@@ -1,12 +1,16 @@
-"""Single-run backtest engine for Phase 1A.
+"""Backtest engine: single-run (Phase 1A) and walk-forward (Phase 1B).
 
 Orchestrates a complete backtest: loads data, configures Cerebro,
 runs the strategy, collects trade artifacts with correct time
 semantics, computes metrics, and logs to the experiment registry.
 
 Usage:
+    # Single-run (Phase 1A):
     python -m backtest.engine --strategy sma_crossover \\
         --start 2024-01-01 --end 2024-12-31
+
+    # Walk-forward (Phase 1B):
+    python -m backtest.engine --strategy sma_crossover --mode walk-forward
 
 Trade time semantics (CRITICAL):
     - entry_signal_time_utc: bar N close time — when signal was computed
@@ -21,12 +25,13 @@ order.executed.dt (fill bar) directly from Backtrader's order lifecycle.
 from __future__ import annotations
 
 import argparse
+import calendar
 import json
 import logging
 import sys
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -486,24 +491,42 @@ def _write_to_registry(
     cost_model: Any,
     metrics: dict[str, Any],
     db_path: Path | None = None,
+    *,
+    run_type: str = "single_run",
+    parent_run_id: str | None = None,
+    train_start: datetime | None = None,
+    train_end: datetime | None = None,
+    notes: str | None = None,
 ) -> None:
     """Write run results to the experiment registry.
 
-    Phase 1A single-run mode:
-    - test_start/test_end = engine's date range
+    Defaults preserve Phase 1A single-run semantics:
+    - run_type="single_run", parent_run_id=None
+    - test_start/test_end = engine's date range (start_date/end_date)
     - train_start/train_end/validation_start/validation_end = NULL
+
+    For walk-forward windows, callers pass:
+    - run_type="walk_forward_window"
+    - parent_run_id=<summary_uuid>
+    - train_start/train_end from the window definition
+    - start_date/end_date set to the window's test dates
 
     Args:
         run_id: UUID for this run.
         strategy_cls: Strategy class.
         strategy_params: Strategy params dict.
-        start_date: Backtest start date.
-        end_date: Backtest end date.
+        start_date: Test start date (used as test_start in registry).
+        end_date: Test end date (used as test_end in registry).
         effective_start: First bar after warmup.
         warmup_bars: Number of warmup bars.
         cost_model: ConstantSlippage instance.
         metrics: Computed metrics dict.
         db_path: Path to DB (uses default if None).
+        run_type: Registry run type (default "single_run").
+        parent_run_id: Parent run UUID for walk-forward windows.
+        train_start: Train window start (NULL for Phase 1A).
+        train_end: Train window end (NULL for Phase 1A).
+        notes: Custom notes string. Falls back to JSON params if None.
     """
     from backtest.experiment_registry import (
         create_table,
@@ -513,10 +536,13 @@ def _write_to_registry(
 
     strategy_name = getattr(strategy_cls, "STRATEGY_NAME", strategy_cls.__name__)
 
+    if notes is None:
+        notes = json.dumps(strategy_params) if strategy_params else None
+
     run_data = {
         "run_id": run_id,
-        "run_type": "single_run",
-        "parent_run_id": None,
+        "run_type": run_type,
+        "parent_run_id": parent_run_id,
         "strategy_name": strategy_name,
         "strategy_source": "manual",
         "test_start": start_date.strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -527,9 +553,16 @@ def _write_to_registry(
             else None
         ),
         "warmup_bars": warmup_bars,
-        # Phase 1A: train/validation are NULL
-        "train_start": None,
-        "train_end": None,
+        "train_start": (
+            train_start.strftime("%Y-%m-%dT%H:%M:%SZ")
+            if train_start
+            else None
+        ),
+        "train_end": (
+            train_end.strftime("%Y-%m-%dT%H:%M:%SZ")
+            if train_end
+            else None
+        ),
         "validation_start": None,
         "validation_end": None,
         "fee_model": cost_model.fee_model_label,
@@ -544,7 +577,7 @@ def _write_to_registry(
         "avg_trade_duration_hours": metrics.get("avg_trade_duration_hours"),
         "avg_trade_return": metrics.get("avg_trade_return"),
         "profit_factor": metrics.get("profit_factor"),
-        "notes": json.dumps(strategy_params) if strategy_params else None,
+        "notes": notes,
     }
 
     conn = get_connection(db_path)
@@ -556,12 +589,409 @@ def _write_to_registry(
 
 
 # ---------------------------------------------------------------------------
+# Walk-forward (Phase 1B)
+# ---------------------------------------------------------------------------
+
+
+def _add_months(d: date, months: int) -> date:
+    """Add calendar months to a date, pinning to the 1st of the month.
+
+    Args:
+        d: Starting date (should be 1st of month for walk-forward).
+        months: Number of months to add.
+
+    Returns:
+        New date with months added.
+    """
+    total_months = (d.year * 12 + d.month - 1) + months
+    year = total_months // 12
+    month = total_months % 12 + 1
+    day = min(d.day, calendar.monthrange(year, month)[1])
+    return date(year, month, day)
+
+
+def generate_walk_forward_windows(
+    overall_start: date,
+    overall_end: date,
+    train_months: int = 12,
+    test_months: int = 3,
+    step_months: int = 3,
+) -> list[tuple[date, date, date, date]]:
+    """Generate rolling walk-forward window date tuples.
+
+    Each window is (train_start, train_end, test_start, test_end).
+    Windows roll forward by step_months. A window is included only
+    if its test_end falls on or before overall_end.
+
+    Args:
+        overall_start: First possible train_start (1st of month).
+        overall_end: Last possible test_end (last of month).
+        train_months: Length of training window in months.
+        test_months: Length of test window in months.
+        step_months: Step size in months between consecutive windows.
+
+    Returns:
+        List of (train_start, train_end, test_start, test_end) tuples.
+    """
+    windows = []
+    train_start = overall_start
+
+    while True:
+        test_start = _add_months(train_start, train_months)
+        train_end = test_start - timedelta(days=1)
+        test_end = _add_months(test_start, test_months) - timedelta(days=1)
+
+        if test_end > overall_end:
+            break
+
+        windows.append((train_start, train_end, test_start, test_end))
+        train_start = _add_months(train_start, step_months)
+
+    return windows
+
+
+@dataclass
+class WalkForwardResult:
+    """Container for walk-forward backtest results."""
+
+    summary_run_id: str
+    window_results: list[BacktestResult]
+    summary_metrics: dict[str, Any]
+    windows: list[tuple[date, date, date, date]]
+
+
+def run_walk_forward(
+    strategy_cls: type[bt.Strategy],
+    strategy_params: dict[str, Any] | None = None,
+    parquet_path: str | Path | None = None,
+    cash: float = 10_000.0,
+    db_path: Path | None = None,
+    walk_forward_config: dict[str, int] | None = None,
+    overall_start: date | None = None,
+    overall_end: date | None = None,
+) -> WalkForwardResult:
+    """Execute walk-forward backtesting across rolling windows.
+
+    Orchestration layer over the Phase 1A single-run engine. Each window
+    calls run_backtest() unchanged — the strategy runs across the full
+    train+test span so indicators evolve continuously, but metrics are
+    computed only on the test portion.
+
+    For Phase 1B baselines, no parameter optimization is performed.
+    The train window represents in-sample context and is logged as such.
+
+    Args:
+        strategy_cls: Backtrader Strategy class to run.
+        strategy_params: Strategy parameters (passed to each window run).
+        parquet_path: Path to OHLCV parquet file. Uses default if None.
+        cash: Initial capital per window (default $10,000).
+        db_path: Path to experiment registry DB. Uses default if None.
+        walk_forward_config: Override window params dict with keys:
+            train_months, test_months, step_months.
+        overall_start: Override start date for window generation.
+        overall_end: Override end date for window generation.
+
+    Returns:
+        WalkForwardResult with per-window results and summary.
+    """
+    import yaml
+
+    strategy_params = strategy_params or {}
+    strategy_name = getattr(strategy_cls, "STRATEGY_NAME", strategy_cls.__name__)
+
+    # Load config from environments.yaml (with overrides)
+    env_path = PROJECT_ROOT / "config" / "environments.yaml"
+    with open(env_path) as f:
+        env_config = yaml.safe_load(f)
+
+    wf_config = env_config.get("walk_forward", {})
+    if walk_forward_config:
+        wf_config.update(walk_forward_config)
+
+    train_months = wf_config.get("train_window_months", 12)
+    test_months = wf_config.get("test_window_months", 3)
+    step_months = wf_config.get("step_months", 3)
+
+    # Determine overall date range from splits
+    if overall_start is None:
+        overall_start = date.fromisoformat(
+            env_config["splits"]["training"]["start"]
+        )
+    if overall_end is None:
+        overall_end = date.fromisoformat(
+            env_config["splits"]["test"]["end"]
+        )
+
+    # Generate windows
+    windows = generate_walk_forward_windows(
+        overall_start, overall_end,
+        train_months, test_months, step_months,
+    )
+
+    if not windows:
+        raise ValueError(
+            f"No walk-forward windows fit in range "
+            f"[{overall_start}, {overall_end}] with "
+            f"train={train_months}m, test={test_months}m, step={step_months}m"
+        )
+
+    logger.info(
+        "Walk-forward: %d windows, %s strategy, train=%dm test=%dm step=%dm",
+        len(windows), strategy_name, train_months, test_months, step_months,
+    )
+
+    # Pre-generate summary run_id — windows point to this
+    summary_run_id = str(uuid.uuid4())
+
+    # Load cost model once for registry writes
+    config = load_execution_config()
+    from backtest.execution_model import ConstantSlippage
+    cost_model = ConstantSlippage.from_config(config)
+
+    window_results: list[BacktestResult] = []
+    window_metrics_list: list[dict[str, Any]] = []
+
+    for i, (w_train_start, w_train_end, w_test_start, w_test_end) in enumerate(windows):
+        logger.info(
+            "  Window %d/%d: train=[%s, %s] test=[%s, %s]",
+            i + 1, len(windows),
+            w_train_start, w_train_end, w_test_start, w_test_end,
+        )
+
+        # Convert dates to UTC datetimes for run_backtest
+        data_start_dt = datetime(
+            w_train_start.year, w_train_start.month, w_train_start.day,
+            tzinfo=timezone.utc,
+        )
+        # Include all bars on the last day
+        data_end_dt = datetime(
+            w_test_end.year, w_test_end.month, w_test_end.day,
+            hour=23, tzinfo=timezone.utc,
+        )
+        test_start_dt = datetime(
+            w_test_start.year, w_test_start.month, w_test_start.day,
+            tzinfo=timezone.utc,
+        )
+
+        # Run the Phase 1A engine unchanged — no registry write
+        result = run_backtest(
+            strategy_cls=strategy_cls,
+            start_date=data_start_dt,
+            end_date=data_end_dt,
+            strategy_params=strategy_params,
+            parquet_path=parquet_path,
+            cash=cash,
+            write_registry=False,
+        )
+
+        # Trim equity curve to test period only
+        ec = result.equity_curve
+        test_start_naive = test_start_dt.replace(tzinfo=None)
+        ec_test = ec[ec.index >= test_start_naive]
+
+        # Filter trades to test period (entry in test window)
+        trades_test = [
+            t for t in result.trades
+            if pd.Timestamp(t["entry_time_utc"]).tz_localize(None)
+               >= test_start_naive
+        ]
+
+        # Recompute metrics on test-only data
+        test_metrics = compute_all_metrics(ec_test, trades_test, cash)
+
+        # Determine effective_start for the test portion
+        test_effective_start = None
+        if len(ec_test) > 0:
+            test_effective_start = ec_test.index[0].to_pydatetime()
+
+        # Write window registry row
+        window_run_id = result.run_id
+        _write_to_registry(
+            run_id=window_run_id,
+            strategy_cls=strategy_cls,
+            strategy_params=strategy_params,
+            start_date=test_start_dt,
+            end_date=data_end_dt,
+            effective_start=test_effective_start,
+            warmup_bars=result.warmup_bars,
+            cost_model=cost_model,
+            metrics=test_metrics,
+            db_path=db_path,
+            run_type="walk_forward_window",
+            parent_run_id=summary_run_id,
+            train_start=data_start_dt,
+            train_end=datetime(
+                w_train_end.year, w_train_end.month, w_train_end.day,
+                hour=23, tzinfo=timezone.utc,
+            ),
+        )
+
+        window_results.append(result)
+        window_metrics_list.append(test_metrics)
+
+        logger.info(
+            "    Window %d: %d trades, return=%.4f, sharpe=%.3f",
+            i + 1,
+            test_metrics["total_trades"],
+            test_metrics["total_return"],
+            test_metrics["sharpe_ratio"],
+        )
+
+    # Compute summary metrics across all windows
+    summary_metrics = _aggregate_walk_forward_metrics(
+        window_metrics_list, len(windows)
+    )
+
+    # Write summary registry row
+    first_test_start_dt = datetime(
+        windows[0][2].year, windows[0][2].month, windows[0][2].day,
+        tzinfo=timezone.utc,
+    )
+    last_test_end_dt = datetime(
+        windows[-1][3].year, windows[-1][3].month, windows[-1][3].day,
+        hour=23, tzinfo=timezone.utc,
+    )
+    first_train_start_dt = datetime(
+        windows[0][0].year, windows[0][0].month, windows[0][0].day,
+        tzinfo=timezone.utc,
+    )
+    last_train_end_dt = datetime(
+        windows[-1][1].year, windows[-1][1].month, windows[-1][1].day,
+        hour=23, tzinfo=timezone.utc,
+    )
+
+    _write_to_registry(
+        run_id=summary_run_id,
+        strategy_cls=strategy_cls,
+        strategy_params=strategy_params,
+        start_date=first_test_start_dt,
+        end_date=last_test_end_dt,
+        effective_start=None,
+        warmup_bars=window_results[0].warmup_bars if window_results else 0,
+        cost_model=cost_model,
+        metrics=summary_metrics,
+        db_path=db_path,
+        run_type="walk_forward_summary",
+        parent_run_id=None,
+        train_start=first_train_start_dt,
+        train_end=last_train_end_dt,
+        notes=json.dumps({
+            "num_windows": len(windows),
+            "train_months": train_months,
+            "test_months": test_months,
+            "step_months": step_months,
+            "params": strategy_params or {},
+        }),
+    )
+
+    logger.info(
+        "Walk-forward complete: %d windows, mean_sharpe=%.3f, "
+        "mean_return=%.4f, total_trades=%d",
+        len(windows),
+        summary_metrics.get("sharpe_ratio", 0.0),
+        summary_metrics.get("total_return", 0.0),
+        summary_metrics.get("total_trades", 0),
+    )
+
+    return WalkForwardResult(
+        summary_run_id=summary_run_id,
+        window_results=window_results,
+        summary_metrics=summary_metrics,
+        windows=windows,
+    )
+
+
+def _aggregate_walk_forward_metrics(
+    window_metrics: list[dict[str, Any]],
+    num_windows: int,
+) -> dict[str, Any]:
+    """Aggregate per-window metrics into walk-forward summary statistics.
+
+    The summary row stores aggregated statistics across window runs
+    and must not be interpreted as a single contiguous backtest.
+
+    Args:
+        window_metrics: List of metrics dicts, one per window.
+        num_windows: Total number of windows.
+
+    Returns:
+        Dict with aggregate metrics matching the registry schema.
+    """
+    if not window_metrics:
+        return {
+            "total_return": 0.0,
+            "sharpe_ratio": 0.0,
+            "max_drawdown": 0.0,
+            "max_drawdown_duration_hours": 0.0,
+            "initial_capital": 0.0,
+            "final_capital": None,
+            "total_trades": 0,
+            "win_rate": 0.0,
+            "avg_trade_duration_hours": 0.0,
+            "avg_trade_return": 0.0,
+            "profit_factor": None,
+        }
+
+    sharpes = [m["sharpe_ratio"] for m in window_metrics]
+    returns = [m["total_return"] for m in window_metrics]
+    drawdowns = [m["max_drawdown"] for m in window_metrics]
+    dd_durations = [m["max_drawdown_duration_hours"] for m in window_metrics]
+    total_trades = sum(m["total_trades"] for m in window_metrics)
+
+    # Aggregate win rate: sum winners across windows / total trades
+    total_winners = sum(
+        round(m["win_rate"] * m["total_trades"])
+        for m in window_metrics
+        if m["total_trades"] > 0
+    )
+    overall_win_rate = total_winners / total_trades if total_trades > 0 else 0.0
+
+    # Aggregate profit factor: sum gross profit / sum gross loss
+    # We don't have raw P&L per window, so use mean of non-None values
+    profit_factors = [
+        m["profit_factor"] for m in window_metrics
+        if m["profit_factor"] is not None
+    ]
+    overall_pf = (
+        float(np.mean(profit_factors)) if profit_factors else None
+    )
+
+    # Aggregate trade duration
+    durations = [
+        m["avg_trade_duration_hours"] for m in window_metrics
+        if m["total_trades"] > 0
+    ]
+    avg_duration = float(np.mean(durations)) if durations else 0.0
+
+    # Aggregate trade return
+    trade_returns = [
+        m["avg_trade_return"] for m in window_metrics
+        if m["total_trades"] > 0
+    ]
+    avg_trade_ret = float(np.mean(trade_returns)) if trade_returns else 0.0
+
+    return {
+        "total_return": float(np.mean(returns)),
+        "sharpe_ratio": float(np.mean(sharpes)),
+        "max_drawdown": float(max(drawdowns)),
+        "max_drawdown_duration_hours": float(max(dd_durations)),
+        "initial_capital": window_metrics[0].get("initial_capital"),
+        "final_capital": None,
+        "total_trades": total_trades,
+        "win_rate": overall_win_rate,
+        "avg_trade_duration_hours": avg_duration,
+        "avg_trade_return": avg_trade_ret,
+        "profit_factor": overall_pf,
+    }
+
+
+# ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
 
 
 def main() -> int:
-    """CLI entry point for single-run backtesting.
+    """CLI entry point for single-run and walk-forward backtesting.
 
     Returns:
         Exit code: 0 on success, 1 on failure.
@@ -573,7 +1003,7 @@ def main() -> int:
     )
 
     parser = argparse.ArgumentParser(
-        description="Run a single backtest (Phase 1A)"
+        description="Run backtests (Phase 1A single-run or Phase 1B walk-forward)"
     )
     parser.add_argument(
         "--strategy",
@@ -582,16 +1012,23 @@ def main() -> int:
         help="Strategy name (e.g. sma_crossover)",
     )
     parser.add_argument(
+        "--mode",
+        type=str,
+        choices=["single-run", "walk-forward"],
+        default="single-run",
+        help="Run mode (default: single-run)",
+    )
+    parser.add_argument(
         "--start",
         type=str,
-        required=True,
-        help="Start date (YYYY-MM-DD)",
+        default=None,
+        help="Start date YYYY-MM-DD (single-run only, required for single-run)",
     )
     parser.add_argument(
         "--end",
         type=str,
-        required=True,
-        help="End date (YYYY-MM-DD)",
+        default=None,
+        help="End date YYYY-MM-DD (single-run only, required for single-run)",
     )
     parser.add_argument(
         "--cash",
@@ -629,6 +1066,17 @@ def main() -> int:
         return 1
 
     strategy_cls = STRATEGY_REGISTRY[args.strategy]
+    strategy_params = json.loads(args.params) if args.params else {}
+    parquet_path = Path(args.parquet) if args.parquet else None
+
+    if args.mode == "walk-forward":
+        return _cli_walk_forward(args, strategy_cls, strategy_params, parquet_path)
+
+    # Single-run mode
+    if not args.start or not args.end:
+        logger.error("--start and --end are required for single-run mode")
+        return 1
+
     start_date = datetime.strptime(args.start, "%Y-%m-%d").replace(
         tzinfo=timezone.utc
     )
@@ -638,12 +1086,6 @@ def main() -> int:
         datetime.strptime(args.end, "%Y-%m-%d").replace(tzinfo=timezone.utc)
         + timedelta(hours=23)
     )
-
-    strategy_params = {}
-    if args.params:
-        strategy_params = json.loads(args.params)
-
-    parquet_path = Path(args.parquet) if args.parquet else None
 
     result = run_backtest(
         strategy_cls=strategy_cls,
@@ -655,7 +1097,88 @@ def main() -> int:
         write_registry=not args.no_registry,
     )
 
+    _print_single_run_summary(result)
+    return 0
+
+
+def _cli_walk_forward(
+    args: argparse.Namespace,
+    strategy_cls: type[bt.Strategy],
+    strategy_params: dict[str, Any],
+    parquet_path: Path | None,
+) -> int:
+    """Handle walk-forward CLI mode.
+
+    In walk-forward mode, --start/--end are ignored. Dates come from
+    environments.yaml.
+
+    Args:
+        args: Parsed CLI args.
+        strategy_cls: Strategy class.
+        strategy_params: Strategy params dict.
+        parquet_path: Optional parquet path.
+
+    Returns:
+        Exit code: 0 on success.
+    """
+    if args.start or args.end:
+        logger.warning(
+            "--start/--end are ignored in walk-forward mode "
+            "(dates come from environments.yaml)"
+        )
+
+    wf_result = run_walk_forward(
+        strategy_cls=strategy_cls,
+        strategy_params=strategy_params,
+        parquet_path=parquet_path,
+        cash=args.cash,
+        db_path=None if not args.no_registry else Path("/dev/null"),
+    )
+
     # Print summary
+    sm = wf_result.summary_metrics
+    print(f"\n{'='*60}")
+    print(f"WALK-FORWARD SUMMARY")
+    print(f"{'='*60}")
+    print(f"Summary ID:   {wf_result.summary_run_id[:8]}...")
+    print(f"Strategy:     {getattr(strategy_cls, 'STRATEGY_NAME', '?')}")
+    print(f"Windows:      {len(wf_result.windows)}")
+    print(f"{'='*60}")
+    print(f"Mean Return:    {sm['total_return']:.4f} ({sm['total_return']*100:.2f}%)")
+    print(f"Mean Sharpe:    {sm['sharpe_ratio']:.3f}")
+    print(f"Worst Drawdown: {sm['max_drawdown']:.4f} ({sm['max_drawdown']*100:.2f}%)")
+    print(f"Total Trades:   {sm['total_trades']}")
+    print(f"Win Rate:       {sm['win_rate']:.2f}")
+    pf = sm.get("profit_factor")
+    print(f"Profit Factor:  {pf:.2f}" if pf is not None else "Profit Factor:  N/A")
+    print(f"{'='*60}")
+
+    # Per-window breakdown
+    print(f"\n{'Window':<8s} {'Train Period':<24s} {'Test Period':<24s} "
+          f"{'Trades':>7s} {'Return':>8s} {'Sharpe':>8s}")
+    print(f"{'-'*8} {'-'*24} {'-'*24} {'-'*7} {'-'*8} {'-'*8}")
+    for i, (w_result, window) in enumerate(
+        zip(wf_result.window_results, wf_result.windows)
+    ):
+        train_str = f"{window[0]} to {window[1]}"
+        test_str = f"{window[2]} to {window[3]}"
+        # Window metrics are the test-only metrics stored in registry;
+        # for display, we show the original full-run result counts
+        print(f"  {i+1:<6d} {train_str:<24s} {test_str:<24s} "
+              f"{w_result.metrics['total_trades']:>7d} "
+              f"{w_result.metrics['total_return']:>8.4f} "
+              f"{w_result.metrics['sharpe_ratio']:>8.3f}")
+
+    print(f"{'='*60}\n")
+    return 0
+
+
+def _print_single_run_summary(result: BacktestResult) -> None:
+    """Print summary for a single-run backtest.
+
+    Args:
+        result: BacktestResult from run_backtest().
+    """
     print(f"\n{'='*60}")
     print(f"Run ID:     {result.run_id}")
     print(f"Strategy:   {result.strategy_name}")
@@ -676,8 +1199,6 @@ def main() -> int:
     if result.trade_csv_path:
         print(f"Trade Log:      {result.trade_csv_path}")
     print(f"{'='*60}\n")
-
-    return 0
 
 
 if __name__ == "__main__":
