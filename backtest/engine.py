@@ -52,10 +52,23 @@ STRATEGY_REGISTRY: dict[str, type[bt.Strategy]] = {}
 
 
 def register_strategy(cls: type[bt.Strategy]) -> type[bt.Strategy]:
-    """Register a strategy class by its STRATEGY_NAME."""
+    """Register a strategy class by its STRATEGY_NAME.
+
+    Raises:
+        ValueError: If cls has no STRATEGY_NAME or if a different class
+            is already registered under the same name.
+    """
     name = getattr(cls, "STRATEGY_NAME", None)
     if name is None:
         raise ValueError(f"{cls.__name__} must define STRATEGY_NAME")
+
+    existing = STRATEGY_REGISTRY.get(name)
+    if existing is not None and existing is not cls:
+        raise ValueError(
+            f"Strategy name conflict: '{name}' already registered by "
+            f"{existing.__name__}, cannot register {cls.__name__}"
+        )
+
     STRATEGY_REGISTRY[name] = cls
     return cls
 
@@ -63,8 +76,13 @@ def register_strategy(cls: type[bt.Strategy]) -> type[bt.Strategy]:
 def _ensure_strategies_loaded() -> None:
     """Import and register all baseline strategies.
 
-    Scans strategies/baseline/ for Python modules containing
-    BaseStrategy subclasses with STRATEGY_NAME defined.
+    Scans strategies/baseline/ for Python modules and registers
+    concrete BaseStrategy subclasses. Skips:
+    - The BaseStrategy abstract base class itself
+    - Classes with STRATEGY_NAME == "unnamed" (unoverridden default)
+    - Non-BaseStrategy classes
+
+    Logs errors explicitly if a module fails to import.
     """
     if STRATEGY_REGISTRY:
         return
@@ -72,18 +90,24 @@ def _ensure_strategies_loaded() -> None:
     import importlib
     import pkgutil
 
+    from strategies.template import BaseStrategy
+
     import strategies.baseline as baseline_pkg
 
-    for importer, modname, ispkg in pkgutil.iter_modules(baseline_pkg.__path__):
-        module = importlib.import_module(f"strategies.baseline.{modname}")
+    for _importer, modname, ispkg in pkgutil.iter_modules(baseline_pkg.__path__):
+        try:
+            module = importlib.import_module(f"strategies.baseline.{modname}")
+        except Exception:
+            logger.exception("Failed to import strategy module: %s", modname)
+            continue
+
         for attr_name in dir(module):
             attr = getattr(module, attr_name)
             if (
                 isinstance(attr, type)
-                and issubclass(attr, bt.Strategy)
-                and hasattr(attr, "STRATEGY_NAME")
+                and issubclass(attr, BaseStrategy)
+                and attr is not BaseStrategy
                 and getattr(attr, "STRATEGY_NAME", "unnamed") != "unnamed"
-                and attr.STRATEGY_NAME not in STRATEGY_REGISTRY
             ):
                 register_strategy(attr)
 
