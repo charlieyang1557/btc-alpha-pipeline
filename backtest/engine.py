@@ -796,6 +796,15 @@ def run_walk_forward(
                >= test_start_naive
         ]
 
+        # Renumber trade_ids sequentially within the test-only set
+        for idx, t in enumerate(trades_test, start=1):
+            t["trade_id"] = idx
+
+        # Overwrite the trade CSV with test-only trades.
+        # run_backtest() already saved the full train+test CSV; we must
+        # replace it so the persisted artifact is test-window isolated.
+        _save_trade_csv(result.run_id, trades_test)
+
         # Recompute metrics on test-only data
         test_metrics = compute_all_metrics(ec_test, trades_test, cash)
 

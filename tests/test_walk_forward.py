@@ -299,6 +299,87 @@ class TestWalkForwardRegistry:
 
 
 @pytestmark_data
+class TestTradeArtifactIsolation:
+    """Verify per-window trade CSVs contain only test-period trades.
+
+    This is the strongest check for no trade/position leakage. For every
+    window, the persisted trade CSV must contain only trades whose
+    entry and exit times fall within that window's test_start to test_end.
+    """
+
+    @pytest.fixture(scope="class")
+    def window_rows(self, walk_forward_result):
+        """Fetch window registry rows with their trade CSVs."""
+        db_path = walk_forward_result._test_db_path
+        conn = sqlite3.connect(str(db_path))
+        conn.row_factory = sqlite3.Row
+        rows = [
+            dict(r) for r in conn.execute(
+                "SELECT * FROM runs WHERE run_type = 'walk_forward_window'"
+            ).fetchall()
+        ]
+        conn.close()
+        return rows
+
+    def test_all_window_csvs_exist(self, window_rows):
+        """Every window must have a trade CSV on disk."""
+        from backtest.engine import RESULTS_DIR
+        for row in window_rows:
+            csv_path = RESULTS_DIR / f"trades_{row['run_id']}.csv"
+            assert csv_path.exists(), f"Missing: {csv_path}"
+
+    def test_csv_row_counts_match_registry(self, window_rows):
+        """Trade CSV row count must match registry total_trades."""
+        import pandas as _pd
+        from backtest.engine import RESULTS_DIR
+        for row in window_rows:
+            csv_path = RESULTS_DIR / f"trades_{row['run_id']}.csv"
+            if not csv_path.exists():
+                continue
+            trades = _pd.read_csv(csv_path)
+            assert len(trades) == row["total_trades"], (
+                f"Window {row['run_id'][:8]}: CSV has {len(trades)} rows, "
+                f"registry has {row['total_trades']}"
+            )
+
+    def test_all_entries_within_test_window(self, window_rows):
+        """Every trade entry_time_utc must be >= test_start."""
+        import pandas as _pd
+        from backtest.engine import RESULTS_DIR
+        for row in window_rows:
+            csv_path = RESULTS_DIR / f"trades_{row['run_id']}.csv"
+            if not csv_path.exists():
+                continue
+            trades = _pd.read_csv(csv_path, parse_dates=["entry_time_utc"])
+            if len(trades) == 0:
+                continue
+            test_start = _pd.Timestamp(row["test_start"])
+            leaked = trades[trades["entry_time_utc"] < test_start]
+            assert len(leaked) == 0, (
+                f"Window {row['run_id'][:8]}: {len(leaked)} trade entries "
+                f"before test_start={test_start}"
+            )
+
+    def test_all_exits_within_test_window(self, window_rows):
+        """Every trade exit_time_utc must be <= test_end."""
+        import pandas as _pd
+        from backtest.engine import RESULTS_DIR
+        for row in window_rows:
+            csv_path = RESULTS_DIR / f"trades_{row['run_id']}.csv"
+            if not csv_path.exists():
+                continue
+            trades = _pd.read_csv(csv_path, parse_dates=["exit_time_utc"])
+            if len(trades) == 0:
+                continue
+            test_end = _pd.Timestamp(row["test_end"])
+            leaked = trades[trades["exit_time_utc"] > test_end]
+            assert len(leaked) == 0, (
+                f"Window {row['run_id'][:8]}: {len(leaked)} trade exits "
+                f"after test_end={test_end}"
+            )
+
+
+@pytestmark_data
 class TestWalkForwardSummaryMetrics:
     """Verify summary metrics are populated and reasonable."""
 
