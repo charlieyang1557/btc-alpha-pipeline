@@ -16,6 +16,9 @@ import pytest
 
 from ingestion.bulk_download import (
     BINANCE_CSV_COLUMNS,
+    _find_timestamp_column,
+    _looks_like_ms_timestamp,
+    _map_header_columns,
     download_month,
     generate_month_keys,
     process_dataframe,
@@ -244,3 +247,148 @@ class TestDownloadMonthHeaderDetection:
         assert len(df) == 2
         assert pd.api.types.is_integer_dtype(df["open_time"])
         assert df["open_time"].iloc[0] == 1577836800000
+
+    def test_header_with_different_names(self, monkeypatch):
+        """CSVs with Binance's alternative header names should map correctly."""
+        # Uses "Number of trades" instead of "count", "Quote asset volume", etc.
+        csv = (
+            "Open time,Open,High,Low,Close,Volume,Close time,"
+            "Quote asset volume,Number of trades,"
+            "Taker buy base asset volume,Taker buy quote asset volume,Ignore\n"
+            "1735689600000,94000.5,94200.0,93800.0,94100.0,"
+            "500.0,1735693199999,47050000.0,25000,250.0,23525000.0,0\n"
+            "1735693200000,94100.0,94300.0,93900.0,94200.0,"
+            "450.0,1735696799999,42390000.0,22000,225.0,21195000.0,0\n"
+        )
+        zip_bytes = self._make_csv_zip(csv, "BTCUSDT-1h-2025-01.csv")
+
+        import requests as req
+
+        class FakeResp:
+            status_code = 200
+            content = zip_bytes
+
+        monkeypatch.setattr(req, "get", lambda *a, **kw: FakeResp())
+
+        df = download_month("BTCUSDT", "1h", "2025-01")
+        assert df is not None
+        assert len(df) == 2
+        assert pd.api.types.is_integer_dtype(df["open_time"])
+        # 2025-01-01 00:00 UTC
+        assert df["open_time"].iloc[0] == 1735689600000
+        # trade_count mapped from "Number of trades"
+        assert "trade_count" in df.columns
+        assert df["trade_count"].iloc[0] == 25000
+
+    def test_extra_leading_column_with_header(self, monkeypatch):
+        """CSV with an extra leading column should still parse via name mapping."""
+        # Extra "id" column at position 0
+        csv = (
+            "id,open_time,open,high,low,close,volume,close_time,"
+            "quote_volume,count,taker_buy_volume,taker_buy_quote_volume,ignore\n"
+            "1,1735689600000,94000.5,94200.0,93800.0,94100.0,"
+            "500.0,1735693199999,47050000.0,25000,250.0,23525000.0,0\n"
+            "2,1735693200000,94100.0,94300.0,93900.0,94200.0,"
+            "450.0,1735696799999,42390000.0,22000,225.0,21195000.0,0\n"
+        )
+        zip_bytes = self._make_csv_zip(csv, "BTCUSDT-1h-2025-01.csv")
+
+        import requests as req
+
+        class FakeResp:
+            status_code = 200
+            content = zip_bytes
+
+        monkeypatch.setattr(req, "get", lambda *a, **kw: FakeResp())
+
+        df = download_month("BTCUSDT", "1h", "2025-01")
+        assert df is not None
+        assert len(df) == 2
+        # Name-based mapping should correctly identify open_time
+        assert "open_time" in df.columns
+        assert pd.api.types.is_integer_dtype(df["open_time"])
+        assert df["open_time"].iloc[0] == 1735689600000
+
+
+class TestTimestampHelpers:
+    def test_valid_ms_timestamp(self):
+        # 2024-01-01 00:00 UTC
+        assert _looks_like_ms_timestamp(1704067200000) is True
+
+    def test_valid_ms_timestamp_2025(self):
+        # 2025-01-01 00:00 UTC
+        assert _looks_like_ms_timestamp(1735689600000) is True
+
+    def test_seconds_timestamp_rejected(self):
+        # Same date in seconds — not ms range
+        assert _looks_like_ms_timestamp(1704067200) is False
+
+    def test_string_timestamp(self):
+        assert _looks_like_ms_timestamp("1704067200000") is True
+
+    def test_garbage_rejected(self):
+        assert _looks_like_ms_timestamp("not_a_number") is False
+
+    def test_zero_rejected(self):
+        assert _looks_like_ms_timestamp(0) is False
+
+    def test_find_timestamp_column(self):
+        df = pd.DataFrame({
+            "id": [1, 2],
+            "ts": [1704067200000, 1704070800000],
+            "price": [42000.0, 42100.0],
+        })
+        assert _find_timestamp_column(df) == "ts"
+
+    def test_find_timestamp_column_first_col(self):
+        df = pd.DataFrame({
+            "open_time": [1704067200000, 1704070800000],
+            "price": [42000.0, 42100.0],
+        })
+        assert _find_timestamp_column(df) == "open_time"
+
+    def test_find_timestamp_column_none(self):
+        df = pd.DataFrame({
+            "a": [1, 2],
+            "b": [3.14, 2.71],
+        })
+        assert _find_timestamp_column(df) is None
+
+
+class TestHeaderMapping:
+    def test_standard_headers(self):
+        cols = [
+            "open_time", "open", "high", "low", "close", "volume",
+            "close_time", "quote_volume", "trade_count",
+            "taker_buy_base", "taker_buy_quote", "ignore",
+        ]
+        result = _map_header_columns(cols)
+        assert result is not None
+        assert result["open_time"] == "open_time"
+
+    def test_binance_verbose_headers(self):
+        cols = [
+            "Open time", "Open", "High", "Low", "Close", "Volume",
+            "Close time", "Quote asset volume", "Number of trades",
+            "Taker buy base asset volume", "Taker buy quote asset volume", "Ignore",
+        ]
+        result = _map_header_columns(cols)
+        assert result is not None
+        assert result["Number of trades"] == "trade_count"
+        assert result["Quote asset volume"] == "quote_volume"
+
+    def test_unknown_headers_returns_none(self):
+        cols = ["col_a", "col_b", "col_c", "col_d"]
+        result = _map_header_columns(cols)
+        assert result is None
+
+    def test_extra_columns_still_map(self):
+        cols = [
+            "row_id", "open_time", "open", "high", "low", "close", "volume",
+            "close_time", "quote_volume", "count",
+            "taker_buy_volume", "taker_buy_quote_volume", "ignore",
+        ]
+        result = _map_header_columns(cols)
+        assert result is not None
+        assert "row_id" not in result  # extra col not mapped
+        assert result["count"] == "trade_count"

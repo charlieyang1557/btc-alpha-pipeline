@@ -28,13 +28,19 @@ It serves as the authoritative reference for both human developers and AI agents
 | `quote_volume` | float64 | 53000000.00 | USDT volume traded |
 | `trade_count` | int64 | 45000 | Number of individual trades |
 | `ingested_at_utc` | datetime64[ms, UTC] | 2026-04-15 10:30:00+00:00 | When we wrote this row |
-| `source` | string | "binance_vision" | Data provenance |
+| `source` | string | "binance_vision" | Data provenance: acquisition method + venue |
+
+**Source values:**
+- `"binance_vision"` — Bulk historical archive from Binance global (highest fidelity, preferred).
+- `"ccxt_binance"` — CCXT API against Binance global (live incremental updates).
+- `"ccxt_binanceus"` — CCXT API against Binance.US (separate venue with different liquidity and order flow; must NOT be merged with Binance global data — use a separate dataset path).
 
 **Important notes:**
 - `open_time_utc` identifies the START of the candle. A candle with `open_time_utc = 08:00` covers the period 08:00:00.000 to 08:59:59.999.
 - Binance Vision provides raw Unix timestamps in milliseconds. These are converted to timezone-aware UTC datetimes during ingestion.
 - Zero-volume bars exist and are flagged in quality reports. They may indicate exchange downtime or data-quality issues.
 - Gaps (missing bars) exist and are flagged. They are NOT forward-filled.
+- `binance_vision` is preferred over `ccxt_binance` when both cover the same timestamps. The reconcile script enforces this priority during deduplication.
 
 ---
 

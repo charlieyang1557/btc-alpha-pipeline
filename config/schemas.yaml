@@ -57,8 +57,13 @@ ohlcv:
     source:
       dtype: "string"
       nullable: false
-      allowed_values: ["binance_vision", "ccxt_api"]
-      description: "Data provenance"
+      allowed_values: ["binance_vision", "ccxt_binance", "ccxt_binanceus"]
+      description: >
+        Data provenance: acquisition method + venue.
+        "binance_vision" = bulk historical archive from Binance global.
+        "ccxt_binance" = CCXT API against Binance global (live incremental).
+        "ccxt_binanceus" = CCXT API against Binance.US (separate venue,
+        different liquidity — must NOT be merged with Binance global data).
 
   validation_rules:
     - name: "no_duplicates"
