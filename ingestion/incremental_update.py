@@ -114,7 +114,11 @@ def fetch_all_candles(
     timeframe: str,
     since_ms: int,
 ) -> list[list]:
-    """Paginate through CCXT to fetch all candles from since_ms to now.
+    """Paginate through Binance to fetch all full klines from since_ms to now.
+
+    Uses the full Binance kline endpoint (12 fields) for real
+    quote_volume and trade_count. Falls back to 6-field CCXT OHLCV
+    if the full endpoint fails.
 
     Args:
         exchange: CCXT exchange instance.
@@ -123,17 +127,33 @@ def fetch_all_candles(
         since_ms: Start time in ms since epoch.
 
     Returns:
-        List of all OHLCV candles fetched.
+        List of all kline rows fetched.
     """
     all_candles: list[list] = []
     current_since = since_ms
+    use_full = True
 
     while True:
         logger.info(
             "Fetching from %s ...",
             pd.Timestamp(current_since, unit="ms", tz="UTC"),
         )
-        candles = fetch_with_backoff(exchange, symbol, timeframe, current_since)
+        try:
+            if use_full:
+                candles = fetch_with_full_klines(
+                    exchange, symbol, timeframe, current_since
+                )
+            else:
+                candles = fetch_with_backoff(
+                    exchange, symbol, timeframe, current_since
+                )
+        except Exception as e:
+            if use_full:
+                logger.warning("Full kline fetch failed (%s), falling back to OHLCV", e)
+                use_full = False
+                continue
+            raise
+
         if not candles:
             break
 
@@ -145,37 +165,145 @@ def fetch_all_candles(
             break
 
         # Move to the next batch (last candle's time + 1 hour)
-        current_since = candles[-1][0] + ONE_HOUR_MS
+        last_ts = int(candles[-1][0])
+        current_since = last_ts + ONE_HOUR_MS
 
     return all_candles
 
 
-def candles_to_dataframe(candles: list[list]) -> pd.DataFrame:
-    """Convert CCXT OHLCV candle list to a schema-compliant DataFrame.
+def fetch_full_klines(
+    exchange: ccxt.binance,
+    symbol: str,
+    timeframe: str,
+    since_ms: int,
+    limit: int = KLINE_LIMIT,
+) -> list[list]:
+    """Fetch full Binance klines (including quote_volume and trade_count).
+
+    Uses the Binance REST API directly via CCXT's public GET to retrieve
+    all 12 kline fields, not just the 6-field OHLCV subset.
 
     Args:
-        candles: List of [timestamp_ms, open, high, low, close, volume] lists.
+        exchange: CCXT exchange instance.
+        symbol: Trading pair symbol (e.g. "BTC/USDT").
+        timeframe: Candle interval (e.g. "1h").
+        since_ms: Start time in milliseconds since epoch.
+        limit: Maximum candles per request.
+
+    Returns:
+        List of raw Binance kline rows (12 fields each).
+    """
+    market = exchange.market(symbol)
+    params = {
+        "symbol": market["id"],
+        "interval": timeframe,
+        "startTime": since_ms,
+        "limit": limit,
+    }
+    return exchange.publicGetKlines(params)
+
+
+def fetch_with_full_klines(
+    exchange: ccxt.binance,
+    symbol: str,
+    timeframe: str,
+    since: int,
+    limit: int = KLINE_LIMIT,
+) -> list[list]:
+    """Fetch full klines with exponential backoff on network/rate-limit errors.
+
+    Args:
+        exchange: CCXT exchange instance.
+        symbol: Trading pair symbol (e.g. "BTC/USDT").
+        timeframe: Candle interval (e.g. "1h").
+        since: Start time in milliseconds since epoch.
+        limit: Maximum candles per request.
+
+    Returns:
+        List of raw Binance kline rows.
+
+    Raises:
+        ccxt.NetworkError: After MAX_RETRIES exhausted.
+        ccxt.ExchangeError: Non-retryable exchange errors.
+    """
+    backoff = INITIAL_BACKOFF_S
+    for attempt in range(1, MAX_RETRIES + 1):
+        try:
+            return fetch_full_klines(exchange, symbol, timeframe, since, limit)
+        except (ccxt.NetworkError, ccxt.RateLimitExceeded) as e:
+            if attempt == MAX_RETRIES:
+                logger.error("Max retries (%d) exhausted: %s", MAX_RETRIES, e)
+                raise
+            logger.warning(
+                "Attempt %d/%d failed (%s), retrying in %.1fs ...",
+                attempt,
+                MAX_RETRIES,
+                type(e).__name__,
+                backoff,
+            )
+            time.sleep(backoff)
+            backoff = min(backoff * 2, MAX_BACKOFF_S)
+    return []  # unreachable, satisfies type checker
+
+
+def candles_to_dataframe(candles: list[list]) -> pd.DataFrame:
+    """Convert Binance kline rows to a schema-compliant DataFrame.
+
+    Accepts either full 12-field Binance klines or 6-field CCXT OHLCV.
+    Full klines provide real quote_volume and trade_count; 6-field
+    fallback estimates quote_volume and sets trade_count to 0.
+
+    Args:
+        candles: List of kline rows. Each row is either 12 fields
+            (full Binance) or 6 fields (CCXT OHLCV fallback).
 
     Returns:
         DataFrame matching the project OHLCV schema.
     """
-    df = pd.DataFrame(candles, columns=["timestamp", "open", "high", "low", "close", "volume"])
+    if not candles:
+        return pd.DataFrame(columns=[
+            "open_time_utc", "open", "high", "low", "close",
+            "volume", "quote_volume", "trade_count",
+            "ingested_at_utc", "source",
+        ])
 
-    df["open_time_utc"] = pd.to_datetime(df["timestamp"], unit="ms", utc=True)
+    if len(candles[0]) >= 12:
+        # Full Binance kline: [open_time, open, high, low, close, volume,
+        #   close_time, quote_volume, trade_count, taker_buy_base,
+        #   taker_buy_quote, ignore]
+        df = pd.DataFrame(candles, columns=[
+            "timestamp", "open", "high", "low", "close", "volume",
+            "close_time", "quote_volume", "trade_count",
+            "taker_buy_base", "taker_buy_quote", "ignore",
+        ])
+        df = df[["timestamp", "open", "high", "low", "close",
+                 "volume", "quote_volume", "trade_count"]]
+    else:
+        # 6-field CCXT OHLCV fallback
+        df = pd.DataFrame(
+            candles, columns=["timestamp", "open", "high", "low", "close", "volume"]
+        )
+        logger.warning(
+            "Using 6-field OHLCV: quote_volume estimated, trade_count=0"
+        )
+        df["quote_volume"] = df["volume"].astype(float) * df["close"].astype(float)
+        df["trade_count"] = 0
+
+    df["open_time_utc"] = pd.to_datetime(
+        pd.to_numeric(df["timestamp"], errors="coerce"), unit="ms", utc=True
+    )
     df = df.drop(columns=["timestamp"])
-
-    # CCXT doesn't provide quote_volume and trade_count; fill with defaults
-    df["quote_volume"] = df["volume"] * df["close"]
-    df["trade_count"] = 0  # CCXT basic endpoint doesn't provide this
 
     # Ensure dtypes
     for col in ["open", "high", "low", "close", "volume", "quote_volume"]:
-        df[col] = df[col].astype("float64")
-    df["trade_count"] = df["trade_count"].astype("int64")
+        df[col] = pd.to_numeric(df[col], errors="coerce").astype("float64")
+    df["trade_count"] = pd.to_numeric(df["trade_count"], errors="coerce").fillna(0).astype("int64")
 
-    # Add metadata
-    df["source"] = "ccxt_api"
-    df["ingested_at_utc"] = pd.Timestamp.now(tz="UTC")
+    # Enforce ms resolution and schema-compliant metadata dtypes
+    df["open_time_utc"] = df["open_time_utc"].astype("datetime64[ms, UTC]")
+    df["source"] = pd.array(["ccxt_api"] * len(df), dtype="string")
+    df["ingested_at_utc"] = pd.Timestamp.now(tz="UTC").floor("ms")
+    df["ingested_at_utc"] = df["ingested_at_utc"].astype("datetime64[ms, UTC]")
 
     # Reorder columns
     df = df[

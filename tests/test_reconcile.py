@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from ingestion.reconcile import archive_file, reconcile
+from ingestion.reconcile import archive_file, reconcile, verify_overlap
 
 
 def make_ohlcv_df(
@@ -41,8 +41,8 @@ def make_ohlcv_df(
     lows = np.minimum(opens, closes) - rng.uniform(5, 50, n_hours)
     lows = np.maximum(lows, 1)
 
-    return pd.DataFrame({
-        "open_time_utc": timestamps,
+    df = pd.DataFrame({
+        "open_time_utc": timestamps.astype("datetime64[ms, UTC]"),
         "open": opens,
         "high": highs,
         "low": lows,
@@ -50,9 +50,11 @@ def make_ohlcv_df(
         "volume": rng.uniform(100, 1000, n_hours),
         "quote_volume": rng.uniform(1e6, 1e7, n_hours),
         "trade_count": rng.integers(5000, 50000, n_hours).astype(np.int64),
-        "ingested_at_utc": pd.Timestamp.now(tz="UTC"),
-        "source": source,
+        "ingested_at_utc": pd.Timestamp.now(tz="UTC").floor("ms"),
+        "source": pd.array([source] * n_hours, dtype="string"),
     })
+    df["ingested_at_utc"] = df["ingested_at_utc"].astype("datetime64[ms, UTC]")
+    return df
 
 
 class TestReconcile:
@@ -145,3 +147,32 @@ class TestArchive:
     def test_archive_nonexistent_returns_none(self, tmp_path: Path):
         result = archive_file(tmp_path / "nonexistent.parquet")
         assert result is None
+
+
+class TestVerifyOverlap:
+    def test_no_overlap(self):
+        existing = make_ohlcv_df("2024-01-01", n_hours=24)
+        new = make_ohlcv_df("2024-01-02", n_hours=24, source="ccxt_api")
+        result = verify_overlap(existing, new)
+        assert result["passed"] is True
+        assert result["overlap_rows"] == 0
+
+    def test_matching_overlap_passes(self):
+        existing = make_ohlcv_df("2024-01-01", n_hours=24)
+        # Exact same data as overlap
+        new = existing.iloc[12:].copy()
+        new["source"] = pd.array(["ccxt_api"] * len(new), dtype="string")
+        result = verify_overlap(existing, new)
+        assert result["passed"] is True
+        assert result["overlap_rows"] == 12
+
+    def test_divergent_overlap_fails(self):
+        existing = make_ohlcv_df("2024-01-01", n_hours=24)
+        new = existing.iloc[12:].copy()
+        new["source"] = pd.array(["ccxt_api"] * len(new), dtype="string")
+        # Introduce >0.01% price deviation
+        new.loc[new.index[0], "close"] *= 1.01  # 1% off
+        result = verify_overlap(existing, new)
+        assert result["passed"] is False
+        assert result["overlap_rows"] == 12
+        assert len(result["details"]) > 0

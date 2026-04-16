@@ -22,6 +22,7 @@ import logging
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 
@@ -76,6 +77,56 @@ def archive_file(file_path: Path) -> Path | None:
     return archive_path
 
 
+def verify_overlap(
+    existing_df: pd.DataFrame,
+    new_df: pd.DataFrame,
+    threshold: float = 0.0001,
+) -> dict[str, Any]:
+    """Verify that overlapping rows between existing and new data agree on OHLC prices.
+
+    Per PHASE0_BLUEPRINT: prices must match within 0.01% in the overlap period.
+
+    Args:
+        existing_df: Current canonical DataFrame.
+        new_df: New rows to merge in.
+        threshold: Maximum allowed relative deviation (default 0.0001 = 0.01%).
+
+    Returns:
+        dict with 'passed' (bool), 'overlap_rows' (int), and 'details' (list of deviations).
+    """
+    overlap = pd.merge(
+        existing_df[["open_time_utc", "open", "high", "low", "close"]],
+        new_df[["open_time_utc", "open", "high", "low", "close"]],
+        on="open_time_utc",
+        suffixes=("_existing", "_new"),
+    )
+
+    if len(overlap) == 0:
+        return {"passed": True, "overlap_rows": 0, "details": None}
+
+    deviations: list[dict] = []
+    for col in ["open", "high", "low", "close"]:
+        existing_col = overlap[f"{col}_existing"]
+        new_col = overlap[f"{col}_new"]
+        rel_dev = ((new_col - existing_col) / existing_col).abs()
+        bad = rel_dev > threshold
+        if bad.any():
+            for idx in overlap.index[bad]:
+                deviations.append({
+                    "timestamp": str(overlap.loc[idx, "open_time_utc"]),
+                    "field": col,
+                    "existing": float(existing_col.loc[idx]),
+                    "new": float(new_col.loc[idx]),
+                    "relative_deviation": float(rel_dev.loc[idx]),
+                })
+
+    return {
+        "passed": len(deviations) == 0,
+        "overlap_rows": len(overlap),
+        "details": deviations[:50] if deviations else None,
+    }
+
+
 def reconcile(
     existing_df: pd.DataFrame,
     new_df: pd.DataFrame,
@@ -94,6 +145,14 @@ def reconcile(
     """
     rows_before = len(existing_df)
     rows_new = len(new_df)
+
+    # Verify overlap prices match within 0.01% before merging
+    overlap_result = verify_overlap(existing_df, new_df)
+    if not overlap_result["passed"]:
+        logger.warning(
+            "Price deviation in %d overlap rows (threshold 0.01%%)",
+            len(overlap_result["details"]),
+        )
 
     # Concatenate
     combined = pd.concat([existing_df, new_df], ignore_index=True)
@@ -138,6 +197,7 @@ def reconcile(
         "rows_trimmed": rows_trimmed,
         "rows_after": len(combined),
         "gaps_found": gaps_found,
+        "overlap_check": overlap_result,
     }
 
     return combined, stats
@@ -193,24 +253,28 @@ def main() -> int:
     report["file_checked"] = str(existing_path)
     logger.info("Validation status: %s", report["overall_status"])
 
+    # Save validation report (always, even on failure)
+    QUALITY_DIR.mkdir(parents=True, exist_ok=True)
+    save_report(report, QUALITY_DIR, prefix="reconcile_validation")
+
     if args.dry_run:
         logger.info("Dry run — not saving")
         return 0
 
-    # Archive current file BEFORE overwriting
+    # Block write on fatal validation failure
+    if report["overall_status"] == "FAIL":
+        logger.error(
+            "Merged data FAILED validation — refusing to overwrite canonical file. "
+            "Review quality report."
+        )
+        return 1
+
+    # Archive current file only after validation passes
     archive_file(existing_path)
 
     # Save merged result
     merged_df.to_parquet(existing_path, engine="pyarrow", index=False)
     logger.info("Saved %d rows to %s", len(merged_df), existing_path)
-
-    # Save validation report
-    QUALITY_DIR.mkdir(parents=True, exist_ok=True)
-    save_report(report, QUALITY_DIR, prefix="reconcile_validation")
-
-    if report["overall_status"] == "FAIL":
-        logger.error("Merged data failed validation — review report")
-        return 1
 
     return 0
 

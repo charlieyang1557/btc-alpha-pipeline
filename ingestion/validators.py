@@ -118,8 +118,35 @@ def load_schema() -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
+def _check_datetime_col(df: pd.DataFrame, col: str, issues: list[str]) -> None:
+    """Validate a datetime column for UTC tz and ms resolution.
+
+    Args:
+        df: DataFrame to check.
+        col: Column name.
+        issues: Mutable list to append issues to.
+    """
+    if col not in df.columns:
+        return
+    dtype = df[col].dtype
+    if not hasattr(dtype, "tz") or df[col].dt.tz is None:
+        issues.append(f"{col} is not timezone-aware")
+    elif str(df[col].dt.tz) != "UTC":
+        issues.append(f"{col} timezone is {df[col].dt.tz}, expected UTC")
+    # Enforce ms resolution per schemas.yaml: datetime64[ms, UTC]
+    dtype_str = str(dtype)
+    if "datetime64" in dtype_str and "ms" not in dtype_str:
+        issues.append(f"{col} has resolution {dtype_str}, expected datetime64[ms, UTC]")
+
+
 def check_schema(df: pd.DataFrame) -> dict[str, Any]:
     """Verify all required columns are present with correct dtypes.
+
+    Enforces:
+    - All required columns present
+    - Numeric columns are float64/int64
+    - Datetime columns are datetime64[ms, UTC]
+    - Source column is string (not object)
 
     Args:
         df: The OHLCV DataFrame to validate.
@@ -139,20 +166,16 @@ def check_schema(df: pd.DataFrame) -> dict[str, Any]:
         if col in df.columns and str(df[col].dtype) != expected:
             issues.append(f"Column '{col}' has dtype {df[col].dtype}, expected {expected}")
 
-    # Check open_time_utc is datetime with UTC tz
-    if "open_time_utc" in df.columns:
-        if not hasattr(df["open_time_utc"].dtype, "tz") or df["open_time_utc"].dt.tz is None:
-            issues.append("open_time_utc is not timezone-aware")
-        elif str(df["open_time_utc"].dt.tz) != "UTC":
-            issues.append(f"open_time_utc timezone is {df['open_time_utc'].dt.tz}, expected UTC")
+    # Check datetime columns: UTC tz + ms resolution
+    _check_datetime_col(df, "open_time_utc", issues)
+    _check_datetime_col(df, "ingested_at_utc", issues)
 
-    # Check ingested_at_utc is datetime with UTC tz
-    if "ingested_at_utc" in df.columns:
-        if not hasattr(df["ingested_at_utc"].dtype, "tz") or df["ingested_at_utc"].dt.tz is None:
-            issues.append("ingested_at_utc is not timezone-aware")
-        elif str(df["ingested_at_utc"].dt.tz) != "UTC":
+    # Check source is string dtype (not object)
+    if "source" in df.columns:
+        if df["source"].dtype == "object":
             issues.append(
-                f"ingested_at_utc timezone is {df['ingested_at_utc'].dt.tz}, expected UTC"
+                f"Column 'source' has dtype object, expected string "
+                f"(use pd.StringDtype() or astype('string'))"
             )
 
     return {"passed": len(issues) == 0, "details": issues if issues else None}
@@ -241,10 +264,11 @@ def check_no_gaps(df: pd.DataFrame) -> dict[str, Any]:
     if "open_time_utc" not in df.columns or len(df) < 2:
         return {"passed": True, "details": None}
 
+    one_hour = pd.Timedelta(hours=1)
     timestamps = df["open_time_utc"].sort_values().reset_index(drop=True)
-    diffs_ms = timestamps.diff().dt.total_seconds() * 1000
-    # First diff is NaT → NaN, skip it
-    gap_mask = diffs_ms[1:] != ONE_HOUR_MS
+    diffs = timestamps.diff()
+    # First diff is NaT, skip it
+    gap_mask = diffs[1:] != one_hour
     gap_indices = gap_mask[gap_mask].index.tolist()
 
     if gap_indices:
@@ -252,11 +276,13 @@ def check_no_gaps(df: pd.DataFrame) -> dict[str, Any]:
         for idx in gap_indices:
             start = timestamps.iloc[idx - 1]
             end = timestamps.iloc[idx]
+            gap_duration = diffs.iloc[idx]
+            missing_hours = int(gap_duration / one_hour) - 1
             missing_intervals.append(
                 {
                     "after": _safe_ts_str(start),
                     "before": _safe_ts_str(end),
-                    "missing_hours": int(diffs_ms.iloc[idx] / ONE_HOUR_MS) - 1,
+                    "missing_hours": missing_hours,
                 }
             )
 
@@ -444,6 +470,46 @@ def check_volume_drops(df: pd.DataFrame) -> dict[str, Any]:
     return {"count": 0, "details": None}
 
 
+def check_partial_last_candle(
+    df: pd.DataFrame,
+    now_utc: pd.Timestamp | None = None,
+    timeframe_hours: int = 1,
+) -> dict[str, Any]:
+    """Check whether the last candle in the dataset is potentially partial.
+
+    A candle is partial if its open_time + timeframe > now, meaning the
+    candle period has not yet closed.
+
+    Args:
+        df: The OHLCV DataFrame to validate.
+        now_utc: Current UTC time. Defaults to pd.Timestamp.now(tz="UTC").
+        timeframe_hours: Candle duration in hours (default 1).
+
+    Returns:
+        dict with 'passed' (bool) and 'details' (dict with partial candle info).
+        Severity is 'warning'.
+    """
+    if "open_time_utc" not in df.columns or len(df) == 0:
+        return {"passed": True, "details": None}
+
+    if now_utc is None:
+        now_utc = pd.Timestamp.now(tz="UTC")
+
+    last_open = df["open_time_utc"].max()
+    candle_close = last_open + pd.Timedelta(hours=timeframe_hours)
+
+    if candle_close > now_utc:
+        return {
+            "passed": False,
+            "details": {
+                "last_open_time": _safe_ts_str(last_open),
+                "candle_close_time": _safe_ts_str(candle_close),
+                "now_utc": _safe_ts_str(now_utc),
+            },
+        }
+    return {"passed": True, "details": None}
+
+
 # ---------------------------------------------------------------------------
 # Main validation orchestrator
 # ---------------------------------------------------------------------------
@@ -483,6 +549,7 @@ def validate_ohlcv(df: pd.DataFrame) -> dict[str, Any]:
     checks["volume_non_negative"] = check_volume_non_negative(df)
     checks["zero_volume_bars"] = check_zero_volume_bars(df)
     checks["volume_drops"] = check_volume_drops(df)
+    checks["partial_last_candle"] = check_partial_last_candle(df)
 
     # Determine overall status
     # FAIL: schema, no_nulls, no_duplicates, prices_positive, ohlc_consistency,
@@ -497,8 +564,11 @@ def validate_ohlcv(df: pd.DataFrame) -> dict[str, Any]:
         "source_populated",
         "hour_aligned",
     ]
-    # WARNING: no_gaps, price_anomalies, zero_volume_bars, volume_drops
-    warning_checks = ["no_gaps", "price_anomalies", "zero_volume_bars", "volume_drops"]
+    # WARNING: no_gaps, price_anomalies, zero_volume_bars, volume_drops, partial_last_candle
+    warning_checks = [
+        "no_gaps", "price_anomalies", "zero_volume_bars", "volume_drops",
+        "partial_last_candle",
+    ]
 
     has_fatal = any(
         checks[name].get("passed") is False

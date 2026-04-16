@@ -33,6 +33,7 @@ from ingestion.validators import (
     check_no_gaps,
     check_no_nulls,
     check_ohlc_consistency,
+    check_partial_last_candle,
     check_price_anomalies,
     check_prices_positive,
     check_schema,
@@ -79,7 +80,7 @@ def make_good_df(n_hours: int = 48, start: str = "2024-01-01T00:00:00") -> pd.Da
 
     df = pd.DataFrame(
         {
-            "open_time_utc": timestamps,
+            "open_time_utc": timestamps.astype("datetime64[ms, UTC]"),
             "open": opens,
             "high": highs,
             "low": lows,
@@ -87,10 +88,11 @@ def make_good_df(n_hours: int = 48, start: str = "2024-01-01T00:00:00") -> pd.Da
             "volume": volumes,
             "quote_volume": quote_volumes,
             "trade_count": trade_counts.astype(np.int64),
-            "ingested_at_utc": pd.Timestamp.now(tz="UTC"),
-            "source": "binance_vision",
+            "ingested_at_utc": pd.Timestamp.now(tz="UTC").floor("ms"),
+            "source": pd.array(["binance_vision"] * n_hours, dtype="string"),
         }
     )
+    df["ingested_at_utc"] = df["ingested_at_utc"].astype("datetime64[ms, UTC]")
     return df
 
 
@@ -522,3 +524,57 @@ class TestSaveReport:
         report_path = save_report(report, nested)
         assert report_path.exists()
         assert nested.exists()
+
+
+# ---------------------------------------------------------------------------
+# Partial candle checks
+# ---------------------------------------------------------------------------
+
+
+class TestCheckPartialLastCandle:
+    def test_old_data_passes(self):
+        df = make_good_df(start="2020-01-01T00:00:00")
+        result = check_partial_last_candle(df)
+        assert result["passed"] is True
+
+    def test_recent_candle_flagged(self):
+        # Create a candle with open_time = now, which is definitely partial
+        now = pd.Timestamp.now(tz="UTC").floor("h")
+        df = make_good_df(n_hours=1, start=str(now))
+        result = check_partial_last_candle(df, now_utc=now + pd.Timedelta(minutes=30))
+        assert result["passed"] is False
+        assert "last_open_time" in result["details"]
+
+    def test_completed_candle_passes(self):
+        now = pd.Timestamp.now(tz="UTC").floor("h")
+        two_hours_ago = now - pd.Timedelta(hours=2)
+        df = make_good_df(n_hours=1, start=str(two_hours_ago))
+        result = check_partial_last_candle(df, now_utc=now)
+        assert result["passed"] is True
+
+
+# ---------------------------------------------------------------------------
+# Schema enforcement (strict dtypes)
+# ---------------------------------------------------------------------------
+
+
+class TestStrictSchema:
+    def test_object_source_dtype_fails(self):
+        df = make_good_df()
+        df["source"] = df["source"].astype("object")
+        result = check_schema(df)
+        assert result["passed"] is False
+        assert any("source" in d for d in result["details"])
+
+    def test_microsecond_datetime_fails(self):
+        df = make_good_df()
+        # Convert to microsecond precision
+        df["ingested_at_utc"] = df["ingested_at_utc"].astype("datetime64[us, UTC]")
+        result = check_schema(df)
+        assert result["passed"] is False
+        assert any("ingested_at_utc" in d for d in result["details"])
+
+    def test_compliant_dtypes_pass(self):
+        df = make_good_df()
+        result = check_schema(df)
+        assert result["passed"] is True

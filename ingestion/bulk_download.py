@@ -25,7 +25,6 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import requests
-import yaml
 
 # ---------------------------------------------------------------------------
 # Logging
@@ -43,7 +42,6 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-SCHEMAS_PATH = PROJECT_ROOT / "config" / "schemas.yaml"
 OUTPUT_PATH = PROJECT_ROOT / "data" / "raw" / "btcusdt_1h.parquet"
 QUALITY_DIR = PROJECT_ROOT / "data" / "quality"
 
@@ -75,18 +73,6 @@ COLUMNS_TO_KEEP = [
     "quote_volume",
     "trade_count",
 ]
-
-
-def load_schema() -> dict:
-    """Load the OHLCV schema from config/schemas.yaml.
-
-    Returns:
-        dict: The parsed YAML schema definition, or empty dict if not found.
-    """
-    if SCHEMAS_PATH.exists():
-        with open(SCHEMAS_PATH) as f:
-            return yaml.safe_load(f)
-    return {}
 
 
 def generate_month_keys(start: str, end: str | None = None) -> list[str]:
@@ -232,9 +218,13 @@ def process_dataframe(df: pd.DataFrame) -> pd.DataFrame:
         df[col] = df[col].astype("float64")
     df["trade_count"] = df["trade_count"].astype("int64")
 
-    # Add metadata columns
-    df["source"] = "binance_vision"
-    df["ingested_at_utc"] = pd.Timestamp.now(tz="UTC")
+    # Enforce ms resolution on open_time_utc per schemas.yaml
+    df["open_time_utc"] = df["open_time_utc"].astype("datetime64[ms, UTC]")
+
+    # Add metadata columns with schema-compliant dtypes
+    df["source"] = pd.array(["binance_vision"] * len(df), dtype="string")
+    df["ingested_at_utc"] = pd.Timestamp.now(tz="UTC").floor("ms")
+    df["ingested_at_utc"] = df["ingested_at_utc"].astype("datetime64[ms, UTC]")
 
     # Sort by primary key
     df = df.sort_values("open_time_utc").reset_index(drop=True)
@@ -313,19 +303,20 @@ def main() -> int:
         elif count is not None:
             logger.info("  %-25s %d flagged", check_name, count)
 
-    # Save validation report
+    # Save validation report (always, even on failure)
     QUALITY_DIR.mkdir(parents=True, exist_ok=True)
     save_report(report, QUALITY_DIR, prefix="bulk_validation")
 
-    # Save parquet
+    # Block write on fatal validation failure
+    if report["overall_status"] == "FAIL":
+        logger.error("Validation FAILED — refusing to write parquet. Review quality report.")
+        return 1
+
+    # Save parquet only after validation passes
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     df.to_parquet(output_path, engine="pyarrow", index=False)
     logger.info("Saved %d rows to %s", len(df), output_path)
-
-    if report["overall_status"] == "FAIL":
-        logger.error("Validation FAILED — review quality report")
-        return 1
 
     return 0
 
