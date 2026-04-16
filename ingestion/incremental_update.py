@@ -21,6 +21,8 @@ Usage:
     python -m ingestion.incremental_update --pair BTCUSDT --interval 1h
     python -m ingestion.incremental_update --pair BTCUSDT --interval 1h --dry-run
     python -m ingestion.incremental_update --pair BTCUSDT --interval 1h --exchange binanceus
+    python -m ingestion.incremental_update --pair BTCUSDT --interval 1h --proxy http://host:port
+    CCXT_PROXY=http://host:port python -m ingestion.incremental_update --pair BTCUSDT --interval 1h
 """
 
 from __future__ import annotations
@@ -68,11 +70,17 @@ ONE_HOUR_MS = 3_600_000
 SUPPORTED_EXCHANGES = {"binance", "binanceus"}
 
 
-def create_exchange(exchange_id: str = "binance") -> ccxt.Exchange:
+def create_exchange(
+    exchange_id: str = "binance",
+    proxy: str | None = None,
+) -> ccxt.Exchange:
     """Create a CCXT exchange instance with rate limiting enabled.
 
     Args:
         exchange_id: CCXT exchange identifier ("binance" or "binanceus").
+        proxy: Optional HTTP(S) proxy URL for routing API requests
+            through a permitted jurisdiction (e.g. "http://host:port").
+            Can also be set via CCXT_PROXY environment variable.
 
     Returns:
         Configured exchange instance with markets loaded.
@@ -85,8 +93,21 @@ def create_exchange(exchange_id: str = "binance") -> ccxt.Exchange:
             f"Unsupported exchange '{exchange_id}'. "
             f"Supported: {sorted(SUPPORTED_EXCHANGES)}"
         )
+
+    # Resolve proxy: explicit arg > env var > None
+    import os
+    proxy_url = proxy or os.environ.get("CCXT_PROXY")
+
+    config: dict = {"enableRateLimit": True}
+    if proxy_url:
+        config["proxies"] = {
+            "http": proxy_url,
+            "https": proxy_url,
+        }
+        logger.info("Using proxy: %s", proxy_url)
+
     exchange_class = getattr(ccxt, exchange_id)
-    exchange = exchange_class({"enableRateLimit": True})
+    exchange = exchange_class(config)
     logger.info("Loading markets for %s ...", exchange_id)
     exchange.load_markets()
     return exchange
@@ -390,6 +411,13 @@ def main() -> int:
         help="CCXT exchange id (default: binance). binanceus is a separate "
         "venue with different data — do not mix with binance global",
     )
+    parser.add_argument(
+        "--proxy",
+        type=str,
+        default=None,
+        help="HTTP(S) proxy URL (e.g. http://host:port). "
+        "Also reads CCXT_PROXY env var if flag not set",
+    )
     parser.add_argument("--dry-run", action="store_true", help="Show what would be fetched")
     args = parser.parse_args()
 
@@ -415,7 +443,7 @@ def main() -> int:
         print(f"Would fetch {symbol} {args.interval} from {since_ts} to now")
         return 0
 
-    exchange = create_exchange(args.exchange)
+    exchange = create_exchange(args.exchange, proxy=args.proxy)
     candles = fetch_all_candles(exchange, symbol, args.interval, since_ms)
 
     if not candles:
