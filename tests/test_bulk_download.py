@@ -1,10 +1,14 @@
 """Tests for ingestion/bulk_download.py.
 
-Tests the data processing and month-key generation logic using synthetic data.
-Download tests are skipped since Binance Vision requires network access.
+Tests the data processing, month-key generation, and CSV header detection
+logic using synthetic data. Download tests are skipped since Binance Vision
+requires network access.
 """
 
 from __future__ import annotations
+
+import io
+import zipfile
 
 import numpy as np
 import pandas as pd
@@ -12,6 +16,7 @@ import pytest
 
 from ingestion.bulk_download import (
     BINANCE_CSV_COLUMNS,
+    download_month,
     generate_month_keys,
     process_dataframe,
 )
@@ -145,3 +150,97 @@ class TestProcessDataframe:
         assert "taker_buy_base" not in result.columns
         assert "taker_buy_quote" not in result.columns
         assert "ignore" not in result.columns
+
+    def test_float64_open_time_precision(self):
+        """Ensure ms-epoch ints survive even if read_csv yields float64.
+
+        When pandas reads large integers it may store them as float64,
+        which can lose precision. process_dataframe must still produce
+        correct timestamps.
+        """
+        raw = self._make_raw_binance_df(n_hours=24)
+        # Simulate float64 precision issue
+        raw["open_time"] = raw["open_time"].astype("float64")
+        result = process_dataframe(raw)
+        # All timestamps must land in 2020
+        assert (result["open_time_utc"].dt.year == 2020).all()
+
+    def test_timestamps_reasonable_range(self):
+        """All parsed timestamps must be in a reasonable range (2017-2030)."""
+        raw = self._make_raw_binance_df(n_hours=48)
+        result = process_dataframe(raw)
+        assert (result["open_time_utc"].dt.year >= 2017).all()
+        assert (result["open_time_utc"].dt.year <= 2030).all()
+
+
+class TestDownloadMonthHeaderDetection:
+    """Test that download_month handles CSVs with and without headers."""
+
+    def _make_csv_zip(self, csv_content: str, filename: str = "BTCUSDT-1h-2020-01.csv") -> bytes:
+        """Create an in-memory ZIP containing a single CSV.
+
+        Args:
+            csv_content: Raw CSV string.
+            filename: Name of the CSV file inside the ZIP.
+
+        Returns:
+            Bytes of the ZIP file.
+        """
+        buf = io.BytesIO()
+        with zipfile.ZipFile(buf, "w") as zf:
+            zf.writestr(filename, csv_content)
+        return buf.getvalue()
+
+    def test_headerless_csv_parsed(self, monkeypatch):
+        """Binance CSVs without header row should parse correctly."""
+        # Two rows, no header — 12 fields matching BINANCE_CSV_COLUMNS:
+        # open_time,open,high,low,close,volume,close_time,quote_volume,
+        # trade_count,taker_buy_base,taker_buy_quote,ignore
+        csv = (
+            "1577836800000,7195.24,7196.25,7175.47,7184.27,"
+            "489.85,1577840399999,3521345.76,18543,244.92,1760672.88,0\n"
+            "1577840400000,7184.27,7186.35,7177.33,7182.04,"
+            "302.11,1577843999999,2171018.31,12040,151.05,1085509.15,0\n"
+        )
+        zip_bytes = self._make_csv_zip(csv)
+
+        import requests as req
+
+        class FakeResp:
+            status_code = 200
+            content = zip_bytes
+
+        monkeypatch.setattr(req, "get", lambda *a, **kw: FakeResp())
+
+        df = download_month("BTCUSDT", "1h", "2020-01")
+        assert df is not None
+        assert len(df) == 2
+        # open_time must be int, not string
+        assert df["open_time"].dtype in (np.int64, np.int32)
+        assert df["open_time"].iloc[0] == 1577836800000
+
+    def test_header_csv_parsed(self, monkeypatch):
+        """Binance CSVs with a header row should also parse correctly."""
+        csv = (
+            "open_time,open,high,low,close,volume,close_time,"
+            "quote_volume,count,taker_buy_volume,taker_buy_quote_volume,ignore\n"
+            "1577836800000,7195.24,7196.25,7175.47,7184.27,"
+            "489.85,1577840399999,3521345.76,18543,244.92,1760672.88,0\n"
+            "1577840400000,7184.27,7186.35,7177.33,7182.04,"
+            "302.11,1577843999999,2171018.31,12040,151.05,1085509.15,0\n"
+        )
+        zip_bytes = self._make_csv_zip(csv)
+
+        import requests as req
+
+        class FakeResp:
+            status_code = 200
+            content = zip_bytes
+
+        monkeypatch.setattr(req, "get", lambda *a, **kw: FakeResp())
+
+        df = download_month("BTCUSDT", "1h", "2020-01")
+        assert df is not None
+        assert len(df) == 2
+        assert df["open_time"].dtype in (np.int64, np.int32)
+        assert df["open_time"].iloc[0] == 1577836800000

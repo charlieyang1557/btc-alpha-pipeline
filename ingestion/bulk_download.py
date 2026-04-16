@@ -22,6 +22,7 @@ import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import requests
 import yaml
@@ -153,11 +154,29 @@ def download_month(pair: str, interval: str, month_key: str) -> pd.DataFrame | N
                 return None
 
             with zf.open(csv_names[0]) as csv_file:
-                df = pd.read_csv(
-                    csv_file,
-                    header=None,
-                    names=BINANCE_CSV_COLUMNS,
-                )
+                # Some Binance Vision CSVs have a header row, others don't.
+                # Peek at the first line to detect which format we have.
+                first_line = csv_file.readline().decode("utf-8", errors="replace")
+                csv_file.seek(0)
+
+                has_header = not first_line.strip().split(",")[0].isdigit()
+
+                if has_header:
+                    df = pd.read_csv(csv_file, header=0)
+                    # Normalize column names to our expected schema
+                    df.columns = BINANCE_CSV_COLUMNS[: len(df.columns)]
+                else:
+                    df = pd.read_csv(
+                        csv_file,
+                        header=None,
+                        names=BINANCE_CSV_COLUMNS,
+                    )
+
+                # Force open_time and close_time to int64 to prevent
+                # float64 precision loss on large ms-epoch values
+                for col in ["open_time", "close_time"]:
+                    if col in df.columns:
+                        df[col] = df[col].astype(np.int64)
     except (zipfile.BadZipFile, Exception) as e:
         logger.warning("Error parsing %s: %s", filename, e)
         return None

@@ -440,12 +440,12 @@ def validate_ohlcv(df: pd.DataFrame) -> dict[str, Any]:
     """
     now_utc = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
-    # Determine date range
+    # Determine date range (use isoformat to handle out-of-range timestamps safely)
     date_range: dict[str, str | None] = {"start": None, "end": None}
     if "open_time_utc" in df.columns and len(df) > 0:
         sorted_ts = df["open_time_utc"].sort_values()
-        date_range["start"] = sorted_ts.iloc[0].strftime("%Y-%m-%dT%H:%M:%SZ")
-        date_range["end"] = sorted_ts.iloc[-1].strftime("%Y-%m-%dT%H:%M:%SZ")
+        date_range["start"] = str(sorted_ts.iloc[0])
+        date_range["end"] = str(sorted_ts.iloc[-1])
 
     # Run all checks
     checks: dict[str, Any] = {}
