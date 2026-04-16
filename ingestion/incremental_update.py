@@ -11,6 +11,7 @@ for NetworkError / RateLimitExceeded (start 1s, max 60s, 5 retries).
 Usage:
     python -m ingestion.incremental_update --pair BTCUSDT --interval 1h
     python -m ingestion.incremental_update --pair BTCUSDT --interval 1h --dry-run
+    python -m ingestion.incremental_update --pair BTCUSDT --interval 1h --exchange binanceus
 """
 
 from __future__ import annotations
@@ -55,18 +56,35 @@ KLINE_LIMIT = 1000
 ONE_HOUR_MS = 3_600_000
 
 
-def create_exchange() -> ccxt.binance:
-    """Create a CCXT Binance exchange instance with rate limiting enabled.
+SUPPORTED_EXCHANGES = {"binance", "binanceus"}
+
+
+def create_exchange(exchange_id: str = "binance") -> ccxt.Exchange:
+    """Create a CCXT exchange instance with rate limiting enabled.
+
+    Args:
+        exchange_id: CCXT exchange identifier ("binance" or "binanceus").
 
     Returns:
-        ccxt.binance: Configured exchange instance.
+        Configured exchange instance with markets loaded.
+
+    Raises:
+        ValueError: If exchange_id is not supported.
     """
-    exchange = ccxt.binance({"enableRateLimit": True})
+    if exchange_id not in SUPPORTED_EXCHANGES:
+        raise ValueError(
+            f"Unsupported exchange '{exchange_id}'. "
+            f"Supported: {sorted(SUPPORTED_EXCHANGES)}"
+        )
+    exchange_class = getattr(ccxt, exchange_id)
+    exchange = exchange_class({"enableRateLimit": True})
+    logger.info("Loading markets for %s ...", exchange_id)
+    exchange.load_markets()
     return exchange
 
 
 def fetch_with_backoff(
-    exchange: ccxt.binance,
+    exchange: ccxt.Exchange,
     symbol: str,
     timeframe: str,
     since: int,
@@ -109,7 +127,7 @@ def fetch_with_backoff(
 
 
 def fetch_all_candles(
-    exchange: ccxt.binance,
+    exchange: ccxt.Exchange,
     symbol: str,
     timeframe: str,
     since_ms: int,
@@ -172,7 +190,7 @@ def fetch_all_candles(
 
 
 def fetch_full_klines(
-    exchange: ccxt.binance,
+    exchange: ccxt.Exchange,
     symbol: str,
     timeframe: str,
     since_ms: int,
@@ -204,7 +222,7 @@ def fetch_full_klines(
 
 
 def fetch_with_full_klines(
-    exchange: ccxt.binance,
+    exchange: ccxt.Exchange,
     symbol: str,
     timeframe: str,
     since: int,
@@ -334,6 +352,13 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Incremental update via CCXT")
     parser.add_argument("--pair", type=str, default="BTCUSDT", help="Trading pair (no slash)")
     parser.add_argument("--interval", type=str, default="1h", help="Candle interval")
+    parser.add_argument(
+        "--exchange",
+        type=str,
+        default="binance",
+        choices=sorted(SUPPORTED_EXCHANGES),
+        help="CCXT exchange id (default: binance, use binanceus for US)",
+    )
     parser.add_argument("--dry-run", action="store_true", help="Show what would be fetched")
     args = parser.parse_args()
 
@@ -359,7 +384,7 @@ def main() -> int:
         print(f"Would fetch {symbol} {args.interval} from {since_ts} to now")
         return 0
 
-    exchange = create_exchange()
+    exchange = create_exchange(args.exchange)
     candles = fetch_all_candles(exchange, symbol, args.interval, since_ms)
 
     if not candles:
