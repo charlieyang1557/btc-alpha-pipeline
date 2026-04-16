@@ -117,20 +117,93 @@ _MIN_VALID_MS = 1_483_228_800_000  # 2017-01-01 00:00 UTC
 _MAX_VALID_MS = 2_051_222_400_000  # 2035-01-01 00:00 UTC
 
 
-def _looks_like_ms_timestamp(value: object) -> bool:
-    """Check if a value looks like a millisecond-since-epoch timestamp.
+def _infer_ts_unit(value: object) -> str | None:
+    """Infer timestamp unit (ms, us, ns, s) from a numeric value's magnitude.
+
+    Binance Vision CSVs have historically used milliseconds, but newer
+    files (2025+) may use microseconds. This function detects the unit
+    by digit count / magnitude:
+        10 digits  → seconds
+        13 digits  → milliseconds
+        16 digits  → microseconds
+        19 digits  → nanoseconds
+
+    Args:
+        value: A scalar numeric value (int, float, or string).
+
+    Returns:
+        "s", "ms", "us", "ns", or None if unrecognizable.
+    """
+    try:
+        v = int(float(str(value)))
+    except (ValueError, TypeError, OverflowError):
+        return None
+
+    if v <= 0:
+        return None
+
+    # Check by range: which unit puts the value in 2017-2035?
+    if _MIN_VALID_MS <= v <= _MAX_VALID_MS:
+        return "ms"
+    if _MIN_VALID_MS * 1_000 <= v <= _MAX_VALID_MS * 1_000:
+        return "us"
+    if _MIN_VALID_MS * 1_000_000 <= v <= _MAX_VALID_MS * 1_000_000:
+        return "ns"
+    if _MIN_VALID_MS // 1_000 <= v <= _MAX_VALID_MS // 1_000:
+        return "s"
+    return None
+
+
+def _normalize_ts_column(df: pd.DataFrame, col: str) -> pd.DataFrame:
+    """Normalize a timestamp column to milliseconds, auto-detecting the unit.
+
+    If the column is already in ms, no change. If in us or ns, divides
+    down to ms. Logs the detected unit for transparency.
+
+    Args:
+        df: DataFrame containing the timestamp column.
+        col: Column name to normalize.
+
+    Returns:
+        DataFrame with the column normalized to ms.
+    """
+    if col not in df.columns or len(df) == 0:
+        return df
+
+    sample = df[col].iloc[0]
+    unit = _infer_ts_unit(sample)
+
+    if unit is None:
+        logger.warning(
+            "Cannot infer timestamp unit for %s (sample=%s)", col, sample
+        )
+        return df
+
+    if unit == "ms":
+        return df  # already correct
+    elif unit == "us":
+        logger.info("  %s is in microseconds, converting to ms", col)
+        df[col] = df[col] // 1_000
+    elif unit == "ns":
+        logger.info("  %s is in nanoseconds, converting to ms", col)
+        df[col] = df[col] // 1_000_000
+    elif unit == "s":
+        logger.info("  %s is in seconds, converting to ms", col)
+        df[col] = df[col] * 1_000
+
+    return df
+
+
+def _looks_like_epoch_timestamp(value: object) -> bool:
+    """Check if a value looks like an epoch timestamp in any supported unit.
 
     Args:
         value: A scalar value from a DataFrame cell.
 
     Returns:
-        True if value is in the ms-epoch range for 2017-2035.
+        True if value resolves to a valid timestamp in s, ms, us, or ns.
     """
-    try:
-        v = int(float(str(value)))
-        return _MIN_VALID_MS <= v <= _MAX_VALID_MS
-    except (ValueError, TypeError, OverflowError):
-        return False
+    return _infer_ts_unit(value) is not None
 
 
 def _map_header_columns(raw_columns: list[str]) -> dict[str, str] | None:
@@ -158,9 +231,10 @@ def _map_header_columns(raw_columns: list[str]) -> dict[str, str] | None:
 
 
 def _find_timestamp_column(df: pd.DataFrame) -> str | None:
-    """Auto-detect which column contains ms-epoch timestamps.
+    """Auto-detect which column contains epoch timestamps (any unit).
 
-    Checks the first row of each column for values in the ms-epoch range.
+    Checks the first row of each column for values that look like
+    epoch timestamps in s, ms, us, or ns.
 
     Args:
         df: Raw DataFrame to inspect.
@@ -172,7 +246,7 @@ def _find_timestamp_column(df: pd.DataFrame) -> str | None:
         return None
     first_row = df.iloc[0]
     for col in df.columns:
-        if _looks_like_ms_timestamp(first_row[col]):
+        if _looks_like_epoch_timestamp(first_row[col]):
             return col
     return None
 
@@ -284,13 +358,13 @@ def download_month(pair: str, interval: str, month_key: str) -> pd.DataFrame | N
                     if col in df.columns:
                         df[col] = pd.to_numeric(df[col], errors="coerce").astype("Int64")
 
-                # Sanity check: verify open_time contains valid ms timestamps.
+                # Sanity check: verify open_time contains valid epoch timestamps.
                 # If not, try to auto-detect which column has the timestamps.
                 if "open_time" in df.columns and len(df) > 0:
                     sample = df["open_time"].iloc[0]
-                    if not _looks_like_ms_timestamp(sample):
+                    if not _looks_like_epoch_timestamp(sample):
                         logger.warning(
-                            "  %s: open_time value %s is not a valid ms timestamp, "
+                            "  %s: open_time value %s is not a valid epoch timestamp, "
                             "scanning columns ...",
                             month_key, sample,
                         )
@@ -313,6 +387,13 @@ def download_month(pair: str, interval: str, month_key: str) -> pd.DataFrame | N
                                 "data may be misaligned (columns: %s)",
                                 month_key, list(df.columns),
                             )
+
+                # Normalize timestamp units (us/ns/s → ms).
+                # Binance Vision CSVs from 2025+ use microseconds instead
+                # of milliseconds. This must happen before process_dataframe()
+                # which assumes ms.
+                df = _normalize_ts_column(df, "open_time")
+                df = _normalize_ts_column(df, "close_time")
     except (zipfile.BadZipFile, Exception) as e:
         logger.warning("Error parsing %s: %s", filename, e)
         return None
