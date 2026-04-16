@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from ingestion.incremental_update import SUPPORTED_EXCHANGES, candles_to_dataframe
+from ingestion.incremental_update import SUPPORTED_EXCHANGES, candles_to_dataframe, source_label
 from ingestion.validators import validate_ohlcv
 
 
@@ -47,10 +47,15 @@ class TestCandlesToDataframe:
         }
         assert set(df.columns) == expected
 
-    def test_source_is_ccxt_api(self):
+    def test_source_default_is_ccxt_binance(self):
         candles = self._make_ccxt_candles()
         df = candles_to_dataframe(candles)
-        assert (df["source"] == "ccxt_api").all()
+        assert (df["source"] == "ccxt_binance").all()
+
+    def test_source_reflects_exchange_id(self):
+        candles = self._make_ccxt_candles(n=5)
+        df = candles_to_dataframe(candles, exchange_id="binanceus")
+        assert (df["source"] == "ccxt_binanceus").all()
 
     def test_timestamps_utc_aware(self):
         candles = self._make_ccxt_candles()
@@ -126,3 +131,11 @@ class TestSupportedExchanges:
 
     def test_binanceus_supported(self):
         assert "binanceus" in SUPPORTED_EXCHANGES
+
+
+class TestSourceLabel:
+    def test_binance_label(self):
+        assert source_label("binance") == "ccxt_binance"
+
+    def test_binanceus_label(self):
+        assert source_label("binanceus") == "ccxt_binanceus"

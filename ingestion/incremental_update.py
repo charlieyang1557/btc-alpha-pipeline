@@ -1,9 +1,18 @@
 """
-Incremental update of BTC/USDT 1h klines via CCXT (Binance).
+Incremental update of BTC/USDT 1h klines via CCXT.
 
 Reads the existing canonical parquet, finds the latest timestamp,
 fetches new candles from (latest + 1h) to now via CCXT, validates
 new rows, then hands off to reconcile.py for merge.
+
+Supports multiple exchanges via --exchange flag. Default is "binance"
+(Binance global). Use "binanceus" for US-accessible Binance.US.
+
+IMPORTANT: Binance.US is a separate venue with different liquidity and
+order flow. Its candles are NOT equivalent to Binance global data.
+The source column reflects the venue (e.g. "ccxt_binance" vs
+"ccxt_binanceus"), and reconcile.py will refuse to merge data from
+different venues into the same canonical file.
 
 Uses CCXT's built-in rate limiter + custom exponential backoff
 for NetworkError / RateLimitExceeded (start 1s, max 60s, 5 retries).
@@ -264,7 +273,26 @@ def fetch_with_full_klines(
     return []  # unreachable, satisfies type checker
 
 
-def candles_to_dataframe(candles: list[list]) -> pd.DataFrame:
+def source_label(exchange_id: str) -> str:
+    """Return the source column value for a given exchange.
+
+    Each exchange is a distinct venue. The source label encodes both
+    the acquisition method (ccxt) and the specific venue so that
+    reconcile.py can detect and reject cross-venue merges.
+
+    Args:
+        exchange_id: CCXT exchange identifier (e.g. "binance", "binanceus").
+
+    Returns:
+        Source string like "ccxt_binance" or "ccxt_binanceus".
+    """
+    return f"ccxt_{exchange_id}"
+
+
+def candles_to_dataframe(
+    candles: list[list],
+    exchange_id: str = "binance",
+) -> pd.DataFrame:
     """Convert Binance kline rows to a schema-compliant DataFrame.
 
     Accepts either full 12-field Binance klines or 6-field CCXT OHLCV.
@@ -274,6 +302,7 @@ def candles_to_dataframe(candles: list[list]) -> pd.DataFrame:
     Args:
         candles: List of kline rows. Each row is either 12 fields
             (full Binance) or 6 fields (CCXT OHLCV fallback).
+        exchange_id: CCXT exchange id, used to set the source label.
 
     Returns:
         DataFrame matching the project OHLCV schema.
@@ -319,7 +348,8 @@ def candles_to_dataframe(candles: list[list]) -> pd.DataFrame:
 
     # Enforce ms resolution and schema-compliant metadata dtypes
     df["open_time_utc"] = df["open_time_utc"].astype("datetime64[ms, UTC]")
-    df["source"] = pd.array(["ccxt_api"] * len(df), dtype="string")
+    src = source_label(exchange_id)
+    df["source"] = pd.array([src] * len(df), dtype="string")
     df["ingested_at_utc"] = pd.Timestamp.now(tz="UTC").floor("ms")
     df["ingested_at_utc"] = df["ingested_at_utc"].astype("datetime64[ms, UTC]")
 
@@ -357,7 +387,8 @@ def main() -> int:
         type=str,
         default="binance",
         choices=sorted(SUPPORTED_EXCHANGES),
-        help="CCXT exchange id (default: binance, use binanceus for US)",
+        help="CCXT exchange id (default: binance). binanceus is a separate "
+        "venue with different data — do not mix with binance global",
     )
     parser.add_argument("--dry-run", action="store_true", help="Show what would be fetched")
     args = parser.parse_args()
@@ -391,8 +422,8 @@ def main() -> int:
         logger.info("No new candles available")
         return 0
 
-    df = candles_to_dataframe(candles)
-    logger.info("Fetched %d new rows", len(df))
+    df = candles_to_dataframe(candles, exchange_id=args.exchange)
+    logger.info("Fetched %d new rows (source=%s)", len(df), source_label(args.exchange))
     logger.info(
         "New data range: %s to %s",
         df["open_time_utc"].iloc[0],

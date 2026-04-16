@@ -195,9 +195,9 @@ class TestCheckSourcePopulated:
         result = check_source_populated(df)
         assert result["passed"] is False
 
-    def test_ccxt_api_source_passes(self):
+    def test_ccxt_binance_source_passes(self):
         df = make_good_df()
-        df["source"] = "ccxt_api"
+        df["source"] = "ccxt_binance"
         result = check_source_populated(df)
         assert result["passed"] is True
 

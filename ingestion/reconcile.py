@@ -47,7 +47,17 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 ARCHIVE_DIR = PROJECT_ROOT / "data" / "raw" / "archive"
 QUALITY_DIR = PROJECT_ROOT / "data" / "quality"
 
-SOURCE_PRIORITY = {"binance_vision": 0, "ccxt_api": 1}
+# Source priority for deduplication. Lower number = preferred.
+# "binance_vision" is the bulk historical archive (ground truth).
+# "ccxt_binance" is the live Binance global API.
+# Other venues (ccxt_binanceus, etc.) should NOT be mixed into
+# a Binance global canonical file — check_venue_compatibility() enforces this.
+SOURCE_PRIORITY = {"binance_vision": 0, "ccxt_binance": 1}
+
+# Venues that are compatible with each other for merging.
+# binance_vision and ccxt_binance both come from Binance global.
+# binanceus is a separate venue and must NOT be mixed in.
+COMPATIBLE_VENUES = {"binance_vision", "ccxt_binance"}
 
 
 def archive_file(file_path: Path) -> Path | None:
@@ -75,6 +85,50 @@ def archive_file(file_path: Path) -> Path | None:
     shutil.copy2(file_path, archive_path)
     logger.info("Archived %s → %s", file_path.name, archive_path)
     return archive_path
+
+
+def check_venue_compatibility(
+    existing_df: pd.DataFrame,
+    new_df: pd.DataFrame,
+) -> dict[str, Any]:
+    """Check that existing and new data come from compatible venues.
+
+    Binance global (binance_vision, ccxt_binance) and Binance.US
+    (ccxt_binanceus) are separate markets with different liquidity
+    and order flow. Merging them produces an incoherent dataset.
+
+    Args:
+        existing_df: Current canonical DataFrame.
+        new_df: New rows to merge in.
+
+    Returns:
+        dict with 'compatible' (bool), 'existing_sources' (set),
+        'new_sources' (set), and 'reason' (str or None).
+    """
+    existing_sources = set(existing_df["source"].dropna().unique())
+    new_sources = set(new_df["source"].dropna().unique())
+    all_sources = existing_sources | new_sources
+
+    incompatible = all_sources - COMPATIBLE_VENUES
+    if incompatible:
+        return {
+            "compatible": False,
+            "existing_sources": existing_sources,
+            "new_sources": new_sources,
+            "reason": (
+                f"Incompatible venue(s) detected: {sorted(incompatible)}. "
+                f"Only {sorted(COMPATIBLE_VENUES)} can be merged into the "
+                f"same canonical file. Binance.US is a separate market — "
+                f"use a separate dataset path for it."
+            ),
+        }
+
+    return {
+        "compatible": True,
+        "existing_sources": existing_sources,
+        "new_sources": new_sources,
+        "reason": None,
+    }
 
 
 def verify_overlap(
@@ -145,6 +199,11 @@ def reconcile(
     """
     rows_before = len(existing_df)
     rows_new = len(new_df)
+
+    # Block cross-venue merges (e.g. binance global + binanceus)
+    venue_check = check_venue_compatibility(existing_df, new_df)
+    if not venue_check["compatible"]:
+        raise ValueError(venue_check["reason"])
 
     # Verify overlap prices match within 0.01% before merging
     overlap_result = verify_overlap(existing_df, new_df)

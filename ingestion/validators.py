@@ -66,7 +66,11 @@ EXPECTED_DTYPES = {
     "trade_count": "int64",
 }
 
-ALLOWED_SOURCES = {"binance_vision", "ccxt_api"}
+# Allowed source labels. Each encodes acquisition method + venue.
+# "binance_vision" = bulk historical archive from Binance global.
+# "ccxt_binance" = CCXT API against Binance global.
+# "ccxt_binanceus" = CCXT API against Binance.US (separate venue).
+ALLOWED_SOURCES = {"binance_vision", "ccxt_binance", "ccxt_binanceus"}
 
 
 def _safe_ts_str(ts: pd.Timestamp) -> str:

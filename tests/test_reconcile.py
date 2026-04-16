@@ -14,7 +14,12 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from ingestion.reconcile import archive_file, reconcile, verify_overlap
+from ingestion.reconcile import (
+    archive_file,
+    check_venue_compatibility,
+    reconcile,
+    verify_overlap,
+)
 
 
 def make_ohlcv_df(
@@ -60,7 +65,7 @@ def make_ohlcv_df(
 class TestReconcile:
     def test_simple_merge(self):
         existing = make_ohlcv_df("2024-01-01", n_hours=48)
-        new = make_ohlcv_df("2024-01-03", n_hours=24, source="ccxt_api")
+        new = make_ohlcv_df("2024-01-03", n_hours=24, source="ccxt_binance")
         merged, stats = reconcile(existing, new, remove_partial=False)
 
         assert stats["rows_before"] == 48
@@ -72,7 +77,7 @@ class TestReconcile:
     def test_deduplication(self):
         existing = make_ohlcv_df("2024-01-01", n_hours=48)
         # Overlapping 12 hours
-        new = make_ohlcv_df("2024-01-02T12:00:00", n_hours=24, source="ccxt_api")
+        new = make_ohlcv_df("2024-01-02T12:00:00", n_hours=24, source="ccxt_binance")
         merged, stats = reconcile(existing, new, remove_partial=False)
 
         # 48 existing + 24 new - 12 overlap = 60
@@ -82,7 +87,7 @@ class TestReconcile:
 
     def test_binance_vision_preferred_on_conflict(self):
         existing = make_ohlcv_df("2024-01-01", n_hours=24, source="binance_vision")
-        new = make_ohlcv_df("2024-01-01", n_hours=24, source="ccxt_api")
+        new = make_ohlcv_df("2024-01-01", n_hours=24, source="ccxt_binance")
         merged, stats = reconcile(existing, new, remove_partial=False)
 
         # All 24 rows should be from binance_vision
@@ -90,31 +95,31 @@ class TestReconcile:
         assert (merged["source"] == "binance_vision").all()
 
     def test_ccxt_preferred_when_only_source(self):
-        existing = make_ohlcv_df("2024-01-01", n_hours=24, source="ccxt_api")
-        new = make_ohlcv_df("2024-01-02", n_hours=24, source="ccxt_api")
+        existing = make_ohlcv_df("2024-01-01", n_hours=24, source="ccxt_binance")
+        new = make_ohlcv_df("2024-01-02", n_hours=24, source="ccxt_binance")
         merged, stats = reconcile(existing, new, remove_partial=False)
 
         assert stats["rows_after"] == 48
-        assert (merged["source"] == "ccxt_api").all()
+        assert (merged["source"] == "ccxt_binance").all()
 
     def test_gap_detection(self):
         existing = make_ohlcv_df("2024-01-01", n_hours=24)
         # Gap: skip 2 hours
-        new = make_ohlcv_df("2024-01-02T02:00:00", n_hours=24, source="ccxt_api")
+        new = make_ohlcv_df("2024-01-02T02:00:00", n_hours=24, source="ccxt_binance")
         merged, stats = reconcile(existing, new, remove_partial=False)
 
         assert stats["gaps_found"] == 1
 
     def test_sorted_output(self):
         existing = make_ohlcv_df("2024-01-01", n_hours=24)
-        new = make_ohlcv_df("2024-01-02", n_hours=24, source="ccxt_api")
+        new = make_ohlcv_df("2024-01-02", n_hours=24, source="ccxt_binance")
         merged, stats = reconcile(existing, new, remove_partial=False)
 
         assert merged["open_time_utc"].is_monotonic_increasing
 
     def test_no_gaps_clean_merge(self):
         existing = make_ohlcv_df("2024-01-01", n_hours=24)
-        new = make_ohlcv_df("2024-01-02", n_hours=24, source="ccxt_api")
+        new = make_ohlcv_df("2024-01-02", n_hours=24, source="ccxt_binance")
         merged, stats = reconcile(existing, new, remove_partial=False)
 
         assert stats["gaps_found"] == 0
@@ -152,7 +157,7 @@ class TestArchive:
 class TestVerifyOverlap:
     def test_no_overlap(self):
         existing = make_ohlcv_df("2024-01-01", n_hours=24)
-        new = make_ohlcv_df("2024-01-02", n_hours=24, source="ccxt_api")
+        new = make_ohlcv_df("2024-01-02", n_hours=24, source="ccxt_binance")
         result = verify_overlap(existing, new)
         assert result["passed"] is True
         assert result["overlap_rows"] == 0
@@ -161,7 +166,7 @@ class TestVerifyOverlap:
         existing = make_ohlcv_df("2024-01-01", n_hours=24)
         # Exact same data as overlap
         new = existing.iloc[12:].copy()
-        new["source"] = pd.array(["ccxt_api"] * len(new), dtype="string")
+        new["source"] = pd.array(["ccxt_binance"] * len(new), dtype="string")
         result = verify_overlap(existing, new)
         assert result["passed"] is True
         assert result["overlap_rows"] == 12
@@ -169,10 +174,38 @@ class TestVerifyOverlap:
     def test_divergent_overlap_fails(self):
         existing = make_ohlcv_df("2024-01-01", n_hours=24)
         new = existing.iloc[12:].copy()
-        new["source"] = pd.array(["ccxt_api"] * len(new), dtype="string")
+        new["source"] = pd.array(["ccxt_binance"] * len(new), dtype="string")
         # Introduce >0.01% price deviation
         new.loc[new.index[0], "close"] *= 1.01  # 1% off
         result = verify_overlap(existing, new)
         assert result["passed"] is False
         assert result["overlap_rows"] == 12
         assert len(result["details"]) > 0
+
+
+class TestVenueCompatibility:
+    def test_binance_vision_and_ccxt_binance_compatible(self):
+        existing = make_ohlcv_df("2024-01-01", n_hours=24, source="binance_vision")
+        new = make_ohlcv_df("2024-01-02", n_hours=24, source="ccxt_binance")
+        result = check_venue_compatibility(existing, new)
+        assert result["compatible"] is True
+        assert result["reason"] is None
+
+    def test_binanceus_incompatible_with_binance_global(self):
+        existing = make_ohlcv_df("2024-01-01", n_hours=24, source="binance_vision")
+        new = make_ohlcv_df("2024-01-02", n_hours=24, source="ccxt_binanceus")
+        result = check_venue_compatibility(existing, new)
+        assert result["compatible"] is False
+        assert "ccxt_binanceus" in result["reason"]
+
+    def test_reconcile_raises_on_cross_venue(self):
+        existing = make_ohlcv_df("2024-01-01", n_hours=24, source="binance_vision")
+        new = make_ohlcv_df("2024-01-02", n_hours=24, source="ccxt_binanceus")
+        with pytest.raises(ValueError, match="Incompatible venue"):
+            reconcile(existing, new, remove_partial=False)
+
+    def test_same_venue_passes(self):
+        existing = make_ohlcv_df("2024-01-01", n_hours=24, source="ccxt_binance")
+        new = make_ohlcv_df("2024-01-02", n_hours=24, source="ccxt_binance")
+        result = check_venue_compatibility(existing, new)
+        assert result["compatible"] is True
