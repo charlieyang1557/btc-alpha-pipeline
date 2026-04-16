@@ -140,10 +140,18 @@ def configure_cerebro(
     # Set initial capital
     cerebro.broker.setcash(cash)
 
+    # Position sizing from execution.yaml
+    # default_position_pct: fraction of capital per trade (1.0 = 100%)
+    # Use 99% to leave headroom for commission on the fill bar
+    position_pct = config.get("position", {}).get("default_position_pct", 1.0)
+    sizer_pct = min(position_pct * 100, 99.0)
+    cerebro.addsizer(bt.sizers.PercentSizer, percents=sizer_pct)
+
     logger.info(
-        "Cerebro configured: cash=%.2f, coc=False, coo=False, %s",
+        "Cerebro configured: cash=%.2f, coc=False, coo=False, %s, sizer=%.0f%%",
         cash,
         cost_model.fee_model_label,
+        sizer_pct,
     )
 
     return cost_model
