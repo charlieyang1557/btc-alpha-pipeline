@@ -6,6 +6,9 @@ data/features/*.parquet
 # Quality reports (generated)
 data/quality/*.json
 
+# Trade log CSVs (generated per run)
+data/results/
+
 # SQLite databases
 backtest/experiments.db
 
