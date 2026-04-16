@@ -1,0 +1,66 @@
+# environments.yaml — Immutable Date Split Configuration
+# ⚠️ THIS FILE IS IMMUTABLE DURING A RESEARCH PHASE ⚠️
+# DO NOT MODIFY without explicit human approval and version bump.
+# AI agents may READ this file but NEVER propose modifications.
+# Changing date splits mid-research invalidates all prior experiment results.
+# Last reviewed: 2026-04-15
+
+version: "v1"
+
+# ============================================================
+# DATE SPLITS
+# ============================================================
+# All dates are inclusive, UTC, date-only (no time component).
+# Strategies may ONLY optimize parameters using training data.
+# Validation is for model selection / early stopping only.
+# Test is touched ONCE for final evaluation per strategy.
+
+splits:
+  training:
+    start: "2020-01-01"
+    end: "2023-12-31"
+    purpose: "Strategy development, parameter optimization, feature engineering"
+    notes: "Covers COVID crash, 2021 bull run, 2022 bear market, 2023 recovery"
+
+  validation:
+    start: "2024-01-01"
+    end: "2024-12-31"
+    purpose: "Hyperparameter selection, early stopping, model comparison"
+    notes: "BTC ETF approval era, halving year"
+
+  test:
+    start: "2025-01-01"
+    end: "2025-12-31"
+    purpose: "Final out-of-sample evaluation ONLY. Touch once per strategy."
+    notes: "Post-halving period"
+
+  live_forward:
+    start: "2026-01-01"
+    end: null  # ongoing
+    purpose: "Paper trading and eventual live trading"
+    notes: "True out-of-sample. Never used for any form of optimization."
+
+# ============================================================
+# WALK-FORWARD CONFIGURATION (Phase 1+)
+# ============================================================
+# When running walk-forward optimization, use these rolling windows.
+
+walk_forward:
+  train_window_months: 12
+  test_window_months: 3
+  step_months: 3
+  # Example sequence:
+  #   Train: 2020-01 to 2020-12 → Test: 2021-01 to 2021-03
+  #   Train: 2020-04 to 2021-03 → Test: 2021-04 to 2021-06
+  #   ... and so on
+
+# ============================================================
+# RULES
+# ============================================================
+
+rules:
+  - "Agent-generated strategies may ONLY access data within the training split during development"
+  - "Validation split results may inform which strategies advance, but NOT how they are parameterized"
+  - "Test split is a ONE-SHOT evaluation. If results are used to modify the strategy, the test becomes validation and a new test period must be designated"
+  - "Walk-forward windows must be version-tracked in experiment_registry alongside split version"
+  - "If this file is updated, version must be bumped and all experiments must record which version they used"

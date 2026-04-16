@@ -1,0 +1,105 @@
+# schemas.yaml — Data Schema Definitions
+# Defines required columns, dtypes, and constraints for all data tables.
+# Used by validators.py to verify data integrity.
+# Last reviewed: 2026-04-15
+
+ohlcv:
+  description: "Hourly OHLCV candle data for BTC/USDT"
+  primary_key: "open_time_utc"
+  sort_order: "open_time_utc ASC"
+  file_pattern: "data/raw/btcusdt_1h.parquet"  # canonical current dataset (overwritten by reconcile.py)
+  # Pre-reconcile snapshots archived to: data/raw/archive/btcusdt_1h_YYYYMMDDTHHMMSSZ.parquet
+
+  columns:
+    open_time_utc:
+      dtype: "datetime64[ms, UTC]"
+      nullable: false
+      description: "Candle open timestamp, UTC timezone-aware, aligned to hour boundary"
+    open:
+      dtype: "float64"
+      nullable: false
+      constraints: "> 0"
+      description: "Open price in USDT"
+    high:
+      dtype: "float64"
+      nullable: false
+      constraints: "> 0, >= open, >= close"
+      description: "Highest price in USDT during candle"
+    low:
+      dtype: "float64"
+      nullable: false
+      constraints: "> 0, <= open, <= close"
+      description: "Lowest price in USDT during candle"
+    close:
+      dtype: "float64"
+      nullable: false
+      constraints: "> 0"
+      description: "Close price in USDT"
+    volume:
+      dtype: "float64"
+      nullable: false
+      constraints: ">= 0"
+      description: "Base asset volume (BTC traded)"
+    quote_volume:
+      dtype: "float64"
+      nullable: false
+      constraints: ">= 0"
+      description: "Quote asset volume (USDT traded)"
+    trade_count:
+      dtype: "int64"
+      nullable: false
+      constraints: ">= 0"
+      description: "Number of trades executed during candle"
+    ingested_at_utc:
+      dtype: "datetime64[ms, UTC]"
+      nullable: false
+      description: "Timestamp when this row was written to the dataset"
+    source:
+      dtype: "string"
+      nullable: false
+      allowed_values: ["binance_vision", "ccxt_api"]
+      description: "Data provenance"
+
+  validation_rules:
+    - name: "no_duplicates"
+      check: "open_time_utc is unique"
+    - name: "no_gaps"
+      check: "consecutive open_time_utc differ by exactly 3600000ms"
+      severity: "warning"  # gaps are flagged, not fatal
+    - name: "hour_aligned"
+      check: "open_time_utc minute=0, second=0, microsecond=0"
+    - name: "ohlc_consistency"
+      check: "high >= max(open, close) AND low <= min(open, close)"
+    - name: "no_null_core_fields"
+      check: "no NaN/None in open, high, low, close, volume, quote_volume, trade_count"
+    - name: "price_sanity"
+      check: "abs(close / prev_close - 1) < 0.50"
+      severity: "warning"  # flag only, do NOT auto-remove; extreme moves are real in crypto
+    - name: "volume_anomaly"
+      check: "volume > 0 or flagged in quality report"
+      severity: "warning"
+
+# Binance Vision CSV column mapping (raw download format)
+binance_vision_csv:
+  description: "Column mapping for Binance Vision kline CSV files"
+  columns_ordered:
+    - open_time       # Unix timestamp in ms
+    - open
+    - high
+    - low
+    - close
+    - volume
+    - close_time      # Unix timestamp in ms (dropped after parsing)
+    - quote_volume
+    - trade_count
+    - taker_buy_base  # dropped
+    - taker_buy_quote # dropped
+    - ignore          # dropped
+  columns_to_keep: [open_time, open, high, low, close, volume, quote_volume, trade_count]
+  rename_map:
+    open_time: "open_time_utc"
+
+  # NOTE: close_time is intentionally dropped during ingestion.
+  # The canonical dataset does NOT store close_time.
+  # Candle interval is inferred from open_time_utc + timeframe (defined in execution.yaml).
+  # A candle with open_time_utc=08:00 and timeframe=1h covers 08:00:00.000 to 08:59:59.999.

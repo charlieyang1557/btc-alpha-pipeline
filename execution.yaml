@@ -1,0 +1,107 @@
+# execution.yaml — Trading Execution Convention
+# This file defines HOW backtests simulate trade execution.
+# ALL strategies and backtests MUST read from this file.
+# DO NOT hardcode fees, slippage, or execution timing in strategy code.
+# Last reviewed: 2026-04-15
+
+# ============================================================
+# BAR EXECUTION SEMANTICS
+# ============================================================
+# This is the single most important section in the entire project.
+# Getting this wrong silently inflates all backtest results.
+
+execution:
+  # Signal computation: what data is available when the strategy decides?
+  signal_timing: "bar_close"
+  # Signal is computed using data up to and including bar N's OHLCV.
+
+  # Order execution: when and at what price does the order fill?
+  fill_timing: "next_bar_open"
+  # Orders generated from bar N's signal execute at bar N+1's open price.
+  # This is Backtrader's default behavior (cheat_on_open = False).
+
+  # CRITICAL: same-bar execution is PROHIBITED
+  # A strategy CANNOT see bar N's close and fill at bar N's close.
+  # This would be look-ahead bias.
+
+  # Intra-bar stop/limit resolution
+  stop_limit_intrabar: "adverse_first"
+  # If both stop-loss and take-profit trigger within the same OHLCV bar,
+  # assume the adverse outcome triggers first (conservative assumption).
+  # This prevents backtest optimism from ambiguous bar resolution.
+
+# ============================================================
+# TRANSACTION COST MODEL
+# ============================================================
+# Phase 0-1: constant model (pessimistic assumptions)
+# Phase 2+: upgrade to volatility-scaled model
+
+cost_model:
+  name: "constant_pessimistic"
+
+  # Fee structure (Binance perpetual futures, VIP 0)
+  maker_fee_bps: 2.0    # 0.02% per side
+  taker_fee_bps: 4.0    # 0.04% per side
+
+  # Default assumption: all orders are TAKER (market orders)
+  # This is deliberately pessimistic. Strategies that use limit orders
+  # can override to maker_fee_bps, but must prove fill rates in paper trading.
+  default_fee_bps: 4.0
+
+  # Slippage: additional cost beyond the quoted fee
+  # Accounts for: spread crossing, partial fills, market impact
+  slippage_bps: 3.0
+
+  # Total effective cost per side: default_fee_bps + slippage_bps = 7 bps
+  # Round trip cost: 14 bps (0.14%)
+  # A strategy MUST generate returns > 14bps per trade just to break even.
+
+# ============================================================
+# ZERO-VOLUME BAR HANDLING
+# ============================================================
+
+zero_volume:
+  # How to handle bars with volume == 0
+  treatment: "flag_only"
+  # Options:
+  #   "flag_only" — mark in validation report, do not remove or modify
+  #   "exclude_from_signals" — strategy receives no signal on these bars
+  #   "halt_trading" — close all positions, wait for next nonzero bar
+  #
+  # Phase 0 uses "flag_only". Upgrade in Phase 1 after analyzing frequency.
+
+  # NOTE (Phase 1+): Gap-open handling after zero-volume bars
+  # (e.g., how limit orders fill after exchange downtime)
+  # will be defined in execution_model.py when the backtest engine is built.
+  # Do NOT specify gap-fill semantics until the order simulator exists.
+
+# ============================================================
+# POSITION SIZING DEFAULTS
+# ============================================================
+# Phase 0 placeholder only. These values take effect from Phase 1
+# when the backtest engine reads this config.
+
+position:
+  max_position_pct: 1.0    # Max 100% of capital in a single position
+  default_position_pct: 1.0 # Default: full capital per trade (simple strategies)
+  max_leverage: 1.0          # No leverage in Phase 0-1
+  # Phase 3+ will introduce Kelly-based and inverse-vol sizing
+
+# ============================================================
+# TIMEZONE
+# ============================================================
+
+timezone:
+  canonical: "UTC"
+  # ALL timestamps in the entire system are UTC. No exceptions.
+  # Column naming convention: all time fields end in _utc
+  # Python code: use datetime.now(timezone.utc), NEVER datetime.now()
+
+# ============================================================
+# TIMEFRAME
+# ============================================================
+
+timeframe:
+  primary: "1h"
+  # All Phase 0-1 strategies operate on 1-hour bars.
+  # Multi-timeframe analysis requires explicit documentation.
