@@ -54,6 +54,8 @@ CONFIG_FILES = [
 CREATE_TABLE_SQL = """
 CREATE TABLE IF NOT EXISTS runs (
     run_id TEXT PRIMARY KEY,
+    run_type TEXT NOT NULL DEFAULT 'single_run',
+    parent_run_id TEXT,
     strategy_name TEXT NOT NULL,
     strategy_source TEXT NOT NULL,
     git_commit TEXT,
@@ -67,12 +69,19 @@ CREATE TABLE IF NOT EXISTS runs (
     validation_end TEXT,
     test_start TEXT,
     test_end TEXT,
+    effective_start TEXT,
+    warmup_bars INTEGER,
+    initial_capital REAL,
+    final_capital REAL,
     total_return REAL,
     sharpe_ratio REAL,
     max_drawdown REAL,
+    max_drawdown_duration_hours REAL,
     total_trades INTEGER,
     win_rate REAL,
     avg_trade_duration_hours REAL,
+    avg_trade_return REAL,
+    profit_factor REAL,
     fee_model TEXT,
     notes TEXT,
     review_status TEXT DEFAULT 'pending',
@@ -80,6 +89,19 @@ CREATE TABLE IF NOT EXISTS runs (
     created_at_utc TEXT NOT NULL
 )
 """
+
+# Migration SQL for adding Phase 1A columns to an existing database
+MIGRATION_COLUMNS = [
+    ("run_type", "TEXT NOT NULL DEFAULT 'single_run'"),
+    ("parent_run_id", "TEXT"),
+    ("effective_start", "TEXT"),
+    ("warmup_bars", "INTEGER"),
+    ("initial_capital", "REAL"),
+    ("final_capital", "REAL"),
+    ("max_drawdown_duration_hours", "REAL"),
+    ("avg_trade_return", "REAL"),
+    ("profit_factor", "REAL"),
+]
 
 # ---------------------------------------------------------------------------
 # Database helpers
@@ -102,14 +124,30 @@ def get_connection(db_path: Path | None = None) -> sqlite3.Connection:
 
 
 def create_table(conn: sqlite3.Connection) -> None:
-    """Create the runs table if it doesn't exist.
+    """Create the runs table if it doesn't exist, then apply migrations.
+
+    If the table already exists from Phase 0, new Phase 1A columns are
+    added via ALTER TABLE (SQLite supports ADD COLUMN but not in-place
+    modification). This is idempotent — columns that already exist are
+    silently skipped.
 
     Args:
         conn: SQLite connection.
     """
     conn.execute(CREATE_TABLE_SQL)
     conn.commit()
-    logger.info("Ensured 'runs' table exists")
+
+    # Migrate existing tables: add any missing Phase 1A columns
+    cursor = conn.execute("PRAGMA table_info(runs)")
+    existing_cols = {row[1] for row in cursor.fetchall()}
+
+    for col_name, col_def in MIGRATION_COLUMNS:
+        if col_name not in existing_cols:
+            conn.execute(f"ALTER TABLE runs ADD COLUMN {col_name} {col_def}")
+            logger.info("Migrated: added column '%s' to runs table", col_name)
+
+    conn.commit()
+    logger.info("Ensured 'runs' table exists with Phase 1A schema")
 
 
 # ---------------------------------------------------------------------------
