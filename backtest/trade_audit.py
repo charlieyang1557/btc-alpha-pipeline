@@ -32,6 +32,8 @@ RESULTS_DIR = PROJECT_ROOT / "data" / "results"
 DEFAULT_PARQUET = PROJECT_ROOT / "data" / "raw" / "btcusdt_1h.parquet"
 
 EXPECTED_COMMISSION_RATE = 0.0007  # 7bps per side
+PRICE_TOLERANCE = 1e-6
+COMMISSION_TOLERANCE = 1e-4
 
 
 def load_trade_csv(run_id: str) -> pd.DataFrame:
@@ -112,7 +114,7 @@ def audit_trade(
     entry_price_match = False
     if entry_fill_dt in ohlcv.index:
         expected_entry_price = ohlcv.loc[entry_fill_dt, "open"]
-        entry_price_match = abs(trade["entry_price"] - expected_entry_price) < 1e-6
+        entry_price_match = abs(trade["entry_price"] - expected_entry_price) < PRICE_TOLERANCE
         result["checks"]["entry_price_match"] = {
             "pass": entry_price_match,
             "expected": float(expected_entry_price),
@@ -126,7 +128,7 @@ def audit_trade(
 
     # Check entry commission
     expected_entry_comm = size * trade["entry_price"] * EXPECTED_COMMISSION_RATE
-    entry_comm_match = abs(trade["entry_commission"] - expected_entry_comm) < 0.01
+    entry_comm_match = abs(trade["entry_commission"] - expected_entry_comm) < COMMISSION_TOLERANCE
     result["checks"]["entry_commission"] = {
         "pass": entry_comm_match,
         "expected": round(expected_entry_comm, 6),
@@ -157,7 +159,7 @@ def audit_trade(
 
     if exit_fill_dt in ohlcv.index:
         expected_exit_price = ohlcv.loc[exit_fill_dt, "open"]
-        exit_price_match = abs(trade["exit_price"] - expected_exit_price) < 1e-6
+        exit_price_match = abs(trade["exit_price"] - expected_exit_price) < PRICE_TOLERANCE
         result["checks"]["exit_price_match"] = {
             "pass": exit_price_match,
             "expected": float(expected_exit_price),
@@ -170,7 +172,7 @@ def audit_trade(
         }
 
     expected_exit_comm = size * trade["exit_price"] * EXPECTED_COMMISSION_RATE
-    exit_comm_match = abs(trade["exit_commission"] - expected_exit_comm) < 0.01
+    exit_comm_match = abs(trade["exit_commission"] - expected_exit_comm) < COMMISSION_TOLERANCE
     result["checks"]["exit_commission"] = {
         "pass": exit_comm_match,
         "expected": round(expected_exit_comm, 6),

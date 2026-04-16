@@ -46,7 +46,7 @@ class TestSharpeRatio:
         returns = np.array([0.01, -0.005, 0.008, 0.003, -0.002])
         mean = np.mean(returns)
         std = np.std(returns, ddof=1)
-        expected = mean / std * math.sqrt(8766)
+        expected = mean / std * math.sqrt(8760)
 
         result = compute_sharpe_ratio(returns)
         assert result == pytest.approx(expected, rel=1e-6)
@@ -210,7 +210,7 @@ class TestTradeStats:
         ]
         stats = compute_trade_stats(trades)
         assert stats["win_rate"] == 1.0
-        assert stats["profit_factor"] == float("inf")
+        assert stats["profit_factor"] is None
 
 
 # ---------------------------------------------------------------------------

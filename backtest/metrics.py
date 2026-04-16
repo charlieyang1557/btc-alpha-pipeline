@@ -27,8 +27,8 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
-# Hours per year for annualization (365.25 * 24)
-HOURS_PER_YEAR = 8766
+# Hours per year for annualization (365 * 24)
+HOURS_PER_YEAR = 8760
 
 
 def compute_sharpe_ratio(
@@ -172,7 +172,7 @@ def compute_trade_stats(trades: list[dict[str, Any]]) -> dict[str, Any]:
     # Profit factor: gross profits / gross losses
     gross_profit = sum(p for p in pnls if p > 0)
     gross_loss = abs(sum(p for p in pnls if p < 0))
-    profit_factor = gross_profit / gross_loss if gross_loss > 0 else float("inf")
+    profit_factor = gross_profit / gross_loss if gross_loss > 0 else None
 
     return {
         "total_trades": n,

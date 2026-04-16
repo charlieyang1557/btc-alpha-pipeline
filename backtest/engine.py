@@ -26,7 +26,7 @@ import logging
 import sys
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -61,10 +61,31 @@ def register_strategy(cls: type[bt.Strategy]) -> type[bt.Strategy]:
 
 
 def _ensure_strategies_loaded() -> None:
-    """Import baseline strategies so they register themselves."""
-    if not STRATEGY_REGISTRY:
-        from strategies.baseline.sma_crossover import SMACrossover  # noqa: F401
-        register_strategy(SMACrossover)
+    """Import and register all baseline strategies.
+
+    Scans strategies/baseline/ for Python modules containing
+    BaseStrategy subclasses with STRATEGY_NAME defined.
+    """
+    if STRATEGY_REGISTRY:
+        return
+
+    import importlib
+    import pkgutil
+
+    import strategies.baseline as baseline_pkg
+
+    for importer, modname, ispkg in pkgutil.iter_modules(baseline_pkg.__path__):
+        module = importlib.import_module(f"strategies.baseline.{modname}")
+        for attr_name in dir(module):
+            attr = getattr(module, attr_name)
+            if (
+                isinstance(attr, type)
+                and issubclass(attr, bt.Strategy)
+                and hasattr(attr, "STRATEGY_NAME")
+                and getattr(attr, "STRATEGY_NAME", "unnamed") != "unnamed"
+                and attr.STRATEGY_NAME not in STRATEGY_REGISTRY
+            ):
+                register_strategy(attr)
 
 
 # ---------------------------------------------------------------------------
@@ -74,6 +95,11 @@ def _ensure_strategies_loaded() -> None:
 
 class TradeCollector(bt.Analyzer):
     """Collects completed trades with correct signal/fill time semantics.
+
+    Phase 1A limitation: only supports single-position long/flat strategies.
+    Does NOT support partial exits, scaling in/out, short positions, or
+    overlapping positions. If used with such strategies, trade matching
+    will silently produce incorrect artifacts.
 
     For each completed round-trip trade, records:
     - Signal times (order.created.dt) — when the signal was generated
@@ -468,7 +494,7 @@ def _write_to_registry(
         "run_type": "single_run",
         "parent_run_id": None,
         "strategy_name": strategy_name,
-        "strategy_source": json.dumps(strategy_params) if strategy_params else "{}",
+        "strategy_source": "manual",
         "test_start": start_date.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "test_end": end_date.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "effective_start": (
@@ -494,6 +520,7 @@ def _write_to_registry(
         "avg_trade_duration_hours": metrics.get("avg_trade_duration_hours"),
         "avg_trade_return": metrics.get("avg_trade_return"),
         "profit_factor": metrics.get("profit_factor"),
+        "notes": json.dumps(strategy_params) if strategy_params else None,
     }
 
     conn = get_connection(db_path)
@@ -581,8 +608,11 @@ def main() -> int:
     start_date = datetime.strptime(args.start, "%Y-%m-%d").replace(
         tzinfo=timezone.utc
     )
-    end_date = datetime.strptime(args.end, "%Y-%m-%d").replace(
-        tzinfo=timezone.utc
+    # --end 2024-12-31 means "include all bars on that day"
+    # Expand to 23:00 UTC (last hourly bar of the day)
+    end_date = (
+        datetime.strptime(args.end, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+        + timedelta(hours=23)
     )
 
     strategy_params = {}
@@ -616,7 +646,8 @@ def main() -> int:
     print(f"DD Duration:    {result.metrics['max_drawdown_duration_hours']:.0f} hours")
     print(f"Total Trades:   {result.metrics['total_trades']}")
     print(f"Win Rate:       {result.metrics['win_rate']:.2f}")
-    print(f"Profit Factor:  {result.metrics['profit_factor']:.2f}")
+    pf = result.metrics['profit_factor']
+    print(f"Profit Factor:  {pf:.2f}" if pf is not None else "Profit Factor:  N/A (no losses)")
     print(f"Avg Trade Ret:  {result.metrics['avg_trade_return']:.4f}")
     if result.trade_csv_path:
         print(f"Trade Log:      {result.trade_csv_path}")
