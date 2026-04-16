@@ -159,24 +159,32 @@ def download_month(pair: str, interval: str, month_key: str) -> pd.DataFrame | N
                 first_line = csv_file.readline().decode("utf-8", errors="replace")
                 csv_file.seek(0)
 
-                has_header = not first_line.strip().split(",")[0].isdigit()
+                first_field = first_line.strip().split(",")[0]
+                has_header = not first_field.isdigit()
 
                 if has_header:
                     df = pd.read_csv(csv_file, header=0)
-                    # Normalize column names to our expected schema
+                    # Normalize: Binance header names vary, so rename
+                    # positionally to our expected schema
                     df.columns = BINANCE_CSV_COLUMNS[: len(df.columns)]
                 else:
-                    df = pd.read_csv(
-                        csv_file,
-                        header=None,
-                        names=BINANCE_CSV_COLUMNS,
-                    )
+                    # Count fields in the first data line to handle
+                    # CSVs with more columns than our schema expects
+                    n_fields = len(first_line.strip().split(","))
+                    if n_fields > len(BINANCE_CSV_COLUMNS):
+                        # Extra trailing columns — read all, then drop extras
+                        col_names = BINANCE_CSV_COLUMNS + [
+                            f"_extra_{i}" for i in range(n_fields - len(BINANCE_CSV_COLUMNS))
+                        ]
+                    else:
+                        col_names = BINANCE_CSV_COLUMNS[:n_fields]
+                    df = pd.read_csv(csv_file, header=None, names=col_names)
 
-                # Force open_time and close_time to int64 to prevent
+                # Force timestamp columns to int64 to prevent
                 # float64 precision loss on large ms-epoch values
                 for col in ["open_time", "close_time"]:
                     if col in df.columns:
-                        df[col] = df[col].astype(np.int64)
+                        df[col] = pd.to_numeric(df[col], errors="coerce").astype("Int64")
     except (zipfile.BadZipFile, Exception) as e:
         logger.warning("Error parsing %s: %s", filename, e)
         return None
@@ -206,6 +214,18 @@ def process_dataframe(df: pd.DataFrame) -> pd.DataFrame:
 
     # Convert ms timestamp to timezone-aware UTC datetime
     df["open_time_utc"] = pd.to_datetime(df["open_time_utc"], unit="ms", utc=True)
+
+    # Sanity check: all timestamps must be in a reasonable range (2017-2035).
+    # Bad column alignment or wrong unit produces years like 58217.
+    min_valid = pd.Timestamp("2017-01-01", tz="UTC")
+    max_valid = pd.Timestamp("2035-01-01", tz="UTC")
+    bad_mask = (df["open_time_utc"] < min_valid) | (df["open_time_utc"] > max_valid)
+    n_bad = int(bad_mask.sum())
+    if n_bad > 0:
+        logger.warning(
+            "Dropped %d rows with out-of-range timestamps (bad column alignment?)", n_bad
+        )
+        df = df[~bad_mask].reset_index(drop=True)
 
     # Ensure correct dtypes
     for col in ["open", "high", "low", "close", "volume", "quote_volume"]:

@@ -68,6 +68,36 @@ EXPECTED_DTYPES = {
 
 ALLOWED_SOURCES = {"binance_vision", "ccxt_api"}
 
+
+def _safe_ts_str(ts: pd.Timestamp) -> str:
+    """Convert a pandas Timestamp to ISO string without crashing on out-of-range years.
+
+    Args:
+        ts: A pandas Timestamp (possibly with year > 9999 from bad data).
+
+    Returns:
+        ISO-formatted string, or str(ts) as fallback.
+    """
+    try:
+        return ts.strftime("%Y-%m-%dT%H:%M:%SZ")
+    except (ValueError, NotImplementedError, OverflowError):
+        return str(ts)
+
+
+def _safe_ts_series(series: pd.Series) -> list[str]:
+    """Convert a Series of Timestamps to ISO strings safely.
+
+    Args:
+        series: pandas Series of Timestamps.
+
+    Returns:
+        List of ISO-formatted strings with fallback for bad values.
+    """
+    try:
+        return series.dt.strftime("%Y-%m-%dT%H:%M:%SZ").tolist()
+    except (ValueError, NotImplementedError, OverflowError):
+        return [str(v) for v in series]
+
 ONE_HOUR_MS = 3_600_000
 
 
@@ -187,7 +217,7 @@ def check_no_duplicates(df: pd.DataFrame) -> dict[str, Any]:
     dupe_count = int(dupes.sum())
 
     if dupe_count > 0:
-        dupe_timestamps = df.loc[dupes, "open_time_utc"].dt.strftime("%Y-%m-%dT%H:%M:%SZ").tolist()
+        dupe_timestamps = _safe_ts_series(df.loc[dupes, "open_time_utc"])
         return {
             "passed": False,
             "details": {
@@ -224,8 +254,8 @@ def check_no_gaps(df: pd.DataFrame) -> dict[str, Any]:
             end = timestamps.iloc[idx]
             missing_intervals.append(
                 {
-                    "after": start.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                    "before": end.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                    "after": _safe_ts_str(start),
+                    "before": _safe_ts_str(end),
                     "missing_hours": int(diffs_ms.iloc[idx] / ONE_HOUR_MS) - 1,
                 }
             )
@@ -259,7 +289,7 @@ def check_hour_aligned(df: pd.DataFrame) -> dict[str, Any]:
     misaligned_count = int(misaligned.sum())
 
     if misaligned_count > 0:
-        examples = ts[misaligned].head(10).dt.strftime("%Y-%m-%dT%H:%M:%SZ").tolist()
+        examples = _safe_ts_series(ts[misaligned].head(10))
         return {
             "passed": False,
             "details": {"misaligned_count": misaligned_count, "examples": examples},
@@ -337,7 +367,7 @@ def check_price_anomalies(df: pd.DataFrame) -> dict[str, Any]:
         for idx in df.index[anomaly_mask]:
             anomalies.append(
                 {
-                    "timestamp": df.loc[idx, "open_time_utc"].strftime("%Y-%m-%dT%H:%M:%SZ"),
+                    "timestamp": _safe_ts_str(df.loc[idx, "open_time_utc"]),
                     "pct_change": round(float(pct_change.loc[idx]), 4),
                 }
             )
@@ -382,11 +412,7 @@ def check_zero_volume_bars(df: pd.DataFrame) -> dict[str, Any]:
     zero_count = int(zero_mask.sum())
 
     if zero_count > 0:
-        timestamps = (
-            df.loc[zero_mask, "open_time_utc"]
-            .dt.strftime("%Y-%m-%dT%H:%M:%SZ")
-            .tolist()
-        )
+        timestamps = _safe_ts_series(df.loc[zero_mask, "open_time_utc"])
         return {"count": zero_count, "timestamps": timestamps[:200]}
     return {"count": 0, "timestamps": []}
 
@@ -413,11 +439,7 @@ def check_volume_drops(df: pd.DataFrame) -> dict[str, Any]:
     drop_count = int(drop_mask.sum())
 
     if drop_count > 0:
-        flagged = (
-            df.loc[drop_mask, "open_time_utc"]
-            .dt.strftime("%Y-%m-%dT%H:%M:%SZ")
-            .tolist()
-        )
+        flagged = _safe_ts_series(df.loc[drop_mask, "open_time_utc"])
         return {"count": drop_count, "details": flagged[:100]}
     return {"count": 0, "details": None}
 

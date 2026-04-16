@@ -216,7 +216,7 @@ class TestDownloadMonthHeaderDetection:
         assert df is not None
         assert len(df) == 2
         # open_time must be int, not string
-        assert df["open_time"].dtype in (np.int64, np.int32)
+        assert pd.api.types.is_integer_dtype(df["open_time"])
         assert df["open_time"].iloc[0] == 1577836800000
 
     def test_header_csv_parsed(self, monkeypatch):
@@ -242,5 +242,5 @@ class TestDownloadMonthHeaderDetection:
         df = download_month("BTCUSDT", "1h", "2020-01")
         assert df is not None
         assert len(df) == 2
-        assert df["open_time"].dtype in (np.int64, np.int32)
+        assert pd.api.types.is_integer_dtype(df["open_time"])
         assert df["open_time"].iloc[0] == 1577836800000
