@@ -71,7 +71,7 @@ class AlphaBroker(bt.brokers.BackBroker):
         """
         data = order.data
 
-        if data.volume[0] == 0.0:
+        if data.volume[0] <= 0:
             ref = order.ref
             count = self._defer_counts.get(ref, 0) + 1
             self._defer_counts[ref] = count
@@ -125,9 +125,9 @@ def configure_cerebro(
     if config is None:
         config = load_execution_config()
 
-    # Install custom broker
+    # Install custom broker via Backtrader's official API
     broker = AlphaBroker()
-    cerebro.broker = broker
+    cerebro.setbroker(broker)
 
     # Enforce execution timing
     cerebro.broker.set_coc(False)  # No cheat-on-close

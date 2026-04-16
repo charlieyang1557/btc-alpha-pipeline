@@ -23,6 +23,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
+import backtrader as bt
 import yaml
 
 logger = logging.getLogger(__name__)
@@ -96,16 +97,16 @@ class ConstantSlippage:
         Returns:
             String label for experiment registry (e.g. 'effective_7bps_per_side').
         """
-        return f"effective_{int(self.total_bps)}bps_per_side"
+        return f"effective_{self.total_bps:g}bps_per_side"
 
-    def apply(self, broker: object) -> None:
+    def apply(self, broker: bt.brokers.BackBroker) -> None:
         """Configure a Backtrader broker with this cost model.
 
         Sets the broker's commission to the combined effective rate.
         No separate slippage is applied — it's all in the commission.
 
         Args:
-            broker: A Backtrader broker instance.
+            broker: A Backtrader BackBroker instance (must have setcommission).
         """
         broker.setcommission(commission=self.effective_commission)
         logger.info(

@@ -102,17 +102,32 @@ class ParquetFeed(bt.feeds.PandasData):
         if missing:
             raise ValueError(f"Parquet missing required columns: {sorted(missing)}")
 
+        # Defensive checks on primary key column
+        if not pd.api.types.is_datetime64_any_dtype(df["open_time_utc"]):
+            raise ValueError("open_time_utc must be datetime-like")
+        if df["open_time_utc"].duplicated().any():
+            raise ValueError("Duplicate open_time_utc values found")
+
         # Ensure optional extra-line columns exist (fill with 0 if missing)
         for col, default in [("quote_volume", 0.0), ("trade_count", 0)]:
             if col not in df.columns:
                 df[col] = default
 
-        # Filter by date range (using UTC-aware comparison)
+        # Filter by date range (using UTC-aware comparison).
+        # Handle both tz-naive and tz-aware inputs safely.
         if fromdate is not None:
-            from_ts = pd.Timestamp(fromdate, tz="UTC")
+            from_ts = pd.Timestamp(fromdate)
+            if from_ts.tz is None:
+                from_ts = from_ts.tz_localize("UTC")
+            else:
+                from_ts = from_ts.tz_convert("UTC")
             df = df[df["open_time_utc"] >= from_ts]
         if todate is not None:
-            to_ts = pd.Timestamp(todate, tz="UTC")
+            to_ts = pd.Timestamp(todate)
+            if to_ts.tz is None:
+                to_ts = to_ts.tz_localize("UTC")
+            else:
+                to_ts = to_ts.tz_convert("UTC")
             df = df[df["open_time_utc"] <= to_ts]
 
         if len(df) == 0:
@@ -124,7 +139,8 @@ class ParquetFeed(bt.feeds.PandasData):
         df = df.set_index("open_time_utc").sort_index()
         df.index = df.index.tz_localize(None)
 
-        # Ensure numeric types (Backtrader expects float for all lines)
+        # Backtrader lines are float-typed internally; cast trade_count
+        # from int64 to float64 for compatibility.
         df["trade_count"] = df["trade_count"].astype("float64")
 
         logger.info(
