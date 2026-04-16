@@ -74,6 +74,108 @@ COLUMNS_TO_KEEP = [
     "trade_count",
 ]
 
+# Known Binance Vision CSV header names (may vary across months).
+# Maps known header variants → our canonical column names.
+_HEADER_ALIASES: dict[str, str] = {
+    "open_time": "open_time",
+    "Open time": "open_time",
+    "Open Time": "open_time",
+    "open": "open",
+    "Open": "open",
+    "high": "high",
+    "High": "high",
+    "low": "low",
+    "Low": "low",
+    "close": "close",
+    "Close": "close",
+    "volume": "volume",
+    "Volume": "volume",
+    "close_time": "close_time",
+    "Close time": "close_time",
+    "Close Time": "close_time",
+    "quote_volume": "quote_volume",
+    "Quote asset volume": "quote_volume",
+    "quote_asset_volume": "quote_volume",
+    "trade_count": "trade_count",
+    "count": "trade_count",
+    "Number of trades": "trade_count",
+    "number_of_trades": "trade_count",
+    "taker_buy_base": "taker_buy_base",
+    "Taker buy base asset volume": "taker_buy_base",
+    "taker_buy_base_asset_volume": "taker_buy_base",
+    "taker_buy_volume": "taker_buy_base",
+    "taker_buy_quote": "taker_buy_quote",
+    "Taker buy quote asset volume": "taker_buy_quote",
+    "taker_buy_quote_asset_volume": "taker_buy_quote",
+    "taker_buy_quote_volume": "taker_buy_quote",
+    "ignore": "ignore",
+    "Ignore": "ignore",
+}
+
+# Range for valid ms-since-epoch timestamps: 2017-01-01 to 2035-01-01
+_MIN_VALID_MS = 1_483_228_800_000  # 2017-01-01 00:00 UTC
+_MAX_VALID_MS = 2_051_222_400_000  # 2035-01-01 00:00 UTC
+
+
+def _looks_like_ms_timestamp(value: object) -> bool:
+    """Check if a value looks like a millisecond-since-epoch timestamp.
+
+    Args:
+        value: A scalar value from a DataFrame cell.
+
+    Returns:
+        True if value is in the ms-epoch range for 2017-2035.
+    """
+    try:
+        v = int(float(str(value)))
+        return _MIN_VALID_MS <= v <= _MAX_VALID_MS
+    except (ValueError, TypeError, OverflowError):
+        return False
+
+
+def _map_header_columns(raw_columns: list[str]) -> dict[str, str] | None:
+    """Try to map CSV header names to our canonical column names.
+
+    Args:
+        raw_columns: Column names as read from the CSV header.
+
+    Returns:
+        Rename dict {raw_name: canonical_name}, or None if mapping failed
+        (fewer than 8 of our required columns matched).
+    """
+    rename_map = {}
+    for col in raw_columns:
+        col_stripped = col.strip()
+        if col_stripped in _HEADER_ALIASES:
+            rename_map[col] = _HEADER_ALIASES[col_stripped]
+    # Require at least the 8 columns we keep
+    mapped_targets = set(rename_map.values())
+    required = {"open_time", "open", "high", "low", "close", "volume",
+                "quote_volume", "trade_count"}
+    if required.issubset(mapped_targets):
+        return rename_map
+    return None
+
+
+def _find_timestamp_column(df: pd.DataFrame) -> str | None:
+    """Auto-detect which column contains ms-epoch timestamps.
+
+    Checks the first row of each column for values in the ms-epoch range.
+
+    Args:
+        df: Raw DataFrame to inspect.
+
+    Returns:
+        Column name containing timestamps, or None.
+    """
+    if len(df) == 0:
+        return None
+    first_row = df.iloc[0]
+    for col in df.columns:
+        if _looks_like_ms_timestamp(first_row[col]):
+            return col
+    return None
+
 
 def generate_month_keys(start: str, end: str | None = None) -> list[str]:
     """Generate list of YYYY-MM month strings from start to end.
@@ -146,13 +248,23 @@ def download_month(pair: str, interval: str, month_key: str) -> pd.DataFrame | N
                 csv_file.seek(0)
 
                 first_field = first_line.strip().split(",")[0]
-                has_header = not first_field.isdigit()
+                has_header = not first_field.replace(".", "").replace("-", "").isdigit()
 
                 if has_header:
                     df = pd.read_csv(csv_file, header=0)
-                    # Normalize: Binance header names vary, so rename
-                    # positionally to our expected schema
-                    df.columns = BINANCE_CSV_COLUMNS[: len(df.columns)]
+                    # Try name-based mapping first (robust to column reordering)
+                    header_map = _map_header_columns(list(df.columns))
+                    if header_map:
+                        df = df.rename(columns=header_map)
+                        logger.debug("  Mapped columns by name for %s", month_key)
+                    else:
+                        # Fallback: positional rename
+                        logger.debug(
+                            "  Header name mapping failed for %s, "
+                            "falling back to positional (columns: %s)",
+                            month_key, list(df.columns),
+                        )
+                        df.columns = BINANCE_CSV_COLUMNS[: len(df.columns)]
                 else:
                     # Count fields in the first data line to handle
                     # CSVs with more columns than our schema expects
@@ -171,6 +283,36 @@ def download_month(pair: str, interval: str, month_key: str) -> pd.DataFrame | N
                 for col in ["open_time", "close_time"]:
                     if col in df.columns:
                         df[col] = pd.to_numeric(df[col], errors="coerce").astype("Int64")
+
+                # Sanity check: verify open_time contains valid ms timestamps.
+                # If not, try to auto-detect which column has the timestamps.
+                if "open_time" in df.columns and len(df) > 0:
+                    sample = df["open_time"].iloc[0]
+                    if not _looks_like_ms_timestamp(sample):
+                        logger.warning(
+                            "  %s: open_time value %s is not a valid ms timestamp, "
+                            "scanning columns ...",
+                            month_key, sample,
+                        )
+                        ts_col = _find_timestamp_column(df)
+                        if ts_col and ts_col != "open_time":
+                            logger.warning(
+                                "  %s: found timestamps in column '%s', swapping",
+                                month_key, ts_col,
+                            )
+                            df["open_time"], df[ts_col] = (
+                                df[ts_col].copy(),
+                                df["open_time"].copy(),
+                            )
+                            df["open_time"] = pd.to_numeric(
+                                df["open_time"], errors="coerce"
+                            ).astype("Int64")
+                        else:
+                            logger.warning(
+                                "  %s: could not find timestamp column, "
+                                "data may be misaligned (columns: %s)",
+                                month_key, list(df.columns),
+                            )
     except (zipfile.BadZipFile, Exception) as e:
         logger.warning("Error parsing %s: %s", filename, e)
         return None
@@ -208,8 +350,13 @@ def process_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     bad_mask = (df["open_time_utc"] < min_valid) | (df["open_time_utc"] > max_valid)
     n_bad = int(bad_mask.sum())
     if n_bad > 0:
-        logger.warning(
-            "Dropped %d rows with out-of-range timestamps (bad column alignment?)", n_bad
+        # Log sample of bad values to help diagnose column alignment issues
+        bad_samples = df.loc[bad_mask, "open_time_utc"].head(5)
+        logger.error(
+            "DROPPING %d of %d rows with out-of-range timestamps. "
+            "Sample bad values: %s. "
+            "This likely indicates a CSV column alignment or unit problem.",
+            n_bad, len(df), list(bad_samples),
         )
         df = df[~bad_mask].reset_index(drop=True)
 
