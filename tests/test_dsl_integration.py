@@ -142,12 +142,29 @@ def _features_for(timestamps: pd.DatetimeIndex, **factor_cols) -> pd.DataFrame:
 
 
 # ===========================================================================
-# 1. End-to-end crosses_above single-fire test.
+# 1. End-to-end cross-operator single-fire tests.
+#
+# Blueprint D2 mandates that both `crosses_above` AND `crosses_below`
+# compile to a true two-bar cross (or bt.CrossOver), and that factor-vs-scalar
+# and factor-vs-factor are independent code paths. This class asserts the
+# single-fire contract survives the compiler + next() path end-to-end for
+# all four operator × path combinations:
+#
+#     crosses_above × scalar       (test_crosses_above_scalar_...)
+#     crosses_below × scalar       (test_crosses_below_scalar_...)
+#     crosses_above × factor       (test_crosses_above_factor_vs_factor_...)
+#     crosses_below × factor       (test_crosses_below_factor_vs_factor_...)
+#
+# Helper-level versions of these tests live in test_dsl.py::TestNanSemantics
+# and TestFactorVsScalar/TestFactorVsFactor. These end-to-end versions exist
+# because the helpers alone cannot catch regressions in the compiler's
+# bt.CrossOver emission or in the next() scheduling of the fire signal.
 # ===========================================================================
 
 
-class TestCrossesAboveIntegration:
+class TestCrossOperatorIntegration:
     def _build_registry(self) -> FactorRegistry:
+        """Registry with a single `value` factor for factor-vs-scalar tests."""
         reg = FactorRegistry()
         reg.register(
             FactorSpec(
@@ -158,6 +175,33 @@ class TestCrossesAboveIntegration:
                 output_dtype="float64",
                 compute=_passthrough_value,
                 docstring="synthetic passthrough factor",
+            )
+        )
+        return reg
+
+    def _build_two_factor_registry(self) -> FactorRegistry:
+        """Registry with `value` + `other` for factor-vs-factor tests."""
+        reg = FactorRegistry()
+        reg.register(
+            FactorSpec(
+                name="value",
+                category="test",
+                warmup_bars=0,
+                inputs=["value"],
+                output_dtype="float64",
+                compute=_passthrough_value,
+                docstring="synthetic passthrough factor (lhs)",
+            )
+        )
+        reg.register(
+            FactorSpec(
+                name="other",
+                category="test",
+                warmup_bars=0,
+                inputs=["other"],
+                output_dtype="float64",
+                compute=_passthrough_other,
+                docstring="synthetic passthrough factor (rhs)",
             )
         )
         return reg
@@ -178,8 +222,8 @@ class TestCrossesAboveIntegration:
 
         dsl = StrategyDSL.model_validate(
             {
-                "name": "cross_once",
-                "description": "value crosses 50",
+                "name": "cross_once_above_scalar",
+                "description": "value crosses above 50",
                 "entry": [
                     {
                         "conditions": [
@@ -224,6 +268,200 @@ class TestCrossesAboveIntegration:
         assert len(counter.buys) == 1, (
             f"Expected exactly 1 buy over 50-bar stays-above run; "
             f"got {len(counter.buys)}"
+        )
+        assert len(counter.sells) == 0
+
+    def test_crosses_below_scalar_fires_exactly_once_through_compiler(
+        self, tmp_path
+    ):
+        """Mirror of crosses_above scalar: a value that stays above 50
+        for 30 bars then drops to 40 and stays there for 50 more bars
+        must produce exactly ONE entry (crosses_below scalar) when run
+        through the compiled strategy — not 50.
+        """
+        reg = self._build_registry()
+
+        n = 80
+        ohlcv = _synthetic_ohlcv_flat(n)
+        values = np.concatenate([np.full(30, 70.0), np.full(n - 30, 40.0)])
+        features_df = _features_for(ohlcv.index, value=values)
+
+        dsl = StrategyDSL.model_validate(
+            {
+                "name": "cross_once_below_scalar",
+                "description": "value crosses below 50",
+                "entry": [
+                    {
+                        "conditions": [
+                            {
+                                "factor": "value",
+                                "op": "crosses_below",
+                                "value": 50.0,
+                            }
+                        ]
+                    }
+                ],
+                # Exit never true on this feed (value stays at 40).
+                "exit": [
+                    {
+                        "conditions": [
+                            {
+                                "factor": "value",
+                                "op": ">",
+                                "value": 999.0,
+                            }
+                        ]
+                    }
+                ],
+                "position_sizing": "full_equity",
+            },
+            context={"registry": reg},
+        )
+
+        strategy_cls = compile_dsl_to_strategy(
+            dsl, reg, manifest_dir=tmp_path
+        )
+
+        class Bound(strategy_cls):  # type: ignore[misc,valid-type]
+            params = (
+                ("features_df_override", features_df),
+                ("registry_override", reg),
+            )
+
+        counter = _run_on_synthetic(Bound, ohlcv)
+        assert len(counter.buys) == 1, (
+            f"Expected exactly 1 buy over 50-bar stays-below run; "
+            f"got {len(counter.buys)}"
+        )
+        assert len(counter.sells) == 0
+
+    def test_crosses_above_factor_vs_factor_fires_exactly_once_through_compiler(
+        self, tmp_path
+    ):
+        """Factor-vs-factor crosses_above single-fire: `value` jumps
+        above a constant-valued `other` factor at bar 30 and stays
+        above — must fire exactly once through the compiler's
+        factor-vs-factor code path.
+        """
+        reg = self._build_two_factor_registry()
+
+        n = 80
+        ohlcv = _synthetic_ohlcv_flat(n)
+        values = np.concatenate([np.full(30, 10.0), np.full(n - 30, 60.0)])
+        others = np.full(n, 50.0)
+        features_df = _features_for(ohlcv.index, value=values, other=others)
+
+        dsl = StrategyDSL.model_validate(
+            {
+                "name": "cross_once_above_factor",
+                "description": "value crosses above other",
+                "entry": [
+                    {
+                        "conditions": [
+                            {
+                                "factor": "value",
+                                "op": "crosses_above",
+                                "value": "other",
+                            }
+                        ]
+                    }
+                ],
+                # Exit never true (value never goes to -1).
+                "exit": [
+                    {
+                        "conditions": [
+                            {
+                                "factor": "value",
+                                "op": "<",
+                                "value": -1.0,
+                            }
+                        ]
+                    }
+                ],
+                "position_sizing": "full_equity",
+            },
+            context={"registry": reg},
+        )
+
+        strategy_cls = compile_dsl_to_strategy(
+            dsl, reg, manifest_dir=tmp_path
+        )
+
+        class Bound(strategy_cls):  # type: ignore[misc,valid-type]
+            params = (
+                ("features_df_override", features_df),
+                ("registry_override", reg),
+            )
+
+        counter = _run_on_synthetic(Bound, ohlcv)
+        assert len(counter.buys) == 1, (
+            f"Expected exactly 1 buy over 50-bar factor-vs-factor "
+            f"stays-above run; got {len(counter.buys)}"
+        )
+        assert len(counter.sells) == 0
+
+    def test_crosses_below_factor_vs_factor_fires_exactly_once_through_compiler(
+        self, tmp_path
+    ):
+        """Factor-vs-factor crosses_below single-fire: `value` drops
+        below a constant-valued `other` factor at bar 30 and stays
+        below — must fire exactly once through the compiler's
+        factor-vs-factor code path.
+        """
+        reg = self._build_two_factor_registry()
+
+        n = 80
+        ohlcv = _synthetic_ohlcv_flat(n)
+        values = np.concatenate([np.full(30, 70.0), np.full(n - 30, 40.0)])
+        others = np.full(n, 50.0)
+        features_df = _features_for(ohlcv.index, value=values, other=others)
+
+        dsl = StrategyDSL.model_validate(
+            {
+                "name": "cross_once_below_factor",
+                "description": "value crosses below other",
+                "entry": [
+                    {
+                        "conditions": [
+                            {
+                                "factor": "value",
+                                "op": "crosses_below",
+                                "value": "other",
+                            }
+                        ]
+                    }
+                ],
+                # Exit never true (value stays at 40, never > 999).
+                "exit": [
+                    {
+                        "conditions": [
+                            {
+                                "factor": "value",
+                                "op": ">",
+                                "value": 999.0,
+                            }
+                        ]
+                    }
+                ],
+                "position_sizing": "full_equity",
+            },
+            context={"registry": reg},
+        )
+
+        strategy_cls = compile_dsl_to_strategy(
+            dsl, reg, manifest_dir=tmp_path
+        )
+
+        class Bound(strategy_cls):  # type: ignore[misc,valid-type]
+            params = (
+                ("features_df_override", features_df),
+                ("registry_override", reg),
+            )
+
+        counter = _run_on_synthetic(Bound, ohlcv)
+        assert len(counter.buys) == 1, (
+            f"Expected exactly 1 buy over 50-bar factor-vs-factor "
+            f"stays-below run; got {len(counter.buys)}"
         )
         assert len(counter.sells) == 0
 
