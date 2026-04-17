@@ -50,6 +50,19 @@ Hard design decisions (see PHASE2_BLUEPRINT_v2.md D2 and CLAUDE.md):
 6. **Factor values are loaded once per strategy instance**.
    The parquet is read in the strategy's ``__init__`` and stored as a
    timestamp→tuple dict. In ``next()`` we do one ``dict.get`` per bar.
+
+7. **``max_hold_bars`` is counted in signal bars, which equals
+   fill-to-fill bars**.
+   ``_entry_bar`` is stamped on the bar the entry signal fires. The
+   close is triggered when ``len(self) - _entry_bar >= max_hold_bars``.
+   Because both ``self.buy()`` and ``self.close()`` execute at the
+   next bar's open (Phase 1 execution convention), the 1-bar fill lag
+   applies symmetrically to both sides and cancels in the difference.
+   Therefore ``max_hold_bars = N`` means the position is held for
+   exactly N bars measured fill-to-fill (entry fill open → exit fill
+   open). Example: signal at bar K fills at K+1; with N=5 the close
+   signal fires at K+5 (since len-bar difference reaches 5 there) and
+   the close fills at K+6 — i.e. (K+6) − (K+1) = 5 bars in position.
 """
 
 from __future__ import annotations
@@ -704,6 +717,10 @@ def compile_dsl_to_strategy(
             if not self.position:
                 if entry_eval(cur_row, prev_row):
                     self.buy()
+                    # Stamp on the signal bar. The 1-bar next-open fill
+                    # lag is symmetric on entry and exit, so signal-bar
+                    # counting == fill-to-fill duration. See module
+                    # docstring point 7.
                     self._entry_bar = len(self)
                 return
 
