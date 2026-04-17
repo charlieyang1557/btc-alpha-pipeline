@@ -232,6 +232,81 @@ class TestSchema:
         with pytest.raises(ValidationError):
             StrategyDSL.model_validate(bad)
 
+    # ---- Non-finite float rejection (T1.2) --------------------------------
+
+    def test_nan_threshold_rejected(self):
+        bad = _valid_dsl_dict(entry=[
+            {"conditions": [
+                {"factor": "sma_20", "op": ">", "value": float("nan")}
+            ]}
+        ])
+        with pytest.raises(ValidationError) as exc:
+            StrategyDSL.model_validate(bad)
+        assert "finite" in str(exc.value).lower()
+
+    def test_inf_threshold_rejected(self):
+        for v in (float("inf"), float("-inf")):
+            bad = _valid_dsl_dict(entry=[
+                {"conditions": [
+                    {"factor": "sma_20", "op": ">", "value": v}
+                ]}
+            ])
+            with pytest.raises(ValidationError) as exc:
+                StrategyDSL.model_validate(bad)
+            assert "finite" in str(exc.value).lower()
+
+    # ---- Duplicate condition rejection within a group (T1.3) --------------
+
+    def test_duplicate_condition_in_group_rejected(self):
+        """AND-idempotence: a group containing two identical
+        (factor, op, value) triples is rejected at schema time so D3's
+        canonicalizer never has to collapse [A, A, B] vs [A, B].
+        """
+        # Exact duplicate (scalar value).
+        bad = _valid_dsl_dict(entry=[
+            {"conditions": [
+                {"factor": "sma_20", "op": ">", "value": 50.0},
+                {"factor": "sma_20", "op": ">", "value": 50.0},
+            ]}
+        ])
+        with pytest.raises(ValidationError) as exc:
+            StrategyDSL.model_validate(bad)
+        assert "duplicate condition" in str(exc.value).lower()
+
+    def test_duplicate_condition_6decimal_equivalent_rejected(self):
+        """Duplicates that differ only in float repr but canonicalize to
+        the same 6-decimal string are also rejected (matches D3's
+        canonical form).
+        """
+        bad = _valid_dsl_dict(entry=[
+            {"conditions": [
+                {"factor": "sma_20", "op": ">", "value": 50.0},
+                {"factor": "sma_20", "op": ">", "value": 50},
+            ]}
+        ])
+        with pytest.raises(ValidationError):
+            StrategyDSL.model_validate(bad)
+
+    def test_duplicate_condition_factor_vs_factor_rejected(self):
+        bad = _valid_dsl_dict(entry=[
+            {"conditions": [
+                {"factor": "sma_20", "op": ">", "value": "sma_50"},
+                {"factor": "sma_20", "op": ">", "value": "sma_50"},
+            ]}
+        ])
+        with pytest.raises(ValidationError):
+            StrategyDSL.model_validate(bad)
+
+    def test_distinct_conditions_in_group_accepted(self):
+        """Same factor/op but different values is NOT a duplicate."""
+        dsl = StrategyDSL.model_validate(_valid_dsl_dict(entry=[
+            {"conditions": [
+                {"factor": "sma_20", "op": ">", "value": 50.0},
+                {"factor": "sma_20", "op": ">", "value": 60.0},
+            ]}
+        ]))
+        assert len(dsl.entry[0].conditions) == 2
+
     # ---- Registry injection via context ------------------------------------
 
     def test_custom_registry_via_context(self):

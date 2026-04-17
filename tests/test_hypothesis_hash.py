@@ -15,6 +15,7 @@ from pathlib import Path
 import pytest
 
 from agents.hypothesis_hash import (
+    _canonical_value,
     are_equivalent,
     canonicalize_for_hash,
     hash_dsl,
@@ -340,6 +341,32 @@ class TestHashFormat:
             ]}],
         )
         assert hash_dsl(dsl_a) != hash_dsl(dsl_b)
+
+
+# ===========================================================================
+# 7b. Scalar vs lookalike-string collision resistance.
+# ===========================================================================
+
+
+class TestScalarStringDisambiguation:
+    def test_scalar_vs_lookalike_string_distinct(self):
+        """A scalar and a string whose digits look like the scalar's
+        canonical 6-decimal form must produce distinct canonical
+        outputs.
+
+        Exercised directly on the ``_canonical_value`` helper because
+        D2's schema rejects a factor string that is not a registered
+        name — so we cannot construct a full DSL where the RHS is the
+        literal string ``"30.000000"``. The disambiguation matters at
+        the canonicalization layer regardless of whether upstream
+        schema would ever surface such a string: the tag prefix is the
+        invariant that defends the dedup hash.
+        """
+        scalar_out = _canonical_value(30.0)
+        string_out = _canonical_value("30.000000")
+        assert scalar_out == "num:30.000000"
+        assert string_out == "fac:30.000000"
+        assert scalar_out != string_out
 
 
 # ===========================================================================

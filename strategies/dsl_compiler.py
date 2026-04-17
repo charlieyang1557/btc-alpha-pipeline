@@ -641,6 +641,8 @@ def compile_dsl_to_strategy(
 
     warmup_bars = registry.max_warmup(factors_used) if factors_used else 0
 
+    # DESIGN INVARIANT: cross operators cost exactly +1 warmup bar
+    # relative to continuous operators. This asymmetry is intentional.
     # Minperiod calculation:
     # - Continuous ops (``<``, ``>``, ``==``, ...) read only ``cur_row``,
     #   so the first firable bar is ``warmup_bars`` (0-indexed), i.e.
@@ -649,6 +651,12 @@ def compile_dsl_to_strategy(
     #   bar shifts forward by 1 → ``len(self) == warmup_bars + 2``.
     # We also unconditionally need ``len(self) >= 2`` because ``next()``
     # always calls ``self.data.datetime.datetime(-1)``.
+    # Changing the ``+ 1`` to ``+ 2`` or 0 is NOT a tuning knob — it
+    # tracks the exact arity of the comparison helpers in
+    # :mod:`strategies.dsl_compiler` and CrossOver's own lookback. Any
+    # refactor that unifies continuous and cross into a single code path
+    # must update this invariant and D2's cross-operator semantics in
+    # lockstep.
     uses_cross = _dsl_uses_cross_op(dsl)
     effective_minperiod = max(warmup_bars + (2 if uses_cross else 1), 2)
 

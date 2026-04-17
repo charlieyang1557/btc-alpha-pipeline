@@ -32,9 +32,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from pydantic import ValidationInfo
 
 from factors.registry import FactorRegistry, get_registry
@@ -120,10 +121,23 @@ class Condition(BaseModel):
     @field_validator("value")
     @classmethod
     def _validate_value(
-        cls, v: float | str, info: ValidationInfo
+        cls, v: int | float | str, info: ValidationInfo
     ) -> float | str:
         if isinstance(v, (int, float)):
-            return float(v)
+            fv = float(v)
+            # NaN/Inf thresholds would silently evaluate every comparison
+            # to False (NaN) or collapse operator semantics (Inf is a
+            # valid IEEE 754 float but is nonsensical as a threshold and
+            # breaks D3's 6-decimal canonical form: `f"{inf:.6f}" ==
+            # "inf"` equals `f"{-inf:.6f}" == "-inf"` and cannot be
+            # distinguished from a factor named "inf"). Reject at schema
+            # time so neither the compiler nor the D3 hasher ever sees
+            # one.
+            if math.isnan(fv) or math.isinf(fv):
+                raise ValueError(
+                    f"value must be a finite float; got {fv!r}"
+                )
+            return fv
         if isinstance(v, str):
             if not v:
                 raise ValueError("value string must be non-empty")
@@ -152,11 +166,41 @@ class ConditionGroup(BaseModel):
 
     Multiple ``ConditionGroup`` objects in an entry/exit list are
     OR-connected; within a group, all conditions must be true.
+
+    Duplicate conditions within a single group are rejected at schema
+    time: ``A AND A AND B`` is logically identical to ``A AND B`` and
+    would otherwise hash to a different D3 canonical form unless the
+    hasher performed boolean simplification. Closing the attack surface
+    here keeps D3's canonicalizer a pure sort-and-serialize function.
+    Two conditions collide iff their ``(factor, op, value)`` triples
+    match after normalizing scalar values to D3's 6-decimal format
+    (``f"{float(v):.6f}"``) so e.g. ``30``, ``30.0`` and ``30.000000``
+    are treated as one condition.
     """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     conditions: list[Condition] = Field(min_length=1, max_length=4)
+
+    @model_validator(mode="after")
+    def _reject_duplicate_conditions(self) -> "ConditionGroup":
+        seen: set[tuple[str, str, str]] = set()
+        for c in self.conditions:
+            if isinstance(c.value, (int, float)):
+                # Match D3's _canonical_value scalar normalization.
+                value_key = f"num:{float(c.value):.6f}"
+            else:
+                value_key = f"fac:{c.value}"
+            key = (c.factor, c.op, value_key)
+            if key in seen:
+                raise ValueError(
+                    f"duplicate condition in group: "
+                    f"({c.factor!r}, {c.op!r}, {c.value!r}); "
+                    f"AND-idempotence means each condition may appear "
+                    f"at most once per group"
+                )
+            seen.add(key)
+        return self
 
 
 # ---------------------------------------------------------------------------
@@ -186,6 +230,17 @@ class StrategyDSL(BaseModel):
     description: str = Field(min_length=1, max_length=300)
     entry: list[ConditionGroup] = Field(min_length=1, max_length=3)
     exit: list[ConditionGroup] = Field(min_length=1, max_length=3)
+    # CONTRACT GAP: ``position_sizing`` is currently a
+    # ``Literal["full_equity"]`` so there is nothing to discriminate on.
+    # Once D4+ relaxes this to support alternative sizings (e.g.
+    # ``"half_equity"``, ``"kelly"``), D3's
+    # ``agents.hypothesis_hash.canonicalize_for_hash`` already includes
+    # this field — a strategy that differs only in its sizing will then
+    # hash distinctly, which is the intended behavior. The dedup test
+    # suite has a matching TODO marker (see agents/hypothesis_hash.py
+    # ``CONTRACT GAP: position_sizing``). DO NOT remove
+    # ``position_sizing`` from D3's canonical payload; removing it would
+    # silently collapse different sizings into the same dedup key.
     position_sizing: Literal["full_equity"]
     max_hold_bars: int | None = Field(default=None, ge=1, le=720)
 
@@ -201,7 +256,19 @@ def canonicalize_dsl(dsl: StrategyDSL) -> str:
     Uses ``sort_keys=True`` and compact separators so the output is
     byte-stable across Python runs on the same machine. The returned
     string is safe to feed into :func:`hashlib.sha256` for manifest keys
-    and (later) D3's hypothesis_hash.
+    used by D2's compilation-manifest drift detection.
+
+    CONTRACT BOUNDARY: this function is D2's byte-stable form, which
+    preserves field ordering, includes ``name``/``description``, and
+    uses Python's default float repr. D3's
+    :func:`agents.hypothesis_hash.canonicalize_for_hash` is a
+    *separate* canonicalization used for semantic-equivalence dedup:
+    it sorts conditions, drops cosmetic fields, and tags scalars with
+    6-decimal precision. These two forms serve opposite purposes —
+    D2 protects manifest integrity (any textual change is a drift
+    signal), D3 collapses textual equivalents into one dedup key —
+    and they MUST NOT be merged. See
+    ``agents/hypothesis_hash.py`` for the mirror-side contract.
     """
     return json.dumps(
         dsl.model_dump(mode="json"),
