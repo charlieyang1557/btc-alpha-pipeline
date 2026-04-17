@@ -1172,6 +1172,15 @@ def _evaluate_regime_holdout_pass(
     dd = metrics.get("max_drawdown", float("nan"))
     ret = metrics.get("total_return", float("nan"))
     trades = metrics.get("total_trades", 0) or 0
+    # CONTRACT GAP: The passing_criteria thresholds in environments.yaml
+    # are calibrated for the current D4 feed-loading semantics (see the
+    # DESIGN INVARIANT block above run_regime_holdout): first WARMUP_BARS
+    # bars of 2022 are NOT signal-eligible, effective holdout sample is
+    # ~8700 bars for WARMUP_BARS ≈ 50. If a later phase modifies the
+    # holdout feed loader to prepend pre-window history, the effective
+    # sample grows to the full 8760 bars and these thresholds —
+    # especially min_total_trades=5 — should be re-validated in the
+    # same PR that introduces the feed change.
     return bool(
         sharpe >= passing_criteria["min_sharpe"]
         and dd <= passing_criteria["max_drawdown"]

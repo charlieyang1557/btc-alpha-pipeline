@@ -62,6 +62,86 @@ def compute_atr_14(df: pd.DataFrame) -> pd.Series:
     return true_range.rolling(14).mean()
 
 
+def compute_bb_upper_24_2(df: pd.DataFrame) -> pd.Series:
+    """Bollinger upper band: SMA(close, 24) + 2 * StdDev(close, 24).
+
+    Uses **population** standard deviation (ddof=0) to match Backtrader's
+    ``bt.indicators.StdDev`` which divides by ``period`` (not ``period-1``).
+    This is critical for exact parity with the hand-written
+    volatility_breakout baseline.
+
+    Inputs: ``close``.
+    Warmup: 23 bars (both ``rolling(24).mean()`` and ``rolling(24).std()``
+    produce NaN for positions 0..22).
+    Output dtype: float64.
+    Null policy: NaN only at positions 0..22.
+
+    Added as a D1 retroactive addition during D5 to support the
+    volatility_breakout baseline (entry condition: close > bb_upper_24_2).
+    """
+    sma = df["close"].rolling(24).mean()
+    std = df["close"].rolling(24).std(ddof=0)
+    return sma + 2.0 * std
+
+
+def compute_zscore_48(df: pd.DataFrame) -> pd.Series:
+    """48-bar z-score of close: (close - SMA(48)) / StdDev(48).
+
+    Uses **population** standard deviation (ddof=0) to match Backtrader's
+    ``bt.indicators.StdDev`` which divides by ``period`` (not ``period-1``).
+    This is critical for exact parity with the hand-written mean_reversion
+    baseline.
+
+    When the rolling standard deviation is below 1e-10 (effectively zero),
+    the z-score is set to 0.0. This matches the hand-written baseline's
+    ``if std_val < 1e-10: return`` guard, which skips the bar (no entry
+    or exit). A z-score of 0.0 produces the same skip behavior:
+    ``0.0 < -2.0`` is False (no entry) and ``0.0 > 0.0`` is False (no
+    exit).
+
+    Inputs: ``close``.
+    Warmup: 47 bars (``rolling(48)`` produces NaN for positions 0..46;
+    first valid at position 47).
+    Output dtype: float64.
+    Null policy: NaN only at positions 0..46.
+
+    Added as a D1 retroactive addition during D5 to support the
+    mean_reversion baseline.
+    """
+    sma = df["close"].rolling(48).mean()
+    std = df["close"].rolling(48).std(ddof=0)
+
+    warmup_mask = sma.isna() | std.isna()
+    flat_mask = (std < 1e-10) & (~warmup_mask)
+
+    with np.errstate(divide="ignore", invalid="ignore"):
+        z = (df["close"] - sma) / std
+
+    z = z.where(~flat_mask, other=0.0)
+    z = z.where(~warmup_mask, other=np.nan)
+    return z
+
+
+SPEC_BB_UPPER_24_2 = FactorSpec(
+    name="bb_upper_24_2",
+    category="volatility",
+    warmup_bars=23,
+    inputs=["close"],
+    output_dtype="float64",
+    compute=compute_bb_upper_24_2,
+    docstring=compute_bb_upper_24_2.__doc__ or "",
+)
+
+SPEC_ZSCORE_48 = FactorSpec(
+    name="zscore_48",
+    category="volatility",
+    warmup_bars=47,
+    inputs=["close"],
+    output_dtype="float64",
+    compute=compute_zscore_48,
+    docstring=compute_zscore_48.__doc__ or "",
+)
+
 SPEC_REALIZED_VOL_24H = FactorSpec(
     name="realized_vol_24h",
     category="volatility",

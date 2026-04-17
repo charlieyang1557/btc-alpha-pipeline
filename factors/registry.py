@@ -341,7 +341,7 @@ _GLOBAL_REGISTRY: FactorRegistry | None = None
 
 
 def get_registry() -> FactorRegistry:
-    """Return the process-wide registry, lazily bootstrapped with the 13
+    """Return the process-wide registry, lazily bootstrapped with the 18
     core factors on first access.
 
     Tests that need a fresh registry should construct ``FactorRegistry()``
@@ -365,7 +365,12 @@ def reset_registry() -> None:
 
 
 def _bootstrap_core_factors(registry: FactorRegistry) -> None:
-    """Register the 13 D1 core factors on the given registry.
+    """Register the 18 core factors on the given registry.
+
+    The original D1 set had 14 factors. D5 (Baselines in DSL) promoted 4
+    additional factors from the deferred list to support the
+    volatility_breakout and mean_reversion baselines:
+    ``close``, ``sma_24``, ``bb_upper_24_2``, ``zscore_48``.
 
     Factor modules are imported here (not at top-level) to avoid import
     cycles with anything that may eventually import ``factors/__init__.py``.
@@ -374,6 +379,7 @@ def _bootstrap_core_factors(registry: FactorRegistry) -> None:
     from factors import (  # noqa: PLC0415
         momentum,
         moving_averages,
+        price,
         returns,
         structural,
         volatility,
@@ -381,13 +387,17 @@ def _bootstrap_core_factors(registry: FactorRegistry) -> None:
     )
 
     for spec in (
+        price.SPEC_CLOSE,
         returns.SPEC_RETURN_1H,
         returns.SPEC_RETURN_24H,
         returns.SPEC_RETURN_168H,
         moving_averages.SPEC_SMA_20,
+        moving_averages.SPEC_SMA_24,
         moving_averages.SPEC_SMA_50,
         moving_averages.SPEC_EMA_12,
         moving_averages.SPEC_EMA_26,
+        volatility.SPEC_BB_UPPER_24_2,
+        volatility.SPEC_ZSCORE_48,
         volatility.SPEC_REALIZED_VOL_24H,
         volatility.SPEC_ATR_14,
         momentum.SPEC_RSI_14,

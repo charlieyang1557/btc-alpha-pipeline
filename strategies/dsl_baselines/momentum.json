@@ -1,0 +1,19 @@
+{
+  "name": "momentum_24h",
+  "description": "Buy when 24h return exceeds +2%; exit when return drops below 0%",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.02}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": "<", "value": 0.0}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity"
+}

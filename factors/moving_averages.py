@@ -63,6 +63,20 @@ def compute_ema_26(df: pd.DataFrame) -> pd.Series:
     return df["close"].ewm(span=26, adjust=False).mean()
 
 
+def compute_sma_24(df: pd.DataFrame) -> pd.Series:
+    """Simple moving average of close over 24 bars.
+
+    Inputs: ``close``.
+    Warmup: 23 bars (``rolling(24)`` is NaN for positions 0..22).
+    Output dtype: float64.
+    Null policy: NaN only at positions 0..22.
+
+    Added as a D1 retroactive addition during D5 to support the
+    volatility_breakout baseline (exit condition: close < sma_24).
+    """
+    return df["close"].rolling(24).mean()
+
+
 SPEC_SMA_20 = FactorSpec(
     name="sma_20",
     category="moving_averages",
@@ -81,6 +95,16 @@ SPEC_SMA_50 = FactorSpec(
     output_dtype="float64",
     compute=compute_sma_50,
     docstring=compute_sma_50.__doc__ or "",
+)
+
+SPEC_SMA_24 = FactorSpec(
+    name="sma_24",
+    category="moving_averages",
+    warmup_bars=23,
+    inputs=["close"],
+    output_dtype="float64",
+    compute=compute_sma_24,
+    docstring=compute_sma_24.__doc__ or "",
 )
 
 SPEC_EMA_12 = FactorSpec(

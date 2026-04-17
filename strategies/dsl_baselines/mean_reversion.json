@@ -1,0 +1,19 @@
+{
+  "name": "mean_reversion_z48",
+  "description": "Buy when 48-bar z-score drops below -2 (oversold); exit on reversion to mean",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "zscore_48", "op": "<", "value": -2.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "zscore_48", "op": ">", "value": 0.0}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity"
+}

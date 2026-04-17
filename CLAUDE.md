@@ -375,8 +375,8 @@ The canonical dataset (`data/raw/btcusdt_1h.parquet`) has these stable, verified
 
 ## Phase Marker (update as work progresses)
 
-- **Current phase:** Phase 2A in progress — D1, D2, D3 signed off; **D4 (Regime Holdout Integration) in progress**
-- **Completed:** Phase 0, Phase 1A, Phase 1B; Phase 2A D1 (factor library), D2 (DSL + compiler), D3 (hypothesis hash + dedup)
+- **Current phase:** Phase 2A in progress — D1, D2, D3, D4 signed off; **D5 (Baselines in DSL — sign-off gate) in progress**
+- **Completed:** Phase 0, Phase 1A, Phase 1B; Phase 2A D1 (factor library), D2 (DSL + compiler), D3 (hypothesis hash + dedup), D4 (regime holdout integration)
 - **Active blueprint:** `PHASE2_BLUEPRINT.md` (v2)
 - **Current batch_id:** N/A (Phase 2B not yet started)
 - **Current UTC-month spend:** query via `python -m agents.orchestrator --status` (Phase 2B only)

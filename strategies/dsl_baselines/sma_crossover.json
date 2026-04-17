@@ -1,0 +1,19 @@
+{
+  "name": "sma_crossover_20_50",
+  "description": "Buy when SMA(20) crosses above SMA(50); sell on death cross",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "sma_20", "op": "crosses_above", "value": "sma_50"}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "sma_20", "op": "crosses_below", "value": "sma_50"}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity"
+}

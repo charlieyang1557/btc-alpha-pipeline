@@ -154,18 +154,19 @@ class TestRegistration:
 
 
 # ---------------------------------------------------------------------------
-# Core factors — 14 registered
+# Core factors — 18 registered (14 original D1 + 4 D5 retroactive additions)
 # ---------------------------------------------------------------------------
 
 EXPECTED_FACTORS = [
-    "atr_14", "day_of_week", "ema_12", "ema_26", "hour_of_day",
-    "macd_hist", "realized_vol_24h", "return_168h", "return_1h",
-    "return_24h", "rsi_14", "sma_20", "sma_50", "volume_zscore_24h",
+    "atr_14", "bb_upper_24_2", "close", "day_of_week", "ema_12", "ema_26",
+    "hour_of_day", "macd_hist", "realized_vol_24h", "return_168h",
+    "return_1h", "return_24h", "rsi_14", "sma_20", "sma_24", "sma_50",
+    "volume_zscore_24h", "zscore_48",
 ]
 
 
 class TestCoreFactors:
-    """All 14 core factors are registered and computable."""
+    """All 18 core factors are registered and computable."""
 
     def test_all_registered(self, registry):
         assert registry.list_names() == EXPECTED_FACTORS
@@ -261,6 +262,53 @@ class TestKnownValues:
         post = z.iloc[23:]
         assert post.isna().sum() == 0
         assert np.isfinite(post).all()
+
+    # --- D5 retroactive additions ---
+
+    def test_close_identity(self, synthetic_200):
+        from factors.price import compute_close
+        result = compute_close(synthetic_200)
+        pd.testing.assert_series_equal(
+            result, synthetic_200["close"].astype("float64"), check_names=False
+        )
+
+    def test_sma_24_at_bar_23(self, synthetic_200):
+        from factors.moving_averages import compute_sma_24
+        s = compute_sma_24(synthetic_200)
+        c = synthetic_200["close"]
+        expected = c.iloc[0:24].mean()
+        assert s.iloc[23] == pytest.approx(expected)
+
+    def test_bb_upper_24_2_at_bar_23(self, synthetic_200):
+        from factors.volatility import compute_bb_upper_24_2
+        bb = compute_bb_upper_24_2(synthetic_200)
+        c = synthetic_200["close"]
+        window = c.iloc[0:24]
+        expected = window.mean() + 2.0 * window.std(ddof=0)
+        assert bb.iloc[23] == pytest.approx(expected)
+
+    def test_zscore_48_at_bar_47(self, synthetic_200):
+        from factors.volatility import compute_zscore_48
+        z = compute_zscore_48(synthetic_200)
+        c = synthetic_200["close"]
+        window = c.iloc[0:48]
+        mean = window.mean()
+        std = window.std(ddof=0)
+        expected = (c.iloc[47] - mean) / std
+        assert z.iloc[47] == pytest.approx(expected)
+
+    def test_zscore_48_flat_window_returns_zero(self):
+        """When all closes are identical (std=0), zscore_48 returns 0.0."""
+        from factors.volatility import compute_zscore_48
+        idx = pd.date_range("2024-01-01", periods=60, freq="1h", tz="UTC")
+        flat = pd.DataFrame({
+            "open_time_utc": idx,
+            "open": 100.0, "high": 101.0, "low": 99.0,
+            "close": 100.0, "volume": 1000.0,
+        })
+        z = compute_zscore_48(flat)
+        assert z.iloc[48] == 0.0
+        assert z.iloc[59] == 0.0
 
 
 # ---------------------------------------------------------------------------
