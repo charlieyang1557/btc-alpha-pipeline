@@ -22,10 +22,27 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
+
+
+def _load_dotenv(path: Path | None = None) -> None:
+    """Load .env file into os.environ (stdlib-only, no python-dotenv)."""
+    env_path = path or Path(__file__).resolve().parents[2] / ".env"
+    if not env_path.is_file():
+        return
+    for line in env_path.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        key = key.strip()
+        value = value.strip().strip("'\"")
+        if key and key not in os.environ:
+            os.environ[key] = value
 
 from agents.orchestrator.budget_ledger import BudgetLedger
 from agents.orchestrator.ingest import (
@@ -52,6 +69,7 @@ LEDGER_PATH = Path("agents/spend_ledger.db")
 
 def run_stage2a(*, dry_run: bool = False) -> dict:
     """Execute the Stage 2a smoke run. Returns a summary dict."""
+    _load_dotenv()
     registry = get_registry()
     batch_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc)
