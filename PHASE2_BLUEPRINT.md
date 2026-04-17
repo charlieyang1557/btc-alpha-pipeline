@@ -17,7 +17,7 @@ cheat on validation or test data, and produces an auditable shortlist that a
 human reviews before any strategy advances toward paper trading.
 
 **What "done" looks like for Phase 2A (infrastructure):**
-A factor library with 13 core factors, a strategy DSL that compiles to
+A factor library with 14 core factors, a strategy DSL that compiles to
 Backtrader, a deterministic hypothesis hash for deduplication, and a regime
 holdout (2022) wired into the engine and registry. Zero LLM calls at this
 stage.
@@ -58,7 +58,7 @@ Claude API call until 2A is green.
 
 All 7 conditions must pass before Phase 2A is considered complete:
 
-1. ✅ Core factor registry complete (minimum 12, target 13), each with docstring
+1. ✅ Core factor registry complete (14 total), each with docstring
    specifying inputs, computation, warmup period, output dtype, and null policy
 2. ✅ Every factor has a unit test covering: warmup correctness, at least one
    known-value assertion against raw OHLCV, and NaN policy compliance
@@ -131,7 +131,7 @@ dependency.
 Create `factors/registry.py` with a `FactorRegistry` class. Each factor
 implemented in `factors/<category>.py` and decorated with `@register_factor`.
 
-**Core factors (required for D1 sign-off, 13 total):**
+**Core factors (required for D1 sign-off, 14 total):**
 
 | Category | File | Factor Name |
 |----------|------|-------------|
@@ -251,7 +251,7 @@ python -m factors.build_features --force-rebuild
 **Tests (`tests/test_factors.py`):**
 - Registry registration works, duplicate names rejected
 - Registry rejects lambdas and nested functions at registration time
-- Each of the 13 factors computes without error on a 200-bar synthetic sample
+- Each of the 14 factors computes without error on a 200-bar synthetic sample
 - Each factor produces correct values at a hand-picked index (e.g. `sma_20` at
   row 20 equals `close.iloc[0:20].mean()`)
 - `max_warmup([...])` returns correct maximum across inputs
@@ -1083,7 +1083,7 @@ Add new phase markers and tracking:
 - ❌ Real-time streaming features (Phase 4+)
 - ❌ Full Bailey-Lopez de Prado DSR (heuristic remains sufficient)
 - ❌ Automated paper trading based on Phase 2 winners (Phase 4)
-- ❌ More than 13 factors in initial registry (scope creep; add in Phase 2.1)
+- ❌ More than 14 factors in initial registry (scope creep; add in Phase 2.1)
 - ❌ Agent self-improvement loops, memory, or fine-tuning
 - ❌ Critic refinement verdict (removed from v2; consider for Phase 2.5)
 - ❌ Semantic deduplication via LLM (Haiku reserved for Phase 2.5 if factor
@@ -1197,7 +1197,7 @@ Do not combine deliverables into a single prompt. Every deliverable ships with:
 5. `feature_version` defined as SHA256 of canonical metadata + compute source
 6. `crosses_above/below` must use CrossOver or explicit two-bar form
 7. Spend ledger uses pre-flight charge pattern
-8. Factor library: 13 core (was 20)
+8. Factor library: 14 core (was 20)
 9. Proposer context: allow-listed fields only
 10. DSL `value` str validator (must be registered factor name)
 11. Crossing operators: both factor-vs-scalar and factor-vs-factor supported
