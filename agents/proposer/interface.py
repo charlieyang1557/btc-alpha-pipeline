@@ -63,9 +63,9 @@ class BatchContext:
             "crosses_below")`` at Phase 2B). The Proposer MAY NOT use any
             operator outside this list.
         theme_slot: Optional rotating theme identifier for this call
-            (integer index into D8's ``THEMES`` list). D6 accepts and
-            forwards but does NOT decide rotation strategy; the
-            orchestrator owns theme assignment.
+            (integer index into :data:`agents.themes.THEMES`). D6
+            accepts and forwards but does NOT decide rotation strategy;
+            the orchestrator owns theme assignment.
         budget_remaining: ``{"batch_usd": float, "monthly_usd": float}``
             snapshot at call time. Informational; the budget gate is
             enforced pre-call by the orchestrator, not by the backend.

@@ -12,12 +12,14 @@ import pytest
 
 from agents.proposer import BatchContext
 from agents.proposer.prompt_builder import (
+    FORBIDDEN_PATTERNS,
     FORBIDDEN_SUBSTRINGS,
     ProposerPrompt,
     THEMES,
     audit_prompt_for_leakage,
     build_prompt,
 )
+from agents.themes import THEMES as THEMES_CANONICAL
 from factors.registry import get_registry
 
 
@@ -84,14 +86,14 @@ def test_clean_prompt_has_empty_audit(registry):
     assert audit_prompt_for_leakage(prompt) == []
 
 
-def test_audit_detects_a_known_forbidden_substring():
+def test_audit_detects_a_known_forbidden_pattern():
     dirty = ProposerPrompt(
         system="You may use 2024-01 results as a reference.",
         user="",
         factor_menu="",
     )
     findings = audit_prompt_for_leakage(dirty)
-    assert "2024-" in findings
+    assert any("2024" in f for f in findings)
 
 
 def test_audit_is_case_insensitive():
@@ -101,7 +103,7 @@ def test_audit_is_case_insensitive():
         factor_menu="",
     )
     findings = audit_prompt_for_leakage(dirty)
-    assert "bear_2022" in findings
+    assert any("bear" in f for f in findings)
 
 
 def test_audit_detects_leaderboard_contamination():
@@ -110,7 +112,8 @@ def test_audit_detects_leaderboard_contamination():
         user="See the leaderboard for top performers.",
         factor_menu="",
     )
-    assert "leaderboard" in audit_prompt_for_leakage(dirty)
+    findings = audit_prompt_for_leakage(dirty)
+    assert any("leaderboard" in f for f in findings)
 
 
 def test_audit_clean_across_many_positions_and_themes(registry):
@@ -148,13 +151,64 @@ def test_audit_clean_when_approved_examples_are_pure_dsl(registry):
 
 
 def test_forbidden_list_includes_all_phase2_leakage_surfaces():
-    """If this test fails after a FORBIDDEN_SUBSTRINGS edit, the hard
+    """If this test fails after a FORBIDDEN_PATTERNS edit, the hard
     constraint in CLAUDE.md has been weakened — revisit review."""
-    required_tokens = {
-        "2022-", "2024-", "2025-",
-        "bear_2022", "regime_holdout",
-        "holdout_sharpe", "validation_sharpe", "test_sharpe",
-        "leaderboard",
-    }
-    missing = required_tokens - set(FORBIDDEN_SUBSTRINGS)
-    assert not missing, f"missing forbidden tokens: {missing}"
+    joined = " ".join(FORBIDDEN_PATTERNS)
+    for token in ("2022", "2024", "2025", "bear", "regime",
+                  "holdout", "validation", "test",
+                  "leaderboard", "pending", "dsr",
+                  "out", "sample", "oos", "sharpe"):
+        assert token in joined, f"missing coverage for {token!r}"
+
+
+def test_themes_reexport_matches_canonical():
+    """prompt_builder's THEMES must be the canonical agents.themes.THEMES."""
+    assert THEMES is THEMES_CANONICAL
+
+
+# ---------------------------------------------------------------------------
+# Adversarial leakage cases (Issue 2 regression suite)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "snippet,should_fire",
+    [
+        # Year variants the old substring approach missed
+        ("results from 2022:", True),
+        ("year 2022.", True),
+        ("(2022)", True),
+        ("2022,Q1", True),
+        ("in 2022\n", True),
+        ('"2022"', True),
+        ("2022\there", True),
+        ("2024-01", True),
+        ("2025 Q3", True),
+        # Regime / holdout wording variants
+        ("bear_2022", True),
+        ("bear market data", True),
+        ("bear regime signal", True),
+        ("regime_holdout", True),
+        ("holdout data", True),
+        # OOS aliases
+        ("out_of_sample sharpe", True),
+        ("out-of-sample test", True),
+        ("oos_sharpe", True),
+        ("oos-return", True),
+        # Metric name variants
+        ("validation period", True),
+        ("test period", True),
+        ("pending_dsr", True),
+        # Clean text that must NOT fire
+        ("strategy #2023 is great", False),
+        ("return_24h > 0.02", False),
+        ("hypothesis testing framework", False),
+        ("factor_momentum_30", False),
+    ],
+)
+def test_adversarial_leakage_cases(snippet, should_fire):
+    findings = audit_prompt_for_leakage(snippet)
+    if should_fire:
+        assert len(findings) > 0, f"expected leak for {snippet!r} but got none"
+    else:
+        assert len(findings) == 0, f"false positive for {snippet!r}: {findings}"

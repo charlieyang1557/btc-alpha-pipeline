@@ -28,6 +28,12 @@ set; the rest arrive with D7 Critic and D8 full batch loop):
                                 into the loop. When D7/D8 land, this
                                 state is demoted to transient and the
                                 hypothesis flows onward.
+    - ``backend_empty_output``— the backend returned zero candidates
+                                for a call slot. Under Sonnet this
+                                means a failed generation (e.g., model
+                                returned empty/refusal). Counts as
+                                one ``hypotheses_attempted`` so the
+                                DSR denominator is honest.
 
 CONTRACT BOUNDARY: this module imports only from ``agents.proposer``
 and ``agents.hypothesis_hash`` plus stdlib + pydantic. It MUST NOT
@@ -76,12 +82,14 @@ INVALID_DSL = "invalid_dsl"
 REJECTED_COMPLEXITY = "rejected_complexity"
 DUPLICATE = "duplicate"
 PENDING_BACKTEST = "pending_backtest"
+BACKEND_EMPTY_OUTPUT = "backend_empty_output"
 
 D6_STAGE1_LIFECYCLE_STATES: tuple[str, ...] = (
     INVALID_DSL,
     REJECTED_COMPLEXITY,
     DUPLICATE,
     PENDING_BACKTEST,
+    BACKEND_EMPTY_OUTPUT,
 )
 
 
@@ -243,7 +251,27 @@ def ingest_candidate(
 def ingest_output(
     state: BatchIngestState, output: ProposerOutput
 ) -> list[HypothesisRecord]:
-    """Ingest every candidate from one :class:`ProposerOutput` in order."""
+    """Ingest every candidate from one :class:`ProposerOutput` in order.
+
+    If ``output.candidates`` is empty, one ``backend_empty_output``
+    record is emitted so the call slot still counts toward
+    ``hypotheses_attempted`` and the DSR denominator.
+    """
+    if not output.candidates:
+        state.hypotheses_attempted += 1
+        position = state.hypotheses_attempted
+        record = HypothesisRecord(
+            batch_id=state.batch_id,
+            position=position,
+            lifecycle_state=BACKEND_EMPTY_OUTPUT,
+            hypothesis_hash=None,
+            error_kind="empty_output",
+            parse_error=None,
+            provenance=dict(output.telemetry),
+        )
+        state.lifecycle_counts[BACKEND_EMPTY_OUTPUT] += 1
+        state.records.append(record)
+        return [record]
     return [ingest_candidate(state, c) for c in output.candidates]
 
 
@@ -295,6 +323,7 @@ def assert_lifecycle_invariant_at_batch_close(state: BatchIngestState) -> None:
 
 
 __all__ = [
+    "BACKEND_EMPTY_OUTPUT",
     "BatchIngestState",
     "D6_STAGE1_LIFECYCLE_STATES",
     "DUPLICATE",

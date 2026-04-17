@@ -18,6 +18,7 @@ import pytest
 
 from agents.hypothesis_hash import hash_dsl
 from agents.orchestrator.ingest import (
+    BACKEND_EMPTY_OUTPUT,
     BatchIngestState,
     D6_STAGE1_LIFECYCLE_STATES,
     DUPLICATE,
@@ -30,6 +31,7 @@ from agents.orchestrator.ingest import (
     ingest_output,
     ingest_outputs,
 )
+from agents.proposer.interface import ProposerOutput
 from agents.proposer import (
     BatchContext,
     InvalidCandidate,
@@ -226,10 +228,29 @@ def test_invariant_holds_on_empty_batch(batch_id):
 
 
 def test_d6_stage1_lifecycle_states_is_closed_set():
-    """The Stage 1 lifecycle set is exactly the four expected values."""
+    """The Stage 1 lifecycle set is exactly the five expected values."""
     assert set(D6_STAGE1_LIFECYCLE_STATES) == {
         INVALID_DSL, REJECTED_COMPLEXITY, DUPLICATE, PENDING_BACKTEST,
+        BACKEND_EMPTY_OUTPUT,
     }
+
+
+# ---------------------------------------------------------------------------
+# Empty ProposerOutput accounting (Issue 1)
+# ---------------------------------------------------------------------------
+
+
+def test_empty_proposer_output_counts_as_one_attempt(batch_id):
+    """A Sonnet call yielding zero candidates is not a free retry."""
+    state = BatchIngestState(batch_id=batch_id)
+    empty_output = ProposerOutput(candidates=())
+    records = ingest_output(state, empty_output)
+    assert state.hypotheses_attempted == 1
+    assert len(records) == 1
+    assert records[0].lifecycle_state == BACKEND_EMPTY_OUTPUT
+    assert state.lifecycle_counts[BACKEND_EMPTY_OUTPUT] == 1
+    assert records[0].error_kind == "empty_output"
+    assert_lifecycle_invariant_at_batch_close(state)
 
 
 # ---------------------------------------------------------------------------

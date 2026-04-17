@@ -23,59 +23,64 @@ asserts emptiness across a range of contexts.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 
 from agents.proposer.interface import BatchContext
+from agents.themes import THEMES
 from factors.registry import FactorRegistry, get_registry
 
 
-# Canonical D8 theme list. D6 accepts ``theme_slot`` from
-# :class:`BatchContext` and indexes this list; it does NOT decide
-# rotation strategy. See CLAUDE.md "Theme rotation" rule.
-THEMES: tuple[str, ...] = (
-    "momentum",
-    "mean_reversion",
-    "volatility_regime",
-    "volume_divergence",
-    "calendar_effect",
-    "multi_factor_combination",
-)
+# ---------------------------------------------------------------------------
+# Leakage-detection patterns (regex, case-insensitive)
+# ---------------------------------------------------------------------------
 
-
-# Substrings whose appearance anywhere in a constructed prompt
-# constitutes leakage. Matched case-insensitively.
-FORBIDDEN_SUBSTRINGS: tuple[str, ...] = (
-    # Holdout / validation / test period date markers
-    "2022-",
-    "2022/",
-    "2022 ",
-    "bear_2022",
-    "regime_holdout",
-    "regime holdout",
-    "2024-",
-    "2024/",
-    "2024 ",
-    "2025-",
-    "2025/",
-    "2025 ",
-    # Leaked metric names
-    "holdout_sharpe",
-    "holdout_return",
-    "holdout_drawdown",
-    "holdout_max_dd",
-    "holdout_total_return",
-    "validation_sharpe",
-    "validation_return",
-    "validation_drawdown",
-    "test_sharpe",
-    "test_return",
-    "test_drawdown",
+# Each pattern is a raw regex string compiled once at import time.
+# Word-boundary (\b) matching replaces the old substring approach so
+# variants like "2022:", "2022.", "2022\n", "(2022)", or bare "2022"
+# at EOL are all caught.
+FORBIDDEN_PATTERNS: tuple[str, ...] = (
+    # Year markers for holdout (2022), validation (2024), test (2025)
+    r"\b2022\b",
+    r"\b2024\b",
+    r"\b2025\b",
+    # Regime labels and identifiers
+    r"\bbear[_\s]2022\b",
+    r"\bregime[_\s]holdout\b",
+    r"\bbear\s+(market|regime)\b",
+    # Bare "holdout" catches compound variants not already covered
+    r"\bholdout\b",
+    # Leaked metric names (holdout / validation / test)
+    r"\bholdout[_\s]sharpe\b",
+    r"\bholdout[_\s]return\b",
+    r"\bholdout[_\s]drawdown\b",
+    r"\bholdout[_\s]max[_\s]dd\b",
+    r"\bholdout[_\s]total[_\s]return\b",
+    r"\bvalidation[_\s]sharpe\b",
+    r"\bvalidation[_\s]return\b",
+    r"\bvalidation[_\s]drawdown\b",
+    r"\bvalidation\s+period\b",
+    r"\btest[_\s]sharpe\b",
+    r"\btest[_\s]return\b",
+    r"\btest[_\s]drawdown\b",
+    r"\btest\s+period\b",
+    # Out-of-sample / OOS aliases
+    r"\bout[_\s\-]of[_\s\-]sample\b",
+    r"\boos[_\s\-]\w+",
     # Downstream aggregate artifacts
-    "leaderboard",
-    "dsr_threshold",
-    "dsr_failed",
-    "shortlisted",
+    r"\bleaderboard\b",
+    r"\bdsr[_\s]threshold\b",
+    r"\bdsr[_\s]failed\b",
+    r"\bshortlisted\b",
+    r"\bpending[_\s]dsr\b",
 )
+
+_COMPILED_FORBIDDEN: tuple[re.Pattern[str], ...] = tuple(
+    re.compile(p, re.IGNORECASE) for p in FORBIDDEN_PATTERNS
+)
+
+# Legacy alias kept for any downstream code that referenced the old name.
+FORBIDDEN_SUBSTRINGS = FORBIDDEN_PATTERNS
 
 
 @dataclass(frozen=True)
@@ -186,21 +191,27 @@ def build_prompt(
 def audit_prompt_for_leakage(
     prompt: ProposerPrompt | str,
     *,
-    forbidden: tuple[str, ...] = FORBIDDEN_SUBSTRINGS,
+    forbidden: tuple[str, ...] = FORBIDDEN_PATTERNS,
 ) -> list[str]:
-    """Return a list of forbidden substrings that appear in the prompt.
+    """Return forbidden patterns that match anywhere in the prompt text.
 
-    An empty list means the prompt is clean. The check is
-    case-insensitive and scans the full concatenated prompt text
-    (``system + user + factor_menu``). A non-empty return value is a
-    hard leak and the test suite asserts against it.
+    An empty list means the prompt is clean. Each entry is the regex
+    pattern string that fired. The check is case-insensitive and scans
+    the full concatenated prompt text (``system + user + factor_menu``).
+
+    If ``forbidden`` is overridden by the caller (e.g. with additional
+    patterns), those strings are compiled on the fly.
     """
     text = prompt.all_text() if isinstance(prompt, ProposerPrompt) else prompt
-    lowered = text.lower()
-    return [s for s in forbidden if s.lower() in lowered]
+    if forbidden is FORBIDDEN_PATTERNS:
+        compiled = _COMPILED_FORBIDDEN
+    else:
+        compiled = tuple(re.compile(p, re.IGNORECASE) for p in forbidden)
+    return [p.pattern for p in compiled if p.search(text)]
 
 
 __all__ = [
+    "FORBIDDEN_PATTERNS",
     "FORBIDDEN_SUBSTRINGS",
     "ProposerPrompt",
     "THEMES",
