@@ -47,6 +47,7 @@ phase1 = [
 phase2 = [
     "anthropic>=0.40.0",
     "vectorbt>=0.26.0",
+    "pydantic~=2.0",           # DSL schema validation (D2)
 ]
 
 [tool.ruff]
