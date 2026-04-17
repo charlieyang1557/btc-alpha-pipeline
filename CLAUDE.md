@@ -69,11 +69,16 @@ btc-alpha-pipeline/
 │   ├── volume.py
 │   └── structural.py
 ├── agents/              # AI hypothesis + strategy generation (Phase 2B)
-│   ├── hypothesis_hash.py      # Canonical DSL hash + dedup
-│   ├── proposer.py             # Claude Sonnet hypothesis generator
-│   ├── critic.py               # Claude Sonnet hypothesis gate
-│   ├── orchestrator.py         # Main batch loop + lifecycle tracker
-│   └── spend_ledger.db         # Crash-safe budget accounting (Phase 2B)
+│   ├── hypothesis_hash.py      # Canonical DSL hash + dedup (Phase 2A D3)
+│   ├── proposer/               # Phase 2B D6 — Proposer agent (stub + Sonnet)
+│   │   ├── interface.py        # ProposerBackend Protocol + I/O schemas
+│   │   ├── stub_backend.py     # Deterministic stub backend (Stage 1)
+│   │   └── prompt_builder.py   # Prompt construction + leakage audit helpers
+│   ├── orchestrator/           # Phase 2B D8 — main batch loop
+│   │   ├── ingest.py           # ProposerOutput → lifecycle state assignment
+│   │   └── budget_ledger.py    # Crash-safe pre-charge SQLite ledger
+│   ├── critic.py               # Claude Sonnet hypothesis gate (D7)
+│   └── spend_ledger.db         # SQLite file owned by orchestrator/budget_ledger.py
 ├── risk/                # Position sizing and capital allocation (Phase 3+)
 ├── paper_trading/       # Simulated live execution (Phase 4)
 ├── tests/               # Automated test suite
@@ -375,8 +380,8 @@ The canonical dataset (`data/raw/btcusdt_1h.parquet`) has these stable, verified
 
 ## Phase Marker (update as work progresses)
 
-- **Current phase:** Phase 2A in progress — D1, D2, D3, D4 signed off; **D5 (Baselines in DSL — sign-off gate) in progress**
-- **Completed:** Phase 0, Phase 1A, Phase 1B; Phase 2A D1 (factor library), D2 (DSL + compiler), D3 (hypothesis hash + dedup), D4 (regime holdout integration)
-- **Active blueprint:** `PHASE2_BLUEPRINT.md` (v2)
-- **Current batch_id:** N/A (Phase 2B not yet started)
-- **Current UTC-month spend:** query via `python -m agents.orchestrator --status` (Phase 2B only)
+- **Current phase:** Phase 2A closed (signed off 2026-04-17); **Phase 2B D6 Stage 1 (Proposer dry-run plumbing) in progress** — stub backend only, zero Claude API calls
+- **Completed:** Phase 0, Phase 1A, Phase 1B; Phase 2A (D1-D5 all signed off)
+- **Active blueprint:** `Blueprint/PHASE2_BLUEPRINT.md` (v2)
+- **Current batch_id:** N/A (no live batch run yet)
+- **Current UTC-month spend:** $0.00 (dry-run stub only; no API calls until D6 Stage 2)
