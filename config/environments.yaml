@@ -3,37 +3,63 @@
 # DO NOT MODIFY without explicit human approval and version bump.
 # AI agents may READ this file but NEVER propose modifications.
 # Changing date splits mid-research invalidates all prior experiment results.
-# Last reviewed: 2026-04-15
+# Last reviewed: 2026-04-17 (Phase 2A D4 — bumped v1 → v2 for regime holdout)
 
-version: "v1"
+version: "v2"
 
 # ============================================================
-# DATE SPLITS
+# DATE SPLITS (v2 — Phase 2)
 # ============================================================
 # All dates are inclusive, UTC, date-only (no time component).
-# Strategies may ONLY optimize parameters using training data.
+# v2 introduces a disjoint train_windows list (skipping 2022) plus a
+# fixed regime_holdout block. The 2022 bear market is held out from
+# every training window so it can serve as a regime stress test the
+# AI never sees during hypothesis generation.
+#
+# Strategies may ONLY optimize parameters using train_windows data.
+# regime_holdout is consumed orchestrator-internal only (no CLI).
 # Validation is for model selection / early stopping only.
 # Test is touched ONCE for final evaluation per strategy.
 
 splits:
-  training:
-    start: "2020-01-01"
-    end: "2023-12-31"
-    purpose: "Strategy development, parameter optimization, feature engineering"
-    notes: "Covers COVID crash, 2021 bull run, 2022 bear market, 2023 recovery"
+  # --- Disjoint train ranges (2022 deliberately excluded) ---
+  # Each entry is [start_inclusive, end_inclusive], date-only UTC.
+  # Walk-forward sub-windows are generated from each range
+  # independently. 2022 bars are NEVER part of any training window.
+  train_windows:
+    - ["2020-01-01", "2021-12-31"]
+    - ["2023-01-01", "2023-12-31"]
 
+  # --- Regime holdout (2022 bear market) ---
+  # Orchestrator-internal only. The Proposer/Critic NEVER see results
+  # from this block in any prompt context (CLAUDE.md hard constraint).
+  # passing_criteria is an AND gate: ALL four must be satisfied for
+  # regime_holdout_passed = True.
+  regime_holdout:
+    start: "2022-01-01"
+    end: "2022-12-31"
+    label: "bear_2022"
+    passing_criteria:
+      min_sharpe: -0.5            # allow loss but not crash
+      max_drawdown: 0.25          # single DD ≤ 25%
+      min_total_return: -0.15     # full year loss ≤ 15%
+      min_total_trades: 5         # must actually trade
+
+  # --- Validation (placeholder for D7+; no execution path in D4) ---
   validation:
     start: "2024-01-01"
     end: "2024-12-31"
-    purpose: "Hyperparameter selection, early stopping, model comparison"
+    purpose: "Hyperparameter selection, leaderboard ranking (Phase 2B+)"
     notes: "BTC ETF approval era, halving year"
 
+  # --- Test (placeholder for final OOS; no execution path in D4) ---
   test:
     start: "2025-01-01"
     end: "2025-12-31"
     purpose: "Final out-of-sample evaluation ONLY. Touch once per strategy."
     notes: "Post-halving period"
 
+  # --- Live forward (placeholder for paper/live trading in Phase 4+) ---
   live_forward:
     start: "2026-01-01"
     end: null  # ongoing
@@ -43,23 +69,30 @@ splits:
 # ============================================================
 # WALK-FORWARD CONFIGURATION (Phase 1+)
 # ============================================================
-# When running walk-forward optimization, use these rolling windows.
+# Rolling sub-window parameters applied independently within each
+# train_windows range. A range shorter than (train + test) months
+# produces zero sub-windows for that range.
 
 walk_forward:
   train_window_months: 12
   test_window_months: 3
   step_months: 3
-  # Example sequence:
+  # Example v2 sequence over the 2020-2021 range:
   #   Train: 2020-01 to 2020-12 → Test: 2021-01 to 2021-03
   #   Train: 2020-04 to 2021-03 → Test: 2021-04 to 2021-06
-  #   ... and so on
+  #   Train: 2020-07 to 2021-06 → Test: 2021-07 to 2021-09
+  #   Train: 2020-10 to 2021-09 → Test: 2021-10 to 2021-12
+  # The 2023 range alone is too short for these defaults; orchestrators
+  # that need sub-windows from 2023 should pass smaller wf params via
+  # the engine API.
 
 # ============================================================
 # RULES
 # ============================================================
 
 rules:
-  - "Agent-generated strategies may ONLY access data within the training split during development"
+  - "Agent-generated strategies may ONLY access data within train_windows during development"
+  - "Regime holdout (2022) is orchestrator-internal — never expose a CLI flag and never include holdout results in any LLM prompt"
   - "Validation split results may inform which strategies advance, but NOT how they are parameterized"
   - "Test split is a ONE-SHOT evaluation. If results are used to modify the strategy, the test becomes validation and a new test period must be designated"
   - "Walk-forward windows must be version-tracked in experiment_registry alongside split version"

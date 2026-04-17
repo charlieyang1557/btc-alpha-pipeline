@@ -300,6 +300,37 @@ Any library not listed above requires explicit human approval before use. Standa
 - Use `pathlib.Path` for all file paths, never string concatenation
 - Config loading: use a shared utility that reads YAML once and passes as dict
 
+## Contract Markers
+
+Three grep-discoverable comment markers document contract obligations in code:
+
+- `CONTRACT GAP` — a test or mechanism that should exist but doesn't yet,
+  with a trigger condition that will require adding it (e.g., "widening
+  this Literal requires adding test_X in the same PR"). Use
+  `rg "CONTRACT GAP"` to list all pending gaps.
+- `CONTRACT BOUNDARY` — a deliberate separation between two mechanisms
+  that look mergeable but must stay separate (e.g., D2 manifest
+  canonicalization vs D3 dedup canonicalization). Mutual cross-references
+  required.
+- `DESIGN INVARIANT` — a non-obvious design decision that future readers
+  might mistake for a bug (e.g., cross operators delay first-firable bar
+  by 1). Explain the rationale at the site.
+
+When introducing a contract obligation that can't be closed immediately,
+tag it with one of these markers rather than a TODO or a checklist entry
+in a separate document. Markers at the code site are self-maintaining;
+external checklists are not.
+
+Use these markers **sparingly**, for true contract obligations and
+design boundaries — not for routine implementation notes. If the marker
+points at something that will be fixed in the next PR, it's a regular
+TODO, not a contract marker. Contract markers exist for obligations
+whose trigger condition is **external to the current PR's scope**
+(e.g., "when Literal X is widened", "when parallel execution is
+added", "when a later phase begins"). Prefer placing the marker at the
+exact code site where the invariant or future-trigger condition matters,
+not at a distant wrapper or caller.
+
 ## Running the Pipeline
 
 ```bash
@@ -344,8 +375,8 @@ The canonical dataset (`data/raw/btcusdt_1h.parquet`) has these stable, verified
 
 ## Phase Marker (update as work progresses)
 
-- **Current phase:** Phase 2A in progress (AI-free infrastructure: factor library → DSL → hash → regime holdout → DSL baselines)
-- **Completed:** Phase 0, Phase 1A, Phase 1B
-- **Active blueprint:** `PHASE2_BLUEPRINT_v2.md`
+- **Current phase:** Phase 2A in progress — D1, D2, D3 signed off; **D4 (Regime Holdout Integration) in progress**
+- **Completed:** Phase 0, Phase 1A, Phase 1B; Phase 2A D1 (factor library), D2 (DSL + compiler), D3 (hypothesis hash + dedup)
+- **Active blueprint:** `PHASE2_BLUEPRINT.md` (v2)
 - **Current batch_id:** N/A (Phase 2B not yet started)
 - **Current UTC-month spend:** query via `python -m agents.orchestrator --status` (Phase 2B only)
