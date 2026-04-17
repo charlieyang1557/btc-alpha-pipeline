@@ -1180,6 +1180,52 @@ def _evaluate_regime_holdout_pass(
     )
 
 
+# DESIGN INVARIANT: feed loading for the regime holdout run.
+#
+# Earlier D4 wording (both in this file's surrounding prose and in
+# PHASE2_BLUEPRINT.md §D4) suggested that "warmup is naturally served by
+# the bars preceding fromdate within the parquet" — implying that late-2021
+# bars fill the warmup for a 2022 holdout run. That wording was INACCURATE
+# relative to the actual Phase 1A engine behavior.
+#
+# What actually happens (and what D4 signs off on):
+#   - run_regime_holdout calls run_backtest with
+#         fromdate = 2022-01-01  (holdout start)
+#         todate   = 2022-12-31  (holdout end)
+#   - ParquetFeed.from_parquet(fromdate=..., todate=...) at engine.py:376
+#     filters the parquet down to bars strictly inside that window. The
+#     feed for the holdout run therefore contains ONLY 2022 bars — not a
+#     full dataset with pre-window history attached.
+#   - Backtrader consumes the first WARMUP_BARS bars of 2022 to warm up
+#     the strategy's indicators. Those early-January 2022 bars are
+#     therefore NOT signal-eligible. Metrics (Sharpe, drawdown, etc.)
+#     are computed only from the first post-warmup bar onward, exactly
+#     as in every other run_backtest call.
+#   - Consequence: the first small fraction of the 2022 holdout window
+#     (WARMUP_BARS hours — typically ≤ a few days for the baselines) is
+#     not evaluated. The 4-condition holdout gate operates on what
+#     remains.
+#
+# Why this is acceptable for D4 sign-off and why we are NOT reopening it:
+#   1. It is the exact behavior of the trusted Phase 1A single-run engine.
+#      Every run in the registry — train walk-forward windows, validation,
+#      test, and now regime holdout — uses the same feed-loading rule, so
+#      strategies are compared on a level playing field.
+#   2. D4's 4-condition holdout gate (min_sharpe, max_drawdown,
+#      min_total_return, min_total_trades) remains operationally
+#      meaningful over an 8,700-bar year minus ~50 warmup bars. Losing
+#      the first few days does not change whether a strategy survives
+#      a bear regime.
+#   3. Modifying ParquetFeed or run_backtest to prepend pre-window
+#      history purely for holdout runs would be a Phase 1 engine change
+#      touching code paths used by every existing backtest. That is
+#      explicitly OUT OF SCOPE for D4. If a future phase decides the
+#      missing warmup window is material, it must be proposed as a
+#      scoped Phase 1 revision, not smuggled in through D4.
+#
+# CONTRACT BOUNDARY with the no-CLI rule above still applies: this
+# function is orchestrator-internal, and the warmup convention here does
+# not change that.
 def run_regime_holdout(
     dsl: "Any",
     batch_id: str,
@@ -1205,9 +1251,11 @@ def run_regime_holdout(
           ``strategy_cls``) and invokes :func:`run_backtest` over the
           fixed 2022-01-01..2022-12-31 range.
         - The Backtrader feed is loaded with fromdate / todate set to
-          this range. Warmup is served naturally by the bars preceding
-          fromdate within the parquet (the standard Phase 1A mechanism).
-          This is a SEPARATE run — never sliced from a longer
+          exactly this holdout range — see the DESIGN INVARIANT block
+          immediately above this function for why warmup is served
+          from *inside* the holdout window rather than from late-2021
+          bars, and why that is the correct behavior for D4.
+        - This is a SEPARATE run — never sliced from a longer
           continuous run, because slicing a continuous-run equity curve
           for holdout metrics is a CLAUDE.md hard prohibition.
         - Computes :func:`compute_all_metrics` over the holdout-only

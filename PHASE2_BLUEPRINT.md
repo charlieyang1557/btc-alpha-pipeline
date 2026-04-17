@@ -513,11 +513,27 @@ Add columns:
 
 Add an internal function `run_regime_holdout(dsl, batch_id, parent_run_id)`
 that calls `run_backtest()` with `fromdate=2022-01-01, todate=2022-12-31`.
-The Backtrader feed loads the full dataset (warmup before Jan 1 2022 is served
-naturally by the feed); metrics compute only over the fromdate-todate window.
-Writes a row with `run_type="regime_holdout"`, `parent_run_id` linking to the
-train walk-forward summary, and `regime_holdout_passed` computed per the
-four criteria.
+
+**Feed-loading semantics (authoritative for D4 sign-off).** D4 uses the
+existing Phase 1A single-run engine mechanism without modification. The
+holdout is executed as a SEPARATE run over the fixed 2022 holdout window —
+never sliced from a longer continuous run (that would violate the
+CLAUDE.md hard prohibition on stitched equity curves). The Backtrader feed
+for this run is loaded over the holdout window itself: the parquet is
+filtered to bars with `open_time_utc` inside `[2022-01-01, 2022-12-31]`,
+and the first `WARMUP_BARS` bars of 2022 serve as warmup. Late-2021
+bars are NOT prepended; an earlier revision of this document implied
+otherwise and has been corrected. Consequence: roughly the first
+`WARMUP_BARS` hours of the holdout window (a small fraction of the year
+for baseline strategies) are not signal-eligible. This is the same
+convention every other run type uses, which preserves cross-run
+comparability. Modifying the feed loader to prepend pre-window history
+is explicitly out of scope for D4 and would require a scoped Phase 1
+engine revision.
+
+The run writes a row with `run_type="regime_holdout"`, `parent_run_id`
+linking to the train walk-forward summary, and `regime_holdout_passed`
+computed per the four criteria.
 
 **Hard constraint:** No `--mode regime-holdout` CLI exposed. Regime holdout
 is orchestrator-internal only. This is deliberate — holdout must not become
