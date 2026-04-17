@@ -217,6 +217,19 @@ These rules are defined in `config/execution.yaml` and enforced by `backtest/exe
 - **DSR N:** always `hypotheses_attempted` from the `batch_summary` row. NEVER use `hypotheses_approved` or survivor count.
 - **D9 finalization authority:** `shortlisted` and `dsr_failed` terminal states are written ONLY by D9's `finalize_batch()`. The orchestrator writes `pending_dsr` and stops.
 
+## Raw payload audit artifact retention (permanent)
+
+`raw_payloads/` directories referenced by signed-off Stage 2 acceptance
+notebooks are audit artifacts and must not be deleted or bulk-cleaned
+without explicit human approval. Currently protected batches:
+
+- Stage 2a signed-off:              raw_payloads/batch_03d62937-dbe8-46f2-a91b-50fa5696b14e/
+- Stage 2a post-patch re-smoke:     raw_payloads/batch_74a52dae-7a2e-4555-b773-c95f2211ad9f/
+- Stage 2b signed-off:              raw_payloads/batch_cd2f32ba-1984-4461-8216-1a9ac4ca2c17/
+
+New acceptance batches are added here as they sign off. Claude Code
+must not include these paths in any cleanup operation.
+
 ---
 
 ## HARD CONSTRAINTS — THINGS CLAUDE CODE MUST NEVER DO
