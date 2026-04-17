@@ -436,7 +436,7 @@ def _manifest_to_json_dict(
 
 def _read_stored_manifest(path: Path) -> dict[str, Any]:
     """Read and parse a manifest JSON file."""
-    return json.loads(path.read_text())
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def _drift_report(
@@ -520,7 +520,7 @@ def write_compilation_manifest(
         return path
 
     data = _manifest_to_json_dict(live, pseudo_code=pseudo_code)
-    path.write_text(json.dumps(data, indent=2, sort_keys=True))
+    path.write_text(json.dumps(data, indent=2, sort_keys=True), encoding="utf-8")
     logger.info(
         "Wrote compilation manifest %s (compiler_sha=%s, feature_version=%s)",
         path,
