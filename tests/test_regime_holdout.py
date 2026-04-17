@@ -500,15 +500,17 @@ class TestRunRegimeHoldoutRegistryRow:
 # ===========================================================================
 
 
-def _make_full_range_parquet(tmp_path: Path) -> Path:
-    """Synthesize hourly bars from 2019-12 through 2022-12 so the v2
-    train range 2020-01..2021-12 plus the 2022 holdout both fit."""
+def _make_v2_full_range_parquet(tmp_path: Path) -> Path:
+    """Synthesize hourly bars from 2019-12 through 2023-12 so BOTH v2
+    train ranges (2020-2021 + 2023) and the 2022 holdout all fit in
+    one parquet. The 2019-12 cushion serves SMA(50) warmup before the
+    2020-01-01 start.
+    """
     import numpy as np
     import pandas as pd
 
-    # 2019-12 cushion serves SMA(50) warmup before the 2020-01-01 start.
     timestamps = pd.date_range(
-        start="2019-12-01", end="2022-12-31 23:00", freq="h", tz="UTC"
+        start="2019-12-01", end="2023-12-31 23:00", freq="h", tz="UTC"
     )
     n = len(timestamps)
     t = np.arange(n, dtype=float)
@@ -531,36 +533,35 @@ def _make_full_range_parquet(tmp_path: Path) -> Path:
     })
     df["ingested_at_utc"] = df["ingested_at_utc"].astype("datetime64[ms, UTC]")
 
-    path = tmp_path / "full_range.parquet"
+    path = tmp_path / "v2_full.parquet"
     df.to_parquet(path, engine="pyarrow", index=False)
     return path
 
 
 class TestIntegrationTwoSummariesPlusHoldout:
-    """Simulates what the orchestrator will do per hypothesis:
-        1. Call run_walk_forward on the 2020-2021 train range → 1 summary row
-        2. Call run_walk_forward on the 2023 range → 0 windows (skipped,
-           matching the v2 assumption that 2023 alone is too short for
-           12m/3m/3m).
-        3. Call run_regime_holdout → 1 holdout row linked via parent_run_id.
+    """Orchestrator pattern per hypothesis, using hand-coded SMACrossover:
 
-    Because the 2023 range cannot fit in 12m/3m defaults, the integration
-    test uses a shorter 6m/3m/3m walk-forward config so both ranges yield
-    at least one sub-window and both summaries get written. This locks
-    in the "two ranges → two summaries" invariant without requiring the
-    canonical 12m configuration.
+        1. run_walk_forward on the 2020-2021 train range → summary row 1
+        2. run_walk_forward on the 2023 train range → summary row 2
+        3. run_regime_holdout linked to summary 1 via parent_run_id
+
+    The 12m train + 3m test + 3m step default cannot fit in a 12-month
+    2023 range, so the integration test uses a shorter 6m/3m/3m config
+    so both ranges yield ≥1 sub-window and BOTH summaries get written.
+    This locks in the "two v2 ranges → two summaries" invariant without
+    depending on the canonical 12m walk-forward configuration.
     """
 
     def test_two_summaries_and_linked_holdout(self, tmp_path):
         from backtest.engine import run_regime_holdout, run_walk_forward
         from strategies.baseline.sma_crossover import SMACrossover
 
-        parquet = _make_full_range_parquet(tmp_path)
+        parquet = _make_v2_full_range_parquet(tmp_path)
         db_path = tmp_path / "experiments.db"
 
         wf_cfg = {"train_window_months": 6, "test_window_months": 3, "step_months": 3}
 
-        # Summary 1: 2020-2021 range.
+        # --- Summary 1: 2020-2021 range ---
         wf1 = run_walk_forward(
             strategy_cls=SMACrossover,
             strategy_params={"fast_period": 20, "slow_period": 50},
@@ -570,7 +571,17 @@ class TestIntegrationTwoSummariesPlusHoldout:
             train_ranges=[(date(2020, 1, 1), date(2021, 12, 31))],
         )
 
-        # Holdout on summary 1 is the interesting lineage link.
+        # --- Summary 2: 2023 range ---
+        wf2 = run_walk_forward(
+            strategy_cls=SMACrossover,
+            strategy_params={"fast_period": 20, "slow_period": 50},
+            parquet_path=parquet,
+            db_path=db_path,
+            walk_forward_config=wf_cfg,
+            train_ranges=[(date(2023, 1, 1), date(2023, 12, 31))],
+        )
+
+        # --- Holdout linked to summary 1 ---
         ho = run_regime_holdout(
             dsl=None,
             batch_id=str(uuid.uuid4()),
@@ -599,35 +610,160 @@ class TestIntegrationTwoSummariesPlusHoldout:
         finally:
             conn.close()
 
-        assert len(summaries) == 1
+        # Two summaries (one per v2 train range) + exactly one holdout.
+        assert len(summaries) == 2
         assert len(holdouts) == 1
 
-        summary_row = dict(summaries[0])
-        holdout_row = dict(holdouts[0])
+        summary_ids = {dict(s)["run_id"] for s in summaries}
+        assert wf1.summary_run_id in summary_ids
+        assert wf2.summary_run_id in summary_ids
 
-        # Lineage link.
-        assert holdout_row["parent_run_id"] == summary_row["run_id"]
+        holdout_row = dict(holdouts[0])
+        # Holdout lineage points at summary 1 specifically.
         assert holdout_row["parent_run_id"] == wf1.summary_run_id
         assert holdout_row["run_id"] == ho.run_id
 
-        # Every window points to its summary.
-        for w in windows:
-            assert dict(w)["parent_run_id"] == summary_row["run_id"]
+        # Every window points to exactly one of the two summaries.
+        window_rows = [dict(w) for w in windows]
+        for w in window_rows:
+            assert w["parent_run_id"] in summary_ids
 
-        # Summary's notes capture train_ranges provenance.
-        notes = json.loads(summary_row["notes"])
-        assert notes["train_ranges"] == [["2020-01-01", "2021-12-31"]]
+        # Summaries' notes record the exact per-call train_ranges
+        # provenance — confirming the engine did not merge ranges.
+        summary_rows = [dict(s) for s in summaries]
+        notes_by_id = {
+            s["run_id"]: json.loads(s["notes"]) for s in summary_rows
+        }
+        assert notes_by_id[wf1.summary_run_id]["train_ranges"] == [
+            ["2020-01-01", "2021-12-31"]
+        ]
+        assert notes_by_id[wf2.summary_run_id]["train_ranges"] == [
+            ["2023-01-01", "2023-12-31"]
+        ]
 
-        # No window touches 2022 bars.
-        for w in windows:
+        # Hard constraint: NO window touches a 2022 bar.
+        for w in window_rows:
             test_start = datetime.strptime(
-                dict(w)["test_start"], "%Y-%m-%dT%H:%M:%SZ"
+                w["test_start"], "%Y-%m-%dT%H:%M:%SZ"
             )
             test_end = datetime.strptime(
-                dict(w)["test_end"], "%Y-%m-%dT%H:%M:%SZ"
+                w["test_end"], "%Y-%m-%dT%H:%M:%SZ"
             )
             assert test_start.year != 2022
             assert test_end.year != 2022
+            train_start = datetime.strptime(
+                w["train_start"], "%Y-%m-%dT%H:%M:%SZ"
+            )
+            train_end = datetime.strptime(
+                w["train_end"], "%Y-%m-%dT%H:%M:%SZ"
+            )
+            assert train_start.year != 2022
+            assert train_end.year != 2022
+
+
+class TestIntegrationDslCompiledEndToEnd:
+    """End-to-end with a DSL-COMPILED strategy — not hand-coded. Drives
+    ``run_regime_holdout(dsl=...)`` through the full compile path so
+    the registry captures ``hypothesis_hash`` + ``strategy_source``.
+
+    Uses the canonical OHLCV and features parquets (skips gracefully
+    if either is missing) because the DSL compiler expects a real
+    features parquet produced by ``factors.build_features``. This test
+    is the one that exercises the full lineage Phase 2B will use:
+
+        DSL → compile_dsl_to_strategy → run_walk_forward (train)
+            → run_regime_holdout(dsl=..., parent_run_id=summary)
+    """
+
+    FEATURES_PATH = PROJECT_ROOT / "data" / "features" / "btcusdt_1h_features.parquet"
+
+    def _sma_crossover_dsl(self):
+        from strategies.dsl import StrategyDSL
+        return StrategyDSL.model_validate({
+            "name": "sma_crossover_v2_integration",
+            "description": "SMA 20/50 crossover for D4 integration test",
+            "entry": [{"conditions": [
+                {"factor": "sma_20", "op": "crosses_above", "value": "sma_50"}
+            ]}],
+            "exit": [{"conditions": [
+                {"factor": "sma_20", "op": "crosses_below", "value": "sma_50"}
+            ]}],
+            "position_sizing": "full_equity",
+        })
+
+    def test_dsl_compiled_hypothesis_hash_roundtrip(self, tmp_path):
+        if not PARQUET_PATH.exists() or not self.FEATURES_PATH.exists():
+            pytest.skip("canonical OHLCV or features parquet not available")
+
+        from backtest.engine import run_regime_holdout, run_walk_forward
+        from factors.registry import get_registry
+        from strategies.dsl import compute_dsl_hash
+        from strategies.dsl_compiler import compile_dsl_to_strategy
+
+        dsl = self._sma_crossover_dsl()
+        expected_hash = compute_dsl_hash(dsl)
+
+        manifest_dir = tmp_path / "manifests"
+        manifest_dir.mkdir()
+        db_path = tmp_path / "experiments.db"
+
+        compiled_cls = compile_dsl_to_strategy(
+            dsl, registry=get_registry(), manifest_dir=manifest_dir
+        )
+
+        # Train on 2020-2021 via compiled strategy.
+        wf = run_walk_forward(
+            strategy_cls=compiled_cls,
+            parquet_path=PARQUET_PATH,
+            db_path=db_path,
+            walk_forward_config={
+                "train_window_months": 6,
+                "test_window_months": 3,
+                "step_months": 3,
+            },
+            train_ranges=[(date(2020, 1, 1), date(2021, 12, 31))],
+        )
+
+        # Drive run_regime_holdout(dsl=...) — this is the production
+        # code path the orchestrator will call. Registry row must
+        # capture strategy_source='dsl' and hypothesis_hash=SHA256(dsl).
+        batch_id = str(uuid.uuid4())
+        ho = run_regime_holdout(
+            dsl=dsl,
+            batch_id=batch_id,
+            parent_run_id=wf.summary_run_id,
+            parquet_path=PARQUET_PATH,
+            db_path=db_path,
+            env_config=_make_v2_env_config(),
+            registry=get_registry(),
+            manifest_dir=manifest_dir,
+        )
+
+        assert ho.hypothesis_hash == expected_hash
+        assert ho.batch_id == batch_id
+        assert ho.parent_run_id == wf.summary_run_id
+
+        conn = sqlite3.connect(str(db_path))
+        conn.row_factory = sqlite3.Row
+        try:
+            row = dict(conn.execute(
+                "SELECT * FROM runs WHERE run_id = ?", (ho.run_id,)
+            ).fetchone())
+        finally:
+            conn.close()
+
+        # DSL-compiled row: must record the canonical hypothesis hash,
+        # the DSL source label, and the regime_holdout_passed INT flag.
+        assert row["run_type"] == "regime_holdout"
+        assert row["hypothesis_hash"] == expected_hash
+        assert row["strategy_source"] == "dsl"
+        assert row["batch_id"] == batch_id
+        assert row["parent_run_id"] == wf.summary_run_id
+        assert row["regime_holdout_passed"] in (0, 1)
+        # feature_version is captured best-effort — must be a non-empty
+        # string (SHA256 hex) or NULL; never an empty string.
+        fv = row["feature_version"]
+        assert fv is None or (isinstance(fv, str) and len(fv) > 0)
 
 
 # ===========================================================================
