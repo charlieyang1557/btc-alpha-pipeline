@@ -73,7 +73,9 @@ btc-alpha-pipeline/
 │   ├── proposer/               # Phase 2B D6 — Proposer agent (stub + Sonnet)
 │   │   ├── interface.py        # ProposerBackend Protocol + I/O schemas
 │   │   ├── stub_backend.py     # Deterministic stub backend (Stage 1)
-│   │   └── prompt_builder.py   # Prompt construction + leakage audit helpers
+│   │   ├── sonnet_backend.py   # Live Sonnet backend (Stage 2a+)
+│   │   ├── prompt_builder.py   # Prompt construction + leakage audit helpers
+│   │   └── stage2a_smoke.py    # Single-hypothesis smoke run script
 │   ├── orchestrator/           # Phase 2B D8 — main batch loop
 │   │   ├── ingest.py           # ProposerOutput → lifecycle state assignment
 │   │   └── budget_ledger.py    # Crash-safe pre-charge SQLite ledger
@@ -380,8 +382,8 @@ The canonical dataset (`data/raw/btcusdt_1h.parquet`) has these stable, verified
 
 ## Phase Marker (update as work progresses)
 
-- **Current phase:** Phase 2A closed (signed off 2026-04-17); **Phase 2B D6 Stage 1 (Proposer dry-run plumbing) in progress** — stub backend only, zero Claude API calls
-- **Completed:** Phase 0, Phase 1A, Phase 1B; Phase 2A (D1-D5 all signed off)
+- **Current phase:** Phase 2A closed (signed off 2026-04-17); **Phase 2B D6 Stage 2a (first live Sonnet call) in progress** — single-hypothesis calibration batch
+- **Completed:** Phase 0, Phase 1A, Phase 1B; Phase 2A (D1-D5 all signed off); Phase 2B D6 Stage 1 (stub plumbing, 675 tests)
 - **Active blueprint:** `Blueprint/PHASE2_BLUEPRINT.md` (v2)
 - **Current batch_id:** N/A (no live batch run yet)
 - **Current UTC-month spend:** $0.00 (dry-run stub only; no API calls until D6 Stage 2)

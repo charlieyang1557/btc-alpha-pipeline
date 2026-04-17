@@ -11,6 +11,10 @@ data/results/
 
 # SQLite databases
 backtest/experiments.db
+agents/spend_ledger.db
+
+# Raw API payloads (per-run artifacts, not source)
+raw_payloads/
 
 # Python
 __pycache__/
