@@ -677,6 +677,15 @@ def compile_dsl_to_strategy(
         """Dynamically-generated BaseStrategy for a compiled DSL."""
 
         STRATEGY_NAME = strategy_name
+        # DESIGN INVARIANT: WARMUP_BARS here uses the registry's 0-indexed
+        # convention (sma_50 → warmup_bars=49), while hand-written baselines
+        # use a 1-indexed "N bars needed" convention (SMA(50) →
+        # WARMUP_BARS=50). The difference is purely reporting — runtime
+        # gating is controlled by effective_minperiod and the
+        # _MinperiodGate indicator below, which produces identical
+        # Backtrader minperiod in both cases. D5 parity tests confirm
+        # that trade counts and metrics match across all four baselines
+        # despite this one-bar naming difference.
         WARMUP_BARS = warmup_bars
         _DSL = dsl
         _FACTORS_USED = tuple(factors_used)
