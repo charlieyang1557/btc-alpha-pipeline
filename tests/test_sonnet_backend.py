@@ -395,3 +395,46 @@ def test_stub_backend_unaffected_by_sonnet_import(registry):
     output = backend.generate(ctx)
     assert len(output.candidates) == 1
     assert isinstance(output.candidates[0], ValidCandidate)
+
+
+# ---------------------------------------------------------------------------
+# Stage 2a calibration: markdown-fenced JSON must parse + disk stays intact
+# ---------------------------------------------------------------------------
+
+
+def test_fenced_sonnet_response_parses_and_disk_preserves_fence(
+    ctx, registry, tmp_path
+):
+    """End-to-end: Sonnet returns ```json ...``` fenced output. Backend
+    should classify as ValidCandidate AND write the fenced original to
+    disk byte-for-byte (never the stripped form)."""
+    dsl_json = _valid_dsl_json(registry)
+    fenced = f"```json\n{dsl_json}\n```"
+    mock_resp = _mock_response(fenced, input_tokens=700, output_tokens=180)
+
+    backend = SonnetProposerBackend(
+        registry=registry,
+        raw_payload_dir=tmp_path / "payloads",
+        backoff_base_seconds=0.0,
+    )
+
+    with patch.object(backend, "_get_client") as mock_client:
+        mock_client.return_value.messages.create.return_value = mock_resp
+        output = backend.generate(ctx)
+
+    # Parsed successfully despite fence.
+    assert len(output.candidates) == 1
+    assert isinstance(output.candidates[0], ValidCandidate)
+
+    # Disk file retains the original fenced text byte-for-byte.
+    response_file = (
+        tmp_path / "payloads" / f"batch_{ctx.batch_id}"
+        / "attempt_0001_response.txt"
+    )
+    on_disk = response_file.read_text(encoding="utf-8")
+    assert on_disk == fenced, (
+        "Disk payload must equal the ORIGINAL fenced API response, not the "
+        "stripped form. Forensic-audit integrity requirement."
+    )
+    assert on_disk.startswith("```json\n")
+    assert on_disk.endswith("\n```")

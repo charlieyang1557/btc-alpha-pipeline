@@ -37,6 +37,7 @@ without any Anthropic credentials or network access.
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
 from typing import Callable
 
@@ -172,6 +173,34 @@ DEFAULT_SCENARIO_SEQUENCE: tuple[str, ...] = (
 
 
 # ---------------------------------------------------------------------------
+# Markdown-fence stripper (Stage 2a real-world finding: Sonnet wrapped JSON
+# in ```json ... ``` fences). Stripping is purely in-memory and only affects
+# json.loads() input; InvalidCandidate.raw_json and disk payloads remain
+# byte-identical to the model's original output.
+#
+# DESIGN INVARIANT: never overwrite the disk file at
+# raw_payloads/.../attempt_XXXX_response.txt with a stripped version. The
+# forensic audit trail must show exactly what Sonnet returned, fences and
+# all. The stripper is a parser convenience, not a sanitizer.
+# ---------------------------------------------------------------------------
+
+_FENCE_RE = re.compile(
+    r"```(?:\s*json)?\s*(.*?)\s*```",
+    re.DOTALL | re.IGNORECASE,
+)
+
+
+def _strip_markdown_fence(raw: str) -> str:
+    """Extract JSON body from a markdown code fence if present.
+
+    Uses ``re.search`` (not ``re.match``) so leading/trailing prose is
+    tolerated. Returns ``raw`` unchanged when no fence matches.
+    """
+    m = _FENCE_RE.search(raw)
+    return m.group(1) if m else raw
+
+
+# ---------------------------------------------------------------------------
 # Shared classifier (used by stub; will be reused by Sonnet backend in Stage 2)
 # ---------------------------------------------------------------------------
 
@@ -195,8 +224,9 @@ def classify_raw_json(
     ``agents/orchestrator/ingest.py``).
     """
     prov = dict(provenance or {})
+    parse_input = _strip_markdown_fence(raw_json)
     try:
-        payload = json.loads(raw_json)
+        payload = json.loads(parse_input)
     except json.JSONDecodeError as exc:
         return InvalidCandidate(
             raw_json=raw_json,

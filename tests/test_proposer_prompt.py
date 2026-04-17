@@ -171,6 +171,64 @@ def test_themes_reexport_matches_canonical():
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# Stage 2a calibration: concrete JSON example + synonym negative guidance
+# ---------------------------------------------------------------------------
+#
+# Stage 2a's first live Sonnet response emitted plausible-wrong field names
+# (``hypothesis_id`` instead of ``name``, ``entry_conditions`` instead of
+# ``entry``, etc.) wrapped in a ```json fence. The prompt now carries an
+# explicit positive schema block and an explicit negative synonym block.
+
+
+def test_prompt_contains_concrete_example_and_negative_guidance(registry):
+    prompt = build_prompt(_ctx(1, 0, registry), registry=registry)
+    sys = prompt.system
+
+    # Positive block: exact JSON shape header.
+    assert (
+        "Your output must be a JSON object matching EXACTLY this shape:" in sys
+    )
+    # Positive block: key field markers appear verbatim.
+    assert '"name": "short_strategy_name"' in sys
+    assert '"description": "one-sentence economic rationale"' in sys
+    assert '"entry": [' in sys
+    assert '"exit": [' in sys
+    assert '"factor": "<factor_name>"' in sys
+    assert '"op": "<operator>"' in sys
+    assert '"value": <number or factor_name>' in sys
+    assert '"position_sizing": "full_equity"' in sys
+    assert '"max_hold_bars": <integer or null>' in sys
+
+    # Negative block: header.
+    assert (
+        "Use these EXACT field names. Do NOT use synonyms or alternative "
+        "names such as:"
+    ) in sys
+    # Negative block: each observed synonym enumerated.
+    assert '"hypothesis_id" (use "name")' in sys
+    assert '"entry_conditions" / "exit_conditions"' in sys
+    assert '"left_factor" / "right_value"' in sys
+    assert '"operator" (use "op")' in sys
+    assert '"condition_group_id", "join_operator"' in sys
+    # Negative block: no markdown fences.
+    assert (
+        "Respond with raw JSON only. Do NOT wrap the output in markdown "
+        "code fences (triple backticks)."
+    ) in sys
+
+
+def test_leakage_audit_clean_on_new_prompt(registry):
+    """The positive + negative blocks must not accidentally fire any
+    forbidden leakage pattern."""
+    prompt = build_prompt(_ctx(1, 0, registry), registry=registry)
+    findings = audit_prompt_for_leakage(prompt)
+    assert findings == [], (
+        f"New prompt blocks leaked: {findings}. Review FORBIDDEN_PATTERNS "
+        f"and/or the new system_lines text."
+    )
+
+
 @pytest.mark.parametrize(
     "snippet,should_fire",
     [

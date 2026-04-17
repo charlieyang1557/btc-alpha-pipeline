@@ -147,6 +147,49 @@ def build_prompt(
         "or any grammar outside the schema. Registry and grammar are frozen "
         "for this batch; factor or operator additions require explicit "
         "human review outside this loop.",
+        "",
+        # --- Stage 2a calibration finding: Sonnet emitted plausible-wrong
+        # field names (hypothesis_id/entry_conditions/left_factor/...). The
+        # positive block below shows the exact schema shape; the negative
+        # block enumerates observed synonyms to reject, and forbids
+        # markdown fences around the output.
+        "Your output must be a JSON object matching EXACTLY this shape:",
+        "",
+        "{",
+        '  "name": "short_strategy_name",',
+        '  "description": "one-sentence economic rationale",',
+        '  "entry": [',
+        "    {",
+        '      "conditions": [',
+        '        {"factor": "<factor_name>", "op": "<operator>", '
+        '"value": <number or factor_name>}',
+        "      ]",
+        "    }",
+        "  ],",
+        '  "exit": [',
+        "    {",
+        '      "conditions": [',
+        '        {"factor": "<factor_name>", "op": "<operator>", '
+        '"value": <number or factor_name>}',
+        "      ]",
+        "    }",
+        "  ],",
+        '  "position_sizing": "full_equity",',
+        '  "max_hold_bars": <integer or null>',
+        "}",
+        "",
+        "Use these EXACT field names. Do NOT use synonyms or alternative "
+        "names such as:",
+        '  - "hypothesis_id" (use "name")',
+        '  - "entry_conditions" / "exit_conditions" '
+        '(use "entry" / "exit")',
+        '  - "left_factor" / "right_value" (use "factor" / "value")',
+        '  - "operator" (use "op")',
+        '  - "condition_group_id", "join_operator" '
+        "(do not add these fields)",
+        "",
+        "Respond with raw JSON only. Do NOT wrap the output in markdown "
+        "code fences (triple backticks).",
     ]
     system = "\n".join(system_lines)
 
