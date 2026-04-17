@@ -226,6 +226,7 @@ without explicit human approval. Currently protected batches:
 - Stage 2a signed-off:              raw_payloads/batch_03d62937-dbe8-46f2-a91b-50fa5696b14e/
 - Stage 2a post-patch re-smoke:     raw_payloads/batch_74a52dae-7a2e-4555-b773-c95f2211ad9f/
 - Stage 2b signed-off:              raw_payloads/batch_cd2f32ba-1984-4461-8216-1a9ac4ca2c17/
+- Stage 2c signed-off:              raw_payloads/batch_e07f34a2-b532-4f35-a9f3-af97a5a96f1f/
 
 New acceptance batches are added here as they sign off. Claude Code
 must not include these paths in any cleanup operation.
