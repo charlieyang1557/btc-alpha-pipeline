@@ -56,7 +56,7 @@ from factors.registry import FactorRegistry, get_registry
 # Sonnet pricing (claude-sonnet-4-5, as of 2025-06)
 # ---------------------------------------------------------------------------
 
-SONNET_MODEL = "claude-sonnet-4-5-20250514"
+SONNET_MODEL = "claude-sonnet-4-5"
 SONNET_INPUT_PRICE_PER_MTOK: float = 3.0
 SONNET_OUTPUT_PRICE_PER_MTOK: float = 15.0
 

@@ -63,7 +63,7 @@ def _mock_response(text: str, input_tokens: int = 500, output_tokens: int = 200)
         content=[content_block],
         usage=usage,
         stop_reason="end_turn",
-        model="claude-sonnet-4-5-20250514",
+        model="claude-sonnet-4-5",
     )
 
 
