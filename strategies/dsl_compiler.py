@@ -33,7 +33,12 @@ Hard design decisions (see PHASE2_BLUEPRINT_v2.md D2 and CLAUDE.md):
    returns False if any are NaN. NaN never evaluates to True, never
    short-circuits. This is the interaction point with D1's warmup
    boundary (where factors are NaN) and prevents spurious firing at the
-   boundary.
+   boundary. Cross operators delay the first-firable bar by 1 extra bar
+   compared to continuous operators, because they require a valid
+   ``prev_row``. A DSL that differs only in swapping ``>`` for
+   ``crosses_above`` will have its first possible entry one bar later.
+   This is intentional — it avoids relying on the NaN-returns-False
+   fallback as a load-bearing mechanism.
 
 4. **Compiler never edits engine/registry/metrics**.
    The compiled class is a plain :class:`BaseStrategy` subclass with
