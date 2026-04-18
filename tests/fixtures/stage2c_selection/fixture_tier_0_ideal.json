@@ -1,0 +1,29 @@
+{
+  "description": "Tier 0 ideal for Stage 2c N=20: 20 passing in 10 distinct-factor-set pairs (10 divergence pioneers + 10 agreement clones). 3 themes rotated across pairs so the 10 divergences naturally include cross-theme pairs. Buckets: early=8 (pairs 1-4), mid=6 (pairs 5-7), late=6 (pairs 8-10). 4 rejected calls populate 4 of the 7 rejection_breakdown keys.",
+  "calls": [
+    {"position": 5, "hypothesis_hash": "rej_pos", "theme": "mean_reversion", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 10, "hypothesis_hash": "h010", "theme": "mean_reversion", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 15, "hypothesis_hash": "h015", "theme": "mean_reversion", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 20, "hypothesis_hash": "h020", "theme": "volatility_regime", "lifecycle_state": "pending_backtest", "factors_used": ["fb1", "fb2", "fb3"], "default_momentum_factors_used": []},
+    {"position": 25, "hypothesis_hash": "h025", "theme": "volatility_regime", "lifecycle_state": "pending_backtest", "factors_used": ["fb1", "fb2", "fb3"], "default_momentum_factors_used": []},
+    {"position": 30, "hypothesis_hash": "h030", "theme": "volume_divergence", "lifecycle_state": "pending_backtest", "factors_used": ["fc1", "fc2", "fc3"], "default_momentum_factors_used": []},
+    {"position": 35, "hypothesis_hash": "h035", "theme": "volume_divergence", "lifecycle_state": "pending_backtest", "factors_used": ["fc1", "fc2", "fc3"], "default_momentum_factors_used": []},
+    {"position": 40, "hypothesis_hash": "h040", "theme": "mean_reversion", "lifecycle_state": "pending_backtest", "factors_used": ["fd1", "fd2", "fd3"], "default_momentum_factors_used": []},
+    {"position": 45, "hypothesis_hash": "h045", "theme": "mean_reversion", "lifecycle_state": "pending_backtest", "factors_used": ["fd1", "fd2", "fd3"], "default_momentum_factors_used": []},
+    {"position": 50, "hypothesis_hash": "rej_mom", "theme": "momentum", "lifecycle_state": "pending_backtest", "factors_used": ["macd_hist", "roc_14", "rsi_14"], "default_momentum_factors_used": []},
+    {"position": 65, "hypothesis_hash": "rej_fc", "theme": "mean_reversion", "lifecycle_state": "pending_backtest", "factors_used": ["only_one_factor"], "default_momentum_factors_used": []},
+    {"position": 70, "hypothesis_hash": "h070", "theme": "volatility_regime", "lifecycle_state": "pending_backtest", "factors_used": ["fe1", "fe2", "fe3"], "default_momentum_factors_used": []},
+    {"position": 75, "hypothesis_hash": "h075", "theme": "volatility_regime", "lifecycle_state": "pending_backtest", "factors_used": ["fe1", "fe2", "fe3"], "default_momentum_factors_used": []},
+    {"position": 80, "hypothesis_hash": "h080", "theme": "volume_divergence", "lifecycle_state": "pending_backtest", "factors_used": ["ff1", "ff2", "ff3"], "default_momentum_factors_used": []},
+    {"position": 85, "hypothesis_hash": "h085", "theme": "volume_divergence", "lifecycle_state": "pending_backtest", "factors_used": ["ff1", "ff2", "ff3"], "default_momentum_factors_used": []},
+    {"position": 90, "hypothesis_hash": "h090", "theme": "mean_reversion", "lifecycle_state": "pending_backtest", "factors_used": ["fg1", "fg2", "fg3"], "default_momentum_factors_used": []},
+    {"position": 95, "hypothesis_hash": "h095", "theme": "mean_reversion", "lifecycle_state": "pending_backtest", "factors_used": ["fg1", "fg2", "fg3"], "default_momentum_factors_used": []},
+    {"position": 100, "hypothesis_hash": "rej_life", "theme": "mean_reversion", "lifecycle_state": "proposer_invalid_dsl", "factors_used": ["fg1", "fg2", "fg3"], "default_momentum_factors_used": []},
+    {"position": 140, "hypothesis_hash": "h140", "theme": "volatility_regime", "lifecycle_state": "pending_backtest", "factors_used": ["fh1", "fh2", "fh3"], "default_momentum_factors_used": []},
+    {"position": 145, "hypothesis_hash": "h145", "theme": "volatility_regime", "lifecycle_state": "pending_backtest", "factors_used": ["fh1", "fh2", "fh3"], "default_momentum_factors_used": []},
+    {"position": 150, "hypothesis_hash": "h150", "theme": "volume_divergence", "lifecycle_state": "pending_backtest", "factors_used": ["fi1", "fi2", "fi3"], "default_momentum_factors_used": []},
+    {"position": 155, "hypothesis_hash": "h155", "theme": "volume_divergence", "lifecycle_state": "pending_backtest", "factors_used": ["fi1", "fi2", "fi3"], "default_momentum_factors_used": []},
+    {"position": 160, "hypothesis_hash": "h160", "theme": "mean_reversion", "lifecycle_state": "pending_backtest", "factors_used": ["fj1", "fj2", "fj3"], "default_momentum_factors_used": []},
+    {"position": 165, "hypothesis_hash": "h165", "theme": "mean_reversion", "lifecycle_state": "pending_backtest", "factors_used": ["fj1", "fj2", "fj3"], "default_momentum_factors_used": []}
+  ]
+}

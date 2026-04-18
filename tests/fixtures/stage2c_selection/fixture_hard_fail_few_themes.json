@@ -1,0 +1,25 @@
+{
+  "description": "Hard-fail: pool has 20 passing candidates across all 3 buckets but only 2 distinct themes (mean_reversion, volatility_regime). Stage 2c pre-check fails with themes<3 violation.",
+  "calls": [
+    {"position": 10, "hypothesis_hash": "h010", "theme": "mean_reversion", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 15, "hypothesis_hash": "h015", "theme": "mean_reversion", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 20, "hypothesis_hash": "h020", "theme": "volatility_regime", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 25, "hypothesis_hash": "h025", "theme": "volatility_regime", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 30, "hypothesis_hash": "h030", "theme": "mean_reversion", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 35, "hypothesis_hash": "h035", "theme": "mean_reversion", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 40, "hypothesis_hash": "h040", "theme": "volatility_regime", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 45, "hypothesis_hash": "h045", "theme": "volatility_regime", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 70, "hypothesis_hash": "h070", "theme": "mean_reversion", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 80, "hypothesis_hash": "h080", "theme": "mean_reversion", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 90, "hypothesis_hash": "h090", "theme": "volatility_regime", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 100, "hypothesis_hash": "h100", "theme": "volatility_regime", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 110, "hypothesis_hash": "h110", "theme": "mean_reversion", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 120, "hypothesis_hash": "h120", "theme": "volatility_regime", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 140, "hypothesis_hash": "h140", "theme": "mean_reversion", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 150, "hypothesis_hash": "h150", "theme": "mean_reversion", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 160, "hypothesis_hash": "h160", "theme": "volatility_regime", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 170, "hypothesis_hash": "h170", "theme": "volatility_regime", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 180, "hypothesis_hash": "h180", "theme": "mean_reversion", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 190, "hypothesis_hash": "h190", "theme": "volatility_regime", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []}
+  ]
+}

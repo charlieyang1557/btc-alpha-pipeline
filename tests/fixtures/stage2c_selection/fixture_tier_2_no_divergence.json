@@ -1,0 +1,25 @@
+{
+  "description": "Tier 2 no-divergence scenario. The selection-time label machinery always labels the first passing candidate `divergence_expected`, so a natural pool cannot carry zero divergences. This fixture provides a pool whose cross-candidate structure (>=5/bucket, >=3 themes, >=4 agreements) satisfies Stage 2c pre-checks, and the Tier 2 tests override the pool's `d7a_b_relationship_label` entries in-memory to exercise `_try_tier2_stage2c` and `select_stage2c` when the pool's divergences have been neutralized. No subprocess test runs Tier 2 directly from this fixture.",
+  "calls": [
+    {"position": 10, "hypothesis_hash": "h010", "theme": "mean_reversion", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 15, "hypothesis_hash": "h015", "theme": "mean_reversion", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 20, "hypothesis_hash": "h020", "theme": "volatility_regime", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 25, "hypothesis_hash": "h025", "theme": "volatility_regime", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 30, "hypothesis_hash": "h030", "theme": "volume_divergence", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 35, "hypothesis_hash": "h035", "theme": "volume_divergence", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 40, "hypothesis_hash": "h040", "theme": "mean_reversion", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 45, "hypothesis_hash": "h045", "theme": "volatility_regime", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 70, "hypothesis_hash": "h070", "theme": "volume_divergence", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 80, "hypothesis_hash": "h080", "theme": "mean_reversion", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 90, "hypothesis_hash": "h090", "theme": "volatility_regime", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 100, "hypothesis_hash": "h100", "theme": "volume_divergence", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 110, "hypothesis_hash": "h110", "theme": "mean_reversion", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 120, "hypothesis_hash": "h120", "theme": "volatility_regime", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 140, "hypothesis_hash": "h140", "theme": "volume_divergence", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 150, "hypothesis_hash": "h150", "theme": "mean_reversion", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 160, "hypothesis_hash": "h160", "theme": "volatility_regime", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 170, "hypothesis_hash": "h170", "theme": "volume_divergence", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 180, "hypothesis_hash": "h180", "theme": "mean_reversion", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 190, "hypothesis_hash": "h190", "theme": "volatility_regime", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []}
+  ]
+}

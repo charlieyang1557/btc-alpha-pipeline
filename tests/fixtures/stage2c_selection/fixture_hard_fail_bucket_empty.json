@@ -1,0 +1,25 @@
+{
+  "description": "Hard-fail: pool has 20 passing candidates but late bucket [134,190] is empty (all positions <=133). Stage 2c pre-check fails with bucket_min violation on 'late' bucket.",
+  "calls": [
+    {"position": 10, "hypothesis_hash": "h010", "theme": "mean_reversion", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 15, "hypothesis_hash": "h015", "theme": "mean_reversion", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 20, "hypothesis_hash": "h020", "theme": "volatility_regime", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 25, "hypothesis_hash": "h025", "theme": "volatility_regime", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 30, "hypothesis_hash": "h030", "theme": "volume_divergence", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 35, "hypothesis_hash": "h035", "theme": "volume_divergence", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 40, "hypothesis_hash": "h040", "theme": "mean_reversion", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 45, "hypothesis_hash": "h045", "theme": "volatility_regime", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 55, "hypothesis_hash": "h055", "theme": "volume_divergence", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 60, "hypothesis_hash": "h060", "theme": "mean_reversion", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 70, "hypothesis_hash": "h070", "theme": "volatility_regime", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 75, "hypothesis_hash": "h075", "theme": "volume_divergence", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 80, "hypothesis_hash": "h080", "theme": "mean_reversion", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 85, "hypothesis_hash": "h085", "theme": "volatility_regime", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 90, "hypothesis_hash": "h090", "theme": "volume_divergence", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 95, "hypothesis_hash": "h095", "theme": "mean_reversion", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 100, "hypothesis_hash": "h100", "theme": "volatility_regime", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 110, "hypothesis_hash": "h110", "theme": "volume_divergence", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 120, "hypothesis_hash": "h120", "theme": "mean_reversion", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []},
+    {"position": 130, "hypothesis_hash": "h130", "theme": "volatility_regime", "lifecycle_state": "pending_backtest", "factors_used": ["fa1", "fa2", "fa3"], "default_momentum_factors_used": []}
+  ]
+}
