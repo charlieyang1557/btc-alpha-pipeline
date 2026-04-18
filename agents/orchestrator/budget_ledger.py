@@ -42,6 +42,17 @@ CONTRACT BOUNDARY: this module imports only stdlib. It MUST NOT import
 ``anthropic`` or any Proposer-specific symbol; the ledger is backend-
 agnostic and records generic ``api_call_kind`` strings supplied by the
 caller.
+
+DESIGN INVARIANT (backend_kind / call_role tagging):
+Every ledger row MUST carry both ``backend_kind`` and ``call_role``.
+These fields let downstream rollups split D6 proposer spend from D7b
+critic spend without parsing free-form ``api_call_kind`` strings.
+``write_pending`` REQUIRES both fields explicitly. There is no default:
+a caller that forgets to pass them raises ``TypeError``. Pre-Stage-2a
+rows are backfilled once at schema-migration time with
+``backend_kind='d6_proposer'``, ``call_role='propose'``; the backfill
+is idempotent and runs exactly once per database via
+:func:`_migrate_backend_kind_call_role`.
 """
 
 from __future__ import annotations
@@ -75,11 +86,31 @@ BATCH_CAP_USD: float = 20.0
 MONTHLY_CAP_USD: float = 100.0
 
 
+# backend_kind / call_role canonical vocabularies. These are enforced at
+# write time; unknown values are rejected so the rollups never silently
+# see a new category.
+BACKEND_KIND_D6_PROPOSER = "d6_proposer"
+BACKEND_KIND_D7B_CRITIC = "d7b_critic"
+VALID_BACKEND_KINDS: tuple[str, ...] = (
+    BACKEND_KIND_D6_PROPOSER,
+    BACKEND_KIND_D7B_CRITIC,
+)
+
+CALL_ROLE_PROPOSE = "propose"
+CALL_ROLE_CRITIQUE = "critique"
+VALID_CALL_ROLES: tuple[str, ...] = (
+    CALL_ROLE_PROPOSE,
+    CALL_ROLE_CRITIQUE,
+)
+
+
 _SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS ledger (
     id                TEXT PRIMARY KEY,
     batch_id          TEXT NOT NULL,
     api_call_kind     TEXT NOT NULL,
+    backend_kind      TEXT NOT NULL,
+    call_role         TEXT NOT NULL,
     status            TEXT NOT NULL,
     estimated_cost    REAL NOT NULL,
     actual_cost       REAL,
@@ -87,10 +118,55 @@ CREATE TABLE IF NOT EXISTS ledger (
     completed_at_utc  TEXT,
     notes             TEXT
 );
-CREATE INDEX IF NOT EXISTS idx_ledger_batch    ON ledger (batch_id);
-CREATE INDEX IF NOT EXISTS idx_ledger_created  ON ledger (created_at_utc);
-CREATE INDEX IF NOT EXISTS idx_ledger_status   ON ledger (status);
+CREATE INDEX IF NOT EXISTS idx_ledger_batch         ON ledger (batch_id);
+CREATE INDEX IF NOT EXISTS idx_ledger_created       ON ledger (created_at_utc);
+CREATE INDEX IF NOT EXISTS idx_ledger_status        ON ledger (status);
+CREATE INDEX IF NOT EXISTS idx_ledger_backend_kind  ON ledger (backend_kind);
+CREATE INDEX IF NOT EXISTS idx_ledger_call_role     ON ledger (call_role);
 """
+
+
+def _migrate_backend_kind_call_role(conn: sqlite3.Connection) -> None:
+    """Idempotent migration: add ``backend_kind`` / ``call_role`` columns.
+
+    Pre-Stage-2a ledgers have the ``ledger`` table but lack these two
+    columns. Running this migration:
+
+    1. Detects whether the columns already exist via ``PRAGMA table_info``.
+    2. Adds the missing column(s) WITHOUT the ``NOT NULL`` constraint
+       (SQLite cannot retrofit ``NOT NULL`` on an existing populated
+       column without a full table rebuild, which we avoid to keep the
+       migration in-place and reversible).
+    3. Backfills NULL values with ``d6_proposer`` / ``propose``.
+    4. Creates the two indexes if absent.
+
+    After migration, application code REQUIRES both fields in
+    ``write_pending`` via keyword arguments — the NOT NULL invariant is
+    upheld at the application layer for pre-existing databases and at
+    both layers for newly created ones (``_SCHEMA_SQL`` declares them
+    ``NOT NULL``).
+    """
+    cols = {row[1] for row in conn.execute("PRAGMA table_info(ledger)")}
+    if "backend_kind" not in cols:
+        conn.execute("ALTER TABLE ledger ADD COLUMN backend_kind TEXT")
+        conn.execute(
+            "UPDATE ledger SET backend_kind = ? WHERE backend_kind IS NULL",
+            (BACKEND_KIND_D6_PROPOSER,),
+        )
+    if "call_role" not in cols:
+        conn.execute("ALTER TABLE ledger ADD COLUMN call_role TEXT")
+        conn.execute(
+            "UPDATE ledger SET call_role = ? WHERE call_role IS NULL",
+            (CALL_ROLE_PROPOSE,),
+        )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_ledger_backend_kind "
+        "ON ledger (backend_kind)"
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_ledger_call_role "
+        "ON ledger (call_role)"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -143,6 +219,8 @@ class LedgerEntry:
     id: str
     batch_id: str
     api_call_kind: str
+    backend_kind: str
+    call_role: str
     status: str
     estimated_cost: float
     actual_cost: float | None
@@ -188,6 +266,7 @@ class BudgetLedger:
     def _ensure_schema(self) -> None:
         with self._conn() as conn:
             conn.executescript(_SCHEMA_SQL)
+            _migrate_backend_kind_call_role(conn)
 
     # ------------------------------------------------------------------
     # Mutations
@@ -198,11 +277,20 @@ class BudgetLedger:
         *,
         batch_id: str,
         api_call_kind: str,
+        backend_kind: str,
+        call_role: str,
         estimated_cost_usd: float,
         now: datetime | None = None,
         notes: str | None = None,
     ) -> str:
         """Insert a pending row. Returns the ledger row ``id``.
+
+        ``backend_kind`` MUST be one of :data:`VALID_BACKEND_KINDS` and
+        ``call_role`` MUST be one of :data:`VALID_CALL_ROLES`. Both are
+        required keyword arguments with no default: every call site is
+        explicit about which subsystem (D6 proposer vs. D7b critic) is
+        charging the ledger. This is what makes the split cost rollup
+        (:meth:`cost_by_backend_kind`) trustworthy.
 
         The caller MUST invoke :meth:`finalize` or :meth:`mark_crashed`
         on this id after the API call, using the returned value as the
@@ -214,19 +302,31 @@ class BudgetLedger:
             raise ValueError(
                 f"estimated_cost_usd must be >= 0; got {estimated_cost_usd!r}"
             )
+        if backend_kind not in VALID_BACKEND_KINDS:
+            raise ValueError(
+                f"backend_kind must be one of {VALID_BACKEND_KINDS!r}; "
+                f"got {backend_kind!r}"
+            )
+        if call_role not in VALID_CALL_ROLES:
+            raise ValueError(
+                f"call_role must be one of {VALID_CALL_ROLES!r}; "
+                f"got {call_role!r}"
+            )
         row_id = str(uuid.uuid4())
         ts = _iso_z(now or _utc_now())
         with self._conn() as conn:
             conn.execute(
                 "INSERT INTO ledger "
-                "(id, batch_id, api_call_kind, status, "
-                " estimated_cost, actual_cost, "
+                "(id, batch_id, api_call_kind, backend_kind, call_role, "
+                " status, estimated_cost, actual_cost, "
                 " created_at_utc, completed_at_utc, notes) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (
                     row_id,
                     batch_id,
                     api_call_kind,
+                    backend_kind,
+                    call_role,
                     STATUS_PENDING,
                     float(estimated_cost_usd),
                     None,
@@ -395,6 +495,8 @@ class BudgetLedger:
                 id=r["id"],
                 batch_id=r["batch_id"],
                 api_call_kind=r["api_call_kind"],
+                backend_kind=r["backend_kind"],
+                call_role=r["call_role"],
                 status=r["status"],
                 estimated_cost=float(r["estimated_cost"]),
                 actual_cost=(
@@ -416,14 +518,49 @@ class BudgetLedger:
         return [e for e in self.list_entries(batch_id=batch_id)
                 if e.status == STATUS_PENDING]
 
+    def cost_by_backend_kind(
+        self, *, batch_id: str | None = None
+    ) -> dict[str, float]:
+        """Return per-``backend_kind`` cost rollup for this ledger.
+
+        Pending and crashed rows count at their ``estimated_cost``;
+        completed rows count at ``actual_cost`` (via ``COALESCE``).
+        Every ``backend_kind`` in :data:`VALID_BACKEND_KINDS` appears in
+        the returned dict, defaulting to ``0.0`` when absent. This gives
+        downstream callers a stable shape regardless of whether the
+        batch issued any critic calls yet.
+        """
+        sql = (
+            "SELECT backend_kind, "
+            "COALESCE(SUM(COALESCE(actual_cost, estimated_cost)), 0) AS total "
+            "FROM ledger "
+        )
+        params: tuple = ()
+        if batch_id is not None:
+            sql += "WHERE batch_id = ? "
+            params = (batch_id,)
+        sql += "GROUP BY backend_kind"
+        with self._conn() as conn:
+            rows = conn.execute(sql, params).fetchall()
+        out: dict[str, float] = {k: 0.0 for k in VALID_BACKEND_KINDS}
+        for r in rows:
+            out[r["backend_kind"]] = float(r["total"])
+        return out
+
 
 __all__ = [
+    "BACKEND_KIND_D6_PROPOSER",
+    "BACKEND_KIND_D7B_CRITIC",
     "BATCH_CAP_USD",
     "BudgetLedger",
+    "CALL_ROLE_CRITIQUE",
+    "CALL_ROLE_PROPOSE",
     "LedgerEntry",
     "MONTHLY_CAP_USD",
     "STATUS_COMPLETED",
     "STATUS_CRASHED",
     "STATUS_PENDING",
+    "VALID_BACKEND_KINDS",
+    "VALID_CALL_ROLES",
     "VALID_STATUSES",
 ]

@@ -45,7 +45,9 @@ def _utc(y, m, d, h=0) -> datetime:
 
 def test_write_pending_is_immediately_counted(ledger):
     rid = ledger.write_pending(
-        batch_id="b1", api_call_kind="proposer", estimated_cost_usd=0.50,
+        batch_id="b1", api_call_kind="proposer",
+        backend_kind="d6_proposer", call_role="propose",
+        estimated_cost_usd=0.50,
     )
     assert ledger.batch_spent_usd("b1") == pytest.approx(0.50)
     entry = ledger.list_entries(batch_id="b1")[0]
@@ -56,7 +58,9 @@ def test_write_pending_is_immediately_counted(ledger):
 
 def test_finalize_replaces_estimate_with_actual(ledger):
     rid = ledger.write_pending(
-        batch_id="b1", api_call_kind="proposer", estimated_cost_usd=0.50,
+        batch_id="b1", api_call_kind="proposer",
+        backend_kind="d6_proposer", call_role="propose",
+        estimated_cost_usd=0.50,
     )
     ledger.finalize(rid, actual_cost_usd=0.12)
     assert ledger.batch_spent_usd("b1") == pytest.approx(0.12)
@@ -68,7 +72,9 @@ def test_finalize_replaces_estimate_with_actual(ledger):
 
 def test_finalize_twice_rejected(ledger):
     rid = ledger.write_pending(
-        batch_id="b1", api_call_kind="proposer", estimated_cost_usd=0.50,
+        batch_id="b1", api_call_kind="proposer",
+        backend_kind="d6_proposer", call_role="propose",
+        estimated_cost_usd=0.50,
     )
     ledger.finalize(rid, actual_cost_usd=0.12)
     with pytest.raises(ValueError, match="status is 'completed'"):
@@ -83,7 +89,9 @@ def test_finalize_unknown_id_raises_keyerror(ledger):
 def test_negative_cost_rejected(ledger):
     with pytest.raises(ValueError):
         ledger.write_pending(
-            batch_id="b1", api_call_kind="proposer", estimated_cost_usd=-0.01,
+            batch_id="b1", api_call_kind="proposer",
+            backend_kind="d6_proposer", call_role="propose",
+            estimated_cost_usd=-0.01,
         )
 
 
@@ -95,7 +103,9 @@ def test_negative_cost_rejected(ledger):
 def test_simulated_crash_preserves_precharge_in_totals(ledger):
     """Pending row without finalize still counts — the whole point."""
     ledger.write_pending(
-        batch_id="b1", api_call_kind="proposer", estimated_cost_usd=2.00,
+        batch_id="b1", api_call_kind="proposer",
+        backend_kind="d6_proposer", call_role="propose",
+        estimated_cost_usd=2.00,
     )
     # Process "crashes" before finalize is called. Totals unchanged:
     assert ledger.batch_spent_usd("b1") == pytest.approx(2.00)
@@ -104,7 +114,9 @@ def test_simulated_crash_preserves_precharge_in_totals(ledger):
 
 def test_mark_crashed_keeps_precharge_counted(ledger):
     rid = ledger.write_pending(
-        batch_id="b1", api_call_kind="proposer", estimated_cost_usd=3.00,
+        batch_id="b1", api_call_kind="proposer",
+        backend_kind="d6_proposer", call_role="propose",
+        estimated_cost_usd=3.00,
     )
     ledger.mark_crashed(rid, notes="network timeout")
     assert ledger.batch_spent_usd("b1") == pytest.approx(3.00)
@@ -119,7 +131,9 @@ def test_new_instance_sees_existing_pending_rows(tmp_path):
     db = tmp_path / "s.db"
     ledger_a = BudgetLedger(db)
     ledger_a.write_pending(
-        batch_id="b1", api_call_kind="proposer", estimated_cost_usd=1.00,
+        batch_id="b1", api_call_kind="proposer",
+        backend_kind="d6_proposer", call_role="propose",
+        estimated_cost_usd=1.00,
     )
     del ledger_a  # simulate crash
     ledger_b = BudgetLedger(db)
@@ -136,6 +150,7 @@ def test_can_afford_respects_batch_cap(ledger):
     # Pre-charge most of the batch budget.
     ledger.write_pending(
         batch_id="b1", api_call_kind="proposer",
+        backend_kind="d6_proposer", call_role="propose",
         estimated_cost_usd=BATCH_CAP_USD - 1.0,
     )
     assert ledger.can_afford(
@@ -155,6 +170,7 @@ def test_can_afford_respects_monthly_cap(ledger):
         chunk = min(5.0, remaining)
         ledger.write_pending(
             batch_id=f"b{i}", api_call_kind="proposer",
+            backend_kind="d6_proposer", call_role="propose",
             estimated_cost_usd=chunk,
         )
         remaining -= chunk
@@ -189,10 +205,12 @@ def test_monthly_spent_excludes_prior_month(ledger):
     this_month = _utc(2026, 4, 2, 3)
     ledger.write_pending(
         batch_id="b_old", api_call_kind="proposer",
+        backend_kind="d6_proposer", call_role="propose",
         estimated_cost_usd=10.0, now=last_month,
     )
     ledger.write_pending(
         batch_id="b_new", api_call_kind="proposer",
+        backend_kind="d6_proposer", call_role="propose",
         estimated_cost_usd=4.0, now=this_month,
     )
     assert ledger.monthly_spent_usd(now=this_month) == pytest.approx(4.0)
@@ -205,6 +223,7 @@ def test_monthly_rollover_at_month_boundary(ledger):
     apr_01 = _utc(2026, 4, 1, 0)
     ledger.write_pending(
         batch_id="b1", api_call_kind="proposer",
+        backend_kind="d6_proposer", call_role="propose",
         estimated_cost_usd=9.0, now=mar_31,
     )
     # From Mar 31's perspective, it counts.

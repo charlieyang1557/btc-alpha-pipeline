@@ -293,6 +293,8 @@ def test_pre_flight_clears_stale_pending(registry, tmp_ledger, tmp_payloads):
     stale_id = ledger.write_pending(
         batch_id="stale-batch",
         api_call_kind="proposer",
+        backend_kind="d6_proposer",
+        call_role="propose",
         estimated_cost_usd=0.05,
     )
     assert len(ledger.pending_entries()) == 1

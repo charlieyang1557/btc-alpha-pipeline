@@ -669,6 +669,8 @@ def run_stage2c(
         ledger_row_id = ledger.write_pending(
             batch_id=batch_id,
             api_call_kind="proposer",
+            backend_kind="d6_proposer",
+            call_role="propose",
             estimated_cost_usd=est_cost,
             now=now,
         )

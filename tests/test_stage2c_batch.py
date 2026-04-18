@@ -633,6 +633,8 @@ def test_early_stop_cumulative_spend_exceeded(
     row_id = ledger.write_pending(
         batch_id="seed-batch",
         api_call_kind="proposer",
+        backend_kind="d6_proposer",
+        call_role="propose",
         estimated_cost_usd=29.995,
         now=datetime.now(timezone.utc),
     )

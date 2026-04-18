@@ -58,6 +58,12 @@ class CriticResult:
         default_factory=lambda: {"d7a_ms": 0.0, "d7b_ms": 0.0}
     )
 
+    # Stage 2a additive error-forensics fields. Both are None on the
+    # ``critic_status == 'ok'`` path. Populated when the D7b live backend
+    # raises a structured error (content, API, leakage audit, cost ceiling).
+    critic_error_signature: str | None = None
+    critic_error_full_path: str | None = None
+
     def to_dict(self) -> dict:
         """Serialize to a JSON-compatible dict."""
         return {
@@ -75,6 +81,8 @@ class CriticResult:
             "d7b_output_tokens": self.d7b_output_tokens,
             "d7b_retry_count": self.d7b_retry_count,
             "critic_timing_ms": dict(self.critic_timing_ms),
+            "critic_error_signature": self.critic_error_signature,
+            "critic_error_full_path": self.critic_error_full_path,
         }
 
     @classmethod
@@ -95,6 +103,8 @@ class CriticResult:
             d7b_output_tokens=d["d7b_output_tokens"],
             d7b_retry_count=d["d7b_retry_count"],
             critic_timing_ms=dict(d.get("critic_timing_ms", {})),
+            critic_error_signature=d.get("critic_error_signature"),
+            critic_error_full_path=d.get("critic_error_full_path"),
         )
 
 

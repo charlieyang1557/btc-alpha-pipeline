@@ -125,6 +125,8 @@ def run_critic(
         "retry_count": 0,
     }
     d7b_error = False
+    critic_error_signature: str | None = None
+    critic_error_full_path: str | None = None
 
     # --- D7a ---
     t0 = time.monotonic()
@@ -142,8 +144,22 @@ def run_critic(
         d7b_scores, d7b_reasoning, d7b_metadata = d7b_backend.score(
             dsl, theme, batch_context,
         )
-    except Exception:
+    except Exception as exc:
         d7b_error = True
+        # Extract structured forensic signature from D7b live errors.
+        sig = getattr(exc, "sanitized_signature", None)
+        if callable(sig):
+            critic_error_signature = sig()
+        else:
+            critic_error_signature = f"{type(exc).__name__}: {str(exc)[:160]}"
+        # If the live backend recorded a traceback artifact, populate it.
+        backend_tb = getattr(d7b_backend, "_traceback_path", None)
+        if callable(backend_tb):
+            try:
+                p = backend_tb()
+                critic_error_full_path = str(p) if p.exists() else None
+            except Exception:  # pragma: no cover - defensive
+                critic_error_full_path = None
     d7b_ms = round((time.monotonic() - t1) * 1000, 3)
 
     # --- Status ---
@@ -172,6 +188,8 @@ def run_critic(
         d7b_output_tokens=d7b_metadata.get("output_tokens"),
         d7b_retry_count=d7b_metadata.get("retry_count", 0),
         critic_timing_ms={"d7a_ms": d7a_ms, "d7b_ms": d7b_ms},
+        critic_error_signature=critic_error_signature,
+        critic_error_full_path=critic_error_full_path,
     )
 
 

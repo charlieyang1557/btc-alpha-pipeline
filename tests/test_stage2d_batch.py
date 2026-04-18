@@ -623,6 +623,7 @@ def test_cumulative_spend_stop(registry, tmp_ledger, tmp_payloads):
     ledger = BudgetLedger(tmp_ledger)
     row_id = ledger.write_pending(
         batch_id="seed", api_call_kind="proposer",
+        backend_kind="d6_proposer", call_role="propose",
         estimated_cost_usd=29.99,
         now=datetime.now(timezone.utc),
     )
