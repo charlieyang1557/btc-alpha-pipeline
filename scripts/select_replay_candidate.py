@@ -90,6 +90,44 @@ MAX_POSITION = 190
 STAGE2A_N_FACTORS_RANGE: tuple[int, int] = (3, 5)
 STAGE2B_N_FACTORS_RANGE: tuple[int, int] = (3, 7)
 
+# -----------------------------------------------------------------------
+# Stage 2c — N=20 selection constants
+#
+# Stage 2c extends Stage 2b's N=5 path to select 20 replay candidates
+# for the full forensic sweep. Per-candidate criteria (the seven rules
+# enforced by ``passes_selection``) and the factor-count range
+# (``STAGE2B_N_FACTORS_RANGE``) are inherited verbatim — Stage 2c does
+# not introduce a new per-candidate gate. The scaling happens at the
+# cross-candidate constraint layer:
+#
+#   * Bucket coverage: early/mid/late each require >= 5 candidates
+#     (scaled from Stage 2b's >= 1). Total bucket-forced picks = 15.
+#   * Theme diversity: >= 3 themes (unchanged; pool-limited).
+#   * Agreement floor: >= 4 ``agreement_expected`` candidates in the
+#     selection. This is a HARD constraint at all tiers, never relaxed,
+#     pre-checked against the pool before any tier attempt.
+#   * Unique hypothesis hashes (unchanged).
+#
+# Soft tier ladder (fixed order):
+#   * Tier 0: >= 2 cross-theme ``divergence_expected`` candidates.
+#   * Tier 1: >= 1 ``divergence_expected`` candidate, with two sub-cases
+#     tried in order — two same-theme divergences first (more coverage),
+#     then a single divergence as a further fallback.
+#   * Tier 2: zero divergence coverage; agreement floor still enforced.
+#
+# CONTRACT BOUNDARY: ``STAGE2B_N_FACTORS_RANGE`` is REUSED by Stage 2c
+# (not renamed / not duplicated). The factor-count bound is a property
+# of the D6 proposer's empirical distribution, not of the selection
+# fan-out. Do not introduce a ``STAGE2C_N_FACTORS_RANGE`` constant; a
+# Stage 2c code path that read its own range would desynchronize from
+# Stage 2b's pool-eligibility rules.
+STAGE2C_N_CANDIDATES: int = 20
+STAGE2C_THEMES_MIN: int = 3
+STAGE2C_BUCKET_MIN: int = 5
+STAGE2C_AGREEMENT_FLOOR: int = 4
+STAGE2C_TIER_0_DIVERGENCE_MIN: int = 2
+STAGE2C_TIER_1_DIVERGENCE_MIN: int = 1
+
 
 def _has_cross_operator(response_text: str) -> bool:
     """Check whether the raw response contains a cross operator.
@@ -869,6 +907,590 @@ def run_stage2b(
     return 0
 
 
+# -----------------------------------------------------------------------
+# Stage 2c — N=20 selection (two-phase slot-filling with agreement floor)
+#
+# The Stage 2c path reuses Stage 2b's pool-building machinery
+# (``build_eligible_pool`` with ``STAGE2B_N_FACTORS_RANGE``) verbatim
+# and layers a scaled constraint check plus a three-tier soft ladder on
+# top. See the ``STAGE2C_*`` constants block above for the full rule
+# list. The implementation below is intentionally kept separate from the
+# Stage 2b ``_fill_rest`` / ``_try_*`` helpers: Stage 2c's agreement
+# floor and scaled per-bucket minimum make its filler a different enough
+# shape that co-mingling the two would obscure the cross-candidate
+# invariants of each path.
+# -----------------------------------------------------------------------
+
+STAGE2C_DEFAULT_OUTPUT = Path("docs/d7_stage2c/replay_candidates.json")
+STAGE2C_STAGE_LABEL = "d7_stage2c"
+STAGE2C_RECORD_VERSION = "1.0"
+STAGE2B_REFERENCE_DEFAULT = Path("docs/d7_stage2b/replay_candidates.json")
+
+
+def _render_rationale_stage2c(
+    candidate: dict, candidates_before: list[dict],
+) -> str:
+    """Context-aware rationale for a Stage 2c candidate.
+
+    Uses ``adds theme`` on the first appearance of a theme in the
+    firing-order-ordered candidate list, and ``retains theme`` on all
+    subsequent appearances. The label clause is always the mechanical
+    ``label=<agreement|divergence|neutral>_expected`` template.
+    """
+    themes_seen = {c["theme"] for c in candidates_before}
+    if candidate["theme"] in themes_seen:
+        theme_clause = f"retains theme {candidate['theme']}"
+    else:
+        theme_clause = f"adds theme {candidate['theme']}"
+    return (
+        f"fills {candidate['position_bucket']} bucket; "
+        f"{theme_clause}; "
+        f"label={candidate['d7a_b_relationship_label']}"
+    )
+
+
+def _fill_rest_stage2c(
+    pool: list[dict],
+    seed: list[dict],
+    *,
+    n_target: int = STAGE2C_N_CANDIDATES,
+    bucket_min: int = STAGE2C_BUCKET_MIN,
+    agreement_floor: int = STAGE2C_AGREEMENT_FLOOR,
+) -> list[dict] | None:
+    """Two-phase greedy fill for Stage 2c.
+
+    Phase 1 enforces the agreement floor by force-picking
+    ``agreement_expected`` candidates from the pool until the selection
+    contains at least ``agreement_floor`` of them (or the pool runs
+    out, in which case we return ``None``). Within Phase 1, bucket /
+    theme coverage is still used as a tiebreak so the forced agreements
+    help satisfy the other hard constraints.
+
+    Phase 2 fills the remaining slots with bucket / theme priorities
+    identical to Stage 2b's ``_fill_rest`` — ordered: fill
+    under-populated buckets, then add missing themes, then lower
+    position.
+
+    Returns the newly added candidates (excluding ``seed``) if filling
+    succeeds AND all hard constraints hold. Returns ``None`` otherwise.
+    """
+    added: list[dict] = []
+    used_hashes: set[str] = {c["hypothesis_hash"] for c in seed}
+    pool_sorted = sorted(
+        pool, key=lambda c: (c["position"], c["hypothesis_hash"]),
+    )
+
+    def current() -> list[dict]:
+        return seed + added
+
+    def agreement_count() -> int:
+        return sum(
+            1 for c in current()
+            if c["d7a_b_relationship_label"] == AGREEMENT_LABEL
+        )
+
+    def bucket_counts_now() -> dict[str, int]:
+        sel = current()
+        return {
+            n: sum(1 for c in sel if c["position_bucket"] == n)
+            for n in BUCKET_NAMES
+        }
+
+    # Phase 1 — force agreement floor
+    while (
+        agreement_count() < agreement_floor
+        and len(current()) < n_target
+    ):
+        remaining_agreements = [
+            c for c in pool_sorted
+            if c["hypothesis_hash"] not in used_hashes
+            and c["d7a_b_relationship_label"] == AGREEMENT_LABEL
+        ]
+        if not remaining_agreements:
+            return None
+
+        bc = bucket_counts_now()
+        buckets_needing_fill = {
+            n for n in BUCKET_NAMES if bc[n] < bucket_min
+        }
+        themes_covered = {c["theme"] for c in current()}
+        need_theme_diversity = len(themes_covered) < STAGE2C_THEMES_MIN
+
+        def rank_key_phase1(c: dict) -> tuple:
+            p1 = 0 if c["position_bucket"] in buckets_needing_fill else 1
+            p2 = (
+                0
+                if (need_theme_diversity and c["theme"] not in themes_covered)
+                else 1
+            )
+            return (p1, p2, c["position"])
+
+        remaining_agreements.sort(key=rank_key_phase1)
+        chosen = remaining_agreements[0]
+        added.append(chosen)
+        used_hashes.add(chosen["hypothesis_hash"])
+
+    # Phase 2 — bucket/theme-driven fill for remaining slots
+    while len(current()) < n_target:
+        bc = bucket_counts_now()
+        buckets_needing_fill = {
+            n for n in BUCKET_NAMES if bc[n] < bucket_min
+        }
+        themes_covered = {c["theme"] for c in current()}
+        need_theme_diversity = len(themes_covered) < STAGE2C_THEMES_MIN
+
+        remaining = [
+            c for c in pool_sorted if c["hypothesis_hash"] not in used_hashes
+        ]
+        if not remaining:
+            return None
+
+        def rank_key_phase2(c: dict) -> tuple:
+            p1 = 0 if c["position_bucket"] in buckets_needing_fill else 1
+            p2 = (
+                0
+                if (need_theme_diversity and c["theme"] not in themes_covered)
+                else 1
+            )
+            return (p1, p2, c["position"])
+
+        remaining.sort(key=rank_key_phase2)
+        chosen = remaining[0]
+        added.append(chosen)
+        used_hashes.add(chosen["hypothesis_hash"])
+
+    # Post-fill hard-constraint validation
+    all_sel = seed + added
+    if len({c["hypothesis_hash"] for c in all_sel}) != len(all_sel):
+        return None
+    final_bc = {
+        n: sum(1 for c in all_sel if c["position_bucket"] == n)
+        for n in BUCKET_NAMES
+    }
+    if any(final_bc[n] < bucket_min for n in BUCKET_NAMES):
+        return None
+    if len({c["theme"] for c in all_sel}) < STAGE2C_THEMES_MIN:
+        return None
+    final_agree = sum(
+        1 for c in all_sel
+        if c["d7a_b_relationship_label"] == AGREEMENT_LABEL
+    )
+    if final_agree < agreement_floor:
+        return None
+    return added
+
+
+def _try_tier0_stage2c(
+    pool: list[dict],
+) -> tuple[list[dict], list[dict]] | None:
+    """Tier 0: >= 2 cross-theme divergence candidates in the selection."""
+    divergences = [
+        c for c in pool if c["d7a_b_relationship_label"] == DIVERGENCE_LABEL
+    ]
+    if len(divergences) < STAGE2C_TIER_0_DIVERGENCE_MIN:
+        return None
+
+    # Rank divergences by low overlap-with-priors (strongest divergence
+    # signal first), then lower position as deterministic tiebreak.
+    ranked = sorted(
+        divergences,
+        key=lambda c: (c["max_overlap_with_priors"], c["position"]),
+    )
+
+    for i, d1 in enumerate(ranked):
+        for d2 in ranked[i + 1:]:
+            if d1["theme"] == d2["theme"]:
+                continue
+            filled = _fill_rest_stage2c(pool, [d1, d2])
+            if filled is None:
+                continue
+            return [d1, d2] + filled, []
+    return None
+
+
+def _try_tier1_stage2c(
+    pool: list[dict],
+) -> tuple[list[dict], list[dict]] | None:
+    """Tier 1: single-divergence OR same-theme-divergences seed.
+
+    Tries the stronger sub-case (two same-theme divergences) first,
+    falling back to a single divergence if that sub-case is infeasible.
+    Attaches a Tier-1 warning payload in either sub-case.
+    """
+    divergences = [
+        c for c in pool if c["d7a_b_relationship_label"] == DIVERGENCE_LABEL
+    ]
+    if not divergences:
+        return None
+
+    ranked = sorted(
+        divergences,
+        key=lambda c: (c["max_overlap_with_priors"], c["position"]),
+    )
+
+    warning = {
+        "tier": 1,
+        "constraint_relaxed": "cross_theme_divergence_coverage",
+        "reason": (
+            "fewer than 2 cross-theme divergence-expected candidates "
+            "fit within bucket / theme / agreement-floor-satisfying "
+            "selection"
+        ),
+        "pool_size_searched": len(pool),
+        "pool_breakdown_by_label": _count_labels(pool),
+        "rejection_breakdown": {},
+    }
+
+    # Sub-case A: two same-theme divergences
+    for i, d1 in enumerate(ranked):
+        for d2 in ranked[i + 1:]:
+            if d1["theme"] != d2["theme"]:
+                continue
+            filled = _fill_rest_stage2c(pool, [d1, d2])
+            if filled is None:
+                continue
+            return [d1, d2] + filled, [dict(warning)]
+
+    # Sub-case B: single divergence
+    for d in ranked:
+        filled = _fill_rest_stage2c(pool, [d])
+        if filled is None:
+            continue
+        return [d] + filled, [dict(warning)]
+
+    return None
+
+
+def _try_tier2_stage2c(
+    pool: list[dict],
+) -> tuple[list[dict], list[dict]] | None:
+    """Tier 2: drop divergence coverage. Agreement floor still enforced."""
+    filled = _fill_rest_stage2c(pool, [])
+    if filled is None:
+        return None
+    warnings = [{
+        "tier": 2,
+        "constraint_relaxed": "divergence_coverage",
+        "reason": (
+            "no divergence-expected seed feasible under bucket / theme / "
+            "agreement-floor constraints"
+        ),
+        "pool_size_searched": len(pool),
+        "pool_breakdown_by_label": _count_labels(pool),
+        "hard_constraint_constrained": True,
+        "rejection_breakdown": {},
+    }]
+    return filled, warnings
+
+
+def _validate_hard_constraints_stage2c(candidates: list[dict]) -> bool:
+    if len(candidates) != STAGE2C_N_CANDIDATES:
+        return False
+    if len({c["hypothesis_hash"] for c in candidates}) != STAGE2C_N_CANDIDATES:
+        return False
+    if len({c["theme"] for c in candidates}) < STAGE2C_THEMES_MIN:
+        return False
+    bucket_counts = {
+        n: sum(1 for c in candidates if c["position_bucket"] == n)
+        for n in BUCKET_NAMES
+    }
+    if any(bucket_counts[n] < STAGE2C_BUCKET_MIN for n in BUCKET_NAMES):
+        return False
+    agree = sum(
+        1 for c in candidates
+        if c["d7a_b_relationship_label"] == AGREEMENT_LABEL
+    )
+    if agree < STAGE2C_AGREEMENT_FLOOR:
+        return False
+    positions = [c["position"] for c in candidates]
+    if positions != sorted(positions):
+        return False
+    return True
+
+
+def select_stage2c(pool: list[dict]) -> dict:
+    """Select 20 candidates under Stage 2c constraints.
+
+    Returns a dict with:
+        status: "ok" or "hard_fail"
+        error: str (on hard_fail)
+        candidates: list of 20 candidates, sorted by position asc and
+                    tagged with firing_order + selection_rationale
+        tier: 0 | 1 | 2
+        warnings: list of warning payloads
+        bucket_counts: dict (on empty-bucket hard_fail only)
+        theme_count: int (on few-themes hard_fail only)
+        agreement_count: int (on agreement-floor hard_fail only)
+    """
+    if len(pool) < STAGE2C_N_CANDIDATES:
+        return {
+            "status": "hard_fail",
+            "error": (
+                f"only {len(pool)} candidates pass per-candidate criteria; "
+                f"need >= {STAGE2C_N_CANDIDATES}"
+            ),
+            "pool_size_passing": len(pool),
+        }
+
+    bucket_counts = {
+        n: sum(1 for c in pool if c["position_bucket"] == n)
+        for n in BUCKET_NAMES
+    }
+    for name in BUCKET_NAMES:
+        if bucket_counts[name] < STAGE2C_BUCKET_MIN:
+            return {
+                "status": "hard_fail",
+                "error": (
+                    f"position bucket {name} has only {bucket_counts[name]} "
+                    f"candidates; need >= {STAGE2C_BUCKET_MIN}"
+                ),
+                "bucket_counts": bucket_counts,
+            }
+
+    themes_present = {c["theme"] for c in pool}
+    if len(themes_present) < STAGE2C_THEMES_MIN:
+        return {
+            "status": "hard_fail",
+            "error": (
+                f"only {len(themes_present)} distinct themes in pool; "
+                f"cannot satisfy hard constraint of >= "
+                f"{STAGE2C_THEMES_MIN} themes"
+            ),
+            "theme_count": len(themes_present),
+        }
+
+    agreement_pool_count = sum(
+        1 for c in pool
+        if c["d7a_b_relationship_label"] == AGREEMENT_LABEL
+    )
+    if agreement_pool_count < STAGE2C_AGREEMENT_FLOOR:
+        return {
+            "status": "hard_fail",
+            "error": (
+                f"only {agreement_pool_count} agreement_expected candidates "
+                f"in pool; need >= {STAGE2C_AGREEMENT_FLOOR} (HARD)"
+            ),
+            "agreement_count": agreement_pool_count,
+        }
+
+    for tier in (0, 1, 2):
+        if tier == 0:
+            result = _try_tier0_stage2c(pool)
+        elif tier == 1:
+            result = _try_tier1_stage2c(pool)
+        else:
+            result = _try_tier2_stage2c(pool)
+
+        if result is None:
+            continue
+
+        candidates, warnings = result
+        candidates = sorted(candidates, key=lambda c: c["position"])
+        for idx, cand in enumerate(candidates, start=1):
+            cand["firing_order"] = idx
+            cand["selection_rationale"] = _render_rationale_stage2c(
+                cand, candidates[: idx - 1],
+            )
+
+        if not _validate_hard_constraints_stage2c(candidates):
+            continue
+
+        return {
+            "status": "ok",
+            "candidates": candidates,
+            "tier": tier,
+            "warnings": warnings,
+        }
+
+    return {
+        "status": "hard_fail",
+        "error": (
+            "hard constraints cannot be simultaneously satisfied at any tier"
+        ),
+    }
+
+
+def _compute_stage2b_overlap(
+    stage2c_candidates: list[dict],
+    stage2b_reference_path: Path,
+) -> tuple[int, list[int]]:
+    """Compute overlap against the signed-off Stage 2b candidate file.
+
+    Overlap is defined as candidates whose ``hypothesis_hash`` appears in
+    both the Stage 2b reference file and the Stage 2c selection. Returns
+    ``(overlap_count, sorted_overlap_positions)``. When the reference
+    file is missing or unreadable, returns ``(0, [])`` without raising —
+    Stage 2c is a pure research diagnostic, not a hard dependency on
+    Stage 2b's presence.
+    """
+    if not stage2b_reference_path.exists():
+        return 0, []
+    try:
+        data = json.loads(
+            stage2b_reference_path.read_text(encoding="utf-8"),
+        )
+    except (OSError, json.JSONDecodeError):
+        return 0, []
+    stage2b_hashes = {
+        c.get("hypothesis_hash")
+        for c in data.get("candidates", [])
+        if c.get("hypothesis_hash")
+    }
+    overlap_positions = sorted(
+        c["position"]
+        for c in stage2c_candidates
+        if c["hypothesis_hash"] in stage2b_hashes
+    )
+    return len(overlap_positions), overlap_positions
+
+
+def _count_themes_in(candidates: list[dict]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for c in candidates:
+        counts[c["theme"]] = counts.get(c["theme"], 0) + 1
+    return counts
+
+
+def _count_labels_in(candidates: list[dict]) -> dict[str, int]:
+    return {
+        AGREEMENT_LABEL: sum(
+            1 for c in candidates
+            if c["d7a_b_relationship_label"] == AGREEMENT_LABEL
+        ),
+        DIVERGENCE_LABEL: sum(
+            1 for c in candidates
+            if c["d7a_b_relationship_label"] == DIVERGENCE_LABEL
+        ),
+        NEUTRAL_LABEL: sum(
+            1 for c in candidates
+            if c["d7a_b_relationship_label"] == NEUTRAL_LABEL
+        ),
+    }
+
+
+def build_stage2c_output(
+    batch_uuid: str,
+    selection_result: dict,
+    eligible: dict,
+    *,
+    timestamp_utc: str | None = None,
+    stage2b_overlap_count: int = 0,
+    stage2b_overlap_positions: list[int] | None = None,
+) -> dict:
+    """Assemble the Stage 2c output JSON (in-memory, not yet written)."""
+    if timestamp_utc is None:
+        timestamp_utc = datetime.datetime.now(
+            datetime.timezone.utc
+        ).strftime("%Y-%m-%dT%H:%M:%SZ")
+    if stage2b_overlap_positions is None:
+        stage2b_overlap_positions = []
+
+    candidates = selection_result["candidates"]
+    theme_counts = _count_themes_in(candidates)
+    label_counts = _count_labels_in(candidates)
+
+    return {
+        "stage_label": STAGE2C_STAGE_LABEL,
+        "record_version": STAGE2C_RECORD_VERSION,
+        "batch_uuid": batch_uuid,
+        "selection_timestamp_utc": timestamp_utc,
+        "selection_tier": selection_result["tier"],
+        "selection_warnings": list(selection_result["warnings"]),
+        "pool_size_total": eligible["pool_size_total"],
+        "pool_size_passing_per_candidate_criteria": eligible[
+            "pool_size_passing"
+        ],
+        "rejection_breakdown": dict(eligible["rejection_breakdown"]),
+        "stage2b_overlap_count": stage2b_overlap_count,
+        "stage2b_overlap_positions": list(stage2b_overlap_positions),
+        "theme_counts_in_selected": theme_counts,
+        "label_counts_in_selected": label_counts,
+        "candidates": [
+            _candidate_to_output(c) for c in candidates
+        ],
+    }
+
+
+def run_stage2c(
+    batch_uuid: str,
+    *,
+    artifacts_root: Path,
+    summary_name: str,
+    output_path: Path,
+    stage2b_reference_path: Path,
+) -> int:
+    """Execute the full N=20 Stage 2c selection pipeline.
+
+    Returns a Unix-style exit code (0 success, 1 any failure).
+    """
+    batch_dir = artifacts_root / f"batch_{batch_uuid}"
+    summary_path = batch_dir / summary_name
+
+    if not summary_path.exists():
+        print(
+            f"[select] summary not found: {summary_path}\n"
+            f"[select] batch {batch_uuid} may not exist in {artifacts_root}/",
+            file=sys.stderr,
+        )
+        return 1
+
+    with summary_path.open(encoding="utf-8") as fh:
+        summary = json.load(fh)
+
+    eligible = build_eligible_pool(
+        summary, batch_dir=batch_dir, batch_uuid=batch_uuid,
+    )
+
+    result = select_stage2c(eligible["pool"])
+
+    if result["status"] != "ok":
+        err = result.get("error", "unknown hard fail")
+        print(f"[select] ERROR: {err}.", file=sys.stderr)
+        if "bucket_counts" in result:
+            bc = result["bucket_counts"]
+            print(
+                f"[select] Pool counts: early={bc.get('early', 0)}, "
+                f"mid={bc.get('mid', 0)}, late={bc.get('late', 0)}",
+                file=sys.stderr,
+            )
+        if "pool_size_passing" in result:
+            print(
+                f"[select] Breakdown: {eligible['rejection_breakdown']}",
+                file=sys.stderr,
+            )
+        return 1
+
+    overlap_count, overlap_positions = _compute_stage2b_overlap(
+        result["candidates"], stage2b_reference_path,
+    )
+
+    output = build_stage2c_output(
+        batch_uuid, result, eligible,
+        stage2b_overlap_count=overlap_count,
+        stage2b_overlap_positions=overlap_positions,
+    )
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(
+        json.dumps(output, indent=2) + "\n", encoding="utf-8",
+    )
+
+    positions = [c["position"] for c in result["candidates"]]
+    theme_counts = output["theme_counts_in_selected"]
+    label_counts = output["label_counts_in_selected"]
+
+    print(f"[select] wrote {output_path}")
+    print(f"[select] positions: {positions}")
+    print(f"[select] themes: {theme_counts}")
+    print(f"[select] labels: {label_counts}")
+    print(
+        f"[select] stage2b overlap: {overlap_count} "
+        f"positions={overlap_positions}"
+    )
+
+    return 0
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Select a D7 Stage 2a replay candidate from a Stage 2d batch.",
@@ -892,10 +1514,11 @@ def main() -> None:
         "--n",
         type=int,
         default=1,
-        choices=(1, 5),
+        choices=(1, 5, 20),
         help=(
-            "Number of candidates to select. Must be 1 or 5. Default: 1. "
-            "N=5 triggers Stage 2b selection logic."
+            "Number of candidates to select. Must be 1, 5, or 20. "
+            "Default: 1. N=5 triggers Stage 2b selection logic; "
+            "N=20 triggers Stage 2c selection logic."
         ),
     )
     parser.add_argument(
@@ -903,8 +1526,19 @@ def main() -> None:
         type=Path,
         default=None,
         help=(
-            "Override default output path (Stage 2b only; ignored when "
-            "--n=1). Default: docs/d7_stage2b/replay_candidates.json."
+            "Override default output path (Stage 2b/2c only; ignored when "
+            "--n=1). Defaults: docs/d7_stage2b/replay_candidates.json "
+            "for --n=5; docs/d7_stage2c/replay_candidates.json for --n=20."
+        ),
+    )
+    parser.add_argument(
+        "--stage2b-reference",
+        type=Path,
+        default=None,
+        help=(
+            "Override Stage 2b reference path used by --n=20 to compute "
+            "the stage2b_overlap_count / stage2b_overlap_positions "
+            "fields. Default: docs/d7_stage2b/replay_candidates.json."
         ),
     )
     args = parser.parse_args()
@@ -927,13 +1561,25 @@ def main() -> None:
         )
         return
 
-    # N == 5 — Stage 2b path.
-    output_path = args.output or STAGE2B_DEFAULT_OUTPUT
-    exit_code = run_stage2b(
+    if args.n == 5:
+        output_path = args.output or STAGE2B_DEFAULT_OUTPUT
+        exit_code = run_stage2b(
+            args.batch_uuid,
+            artifacts_root=args.artifacts_root,
+            summary_name=args.summary_name,
+            output_path=output_path,
+        )
+        sys.exit(exit_code)
+
+    # N == 20 — Stage 2c path.
+    output_path = args.output or STAGE2C_DEFAULT_OUTPUT
+    stage2b_ref = args.stage2b_reference or STAGE2B_REFERENCE_DEFAULT
+    exit_code = run_stage2c(
         args.batch_uuid,
         artifacts_root=args.artifacts_root,
         summary_name=args.summary_name,
         output_path=output_path,
+        stage2b_reference_path=stage2b_ref,
     )
     sys.exit(exit_code)
 
