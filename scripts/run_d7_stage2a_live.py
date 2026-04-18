@@ -50,6 +50,7 @@ if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
 from agents.critic.batch_context import BatchContext  # noqa: E402, F401
+from agents.critic.d7a_feature_extraction import extract_factors  # noqa: E402
 from agents.critic.d7b_stub import StubD7bBackend  # noqa: E402
 from agents.critic.orchestrator import run_critic  # noqa: E402
 from agents.critic.replay import reconstruct_batch_context_at_position  # noqa: E402
@@ -117,7 +118,7 @@ def run_live(
     print(f"[stage2a] replay: batch={batch_uuid}, position={position}, "
           f"theme={theme}")
     print(f"[stage2a] DSL name: {dsl.name}")
-    print(f"[stage2a] factors: {sorted(dsl.factors_used())}")
+    print(f"[stage2a] factors: {extract_factors(dsl)}")
 
     # Backend selection.
     if confirm_live:
