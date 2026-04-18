@@ -1,0 +1,445 @@
+{
+  "stage_label": "d7_stage2c",
+  "record_version": "1.0",
+  "batch_uuid": "5cf76668-47d1-48d7-bd90-db06d31982ed",
+  "selection_timestamp_utc": "2026-04-18T15:01:20Z",
+  "selection_tier": 0,
+  "selection_warnings": [],
+  "pool_size_total": 200,
+  "pool_size_passing_per_candidate_criteria": 29,
+  "rejection_breakdown": {
+    "lifecycle_not_pending_backtest": 1,
+    "theme_is_momentum": 39,
+    "factor_count_out_of_range": 1,
+    "no_cross_operator": 16,
+    "rsi14_is_sole_factor": 0,
+    "position_out_of_range": 15,
+    "thin_theme_momentum_bleed": 99
+  },
+  "stage2b_overlap_count": 5,
+  "stage2b_overlap_positions": [
+    17,
+    73,
+    74,
+    97,
+    138
+  ],
+  "theme_counts_in_selected": {
+    "mean_reversion": 15,
+    "volatility_regime": 4,
+    "volume_divergence": 1
+  },
+  "label_counts_in_selected": {
+    "agreement_expected": 8,
+    "divergence_expected": 3,
+    "neutral": 9
+  },
+  "candidates": [
+    {
+      "firing_order": 1,
+      "position": 17,
+      "theme": "mean_reversion",
+      "hypothesis_hash": "17396a8e291dae75",
+      "lifecycle_state": "pending_backtest",
+      "factors_used": [
+        "bb_upper_24_2",
+        "close",
+        "realized_vol_24h",
+        "return_24h",
+        "rsi_14",
+        "sma_24",
+        "zscore_48"
+      ],
+      "factor_set_prior_occurrences": 0,
+      "max_overlap_with_priors": 0,
+      "d7a_b_relationship_label": "divergence_expected",
+      "position_bucket": "early",
+      "selection_rationale": "fills early bucket; adds theme mean_reversion; label=divergence_expected"
+    },
+    {
+      "firing_order": 2,
+      "position": 22,
+      "theme": "mean_reversion",
+      "hypothesis_hash": "dd38cf9547fa9306",
+      "lifecycle_state": "pending_backtest",
+      "factors_used": [
+        "bb_upper_24_2",
+        "close",
+        "realized_vol_24h",
+        "return_1h",
+        "rsi_14",
+        "sma_24",
+        "zscore_48"
+      ],
+      "factor_set_prior_occurrences": 0,
+      "max_overlap_with_priors": 6,
+      "d7a_b_relationship_label": "neutral",
+      "position_bucket": "early",
+      "selection_rationale": "fills early bucket; retains theme mean_reversion; label=neutral"
+    },
+    {
+      "firing_order": 3,
+      "position": 27,
+      "theme": "mean_reversion",
+      "hypothesis_hash": "57f884d5e47b14e6",
+      "lifecycle_state": "pending_backtest",
+      "factors_used": [
+        "bb_upper_24_2",
+        "close",
+        "realized_vol_24h",
+        "return_24h",
+        "rsi_14",
+        "sma_24",
+        "zscore_48"
+      ],
+      "factor_set_prior_occurrences": 1,
+      "max_overlap_with_priors": 7,
+      "d7a_b_relationship_label": "agreement_expected",
+      "position_bucket": "early",
+      "selection_rationale": "fills early bucket; retains theme mean_reversion; label=agreement_expected"
+    },
+    {
+      "firing_order": 4,
+      "position": 32,
+      "theme": "mean_reversion",
+      "hypothesis_hash": "663b1d38277a85f9",
+      "lifecycle_state": "pending_backtest",
+      "factors_used": [
+        "bb_upper_24_2",
+        "close",
+        "return_24h",
+        "rsi_14",
+        "sma_24",
+        "zscore_48"
+      ],
+      "factor_set_prior_occurrences": 0,
+      "max_overlap_with_priors": 6,
+      "d7a_b_relationship_label": "neutral",
+      "position_bucket": "early",
+      "selection_rationale": "fills early bucket; retains theme mean_reversion; label=neutral"
+    },
+    {
+      "firing_order": 5,
+      "position": 62,
+      "theme": "mean_reversion",
+      "hypothesis_hash": "ed50f3d2012b510d",
+      "lifecycle_state": "pending_backtest",
+      "factors_used": [
+        "bb_upper_24_2",
+        "close",
+        "return_1h",
+        "return_24h",
+        "rsi_14",
+        "sma_24",
+        "zscore_48"
+      ],
+      "factor_set_prior_occurrences": 0,
+      "max_overlap_with_priors": 6,
+      "d7a_b_relationship_label": "neutral",
+      "position_bucket": "early",
+      "selection_rationale": "fills early bucket; retains theme mean_reversion; label=neutral"
+    },
+    {
+      "firing_order": 6,
+      "position": 72,
+      "theme": "mean_reversion",
+      "hypothesis_hash": "ca08df07cc55d138",
+      "lifecycle_state": "pending_backtest",
+      "factors_used": [
+        "bb_upper_24_2",
+        "close",
+        "realized_vol_24h",
+        "return_24h",
+        "rsi_14",
+        "zscore_48"
+      ],
+      "factor_set_prior_occurrences": 0,
+      "max_overlap_with_priors": 6,
+      "d7a_b_relationship_label": "neutral",
+      "position_bucket": "mid",
+      "selection_rationale": "fills mid bucket; retains theme mean_reversion; label=neutral"
+    },
+    {
+      "firing_order": 7,
+      "position": 73,
+      "theme": "volatility_regime",
+      "hypothesis_hash": "ab3c1725e1cf4890",
+      "lifecycle_state": "pending_backtest",
+      "factors_used": [
+        "close",
+        "macd_hist",
+        "realized_vol_24h",
+        "return_168h",
+        "sma_50"
+      ],
+      "factor_set_prior_occurrences": 0,
+      "max_overlap_with_priors": 2,
+      "d7a_b_relationship_label": "divergence_expected",
+      "position_bucket": "mid",
+      "selection_rationale": "fills mid bucket; adds theme volatility_regime; label=divergence_expected"
+    },
+    {
+      "firing_order": 8,
+      "position": 74,
+      "theme": "volume_divergence",
+      "hypothesis_hash": "eb019d8da279abb2",
+      "lifecycle_state": "pending_backtest",
+      "factors_used": [
+        "close",
+        "return_168h",
+        "rsi_14",
+        "sma_20",
+        "volume_zscore_24h"
+      ],
+      "factor_set_prior_occurrences": 0,
+      "max_overlap_with_priors": 2,
+      "d7a_b_relationship_label": "divergence_expected",
+      "position_bucket": "mid",
+      "selection_rationale": "fills mid bucket; adds theme volume_divergence; label=divergence_expected"
+    },
+    {
+      "firing_order": 9,
+      "position": 77,
+      "theme": "mean_reversion",
+      "hypothesis_hash": "aa594fe2f732f9ba",
+      "lifecycle_state": "pending_backtest",
+      "factors_used": [
+        "bb_upper_24_2",
+        "close",
+        "realized_vol_24h",
+        "return_24h",
+        "rsi_14",
+        "sma_24"
+      ],
+      "factor_set_prior_occurrences": 0,
+      "max_overlap_with_priors": 6,
+      "d7a_b_relationship_label": "neutral",
+      "position_bucket": "mid",
+      "selection_rationale": "fills mid bucket; retains theme mean_reversion; label=neutral"
+    },
+    {
+      "firing_order": 10,
+      "position": 83,
+      "theme": "volatility_regime",
+      "hypothesis_hash": "00fe887f948bb83b",
+      "lifecycle_state": "pending_backtest",
+      "factors_used": [
+        "close",
+        "realized_vol_24h",
+        "rsi_14",
+        "sma_50",
+        "volume_zscore_24h"
+      ],
+      "factor_set_prior_occurrences": 0,
+      "max_overlap_with_priors": 3,
+      "d7a_b_relationship_label": "neutral",
+      "position_bucket": "mid",
+      "selection_rationale": "fills mid bucket; retains theme volatility_regime; label=neutral"
+    },
+    {
+      "firing_order": 11,
+      "position": 97,
+      "theme": "mean_reversion",
+      "hypothesis_hash": "1f8cbe2ba01c13a9",
+      "lifecycle_state": "pending_backtest",
+      "factors_used": [
+        "bb_upper_24_2",
+        "close",
+        "return_24h",
+        "rsi_14",
+        "sma_24",
+        "zscore_48"
+      ],
+      "factor_set_prior_occurrences": 1,
+      "max_overlap_with_priors": 6,
+      "d7a_b_relationship_label": "agreement_expected",
+      "position_bucket": "mid",
+      "selection_rationale": "fills mid bucket; retains theme mean_reversion; label=agreement_expected"
+    },
+    {
+      "firing_order": 12,
+      "position": 102,
+      "theme": "mean_reversion",
+      "hypothesis_hash": "611638897f1796b9",
+      "lifecycle_state": "pending_backtest",
+      "factors_used": [
+        "bb_upper_24_2",
+        "close",
+        "realized_vol_24h",
+        "return_24h",
+        "rsi_14",
+        "sma_24",
+        "zscore_48"
+      ],
+      "factor_set_prior_occurrences": 2,
+      "max_overlap_with_priors": 7,
+      "d7a_b_relationship_label": "agreement_expected",
+      "position_bucket": "mid",
+      "selection_rationale": "fills mid bucket; retains theme mean_reversion; label=agreement_expected"
+    },
+    {
+      "firing_order": 13,
+      "position": 107,
+      "theme": "mean_reversion",
+      "hypothesis_hash": "797961856fe86918",
+      "lifecycle_state": "pending_backtest",
+      "factors_used": [
+        "bb_upper_24_2",
+        "close",
+        "realized_vol_24h",
+        "return_24h",
+        "rsi_14",
+        "sma_24"
+      ],
+      "factor_set_prior_occurrences": 1,
+      "max_overlap_with_priors": 6,
+      "d7a_b_relationship_label": "agreement_expected",
+      "position_bucket": "mid",
+      "selection_rationale": "fills mid bucket; retains theme mean_reversion; label=agreement_expected"
+    },
+    {
+      "firing_order": 14,
+      "position": 112,
+      "theme": "mean_reversion",
+      "hypothesis_hash": "293d6f4a5553178b",
+      "lifecycle_state": "pending_backtest",
+      "factors_used": [
+        "bb_upper_24_2",
+        "close",
+        "realized_vol_24h",
+        "return_24h",
+        "rsi_14",
+        "sma_24",
+        "zscore_48"
+      ],
+      "factor_set_prior_occurrences": 3,
+      "max_overlap_with_priors": 7,
+      "d7a_b_relationship_label": "agreement_expected",
+      "position_bucket": "mid",
+      "selection_rationale": "fills mid bucket; retains theme mean_reversion; label=agreement_expected"
+    },
+    {
+      "firing_order": 15,
+      "position": 117,
+      "theme": "mean_reversion",
+      "hypothesis_hash": "c7fa8f9f09ea81e4",
+      "lifecycle_state": "pending_backtest",
+      "factors_used": [
+        "bb_upper_24_2",
+        "close",
+        "macd_hist",
+        "realized_vol_24h",
+        "return_24h",
+        "rsi_14",
+        "zscore_48"
+      ],
+      "factor_set_prior_occurrences": 0,
+      "max_overlap_with_priors": 6,
+      "d7a_b_relationship_label": "neutral",
+      "position_bucket": "mid",
+      "selection_rationale": "fills mid bucket; retains theme mean_reversion; label=neutral"
+    },
+    {
+      "firing_order": 16,
+      "position": 138,
+      "theme": "volatility_regime",
+      "hypothesis_hash": "9da35eee117da577",
+      "lifecycle_state": "pending_backtest",
+      "factors_used": [
+        "close",
+        "realized_vol_24h",
+        "return_24h",
+        "sma_20",
+        "volume_zscore_24h"
+      ],
+      "factor_set_prior_occurrences": 0,
+      "max_overlap_with_priors": 4,
+      "d7a_b_relationship_label": "neutral",
+      "position_bucket": "late",
+      "selection_rationale": "fills late bucket; retains theme volatility_regime; label=neutral"
+    },
+    {
+      "firing_order": 17,
+      "position": 143,
+      "theme": "volatility_regime",
+      "hypothesis_hash": "bb697a22f649d982",
+      "lifecycle_state": "pending_backtest",
+      "factors_used": [
+        "close",
+        "realized_vol_24h",
+        "return_168h",
+        "return_24h",
+        "sma_20",
+        "volume_zscore_24h"
+      ],
+      "factor_set_prior_occurrences": 0,
+      "max_overlap_with_priors": 5,
+      "d7a_b_relationship_label": "neutral",
+      "position_bucket": "late",
+      "selection_rationale": "fills late bucket; retains theme volatility_regime; label=neutral"
+    },
+    {
+      "firing_order": 18,
+      "position": 147,
+      "theme": "mean_reversion",
+      "hypothesis_hash": "96a3cfb044e8db33",
+      "lifecycle_state": "pending_backtest",
+      "factors_used": [
+        "bb_upper_24_2",
+        "close",
+        "realized_vol_24h",
+        "return_24h",
+        "rsi_14",
+        "sma_24",
+        "zscore_48"
+      ],
+      "factor_set_prior_occurrences": 4,
+      "max_overlap_with_priors": 7,
+      "d7a_b_relationship_label": "agreement_expected",
+      "position_bucket": "late",
+      "selection_rationale": "fills late bucket; retains theme mean_reversion; label=agreement_expected"
+    },
+    {
+      "firing_order": 19,
+      "position": 152,
+      "theme": "mean_reversion",
+      "hypothesis_hash": "e9cdc1cb41f6d223",
+      "lifecycle_state": "pending_backtest",
+      "factors_used": [
+        "bb_upper_24_2",
+        "close",
+        "realized_vol_24h",
+        "return_24h",
+        "rsi_14",
+        "sma_24",
+        "zscore_48"
+      ],
+      "factor_set_prior_occurrences": 5,
+      "max_overlap_with_priors": 7,
+      "d7a_b_relationship_label": "agreement_expected",
+      "position_bucket": "late",
+      "selection_rationale": "fills late bucket; retains theme mean_reversion; label=agreement_expected"
+    },
+    {
+      "firing_order": 20,
+      "position": 162,
+      "theme": "mean_reversion",
+      "hypothesis_hash": "0bf3523a661bc85b",
+      "lifecycle_state": "pending_backtest",
+      "factors_used": [
+        "bb_upper_24_2",
+        "close",
+        "realized_vol_24h",
+        "return_24h",
+        "rsi_14",
+        "sma_24",
+        "zscore_48"
+      ],
+      "factor_set_prior_occurrences": 6,
+      "max_overlap_with_priors": 7,
+      "d7a_b_relationship_label": "agreement_expected",
+      "position_bucket": "late",
+      "selection_rationale": "fills late bucket; retains theme mean_reversion; label=agreement_expected"
+    }
+  ]
+}
