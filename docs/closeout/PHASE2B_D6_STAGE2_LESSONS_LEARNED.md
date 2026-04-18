@@ -3,7 +3,7 @@
 **Scope:** D6 Proposer, Stage 2 (Stages 2a → 2d, live Sonnet)
 **Branch:** `claude/setup-structure-validators-JNqoI`
 **Status at writing:** D6 Stage 2d signed off; D6 overall signed off; D7 Critic not yet started.
-**Active blueprint:** `Blueprint/PHASE2_BLUEPRINT.md` (v2)
+**Active blueprint:** `blueprint/PHASE2_BLUEPRINT.md` (v2)
 
 ---
 

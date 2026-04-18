@@ -398,6 +398,6 @@ The canonical dataset (`data/raw/btcusdt_1h.parquet`) has these stable, verified
 
 - **Current phase:** Phase 2A closed (signed off 2026-04-17); **Phase 2B D6 Stage 2a (first live Sonnet call) in progress** — single-hypothesis calibration batch
 - **Completed:** Phase 0, Phase 1A, Phase 1B; Phase 2A (D1-D5 all signed off); Phase 2B D6 Stage 1 (stub plumbing, 675 tests)
-- **Active blueprint:** `Blueprint/PHASE2_BLUEPRINT.md` (v2)
+- **Active blueprint:** `blueprint/PHASE2_BLUEPRINT.md` (v2)
 - **Current batch_id:** N/A (no live batch run yet)
 - **Current UTC-month spend:** $0.00 (dry-run stub only; no API calls until D6 Stage 2)
