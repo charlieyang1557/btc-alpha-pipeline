@@ -44,3 +44,4 @@ Thumbs.db
 .vscode/
 .idea/
 data/features/
+.Rhistory
