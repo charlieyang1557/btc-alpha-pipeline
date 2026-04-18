@@ -67,7 +67,7 @@ Produce a single JSON object with exactly four top-level keys:
 ```
 
 All three score values must be floats in [0.0, 1.0], rounded to 4 decimal places.
-The reasoning value must be a single string of 100 to 400 characters.
+The reasoning value must be a single string of 100 to 800 characters.
 (Length is measured in Unicode characters, not tokens.)
 
 ### Score definitions

@@ -160,6 +160,14 @@ def run_critic(
                 critic_error_full_path = str(p) if p.exists() else None
             except Exception:  # pragma: no cover - defensive
                 critic_error_full_path = None
+        # Recover cost/token metadata from billed-but-failed calls.
+        # When the API call succeeded but downstream parsing raised,
+        # the live backend stores the usage data on _last_api_metadata
+        # before raising. Without this recovery, the ledger would
+        # finalize with actual_cost=0.0 even though Anthropic billed.
+        partial = getattr(d7b_backend, "_last_api_metadata", None)
+        if isinstance(partial, dict):
+            d7b_metadata = partial
     d7b_ms = round((time.monotonic() - t1) * 1000, 3)
 
     # --- Status ---

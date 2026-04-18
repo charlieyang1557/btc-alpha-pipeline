@@ -167,6 +167,20 @@ def _migrate_backend_kind_call_role(conn: sqlite3.Connection) -> None:
     )
 
 
+def _migrate_input_output_tokens(conn: sqlite3.Connection) -> None:
+    """Idempotent migration: add ``input_tokens`` / ``output_tokens`` columns.
+
+    These columns capture per-call token usage from the Anthropic SDK's
+    ``response.usage`` object. Pre-Stage-2a rows and stub calls have
+    NULL in both columns.
+    """
+    cols = {row[1] for row in conn.execute("PRAGMA table_info(ledger)")}
+    if "input_tokens" not in cols:
+        conn.execute("ALTER TABLE ledger ADD COLUMN input_tokens INTEGER")
+    if "output_tokens" not in cols:
+        conn.execute("ALTER TABLE ledger ADD COLUMN output_tokens INTEGER")
+
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -225,6 +239,8 @@ class LedgerEntry:
     created_at_utc: str
     completed_at_utc: str | None
     notes: str | None
+    input_tokens: int | None
+    output_tokens: int | None
 
 
 # ---------------------------------------------------------------------------
@@ -265,6 +281,7 @@ class BudgetLedger:
         with self._conn() as conn:
             conn.executescript(_SCHEMA_SQL)
             _migrate_backend_kind_call_role(conn)
+            _migrate_input_output_tokens(conn)
 
     # ------------------------------------------------------------------
     # Mutations
@@ -341,8 +358,16 @@ class BudgetLedger:
         *,
         actual_cost_usd: float,
         now: datetime | None = None,
+        input_tokens: int | None = None,
+        output_tokens: int | None = None,
     ) -> None:
         """Transition a pending row to completed with the true cost.
+
+        Args:
+            input_tokens: Anthropic SDK ``response.usage.input_tokens``.
+                None for stub calls or API-level failures where no
+                response was received.
+            output_tokens: Anthropic SDK ``response.usage.output_tokens``.
 
         Raises:
             KeyError: if no row with ``row_id`` exists.
@@ -367,8 +392,16 @@ class BudgetLedger:
                 )
             conn.execute(
                 "UPDATE ledger SET status = ?, actual_cost = ?, "
-                "completed_at_utc = ? WHERE id = ?",
-                (STATUS_COMPLETED, float(actual_cost_usd), ts, row_id),
+                "completed_at_utc = ?, input_tokens = ?, "
+                "output_tokens = ? WHERE id = ?",
+                (
+                    STATUS_COMPLETED,
+                    float(actual_cost_usd),
+                    ts,
+                    input_tokens,
+                    output_tokens,
+                    row_id,
+                ),
             )
 
     def mark_crashed(
@@ -505,6 +538,16 @@ class BudgetLedger:
                 created_at_utc=r["created_at_utc"],
                 completed_at_utc=r["completed_at_utc"],
                 notes=r["notes"],
+                input_tokens=(
+                    int(r["input_tokens"])
+                    if r["input_tokens"] is not None
+                    else None
+                ),
+                output_tokens=(
+                    int(r["output_tokens"])
+                    if r["output_tokens"] is not None
+                    else None
+                ),
             )
             for r in rows
         ]

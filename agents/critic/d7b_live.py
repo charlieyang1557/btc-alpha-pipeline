@@ -263,7 +263,14 @@ class LiveSonnetD7bBackend(D7bBackend):
 
         Raises on any content-level error. The orchestrator's fail-open
         policy converts raises to ``critic_status = 'd7b_error'``.
+
+        On content-level errors that occur AFTER a successful API call
+        (e.g. schema_reasoning_length), cost and token fields are still
+        captured on ``self._last_api_metadata`` so the orchestrator can
+        recover them for ledger finalization.
         """
+        self._last_api_metadata: dict | None = None
+
         prompt_text = build_d7b_prompt(dsl, theme, batch_context)
 
         # Leakage audit BEFORE writing the prompt file or calling the API.
@@ -289,6 +296,17 @@ class LiveSonnetD7bBackend(D7bBackend):
         output_tokens = usage.output_tokens
         actual_cost = compute_cost_usd(input_tokens, output_tokens)
 
+        # Capture cost/token metadata BEFORE any downstream check that
+        # may raise. This lets the orchestrator recover billed-but-failed
+        # calls via ``getattr(backend, '_last_api_metadata', None)``.
+        self._last_api_metadata = {
+            "raw_response_path": str(response_path),
+            "cost_actual_usd": actual_cost,
+            "input_tokens": input_tokens,
+            "output_tokens": output_tokens,
+            "retry_count": retry_count,
+        }
+
         if actual_cost > self.cost_ceiling_usd:
             exc = D7bLiveCostCeilingError(actual_cost, self.cost_ceiling_usd)
             self._write_traceback(exc, raw_text)
@@ -300,13 +318,7 @@ class LiveSonnetD7bBackend(D7bBackend):
             self._write_traceback(exc, raw_text)
             raise D7bLiveContentError(exc.error_code, exc.detail) from exc
 
-        metadata = {
-            "raw_response_path": str(response_path),
-            "cost_actual_usd": actual_cost,
-            "input_tokens": input_tokens,
-            "output_tokens": output_tokens,
-            "retry_count": retry_count,
-        }
+        metadata = dict(self._last_api_metadata)
         return scores, reasoning, metadata
 
 

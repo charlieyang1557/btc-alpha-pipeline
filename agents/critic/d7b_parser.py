@@ -60,7 +60,7 @@ class StrictD7bResponse(BaseModel):
     semantic_plausibility: float = Field(ge=0.0, le=1.0)
     semantic_theme_alignment: float = Field(ge=0.0, le=1.0)
     structural_variant_risk: float = Field(ge=0.0, le=1.0)
-    reasoning: str = Field(min_length=100, max_length=400)
+    reasoning: str = Field(min_length=100, max_length=800)
 
 
 # ---------------------------------------------------------------------------
