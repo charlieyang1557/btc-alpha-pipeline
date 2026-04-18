@@ -132,7 +132,7 @@ def test_reasoning_too_short_raises():
 
 
 def test_reasoning_too_long_raises():
-    text = _make_response(reasoning="A" * 801)
+    text = _make_response(reasoning="A" * 1501)
     with pytest.raises(D7bContentError) as exc_info:
         parse_d7b_response(text)
     assert exc_info.value.error_code == "schema_reasoning_length"

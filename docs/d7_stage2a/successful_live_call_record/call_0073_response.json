@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.6500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.9500,
+  "reasoning": "The strategy logic proposes entering on volatility regime upward shifts (realized_vol_24h crossing above 0.025) combined with trend confirmation (price above SMA(50) and positive MACD histogram), exiting when volatility subsides or price falls below SMA(50), or when a profit target (8% over 168h) is reached. This narrative is internally coherent: elevated volatility signals regime change, trend filters reduce false signals, and dual exit paths manage both mean-reversion and profit-taking scenarios. The theme alignment is strong because the core trigger explicitly uses realized_vol_24h (a hint factor) and the description correctly frames this as volatility regime detection in crypto markets. However, structural variant risk is very high: the factor set {close, ema_12, ema_26, macd_hist, realized_vol_24h, return_24h, sma_50} appears in the third prior hypothesis, and the current strategy uses {close, macd_hist, realized_vol_24h, return_168h, sma_50}. These sets overlap substantially (four of five factors match), differing only by swapping ema_12/ema_26/return_24h for return_168h. This represents a minor substitution rather than a structurally novel combination, making it a threshold/operator variant of an existing approach."
+}
+```
