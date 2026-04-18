@@ -1,0 +1,40 @@
+{
+  "position": 73,
+  "theme": "volatility_regime",
+  "truncated_by_cap": false,
+  "lifecycle_state": "pending_backtest",
+  "valid_status": "valid",
+  "hypothesis_hash": "ab3c1725e1cf4890",
+  "input_tokens": 2052,
+  "output_tokens": 316,
+  "estimated_cost_usd": 0.013959,
+  "actual_cost_usd": 0.010896,
+  "approved_examples_count_in_prompt_before_call": 3,
+  "approved_example_names_before_call": [
+    "mean_reversion_oversold_vol_spike",
+    "momentum_acceleration_rsi_surge",
+    "monday_low_vol_momentum_entry"
+  ],
+  "approved_example_logic_notes": [
+    "Enter long when price falls below lower Bollinger band with RSI under 30 and realized volatility spikes above 0.03, capturing mean reversion as extreme oversold conditions with volatility expansion historically precede sharp rebounds in crypto markets.",
+    "Enter long when RSI crosses above 60 with positive 24h return and MACD histogram rising above zero while price exceeds EMA(12), capturing momentum acceleration as overbought strength with positive histogram historically signals continuation rather than reversal in trending crypto markets.",
+    "Enter long on Mondays when realized volatility is below 0.02 and MACD histogram turns positive with price above SMA(20), capturing calendar-anomaly momentum as Monday starts with compressed volatility historically precede weekly trend continuations in crypto markets."
+  ],
+  "cardinality": "single_object",
+  "retry_count": 0,
+  "error_info": null,
+  "factors_used": [
+    "close",
+    "macd_hist",
+    "realized_vol_24h",
+    "return_168h",
+    "sma_50"
+  ],
+  "overlap_count": 1,
+  "overlap_ratio": 0.2,
+  "out_of_theme_factor_count": 4,
+  "contains_default_momentum_factor": true,
+  "default_momentum_factors_used": [
+    "macd_hist"
+  ]
+}
