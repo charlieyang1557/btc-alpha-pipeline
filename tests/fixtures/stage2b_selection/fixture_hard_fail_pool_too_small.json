@@ -1,0 +1,53 @@
+{
+  "description": "Hard fail: only 3 calls pass per-candidate criteria (need >= 5).",
+  "calls": [
+    {
+      "position": 15,
+      "hypothesis_hash": "h015",
+      "theme": "mean_reversion",
+      "lifecycle_state": "pending_backtest",
+      "factors_used": ["atr_14", "rsi_14", "sma_50"],
+      "default_momentum_factors_used": []
+    },
+    {
+      "position": 80,
+      "hypothesis_hash": "h080",
+      "theme": "volatility_regime",
+      "lifecycle_state": "pending_backtest",
+      "factors_used": ["atr_14", "bb_width_20", "return_1h"],
+      "default_momentum_factors_used": []
+    },
+    {
+      "position": 140,
+      "hypothesis_hash": "h140",
+      "theme": "volume_divergence",
+      "lifecycle_state": "pending_backtest",
+      "factors_used": ["mfi_14", "obv_ratio_24", "return_4h"],
+      "default_momentum_factors_used": []
+    },
+    {
+      "position": 50,
+      "hypothesis_hash": "h050",
+      "theme": "momentum",
+      "lifecycle_state": "pending_backtest",
+      "factors_used": ["macd_hist", "roc_14", "rsi_14"],
+      "default_momentum_factors_used": []
+    },
+    {
+      "position": 170,
+      "hypothesis_hash": "h170",
+      "theme": "mean_reversion",
+      "lifecycle_state": "proposer_invalid_dsl",
+      "factors_used": ["rsi_14", "sma_20", "sma_50"],
+      "default_momentum_factors_used": []
+    },
+    {
+      "position": 200,
+      "hypothesis_hash": "h200",
+      "theme": "mean_reversion",
+      "lifecycle_state": "pending_backtest",
+      "factors_used": ["rsi_14", "sma_20", "sma_50"],
+      "default_momentum_factors_used": []
+    }
+  ]
+}

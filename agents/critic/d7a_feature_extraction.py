@@ -55,6 +55,34 @@ def is_thin_theme_momentum_bleed(
     return n_default_momentum_factors_used >= 2
 
 
+def compute_max_overlap(
+    f_current: set[str],
+    f_priors: list[set[str]] | tuple[set[str], ...],
+) -> int:
+    """Max count of factors shared between the current factor set and any single prior factor set.
+
+    DESIGN INVARIANT: This returns an integer count, NOT a Jaccard ratio.
+    Count is the right primitive for "how many factors are reused"; Jaccard
+    normalizes by union size, which produces counterintuitive values at
+    different factor-set sizes.
+
+    In selection/replay contexts, f_priors must represent:
+    - prior valid candidates only
+    - empty factor sets excluded
+    - distinct factor sets only
+
+    Args:
+        f_current: Factor set of the current candidate.
+        f_priors: Prior distinct factor sets.
+
+    Returns:
+        Max count of shared factors. 0 if f_priors is empty.
+    """
+    if not f_priors:
+        return 0
+    return max(len(f_current & f_prior) for f_prior in f_priors)
+
+
 def extract_factors(dsl: StrategyDSL) -> list[str]:
     """Return sorted list of distinct factor names referenced in the DSL.
 
@@ -110,6 +138,7 @@ def factor_set_tuple(dsl: StrategyDSL) -> tuple[str, ...]:
 
 __all__ = [
     "THIN_THEMES",
+    "compute_max_overlap",
     "count_conditions",
     "count_entry_groups",
     "count_exit_groups",

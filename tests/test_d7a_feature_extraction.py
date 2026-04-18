@@ -15,6 +15,7 @@ from strategies.dsl import StrategyDSL
 
 from agents.critic.d7a_feature_extraction import (
     THIN_THEMES,
+    compute_max_overlap,
     count_conditions,
     count_entry_groups,
     count_exit_groups,
@@ -349,3 +350,40 @@ class TestIsThinThemeMomentumBleed:
         for theme in THIN_THEMES:
             for n in (2, 3, 5, 10, 100):
                 assert is_thin_theme_momentum_bleed(theme, n) is True
+
+
+# ---------------------------------------------------------------------------
+# compute_max_overlap
+# ---------------------------------------------------------------------------
+
+
+class TestComputeMaxOverlap:
+    def test_empty_priors_returns_zero(self):
+        assert compute_max_overlap({"a", "b", "c"}, []) == 0
+        assert compute_max_overlap({"a", "b", "c"}, ()) == 0
+        assert compute_max_overlap(set(), []) == 0
+
+    def test_single_prior_with_zero_overlap_returns_zero(self):
+        assert compute_max_overlap({"a", "b"}, [{"c", "d"}]) == 0
+
+    def test_single_prior_with_partial_overlap_returns_count(self):
+        assert compute_max_overlap({"a", "b", "c"}, [{"a", "d", "e"}]) == 1
+        assert compute_max_overlap({"a", "b", "c", "d"}, [{"a", "b", "e"}]) == 2
+
+    def test_multiple_priors_returns_max_not_sum_or_average(self):
+        priors = [{"a"}, {"a", "b"}, {"a", "b", "c"}]
+        assert compute_max_overlap({"a", "b", "c", "d"}, priors) == 3
+
+    def test_current_subset_of_prior_returns_current_length(self):
+        assert compute_max_overlap({"a", "b"}, [{"a", "b", "c", "d"}]) == 2
+
+    def test_current_superset_of_prior_returns_prior_length(self):
+        assert compute_max_overlap({"a", "b", "c", "d"}, [{"a", "b"}]) == 2
+
+    def test_identical_sets_returns_full_size(self):
+        assert compute_max_overlap({"a", "b", "c"}, [{"a", "b", "c"}]) == 3
+
+    def test_returns_integer_not_ratio(self):
+        result = compute_max_overlap({"a", "b"}, [{"a", "b"}])
+        assert isinstance(result, int)
+        assert result == 2
