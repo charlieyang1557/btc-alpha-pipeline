@@ -11,8 +11,26 @@ Selection criteria (all must hold):
     4. At least one crosses_above or crosses_below operator in the DSL
     5. rsi_14 is not the sole factor
     6. position in [10, 190]
-    7. No thin_theme_momentum_bleed (inferred from
-       contains_default_momentum_factor being True on a non-momentum theme)
+    7. thin_theme_momentum_bleed flag would NOT fire on this call
+       (routed through ``agents.critic.d7a_feature_extraction.
+       is_thin_theme_momentum_bleed`` — the same predicate used by
+       ``d7a_rules.compute_rule_flags``, so selection and flag evaluation
+       cannot drift).
+
+NOTE on criterion 7: this is a probe-QUALITY filter, not a probe-VALIDITY
+filter. The goal is to pick a replay candidate whose critique is
+informative on its own semantic merits rather than dominated by a
+known-to-fire D7a flag. Relaxing this criterion (e.g., to admit
+flagged candidates for the explicit purpose of auditing the flag's
+behavior in the live critic) is a deliberate research decision that
+MUST be documented in the acceptance notebook and in
+``docs/d7_stage2a/replay_candidate_expectations.md`` before re-running
+selection.
+
+Determinism: scan order is ``sorted(calls, key=(position, hypothesis_hash))``
+so two invocations of this script against the same ``stage2d_summary.json``
+return the same candidate even if the summary's native ordering changes
+across serialization layers.
 
 The script reads signed-off artifacts only. It never generates new DSLs,
 never mutates on-disk state, and never imports anthropic.
@@ -24,6 +42,17 @@ import argparse
 import json
 import sys
 from pathlib import Path
+
+
+# Allow bare ``python scripts/select_replay_candidate.py`` invocation
+# from the repo root without requiring ``python -m`` or PYTHONPATH export.
+_REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
+from agents.critic.d7a_feature_extraction import (  # noqa: E402
+    is_thin_theme_momentum_bleed,
+)
 
 
 # -----------------------------------------------------------------------
@@ -72,11 +101,18 @@ def _scan_conditions_for_cross(dsl: dict) -> bool:
     return False
 
 
-def _infer_thin_theme_momentum_bleed(call: dict) -> bool:
-    """Infer thin_theme_momentum_bleed from per-call record fields."""
-    if call.get("theme") == "momentum":
-        return False
-    return bool(call.get("contains_default_momentum_factor", False))
+def _call_would_trigger_thin_theme_momentum_bleed(call: dict) -> bool:
+    """Check whether this call would trigger the D7a ``thin_theme_momentum_bleed`` flag.
+
+    Adapts a Stage 2d per-call summary record to the canonical predicate
+    in ``agents.critic.d7a_feature_extraction.is_thin_theme_momentum_bleed``.
+    The per-call record exposes ``default_momentum_factors_used`` as a
+    list of distinct factor names; its length is the exact input the
+    predicate expects.
+    """
+    theme = call.get("theme", "")
+    momentum_used = call.get("default_momentum_factors_used") or []
+    return is_thin_theme_momentum_bleed(theme, len(momentum_used))
 
 
 def passes_selection(
@@ -104,8 +140,8 @@ def passes_selection(
     if pos is None or not (MIN_POSITION <= pos <= MAX_POSITION):
         return False, f"position={pos} outside [{MIN_POSITION},{MAX_POSITION}]"
 
-    if _infer_thin_theme_momentum_bleed(call):
-        return False, "thin_theme_momentum_bleed inferred"
+    if _call_would_trigger_thin_theme_momentum_bleed(call):
+        return False, "thin_theme_momentum_bleed would fire"
 
     response_path = _find_response_path(batch_dir, pos)
     if response_path is None:
@@ -165,6 +201,18 @@ def select_candidate(
     if not calls:
         print("[select] summary has no calls", file=sys.stderr)
         return None
+
+    # Deterministic scan order: position ascending, then hypothesis_hash
+    # lexicographic as a stable tiebreak. This pins the selection to a
+    # reproducible candidate even if the upstream summary's native
+    # ordering shifts across serialization or aggregation layers.
+    calls = sorted(
+        calls,
+        key=lambda c: (
+            c.get("position", float("inf")),
+            c.get("hypothesis_hash", ""),
+        ),
+    )
 
     rejection_reasons: dict[str, int] = {}
     for call in calls:

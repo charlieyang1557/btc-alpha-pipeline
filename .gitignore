@@ -16,6 +16,10 @@ agents/spend_ledger.db
 # Raw API payloads (per-run artifacts, not source)
 raw_payloads/
 
+# Dry-run artifacts (physically isolated; never production)
+dryrun_payloads/
+ledger_dryrun.db
+
 # Python
 __pycache__/
 *.py[cod]

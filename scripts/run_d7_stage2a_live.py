@@ -43,12 +43,18 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from agents.critic.batch_context import BatchContext
-from agents.critic.d7b_stub import StubD7bBackend
-from agents.critic.orchestrator import run_critic
-from agents.critic.replay import reconstruct_batch_context_at_position
-from agents.orchestrator.budget_ledger import BudgetLedger
-from strategies.dsl import StrategyDSL
+# Allow bare ``python scripts/run_d7_stage2a_live.py`` invocation from
+# the repo root without requiring ``python -m`` or PYTHONPATH export.
+_REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
+from agents.critic.batch_context import BatchContext  # noqa: E402, F401
+from agents.critic.d7b_stub import StubD7bBackend  # noqa: E402
+from agents.critic.orchestrator import run_critic  # noqa: E402
+from agents.critic.replay import reconstruct_batch_context_at_position  # noqa: E402
+from agents.orchestrator.budget_ledger import BudgetLedger  # noqa: E402
+from strategies.dsl import StrategyDSL  # noqa: E402, F401
 
 
 LEDGER_PATH = Path("agents/spend_ledger.db")

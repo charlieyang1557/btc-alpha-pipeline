@@ -32,15 +32,21 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
-from agents.critic.batch_context import (
+# Allow bare ``python scripts/run_d7_stage2a_dryrun.py`` invocation from
+# the repo root without requiring ``python -m`` or PYTHONPATH export.
+_REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
+from agents.critic.batch_context import (  # noqa: E402
     DEFAULT_MOMENTUM_FACTORS,
     THEME_ANCHOR_FACTORS,
     THEME_HINTS,
     BatchContext,
 )
-from agents.critic.d7b_stub import StubD7bBackend
-from agents.critic.orchestrator import run_critic
-from agents.orchestrator.budget_ledger import BudgetLedger
+from agents.critic.d7b_stub import StubD7bBackend  # noqa: E402
+from agents.critic.orchestrator import run_critic  # noqa: E402
+from agents.orchestrator.budget_ledger import BudgetLedger  # noqa: E402
 
 
 # -----------------------------------------------------------------------

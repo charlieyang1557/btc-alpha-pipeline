@@ -14,6 +14,7 @@ from factors.registry import get_registry
 from strategies.dsl import StrategyDSL
 
 from agents.critic.d7a_feature_extraction import (
+    THIN_THEMES,
     count_conditions,
     count_entry_groups,
     count_exit_groups,
@@ -21,6 +22,7 @@ from agents.critic.d7a_feature_extraction import (
     factor_set_tuple,
     get_description_length,
     get_max_hold_bars,
+    is_thin_theme_momentum_bleed,
 )
 
 
@@ -303,3 +305,47 @@ class TestFactorSetTuple:
         dsl = _make_dsl()
         fst = factor_set_tuple(dsl)
         assert len(fst) > 0
+
+
+# ---------------------------------------------------------------------------
+# Thin-theme momentum-bleed predicate (canonical contract)
+# ---------------------------------------------------------------------------
+
+
+# Pinning assertion at module scope: if the THIN_THEMES membership ever
+# drifts, this assertion fires at import time and every downstream test
+# that references the name surfaces the breakage loudly. Changing this
+# membership is a locked-decision boundary shared with d7a_rules and
+# the selection script; don't update silently.
+assert THIN_THEMES == frozenset({
+    "volume_divergence",
+    "calendar_effect",
+    "volatility_regime",
+}), (
+    "THIN_THEMES drift: updating this set is a locked-decision boundary; "
+    "coordinate with d7a_rules.compute_rule_flags and "
+    "scripts/select_replay_candidate.py before changing it."
+)
+
+
+class TestIsThinThemeMomentumBleed:
+    def test_is_thin_theme_momentum_bleed_thin_theme_two_momentum_fires(self):
+        for theme in THIN_THEMES:
+            assert is_thin_theme_momentum_bleed(theme, 2) is True
+
+    def test_is_thin_theme_momentum_bleed_thin_theme_one_momentum_does_not_fire(self):
+        for theme in THIN_THEMES:
+            assert is_thin_theme_momentum_bleed(theme, 1) is False
+            assert is_thin_theme_momentum_bleed(theme, 0) is False
+
+    @pytest.mark.parametrize("theme", ["momentum", "mean_reversion"])
+    @pytest.mark.parametrize("n_momentum", [0, 1, 2, 5, 10])
+    def test_is_thin_theme_momentum_bleed_non_thin_theme_never_fires(
+        self, theme, n_momentum,
+    ):
+        assert is_thin_theme_momentum_bleed(theme, n_momentum) is False
+
+    def test_is_thin_theme_momentum_bleed_thin_theme_many_momentum_fires(self):
+        for theme in THIN_THEMES:
+            for n in (2, 3, 5, 10, 100):
+                assert is_thin_theme_momentum_bleed(theme, n) is True

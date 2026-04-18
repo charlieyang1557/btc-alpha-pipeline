@@ -12,6 +12,49 @@ from __future__ import annotations
 from strategies.dsl import StrategyDSL
 
 
+# ---------------------------------------------------------------------------
+# Canonical predicate: thin_theme_momentum_bleed
+# ---------------------------------------------------------------------------
+#
+# CONTRACT BOUNDARY: This predicate defines the ONLY condition under which
+# the ``thin_theme_momentum_bleed`` D7a flag fires. All other modules
+# (``d7a_rules.py``, replay selection scripts, audit notebooks) MUST route
+# through ``is_thin_theme_momentum_bleed`` rather than reimplementing the
+# rule. Drift between two implementations of the same semantic is a
+# correctness bug waiting to happen.
+
+THIN_THEMES: frozenset[str] = frozenset({
+    "volume_divergence",
+    "calendar_effect",
+    "volatility_regime",
+})
+
+
+def is_thin_theme_momentum_bleed(
+    theme: str,
+    n_default_momentum_factors_used: int,
+) -> bool:
+    """Return True iff the ``thin_theme_momentum_bleed`` flag fires.
+
+    The flag fires when a DSL proposed under a thin theme (a theme with
+    sparse native factor vocabulary) leans on two or more default
+    momentum factors — a signal that the hypothesis has drifted away
+    from the theme's economic intuition toward a generic momentum bet.
+
+    Args:
+        theme: The theme the DSL was proposed under.
+        n_default_momentum_factors_used: Count of distinct default
+            momentum factors referenced in the DSL's factor set.
+
+    Returns:
+        True iff ``theme in THIN_THEMES`` and
+        ``n_default_momentum_factors_used >= 2``.
+    """
+    if theme not in THIN_THEMES:
+        return False
+    return n_default_momentum_factors_used >= 2
+
+
 def extract_factors(dsl: StrategyDSL) -> list[str]:
     """Return sorted list of distinct factor names referenced in the DSL.
 
@@ -66,6 +109,7 @@ def factor_set_tuple(dsl: StrategyDSL) -> tuple[str, ...]:
 
 
 __all__ = [
+    "THIN_THEMES",
     "count_conditions",
     "count_entry_groups",
     "count_exit_groups",
@@ -73,4 +117,5 @@ __all__ = [
     "factor_set_tuple",
     "get_description_length",
     "get_max_hold_bars",
+    "is_thin_theme_momentum_bleed",
 ]

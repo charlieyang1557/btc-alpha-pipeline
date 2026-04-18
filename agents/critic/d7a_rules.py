@@ -169,12 +169,11 @@ def compute_rule_flags(
     if not factors:
         flags.append("empty_factor_set")
 
-    # thin_theme_momentum_bleed
-    thin_themes = {"volume_divergence", "calendar_effect", "volatility_regime"}
-    if theme in thin_themes:
-        momentum_overlap = len(factors & batch_context.default_momentum_factors)
-        if momentum_overlap >= 2:
-            flags.append("thin_theme_momentum_bleed")
+    # thin_theme_momentum_bleed — route through the canonical predicate in
+    # feature_extraction so replay/selection code and rule code cannot drift.
+    momentum_overlap = len(factors & batch_context.default_momentum_factors)
+    if fe.is_thin_theme_momentum_bleed(theme, momentum_overlap):
+        flags.append("thin_theme_momentum_bleed")
 
     # factor_set_in_top3_repeated
     if factors:
