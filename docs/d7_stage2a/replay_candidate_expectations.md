@@ -1,63 +1,69 @@
-# D7 Stage 2a — Replay Candidate Expectations
+# D7 Stage 2a Replay Candidate — Pre-Live Qualitative Expectations
 
-**Anti-hindsight-bias commitment:** This file MUST be committed to git
-before the `--confirm-live` call. The live-call entrypoint verifies that
-this file has at least one git commit.
+**Candidate:** batch `5cf76668-47d1-48d7-bd90-db06d31982ed`,
+position `73`, theme `volatility_regime`  
+**Factor set:** `close`, `macd_hist`, `realized_vol_24h`,
+`return_168h`, `sma_50`  
+**D7a observations (from dry-run):** `theme_coherence=0.2`,
+`structural_novelty=1.0`, `default_momentum_fallback=0.8`,
+`complexity_appropriateness=0.7`, flag `n_conditions_heavy`  
+**Structural properties:** 6 conditions, 1 entry group, 2 exit groups,
+336-bar max hold, `factor_set_prior_occurrences=0` (first-time factor
+set in batch)
 
-## Target Batch
+**Authored by:** Charlie, 2026-04-18 (before live call)  
+**Purpose:** Anti-hindsight-bias anchor.
 
-- **batch_uuid:** `5cf76668-47d1-48d7-bd90-db06d31982ed`
-- **position:** 102
+## Format Adherence Expectations
 
-## Selection Criteria Applied
+- Parses cleanly on first attempt.
+- Exactly 4 top-level keys, no extras.
+- Reasoning length within `[100, 400]` Unicode characters.
 
-The replay candidate was selected from the signed-off Stage 2d batch
-using `scripts/select_replay_candidate.py` with the following criteria:
+## Reasoning Style Expectations
 
-1. lifecycle_state == "pending_backtest"
-2. theme != "momentum"
-3. 3 <= n_factors <= 5
-4. At least one crosses_above or crosses_below operator
-5. rsi_14 is not the sole factor
-6. position in [10, 190]
-7. No thin_theme_momentum_bleed inferred
+- Descriptive, not directive; no accept / reject / approve / recommend
+  language.
+- References specific factors and operators from the DSL.
+- Mentions `realized_vol_24h` or volatility context.
+  The theme anchor is present; omission would be a noteworthy miss.
 
-## Pre-Call Expectations
+## Score Distribution Expectations — Qualitative Bounds Only
 
-_To be filled in by the researcher before the live call._
+- No score pegged at `0.0` or `1.0` on any axis.
+- `semantic_plausibility`: mid-range. The strategy has defensible
+  volatility-regime logic: entry on volatility expansion, exit on price
+  breaking below SMA trend support. However, `n_conditions=6` and the
+  presence of `macd_hist` in a non-momentum theme add complication.
+- `semantic_theme_alignment`: mid-range. Theme anchor
+  `realized_vol_24h` is present, but factor overlap with theme hints is
+  only `0.2`.
+- `structural_variant_risk`: expected low, near `0.0`.
+  This axis has reversed polarity. `factor_set_prior_occurrences=0`
+  means this is a first-time factor set; a calibrated critic should
+  score it as structurally distinct. A score `>= 0.5` on this axis is
+  evidence of polarity misread.
 
-### D7a Rule Scores (deterministic — known before live call)
+## Refusal Avoidance Expectations
 
-These will be computed from the reconstructed BatchContext and the
-candidate's DSL. They are fully deterministic and can be verified
-against the dry-run output.
+- No "I cannot evaluate", "insufficient context", or similar refusal
+  patterns.
+- Low confidence should produce conservative mid-range scores with
+  uncertainty in reasoning, not a refusal.
 
-- `theme_coherence`: _fill before live call_
-- `structural_novelty`: _fill before live call_
-- `default_momentum_fallback`: _fill before live call_
-- `complexity_appropriateness`: _fill before live call_
+## Failure Modes I Would Find Informative
 
-### D7b LLM Scores (expectations, not predictions)
+These are not blockers by themselves; they are diagnostic signals for
+Stage 2b prompt / parser / calibration work.
 
-The live Sonnet response is inherently stochastic (`temperature=1.0`).
-These are expectations about plausible ranges, not exact predictions.
+- All three scores equal `0.5`: D7b collapsing to default rather than
+  reading the hypothesis.
+- Reasoning does not mention `realized_vol_24h`: missing the theme
+  anchor signal.
+- Reasoning does not mention `macd_hist` or the thin-theme bleed risk:
+  missing the semantic complement to D7a's structural
+  `default_momentum_fallback=0.8`.
+- Reasoning is generic volatility-strategy prose without DSL specifics:
+  pattern-matching on theme rather than reading the hypothesis.
+- `structural_variant_risk >= 0.5`: polarity misread.
 
-- `semantic_plausibility`: Expect [0.3, 0.9]. A strategy with 3-5
-  factors using cross operators should be plausible enough for a
-  non-trivial score.
-- `semantic_theme_alignment`: Depends on the replay candidate's theme
-  and factor set. _fill specific expectation before live call_
-- `structural_variant_risk`: With prior_factor_sets from the batch,
-  expect [0.2, 0.8] depending on how similar the candidate's factor
-  set is to prior sets.
-
-### Expected Outcome
-
-- `critic_status`: "ok" (no errors expected if the prompt is clean)
-- `d7b_mode`: "live"
-- Cost: < $0.01 at Sonnet pricing for ~2K input tokens + ~200 output tokens
-- Reasoning length: 100-400 characters (schema-enforced)
-
-## Post-Call Notes
-
-_To be filled in after the live call. Compare actual vs. expected._
