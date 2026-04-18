@@ -253,7 +253,7 @@ def build_d7b_prompt(
 
 
 # Substrings that must not appear anywhere in the rendered prompt.
-_EXCLUDED_SUBSTRINGS: tuple[str, ...] = (
+D7B_PROTECTED_TERMS: tuple[str, ...] = (
     "batch_id",
     "batch_position",
     "call_index",
@@ -285,6 +285,8 @@ _EXCLUDED_SUBSTRINGS: tuple[str, ...] = (
     "description_length_near_limit",
     "n_conditions_heavy",
 )
+
+_EXCLUDED_SUBSTRINGS: tuple[str, ...] = D7B_PROTECTED_TERMS
 
 # UUID pattern (8-4-4-4-12 hex).
 _UUID_RE = re.compile(
@@ -356,6 +358,7 @@ def run_leakage_audit(prompt_text: str) -> str | None:
 
 __all__ = [
     "D7B_FORBIDDEN_TERMS",
+    "D7B_PROTECTED_TERMS",
     "build_d7b_prompt",
     "run_leakage_audit",
 ]

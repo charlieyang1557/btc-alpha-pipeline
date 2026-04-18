@@ -280,6 +280,8 @@ class TestStubD7bBackend:
         assert metadata["input_tokens"] == 0
         assert metadata["output_tokens"] == 0
         assert metadata["retry_count"] == 0
+        assert metadata["scan_results"]["forbidden_language_scan"]["status"] == "pass"
+        assert metadata["scan_results"]["refusal_scan"]["status"] == "pass"
 
 
 # ---------------------------------------------------------------------------
@@ -300,6 +302,7 @@ class TestRunCritic:
         assert result.d7b_llm_scores is not None
         assert result.d7b_reasoning == STUB_REASONING
         assert result.d7b_cost_actual_usd == 0.0
+        assert result.d7b_scan_results["forbidden_language_scan"]["status"] == "pass"
 
     def test_d7b_error_path(self, reg):
         dsl = _make_dsl()

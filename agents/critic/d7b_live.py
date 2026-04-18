@@ -313,12 +313,13 @@ class LiveSonnetD7bBackend(D7bBackend):
             raise exc
 
         try:
-            scores, reasoning = parse_d7b_response(raw_text)
+            scores, reasoning, scan_results = parse_d7b_response(raw_text)
         except D7bContentError as exc:
             self._write_traceback(exc, raw_text)
             raise D7bLiveContentError(exc.error_code, exc.detail) from exc
 
         metadata = dict(self._last_api_metadata)
+        metadata["scan_results"] = scan_results
         return scores, reasoning, metadata
 
 

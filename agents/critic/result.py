@@ -52,6 +52,7 @@ class CriticResult:
     d7b_input_tokens: int | None
     d7b_output_tokens: int | None
     d7b_retry_count: int
+    d7b_scan_results: dict | None = None
 
     # Timing
     critic_timing_ms: dict[str, float] = field(
@@ -80,6 +81,7 @@ class CriticResult:
             "d7b_input_tokens": self.d7b_input_tokens,
             "d7b_output_tokens": self.d7b_output_tokens,
             "d7b_retry_count": self.d7b_retry_count,
+            "d7b_scan_results": self.d7b_scan_results,
             "critic_timing_ms": dict(self.critic_timing_ms),
             "critic_error_signature": self.critic_error_signature,
             "critic_error_full_path": self.critic_error_full_path,
@@ -102,6 +104,7 @@ class CriticResult:
             d7b_input_tokens=d["d7b_input_tokens"],
             d7b_output_tokens=d["d7b_output_tokens"],
             d7b_retry_count=d["d7b_retry_count"],
+            d7b_scan_results=d.get("d7b_scan_results"),
             critic_timing_ms=dict(d.get("critic_timing_ms", {})),
             critic_error_signature=d.get("critic_error_signature"),
             critic_error_full_path=d.get("critic_error_full_path"),

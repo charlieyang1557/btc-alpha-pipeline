@@ -11,10 +11,13 @@ stub mode defensively, redundant with ``d7b_mode == "stub"``.
 
 from __future__ import annotations
 
+import json
+
 from typing import Literal
 
 from agents.critic.batch_context import BatchContext
 from agents.critic.d7b_backend import D7bBackend
+from agents.critic.d7b_parser import parse_d7b_response
 from strategies.dsl import StrategyDSL
 
 STUB_REASONING_PREFIX = "[STUB REASONING —"
@@ -45,12 +48,16 @@ class StubD7bBackend(D7bBackend):
             "semantic_theme_alignment": 0.5,
             "structural_variant_risk": 0.5,
         }
+        _, _, scan_results = parse_d7b_response(
+            json.dumps({**scores, "reasoning": STUB_REASONING})
+        )
         metadata = {
             "raw_response_path": None,
             "cost_actual_usd": 0.0,
             "input_tokens": 0,
             "output_tokens": 0,
             "retry_count": 0,
+            "scan_results": scan_results,
         }
         return scores, STUB_REASONING, metadata
 

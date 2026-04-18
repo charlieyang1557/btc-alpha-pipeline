@@ -123,6 +123,7 @@ def run_critic(
         "input_tokens": None,
         "output_tokens": None,
         "retry_count": 0,
+        "scan_results": None,
     }
     d7b_error = False
     critic_error_signature: str | None = None
@@ -195,6 +196,7 @@ def run_critic(
         d7b_input_tokens=d7b_metadata.get("input_tokens"),
         d7b_output_tokens=d7b_metadata.get("output_tokens"),
         d7b_retry_count=d7b_metadata.get("retry_count", 0),
+        d7b_scan_results=d7b_metadata.get("scan_results"),
         critic_timing_ms={"d7a_ms": d7a_ms, "d7b_ms": d7b_ms},
         critic_error_signature=critic_error_signature,
         critic_error_full_path=critic_error_full_path,

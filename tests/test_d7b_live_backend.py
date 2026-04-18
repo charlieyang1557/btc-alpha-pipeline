@@ -190,6 +190,24 @@ def test_score_success_returns_expected(tmp_path):
     assert reasoning == _VALID_REASONING
     assert metadata["retry_count"] == 0
     assert metadata["cost_actual_usd"] > 0
+    assert metadata["scan_results"]["forbidden_language_scan"]["status"] == "pass"
+    assert metadata["scan_results"]["refusal_scan"]["status"] == "pass"
+
+
+def test_score_success_metadata_includes_scan_results(tmp_path):
+    """Successful live parsing carries scan results into backend metadata."""
+    backend = _make_backend(tmp_path)
+
+    with _PATCH_AUDIT:
+        _, _, metadata = backend.score(
+            _make_dsl(), "momentum", _make_batch_context(),
+        )
+
+    scan_results = metadata["scan_results"]
+    assert scan_results["forbidden_language_scan"]["hits"] == []
+    assert scan_results["forbidden_language_scan"]["terms_checked_count"] > 0
+    assert scan_results["refusal_scan"]["hits"] == []
+    assert scan_results["refusal_scan"]["patterns_checked"]
 
 
 # ---------------------------------------------------------------------------

@@ -52,6 +52,11 @@ if str(_REPO_ROOT) not in sys.path:
 
 from agents.critic.batch_context import BatchContext  # noqa: E402, F401
 from agents.critic.d7a_feature_extraction import extract_factors  # noqa: E402
+from agents.critic.d7b_prompt import (  # noqa: E402
+    D7B_PROTECTED_TERMS,
+    build_d7b_prompt,
+    run_leakage_audit,
+)
 from agents.critic.d7b_stub import StubD7bBackend  # noqa: E402
 from agents.critic.orchestrator import run_critic  # noqa: E402
 from agents.critic.replay import reconstruct_batch_context_at_position  # noqa: E402
@@ -62,6 +67,23 @@ from strategies.dsl import StrategyDSL  # noqa: E402, F401
 LEDGER_PATH = Path("agents/spend_ledger.db")
 EXPECTATIONS_PATH = Path("docs/d7_stage2a/replay_candidate_expectations.md")
 LIVE_CALL_RECORD_PATH = Path("docs/d7_stage2a/stage2a_live_call_record.json")
+
+
+def _capture_leakage_audit_result(prompt_text: str) -> dict:
+    leakage_detail = run_leakage_audit(prompt_text)
+    return {
+        "status": "pass" if leakage_detail is None else "fail",
+        "violations": [] if leakage_detail is None else [leakage_detail],
+        "protected_terms_checked_count": len(D7B_PROTECTED_TERMS),
+    }
+
+
+def _not_reached_scan_result() -> dict:
+    return {
+        "status": "not_reached",
+        "hits": None,
+        "reason": "parse failed before scan completion",
+    }
 
 
 def _load_dotenv(path: Path | None = None) -> None:
@@ -134,6 +156,8 @@ def run_live(
     dsl, theme, batch_context = reconstruct_batch_context_at_position(
         batch_uuid, position, stage2d_artifacts_root=artifacts_root,
     )
+    prompt_text = build_d7b_prompt(dsl, theme, batch_context)
+    leakage_audit_result = _capture_leakage_audit_result(prompt_text)
 
     print(f"[stage2a] replay: batch={batch_uuid}, position={position}, "
           f"theme={theme}")
@@ -221,6 +245,20 @@ def run_live(
     if est_cost > 0 and actual_cost > 0:
         cost_ratio = round(actual_cost / est_cost, 4)
 
+    scan_results = result.d7b_scan_results if isinstance(
+        result.d7b_scan_results, dict,
+    ) else None
+    forbidden_language_scan_result = (
+        scan_results.get("forbidden_language_scan", _not_reached_scan_result())
+        if scan_results is not None
+        else _not_reached_scan_result()
+    )
+    refusal_scan_result = (
+        scan_results.get("refusal_scan", _not_reached_scan_result())
+        if scan_results is not None
+        else _not_reached_scan_result()
+    )
+
     live_call_record = {
         "request_timestamp_utc": request_ts.isoformat(),
         "response_timestamp_utc": response_ts.isoformat(),
@@ -250,9 +288,9 @@ def run_live(
             "actual_usd": actual_cost,
             "ratio": cost_ratio,
         },
-        "leakage_audit_result": None,
-        "forbidden_language_scan_result": None,
-        "refusal_scan_result": None,
+        "leakage_audit_result": leakage_audit_result,
+        "forbidden_language_scan_result": forbidden_language_scan_result,
+        "refusal_scan_result": refusal_scan_result,
     }
 
     LIVE_CALL_RECORD_PATH.parent.mkdir(parents=True, exist_ok=True)

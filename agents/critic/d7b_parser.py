@@ -128,14 +128,18 @@ _FORBIDDEN_PATTERNS: dict[str, re.Pattern] = {
 
 # Refusal patterns (case-insensitive whole-phrase, not strict word-boundary
 # because these are idiomatic fragments).
-_REFUSAL_PATTERNS: tuple[re.Pattern, ...] = (
-    re.compile(r"\bi cannot\b", re.IGNORECASE),
-    re.compile(r"\bi can't\b", re.IGNORECASE),
-    re.compile(r"\bunable to\b", re.IGNORECASE),
-    re.compile(r"\brefuse to\b", re.IGNORECASE),
-    re.compile(r"\bdecline to\b", re.IGNORECASE),
-    re.compile(r"\bcannot evaluate\b", re.IGNORECASE),
-    re.compile(r"\bcan not evaluate\b", re.IGNORECASE),
+D7B_REFUSAL_PATTERNS: tuple[str, ...] = (
+    r"\bi cannot\b",
+    r"\bi can't\b",
+    r"\bunable to\b",
+    r"\brefuse to\b",
+    r"\bdecline to\b",
+    r"\bcannot evaluate\b",
+    r"\bcan not evaluate\b",
+)
+
+_REFUSAL_PATTERNS: tuple[re.Pattern, ...] = tuple(
+    re.compile(pattern, re.IGNORECASE) for pattern in D7B_REFUSAL_PATTERNS
 )
 
 
@@ -171,8 +175,8 @@ _SCORE_KEYS: frozenset[str] = frozenset({
 _ALL_REQUIRED: frozenset[str] = _SCORE_KEYS | frozenset({"reasoning"})
 
 
-def parse_d7b_response(raw_text: str) -> tuple[dict[str, float], str]:
-    """Parse a live D7b response into ``(scores, reasoning)``.
+def parse_d7b_response(raw_text: str) -> tuple[dict[str, float], str, dict]:
+    """Parse a live D7b response into ``(scores, reasoning, scan_results)``.
 
     Raises :class:`D7bContentError` on any failure with a structured
     ``error_code``. Never returns partially-valid output.
@@ -261,10 +265,23 @@ def parse_d7b_response(raw_text: str) -> tuple[dict[str, float], str]:
         "semantic_theme_alignment": validated.semantic_theme_alignment,
         "structural_variant_risk": validated.structural_variant_risk,
     }
-    return scores, reasoning
+    scan_results = {
+        "forbidden_language_scan": {
+            "status": "pass",
+            "hits": [],
+            "terms_checked_count": len(D7B_FORBIDDEN_TERMS),
+        },
+        "refusal_scan": {
+            "status": "pass",
+            "hits": [],
+            "patterns_checked": list(D7B_REFUSAL_PATTERNS),
+        },
+    }
+    return scores, reasoning, scan_results
 
 
 __all__ = [
+    "D7B_REFUSAL_PATTERNS",
     "D7bContentError",
     "StrictD7bResponse",
     "parse_d7b_response",

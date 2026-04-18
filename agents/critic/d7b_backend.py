@@ -50,6 +50,7 @@ class D7bBackend(ABC):
             metadata: dict with keys {
                 "raw_response_path", "cost_actual_usd",
                 "input_tokens", "output_tokens", "retry_count",
+                "scan_results",
             }
         """
         ...

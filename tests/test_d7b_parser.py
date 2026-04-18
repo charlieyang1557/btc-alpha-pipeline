@@ -19,7 +19,12 @@ import json
 
 import pytest
 
-from agents.critic.d7b_parser import D7bContentError, parse_d7b_response
+from agents.critic.d7b_parser import (
+    D7B_REFUSAL_PATTERNS,
+    D7bContentError,
+    parse_d7b_response,
+)
+from agents.critic.d7b_prompt import D7B_FORBIDDEN_TERMS
 
 
 # ---------------------------------------------------------------------------
@@ -54,16 +59,51 @@ def _make_response(**overrides) -> str:
 
 def test_valid_json_parses_correctly():
     """Valid JSON with all 4 keys parses to expected scores and reasoning."""
-    scores, reasoning = parse_d7b_response(_make_response())
+    scores, reasoning, scan_results = parse_d7b_response(_make_response())
     assert scores["semantic_plausibility"] == pytest.approx(0.75)
     assert scores["semantic_theme_alignment"] == pytest.approx(0.60)
     assert scores["structural_variant_risk"] == pytest.approx(0.20)
     assert reasoning == _VALID_REASONING
+    assert isinstance(scan_results, dict)
+
+
+def test_valid_json_returns_three_tuple_types():
+    """Success path returns scores, reasoning, and scan metadata."""
+    parsed = parse_d7b_response(_make_response())
+    assert isinstance(parsed, tuple)
+    assert len(parsed) == 3
+    scores, reasoning, scan_results = parsed
+    assert isinstance(scores, dict)
+    assert isinstance(reasoning, str)
+    assert isinstance(scan_results, dict)
+
+
+def test_valid_json_returns_scan_results():
+    """Success path returns structured scan results alongside scores."""
+    _, _, scan_results = parse_d7b_response(_make_response())
+    assert scan_results == {
+        "forbidden_language_scan": {
+            "status": "pass",
+            "hits": [],
+            "terms_checked_count": len(D7B_FORBIDDEN_TERMS),
+        },
+        "refusal_scan": {
+            "status": "pass",
+            "hits": [],
+            "patterns_checked": list(D7B_REFUSAL_PATTERNS),
+        },
+    }
+    assert scan_results["forbidden_language_scan"]["terms_checked_count"] > 0
+    assert scan_results["refusal_scan"]["patterns_checked"]
+    assert all(
+        isinstance(pattern, str)
+        for pattern in scan_results["refusal_scan"]["patterns_checked"]
+    )
 
 
 def test_scores_in_range():
     """Scores at valid boundaries are accepted."""
-    scores, _ = parse_d7b_response(_make_response(
+    scores, _, _ = parse_d7b_response(_make_response(
         semantic_plausibility=0.0,
         semantic_theme_alignment=1.0,
         structural_variant_risk=0.5,
@@ -74,7 +114,7 @@ def test_scores_in_range():
 
 def test_score_exactly_at_boundary_zero():
     """Score exactly at 0.0 is accepted."""
-    scores, _ = parse_d7b_response(_make_response(
+    scores, _, _ = parse_d7b_response(_make_response(
         semantic_plausibility=0.0,
     ))
     assert scores["semantic_plausibility"] == pytest.approx(0.0)
@@ -82,7 +122,7 @@ def test_score_exactly_at_boundary_zero():
 
 def test_score_exactly_at_boundary_one():
     """Score exactly at 1.0 is accepted."""
-    scores, _ = parse_d7b_response(_make_response(
+    scores, _, _ = parse_d7b_response(_make_response(
         semantic_theme_alignment=1.0,
     ))
     assert scores["semantic_theme_alignment"] == pytest.approx(1.0)
@@ -164,7 +204,7 @@ def test_json_wrapped_in_fences_parses_correctly():
     """Markdown ```json fences are stripped before parsing."""
     inner = _make_response()
     fenced = f"```json\n{inner}\n```"
-    scores, reasoning = parse_d7b_response(fenced)
+    scores, reasoning, _ = parse_d7b_response(fenced)
     assert scores["semantic_plausibility"] == pytest.approx(0.75)
     assert reasoning == _VALID_REASONING
 
@@ -173,7 +213,7 @@ def test_json_with_prose_preamble_and_postamble():
     """Prose before and after the JSON object is stripped."""
     inner = _make_response()
     wrapped = f"Here is my evaluation:\n{inner}\nI hope this helps."
-    scores, reasoning = parse_d7b_response(wrapped)
+    scores, _, _ = parse_d7b_response(wrapped)
     assert scores["semantic_plausibility"] == pytest.approx(0.75)
 
 
