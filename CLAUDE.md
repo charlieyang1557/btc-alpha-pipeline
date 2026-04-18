@@ -79,7 +79,15 @@ btc-alpha-pipeline/
 │   ├── orchestrator/           # Phase 2B D8 — main batch loop
 │   │   ├── ingest.py           # ProposerOutput → lifecycle state assignment
 │   │   └── budget_ledger.py    # Crash-safe pre-charge SQLite ledger
-│   ├── critic.py               # Claude Sonnet hypothesis gate (D7)
+│   ├── critic/                 # Phase 2B D7 — Critic module (rule gate + LLM)
+│   │   ├── __init__.py         # Public API: CriticResult, run_critic, BatchContext
+│   │   ├── result.py           # Frozen CriticResult dataclass + serialization
+│   │   ├── batch_context.py    # BatchContext dataclass + theme constants
+│   │   ├── d7a_feature_extraction.py  # DSL feature extraction primitives
+│   │   ├── d7a_rules.py        # Deterministic D7a scoring rules (4 axes)
+│   │   ├── d7b_backend.py      # Abstract D7bBackend protocol
+│   │   ├── d7b_stub.py         # StubD7bBackend (all scores 0.5)
+│   │   └── orchestrator.py     # run_critic() orchestrator + reliability fuse
 │   └── spend_ledger.db         # SQLite file owned by orchestrator/budget_ledger.py
 ├── risk/                # Position sizing and capital allocation (Phase 3+)
 ├── paper_trading/       # Simulated live execution (Phase 4)
@@ -296,6 +304,15 @@ These are non-negotiable rules. Violating any of these invalidates research resu
 - ❌ NEVER include 2022 bars in any walk-forward training window
 - ❌ NEVER mark `regime_holdout_passed = True` unless ALL four criteria are met: `sharpe >= -0.5 AND max_dd <= 0.25 AND total_return >= -0.15 AND total_trades >= 5`
 
+### Critic Integrity (Phase 2 D7)
+- ❌ NEVER let `run_critic()` raise an exception — all failures are captured in `critic_status` codes
+- ❌ NEVER modify D7a rule score formulas without updating the edge behavior table in `test_d7a_rules.py`
+- ❌ NEVER let D7a rule scores fall outside `[0.0, 1.0]` or use more than 4 decimal places
+- ❌ NEVER return `d7a_rule_scores = {k: 0.0}` when the score is unknown — use `None` for unknown, `0.0` for measured-as-bad
+- ❌ NEVER enforce the reliability fuse in Stage 1 — `CRITIC_RELIABILITY_FUSE_ENFORCED` must remain `False` until Stage 2
+- ❌ NEVER add critic_result to per-call records when `with_critic=False` — output must be byte-identical to pre-D7 behavior
+- ❌ NEVER let the critic influence `approved_examples` window — critic annotates only, never filters
+
 ### Code Quality
 - ❌ NEVER generate a factor/indicator function without a docstring specifying: inputs, computation method, warmup period, output schema, and null policy
 - ❌ NEVER skip validation steps when ingesting or updating data
@@ -396,8 +413,8 @@ The canonical dataset (`data/raw/btcusdt_1h.parquet`) has these stable, verified
 
 ## Phase Marker (update as work progresses)
 
-- **Current phase:** Phase 2A closed (signed off 2026-04-17); **Phase 2B D6 Stage 2a (first live Sonnet call) in progress** — single-hypothesis calibration batch
-- **Completed:** Phase 0, Phase 1A, Phase 1B; Phase 2A (D1-D5 all signed off); Phase 2B D6 Stage 1 (stub plumbing, 675 tests)
+- **Current phase:** Phase 2A closed (signed off 2026-04-17); **Phase 2B D7 Stage 1 complete** — rule-based critic (D7a) + stub D7b integrated into D6 batch loop via `--with-critic` flag
+- **Completed:** Phase 0, Phase 1A, Phase 1B; Phase 2A (D1-D5 all signed off); Phase 2B D6 Stage 1 (stub plumbing, 675 tests); Phase 2B D7 Stage 1 (D7a rules + stub D7b, 885 tests)
 - **Active blueprint:** `blueprint/PHASE2_BLUEPRINT.md` (v2)
 - **Current batch_id:** N/A (no live batch run yet)
 - **Current UTC-month spend:** $0.00 (dry-run stub only; no API calls until D6 Stage 2)

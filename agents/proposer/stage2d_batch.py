@@ -39,8 +39,14 @@ CONTRACT BOUNDARY: THEME_HINTS below is used ONLY for post-hoc telemetry
 construction, candidate validation, lifecycle classification, ingest
 rules, or any acceptance logic.
 
+D7 Critic integration (optional, via ``--with-critic``):
+    When enabled, ``run_critic()`` is called after step 6 (approved_examples
+    update) for every ``pending_backtest`` candidate. CriticResult is attached
+    to the per-call record. D7 does NOT influence approved_examples selection
+    (D6 behavior is byte-identical with or without critic).
+
 Usage:
-    python -m agents.proposer.stage2d_batch [--dry-run]
+    python -m agents.proposer.stage2d_batch [--dry-run] [--with-critic]
 """
 
 from __future__ import annotations
@@ -776,9 +782,11 @@ def _build_anomaly_log(
 def run_stage2d(
     *,
     dry_run: bool = False,
+    with_critic: bool = False,
     _backend: object | None = None,
     _ledger_path: Path | None = None,
     _payload_dir: Path | None = None,
+    _d7b_backend: object | None = None,
 ) -> dict:
     """Execute the Stage 2d 200-hypothesis observation batch.
 
@@ -832,6 +840,32 @@ def run_stage2d(
         )
         print("[Stage 2d] backend: sonnet (live)")
 
+    # --- Critic setup (optional) ---
+    critic_d7b = None
+    if with_critic:
+        from agents.critic.batch_context import (
+            DEFAULT_MOMENTUM_FACTORS,
+            THEME_ANCHOR_FACTORS,
+            THEME_HINTS as CRITIC_THEME_HINTS,
+            BatchContext as CriticBatchContext,
+        )
+        from agents.critic.d7a_feature_extraction import (
+            extract_factors as critic_extract_factors,
+            factor_set_tuple as critic_factor_set_tuple,
+        )
+        from agents.critic.d7b_stub import StubD7bBackend as StubD7bCriticBackend
+        from agents.critic.orchestrator import (
+            compute_reliability_stats,
+            run_critic,
+        )
+        if _d7b_backend is not None:
+            critic_d7b = _d7b_backend
+        else:
+            critic_d7b = StubD7bCriticBackend()
+        print(f"[Stage 2d] critic: enabled (d7b_mode={critic_d7b.mode})")
+    else:
+        print("[Stage 2d] critic: disabled")
+
     # --- Per-batch running state ---
     state = BatchIngestState(batch_id=batch_id)
     approved_so_far: list[str] = []
@@ -844,6 +878,14 @@ def run_stage2d(
     early_stop_reason: str | None = None
     early_stop_detail: dict | None = None
     batch_status = "in_progress"
+    # Critic state (only used when with_critic=True)
+    critic_prior_factor_sets: list[tuple[str, ...]] = []
+    critic_prior_hashes: list[str] = []
+    critic_ok_count = 0
+    critic_d7a_error_count = 0
+    critic_d7b_error_count = 0
+    critic_both_error_count = 0
+
     summary_dir = payload_dir / f"batch_{batch_id}"
     summary_dir.mkdir(parents=True, exist_ok=True)
     partial_path = summary_dir / "stage2d_summary_partial.json"
@@ -1026,6 +1068,36 @@ def run_stage2d(
             for f in _extract_factors(cand.dsl):
                 factor_usage[f] = factor_usage.get(f, 0) + 1
 
+        # --- D7 Critic (optional, after step 6) ---
+        critic_result_dict = None
+        if with_critic and lifecycle_state == PENDING_BACKTEST and isinstance(
+            cand, ValidCandidate
+        ):
+            critic_ctx = CriticBatchContext(
+                prior_factor_sets=tuple(critic_prior_factor_sets),
+                prior_hashes=tuple(critic_prior_hashes),
+                batch_position=k,
+                theme_hints=CRITIC_THEME_HINTS,
+                default_momentum_factors=DEFAULT_MOMENTUM_FACTORS,
+                theme_anchor_factors=THEME_ANCHOR_FACTORS,
+            )
+            cr = run_critic(cand.dsl, theme, critic_ctx, critic_d7b)
+            critic_result_dict = cr.to_dict()
+            if cr.critic_status == "ok":
+                critic_ok_count += 1
+            elif cr.critic_status == "d7a_error":
+                critic_d7a_error_count += 1
+            elif cr.critic_status == "d7b_error":
+                critic_d7b_error_count += 1
+            elif cr.critic_status == "both_error":
+                critic_both_error_count += 1
+            # Update prior state for next critic call
+            fs_tuple = critic_factor_set_tuple(cand.dsl)
+            if fs_tuple:
+                critic_prior_factor_sets.append(fs_tuple)
+            if hypothesis_hash:
+                critic_prior_hashes.append(hypothesis_hash)
+
         telemetry = output.telemetry
         input_tokens = telemetry.get("input_tokens")
         output_tokens = telemetry.get("output_tokens")
@@ -1090,6 +1162,8 @@ def run_stage2d(
             "default_momentum_factors_used":
                 per_call_tel["default_momentum_factors_used"],
         })
+        if with_critic:
+            call_summaries[-1]["critic_result"] = critic_result_dict
 
         if k <= 5 or k % 50 == 0 or k == STAGE2D_BATCH_SIZE:
             print(f"[Stage 2d] k={k} lifecycle={lifecycle_state} "
@@ -1317,6 +1391,17 @@ def run_stage2d(
         "calls": call_summaries,
     }
 
+    # Critic summary fields (only present when critic is enabled)
+    if with_critic:
+        summary["critic_enabled"] = True
+        summary["d7b_mode"] = critic_d7b.mode
+        summary["critic_reliability"] = compute_reliability_stats(
+            critic_ok_count,
+            critic_d7a_error_count,
+            critic_d7b_error_count,
+            critic_both_error_count,
+        )
+
     summary_path = summary_dir / "stage2d_summary.json"
     _atomic_write_json(summary_path, summary)
     print(f"[Stage 2d] summary written: {summary_path}")
@@ -1400,8 +1485,13 @@ def main() -> None:
         action="store_true",
         help="Use stub backend instead of live Sonnet",
     )
+    parser.add_argument(
+        "--with-critic",
+        action="store_true",
+        help="Enable D7 Critic (rule-based + stub D7b in Stage 1)",
+    )
     args = parser.parse_args()
-    run_stage2d(dry_run=args.dry_run)
+    run_stage2d(dry_run=args.dry_run, with_critic=args.with_critic)
 
 
 if __name__ == "__main__":
