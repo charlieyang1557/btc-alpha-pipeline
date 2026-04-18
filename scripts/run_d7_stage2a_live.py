@@ -38,6 +38,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -60,6 +61,23 @@ from strategies.dsl import StrategyDSL  # noqa: E402, F401
 
 LEDGER_PATH = Path("agents/spend_ledger.db")
 EXPECTATIONS_PATH = Path("docs/d7_stage2a/replay_candidate_expectations.md")
+LIVE_CALL_RECORD_PATH = Path("docs/d7_stage2a/stage2a_live_call_record.json")
+
+
+def _load_dotenv(path: Path | None = None) -> None:
+    """Load .env file into os.environ (stdlib-only)."""
+    env_path = path or _REPO_ROOT / ".env"
+    if not env_path.is_file():
+        return
+    for line in env_path.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        key = key.strip()
+        value = value.strip().strip("'\"")
+        if key and key not in os.environ:
+            os.environ[key] = value
 
 
 def _check_expectations_committed() -> tuple[bool, str]:
@@ -110,6 +128,8 @@ def run_live(
     Returns:
         CriticResult as a dict.
     """
+    request_ts = datetime.now(timezone.utc)
+
     # Reconstruct replay context.
     dsl, theme, batch_context = reconstruct_batch_context_at_position(
         batch_uuid, position, stage2d_artifacts_root=artifacts_root,
@@ -131,7 +151,6 @@ def run_live(
         from agents.critic.d7b_live import (
             D7B_STAGE2A_COST_CEILING_USD,
             LiveSonnetD7bBackend,
-            compute_cost_usd,
         )
 
         backend = LiveSonnetD7bBackend(
@@ -150,47 +169,105 @@ def run_live(
 
     # Ledger pre-charge.
     ledger = BudgetLedger(ledger_path)
-    now = datetime.now(timezone.utc)
     row_id = ledger.write_pending(
         batch_id=batch_uuid,
         api_call_kind=f"d7b_critic_{backend_label}",
         backend_kind="d7b_critic",
         call_role="critique",
         estimated_cost_usd=est_cost,
-        now=now,
+        now=request_ts,
         notes=f"Stage 2a {backend_label}, position={position}",
     )
 
     # Run critic.
     result = run_critic(dsl, theme, batch_context, backend)
 
-    # Finalize ledger.
+    response_ts = datetime.now(timezone.utc)
+    wall_clock_s = (response_ts - request_ts).total_seconds()
+
+    # Finalize ledger with actual cost AND token counts.
     actual_cost = 0.0
     if result.d7b_cost_actual_usd is not None:
         actual_cost = result.d7b_cost_actual_usd
     ledger.finalize(
         row_id,
         actual_cost_usd=actual_cost,
-        now=datetime.now(timezone.utc),
+        now=response_ts,
+        input_tokens=result.d7b_input_tokens,
+        output_tokens=result.d7b_output_tokens,
     )
 
     result_dict = result.to_dict()
 
-    # Write result artifact alongside the raw payloads.
-    if confirm_live:
-        critic_dir = artifacts_root / f"batch_{batch_uuid}" / "critic"
-        critic_dir.mkdir(parents=True, exist_ok=True)
-        result_path = critic_dir / f"call_{position:04d}_critic_result.json"
-        result_path.write_text(
-            json.dumps(result_dict, indent=2, ensure_ascii=False),
-            encoding="utf-8",
-        )
-        print(f"[stage2a] result written to {result_path}")
+    # Write CriticResult artifact on ALL status values (ok, d7a_error,
+    # d7b_error, both_error). The error path is forensically valuable:
+    # null scores, populated supporting measures, error signature.
+    critic_dir = artifacts_root / f"batch_{batch_uuid}" / "critic"
+    critic_dir.mkdir(parents=True, exist_ok=True)
+    result_path = critic_dir / f"call_{position:04d}_critic_result.json"
+    result_path.write_text(
+        json.dumps(result_dict, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    print(f"[stage2a] result written to {result_path}")
+
+    # Collect raw payload file paths for the meta-record.
+    prompt_path = critic_dir / f"call_{position:04d}_prompt.txt"
+    response_path = critic_dir / f"call_{position:04d}_response.json"
+    traceback_path = critic_dir / f"call_{position:04d}_traceback.txt"
+
+    # Build the stage2a_live_call_record.json meta-record (Deliverable 11).
+    cost_ratio: float | None = None
+    if est_cost > 0 and actual_cost > 0:
+        cost_ratio = round(actual_cost / est_cost, 4)
+
+    live_call_record = {
+        "request_timestamp_utc": request_ts.isoformat(),
+        "response_timestamp_utc": response_ts.isoformat(),
+        "wall_clock_seconds": round(wall_clock_s, 3),
+        "retry_count": result.d7b_retry_count,
+        "d7b_mode": result.d7b_mode,
+        "critic_result": result_dict,
+        "ledger_row": {
+            "row_id": row_id,
+            "batch_id": batch_uuid,
+            "api_call_kind": f"d7b_critic_{backend_label}",
+            "backend_kind": "d7b_critic",
+            "call_role": "critique",
+            "estimated_cost_usd": est_cost,
+            "actual_cost_usd": actual_cost,
+            "input_tokens": result.d7b_input_tokens,
+            "output_tokens": result.d7b_output_tokens,
+        },
+        "raw_payload_paths": {
+            "prompt": str(prompt_path) if prompt_path.exists() else None,
+            "response": str(response_path) if response_path.exists() else None,
+            "traceback": str(traceback_path) if traceback_path.exists() else None,
+            "critic_result": str(result_path),
+        },
+        "cost": {
+            "estimated_usd": est_cost,
+            "actual_usd": actual_cost,
+            "ratio": cost_ratio,
+        },
+        "leakage_audit_result": None,
+        "forbidden_language_scan_result": None,
+        "refusal_scan_result": None,
+    }
+
+    LIVE_CALL_RECORD_PATH.parent.mkdir(parents=True, exist_ok=True)
+    LIVE_CALL_RECORD_PATH.write_text(
+        json.dumps(live_call_record, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    print(f"[stage2a] live call record written to {LIVE_CALL_RECORD_PATH}")
 
     return result_dict
 
 
 def main() -> None:
+    _load_dotenv()
+
     parser = argparse.ArgumentParser(
         description="D7 Stage 2a: single forensic probe on a replayed candidate.",
     )
