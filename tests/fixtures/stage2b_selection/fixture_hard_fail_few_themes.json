@@ -1,0 +1,45 @@
+{
+  "description": "Hard fail: 5 passing candidates spread across all 3 buckets but only 2 distinct themes represented.",
+  "calls": [
+    {
+      "position": 15,
+      "hypothesis_hash": "h015",
+      "theme": "mean_reversion",
+      "lifecycle_state": "pending_backtest",
+      "factors_used": ["atr_14", "rsi_14", "sma_50"],
+      "default_momentum_factors_used": []
+    },
+    {
+      "position": 40,
+      "hypothesis_hash": "h040",
+      "theme": "mean_reversion",
+      "lifecycle_state": "pending_backtest",
+      "factors_used": ["macd_signal", "return_7d", "sma_20"],
+      "default_momentum_factors_used": []
+    },
+    {
+      "position": 80,
+      "hypothesis_hash": "h080",
+      "theme": "volatility_regime",
+      "lifecycle_state": "pending_backtest",
+      "factors_used": ["atr_14", "bb_width_20", "return_1h"],
+      "default_momentum_factors_used": []
+    },
+    {
+      "position": 100,
+      "hypothesis_hash": "h100",
+      "theme": "mean_reversion",
+      "lifecycle_state": "pending_backtest",
+      "factors_used": ["return_4h", "sma_200", "rsi_14"],
+      "default_momentum_factors_used": []
+    },
+    {
+      "position": 160,
+      "hypothesis_hash": "h160",
+      "theme": "volatility_regime",
+      "lifecycle_state": "pending_backtest",
+      "factors_used": ["atr_14", "bb_width_20", "realized_vol_24h"],
+      "default_momentum_factors_used": []
+    }
+  ]
+}

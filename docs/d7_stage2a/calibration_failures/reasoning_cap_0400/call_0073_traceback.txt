@@ -1,0 +1,36 @@
+error_type: D7bContentError
+error_message: schema_reasoning_length: reasoning: String should have at most 400 characters
+
+traceback:
+Traceback (most recent call last):
+  File "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/agents/critic/d7b_parser.py", line 213, in parse_d7b_response
+    validated = StrictD7bResponse(**payload)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/yutianyang/miniconda3/lib/python3.11/site-packages/pydantic/main.py", line 250, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for StrictD7bResponse
+reasoning
+  String should have at most 400 characters [type=string_too_long, input_value='Entry logic combines vol...est structural variant.', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/string_too_long
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/agents/critic/d7b_live.py", line 298, in score
+    scores, reasoning = parse_d7b_response(raw_text)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/agents/critic/d7b_parser.py", line 236, in parse_d7b_response
+    raise D7bContentError(
+agents.critic.d7b_parser.D7bContentError: schema_reasoning_length: reasoning: String should have at most 400 characters
+
+
+raw_response:
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "Entry logic combines volatility regime shift detection via realized_vol_24h crossing a threshold with trend confirmation (price above sma_50, positive macd_hist), creating a coherent breakout narrative. Exit conditions include vol normalization, trend reversal, and profit target. Theme alignment is strong, using realized_vol_24h as primary signal for volatility regime detection. However, the factor set {close, ema_12, ema_26, macd_hist, realized_vol_24h, return_24h, sma_50} from prior list #3 overlaps substantially; this strategy uses {close, macd_hist, realized_vol_24h, return_168h, sma_50}, differing mainly in return horizon (168h vs 24h) and omitting EMA factors, constituting a modest structural variant."
+}
+```

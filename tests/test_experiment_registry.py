@@ -308,4 +308,4 @@ class TestHelpers:
 
     def test_split_version(self):
         version = get_split_version()
-        assert version == "v1"
+        assert version == "v2"

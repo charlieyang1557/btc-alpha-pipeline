@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.9500,
+  "reasoning": "The strategy applies a coherent logic: volatility regime expansion (realized_vol_24h crosses above 0.025) coupled with trend confirmation (close > sma_50, macd_hist > 0) signals entry, exiting on vol compression or profit target. The exit dual-path structure (vol collapse OR 8% gain) is economically sound. Theme alignment is strong—realized_vol_24h is a hint factor and the volatility regime shift narrative is central. However, structural_variant_risk is very high: the factor set {close, ema_12, ema_26, macd_hist, realized_vol_24h, return_24h, sma_50} from prior #3 contains nearly identical elements. The current set {close, macd_hist, realized_vol_24h, return_168h, sma_50} differs only in substituting return_168h for return_24h and omitting ema terms derived from macd. This constitutes a shallow threshold/timeframe variant rather than a novel structural hypothesis."
+}
+```

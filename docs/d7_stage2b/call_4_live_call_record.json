@@ -1,0 +1,127 @@
+{
+  "request_timestamp_utc": "2026-04-18T13:13:07.708079Z",
+  "response_timestamp_utc": "2026-04-18T13:13:18.779084Z",
+  "wall_clock_seconds": 11.071,
+  "retry_count": 0,
+  "d7b_mode": "live",
+  "critic_result": {
+    "critic_version": "d7_v1",
+    "critic_status": "ok",
+    "d7b_mode": "live",
+    "d7a_rule_scores": {
+      "theme_coherence": 0.5,
+      "structural_novelty": 0.5,
+      "default_momentum_fallback": 0.5,
+      "complexity_appropriateness": 0.4
+    },
+    "d7a_supporting_measures": {
+      "factor_set_prior_occurrences": 1,
+      "n_factors": 6,
+      "n_conditions": 8,
+      "description_length": 215,
+      "max_hold_bars": 120,
+      "n_entry_groups": 1,
+      "n_exit_groups": 2
+    },
+    "d7a_rule_flags": [
+      "n_conditions_heavy"
+    ],
+    "d7b_llm_scores": {
+      "semantic_plausibility": 0.75,
+      "semantic_theme_alignment": 0.9,
+      "structural_variant_risk": 0.95
+    },
+    "d7b_reasoning": "The strategy exhibits strong internal coherence for mean reversion: entry requires simultaneous confirmation of price at upper Bollinger Band, elevated z-score (1.8), high RSI (68), and positive 24h return, creating a multi-dimensional overbought signal. Exit logic supports reversion via z-score normalization below 0.5 and price crossing below SMA, or via momentum breakdown (negative return + RSI drop). The 120-bar max hold prevents indefinite positions. Theme alignment is excellent—all five hint factors appear (bb_upper_24_2, close, sma_24 proxies sma_20/50, zscore_48), directly targeting statistical overextension. However, structural variant risk is very high: the factor set {bb_upper_24_2, close, return_24h, rsi_14, sma_24, zscore_48} appears as prior #29 in the batch. This hypothesis differs only in threshold values (RSI 68 vs likely different values, z-score 1.8 vs others) and exit operator choices (crosses_below vs potentially simple comparisons). The underlying economic bet—Bollinger-zscore-RSI confluence for mean reversion—is structurally identical to this prior factor combination.",
+    "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0097_response.json",
+    "d7b_cost_actual_usd": 0.01647,
+    "d7b_input_tokens": 3780,
+    "d7b_output_tokens": 342,
+    "d7b_retry_count": 0,
+    "d7b_scan_results": {
+      "forbidden_language_scan": {
+        "status": "pass",
+        "hits": [],
+        "terms_checked_count": 21
+      },
+      "refusal_scan": {
+        "status": "pass",
+        "hits": [],
+        "patterns_checked": [
+          "\\bi cannot\\b",
+          "\\bi can't\\b",
+          "\\bunable to\\b",
+          "\\brefuse to\\b",
+          "\\bdecline to\\b",
+          "\\bcannot evaluate\\b",
+          "\\bcan not evaluate\\b"
+        ]
+      }
+    },
+    "critic_timing_ms": {
+      "d7a_ms": 0.187,
+      "d7b_ms": 11051.94
+    },
+    "critic_error_signature": null,
+    "critic_error_full_path": null
+  },
+  "ledger_row": {
+    "row_id": "8200dadd-dca5-4fc9-a2ef-6d888ee302f6",
+    "batch_id": "5cf76668-47d1-48d7-bd90-db06d31982ed",
+    "api_call_kind": "d7b_critic_live",
+    "backend_kind": "d7b_critic",
+    "call_role": "critique",
+    "estimated_cost_usd": 0.05,
+    "actual_cost_usd": 0.01647,
+    "input_tokens": 3780,
+    "output_tokens": 342
+  },
+  "raw_payload_paths": {
+    "prompt": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0097_prompt.txt",
+    "response": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0097_response.json",
+    "traceback": null,
+    "critic_result": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0097_critic_result.json"
+  },
+  "cost": {
+    "estimated_usd": 0.05,
+    "actual_usd": 0.01647,
+    "ratio": 0.3294
+  },
+  "leakage_audit_result": {
+    "status": "pass",
+    "violations": [],
+    "protected_terms_checked_count": 28
+  },
+  "forbidden_language_scan_result": {
+    "status": "pass",
+    "hits": [],
+    "terms_checked_count": 21
+  },
+  "refusal_scan_result": {
+    "status": "pass",
+    "hits": [],
+    "patterns_checked": [
+      "\\bi cannot\\b",
+      "\\bi can't\\b",
+      "\\bunable to\\b",
+      "\\brefuse to\\b",
+      "\\bdecline to\\b",
+      "\\bcannot evaluate\\b",
+      "\\bcan not evaluate\\b"
+    ]
+  },
+  "firing_order": 4,
+  "candidate_position": 97,
+  "candidate_theme": "mean_reversion",
+  "candidate_hypothesis_hash": "1f8cbe2ba01c13a9",
+  "pre_registered_label": "agreement_expected",
+  "prior_factor_sets_count": 76,
+  "theme_hint_factor_count": 5,
+  "prompt_chars": 9663,
+  "prompt_sha256": "92db19662e199789ed2ee062f5843ce9bd5b5263ee76be6ef0d313458d13b090",
+  "call_index_in_sequence": 4,
+  "inter_call_sleep_elapsed_seconds": 5.003,
+  "critic_status": "ok",
+  "critic_error_signature": null,
+  "actual_cost_usd": 0.01647,
+  "d7b_error_category": null
+}

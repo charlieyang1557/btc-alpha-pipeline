@@ -86,12 +86,31 @@ CREATE TABLE IF NOT EXISTS runs (
     notes TEXT,
     review_status TEXT DEFAULT 'pending',
     review_reason TEXT,
+    batch_id TEXT,
+    hypothesis_hash TEXT,
+    regime_holdout_passed INTEGER,
+    lifecycle_state TEXT,
     created_at_utc TEXT NOT NULL
 )
 """
 
-# Migration SQL for adding Phase 1A columns to an existing database
+# Migration SQL — append-only list of (column_name, column_def) pairs
+# applied via ``ALTER TABLE ... ADD COLUMN`` to bring an older database
+# up to the current schema. SQLite does not support in-place column
+# modification, so the migration is one-way and idempotent (columns
+# already present are skipped). DO NOT remove or reorder entries; doing
+# so would break upgrade paths from databases that stopped at an
+# intermediate Phase 1A / 1B / 2A schema.
+#
+# - Phase 1A entries: original Phase 1A columns added on top of Phase 0.
+# - Phase 2A D4 entries: orchestrator-facing columns. Of these,
+#   ``feature_version`` was actually introduced earlier (D1) but is
+#   re-listed here defensively in case a Phase 1B database predates it.
+#   ``lifecycle_state`` is written by the D8 orchestrator, not by D4 —
+#   the column is added now so D4 registry rows can coexist with D8
+#   rows in the same table without further migrations.
 MIGRATION_COLUMNS = [
+    # --- Phase 1A ---
     ("run_type", "TEXT NOT NULL DEFAULT 'single_run'"),
     ("parent_run_id", "TEXT"),
     ("effective_start", "TEXT"),
@@ -101,6 +120,14 @@ MIGRATION_COLUMNS = [
     ("max_drawdown_duration_hours", "REAL"),
     ("avg_trade_return", "REAL"),
     ("profit_factor", "REAL"),
+    # --- Phase 2A D4 ---
+    ("feature_version", "TEXT DEFAULT 'none'"),
+    ("batch_id", "TEXT"),
+    ("hypothesis_hash", "TEXT"),
+    # SQLite has no native BOOLEAN; INTEGER 0/1/NULL is the canonical
+    # encoding. NULL means "regime holdout did not run for this row".
+    ("regime_holdout_passed", "INTEGER"),
+    ("lifecycle_state", "TEXT"),
 ]
 
 # ---------------------------------------------------------------------------
@@ -126,10 +153,13 @@ def get_connection(db_path: Path | None = None) -> sqlite3.Connection:
 def create_table(conn: sqlite3.Connection) -> None:
     """Create the runs table if it doesn't exist, then apply migrations.
 
-    If the table already exists from Phase 0, new Phase 1A columns are
-    added via ALTER TABLE (SQLite supports ADD COLUMN but not in-place
-    modification). This is idempotent — columns that already exist are
-    silently skipped.
+    If the table already exists from an earlier phase, any missing
+    columns from :data:`MIGRATION_COLUMNS` are added via
+    ``ALTER TABLE ... ADD COLUMN``. SQLite supports ADD COLUMN but not
+    in-place modification. This is idempotent — columns that already
+    exist are silently skipped, so older Phase 1A rows are preserved
+    untouched and newly-added Phase 2A columns default to NULL on
+    existing rows.
 
     Args:
         conn: SQLite connection.
@@ -137,7 +167,7 @@ def create_table(conn: sqlite3.Connection) -> None:
     conn.execute(CREATE_TABLE_SQL)
     conn.commit()
 
-    # Migrate existing tables: add any missing Phase 1A columns
+    # Migrate existing tables: add any missing columns
     cursor = conn.execute("PRAGMA table_info(runs)")
     existing_cols = {row[1] for row in cursor.fetchall()}
 
@@ -147,7 +177,7 @@ def create_table(conn: sqlite3.Connection) -> None:
             logger.info("Migrated: added column '%s' to runs table", col_name)
 
     conn.commit()
-    logger.info("Ensured 'runs' table exists with Phase 1A schema")
+    logger.info("Ensured 'runs' table exists with Phase 2A D4 schema")
 
 
 # ---------------------------------------------------------------------------

@@ -1,0 +1,45 @@
+{
+  "description": "Hard fail: 5 passing candidates but all positions are in early/mid buckets; late bucket is empty.",
+  "calls": [
+    {
+      "position": 15,
+      "hypothesis_hash": "h015",
+      "theme": "mean_reversion",
+      "lifecycle_state": "pending_backtest",
+      "factors_used": ["atr_14", "rsi_14", "sma_50"],
+      "default_momentum_factors_used": []
+    },
+    {
+      "position": 25,
+      "hypothesis_hash": "h025",
+      "theme": "volatility_regime",
+      "lifecycle_state": "pending_backtest",
+      "factors_used": ["atr_14", "bb_width_20", "return_1h"],
+      "default_momentum_factors_used": []
+    },
+    {
+      "position": 40,
+      "hypothesis_hash": "h040",
+      "theme": "calendar_effect",
+      "lifecycle_state": "pending_backtest",
+      "factors_used": ["day_of_week", "hour_of_day", "return_1h"],
+      "default_momentum_factors_used": []
+    },
+    {
+      "position": 80,
+      "hypothesis_hash": "h080",
+      "theme": "volume_divergence",
+      "lifecycle_state": "pending_backtest",
+      "factors_used": ["mfi_14", "obv_ratio_24", "return_4h"],
+      "default_momentum_factors_used": []
+    },
+    {
+      "position": 120,
+      "hypothesis_hash": "h120",
+      "theme": "mean_reversion",
+      "lifecycle_state": "pending_backtest",
+      "factors_used": ["macd_signal", "return_7d", "sma_20"],
+      "default_momentum_factors_used": []
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "Entry logic combines volatility regime shift detection via realized_vol_24h crossing a threshold with trend confirmation (price above sma_50, positive macd_hist), creating a coherent breakout narrative. Exit conditions include vol normalization, trend reversal, and profit target. Theme alignment is strong, using realized_vol_24h as primary signal for volatility regime detection. However, the factor set {close, ema_12, ema_26, macd_hist, realized_vol_24h, return_24h, sma_50} from prior list #3 overlaps substantially; this strategy uses {close, macd_hist, realized_vol_24h, return_168h, sma_50}, differing mainly in return horizon (168h vs 24h) and omitting EMA factors, constituting a modest structural variant."
+}
+```

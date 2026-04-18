@@ -497,6 +497,12 @@ def _write_to_registry(
     train_start: datetime | None = None,
     train_end: datetime | None = None,
     notes: str | None = None,
+    batch_id: str | None = None,
+    hypothesis_hash: str | None = None,
+    regime_holdout_passed: bool | None = None,
+    lifecycle_state: str | None = None,
+    strategy_source: str = "manual",
+    feature_version: str | None = None,
 ) -> None:
     """Write run results to the experiment registry.
 
@@ -504,12 +510,19 @@ def _write_to_registry(
     - run_type="single_run", parent_run_id=None
     - test_start/test_end = engine's date range (start_date/end_date)
     - train_start/train_end/validation_start/validation_end = NULL
+    - batch_id/hypothesis_hash/regime_holdout_passed/lifecycle_state = NULL
 
     For walk-forward windows, callers pass:
     - run_type="walk_forward_window"
     - parent_run_id=<summary_uuid>
     - train_start/train_end from the window definition
     - start_date/end_date set to the window's test dates
+
+    For Phase 2A D4 regime holdout, callers additionally pass:
+    - run_type="regime_holdout"
+    - parent_run_id=<walk_forward_summary_uuid>
+    - batch_id, hypothesis_hash
+    - regime_holdout_passed (bool; stored as SQLite INTEGER 0/1)
 
     Args:
         run_id: UUID for this run.
@@ -527,6 +540,18 @@ def _write_to_registry(
         train_start: Train window start (NULL for Phase 1A).
         train_end: Train window end (NULL for Phase 1A).
         notes: Custom notes string. Falls back to JSON params if None.
+        batch_id: Phase 2B batch UUID (NULL for pre-batch runs).
+        hypothesis_hash: DSL canonical hash (NULL for hand-written
+            baselines; set for DSL-compiled runs).
+        regime_holdout_passed: Regime-holdout AND gate outcome. NULL
+            means "holdout did not run for this row" (applies to every
+            run_type other than ``"regime_holdout"``).
+        lifecycle_state: D8 lifecycle marker. Written by the D8
+            orchestrator only; D4 always passes None.
+        strategy_source: ``"manual"`` for hand-coded strategies,
+            ``"dsl"`` for DSL-compiled strategies.
+        feature_version: FactorRegistry version hash for DSL-compiled
+            runs. None preserves the default 'none' sentinel.
     """
     from backtest.experiment_registry import (
         create_table,
@@ -544,7 +569,7 @@ def _write_to_registry(
         "run_type": run_type,
         "parent_run_id": parent_run_id,
         "strategy_name": strategy_name,
-        "strategy_source": "manual",
+        "strategy_source": strategy_source,
         "test_start": start_date.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "test_end": end_date.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "effective_start": (
@@ -578,7 +603,16 @@ def _write_to_registry(
         "avg_trade_return": metrics.get("avg_trade_return"),
         "profit_factor": metrics.get("profit_factor"),
         "notes": notes,
+        "batch_id": batch_id,
+        "hypothesis_hash": hypothesis_hash,
+        "regime_holdout_passed": (
+            None if regime_holdout_passed is None
+            else (1 if regime_holdout_passed else 0)
+        ),
+        "lifecycle_state": lifecycle_state,
     }
+    if feature_version is not None:
+        run_data["feature_version"] = feature_version
 
     conn = get_connection(db_path)
     try:
@@ -660,6 +694,34 @@ class WalkForwardResult:
     windows: list[tuple[date, date, date, date]]
 
 
+def _load_v2_train_ranges(env_config: dict[str, Any]) -> list[tuple[date, date]]:
+    """Read disjoint training ranges from v2 ``splits.train_windows``.
+
+    Returns a list of ``(start, end)`` date tuples. Raises if the config
+    is not v2-shaped — callers should provide an explicit override
+    (``overall_start``/``overall_end`` or ``train_ranges``) when running
+    against legacy or test fixtures.
+    """
+    splits = env_config.get("splits", {})
+    raw = splits.get("train_windows")
+    if not raw:
+        raise ValueError(
+            "environments.yaml does not contain splits.train_windows; "
+            "expected v2 schema. Pass overall_start/overall_end or "
+            "train_ranges to override."
+        )
+    ranges: list[tuple[date, date]] = []
+    for entry in raw:
+        if len(entry) != 2:
+            raise ValueError(
+                f"train_windows entries must be [start, end]; got {entry!r}"
+            )
+        ranges.append(
+            (date.fromisoformat(entry[0]), date.fromisoformat(entry[1]))
+        )
+    return ranges
+
+
 def run_walk_forward(
     strategy_cls: type[bt.Strategy],
     strategy_params: dict[str, Any] | None = None,
@@ -669,6 +731,7 @@ def run_walk_forward(
     walk_forward_config: dict[str, int] | None = None,
     overall_start: date | None = None,
     overall_end: date | None = None,
+    train_ranges: list[tuple[date, date]] | None = None,
 ) -> WalkForwardResult:
     """Execute walk-forward backtesting across rolling windows.
 
@@ -680,6 +743,22 @@ def run_walk_forward(
     For Phase 1B baselines, no parameter optimization is performed.
     The train window represents in-sample context and is logged as such.
 
+    Range resolution precedence (highest first):
+        1. Explicit ``train_ranges`` argument (list of disjoint ranges).
+        2. Explicit ``overall_start`` + ``overall_end`` (single range,
+           preserved for Phase 1B back-compat).
+        3. v2 ``splits.train_windows`` from environments.yaml. Sub-windows
+           are generated independently from each range and concatenated;
+           a range too short to fit (train_months + test_months) yields
+           zero sub-windows and is skipped silently.
+
+    Per-range sub-windows are concatenated into a single window list.
+    A single ``walk_forward_summary`` row aggregates metrics across all
+    sub-windows per the v2 train-summary aggregation rules
+    (mean Sharpe/return, max DD, summed trade count). Per-window equity
+    curves are NEVER stitched into a continuous series across disjoint
+    ranges — the 2020-2021 and 2023 ranges are independent observations.
+
     Args:
         strategy_cls: Backtrader Strategy class to run.
         strategy_params: Strategy parameters (passed to each window run).
@@ -688,8 +767,12 @@ def run_walk_forward(
         db_path: Path to experiment registry DB. Uses default if None.
         walk_forward_config: Override window params dict with keys:
             train_months, test_months, step_months.
-        overall_start: Override start date for window generation.
-        overall_end: Override end date for window generation.
+        overall_start: Override start date for window generation
+            (single-range path; back-compat with Phase 1B tests).
+        overall_end: Override end date for window generation
+            (single-range path; back-compat with Phase 1B tests).
+        train_ranges: Explicit list of (start, end) date tuples for v2
+            disjoint-range execution. Takes precedence over the env config.
 
     Returns:
         WalkForwardResult with per-window results and summary.
@@ -712,26 +795,26 @@ def run_walk_forward(
     test_months = wf_config.get("test_window_months", 3)
     step_months = wf_config.get("step_months", 3)
 
-    # Determine overall date range from splits
-    if overall_start is None:
-        overall_start = date.fromisoformat(
-            env_config["splits"]["training"]["start"]
-        )
-    if overall_end is None:
-        overall_end = date.fromisoformat(
-            env_config["splits"]["test"]["end"]
-        )
+    # Resolve training ranges (precedence: train_ranges > overall_*  > config)
+    if train_ranges is not None:
+        ranges: list[tuple[date, date]] = list(train_ranges)
+    elif overall_start is not None and overall_end is not None:
+        ranges = [(overall_start, overall_end)]
+    else:
+        ranges = _load_v2_train_ranges(env_config)
 
-    # Generate windows
-    windows = generate_walk_forward_windows(
-        overall_start, overall_end,
-        train_months, test_months, step_months,
-    )
+    # Generate sub-windows per range and concatenate. A range too short
+    # to fit (train + test) months produces zero sub-windows.
+    windows: list[tuple[date, date, date, date]] = []
+    for r_start, r_end in ranges:
+        sub = generate_walk_forward_windows(
+            r_start, r_end, train_months, test_months, step_months,
+        )
+        windows.extend(sub)
 
     if not windows:
         raise ValueError(
-            f"No walk-forward windows fit in range "
-            f"[{overall_start}, {overall_end}] with "
+            f"No walk-forward windows fit in train_ranges {ranges} with "
             f"train={train_months}m, test={test_months}m, step={step_months}m"
         )
 
@@ -889,6 +972,13 @@ def run_walk_forward(
             "train_months": train_months,
             "test_months": test_months,
             "step_months": step_months,
+            # Disjoint-range provenance: callers reading the summary
+            # row should consult train_ranges (not the train_start /
+            # train_end span) for the actual training periods.
+            "train_ranges": [
+                [r_start.isoformat(), r_end.isoformat()]
+                for r_start, r_end in ranges
+            ],
             "params": strategy_params or {},
         }),
     )
@@ -992,6 +1082,352 @@ def _aggregate_walk_forward_metrics(
         "avg_trade_return": avg_trade_ret,
         "profit_factor": overall_pf,
     }
+
+
+# ---------------------------------------------------------------------------
+# Regime holdout (Phase 2A D4) — orchestrator-internal only.
+#
+# CONTRACT BOUNDARY: this section MUST NOT be wired into argparse,
+# main(), or any other CLI surface. Each invocation of
+# :func:`run_regime_holdout` is an observation of the held-out 2022
+# bear-market data; exposing a CLI flag would let people casually re-run
+# it for ad-hoc analysis and silently degrade the holdout's
+# epistemic value. The mechanical ripgrep self-check in the D4
+# checklist enforces absence by name. If a future phase needs a CLI
+# wrapper, it must be paired with an explicit invocation budget — not
+# added here on a whim.
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class RegimeHoldoutResult:
+    """Container for a regime-holdout evaluation.
+
+    The four passing-criteria fields mirror the v2 environments.yaml
+    block. ``regime_holdout_passed`` is the AND of all four — see
+    :func:`_evaluate_regime_holdout_pass` for the exact comparison.
+    """
+
+    run_id: str
+    parent_run_id: str
+    batch_id: str
+    hypothesis_hash: str | None
+    regime_holdout_passed: bool
+    sharpe_ratio: float
+    max_drawdown: float
+    total_return: float
+    total_trades: int
+    passing_criteria: dict[str, float]
+    metrics: dict[str, Any]
+
+
+def _load_regime_holdout_config(
+    env_config: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Read ``splits.regime_holdout`` from environments.yaml.
+
+    Args:
+        env_config: Pre-loaded env config dict (testing). When None,
+            reads ``config/environments.yaml`` from disk.
+
+    Returns:
+        The regime_holdout block. Raises if v2 schema is missing.
+    """
+    if env_config is None:
+        import yaml
+        env_path = PROJECT_ROOT / "config" / "environments.yaml"
+        with open(env_path) as f:
+            env_config = yaml.safe_load(f)
+    block = env_config.get("splits", {}).get("regime_holdout")
+    if not block:
+        raise ValueError(
+            "environments.yaml is missing splits.regime_holdout; "
+            "expected v2 schema."
+        )
+    return block
+
+
+def _evaluate_regime_holdout_pass(
+    metrics: dict[str, Any], passing_criteria: dict[str, float]
+) -> bool:
+    """4-condition AND gate for regime_holdout_passed.
+
+    The gate is intentionally strict — ALL four conditions must hold.
+    NaN on any metric collapses to False (NaN comparisons in Python
+    return False, which is the desired conservative behavior here).
+    Mirrors CLAUDE.md's hard constraint:
+
+        "❌ NEVER mark regime_holdout_passed = True unless ALL four
+         criteria are met"
+
+    Args:
+        metrics: Output of compute_all_metrics for the 2022 holdout run.
+        passing_criteria: Dict with keys min_sharpe, max_drawdown,
+            min_total_return, min_total_trades.
+
+    Returns:
+        True iff every condition holds.
+    """
+    sharpe = metrics.get("sharpe_ratio", float("nan"))
+    dd = metrics.get("max_drawdown", float("nan"))
+    ret = metrics.get("total_return", float("nan"))
+    trades = metrics.get("total_trades", 0) or 0
+    # CONTRACT GAP: The passing_criteria thresholds in environments.yaml
+    # are calibrated for the current D4 feed-loading semantics (see the
+    # DESIGN INVARIANT block above run_regime_holdout): first WARMUP_BARS
+    # bars of 2022 are NOT signal-eligible, effective holdout sample is
+    # ~8700 bars for WARMUP_BARS ≈ 50. If a later phase modifies the
+    # holdout feed loader to prepend pre-window history, the effective
+    # sample grows to the full 8760 bars and these thresholds —
+    # especially min_total_trades=5 — should be re-validated in the
+    # same PR that introduces the feed change.
+    return bool(
+        sharpe >= passing_criteria["min_sharpe"]
+        and dd <= passing_criteria["max_drawdown"]
+        and ret >= passing_criteria["min_total_return"]
+        and trades >= passing_criteria["min_total_trades"]
+    )
+
+
+# DESIGN INVARIANT: feed loading for the regime holdout run.
+#
+# Earlier D4 wording (both in this file's surrounding prose and in
+# PHASE2_BLUEPRINT.md §D4) suggested that "warmup is naturally served by
+# the bars preceding fromdate within the parquet" — implying that late-2021
+# bars fill the warmup for a 2022 holdout run. That wording was INACCURATE
+# relative to the actual Phase 1A engine behavior.
+#
+# What actually happens (and what D4 signs off on):
+#   - run_regime_holdout calls run_backtest with
+#         fromdate = 2022-01-01  (holdout start)
+#         todate   = 2022-12-31  (holdout end)
+#   - ParquetFeed.from_parquet(fromdate=..., todate=...) at engine.py:376
+#     filters the parquet down to bars strictly inside that window. The
+#     feed for the holdout run therefore contains ONLY 2022 bars — not a
+#     full dataset with pre-window history attached.
+#   - Backtrader consumes the first WARMUP_BARS bars of 2022 to warm up
+#     the strategy's indicators. Those early-January 2022 bars are
+#     therefore NOT signal-eligible. Metrics (Sharpe, drawdown, etc.)
+#     are computed only from the first post-warmup bar onward, exactly
+#     as in every other run_backtest call.
+#   - Consequence: the first small fraction of the 2022 holdout window
+#     (WARMUP_BARS hours — typically ≤ a few days for the baselines) is
+#     not evaluated. The 4-condition holdout gate operates on what
+#     remains.
+#
+# Why this is acceptable for D4 sign-off and why we are NOT reopening it:
+#   1. It is the exact behavior of the trusted Phase 1A single-run engine.
+#      Every run in the registry — train walk-forward windows, validation,
+#      test, and now regime holdout — uses the same feed-loading rule, so
+#      strategies are compared on a level playing field.
+#   2. D4's 4-condition holdout gate (min_sharpe, max_drawdown,
+#      min_total_return, min_total_trades) remains operationally
+#      meaningful over an 8,700-bar year minus ~50 warmup bars. Losing
+#      the first few days does not change whether a strategy survives
+#      a bear regime.
+#   3. Modifying ParquetFeed or run_backtest to prepend pre-window
+#      history purely for holdout runs would be a Phase 1 engine change
+#      touching code paths used by every existing backtest. That is
+#      explicitly OUT OF SCOPE for D4. If a future phase decides the
+#      missing warmup window is material, it must be proposed as a
+#      scoped Phase 1 revision, not smuggled in through D4.
+#
+# CONTRACT BOUNDARY with the no-CLI rule above still applies: this
+# function is orchestrator-internal, and the warmup convention here does
+# not change that.
+def run_regime_holdout(
+    dsl: "Any",
+    batch_id: str,
+    parent_run_id: str,
+    *,
+    strategy_cls: type[bt.Strategy] | None = None,
+    strategy_params: dict[str, Any] | None = None,
+    parquet_path: str | Path | None = None,
+    cash: float = 10_000.0,
+    db_path: Path | None = None,
+    env_config: dict[str, Any] | None = None,
+    registry: "Any" = None,
+    manifest_dir: Path | None = None,
+) -> RegimeHoldoutResult:
+    """Run the 2022 regime holdout for a single hypothesis.
+
+    Orchestrator-internal only. The 2022 bear-market window is a fixed
+    stress test that the AI must never see — see CLAUDE.md and the
+    CONTRACT BOUNDARY block above this function for the no-CLI rule.
+
+    Execution model:
+        - Compiles the DSL (or accepts a pre-compiled override via
+          ``strategy_cls``) and invokes :func:`run_backtest` over the
+          fixed 2022-01-01..2022-12-31 range.
+        - The Backtrader feed is loaded with fromdate / todate set to
+          exactly this holdout range — see the DESIGN INVARIANT block
+          immediately above this function for why warmup is served
+          from *inside* the holdout window rather than from late-2021
+          bars, and why that is the correct behavior for D4.
+        - This is a SEPARATE run — never sliced from a longer
+          continuous run, because slicing a continuous-run equity curve
+          for holdout metrics is a CLAUDE.md hard prohibition.
+        - Computes :func:`compute_all_metrics` over the holdout-only
+          equity curve and applies :func:`_evaluate_regime_holdout_pass`
+          for the 4-condition AND gate.
+        - Writes a single registry row with
+          ``run_type="regime_holdout"``, ``parent_run_id`` linking the
+          row to the train walk-forward summary, and the v2 D4 columns
+          (``batch_id``, ``hypothesis_hash``, ``regime_holdout_passed``).
+
+    Args:
+        dsl: Validated :class:`StrategyDSL` instance describing the
+            hypothesis. May be None if ``strategy_cls`` is provided
+            (testing path with hand-coded strategies).
+        batch_id: Phase 2B batch UUID this hypothesis belongs to.
+        parent_run_id: ``run_id`` of the train walk-forward summary
+            row that produced this hypothesis. Stored verbatim in the
+            registry's ``parent_run_id`` column for lineage queries.
+        strategy_cls: Pre-compiled BaseStrategy override (testing). When
+            None, compiles ``dsl`` via :func:`compile_dsl_to_strategy`.
+        strategy_params: Extra kwargs passed to ``cerebro.addstrategy``.
+        parquet_path: Override OHLCV parquet path. None uses the canonical
+            dataset.
+        cash: Initial capital (default $10,000).
+        db_path: Path to experiment registry DB. None uses default.
+        env_config: Pre-loaded env config dict (testing).
+        registry: FactorRegistry override (testing).
+        manifest_dir: Compilation manifest directory (testing).
+
+    Returns:
+        RegimeHoldoutResult with the per-criterion outcome and run_id.
+    """
+    block = _load_regime_holdout_config(env_config)
+    holdout_start = date.fromisoformat(block["start"])
+    holdout_end = date.fromisoformat(block["end"])
+    passing_criteria = block["passing_criteria"]
+
+    start_dt = datetime(
+        holdout_start.year, holdout_start.month, holdout_start.day,
+        tzinfo=timezone.utc,
+    )
+    # Include all hourly bars on the last day (matches single-run CLI).
+    end_dt = datetime(
+        holdout_end.year, holdout_end.month, holdout_end.day,
+        hour=23, tzinfo=timezone.utc,
+    )
+
+    hypothesis_hash: str | None = None
+    feature_version: str | None = None
+    strategy_source = "manual"
+
+    if strategy_cls is None:
+        if dsl is None:
+            raise ValueError(
+                "run_regime_holdout requires either dsl or strategy_cls"
+            )
+        # Local import to avoid pulling pydantic / DSL machinery into
+        # callers that only use the Phase 1 single-run path.
+        from strategies.dsl_compiler import compile_dsl_to_strategy
+        from strategies.dsl import compute_dsl_hash
+
+        compile_kwargs: dict[str, Any] = {}
+        if registry is not None:
+            compile_kwargs["registry"] = registry
+        if manifest_dir is not None:
+            compile_kwargs["manifest_dir"] = manifest_dir
+
+        strategy_cls = compile_dsl_to_strategy(dsl, **compile_kwargs)
+        hypothesis_hash = compute_dsl_hash(dsl)
+        strategy_source = "dsl"
+
+        # Best-effort feature_version capture for registry lineage.
+        try:
+            from factors.registry import compute_feature_version, get_registry
+            reg = registry if registry is not None else get_registry()
+            feature_version = compute_feature_version(reg)
+        except Exception:
+            feature_version = None
+    elif dsl is not None:
+        # Allow tests to pass both — derive hypothesis_hash from dsl.
+        try:
+            from strategies.dsl import compute_dsl_hash
+            hypothesis_hash = compute_dsl_hash(dsl)
+        except Exception:
+            hypothesis_hash = None
+
+    result = run_backtest(
+        strategy_cls=strategy_cls,
+        start_date=start_dt,
+        end_date=end_dt,
+        strategy_params=strategy_params or {},
+        parquet_path=parquet_path,
+        cash=cash,
+        write_registry=False,
+    )
+
+    passed = _evaluate_regime_holdout_pass(result.metrics, passing_criteria)
+
+    # Registry row uses the fresh holdout run_id (already minted by
+    # run_backtest); the orchestrator links via parent_run_id, not by
+    # collapsing the train and holdout rows.
+    holdout_run_id = result.run_id
+
+    from backtest.execution_model import ConstantSlippage
+    cost_model = ConstantSlippage.from_config(load_execution_config())
+
+    notes_payload = {
+        "label": block.get("label"),
+        "passing_criteria": passing_criteria,
+        "criterion_outcomes": {
+            "sharpe_ratio": result.metrics.get("sharpe_ratio"),
+            "max_drawdown": result.metrics.get("max_drawdown"),
+            "total_return": result.metrics.get("total_return"),
+            "total_trades": result.metrics.get("total_trades"),
+        },
+    }
+
+    _write_to_registry(
+        run_id=holdout_run_id,
+        strategy_cls=strategy_cls,
+        strategy_params=strategy_params or {},
+        start_date=start_dt,
+        end_date=end_dt,
+        effective_start=result.effective_start,
+        warmup_bars=result.warmup_bars,
+        cost_model=cost_model,
+        metrics=result.metrics,
+        db_path=db_path,
+        run_type="regime_holdout",
+        parent_run_id=parent_run_id,
+        train_start=None,
+        train_end=None,
+        notes=json.dumps(notes_payload),
+        batch_id=batch_id,
+        hypothesis_hash=hypothesis_hash,
+        regime_holdout_passed=passed,
+        lifecycle_state=None,
+        strategy_source=strategy_source,
+        feature_version=feature_version,
+    )
+
+    logger.info(
+        "Regime holdout %s: passed=%s sharpe=%.3f dd=%.3f ret=%.4f trades=%d",
+        holdout_run_id[:8], passed,
+        result.metrics.get("sharpe_ratio", float("nan")),
+        result.metrics.get("max_drawdown", float("nan")),
+        result.metrics.get("total_return", float("nan")),
+        result.metrics.get("total_trades", 0),
+    )
+
+    return RegimeHoldoutResult(
+        run_id=holdout_run_id,
+        parent_run_id=parent_run_id,
+        batch_id=batch_id,
+        hypothesis_hash=hypothesis_hash,
+        regime_holdout_passed=passed,
+        sharpe_ratio=float(result.metrics.get("sharpe_ratio", float("nan"))),
+        max_drawdown=float(result.metrics.get("max_drawdown", float("nan"))),
+        total_return=float(result.metrics.get("total_return", float("nan"))),
+        total_trades=int(result.metrics.get("total_trades", 0) or 0),
+        passing_criteria=dict(passing_criteria),
+        metrics=dict(result.metrics),
+    )
 
 
 # ---------------------------------------------------------------------------

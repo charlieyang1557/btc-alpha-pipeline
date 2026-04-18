@@ -1,0 +1,68 @@
+{
+  "request_timestamp_utc": "2026-04-18T09:21:56.263972+00:00",
+  "response_timestamp_utc": "2026-04-18T09:22:05.212059+00:00",
+  "wall_clock_seconds": 8.948,
+  "retry_count": 0,
+  "d7b_mode": "live",
+  "critic_result": {
+    "critic_version": "d7_v1",
+    "critic_status": "d7b_error",
+    "d7b_mode": "live",
+    "d7a_rule_scores": {
+      "theme_coherence": 0.2,
+      "structural_novelty": 1.0,
+      "default_momentum_fallback": 0.8,
+      "complexity_appropriateness": 0.7
+    },
+    "d7a_supporting_measures": {
+      "factor_set_prior_occurrences": 0,
+      "n_factors": 5,
+      "n_conditions": 6,
+      "description_length": 225,
+      "max_hold_bars": 336,
+      "n_entry_groups": 1,
+      "n_exit_groups": 2
+    },
+    "d7a_rule_flags": [
+      "n_conditions_heavy"
+    ],
+    "d7b_llm_scores": null,
+    "d7b_reasoning": null,
+    "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0073_response.json",
+    "d7b_cost_actual_usd": 0.013982999999999999,
+    "d7b_input_tokens": 3191,
+    "d7b_output_tokens": 294,
+    "d7b_retry_count": 0,
+    "critic_timing_ms": {
+      "d7a_ms": 0.093,
+      "d7b_ms": 8189.979
+    },
+    "critic_error_signature": "schema_reasoning_length: reasoning: String should have at most 800 characters",
+    "critic_error_full_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0073_traceback.txt"
+  },
+  "ledger_row": {
+    "row_id": "7826c8c7-e517-4873-9cde-ee0d217f8f9e",
+    "batch_id": "5cf76668-47d1-48d7-bd90-db06d31982ed",
+    "api_call_kind": "d7b_critic_live",
+    "backend_kind": "d7b_critic",
+    "call_role": "critique",
+    "estimated_cost_usd": 0.05,
+    "actual_cost_usd": 0.013982999999999999,
+    "input_tokens": 3191,
+    "output_tokens": 294
+  },
+  "raw_payload_paths": {
+    "prompt": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0073_prompt.txt",
+    "response": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0073_response.json",
+    "traceback": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0073_traceback.txt",
+    "critic_result": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0073_critic_result.json"
+  },
+  "cost": {
+    "estimated_usd": 0.05,
+    "actual_usd": 0.013982999999999999,
+    "ratio": 0.2797
+  },
+  "leakage_audit_result": null,
+  "forbidden_language_scan_result": null,
+  "refusal_scan_result": null
+}

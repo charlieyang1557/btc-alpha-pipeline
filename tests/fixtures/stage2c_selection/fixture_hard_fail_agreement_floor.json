@@ -1,0 +1,25 @@
+{
+  "description": "Hard-fail: pool has 20 passing candidates across 3 buckets and 3 themes, but every candidate uses a distinct factor set. Every candidate becomes a divergence pioneer, yielding 0 agreements; Stage 2c hard constraint agreement_count>=4 fails at all tiers.",
+  "calls": [
+    {"position": 10, "hypothesis_hash": "h010", "theme": "mean_reversion", "lifecycle_state": "pending_backtest", "factors_used": ["fa01", "fa02", "fa03"], "default_momentum_factors_used": []},
+    {"position": 15, "hypothesis_hash": "h015", "theme": "mean_reversion", "lifecycle_state": "pending_backtest", "factors_used": ["fb01", "fb02", "fb03"], "default_momentum_factors_used": []},
+    {"position": 20, "hypothesis_hash": "h020", "theme": "volatility_regime", "lifecycle_state": "pending_backtest", "factors_used": ["fc01", "fc02", "fc03"], "default_momentum_factors_used": []},
+    {"position": 25, "hypothesis_hash": "h025", "theme": "volatility_regime", "lifecycle_state": "pending_backtest", "factors_used": ["fd01", "fd02", "fd03"], "default_momentum_factors_used": []},
+    {"position": 30, "hypothesis_hash": "h030", "theme": "volume_divergence", "lifecycle_state": "pending_backtest", "factors_used": ["fe01", "fe02", "fe03"], "default_momentum_factors_used": []},
+    {"position": 35, "hypothesis_hash": "h035", "theme": "volume_divergence", "lifecycle_state": "pending_backtest", "factors_used": ["ff01", "ff02", "ff03"], "default_momentum_factors_used": []},
+    {"position": 40, "hypothesis_hash": "h040", "theme": "mean_reversion", "lifecycle_state": "pending_backtest", "factors_used": ["fg01", "fg02", "fg03"], "default_momentum_factors_used": []},
+    {"position": 45, "hypothesis_hash": "h045", "theme": "volatility_regime", "lifecycle_state": "pending_backtest", "factors_used": ["fh01", "fh02", "fh03"], "default_momentum_factors_used": []},
+    {"position": 70, "hypothesis_hash": "h070", "theme": "volume_divergence", "lifecycle_state": "pending_backtest", "factors_used": ["fi01", "fi02", "fi03"], "default_momentum_factors_used": []},
+    {"position": 80, "hypothesis_hash": "h080", "theme": "mean_reversion", "lifecycle_state": "pending_backtest", "factors_used": ["fj01", "fj02", "fj03"], "default_momentum_factors_used": []},
+    {"position": 90, "hypothesis_hash": "h090", "theme": "volatility_regime", "lifecycle_state": "pending_backtest", "factors_used": ["fk01", "fk02", "fk03"], "default_momentum_factors_used": []},
+    {"position": 100, "hypothesis_hash": "h100", "theme": "volume_divergence", "lifecycle_state": "pending_backtest", "factors_used": ["fl01", "fl02", "fl03"], "default_momentum_factors_used": []},
+    {"position": 110, "hypothesis_hash": "h110", "theme": "mean_reversion", "lifecycle_state": "pending_backtest", "factors_used": ["fm01", "fm02", "fm03"], "default_momentum_factors_used": []},
+    {"position": 120, "hypothesis_hash": "h120", "theme": "volatility_regime", "lifecycle_state": "pending_backtest", "factors_used": ["fn01", "fn02", "fn03"], "default_momentum_factors_used": []},
+    {"position": 140, "hypothesis_hash": "h140", "theme": "volume_divergence", "lifecycle_state": "pending_backtest", "factors_used": ["fo01", "fo02", "fo03"], "default_momentum_factors_used": []},
+    {"position": 150, "hypothesis_hash": "h150", "theme": "mean_reversion", "lifecycle_state": "pending_backtest", "factors_used": ["fp01", "fp02", "fp03"], "default_momentum_factors_used": []},
+    {"position": 160, "hypothesis_hash": "h160", "theme": "volatility_regime", "lifecycle_state": "pending_backtest", "factors_used": ["fq01", "fq02", "fq03"], "default_momentum_factors_used": []},
+    {"position": 170, "hypothesis_hash": "h170", "theme": "volume_divergence", "lifecycle_state": "pending_backtest", "factors_used": ["fr01", "fr02", "fr03"], "default_momentum_factors_used": []},
+    {"position": 180, "hypothesis_hash": "h180", "theme": "mean_reversion", "lifecycle_state": "pending_backtest", "factors_used": ["fs01", "fs02", "fs03"], "default_momentum_factors_used": []},
+    {"position": 190, "hypothesis_hash": "h190", "theme": "volatility_regime", "lifecycle_state": "pending_backtest", "factors_used": ["ft01", "ft02", "ft03"], "default_momentum_factors_used": []}
+  ]
+}

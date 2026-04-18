@@ -1,0 +1,69 @@
+{
+  "description": "Tier 0 ideal: agreement/divergence pair available with different themes. 5 passing calls across 3 buckets and 3 themes; 3 rejected to populate rejection_breakdown. Exercises the widened Stage 2b factor-count bound via h080 (n_factors=6) and h160 (n_factors=7).",
+  "calls": [
+    {
+      "position": 5,
+      "hypothesis_hash": "h005",
+      "theme": "calendar_effect",
+      "lifecycle_state": "pending_backtest",
+      "factors_used": ["day_of_week", "hour_of_day", "return_1h"],
+      "default_momentum_factors_used": []
+    },
+    {
+      "position": 15,
+      "hypothesis_hash": "h015",
+      "theme": "mean_reversion",
+      "lifecycle_state": "pending_backtest",
+      "factors_used": ["atr_14", "rsi_14", "sma_50"],
+      "default_momentum_factors_used": []
+    },
+    {
+      "position": 25,
+      "hypothesis_hash": "h025",
+      "theme": "mean_reversion",
+      "lifecycle_state": "pending_backtest",
+      "factors_used": ["atr_14", "rsi_14", "sma_50"],
+      "default_momentum_factors_used": []
+    },
+    {
+      "position": 40,
+      "hypothesis_hash": "h040",
+      "theme": "momentum",
+      "lifecycle_state": "pending_backtest",
+      "factors_used": ["macd_hist", "roc_14", "rsi_14"],
+      "default_momentum_factors_used": []
+    },
+    {
+      "position": 80,
+      "hypothesis_hash": "h080",
+      "theme": "volatility_regime",
+      "lifecycle_state": "pending_backtest",
+      "factors_used": ["atr_14", "bb_width_20", "return_1h", "obv_ratio_24", "return_4h", "mfi_14"],
+      "default_momentum_factors_used": []
+    },
+    {
+      "position": 100,
+      "hypothesis_hash": "h100",
+      "theme": "mean_reversion",
+      "lifecycle_state": "proposer_invalid_dsl",
+      "factors_used": ["rsi_14", "sma_20", "sma_50"],
+      "default_momentum_factors_used": []
+    },
+    {
+      "position": 140,
+      "hypothesis_hash": "h140",
+      "theme": "volume_divergence",
+      "lifecycle_state": "pending_backtest",
+      "factors_used": ["mfi_14", "obv_ratio_24", "return_4h"],
+      "default_momentum_factors_used": []
+    },
+    {
+      "position": 160,
+      "hypothesis_hash": "h160",
+      "theme": "mean_reversion",
+      "lifecycle_state": "pending_backtest",
+      "factors_used": ["macd_signal", "return_7d", "sma_20", "ema_12", "psar", "willr_14", "kama_14"],
+      "default_momentum_factors_used": []
+    }
+  ]
+}

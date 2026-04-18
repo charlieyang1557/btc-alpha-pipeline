@@ -1,0 +1,19 @@
+{
+  "name": "volatility_breakout_bb24",
+  "description": "Buy on Bollinger upper band breakout; exit on mean reversion to SMA(24)",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "close", "op": ">", "value": "bb_upper_24_2"}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "<", "value": "sma_24"}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity"
+}
