@@ -367,7 +367,13 @@ and the prompt-path surface simultaneously. Execution time per call
 was dominated by the API round trip; the local plumbing (ledger
 write, classify, ingest, approved-examples update, atomic summary
 write) was not a bottleneck at 200-call scale and is expected to
-remain off the critical path at D8's target batch sizes. The
+remain off the critical path at D8's target batch sizes. The 2d
+production-shape batch recorded `batch_duration_seconds=1178.3`,
+roughly 19.6 minutes wall-clock for 200 sequential calls, or about
+5.9 seconds per issued call end-to-end. That runtime profile is
+directly useful for D8 scheduling: a larger batch is more likely to be
+planned around provider latency, rate limits, and review cadence than
+around local CPU time. The
 operational conclusion is that D6's loop has headroom on both cost
 and time; D8 can plan its production loop around a generously-sized
 research space rather than a cost-constrained one.
@@ -492,3 +498,5 @@ treat this document as one of its input references — particularly
 Section 6 (D7 Critic Design Inputs) and the observed-behavior
 patterns in Section 5. This document, together with
 `PHASE2A_SIGNOFF.md`, constitutes the canonical bridge into D7.
+D7 should also preserve the distinction between structural novelty and
+semantic novelty established in Stage 2.
