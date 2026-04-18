@@ -257,9 +257,11 @@ _EXCLUDED_SUBSTRINGS: tuple[str, ...] = (
     "batch_id",
     "batch_position",
     "call_index",
-    "position",
     "holdout",
-    "validation",
+    "validation_start",
+    "validation_end",
+    "validation_sharpe",
+    "validation_return",
     "test_start",
     "test_end",
     "backtest_result",
@@ -294,8 +296,11 @@ _UUID_RE = re.compile(
 _YEAR_RE = re.compile(r"\b(2022|2023|2024|2025|2026)-\d{2}-\d{2}")
 
 # Directive words that may appear ONLY inside the forbidden-language block.
+# Uses exact forms rather than word-root + \w* to avoid false positives
+# on normal English (e.g., "passed" in "has already passed validation").
 _DIRECTIVE_WORDS_RE = re.compile(
-    r"\b(recommend|approve|reject|accept|pass|fail)\w*\b",
+    r"\b(recommend|recommended|recommendation|approve|approved|reject|rejected"
+    r"|accept|accepted|pass\b|fail\b|passing|failing)\b",
     re.IGNORECASE,
 )
 

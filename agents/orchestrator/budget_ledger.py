@@ -121,8 +121,6 @@ CREATE TABLE IF NOT EXISTS ledger (
 CREATE INDEX IF NOT EXISTS idx_ledger_batch         ON ledger (batch_id);
 CREATE INDEX IF NOT EXISTS idx_ledger_created       ON ledger (created_at_utc);
 CREATE INDEX IF NOT EXISTS idx_ledger_status        ON ledger (status);
-CREATE INDEX IF NOT EXISTS idx_ledger_backend_kind  ON ledger (backend_kind);
-CREATE INDEX IF NOT EXISTS idx_ledger_call_role     ON ledger (call_role);
 """
 
 

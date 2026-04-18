@@ -87,6 +87,10 @@ btc-alpha-pipeline/
 │   │   ├── d7a_rules.py        # Deterministic D7a scoring rules (4 axes)
 │   │   ├── d7b_backend.py      # Abstract D7bBackend protocol
 │   │   ├── d7b_stub.py         # StubD7bBackend (all scores 0.5)
+│   │   ├── d7b_live.py         # LiveSonnetD7bBackend (Stage 2a+, own Anthropic client)
+│   │   ├── d7b_prompt.py       # D7b prompt template + leakage audit
+│   │   ├── d7b_parser.py       # D7b response parser + forbidden-language scan
+│   │   ├── replay.py           # Replay reconstruction from Stage 2d artifacts
 │   │   └── orchestrator.py     # run_critic() orchestrator + reliability fuse
 │   └── spend_ledger.db         # SQLite file owned by orchestrator/budget_ledger.py
 ├── risk/                # Position sizing and capital allocation (Phase 3+)
@@ -312,6 +316,12 @@ These are non-negotiable rules. Violating any of these invalidates research resu
 - ❌ NEVER enforce the reliability fuse in Stage 1 — `CRITIC_RELIABILITY_FUSE_ENFORCED` must remain `False` until Stage 2
 - ❌ NEVER add critic_result to per-call records when `with_critic=False` — output must be byte-identical to pre-D7 behavior
 - ❌ NEVER let the critic influence `approved_examples` window — critic annotates only, never filters
+- ❌ NEVER enable prompt caching for D7b calls — this is a CONTRACT BOUNDARY (locked at Stage 2a)
+- ❌ NEVER retry D7b content-level errors (malformed JSON, schema violation, refusal) — zero retries; these are forensic signals
+- ❌ NEVER let D7b live backend share the D6 Proposer's `anthropic.Anthropic()` client — separate client is a CONTRACT BOUNDARY
+- ❌ NEVER modify D7b prompt template wording without a new locked decision — frozen within a Stage 2 run
+- ❌ NEVER omit `backend_kind` or `call_role` from `write_pending()` — both are required with no defaults
+- ❌ NEVER co-mingle dry-run artifacts with production `raw_payloads/` — use `dryrun_payloads/` with physical isolation
 
 ### Code Quality
 - ❌ NEVER generate a factor/indicator function without a docstring specifying: inputs, computation method, warmup period, output schema, and null policy
@@ -413,8 +423,8 @@ The canonical dataset (`data/raw/btcusdt_1h.parquet`) has these stable, verified
 
 ## Phase Marker (update as work progresses)
 
-- **Current phase:** Phase 2A closed (signed off 2026-04-17); **Phase 2B D7 Stage 1 complete** — rule-based critic (D7a) + stub D7b integrated into D6 batch loop via `--with-critic` flag
-- **Completed:** Phase 0, Phase 1A, Phase 1B; Phase 2A (D1-D5 all signed off); Phase 2B D6 Stage 1 (stub plumbing, 675 tests); Phase 2B D7 Stage 1 (D7a rules + stub D7b, 885 tests)
+- **Current phase:** Phase 2A closed (signed off 2026-04-17); **Phase 2B D7 Stage 2a in progress** — live Sonnet D7b backend built, dry-run green, awaiting Charlie's `--confirm-live` call
+- **Completed:** Phase 0, Phase 1A, Phase 1B; Phase 2A (D1-D5 all signed off); Phase 2B D6 Stage 1 (stub plumbing, 675 tests); Phase 2B D7 Stage 1 (D7a rules + stub D7b, 885 tests); Phase 2B D7 Stage 2a infrastructure (D7b live backend, prompt, parser, replay, ledger split)
 - **Active blueprint:** `blueprint/PHASE2_BLUEPRINT.md` (v2)
 - **Current batch_id:** N/A (no live batch run yet)
 - **Current UTC-month spend:** $0.00 (dry-run stub only; no API calls until D6 Stage 2)
