@@ -565,6 +565,165 @@ class TestRelationshipLabel:
 # ---------------------------------------------------------------------------
 
 
+class TestFactorCountRangeBoundaries:
+    """Boundary tests for the factor-count criterion.
+
+    The Stage 2a (N=1) path retains ``(3, 5)`` while the Stage 2b (N=5)
+    path widens the upper bound to ``(3, 7)`` to reflect D6's empirical
+    factor-count distribution. These tests guard the two ranges against
+    drift and confirm the upper bound moves only on the Stage 2b path.
+    """
+
+    @staticmethod
+    def _build_call(
+        n_factors: int,
+        *,
+        position: int = 50,
+        theme: str = "mean_reversion",
+    ) -> dict:
+        return {
+            "position": position,
+            "hypothesis_hash": f"h{position:03d}_n{n_factors}",
+            "theme": theme,
+            "lifecycle_state": "pending_backtest",
+            "factors_used": [f"factor_{i}" for i in range(n_factors)],
+            "default_momentum_factors_used": [],
+        }
+
+    @staticmethod
+    def _materialize_one(tmp_path: Path, call: dict) -> tuple[Path, str]:
+        """Write a single-call batch dir; return (batch_dir, batch_uuid)."""
+        batch_uuid = "boundary-fixture"
+        batch_dir = tmp_path / f"batch_{batch_uuid}"
+        batch_dir.mkdir(parents=True, exist_ok=True)
+        response = batch_dir / f"attempt_{call['position']:04d}_response.txt"
+        response.write_text(
+            _response_with_cross(call["factors_used"]),
+            encoding="utf-8",
+        )
+        return batch_dir, batch_uuid
+
+    # --- Stage 2b path accepts n_factors=6, 7; rejects 8 ---------------
+
+    def test_stage2b_accepts_n_factors_6(self, tmp_path):
+        call = self._build_call(6)
+        batch_dir, batch_uuid = self._materialize_one(tmp_path, call)
+        ok, _reason = sel.passes_selection(
+            call,
+            batch_dir=batch_dir,
+            batch_uuid=batch_uuid,
+            n_factors_range=sel.STAGE2B_N_FACTORS_RANGE,
+        )
+        assert ok is True
+
+    def test_stage2b_accepts_n_factors_7(self, tmp_path):
+        call = self._build_call(7)
+        batch_dir, batch_uuid = self._materialize_one(tmp_path, call)
+        ok, _reason = sel.passes_selection(
+            call,
+            batch_dir=batch_dir,
+            batch_uuid=batch_uuid,
+            n_factors_range=sel.STAGE2B_N_FACTORS_RANGE,
+        )
+        assert ok is True
+
+    def test_stage2b_rejects_n_factors_8(self, tmp_path):
+        call = self._build_call(8)
+        batch_dir, batch_uuid = self._materialize_one(tmp_path, call)
+        ok, reason = sel.passes_selection(
+            call,
+            batch_dir=batch_dir,
+            batch_uuid=batch_uuid,
+            n_factors_range=sel.STAGE2B_N_FACTORS_RANGE,
+        )
+        assert ok is False
+        assert reason.startswith("n_factors=8")
+
+    def test_stage2b_rejects_n_factors_2(self, tmp_path):
+        call = self._build_call(2)
+        batch_dir, batch_uuid = self._materialize_one(tmp_path, call)
+        ok, reason = sel.passes_selection(
+            call,
+            batch_dir=batch_dir,
+            batch_uuid=batch_uuid,
+            n_factors_range=sel.STAGE2B_N_FACTORS_RANGE,
+        )
+        assert ok is False
+        assert reason.startswith("n_factors=2")
+
+    # --- Stage 2a path rejects n_factors=6, 7, 8 -----------------------
+
+    @pytest.mark.parametrize("n_factors", [6, 7, 8])
+    def test_stage2a_rejects_n_factors_above_5(self, tmp_path, n_factors):
+        call = self._build_call(n_factors)
+        batch_dir, batch_uuid = self._materialize_one(tmp_path, call)
+        # Default n_factors_range == STAGE2A_N_FACTORS_RANGE == (3, 5).
+        ok, reason = sel.passes_selection(
+            call, batch_dir=batch_dir, batch_uuid=batch_uuid,
+        )
+        assert ok is False
+        assert reason == f"n_factors={n_factors} outside [3,5]"
+
+    def test_stage2a_explicit_range_rejects_n_factors_6(self, tmp_path):
+        call = self._build_call(6)
+        batch_dir, batch_uuid = self._materialize_one(tmp_path, call)
+        ok, reason = sel.passes_selection(
+            call,
+            batch_dir=batch_dir,
+            batch_uuid=batch_uuid,
+            n_factors_range=sel.STAGE2A_N_FACTORS_RANGE,
+        )
+        assert ok is False
+        assert reason == "n_factors=6 outside [3,5]"
+
+    # --- Asymmetry: Stage 2b accepts what Stage 2a rejects --------------
+
+    @pytest.mark.parametrize("n_factors", [6, 7])
+    def test_path_asymmetry_stage2b_accepts_stage2a_rejects(
+        self, tmp_path, n_factors
+    ):
+        call = self._build_call(n_factors)
+        batch_dir, batch_uuid = self._materialize_one(tmp_path, call)
+        ok_2a, _ = sel.passes_selection(
+            call,
+            batch_dir=batch_dir,
+            batch_uuid=batch_uuid,
+            n_factors_range=sel.STAGE2A_N_FACTORS_RANGE,
+        )
+        ok_2b, _ = sel.passes_selection(
+            call,
+            batch_dir=batch_dir,
+            batch_uuid=batch_uuid,
+            n_factors_range=sel.STAGE2B_N_FACTORS_RANGE,
+        )
+        assert ok_2a is False
+        assert ok_2b is True
+
+    # --- Lower-bound symmetry ------------------------------------------
+
+    @pytest.mark.parametrize(
+        "n_factors_range", [(3, 5), (3, 7)],
+    )
+    def test_both_paths_accept_n_factors_3(self, tmp_path, n_factors_range):
+        call = self._build_call(3)
+        batch_dir, batch_uuid = self._materialize_one(tmp_path, call)
+        ok, _ = sel.passes_selection(
+            call,
+            batch_dir=batch_dir,
+            batch_uuid=batch_uuid,
+            n_factors_range=n_factors_range,
+        )
+        assert ok is True
+
+    # --- Constant values are pinned -------------------------------------
+
+    def test_stage2a_constant_is_3_5(self):
+        assert sel.STAGE2A_N_FACTORS_RANGE == (3, 5)
+
+    def test_stage2b_constant_is_3_7(self):
+        assert sel.STAGE2B_N_FACTORS_RANGE == (3, 7)
+
+
 class TestPositionBucket:
     @pytest.mark.parametrize(
         "pos,bucket",

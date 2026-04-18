@@ -1,5 +1,5 @@
 {
-  "description": "Tier 1: the only agreement candidate shares its theme with all divergence candidates, forcing same-theme pair.",
+  "description": "Tier 1: the only agreement candidate shares its theme with all divergence candidates, forcing same-theme pair. Exercises the widened Stage 2b factor-count bound via h140 (n_factors=6) and h160 (n_factors=7).",
   "calls": [
     {
       "position": 15,
@@ -30,7 +30,7 @@
       "hypothesis_hash": "h140",
       "theme": "volatility_regime",
       "lifecycle_state": "pending_backtest",
-      "factors_used": ["atr_14", "bb_width_20", "return_1h", "rsi_14", "sma_50"],
+      "factors_used": ["atr_14", "bb_width_20", "return_1h", "rsi_14", "sma_50", "bb_width_50"],
       "default_momentum_factors_used": []
     },
     {
@@ -38,7 +38,7 @@
       "hypothesis_hash": "h160",
       "theme": "volume_divergence",
       "lifecycle_state": "pending_backtest",
-      "factors_used": ["atr_14", "mfi_14", "obv_ratio_24", "rsi_14", "sma_50"],
+      "factors_used": ["atr_14", "mfi_14", "obv_ratio_24", "rsi_14", "sma_50", "return_4h", "stoch_k"],
       "default_momentum_factors_used": []
     }
   ]

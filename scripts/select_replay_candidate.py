@@ -7,7 +7,11 @@ passes, prints a diagnostic breakdown and exits non-zero.
 Selection criteria (all must hold):
     1. lifecycle_state == "pending_backtest"
     2. theme != "momentum"
-    3. 3 <= len(factors_used) <= 5
+    3. ``n_factors_range[0]`` <= len(factors_used) <= ``n_factors_range[1]``
+       (defaults to Stage 2a's ``(3, 5)``; Stage 2b's N=5 path widens the
+       upper bound to ``7`` to match the D6 proposer's empirical factor-
+       count distribution — see ``STAGE2A_N_FACTORS_RANGE`` /
+       ``STAGE2B_N_FACTORS_RANGE`` below)
     4. At least one crosses_above or crosses_below operator in the DSL
     5. rsi_14 is not the sole factor
     6. position in [10, 190]
@@ -63,8 +67,28 @@ from agents.critic.d7a_feature_extraction import (  # noqa: E402
 
 MIN_POSITION = 10
 MAX_POSITION = 190
-MIN_FACTORS = 3
-MAX_FACTORS = 5
+
+# Factor-count range is split by selection scope.
+#
+# * Stage 2a (N=1) retains ``(3, 5)`` — the signed-off Stage 2a selection
+#   artifact at ``docs/d7_stage2a/replay_candidate_selection.json`` was
+#   produced under this criterion and must remain reproducible. Widening
+#   the range here retroactively would invalidate that sign-off.
+#
+# * Stage 2b (N=5) widens the upper bound to ``7`` because an empirical
+#   diagnostic against the signed-off Stage 2d batch
+#   ``5cf76668-47d1-48d7-bd90-db06d31982ed`` showed the D6 proposer's
+#   factor-count distribution is modal at ``n_factors=6`` (68 calls),
+#   with 36 calls at ``n_factors=7`` and only one outlier at
+#   ``n_factors=8``. Retaining the original ``(3, 5)`` cap filters out
+#   ~66% of non-momentum candidates, making the Stage 2b hard constraints
+#   (>=3 themes, all 3 buckets, 5 candidates) infeasible.
+#
+# CONTRACT BOUNDARY: these two constants are deliberately kept separate.
+# Do not collapse them into a single module-level constant; ``--n 1`` and
+# ``--n 5`` code paths must remain independently auditable.
+STAGE2A_N_FACTORS_RANGE: tuple[int, int] = (3, 5)
+STAGE2B_N_FACTORS_RANGE: tuple[int, int] = (3, 7)
 
 
 def _has_cross_operator(response_text: str) -> bool:
@@ -122,9 +146,18 @@ def passes_selection(
     *,
     batch_dir: Path,
     batch_uuid: str,
+    n_factors_range: tuple[int, int] = STAGE2A_N_FACTORS_RANGE,
 ) -> tuple[bool, str]:
-    """Check all seven criteria. Returns (pass, reason)."""
+    """Check all seven criteria. Returns (pass, reason).
+
+    ``n_factors_range`` controls the factor-count criterion and defaults
+    to the Stage 2a ``(3, 5)`` range so that the N=1 path (and any caller
+    that doesn't opt into the widened Stage 2b range explicitly) retains
+    byte-identical behavior. Stage 2b's ``build_eligible_pool`` passes
+    ``STAGE2B_N_FACTORS_RANGE`` to widen the upper bound to ``7``.
+    """
     pos = call.get("position")
+    min_factors, max_factors = n_factors_range
 
     if call.get("lifecycle_state") != "pending_backtest":
         return False, "lifecycle_state != pending_backtest"
@@ -133,8 +166,8 @@ def passes_selection(
         return False, "theme == momentum"
 
     factors = call.get("factors_used") or []
-    if not (MIN_FACTORS <= len(factors) <= MAX_FACTORS):
-        return False, f"n_factors={len(factors)} outside [{MIN_FACTORS},{MAX_FACTORS}]"
+    if not (min_factors <= len(factors) <= max_factors):
+        return False, f"n_factors={len(factors)} outside [{min_factors},{max_factors}]"
 
     if factors == ["rsi_14"]:
         return False, "rsi_14 is sole factor"
@@ -347,7 +380,10 @@ def build_eligible_pool(
     passing_calls: list[dict] = []
     for call in calls_sorted:
         ok, reason = passes_selection(
-            call, batch_dir=batch_dir, batch_uuid=batch_uuid,
+            call,
+            batch_dir=batch_dir,
+            batch_uuid=batch_uuid,
+            n_factors_range=STAGE2B_N_FACTORS_RANGE,
         )
         if ok:
             passing_calls.append(call)

@@ -1,5 +1,5 @@
 {
-  "description": "Tier 0 ideal: agreement/divergence pair available with different themes. 5 passing calls across 3 buckets and 3 themes; 3 rejected to populate rejection_breakdown.",
+  "description": "Tier 0 ideal: agreement/divergence pair available with different themes. 5 passing calls across 3 buckets and 3 themes; 3 rejected to populate rejection_breakdown. Exercises the widened Stage 2b factor-count bound via h080 (n_factors=6) and h160 (n_factors=7).",
   "calls": [
     {
       "position": 5,
@@ -38,7 +38,7 @@
       "hypothesis_hash": "h080",
       "theme": "volatility_regime",
       "lifecycle_state": "pending_backtest",
-      "factors_used": ["atr_14", "bb_width_20", "return_1h"],
+      "factors_used": ["atr_14", "bb_width_20", "return_1h", "obv_ratio_24", "return_4h", "mfi_14"],
       "default_momentum_factors_used": []
     },
     {
@@ -62,7 +62,7 @@
       "hypothesis_hash": "h160",
       "theme": "mean_reversion",
       "lifecycle_state": "pending_backtest",
-      "factors_used": ["macd_signal", "return_7d", "sma_20"],
+      "factors_used": ["macd_signal", "return_7d", "sma_20", "ema_12", "psar", "willr_14", "kama_14"],
       "default_momentum_factors_used": []
     }
   ]
