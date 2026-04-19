@@ -1,0 +1,128 @@
+{
+  "request_timestamp_utc": "2026-04-19T14:25:43.029061Z",
+  "response_timestamp_utc": "2026-04-19T14:25:52.680604Z",
+  "wall_clock_seconds": 9.652,
+  "retry_count": 0,
+  "d7b_mode": "live",
+  "critic_result": {
+    "critic_version": "d7_v1",
+    "critic_status": "ok",
+    "d7b_mode": "live",
+    "d7a_rule_scores": {
+      "theme_coherence": 0.4286,
+      "structural_novelty": 1.0,
+      "default_momentum_fallback": 0.5,
+      "complexity_appropriateness": 0.4
+    },
+    "d7a_supporting_measures": {
+      "factor_set_prior_occurrences": 0,
+      "n_factors": 7,
+      "n_conditions": 8,
+      "description_length": 175,
+      "max_hold_bars": 168,
+      "n_entry_groups": 1,
+      "n_exit_groups": 2
+    },
+    "d7a_rule_flags": [
+      "n_conditions_heavy"
+    ],
+    "d7b_llm_scores": {
+      "semantic_plausibility": 0.75,
+      "semantic_theme_alignment": 0.85,
+      "structural_variant_risk": 0.85
+    },
+    "d7b_reasoning": "The strategy exhibits coherent mean-reversion logic: entry triggers on oversold conditions (low RSI, negative zscore) with elevated volatility, while exits capture recovery (positive zscore, RSI normalization, or price crossing above the mean with strong returns). The 168-bar max hold provides a safety mechanism. Theme alignment is strong, employing canonical mean-reversion indicators (zscore_48, bb_upper_24_2, sma_24) from the hint vocabulary. However, the structural variant risk is high. The factor set {bb_upper_24_2, close, realized_vol_24h, rsi_14, sma_24, zscore_48} closely mirrors prior hypothesis #8 which used {atr_14, bb_upper_24_2, close, realized_vol_24h, rsi_14, sma_24, volume_zscore_24h}. Both share five of six factors: bb_upper_24_2, close, realized_vol_24h, rsi_14, sma_24. The substitution of zscore_48 for atr_14 and volume_zscore_24h represents a threshold-level modification rather than a fundamentally distinct structural hypothesis, despite the different entry condition logic (comparing close to bb_upper versus other thresholds).",
+    "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0017_response.json",
+    "d7b_cost_actual_usd": 0.011037,
+    "d7b_input_tokens": 1909,
+    "d7b_output_tokens": 354,
+    "d7b_retry_count": 0,
+    "d7b_scan_results": {
+      "forbidden_language_scan": {
+        "status": "pass",
+        "hits": [],
+        "terms_checked_count": 21
+      },
+      "refusal_scan": {
+        "status": "pass",
+        "hits": [],
+        "patterns_checked": [
+          "\\bi cannot\\b",
+          "\\bi can't\\b",
+          "\\bunable to\\b",
+          "\\brefuse to\\b",
+          "\\bdecline to\\b",
+          "\\bcannot evaluate\\b",
+          "\\bcan not evaluate\\b"
+        ]
+      }
+    },
+    "critic_timing_ms": {
+      "d7a_ms": 0.061,
+      "d7b_ms": 9031.321
+    },
+    "critic_error_signature": null,
+    "critic_error_full_path": null
+  },
+  "ledger_row": {
+    "row_id": "fb3eeb31-6e1a-4f07-b4be-73b14cfb1556",
+    "batch_id": "5cf76668-47d1-48d7-bd90-db06d31982ed",
+    "api_call_kind": "d7b_critic_live",
+    "backend_kind": "d7b_critic",
+    "call_role": "critique",
+    "estimated_cost_usd": 0.05,
+    "actual_cost_usd": 0.011037,
+    "input_tokens": 1909,
+    "output_tokens": 354
+  },
+  "raw_payload_paths": {
+    "prompt": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0017_prompt.txt",
+    "response": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0017_response.json",
+    "traceback": null,
+    "critic_result": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0017_critic_result.json"
+  },
+  "cost": {
+    "estimated_usd": 0.05,
+    "actual_usd": 0.011037,
+    "ratio": 0.2207
+  },
+  "leakage_audit_result": {
+    "status": "pass",
+    "violations": [],
+    "protected_terms_checked_count": 28
+  },
+  "forbidden_language_scan_result": {
+    "status": "pass",
+    "hits": [],
+    "terms_checked_count": 21
+  },
+  "refusal_scan_result": {
+    "status": "pass",
+    "hits": [],
+    "patterns_checked": [
+      "\\bi cannot\\b",
+      "\\bi can't\\b",
+      "\\bunable to\\b",
+      "\\brefuse to\\b",
+      "\\bdecline to\\b",
+      "\\bcannot evaluate\\b",
+      "\\bcan not evaluate\\b"
+    ]
+  },
+  "firing_order": 1,
+  "candidate_position": 17,
+  "candidate_theme": "mean_reversion",
+  "candidate_hypothesis_hash": "17396a8e291dae75",
+  "pre_registered_label": "divergence_expected",
+  "prior_factor_sets_count": 16,
+  "theme_hint_factor_count": 5,
+  "prompt_chars": 5810,
+  "prompt_sha256": "daa986f7e28454f88dae2a793fe74ee7338504e23372684d2991e437a5c1dc24",
+  "call_index_in_sequence": 1,
+  "inter_call_sleep_elapsed_seconds": 0.0,
+  "is_stage2b_overlap": true,
+  "critic_status": "ok",
+  "critic_error_signature": null,
+  "actual_cost_usd": 0.011037,
+  "d7b_error_category": null
+}

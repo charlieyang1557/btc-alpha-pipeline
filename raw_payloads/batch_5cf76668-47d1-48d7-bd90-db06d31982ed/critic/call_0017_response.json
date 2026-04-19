@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy exhibits coherent mean-reversion logic: entry triggers on oversold conditions (low RSI, negative zscore) with elevated volatility, while exits capture recovery (positive zscore, RSI normalization, or price crossing above the mean with strong returns). The 168-bar max hold provides a safety mechanism. Theme alignment is strong, employing canonical mean-reversion indicators (zscore_48, bb_upper_24_2, sma_24) from the hint vocabulary. However, the structural variant risk is high. The factor set {bb_upper_24_2, close, realized_vol_24h, rsi_14, sma_24, zscore_48} closely mirrors prior hypothesis #8 which used {atr_14, bb_upper_24_2, close, realized_vol_24h, rsi_14, sma_24, volume_zscore_24h}. Both share five of six factors: bb_upper_24_2, close, realized_vol_24h, rsi_14, sma_24. The substitution of zscore_48 for atr_14 and volume_zscore_24h represents a threshold-level modification rather than a fundamentally distinct structural hypothesis, despite the different entry condition logic (comparing close to bb_upper versus other thresholds)."
+}
+```

@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.1500,
+  "semantic_theme_alignment": 0.3000,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy contains a critical logical inconsistency: the description claims to enter when price crosses above the Bollinger lower band, but the DSL specifies crossing above bb_upper_24_2 (the upper band). This creates a fundamental contradiction where the entry condition triggers on breakouts rather than mean-reversion bounces, undermining the entire narrative. The combination of crossing the upper band while simultaneously requiring RSI below 38, negative z-score below -1.2, and elevated volatility is internally contradictory—price crossing above the upper band typically indicates overbought conditions, not oversold. Exit logic is more coherent with RSI exceeding 60 and positive z-score signaling mean reversion completion. Theme alignment suffers from the same entry contradiction: upper band crossings represent momentum breakouts rather than mean-reversion setups. The factor set {bb_upper_24_2, close, macd_hist, realized_vol_24h, rsi_14, zscore_48} closely mirrors prior #12 {bb_upper_24_2, close, realized_vol_24h, return_1h, rsi_14, zscore_48} and #60 {bb_upper_24_2, close, realized_vol_24h, return_24h, rsi_14, zscore_48}, differing only by substituting return_1h/return_24h with macd_hist—a shallow operator-level variant."
+}
+```

@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.9500,
+  "reasoning": "The strategy exhibits coherent mean reversion logic: entry requires simultaneous signals of overextension (price at upper Bollinger Band, elevated z-score above 1.8, RSI above 68, and positive 24h return), while exit triggers on mean reversion completion (z-score normalizing below 0.5 with price crossing below SMA) or stop-loss conditions. The conjunction of multiple overbought indicators creates a plausible thesis that extremes will revert. Theme alignment is strong, utilizing four of five hint factors (bb_upper_24_2, close, sma_24 via exit, zscore_48) in a textbook mean reversion setup. However, structural variant risk is very high: the factor set {bb_upper_24_2, close, return_24h, rsi_14, sma_24, zscore_48} appears verbatim as the 29th prior entry. This hypothesis differs only in threshold values (z-score 1.8 vs likely different cutoffs, RSI 68 vs other levels) and exit operator choices, making it a parameter variation rather than a structurally novel exploration of factor space."
+}
+```

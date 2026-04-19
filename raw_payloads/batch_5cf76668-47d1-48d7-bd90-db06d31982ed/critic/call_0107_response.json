@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.3500,
+  "semantic_theme_alignment": 0.7000,
+  "structural_variant_risk": 0.9500,
+  "reasoning": "The strategy attempts a Bollinger Band mean-reversion setup but contains a critical internal inconsistency: the entry condition checks 'close <= bb_upper_24_2' (upper band), while the description and theme logic call for touching the lower band. This contradicts the stated oversold mean-reversion narrative. The exit logic is coherent with dual paths—price crossing SMA with RSI recovery, or achieving profit targets with momentum confirmation. Combining RSI<35, negative 24h returns, and realized volatility creates a reasonable oversold-with-volatility filter structurally. Theme alignment scores moderately high because the factors (Bollinger bands, RSI, SMA, volatility) are canonical mean-reversion indicators, despite the entry logic error. The factor set {bb_upper_24_2, close, realized_vol_24h, return_24h, rsi_14, sma_24} appears nearly identical to prior hypothesis #64 and very similar to #17, #21, and #54. The only structural distinction is sma_24 versus alternative smoothing factors, which represents a superficial parameter variant rather than a fundamentally different economic bet. This is a clear threshold-and-operator tweak of already-explored factor combinations."
+}
+```

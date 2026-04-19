@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.3000,
+  "semantic_theme_alignment": 0.7000,
+  "structural_variant_risk": 0.9000,
+  "reasoning": "The strategy attempts a mean reversion entry by detecting oversold conditions through Bollinger band crossing, RSI, z-score, and negative returns. However, the entry logic contains a critical flaw: the condition 'close crosses_below bb_upper_24_2' signals a move from above to below the upper band, which typically indicates weakening momentum from overbought territory, not an oversold condition. The description claims entry at the lower band, but the DSL uses the upper band. This contradiction undermines plausibility. Theme alignment is moderate because the factors (Bollinger bands, z-score, RSI) are conceptually appropriate for mean reversion despite the implementation error. The exit logic using SMA crossover and RSI recovery is coherent. Structurally, this factor set {bb_upper_24_2, close, return_24h, rsi_14, zscore_48, sma_24} is nearly identical to prior entry #7: {bb_upper_24_2, close, rsi_14, sma_24, zscore_48}, differing only by the addition of return_24h, which constitutes a minor augmentation rather than a fundamentally different structural approach. This represents a high-risk shallow variant."
+}
+```

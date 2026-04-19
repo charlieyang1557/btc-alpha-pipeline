@@ -1,0 +1,128 @@
+{
+  "request_timestamp_utc": "2026-04-19T14:28:07.680437Z",
+  "response_timestamp_utc": "2026-04-19T14:28:16.804999Z",
+  "wall_clock_seconds": 9.125,
+  "retry_count": 0,
+  "d7b_mode": "live",
+  "critic_result": {
+    "critic_version": "d7_v1",
+    "critic_status": "ok",
+    "d7b_mode": "live",
+    "d7a_rule_scores": {
+      "theme_coherence": 0.5,
+      "structural_novelty": 0.5,
+      "default_momentum_fallback": 0.5,
+      "complexity_appropriateness": 0.4
+    },
+    "d7a_supporting_measures": {
+      "factor_set_prior_occurrences": 1,
+      "n_factors": 6,
+      "n_conditions": 8,
+      "description_length": 215,
+      "max_hold_bars": 120,
+      "n_entry_groups": 1,
+      "n_exit_groups": 2
+    },
+    "d7a_rule_flags": [
+      "n_conditions_heavy"
+    ],
+    "d7b_llm_scores": {
+      "semantic_plausibility": 0.75,
+      "semantic_theme_alignment": 0.9,
+      "structural_variant_risk": 0.95
+    },
+    "d7b_reasoning": "The strategy exhibits coherent mean reversion logic: entry requires simultaneous signals of overextension (price at upper Bollinger Band, elevated z-score above 1.8, RSI above 68, and positive 24h return), while exit triggers on mean reversion completion (z-score normalizing below 0.5 with price crossing below SMA) or stop-loss conditions. The conjunction of multiple overbought indicators creates a plausible thesis that extremes will revert. Theme alignment is strong, utilizing four of five hint factors (bb_upper_24_2, close, sma_24 via exit, zscore_48) in a textbook mean reversion setup. However, structural variant risk is very high: the factor set {bb_upper_24_2, close, return_24h, rsi_14, sma_24, zscore_48} appears verbatim as the 29th prior entry. This hypothesis differs only in threshold values (z-score 1.8 vs likely different cutoffs, RSI 68 vs other levels) and exit operator choices, making it a parameter variation rather than a structurally novel exploration of factor space.",
+    "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0097_response.json",
+    "d7b_cost_actual_usd": 0.016125,
+    "d7b_input_tokens": 3780,
+    "d7b_output_tokens": 319,
+    "d7b_retry_count": 0,
+    "d7b_scan_results": {
+      "forbidden_language_scan": {
+        "status": "pass",
+        "hits": [],
+        "terms_checked_count": 21
+      },
+      "refusal_scan": {
+        "status": "pass",
+        "hits": [],
+        "patterns_checked": [
+          "\\bi cannot\\b",
+          "\\bi can't\\b",
+          "\\bunable to\\b",
+          "\\brefuse to\\b",
+          "\\bdecline to\\b",
+          "\\bcannot evaluate\\b",
+          "\\bcan not evaluate\\b"
+        ]
+      }
+    },
+    "critic_timing_ms": {
+      "d7a_ms": 0.212,
+      "d7b_ms": 9104.771
+    },
+    "critic_error_signature": null,
+    "critic_error_full_path": null
+  },
+  "ledger_row": {
+    "row_id": "a86ae1cb-2576-4bd7-b971-b3ef77714202",
+    "batch_id": "5cf76668-47d1-48d7-bd90-db06d31982ed",
+    "api_call_kind": "d7b_critic_live",
+    "backend_kind": "d7b_critic",
+    "call_role": "critique",
+    "estimated_cost_usd": 0.05,
+    "actual_cost_usd": 0.016125,
+    "input_tokens": 3780,
+    "output_tokens": 319
+  },
+  "raw_payload_paths": {
+    "prompt": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0097_prompt.txt",
+    "response": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0097_response.json",
+    "traceback": null,
+    "critic_result": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0097_critic_result.json"
+  },
+  "cost": {
+    "estimated_usd": 0.05,
+    "actual_usd": 0.016125,
+    "ratio": 0.3225
+  },
+  "leakage_audit_result": {
+    "status": "pass",
+    "violations": [],
+    "protected_terms_checked_count": 28
+  },
+  "forbidden_language_scan_result": {
+    "status": "pass",
+    "hits": [],
+    "terms_checked_count": 21
+  },
+  "refusal_scan_result": {
+    "status": "pass",
+    "hits": [],
+    "patterns_checked": [
+      "\\bi cannot\\b",
+      "\\bi can't\\b",
+      "\\bunable to\\b",
+      "\\brefuse to\\b",
+      "\\bdecline to\\b",
+      "\\bcannot evaluate\\b",
+      "\\bcan not evaluate\\b"
+    ]
+  },
+  "firing_order": 11,
+  "candidate_position": 97,
+  "candidate_theme": "mean_reversion",
+  "candidate_hypothesis_hash": "1f8cbe2ba01c13a9",
+  "pre_registered_label": "agreement_expected",
+  "prior_factor_sets_count": 76,
+  "theme_hint_factor_count": 5,
+  "prompt_chars": 9663,
+  "prompt_sha256": "92db19662e199789ed2ee062f5843ce9bd5b5263ee76be6ef0d313458d13b090",
+  "call_index_in_sequence": 11,
+  "inter_call_sleep_elapsed_seconds": 5.005,
+  "is_stage2b_overlap": true,
+  "critic_status": "ok",
+  "critic_error_signature": null,
+  "actual_cost_usd": 0.016125,
+  "d7b_error_category": null
+}

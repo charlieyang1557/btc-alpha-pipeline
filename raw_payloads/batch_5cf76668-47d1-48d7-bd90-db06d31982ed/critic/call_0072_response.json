@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy exhibits strong mean reversion logic by combining multiple oversold indicators: Bollinger band breach, RSI below 30, negative z-score, and elevated realized volatility. The exit logic is coherent, capturing reversal when RSI crosses above 50 or when returns exceed 4%. However, the entry condition uses bb_upper_24_2 in a less-than comparison with close, which appears to be targeting lower band behavior but references the upper band factor name. Theme alignment is strong as it employs canonical mean reversion signals (Bollinger bands, z-score, RSI extremes) from the hint vocabulary. Structurally, this factor set {bb_upper_24_2, close, realized_vol_24h, return_24h, rsi_14, zscore_48} matches prior set #17 exactly, differing only in threshold values (RSI 30 vs other thresholds, volatility 0.03 vs other constants). The structural variant risk is high because the same six factors appear together in an earlier hypothesis, making this a parameter variation rather than a genuinely distinct structural approach."
+}
+```

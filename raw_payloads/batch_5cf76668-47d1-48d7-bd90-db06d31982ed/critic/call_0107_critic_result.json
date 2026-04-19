@@ -1,0 +1,60 @@
+{
+  "critic_version": "d7_v1",
+  "critic_status": "ok",
+  "d7b_mode": "live",
+  "d7a_rule_scores": {
+    "theme_coherence": 0.3333,
+    "structural_novelty": 0.5,
+    "default_momentum_fallback": 0.5,
+    "complexity_appropriateness": 0.4
+  },
+  "d7a_supporting_measures": {
+    "factor_set_prior_occurrences": 1,
+    "n_factors": 6,
+    "n_conditions": 8,
+    "description_length": 286,
+    "max_hold_bars": 168,
+    "n_entry_groups": 1,
+    "n_exit_groups": 2
+  },
+  "d7a_rule_flags": [
+    "n_conditions_heavy"
+  ],
+  "d7b_llm_scores": {
+    "semantic_plausibility": 0.35,
+    "semantic_theme_alignment": 0.7,
+    "structural_variant_risk": 0.95
+  },
+  "d7b_reasoning": "The strategy attempts a Bollinger Band mean-reversion setup but contains a critical internal inconsistency: the entry condition checks 'close <= bb_upper_24_2' (upper band), while the description and theme logic call for touching the lower band. This contradicts the stated oversold mean-reversion narrative. The exit logic is coherent with dual paths—price crossing SMA with RSI recovery, or achieving profit targets with momentum confirmation. Combining RSI<35, negative 24h returns, and realized volatility creates a reasonable oversold-with-volatility filter structurally. Theme alignment scores moderately high because the factors (Bollinger bands, RSI, SMA, volatility) are canonical mean-reversion indicators, despite the entry logic error. The factor set {bb_upper_24_2, close, realized_vol_24h, return_24h, rsi_14, sma_24} appears nearly identical to prior hypothesis #64 and very similar to #17, #21, and #54. The only structural distinction is sma_24 versus alternative smoothing factors, which represents a superficial parameter variant rather than a fundamentally different economic bet. This is a clear threshold-and-operator tweak of already-explored factor combinations.",
+  "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0107_response.json",
+  "d7b_cost_actual_usd": 0.017133,
+  "d7b_input_tokens": 4031,
+  "d7b_output_tokens": 336,
+  "d7b_retry_count": 0,
+  "d7b_scan_results": {
+    "forbidden_language_scan": {
+      "status": "pass",
+      "hits": [],
+      "terms_checked_count": 21
+    },
+    "refusal_scan": {
+      "status": "pass",
+      "hits": [],
+      "patterns_checked": [
+        "\\bi cannot\\b",
+        "\\bi can't\\b",
+        "\\bunable to\\b",
+        "\\brefuse to\\b",
+        "\\bdecline to\\b",
+        "\\bcannot evaluate\\b",
+        "\\bcan not evaluate\\b"
+      ]
+    }
+  },
+  "critic_timing_ms": {
+    "d7a_ms": 0.115,
+    "d7b_ms": 10443.426
+  },
+  "critic_error_signature": null,
+  "critic_error_full_path": null
+}

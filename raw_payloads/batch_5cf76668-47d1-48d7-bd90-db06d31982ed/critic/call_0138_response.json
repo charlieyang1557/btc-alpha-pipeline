@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.3000,
+  "reasoning": "The strategy exhibits strong internal coherence: entering when realized volatility exceeds 3% while price crosses above sma_20 and volume surges creates a defensible regime-shift narrative. Exit logic balances mean reversion (volatility contracting below 1.5%, price crossing below sma_20) with profit-taking (3% gain). The dual exit paths acknowledge that high-volatility breakouts may either exhaust quickly or sustain trends. Theme alignment is excellent, directly employing realized_vol_24h (a hint factor) as the primary filter and volume_zscore_24h to confirm conviction during turbulence. The factor set {close, realized_vol_24h, return_24h, sma_20, volume_zscore_24h} shares realized_vol_24h and volume_zscore_24h with prior entry 74, but crucially omits rsi_14 and substitutes sma_20 for diverse moving averages in other priors. The crosses_above operator on sma_20 paired with volatility creates a mechanically different entry trigger than zscore or Bollinger-based entries seen in priors 8, 17, 21, 64. The structural bet—volatility expansion coinciding with price momentum confirmation via moving average crossover—represents a distinct architectural choice rather than threshold variation."
+}
+```

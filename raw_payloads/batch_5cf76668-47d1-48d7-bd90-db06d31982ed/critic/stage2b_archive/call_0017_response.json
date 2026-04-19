@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy builds a coherent mean-reversion narrative: entering when price closes below lower Bollinger Band (via bb_upper_24_2 comparison), reinforced by deeply negative zscore_48 and oversold RSI_14 below 35, plus elevated realized_vol_24h to ensure sufficient volatility for bounce. Exit logic is well-structured with two paths: normalization back to positive zscore and neutral RSI, or momentum-based cross above SMA_24 with return_24h gain. The theme alignment is strong, using canonical mean-reversion indicators (Bollinger Bands, zscore, RSI) and matching four of five hint factors (bb_upper_24_2, close, zscore_48, plus sma_24 instead of sma_20/50). However, structural variant risk is high. The factor set {bb_upper_24_2, close, realized_vol_24h, rsi_14, return_24h, sma_24, zscore_48} overlaps heavily with prior #2 {bb_upper_24_2, close, return_24h, sma_24, zscore_48} and prior #7 {bb_upper_24_2, close, rsi_14, sma_24, zscore_48}. This hypothesis adds realized_vol_24h to a combination already explored, and the entry condition on bb_upper_24_2 uses '<' rather than the intended lower-band logic, suggesting possible specification ambiguity. The core factor structure is effectively a minor augmentation of prior attempts."
+}
+```

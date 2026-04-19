@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.6500,
+  "reasoning": "The strategy combines volume surge detection (volume_zscore_24h > 2.0) with a price breakout (crosses_above sma_20) while filtering for unsaturated momentum (rsi_14 < 60), creating a coherent narrative of early-stage breakout capture. Exit logic uses volume normalization and price breakdown as dual signals, plus a 10% profit target via return_168h. The theme alignment is strong: volume_zscore_24h is the designated hint factor and serves as the primary divergence signal. However, structural variant risk is elevated because the factor set {close, return_168h, rsi_14, sma_20, volume_zscore_24h} overlaps substantially with prior entries. Specifically, prior #55 uses {close, return_1h, return_24h, rsi_14, sma_20, volume_zscore_24h}, differing only in return horizons; prior #19 uses {close, macd_hist, return_1h, rsi_14, sma_20, volume_zscore_24h}, swapping macd_hist for return_168h. The core quintet (close, rsi_14, sma_20, volume_zscore_24h plus a return measure) has appeared multiple times with minor variations in thresholds and operators."
+}
+```

@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy constructs a coherent trading narrative: entry requires realized volatility crossing above a threshold concurrent with price momentum (above SMA50) and MACD confirmation, while exits trigger on volatility compression, trend breakdown, or profit targets. This three-condition entry with disjunctive exits reflects defensible risk management. The theme alignment is strong; realized_vol_24h is explicitly a hint factor for volatility_regime, and the description directly invokes regime shifts. The MACD and SMA components provide trend confirmation consistent with exploiting volatility transitions. However, structural variant risk is high: the factor set {close, ema_12, macd_hist, realized_vol_24h, return_24h, sma_50} appears at position 3 in the prior list. The current strategy uses {close, macd_hist, realized_vol_24h, return_168h, sma_50}, differing only by substituting return_168h for return_24h and ema_12/ema_26. Given MACD derives from ema_12 and ema_26, this constitutes a shallow variant: same core volatility-trend structure with minor return horizon and implicit/explicit EMA differences."
+}
+```

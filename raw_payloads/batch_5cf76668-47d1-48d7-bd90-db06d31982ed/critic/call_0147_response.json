@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.3500,
+  "semantic_theme_alignment": 0.7500,
+  "structural_variant_risk": 0.9500,
+  "reasoning": "The strategy attempts a mean-reversion logic: enter when price crosses below bb_upper_24_2 (odd, as lower band would be more typical), zscore_48 < -1.5, rsi_14 < 35, and realized_vol_24h > 0.025. Exit when close crosses above sma_24 and rsi_14 > 55, or when return_24h > 0.025. The entry has an internal contradiction: comparing close < bb_upper_24_2 does not capture oversold extremes as described; the lower band would be appropriate. The zscore and RSI conditions do align with oversold logic, and the exit toward the moving average centerline is coherent. Theme alignment is moderate-to-strong given the use of Bollinger bands, zscore, RSI, and moving averages - all core mean-reversion tools from the hint vocabulary. However, the structural factor set {bb_upper_24_2, close, realized_vol_24h, return_24h, rsi_14, sma_24, zscore_48} appears nearly identical to prior entries #17, #21, #29, and #64, differing only in threshold values or minor operator choices. This is a clear shallow variant of already-explored factor combinations."
+}
+```
