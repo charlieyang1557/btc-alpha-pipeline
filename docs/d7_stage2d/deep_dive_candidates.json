@@ -1,0 +1,381 @@
+{
+  "candidates": [
+    {
+      "also_fits_strata": [
+        6
+      ],
+      "factor_set_prior_occurrences": 0,
+      "factor_set_size": 2,
+      "is_in_fresh_eligible_pool": false,
+      "max_overlap_with_priors": 0,
+      "position": 1,
+      "primary_stratum_id": 4,
+      "selection_rationale": "S4 early-position fresh (pos 1 in 1-50): exercises early-batch behavior before Stage 2c selection-window start (theme=momentum).",
+      "theme": "momentum",
+      "universe_a_label": null,
+      "universe_b_label": "divergence_expected"
+    },
+    {
+      "also_fits_strata": [],
+      "factor_set_prior_occurrences": 0,
+      "factor_set_size": 5,
+      "is_in_fresh_eligible_pool": false,
+      "max_overlap_with_priors": 1,
+      "position": 2,
+      "primary_stratum_id": 4,
+      "selection_rationale": "S4 early-position fresh (pos 2 in 1-50): exercises early-batch behavior before Stage 2c selection-window start (theme=mean_reversion).",
+      "theme": "mean_reversion",
+      "universe_a_label": null,
+      "universe_b_label": "divergence_expected"
+    },
+    {
+      "also_fits_strata": [
+        4
+      ],
+      "factor_set_prior_occurrences": 0,
+      "factor_set_size": 3,
+      "is_in_fresh_eligible_pool": false,
+      "max_overlap_with_priors": 1,
+      "position": 5,
+      "primary_stratum_id": 6,
+      "selection_rationale": "S6 rare-family theme 'calendar_effect': theme coverage beyond MR/vol_regime; earliest-position pick within theme.",
+      "theme": "calendar_effect",
+      "universe_a_label": null,
+      "universe_b_label": "divergence_expected"
+    },
+    {
+      "also_fits_strata": [
+        4
+      ],
+      "factor_set_prior_occurrences": 0,
+      "factor_set_size": 4,
+      "is_in_fresh_eligible_pool": false,
+      "max_overlap_with_priors": 2,
+      "position": 6,
+      "primary_stratum_id": 6,
+      "selection_rationale": "S6 rare-family theme 'momentum': theme coverage beyond MR/vol_regime; earliest-position pick within theme.",
+      "theme": "momentum",
+      "universe_a_label": null,
+      "universe_b_label": "divergence_expected"
+    },
+    {
+      "also_fits_strata": [
+        4
+      ],
+      "factor_set_prior_occurrences": 0,
+      "factor_set_size": 7,
+      "is_in_fresh_eligible_pool": false,
+      "max_overlap_with_priors": 4,
+      "position": 8,
+      "primary_stratum_id": 2,
+      "selection_rationale": "S2 RSI-present vol_regime control (pos 8): pairs against S1 RSI-absent picks for sub-pattern isolation (factor_set_size=7).",
+      "theme": "volatility_regime",
+      "universe_a_label": null,
+      "universe_b_label": "neutral"
+    },
+    {
+      "also_fits_strata": [
+        4
+      ],
+      "factor_set_prior_occurrences": 0,
+      "factor_set_size": 7,
+      "is_in_fresh_eligible_pool": false,
+      "max_overlap_with_priors": 5,
+      "position": 13,
+      "primary_stratum_id": 2,
+      "selection_rationale": "S2 RSI-present vol_regime control (pos 13): pairs against S1 RSI-absent picks for sub-pattern isolation (factor_set_size=7).",
+      "theme": "volatility_regime",
+      "universe_a_label": null,
+      "universe_b_label": "neutral"
+    },
+    {
+      "also_fits_strata": [],
+      "factor_set_prior_occurrences": 0,
+      "factor_set_size": 6,
+      "is_in_fresh_eligible_pool": false,
+      "max_overlap_with_priors": 5,
+      "position": 68,
+      "primary_stratum_id": 1,
+      "selection_rationale": "S1 RSI-absent vol_regime (pos 68): tests Stage 2c C16/C17 low-SVR claim on fresh candidate (max_overlap=5, factor_set_size=6).",
+      "theme": "volatility_regime",
+      "universe_a_label": null,
+      "universe_b_label": "neutral"
+    },
+    {
+      "also_fits_strata": [],
+      "factor_set_prior_occurrences": 3,
+      "factor_set_size": 6,
+      "is_in_fresh_eligible_pool": true,
+      "max_overlap_with_priors": 6,
+      "position": 122,
+      "primary_stratum_id": 3,
+      "selection_rationale": "S3 MR high-overlap (fresh-9 anchor): max_overlap=6, prior_occurrences=3 \u2014 extends agreement-cluster follow-through under broadened Lock 4.1 MR stratum.",
+      "theme": "mean_reversion",
+      "universe_a_label": "agreement_expected",
+      "universe_b_label": "agreement_expected"
+    },
+    {
+      "also_fits_strata": [],
+      "factor_set_prior_occurrences": 4,
+      "factor_set_size": 6,
+      "is_in_fresh_eligible_pool": true,
+      "max_overlap_with_priors": 6,
+      "position": 127,
+      "primary_stratum_id": 3,
+      "selection_rationale": "S3 MR high-overlap (fresh-9 anchor): max_overlap=6, prior_occurrences=4 \u2014 extends agreement-cluster follow-through under broadened Lock 4.1 MR stratum.",
+      "theme": "mean_reversion",
+      "universe_a_label": "agreement_expected",
+      "universe_b_label": "agreement_expected"
+    },
+    {
+      "also_fits_strata": [],
+      "factor_set_prior_occurrences": 0,
+      "factor_set_size": 5,
+      "is_in_fresh_eligible_pool": true,
+      "max_overlap_with_priors": 4,
+      "position": 128,
+      "primary_stratum_id": 1,
+      "selection_rationale": "S1 RSI-absent vol_regime (pos 128) (fresh-9 anchor): tests Stage 2c C16/C17 low-SVR claim on fresh candidate (max_overlap=4, factor_set_size=5).",
+      "theme": "volatility_regime",
+      "universe_a_label": "neutral",
+      "universe_b_label": "neutral"
+    },
+    {
+      "also_fits_strata": [],
+      "factor_set_prior_occurrences": 0,
+      "factor_set_size": 4,
+      "is_in_fresh_eligible_pool": true,
+      "max_overlap_with_priors": 3,
+      "position": 129,
+      "primary_stratum_id": 6,
+      "selection_rationale": "S6 rare-family theme 'volume_divergence' (fresh-9 anchor): theme coverage beyond MR/vol_regime; earliest-position pick within theme.",
+      "theme": "volume_divergence",
+      "universe_a_label": "neutral",
+      "universe_b_label": "neutral"
+    },
+    {
+      "also_fits_strata": [],
+      "factor_set_prior_occurrences": 2,
+      "factor_set_size": 6,
+      "is_in_fresh_eligible_pool": true,
+      "max_overlap_with_priors": 6,
+      "position": 132,
+      "primary_stratum_id": 3,
+      "selection_rationale": "S3 MR high-overlap (fresh-9 anchor): max_overlap=6, prior_occurrences=2 \u2014 extends agreement-cluster follow-through under broadened Lock 4.1 MR stratum.",
+      "theme": "mean_reversion",
+      "universe_a_label": "agreement_expected",
+      "universe_b_label": "agreement_expected"
+    },
+    {
+      "also_fits_strata": [
+        3
+      ],
+      "factor_set_prior_occurrences": 0,
+      "factor_set_size": 5,
+      "is_in_fresh_eligible_pool": true,
+      "max_overlap_with_priors": 5,
+      "position": 172,
+      "primary_stratum_id": 5,
+      "selection_rationale": "S5 late-position fresh (pos 172 in 163-200) (fresh-9 anchor): exercises late-batch behavior under enlarged prior history (theme=mean_reversion, max_overlap=5).",
+      "theme": "mean_reversion",
+      "universe_a_label": "neutral",
+      "universe_b_label": "neutral"
+    },
+    {
+      "also_fits_strata": [
+        5
+      ],
+      "factor_set_prior_occurrences": 0,
+      "factor_set_size": 6,
+      "is_in_fresh_eligible_pool": false,
+      "max_overlap_with_priors": 5,
+      "position": 173,
+      "primary_stratum_id": 1,
+      "selection_rationale": "S1 RSI-absent vol_regime (pos 173): tests Stage 2c C16/C17 low-SVR claim on fresh candidate (max_overlap=5, factor_set_size=6).",
+      "theme": "volatility_regime",
+      "universe_a_label": null,
+      "universe_b_label": "neutral"
+    },
+    {
+      "also_fits_strata": [
+        2
+      ],
+      "factor_set_prior_occurrences": 0,
+      "factor_set_size": 7,
+      "is_in_fresh_eligible_pool": true,
+      "max_overlap_with_priors": 5,
+      "position": 178,
+      "primary_stratum_id": 5,
+      "selection_rationale": "S5 late-position fresh (pos 178 in 163-200) (fresh-9 anchor): exercises late-batch behavior under enlarged prior history (theme=volatility_regime, max_overlap=5).",
+      "theme": "volatility_regime",
+      "universe_a_label": "neutral",
+      "universe_b_label": "neutral"
+    },
+    {
+      "also_fits_strata": [
+        5
+      ],
+      "factor_set_prior_occurrences": 0,
+      "factor_set_size": 7,
+      "is_in_fresh_eligible_pool": true,
+      "max_overlap_with_priors": 6,
+      "position": 182,
+      "primary_stratum_id": 3,
+      "selection_rationale": "S3 MR high-overlap (fresh-9 anchor): max_overlap=6, prior_occurrences=0 \u2014 extends agreement-cluster follow-through under broadened Lock 4.1 MR stratum.",
+      "theme": "mean_reversion",
+      "universe_a_label": "neutral",
+      "universe_b_label": "neutral"
+    },
+    {
+      "also_fits_strata": [
+        3
+      ],
+      "factor_set_prior_occurrences": 0,
+      "factor_set_size": 6,
+      "is_in_fresh_eligible_pool": true,
+      "max_overlap_with_priors": 6,
+      "position": 187,
+      "primary_stratum_id": 5,
+      "selection_rationale": "S5 late-position fresh (pos 187 in 163-200) (fresh-9 anchor): exercises late-batch behavior under enlarged prior history (theme=mean_reversion, max_overlap=6).",
+      "theme": "mean_reversion",
+      "universe_a_label": "neutral",
+      "universe_b_label": "neutral"
+    },
+    {
+      "also_fits_strata": [
+        5
+      ],
+      "factor_set_prior_occurrences": 1,
+      "factor_set_size": 6,
+      "is_in_fresh_eligible_pool": false,
+      "max_overlap_with_priors": 6,
+      "position": 188,
+      "primary_stratum_id": 1,
+      "selection_rationale": "S1 RSI-absent vol_regime (pos 188): tests Stage 2c C16/C17 low-SVR claim on fresh candidate (max_overlap=6, factor_set_size=6).",
+      "theme": "volatility_regime",
+      "universe_a_label": null,
+      "universe_b_label": "agreement_expected"
+    },
+    {
+      "also_fits_strata": [
+        5
+      ],
+      "factor_set_prior_occurrences": 7,
+      "factor_set_size": 7,
+      "is_in_fresh_eligible_pool": false,
+      "max_overlap_with_priors": 7,
+      "position": 197,
+      "primary_stratum_id": 3,
+      "selection_rationale": "S3 MR exact-7-factor repeat anchor (pos 197): only fresh exact 7-factor MR repeat in the batch; extends Stage 2c agreement-cluster pattern.",
+      "theme": "mean_reversion",
+      "universe_a_label": null,
+      "universe_b_label": "agreement_expected"
+    },
+    {
+      "also_fits_strata": [
+        5
+      ],
+      "factor_set_prior_occurrences": 0,
+      "factor_set_size": 5,
+      "is_in_fresh_eligible_pool": false,
+      "max_overlap_with_priors": 5,
+      "position": 198,
+      "primary_stratum_id": 1,
+      "selection_rationale": "S1 RSI-absent vol_regime (pos 198): tests Stage 2c C16/C17 low-SVR claim on fresh candidate (max_overlap=5, factor_set_size=5).",
+      "theme": "volatility_regime",
+      "universe_a_label": null,
+      "universe_b_label": "neutral"
+    }
+  ],
+  "fresh_eligible_pool_inclusion_count": 9,
+  "label_universe_analysis_sha256": "ecd52a9e7656d31d13a8e62ec11a7345f8966343172fbfc3f95add2762b3e4a0",
+  "replay_candidates_sha256": "05706642cbeb5014d5072c172b343b01ee56d0eb8ee45afb2f3ce6e56665907e",
+  "scope_lock_commit": "4303d8de2882362ec55c8c581519331c5f6404c6",
+  "selection_methodology": "Sequential greedy assignment in canonical Lock 4.1 stratum order (S1..S6). Each candidate gets exactly one primary stratum (the first eligible in order with an open slot); other qualifying strata are recorded in `also_fits_strata`. Per-stratum ranking: S1 by (is_fresh9 desc, max_overlap desc, pos asc); S2 by pos asc; S3 by pos-197 anchor first then (is_fresh9 desc, max_overlap desc, occurrences desc, pos asc); S4 by pos asc; S5 by (is_fresh9 desc, pos desc); S6 theme-balanced one pick per rare-family theme by (is_fresh9 desc, pos asc). Targets: 5/2/5/2/3/3 = 20. Anti-hindsight: only D6_STAGE2D metadata + signed-off Task 2A/2B labels are consulted; no Stage 2d run data.",
+  "selection_timestamp_utc": "2026-04-19T17:12:37.939627Z",
+  "source_batch_uuid": "5cf76668-47d1-48d7-bd90-db06d31982ed",
+  "stage": "d7_stage2d",
+  "strata": [
+    {
+      "fresh_pool_size": 7,
+      "max_count": 5,
+      "min_count": 3,
+      "name": "RSI-absent volatility_regime",
+      "selected_count": 5,
+      "selected_positions": [
+        68,
+        128,
+        173,
+        188,
+        198
+      ],
+      "stratum_id": 1
+    },
+    {
+      "fresh_pool_size": 29,
+      "max_count": 4,
+      "min_count": 2,
+      "name": "RSI-present volatility_regime",
+      "selected_count": 2,
+      "selected_positions": [
+        8,
+        13
+      ],
+      "stratum_id": 2
+    },
+    {
+      "fresh_pool_size": null,
+      "max_count": 5,
+      "min_count": 3,
+      "name": "MR high-recurrence / high-overlap",
+      "selected_count": 5,
+      "selected_positions": [
+        122,
+        127,
+        132,
+        182,
+        197
+      ],
+      "stratum_id": 3
+    },
+    {
+      "fresh_pool_size": 46,
+      "max_count": 4,
+      "min_count": 2,
+      "name": "Early-position 1-50 fresh",
+      "selected_count": 2,
+      "selected_positions": [
+        1,
+        2
+      ],
+      "stratum_id": 4
+    },
+    {
+      "fresh_pool_size": 38,
+      "max_count": 4,
+      "min_count": 2,
+      "name": "Late-position 163-200 fresh",
+      "selected_count": 3,
+      "selected_positions": [
+        172,
+        178,
+        187
+      ],
+      "stratum_id": 5
+    },
+    {
+      "fresh_pool_size": null,
+      "max_count": 4,
+      "min_count": 2,
+      "name": "Rare-families themes (momentum, volume_divergence, calendar_effect)",
+      "selected_count": 3,
+      "selected_positions": [
+        5,
+        6,
+        129
+      ],
+      "stratum_id": 6
+    }
+  ],
+  "total_deep_dive_count": 20
+}
