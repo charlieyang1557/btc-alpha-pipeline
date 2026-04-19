@@ -80,12 +80,13 @@ STAGE2C_BATCH_UUID: str = "5cf76668-47d1-48d7-bd90-db06d31982ed"
 # D7b score polarity threshold (pinned). exact 0.5 → classified as >= 0.5 (HIGH).
 STRUCTURAL_VARIANT_RISK_HIGH_THRESHOLD: float = 0.5
 
-# Abort rule (c) thresholds — scope-lock primacy:
-#   content-level errors >= 4, evaluated only once K >= 8 completed calls.
-# Launch prompt §4.4 drops the K floor; scope lock retains it and wins
-# per launch prompt §2 ("conflicts resolve in favor of the scope lock").
+# Abort rule (c): fires whenever content-level errors reach this count.
 STAGE2C_CONTENT_ERROR_ABS_THRESHOLD: int = 4
-STAGE2C_CONTENT_ERROR_MIN_K: int = 8
+# Rule (c) fires on this count alone, no minimum-K floor.
+# Note: rule (b) (error rate > 40% at K>=3) substantially overlaps
+# rule (c) in early-clustered-error scenarios, so the K-floor removal
+# is primarily a specification-correctness fix, not a large behavioral
+# change. See launch prompt v2 Amendment 7 for full rationale.
 
 # Selection JSON anchor — commit that locked the selection. Runtime HG2c
 # reads this commit via ``git show`` and compares SHA-256 against on-disk.
@@ -557,15 +558,19 @@ def should_abort(
         )
         if error_count / call_index > 0.40:
             return True, "cumulative_error_rate"
-    # Rule (c) — scope-lock primacy: content-level errors >= 4 AND K >= 8.
-    if call_index >= STAGE2C_CONTENT_ERROR_MIN_K:
-        content_errors = sum(
-            1 for c in call_histories
-            if c.get("critic_status") == "d7b_error"
-            and c.get("d7b_error_category") == "content_level"
-        )
-        if content_errors >= STAGE2C_CONTENT_ERROR_ABS_THRESHOLD:
-            return True, "content_level_threshold"
+    # Rule (c) fires on absolute count, no K floor.
+    # Rationale: 4 content-level errors is systemic whenever it occurs;
+    # waiting for K>=8 would waste budget on a failing sequence.
+    # Rule (b) and rule (c) have overlapping coverage in early-clustered
+    # scenarios, but rule (c) remains the authoritative absolute-count
+    # trigger per launch prompt v2 §4.4 + Amendment 7.
+    content_errors = sum(
+        1 for c in call_histories
+        if c.get("critic_status") == "d7b_error"
+        and c.get("d7b_error_category") == "content_level"
+    )
+    if content_errors >= STAGE2C_CONTENT_ERROR_ABS_THRESHOLD:
+        return True, "content_level_threshold"
     return False, None
 
 

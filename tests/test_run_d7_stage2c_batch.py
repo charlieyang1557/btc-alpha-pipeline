@@ -713,8 +713,8 @@ def test_abort_rule_b_cumulative_error_rate_over_40_percent(tmp_config, monkeypa
     assert agg["abort_at_call_index"] == 3
 
 
-def test_abort_rule_c_does_not_fire_with_3_content_errors_at_k_10():
-    """Scope-lock primacy: rule (c) requires content_errors >= 4."""
+def test_abort_rule_c_does_not_fire_with_3_content_errors():
+    """Rule (c) requires content_errors >= 4 regardless of K."""
     history = (
         [_persisted_record("d7b_error", "content_level", 0.001)] * 3
         + [_persisted_record("ok", None, 0.01)] * 7
@@ -737,16 +737,37 @@ def test_abort_rule_c_fires_at_4_content_errors_when_rule_b_does_not():
     assert reason == "content_level_threshold"
 
 
-def test_abort_rule_c_k_floor_not_evaluated_below_8():
-    """Scope-lock Lock 6(3): rule (c) never evaluates at K < 8."""
-    # 4 content errors at K=4 (rate=100%). Rule (b) fires — verify rule (c)
-    # is not the reason and the abort_at_call_index matches rule (b)'s
-    # first-cross point. Under scope-lock primacy, K<8 never triggers rule c.
+def test_abort_rule_c_fires_at_k_4_with_4_content_errors():
+    """No K floor: rule (c) can fire as early as K=4 with 4 content errors.
+
+    Rule (b) also fires here (rate=100%>40%). Implementation ordering checks
+    rule (b) before rule (c), so reason == cumulative_error_rate in practice;
+    launch prompt v2 doesn't mandate which abort reason wins in ties, so the
+    test verifies only that the sequence aborts with a recognized reason.
+    """
     history = [_persisted_record("d7b_error", "content_level", 0.001)] * 4
     abort, reason = stage2c.should_abort(4, history, 0.001, 0.004)
     assert abort is True
-    # K=4 is below floor → rule (c) not the reason.
-    assert reason == "cumulative_error_rate"
+    assert reason in {"cumulative_error_rate", "content_level_threshold"}
+
+
+def test_abort_rule_c_no_k_floor_constant_removed():
+    """Regression guard: STAGE2C_CONTENT_ERROR_MIN_K must not be re-introduced."""
+    assert not hasattr(stage2c, "STAGE2C_CONTENT_ERROR_MIN_K")
+
+
+def test_abort_rule_c_deterministic_at_k_7():
+    """K=7 with 4 content errors: old K=8 floor would suppress rule (c);
+    new contract fires on absolute count alone. Rule (b) also fires at
+    rate=4/7>40%; either reason is acceptable per launch prompt v2.
+    """
+    history = (
+        [_persisted_record("d7b_error", "content_level", 0.001)] * 4
+        + [_persisted_record("ok", None, 0.01)] * 3
+    )
+    abort, reason = stage2c.should_abort(7, history, 0.01, 0.034)
+    assert abort is True
+    assert reason in {"cumulative_error_rate", "content_level_threshold"}
 
 
 def test_abort_rule_d_per_call_cost_exceeded(tmp_config, monkeypatch):
