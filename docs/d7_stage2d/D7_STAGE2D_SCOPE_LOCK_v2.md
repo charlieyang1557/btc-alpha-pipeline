@@ -690,6 +690,34 @@ mirroring the `stage2a_archive/` and `stage2b_archive/` convention.
 - `## Remaining Candidates (Schema-Level Only)` — brief note only
 - `## Position 116 Treatment` — brief reference to Lock 1.5
 
+### 11.1.a Authoring convention notes (amended 2026-04-19 post-E4 seal)
+
+The following deviations from §11.1 canonical headers were adopted
+during E2-E4 authoring and are preserved as sealed content:
+
+- Prefixes `§6.1`, `§6.2`, `§6.3`, `§6.4`, `§6.5`, `§6.6`, `§E3`,
+  `§E4`, `§E5` may precede the canonical header text for visual
+  organization and cross-reference within the expectations file.
+  Gate 2 (self-check required-headers match) permits optional prefix
+  matching the pattern `§\d+\.\d+\s*—\s*` or `§E\d+\s*—\s*`.
+
+- Additional sections beyond the Lock 11.1 canonical list:
+  - `## §6.5 — Theme-Stratified Sub-Claims` — records the Lock 6.5
+    decline-to-pre-register decision; no numerical commitment.
+  - `## §6.6 — Plausibility / Alignment Observation Axes` —
+    observation-axis specification used by sign-off notebook for
+    post-fire descriptive read-outs; not pre-registered gates.
+
+- Additional header `## Frozen Pre-Registration Anchors` was adopted
+  at E2 authoring as the expectations-file prefix equivalent to
+  Lock 11.1 `## Anti-Hindsight Anchor`. Gate 2 accepts either literal.
+
+Amendment audit trail: Lock 11.1 compliance gap surfaced at E5 gather
+time (2026-04-19) via self_check.py Gate 2 design. Charlie ruled
+Option C (amend scope lock to match DRAFT rather than amend DRAFT to
+match scope lock) preserving sealed §E2/§E3/§E4 content. Both
+advisors ratified.
+
 ### 11.2 Derivation script (per Q-C decision)
 `scripts/derive_d7_stage2d_label_universes.py` is a new, read-only,
 deterministic script. Inputs: signed-off D6_STAGE2D batch artifacts.

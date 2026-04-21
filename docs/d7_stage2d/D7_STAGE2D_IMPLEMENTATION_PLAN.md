@@ -1074,7 +1074,7 @@ Good luck.
 - [ ] **2B.16** — All 16 script-internal invariants (B1-B16) PASS
 - [ ] **2B.17** — Universe B label totals across the 199 replay-eligible entries: 66 agreement, 5 divergence, 128 neutral
 - [ ] **2B.18** — Universe A label totals across the 29 non-null entries: 11 agreement, 3 divergence, 15 neutral
-- [ ] **2B.19** — 170 entries have `universe_a_label == null` (= 199 replay-eligible minus 29 Universe A, plus pos 116)
+- [ ] **2B.19** — 171 entries have `universe_a_label == null` (= 199 replay-eligible minus 29 Universe A, plus pos 116)
 
 **Determinism gate:**
 
@@ -1800,7 +1800,7 @@ Good luck.
 
 - [ ] **2D.12** — Pos 17 Stage 2b (plaus=0.75, align=0.85, svr=0.85) matches signoff §3
 - [ ] **2D.13** — Pos 73 Stage 2b (plaus=0.75, align=0.85, svr=0.85) matches signoff §5.3
-- [ ] **2D.14** — Pos 74 Stage 2b (plaus=0.75, align=0.90, svr=0.65) matches signoff §5.3
+- [ ] **2D.14** — Pos 74 Stage 2b (plaus=0.75, align=0.85, svr=0.65) matches signoff §5.3 (alignment value sourced from call record; Stage 2b signoff §5.3–5.5 does not tabulate alignment)
 - [ ] **2D.15** — Pos 97 Stage 2b (plaus=0.75, align=0.90, svr=0.95) matches signoff §5.4
 - [ ] **2D.16** — Pos 138 Stage 2b (plaus=0.75, align=0.90, svr=0.15) matches signoff §5.5
 - [ ] **2D.17** — All 20 Stage 2c scores match Stage 2c signoff §6 table exactly
@@ -2037,6 +2037,11 @@ fidelity; g: ready-to-proceed).
 
 ## 9. Post-Implementation-Phase Next Steps
 
+**Stage 2d Implementation Phase status: ✅ FULL ACCEPTED
+(Final Advisor Verdict, 2026-04-19)**
+
+**Outstanding follow-up items:** see Section 10.
+
 Once all four tasks are committed AND the Final Advisor Acceptance
 Verdict is FULL ACCEPTED (or CONDITIONAL ACCEPTED with fixes applied):
 
@@ -2060,6 +2065,104 @@ Verdict is FULL ACCEPTED (or CONDITIONAL ACCEPTED with fixes applied):
 6. **Sign-Off Adjudication** (Lock 13).
 
 7. **D7 track closes; Phase 2B → D8 (policy gate)**.
+
+---
+
+## 10. Post-D7 Follow-Up Items
+
+These are tracked here because they were surfaced during Stage 2c /
+Stage 2d Codex reviews but are out-of-scope for Stage 2d itself.
+They are **binding work items, not wishlist.** Each must be
+addressed (or explicitly re-deferred with recorded rationale)
+before Phase 2B advances to D8.
+
+### 10.1 Stub Fixture Isolation Retrofit
+
+**Origin:** Codex Stage 2c HIGH observation (substantive design
+finding, not false positive); reconfirmed during Stage 2d review.
+
+**Issue:** All three D7 fire scripts
+(`scripts/run_d7_stage2b_batch.py`,
+`scripts/run_d7_stage2c_batch.py`, future
+`scripts/run_d7_stage2d_batch.py`) pass
+`stage2d_artifacts_root=RAW_PAYLOAD_ROOT` into their replay
+reconstruction in BOTH live and stub modes. Lock 10.2 specifies
+write-side stub/live isolation but is silent on read-side. Stub
+mode therefore indirectly depends on the live-mode artifact root,
+so "clean replay from a fixture" is not actually validated by the
+shipped command path.
+
+**Why deferred from Stage 2d implementation phase:**
+
+- Scope Lock v2 Lock 10.2 does not require read-side isolation;
+  Task 2E implementing it would be a scope-lock deviation, which
+  the Stage 2c patch report §5 adjudication explicitly prohibits.
+- Stage 2b and 2c are already signed off; retrofitting their fire
+  scripts now provides no Stage 2d benefit.
+- Asymmetric retrofit (only Stage 2d) would create an
+  operational-identity variance across the three fire scripts,
+  exactly the kind of inconsistency Lock 5 carry-forward
+  discipline warns against.
+
+**Resolution path (post-D7 sign-off, pre-D8 entry):**
+
+1. **Step 1 — Mini scope lock v2.1** (1–2 advisor turns, design only)
+   - Defines stub fixture root path
+   - Defines fixture materialize strategy (copy / symlink /
+     git-fixtures / generated; pick exactly one)
+   - Defines fixture SHA256 anchoring (fixture data IS
+     contract-binding)
+   - Defines CI fixture-availability requirement
+   - Lock 10.2 amended with explicit read-side isolation clause
+
+2. **Step 2 — Symmetric retrofit PR** (Claude Code, implementation only)
+   - All three fire scripts (2b, 2c, 2d) updated together to
+     read from the fixture root in stub mode
+   - Live mode read behavior unchanged
+   - Fire-script tests updated; a clean-checkout `--stub` exit-0
+     transcript captured for each
+
+**Sequencing:** D7 sign-off → mini scope lock v2.1 → retrofit PR →
+D8. The mini scope lock and the retrofit PR MUST be two separate
+reviewable units; do not merge design + implementation.
+
+**Required audit-trail entry in the D7 sign-off document:**
+
+```
+Codex Stage 2c HIGH observation: stub read-side isolation
+  Status:    DEFERRED to post-D7 stub fixture retrofit
+  Rationale: scope lock v2.1 patch + symmetric retrofit across 2b/2c/2d
+  Owner:     pre-D8 phase entry
+  Tracking:  docs/d7_stage2d/D7_STAGE2D_IMPLEMENTATION_PLAN.md §10.1
+```
+
+This Codex finding MUST be recorded as **DEFERRED, not RESOLVED**,
+in the D7 sign-off audit trail. "Resolved" would read as dismissed
+to a future auditor; this finding is a real design debt being
+consciously rolled forward.
+
+### 10.2 Implementation-Plan Text Typos (Applied)
+
+Two checklist text typos surfaced during cross-artifact review.
+Deliverables (the committed JSONs) are correct; only the plan
+text in this document was wrong. Both have been applied in-place
+to this document so the plan text agrees with the shipped data.
+
+- **2B.19 (§5 checklist):** previously "170 entries"; correct
+  count is **171** (= 200 total − 29 Universe A non-null entries,
+  which includes pos 116). Verified directly against
+  `docs/d7_stage2d/replay_candidates.json`. The plan's own
+  parenthetical arithmetic (`199 replay-eligible − 29 + pos 116`)
+  also resolves to 171, not 170.
+- **2D.14 (§7 checklist):** previously `align=0.90` for pos 74
+  Stage 2b; correct value is **0.85**. Verified directly against
+  `docs/d7_stage2d/test_retest_baselines.json` (pos 74
+  `stage2b.alignment`). Stage 2b signoff §5.3–5.5 does not
+  tabulate alignment, so the frozen call record is the
+  authoritative source.
+
+These fixes are documentation-only; no code, test, or JSON
+artifact is affected.
 
 ---
 
