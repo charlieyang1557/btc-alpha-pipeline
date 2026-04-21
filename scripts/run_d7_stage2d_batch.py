@@ -89,6 +89,20 @@ STAGE2D_ERROR_RATE_K_FLOOR: int = 3                # Rule (b) K
 STAGE2D_ERROR_RATE_THRESHOLD: float = 0.40         # Rule (b) > 40%
 STAGE2D_CONTENT_ERROR_ABS_THRESHOLD: int = 4       # Rule (c)
 
+# Lock 7 / design spec §10.5 — abort-reason vocabulary. `abort_reason`
+# field in the aggregate MUST be ``None`` or a member of this frozenset.
+# Enforcement: aggregate builder assertion before write.
+STAGE2D_ABORT_REASON_VOCAB: frozenset[str] = frozenset({
+    # Inherited from Stage 2c Lock 7.
+    "consecutive_api_errors",       # Rule (a), §7.1
+    "error_rate_threshold",         # Rule (b), §7.2
+    "content_level_threshold",      # Rule (c), §7.3
+    "per_call_cost_exceeded",       # Rule (d), §7.4
+    "cumulative_cost_cap_exceeded", # Rule (e), §7.5
+    # Stage 2d-new per §7.7.
+    "unexpected_skipped_source",    # Rule (g)
+})
+
 # Lock 10 — I/O paths
 RAW_PAYLOAD_ROOT: Path = Path("raw_payloads")
 LEDGER_PATH: Path = Path("agents/spend_ledger.db")
@@ -1087,20 +1101,147 @@ def _critic_status_counts(per_call_records: list[dict]) -> dict[str, int]:
 
 
 # ---------------------------------------------------------------------------
+# Lock 7 abort evaluation — design spec §7
+# ---------------------------------------------------------------------------
+
+
+def _record_position(rec: dict) -> int:
+    """Return the underlying candidate position for a per-call record.
+
+    Normal records (from ``_run_one_call``) carry ``candidate_position``.
+    Synthetic pos 116 records (from ``_synthesize_pos116_record``) carry
+    ``position`` per Lock 1.5. Rule (g) per design spec §7.7 reads
+    ``last["position"]``; this helper normalizes the two schemas so rule
+    evaluation does not need to care which shape produced the record.
+
+    Raises ``KeyError`` if neither key is present (indicates malformed
+    record — caller should surface rather than silently default).
+    """
+    if "position" in rec:
+        return int(rec["position"])
+    return int(rec["candidate_position"])
+
+
+def should_abort(
+    idx: int,
+    records: list[dict],
+    per_call_cost: float,
+    cumulative_cost: float,
+) -> tuple[bool, str | None]:
+    """Evaluate Lock 7 abort rules against the sequence so far.
+
+    Rule ordering per C.3 ruling: **g → a → b → c → d → e**. First
+    match returns. See design spec §7 for the deterministic pseudocode
+    this function implements verbatim.
+
+    Bookkeeping semantics:
+      - Rule (g) looks at the just-appended record only.
+      - Rules (a), (b), (c) operate on the ``non_skipped`` subsequence
+        per §7.8 — skipped records are filtered out of both tail walks
+        and denominators (C.1, C.2).
+      - Rule (d) is evaluated on the just-completed call's cost; synthetic
+        pos 116 has ``actual_cost_usd=0.0`` and cannot trigger.
+      - Rule (e) is evaluated on cumulative ledger-written cost; synthetic
+        records contribute 0 (no ledger row per C.7).
+
+    Returns ``(True, reason)`` on abort, ``(False, None)`` otherwise.
+    The ``reason`` string is guaranteed to be a member of
+    :data:`STAGE2D_ABORT_REASON_VOCAB`.
+
+    Enum validation: every record's ``critic_status`` is checked against
+    the 3-value enum ``{'ok', 'd7b_error', 'skipped_source_invalid'}``.
+    An unknown value raises ``AssertionError`` rather than silently
+    distorting rules (a)-(c) — same discipline as
+    :func:`_critic_status_counts`.
+    """
+    _ALLOWED_STATUSES = ("ok", "d7b_error", "skipped_source_invalid")
+    for r in records:
+        status = r.get("critic_status")
+        if status not in _ALLOWED_STATUSES:
+            raise AssertionError(
+                f"should_abort: unknown critic_status {status!r} "
+                f"(allowed: {_ALLOWED_STATUSES!r})"
+            )
+
+    last = records[-1]
+
+    # Rule (g) — §7.7 — unexpected skipped_source at unexpected position.
+    if (
+        last.get("critic_status") == "skipped_source_invalid"
+        and _record_position(last) not in STAGE2D_SKIPPED_POSITIONS
+    ):
+        return True, "unexpected_skipped_source"
+
+    # Non-skipped subsequence used by rules (a), (b), (c) per §7.8.
+    non_skipped = [
+        r for r in records
+        if r.get("critic_status") != "skipped_source_invalid"
+    ]
+
+    # Rule (a) — §7.1 — N consecutive api_level errors (non-skipped subsequence).
+    if len(non_skipped) >= STAGE2D_CONSECUTIVE_API_ERROR_THRESHOLD:
+        tail = non_skipped[-STAGE2D_CONSECUTIVE_API_ERROR_THRESHOLD:]
+        if all(
+            r.get("critic_status") == "d7b_error"
+            and r.get("d7b_error_category") == "api_level"
+            for r in tail
+        ):
+            return True, "consecutive_api_errors"
+
+    # Rule (b) — §7.2 — error rate > threshold at K >= floor (non-skipped).
+    K = len(non_skipped)
+    if K >= STAGE2D_ERROR_RATE_K_FLOOR:
+        errors = sum(
+            1 for r in non_skipped
+            if r.get("critic_status") == "d7b_error"
+        )
+        if (errors / K) > STAGE2D_ERROR_RATE_THRESHOLD:
+            return True, "error_rate_threshold"
+
+    # Rule (c) — §7.3 — content_level errors >= absolute threshold (non-skipped).
+    content_errors = sum(
+        1 for r in non_skipped
+        if r.get("critic_status") == "d7b_error"
+        and r.get("d7b_error_category") == "content_level"
+    )
+    if content_errors >= STAGE2D_CONTENT_ERROR_ABS_THRESHOLD:
+        return True, "content_level_threshold"
+
+    # Rule (d) — §7.4 — per-call cost ceiling.
+    if per_call_cost > STAGE2D_PER_CALL_COST_CEILING_USD:
+        return True, "per_call_cost_exceeded"
+
+    # Rule (e) — §7.5 — cumulative cost cap.
+    if cumulative_cost > STAGE2D_TOTAL_COST_CAP_USD:
+        return True, "cumulative_cost_cap_exceeded"
+
+    return False, None
+
+
+# ---------------------------------------------------------------------------
 # run_stage2d — Patch 2: 200-record main loop + minimal aggregate
 # ---------------------------------------------------------------------------
 
 
 def run_stage2d(config: Stage2dConfig) -> dict:
-    """Patch 2: startup gates + 200-record main loop + minimal aggregate.
+    """Patch 2+3a: startup gates + 200-record main loop + Lock 7 aborts.
 
-    The aggregate here is deliberately minimal — it carries the four
-    invariants the stub-run acceptance test checks (``completed_call_count``,
-    ``per_call_records`` length, three-counter ``critic_status_counts``,
-    trailing ``write_completed_at``) plus the enduring startup-audit +
-    hash anchors. Patch 3 will expand to the full 53-key schema
-    (abort-rule vocabulary, stratum breakdown, HG20 input-drift guard,
-    Stage 2c archive SHAs, checkpoint log).
+    Sequence invariants (stub-run acceptance):
+      - ``completed_call_count``: ``STAGE2D_SOURCE_N`` on normal
+        completion; ``abort_at_call_index`` on abort.
+      - ``per_call_records`` length equals ``completed_call_count``.
+      - ``critic_status_counts``: 3-counter with explicit enum validation.
+      - ``write_completed_at``: always the final aggregate key.
+      - ``abort_reason``: ``None`` or a member of
+        :data:`STAGE2D_ABORT_REASON_VOCAB` (§10.5 enforcement).
+
+    Lock 7 rules a-g fire per design spec §7 pseudocode with ordering
+    g → a → b → c → d → e (C.3 ruling). On first match the loop breaks
+    and aggregate reflects truncated state.
+
+    Patch 3c will expand to the full 53-key schema (stratum breakdown,
+    HG20 input-drift guard, Stage 2c archive SHAs, checkpoint log,
+    ordered-list fields).
     """
     _assert_stub_isolation(config)
 
@@ -1123,6 +1264,10 @@ def run_stage2d(config: Stage2dConfig) -> dict:
     ledger = BudgetLedger(config.ledger_path)
     per_call_records: list[dict] = []
     inter_call_sleep_elapsed = 0.0
+    cumulative_cost_usd = 0.0
+    sequence_aborted = False
+    abort_reason: str | None = None
+    abort_at_call_index: int | None = None
     t0 = time.monotonic()
 
     for idx, candidate in enumerate(candidates, start=1):
@@ -1143,6 +1288,20 @@ def run_stage2d(config: Stage2dConfig) -> dict:
                 startup_prompt_template_sha256=config.prompt_template_sha,
             )
         per_call_records.append(record)
+
+        # Track cost: synthetic records contribute 0 per C.7 ruling.
+        per_call_cost = float(record.get("actual_cost_usd", 0.0) or 0.0)
+        cumulative_cost_usd += per_call_cost
+
+        # Lock 7 abort evaluation — mid-loop, after append, before sleep.
+        aborted, reason = should_abort(
+            idx, per_call_records, per_call_cost, cumulative_cost_usd
+        )
+        if aborted:
+            sequence_aborted = True
+            abort_reason = reason
+            abort_at_call_index = idx
+            break
 
         if idx < STAGE2D_SOURCE_N:
             t_before = time.monotonic()
@@ -1176,11 +1335,16 @@ def run_stage2d(config: Stage2dConfig) -> dict:
         "stage2d_live_d7b_call_n": STAGE2D_LIVE_D7B_CALL_N,
         "stage2d_skipped_positions": list(STAGE2D_SKIPPED_POSITIONS),
 
-        # Patch 2 sequence summary — enough to pin the contract.
+        # Sequence summary — abort metadata populated from real Lock 7
+        # rule evaluation (Patch 3a). ``completed_call_count`` equals
+        # ``abort_at_call_index`` on abort (truncated sequence) and
+        # ``STAGE2D_SOURCE_N`` on normal completion. Patch 3c will add
+        # ``total_actual_cost_usd`` (design spec §10.1 row 21) and the
+        # rest of the 53-key aggregate shape.
         "completed_call_count": len(per_call_records),
-        "sequence_aborted": False,  # Patch 3 wires Lock 7 rules a-g
-        "abort_reason": None,
-        "abort_at_call_index": None,
+        "sequence_aborted": sequence_aborted,
+        "abort_reason": abort_reason,
+        "abort_at_call_index": abort_at_call_index,
         "critic_status_counts": _critic_status_counts(per_call_records),
 
         # Startup audit preserved verbatim.
@@ -1189,6 +1353,16 @@ def run_stage2d(config: Stage2dConfig) -> dict:
         # Per-call records — 199 live/stub + 1 synthetic pos 116 = 200.
         "per_call_records": per_call_records,
     }
+
+    # §10.5 vocabulary enforcement: abort_reason is None or a member
+    # of STAGE2D_ABORT_REASON_VOCAB. Any other value is a programmer
+    # error — surface it before writing an unreadable aggregate.
+    if aggregate["abort_reason"] is not None:
+        if aggregate["abort_reason"] not in STAGE2D_ABORT_REASON_VOCAB:
+            raise AssertionError(
+                f"abort_reason {aggregate['abort_reason']!r} not in "
+                f"STAGE2D_ABORT_REASON_VOCAB {sorted(STAGE2D_ABORT_REASON_VOCAB)!r}"
+            )
 
     # Lock 11 invariant: ``write_completed_at`` is appended LAST. Keep the
     # assignment separate from the dict literal so that any future field
