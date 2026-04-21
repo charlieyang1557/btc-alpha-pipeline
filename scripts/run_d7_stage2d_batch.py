@@ -1,26 +1,39 @@
-"""D7 Stage 2d — 200-record replay fire script (SKELETON).
+"""D7 Stage 2d — 200-record replay fire script (Patch 2).
 
-First-stage scaffolding only. This version wires:
+This patch adds the 200-position main loop on top of the Patch 1
+skeleton:
 
 * ``Stage2dStartupError`` + ``Stage2dConfig`` dataclass
 * CLI argument parsing (``--stub`` | ``--confirm-live``, mutually exclusive)
 * Stub/live path routing per Lock 10 / Lock 10.2
 * ``_assert_stub_isolation`` — stub must never resolve under ``raw_payloads/``
-* Eleven ``_startup_gates`` (per design spec §6) in the ratified order
-* A minimal ``run_stage2d`` that, once all startup gates pass, atomically
-  writes a startup-only aggregate record sufficient to prove the shell runs
+* Eleven ``_startup_gates`` (design spec §6) in the ratified order
+* Backend factory (``StubD7bBackend`` / ``LiveSonnetD7bBackend``)
+* ``_synthesize_pos116_record`` — Lock 1.5 11-field core + Layer B envelope
+* ``_run_one_call`` — BatchContext reconstruction, prompt build, leakage
+  audit, ledger pre-charge, ``run_critic``, ledger finalize, per-call
+  artifact writes
+* 200-position main loop (199 live D7b + 1 synthetic pos 116)
+* Minimal aggregate: ``completed_call_count``, three-counter
+  ``critic_status_counts``, per-call records, trailing ``write_completed_at``
 
-It deliberately does NOT implement the 200-record main loop,
-``_run_one_call``, the synthetic pos-116 record, abort rules, or the full
-53-key aggregate builder. Those land in the second-stage patch.
+Patch 3 will add abort-rule evaluation (Lock 7 rules a-g), the full
+53-key aggregate schema (stratum breakdown, HG20 input-drift guard,
+Stage 2c archive SHAs, checkpoint log), and richer per-call record
+expansion to the documented 31-key shape.
 
 Parallel discipline to ``scripts/run_d7_stage2c_batch.py`` — duplication
-is intentional per scope-lock §10.2. Do not refactor the two into a shared
-module.
+is intentional per scope-lock §10.2. Do not refactor the two into a
+shared module.
 
 CONTRACT BOUNDARY: stub mode MUST NOT touch ``raw_payloads/`` or
 ``agents/spend_ledger.db`` under any circumstance. All stub I/O is
 physically isolated under ``dryrun_payloads/dryrun_stage2d/``.
+
+CONTRACT BOUNDARY: pos 116 produces a per-call record but no ledger
+row and no prompt / response / critic_result artifacts (Lock 1.5 +
+C.7 revised ruling). Patch 3 aggregate assertions codify this as the
+"200 records vs 199 ledger rows" invariant (design spec §11.3).
 """
 
 from __future__ import annotations
@@ -36,11 +49,22 @@ import traceback
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Callable
+from typing import Any, Callable
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
+
+from agents.critic.d7b_backend import D7bBackend  # noqa: E402
+from agents.critic.d7b_prompt import (  # noqa: E402
+    D7B_PROTECTED_TERMS,
+    build_d7b_prompt,
+    run_leakage_audit,
+)
+from agents.critic.d7b_stub import StubD7bBackend  # noqa: E402
+from agents.critic.orchestrator import run_critic  # noqa: E402
+from agents.critic.replay import reconstruct_batch_context_at_position  # noqa: E402
+from agents.orchestrator.budget_ledger import BudgetLedger  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
@@ -92,9 +116,19 @@ STAGE2C_ARCHIVE_POSITIONS: tuple[int, ...] = (
     97, 102, 107, 112, 117, 138, 143, 147, 152, 162,
 )
 
+# Stage 2b overlap positions — inherited from Stage 2c launch prompt §4.3.
+# Used for is_stage2b_overlap compute-from-constant per §9.2 Advisor Precision 2.
+STAGE2B_OVERLAP_POSITIONS: frozenset[int] = frozenset({17, 73, 74, 97, 138})
+
+# Inter-call pacing. Live mode matches Stage 2c (5s) for tier-1 rate-limit
+# parity. Stub mode uses 0s because no API is hit — no operational
+# reason to pace. Both values reported in the aggregate record.
+STAGE2D_LIVE_INTER_CALL_SLEEP_SECONDS: float = 5.0
+STAGE2D_STUB_INTER_CALL_SLEEP_SECONDS: float = 0.0
+
 # Aggregate schema identity
 STAGE_LABEL: str = "d7_stage2d"
-RECORD_VERSION: str = "1.0-skeleton"
+RECORD_VERSION: str = "1.0-patch2"
 
 
 # ---------------------------------------------------------------------------
@@ -221,6 +255,10 @@ class Stage2dConfig:
     prompt_template_path: Path = PROMPT_TEMPLATE_PATH
     self_check_script: Path = STAGE2D_SELF_CHECK_SCRIPT
 
+    # Inter-call pacing — see §15 item 6 of design spec. Live = 5s (parity
+    # with Stage 2c), stub = 0s (no API round-trip to pace).
+    inter_call_sleep_seconds: float = STAGE2D_LIVE_INTER_CALL_SLEEP_SECONDS
+
     # Captured at gate time; default empty / None until filled
     prompt_template_sha: str | None = None
     replay_candidates_sha: str | None = None
@@ -232,6 +270,11 @@ class Stage2dConfig:
     expectations_commit_ts_fn: Callable[[Path], int | None] = field(default=_git_commit_unixtime)
     now_unixtime_fn: Callable[[], int] = field(default=_now_unixtime)
     now_iso_fn: Callable[[], str] = field(default=_iso_now)
+    sleep_fn: Callable[[float], None] = field(default=time.sleep)
+    reconstruct_fn: Callable[..., Any] = field(
+        default=reconstruct_batch_context_at_position
+    )
+    backend_factory: Callable[..., D7bBackend] | None = None
 
 
 def build_stage2d_config(confirm_live: bool, stub: bool) -> Stage2dConfig:
@@ -250,6 +293,7 @@ def build_stage2d_config(confirm_live: bool, stub: bool) -> Stage2dConfig:
             raw_payload_root=DRYRUN_ROOT / "raw_payloads",
             ledger_path=DRYRUN_ROOT / "ledger_dryrun.db",
             api_call_kind_override="d7b_critic_stub",
+            inter_call_sleep_seconds=STAGE2D_STUB_INTER_CALL_SLEEP_SECONDS,
         )
     return Stage2dConfig(
         confirm_live=True,
@@ -262,6 +306,7 @@ def build_stage2d_config(confirm_live: bool, stub: bool) -> Stage2dConfig:
         raw_payload_root=RAW_PAYLOAD_ROOT,
         ledger_path=LEDGER_PATH,
         api_call_kind_override="d7b_critic_live",
+        inter_call_sleep_seconds=STAGE2D_LIVE_INTER_CALL_SLEEP_SECONDS,
     )
 
 
@@ -609,15 +654,453 @@ def _startup_gates(config: Stage2dConfig) -> None:
 
 
 # ---------------------------------------------------------------------------
-# run_stage2d (skeleton) — writes startup-only aggregate after gates pass
+# Per-call helpers
+# ---------------------------------------------------------------------------
+
+
+def _critic_dir(raw_payload_root: Path, batch_uuid: str) -> Path:
+    """Directory that holds ``call_NNNN_*`` artifacts for one batch.
+
+    In stub mode ``raw_payload_root`` is ``DRYRUN_ROOT/raw_payloads``; in
+    live mode it is the production ``raw_payloads``. Either way, artifacts
+    land under ``<root>/batch_<uuid>/critic/``.
+    """
+    return raw_payload_root / f"batch_{batch_uuid}" / "critic"
+
+
+def _not_reached_scan_result() -> dict:
+    return {
+        "status": "not_reached",
+        "hits": None,
+        "reason": "parse failed before scan completion",
+    }
+
+
+def _capture_leakage_audit_result(prompt_text: str) -> dict:
+    """Leakage audit result dict — matches Stage 2c shape."""
+    leakage_detail = run_leakage_audit(prompt_text)
+    return {
+        "status": "pass" if leakage_detail is None else "fail",
+        "violations": [] if leakage_detail is None else [leakage_detail],
+        "protected_terms_checked_count": len(D7B_PROTECTED_TERMS),
+    }
+
+
+def _classify_d7b_error(
+    critic_error_signature: str | None, actual_cost_usd: float,
+) -> str | None:
+    """Coarse bucketing for abort-rule category (matches Stage 2c §7).
+
+    Patch 2 uses a conservative default: any non-None signature with
+    observed cost > 0 is content-level (model responded, we rejected the
+    content); zero cost with a signature is api-level (no response billed).
+    Full classifier tuning is Patch 3 work.
+    """
+    if critic_error_signature is None:
+        return None
+    if actual_cost_usd > 0:
+        return "content_level"
+    return "api_level"
+
+
+def _build_backend(config: Stage2dConfig, position: int) -> D7bBackend:
+    """Construct the D7b backend for one call.
+
+    Stub mode returns the deterministic ``StubD7bBackend``. Live mode
+    defers import of ``LiveSonnetD7bBackend`` to call time so that
+    ``--stub`` runs don't require an Anthropic client to import cleanly.
+    A unit-testable ``backend_factory`` override is honoured first.
+
+    Stub vs live artifact asymmetry (Stage 2c parallel discipline):
+    ``StubD7bBackend`` returns ``raw_response_path=None`` and writes no
+    ``response.json`` or ``traceback.txt``. ``LiveSonnetD7bBackend``
+    writes ``response.json`` on success and ``traceback.txt`` on error
+    from within ``invoke()`` itself. The caller uses ``.exists()``
+    probes to reflect this — identical pattern to Stage 2c fire script.
+    """
+    if config.backend_factory is not None:
+        return config.backend_factory(
+            raw_payload_dir=config.raw_payload_root,
+            api_call_number=position,
+            batch_id=STAGE2D_BATCH_UUID,
+        )
+    if config.stub:
+        return StubD7bBackend()
+    from agents.critic.d7b_live import LiveSonnetD7bBackend
+
+    return LiveSonnetD7bBackend(
+        raw_payload_dir=config.raw_payload_root,
+        api_call_number=position,
+        batch_id=STAGE2D_BATCH_UUID,
+    )
+
+
+def _estimated_cost_for_mode(stub: bool) -> float:
+    """Pre-flight ledger estimate.
+
+    Stub = 0.0 (no API call). Live = ``D7B_STAGE2A_COST_CEILING_USD``
+    ($0.05) per Advisor Precision 1 / design spec §11.1. NOT the rule-(d)
+    abort threshold of $0.08.
+    """
+    if stub:
+        return 0.0
+    from agents.critic.d7b_live import D7B_STAGE2A_COST_CEILING_USD
+
+    return D7B_STAGE2A_COST_CEILING_USD
+
+
+def _synthesize_pos116_record(
+    *,
+    candidate: dict,
+    call_index: int,
+    iso_now: str,
+) -> dict:
+    """Synthetic per-call record for position 116 (Lock 1.5 + Layer B).
+
+    Lock 1.5 mandates 11 top-level fields with verbatim values for the
+    sole skipped source. Layer B adds 6 envelope fields required for
+    aggregate-builder parity across all 200 positions — per the design
+    spec §11.0 Layer B governing principle, these may not imply a D7b
+    request, response, prompt, ledger event, or critic computation.
+
+    No ledger row is written for pos 116 (C.7 revised ruling); no
+    prompt / response / critic_result artifacts either. The record
+    exists solely in the aggregate's ``per_call_records[115]`` slot.
+    """
+    if candidate["position"] != 116:
+        raise AssertionError(
+            f"_synthesize_pos116_record called for position "
+            f"{candidate['position']}; expected 116"
+        )
+
+    # Layer A — Lock 1.5 mandated (11 fields, verbatim values).
+    lock_15_fields: dict[str, object] = {
+        "call_index": call_index,
+        "position": 116,
+        "critic_status": "skipped_source_invalid",
+        "d7b_call_attempted": False,
+        "d7b_error_category": "source_invalid",
+        "source_lifecycle_state": "rejected_complexity",
+        "source_valid_status": "invalid_schema",
+        "actual_cost_usd": 0.0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "skip_reason": (
+            "source candidate is not pending_backtest and "
+            "cannot be replayed by BatchContext reconstruction"
+        ),
+    }
+
+    # Layer B — Stage 2d fire-script envelope (6 fields; per §9.2).
+    envelope_fields: dict[str, object] = {
+        "stratum_id": candidate.get("stratum_id"),
+        "record_written_at_utc": iso_now,
+        "firing_order": candidate["firing_order"],
+        "is_stage2b_overlap": 116 in STAGE2B_OVERLAP_POSITIONS,  # → False
+        "is_deep_dive_candidate": False,  # L12-05 deterministic exclusion
+        "test_retest_tier": None,         # pos 116 not in Stage 2c set
+    }
+
+    return {**lock_15_fields, **envelope_fields}
+
+
+def _build_normal_per_call_record(
+    *,
+    candidate: dict,
+    call_index: int,
+    prompt_text: str,
+    prompt_sha256: str,
+    prior_factor_sets_count: int,
+    theme_hint_factor_count: int,
+    request_ts: datetime,
+    response_ts: datetime,
+    result,  # CriticResult
+    ledger_row_id: str,
+    backend_label: str,
+    estimated_cost_usd: float,
+    actual_cost_usd: float,
+    raw_payload_paths: dict,
+    leakage_audit_result: dict,
+    inter_call_sleep_elapsed_seconds: float,
+    record_written_at_utc: str,
+) -> dict:
+    """Assemble the per-call record for a non-skipped (live D7b) position.
+
+    Mirrors Stage 2c's ``build_per_call_record`` shape with Stage 2d
+    candidate schema adaptations (``universe_b_label`` → pre-registered
+    label; ``stratum_id`` / ``is_deep_dive_candidate`` / ``test_retest_tier``
+    envelope fields added). Patch 3 will expand this into the full 31-key
+    shape specified in design spec §9.1; Patch 2 carries the minimum
+    fields required to support the 3-counter ``critic_status_counts``
+    and future abort-rule evaluation.
+    """
+    result_dict = result.to_dict()
+    wall_clock_s = (response_ts - request_ts).total_seconds()
+
+    scan_results = (
+        result.d7b_scan_results
+        if isinstance(result.d7b_scan_results, dict)
+        else None
+    )
+    forbidden_scan = (
+        scan_results.get("forbidden_language_scan", _not_reached_scan_result())
+        if scan_results is not None else _not_reached_scan_result()
+    )
+    refusal_scan = (
+        scan_results.get("refusal_scan", _not_reached_scan_result())
+        if scan_results is not None else _not_reached_scan_result()
+    )
+
+    cost_ratio: float | None = None
+    if estimated_cost_usd > 0 and actual_cost_usd > 0:
+        cost_ratio = round(actual_cost_usd / estimated_cost_usd, 4)
+
+    d7b_error_category: str | None = None
+    if result.critic_status == "d7b_error":
+        d7b_error_category = _classify_d7b_error(
+            result.critic_error_signature, actual_cost_usd,
+        )
+
+    position = candidate["position"]
+    is_overlap = position in STAGE2B_OVERLAP_POSITIONS
+
+    return {
+        # --- Stage 2a-derived live-call fields ---
+        "request_timestamp_utc": request_ts.isoformat().replace("+00:00", "Z"),
+        "response_timestamp_utc": response_ts.isoformat().replace("+00:00", "Z"),
+        "wall_clock_seconds": round(wall_clock_s, 3),
+        "retry_count": result.d7b_retry_count,
+        "d7b_mode": result.d7b_mode,
+        "critic_result": result_dict,
+        "ledger_row": {
+            "row_id": ledger_row_id,
+            "batch_id": STAGE2D_BATCH_UUID,
+            "api_call_kind": f"d7b_critic_{backend_label}",
+            "backend_kind": "d7b_critic",
+            "call_role": "critique",
+            "estimated_cost_usd": estimated_cost_usd,
+            "actual_cost_usd": actual_cost_usd,
+            "input_tokens": result.d7b_input_tokens,
+            "output_tokens": result.d7b_output_tokens,
+        },
+        "raw_payload_paths": raw_payload_paths,
+        "cost": {
+            "estimated_usd": estimated_cost_usd,
+            "actual_usd": actual_cost_usd,
+            "ratio": cost_ratio,
+        },
+        "leakage_audit_result": leakage_audit_result,
+        "forbidden_language_scan_result": forbidden_scan,
+        "refusal_scan_result": refusal_scan,
+
+        # --- Candidate metadata (Stage 2d schema) ---
+        "firing_order": candidate["firing_order"],
+        "candidate_position": position,
+        "candidate_theme": candidate.get("theme"),
+        "pre_registered_label": candidate.get("universe_b_label"),
+        "prior_factor_sets_count": prior_factor_sets_count,
+        "theme_hint_factor_count": theme_hint_factor_count,
+        "prompt_chars": len(prompt_text),
+        "prompt_sha256": prompt_sha256,
+        "call_index": call_index,
+        "call_index_in_sequence": candidate["firing_order"],
+        "inter_call_sleep_elapsed_seconds": round(
+            inter_call_sleep_elapsed_seconds, 3,
+        ),
+
+        # --- Stage 2c inheritance ---
+        "is_stage2b_overlap": is_overlap,
+
+        # --- Stage 2d envelope additions (parallel to synthetic pos 116) ---
+        "stratum_id": candidate.get("stratum_id"),
+        "is_deep_dive_candidate": False,   # Patch 3 wires from deep_dive_candidates
+        "test_retest_tier": None,          # Patch 3 wires from test_retest_baselines
+        "record_written_at_utc": record_written_at_utc,
+
+        # --- Abort-rule mirrors (single source of truth per Stage 2c) ---
+        "critic_status": result.critic_status,
+        "critic_error_signature": result.critic_error_signature,
+        "actual_cost_usd": actual_cost_usd,
+        "d7b_error_category": d7b_error_category,
+    }
+
+
+def _run_one_call(
+    *,
+    config: Stage2dConfig,
+    candidate: dict,
+    call_index: int,
+    ledger: BudgetLedger,
+    inter_call_sleep_elapsed_seconds: float,
+    startup_prompt_template_sha256: str,
+) -> dict:
+    """Fire one non-skipped candidate and return its per-call record.
+
+    Raises ``Stage2dStartupError`` on mid-run prompt-template SHA drift
+    (HG6b). All other D7b failures land as ``critic_status="d7b_error"``
+    in the returned record — they do not raise.
+    """
+    position = candidate["position"]
+    backend_label = "stub" if config.stub else "live"
+    request_ts = datetime.now(timezone.utc)
+
+    # HG6b — mid-sequence prompt-template drift guard.
+    live_template_sha = _file_sha256(config.prompt_template_path)
+    if live_template_sha != startup_prompt_template_sha256:
+        raise Stage2dStartupError(
+            f"HG6b: prompt template SHA-256 drift between startup "
+            f"({startup_prompt_template_sha256}) and call at position "
+            f"{position} ({live_template_sha}). "
+            "Abort reason: prompt_template_mutated_mid_run"
+        )
+
+    # BatchContext reconstruction from signed-off D6 artifacts.
+    dsl, theme, batch_context = config.reconstruct_fn(
+        STAGE2D_BATCH_UUID, position,
+        stage2d_artifacts_root=RAW_PAYLOAD_ROOT,
+    )
+    prompt_text = build_d7b_prompt(dsl, theme, batch_context)
+    prompt_sha256 = hashlib.sha256(prompt_text.encode("utf-8")).hexdigest()
+
+    prior_factor_sets_count = len(batch_context.prior_factor_sets)
+    theme_hint_factor_count = len(batch_context.theme_hints.get(theme, frozenset()))
+
+    leakage_audit_result = _capture_leakage_audit_result(prompt_text)
+
+    critic_dir = _critic_dir(config.raw_payload_root, STAGE2D_BATCH_UUID)
+    critic_dir.mkdir(parents=True, exist_ok=True)
+    prompt_path = critic_dir / f"call_{position:04d}_prompt.txt"
+    prompt_path.write_text(prompt_text, encoding="utf-8")
+
+    backend = _build_backend(config, position)
+    estimated_cost = _estimated_cost_for_mode(config.stub)
+
+    row_id = ledger.write_pending(
+        batch_id=STAGE2D_BATCH_UUID,
+        api_call_kind=config.api_call_kind_override,
+        backend_kind="d7b_critic",
+        call_role="critique",
+        estimated_cost_usd=estimated_cost,
+        now=request_ts,
+        notes=(
+            f"Stage 2d {backend_label}, position={position}, "
+            f"firing_order={candidate['firing_order']}"
+        ),
+    )
+
+    # Deterministic ledger-cleanup path: if anything between write_pending
+    # and finalize raises, mark the row crashed so it never lingers in
+    # ``pending`` status. The pre-charge still counts (CLAUDE.md rule —
+    # "crashed batches are not resumed"), but audit telemetry is correct.
+    ledger_finalized = False
+    try:
+        result = run_critic(dsl, theme, batch_context, backend)
+        response_ts = datetime.now(timezone.utc)
+
+        actual_cost = float(result.d7b_cost_actual_usd or 0.0)
+
+        ledger.finalize(
+            row_id,
+            actual_cost_usd=actual_cost,
+            now=response_ts,
+            input_tokens=result.d7b_input_tokens,
+            output_tokens=result.d7b_output_tokens,
+        )
+        ledger_finalized = True
+
+        result_path = critic_dir / f"call_{position:04d}_critic_result.json"
+        result_path.write_text(
+            json.dumps(result.to_dict(), indent=2, ensure_ascii=False),
+            encoding="utf-8",
+        )
+        response_path = critic_dir / f"call_{position:04d}_response.json"
+        traceback_path = critic_dir / f"call_{position:04d}_traceback.txt"
+
+        raw_payload_paths = {
+            "prompt": str(prompt_path),
+            "response": str(response_path) if response_path.exists() else None,
+            "traceback": str(traceback_path) if traceback_path.exists() else None,
+            "critic_result": str(result_path),
+        }
+
+        record_written_at = config.now_iso_fn()
+        record = _build_normal_per_call_record(
+            candidate=candidate,
+            call_index=call_index,
+            prompt_text=prompt_text,
+            prompt_sha256=prompt_sha256,
+            prior_factor_sets_count=prior_factor_sets_count,
+            theme_hint_factor_count=theme_hint_factor_count,
+            request_ts=request_ts,
+            response_ts=response_ts,
+            result=result,
+            ledger_row_id=row_id,
+            backend_label=backend_label,
+            estimated_cost_usd=estimated_cost,
+            actual_cost_usd=actual_cost,
+            raw_payload_paths=raw_payload_paths,
+            leakage_audit_result=leakage_audit_result,
+            inter_call_sleep_elapsed_seconds=inter_call_sleep_elapsed_seconds,
+            record_written_at_utc=record_written_at,
+        )
+        return record
+    except BaseException:
+        if not ledger_finalized:
+            try:
+                ledger.mark_crashed(
+                    row_id,
+                    now=datetime.now(timezone.utc),
+                    notes=(
+                        f"Stage 2d uncaught exception at position {position} "
+                        f"(call_index={call_index}); see traceback on caller"
+                    ),
+                )
+            except Exception:
+                # Mark-crashed best-effort; never mask the original exception.
+                pass
+        raise
+
+
+def _critic_status_counts(per_call_records: list[dict]) -> dict[str, int]:
+    """Three-counter status per design spec §10.2.
+
+    Keys are always present (zero when absent) so downstream assertions
+    can rely on a fixed-shape dict. Any status value outside the allowed
+    enum raises ``AssertionError`` — a typo or new status must be
+    surfaced loudly rather than silently folded into ``ok``.
+    """
+    counts = {"ok": 0, "d7b_error": 0, "skipped_source_invalid": 0}
+    for rec in per_call_records:
+        status = rec.get("critic_status")
+        if status == "ok":
+            counts["ok"] += 1
+        elif status == "d7b_error":
+            counts["d7b_error"] += 1
+        elif status == "skipped_source_invalid":
+            counts["skipped_source_invalid"] += 1
+        else:
+            raise AssertionError(
+                f"unknown critic_status in per_call_record: {status!r} "
+                f"(allowed: 'ok', 'd7b_error', 'skipped_source_invalid')"
+            )
+    return counts
+
+
+# ---------------------------------------------------------------------------
+# run_stage2d — Patch 2: 200-record main loop + minimal aggregate
 # ---------------------------------------------------------------------------
 
 
 def run_stage2d(config: Stage2dConfig) -> dict:
-    """First-stage scaffolding: gates + minimal aggregate write.
+    """Patch 2: startup gates + 200-record main loop + minimal aggregate.
 
-    Second-stage patch will add the 200-record main loop, ``_run_one_call``,
-    synthetic pos 116 record, abort rules, and the full 53-key aggregate.
+    The aggregate here is deliberately minimal — it carries the four
+    invariants the stub-run acceptance test checks (``completed_call_count``,
+    ``per_call_records`` length, three-counter ``critic_status_counts``,
+    trailing ``write_completed_at``) plus the enduring startup-audit +
+    hash anchors. Patch 3 will expand to the full 53-key schema
+    (abort-rule vocabulary, stratum breakdown, HG20 input-drift guard,
+    Stage 2c archive SHAs, checkpoint log).
     """
     _assert_stub_isolation(config)
 
@@ -625,24 +1108,91 @@ def run_stage2d(config: Stage2dConfig) -> dict:
     _startup_gates(config)
     startup_completed = config.now_iso_fn()
 
-    aggregate = {
+    fire_script_command = (
+        "python scripts/run_d7_stage2d_batch.py "
+        + ("--confirm-live" if config.confirm_live else "--stub")
+    )
+
+    # Load the 200-candidate sequence already validated by Gate 4.
+    selection = json.loads(
+        config.selection_json_path.read_text(encoding="utf-8")
+    )
+    candidates: list[dict] = selection["candidates"]
+    assert len(candidates) == STAGE2D_SOURCE_N, "gate 4 invariant drift"
+
+    ledger = BudgetLedger(config.ledger_path)
+    per_call_records: list[dict] = []
+    inter_call_sleep_elapsed = 0.0
+    t0 = time.monotonic()
+
+    for idx, candidate in enumerate(candidates, start=1):
+        position = candidate["position"]
+        if position in STAGE2D_SKIPPED_POSITIONS:
+            record = _synthesize_pos116_record(
+                candidate=candidate,
+                call_index=idx,
+                iso_now=config.now_iso_fn(),
+            )
+        else:
+            record = _run_one_call(
+                config=config,
+                candidate=candidate,
+                call_index=idx,
+                ledger=ledger,
+                inter_call_sleep_elapsed_seconds=inter_call_sleep_elapsed,
+                startup_prompt_template_sha256=config.prompt_template_sha,
+            )
+        per_call_records.append(record)
+
+        if idx < STAGE2D_SOURCE_N:
+            t_before = time.monotonic()
+            config.sleep_fn(config.inter_call_sleep_seconds)
+            inter_call_sleep_elapsed = time.monotonic() - t_before
+
+    total_wall_clock_seconds = time.monotonic() - t0
+    fire_timestamp_utc_end = config.now_iso_fn()
+
+    aggregate: dict[str, object] = {
         "stage_label": STAGE_LABEL,
         "record_version": RECORD_VERSION,
         "batch_uuid": STAGE2D_BATCH_UUID,
-        "fire_script_command": "run_d7_stage2d_batch.py",
+        "fire_script_command": fire_script_command,
         "mode": config.mode,
         "startup_gates_passed": True,
         "fire_timestamp_utc_start": fire_start,
         "startup_completed_at_utc": startup_completed,
-        "skeleton_only": True,
-        "replay_candidates_sha256": config.replay_candidates_sha,
-        "prompt_template_sha256": config.prompt_template_sha,
+        "fire_timestamp_utc_end": fire_timestamp_utc_end,
+        "total_wall_clock_seconds": round(total_wall_clock_seconds, 3),
+        "inter_call_sleep_seconds": config.inter_call_sleep_seconds,
+
+        # Anchor hashes captured at startup.
+        # Design spec §10.1 row 9: ``selection_json_sha256`` hashes
+        # ``replay_candidates.json`` (Stage 2c name carried forward).
+        "selection_json_sha256": config.replay_candidates_sha,
+        "d7b_prompt_template_sha256": config.prompt_template_sha,
+
+        # Stage 2d self-documenting counts.
+        "stage2d_source_n": STAGE2D_SOURCE_N,
+        "stage2d_live_d7b_call_n": STAGE2D_LIVE_D7B_CALL_N,
+        "stage2d_skipped_positions": list(STAGE2D_SKIPPED_POSITIONS),
+
+        # Patch 2 sequence summary — enough to pin the contract.
+        "completed_call_count": len(per_call_records),
+        "sequence_aborted": False,  # Patch 3 wires Lock 7 rules a-g
+        "abort_reason": None,
+        "abort_at_call_index": None,
+        "critic_status_counts": _critic_status_counts(per_call_records),
+
+        # Startup audit preserved verbatim.
         "startup_audit": config.startup_audit,
+
+        # Per-call records — 199 live/stub + 1 synthetic pos 116 = 200.
+        "per_call_records": per_call_records,
     }
-    # Lock 11: write_completed_at MUST be appended as the literal LAST key.
-    # Kept as a separate assignment (not a literal in the dict above) so
-    # that any future field added upstream cannot accidentally dislodge it
-    # from tail position.
+
+    # Lock 11 invariant: ``write_completed_at`` is appended LAST. Keep the
+    # assignment separate from the dict literal so that any future field
+    # added upstream cannot dislodge it from tail position.
     aggregate["write_completed_at"] = config.now_iso_fn()
     atomic_write_json(config.aggregate_record_path, aggregate)
     return aggregate
@@ -655,7 +1205,7 @@ def run_stage2d(config: Stage2dConfig) -> dict:
 
 def _build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="D7 Stage 2d 200-record fire script (skeleton stage)",
+        description="D7 Stage 2d 200-record fire script (Patch 2: main loop)",
     )
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument(
@@ -697,10 +1247,13 @@ def main(argv: list[str] | None = None) -> int:
         traceback.print_exc()
         return 2
 
+    status_counts = aggregate["critic_status_counts"]
     print(
-        f"[stage2d] skeleton aggregate written to "
-        f"{config.aggregate_record_path} "
-        f"(mode={config.mode}, gates={len(aggregate['startup_audit'])})"
+        f"[stage2d] aggregate written to {config.aggregate_record_path} "
+        f"(mode={config.mode}, gates={len(aggregate['startup_audit'])}, "
+        f"completed={aggregate['completed_call_count']}, "
+        f"ok={status_counts['ok']}, d7b_error={status_counts['d7b_error']}, "
+        f"skipped={status_counts['skipped_source_invalid']})"
     )
     return 0
 
