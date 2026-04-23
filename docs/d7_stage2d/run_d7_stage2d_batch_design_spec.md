@@ -735,7 +735,7 @@ keys; with HG20 drift, 51 + 2 = 53 keys (per Patch 3d.0 amendment).
 | `test_retest_baselines_sha256` | str | SHA-256 of `test_retest_baselines.json` at startup |
 | `label_universe_analysis_sha256` | str | SHA-256 of `label_universe_analysis.json` at startup |
 | `checkpoint_log` | `list[dict]` | Projected-vs-actual at idx=50,100,150 per §10.3 |
-| `stage2c_archive_sha256_by_file` | `dict[str, str]` \| null | live-mode only; per-file SHA of `stage2c_archive/` contents for audit trail; null in stub |
+| `stage2c_archive_sha256_by_file` | `dict[str, str]` \| null | Unconditional field; null in stub mode, populated dict in live mode after Gate 11 passes — per-file SHA of `stage2c_archive/` contents for audit trail |
 | `stage2d_skipped_positions` | list[int] | = `[116]`; explicit for self-documentation |
 | `stage2d_live_d7b_call_n` | int | = 199; redundant with completed_call_count - skip_count but explicit |
 | `stage2d_source_n` | int | = 200 |
@@ -1178,3 +1178,13 @@ earlier and with better error context than gate failure.
   (50, 100, 150)` trigger tuple, empty-list / partial-list edge cases,
   non-skipped denominator parity with Lock 7). Aggregate key-count
   progression: non-drift 49 → 50, drift 51 → 52.
+- Patch 3d.3 — §10.2 row wording refinement + script implementation:
+  Added `stage2c_archive_sha256_by_file` aggregate field (10th and
+  final Stage 2d addition; completes the 3d aggregate-schema arc).
+  Helper `_compute_stage2c_archive_sha256_by_file` walks
+  `stage2c_archive/` in live mode (60 files guaranteed by Gate 11),
+  returns sorted-by-basename SHA-256 dict; stub returns null. §10.2
+  table row wording aligned with the ratified Option α conditionality
+  bullet (was "live-mode only", now "unconditional field; null in
+  stub mode, populated dict in live mode after Gate 11 passes").
+  Aggregate final counts: non-drift 50 → 51, drift 52 → 53.

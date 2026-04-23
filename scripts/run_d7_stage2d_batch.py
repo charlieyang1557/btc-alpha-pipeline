@@ -1241,6 +1241,40 @@ def _build_checkpoint_log(per_call_records: list[dict]) -> list[dict]:
 
 
 # ---------------------------------------------------------------------------
+# Patch 3d.3 — stage2c_archive_sha256_by_file (10th Stage 2d addition;
+# completes the 3d aggregate-schema arc)
+# ---------------------------------------------------------------------------
+
+
+def _compute_stage2c_archive_sha256_by_file(
+    config: "Stage2dConfig",
+) -> dict[str, str] | None:
+    """Patch 3d.3 — final Stage 2d aggregate addition.
+
+    Stub mode: returns ``None`` with no filesystem touch (matches §10.2
+    conditionality bullet: unconditional field; null in stub).
+
+    Live mode: walks ``stage2c_archive/`` (Gate 11 guarantees the
+    directory exists and all 60 files are present) and returns
+    ``{basename: sha256_hexdigest}`` sorted by basename for deterministic
+    JSON output. Intentionally does NOT re-assert the 60-file count —
+    that contract belongs to Gate 11 alone.
+    """
+    if config.mode != "live":
+        return None
+    archive_dir = (
+        config.raw_payload_root
+        / STAGE2D_BATCH_DIR_NAME
+        / STAGE2C_ARCHIVE_RELATIVE
+    )
+    return {
+        path.name: _file_sha256(path)
+        for path in sorted(archive_dir.iterdir(), key=lambda p: p.name)
+        if path.is_file()
+    }
+
+
+# ---------------------------------------------------------------------------
 # Lock 7 abort evaluation — design spec §7
 # ---------------------------------------------------------------------------
 
@@ -1583,14 +1617,15 @@ def build_aggregate_record(
     """Assemble the Stage 2d aggregate AND own its finalization.
 
     Builder responsibilities (Patch 3d.1 Path II ruling, extended by
-    Patch 3d.2):
+    Patches 3d.2 and 3d.3 — completes the 3d aggregate-schema arc):
 
     1. Build the base dict (41 Stage 2c carry-forward keys minus
        ``selection_tier`` / ``selection_warnings_count`` per Patch 3d.0
-       §10.1 amendment, plus 9 Stage 2d additions —
+       §10.1 amendment, plus 10 Stage 2d additions —
        ``critic_status_counts``, ``stratum_breakdown``, 3 auxiliary-input
-       SHAs, the 3 explicit self-documenting counts, and
-       ``checkpoint_log`` [Patch 3d.2]).
+       SHAs, the 3 explicit self-documenting counts,
+       ``checkpoint_log`` [Patch 3d.2], and
+       ``stage2c_archive_sha256_by_file`` [Patch 3d.3]).
     2. Enforce §10.5 ``abort_reason`` vocabulary BEFORE any write so a
        bad aggregate never reaches disk.
     3. Conditionally insert the two HG20 drift fields
@@ -1601,12 +1636,10 @@ def build_aggregate_record(
     5. ``atomic_write_json`` the aggregate to
        ``config.aggregate_record_path`` and return the written dict.
 
-    Patch 3d.3 will add ``stage2c_archive_sha256_by_file``.
+    Key-count invariants (per Patch 3d.3):
 
-    Key-count invariants (per Patch 3d.2):
-
-    - Non-drift: 49 pre-tail → 50 post-``write_completed_at``
-    - Drift: 51 pre-tail → 52 post-``write_completed_at``
+    - Non-drift: 50 pre-tail → 51 post-``write_completed_at``
+    - Drift: 52 pre-tail → 53 post-``write_completed_at``
     """
     # ----- Ordered-list fields (§10.1 rows 25-33) ---------------------------
     reasoning_lengths: list[int | None] = []
@@ -1766,13 +1799,14 @@ def build_aggregate_record(
         "stage2b_overlap_completed_count": overlap_completed,
         "svr_by_label": svr_by_label,
 
-        # --- §10.2: Stage 2d additions (9 of 10; 1 deferred to 3d.3) -----
+        # --- §10.2: Stage 2d additions (10 of 10; 3d arc complete) -------
         "critic_status_counts": _critic_status_counts(per_call_records),
         "stratum_breakdown": stratum_breakdown,
         "deep_dive_candidates_sha256": config.deep_dive_candidates_sha256,
         "test_retest_baselines_sha256": config.test_retest_baselines_sha256,
         "label_universe_analysis_sha256": config.label_universe_analysis_sha256,
         "checkpoint_log": _build_checkpoint_log(per_call_records),
+        "stage2c_archive_sha256_by_file": _compute_stage2c_archive_sha256_by_file(config),
         "stage2d_skipped_positions": list(STAGE2D_SKIPPED_POSITIONS),
         "stage2d_live_d7b_call_n": STAGE2D_LIVE_D7B_CALL_N,
         "stage2d_source_n": STAGE2D_SOURCE_N,
@@ -1811,17 +1845,18 @@ def build_aggregate_record(
         )
 
     # Dynamic key-count assertions — +2 on drift, +0 otherwise. Base is
-    # 49 pre-tail / 50 post-tail after Patch 3d.2 added ``checkpoint_log``
-    # (was 48/49 post-3d.1). Stage 2d diverges from Stage 2c's
-    # wrapper-ownership by keeping HG20 insertion + tail inside the
-    # builder for invariant locality (Patch 3d.1 Q1 ruling: Path II).
+    # 50 pre-tail / 51 post-tail after Patch 3d.3 added
+    # ``stage2c_archive_sha256_by_file`` (was 49/50 post-3d.2). Stage 2d
+    # diverges from Stage 2c's wrapper-ownership by keeping HG20
+    # insertion + tail inside the builder for invariant locality
+    # (Patch 3d.1 Q1 ruling: Path II).
     hg20_addition = 2 if hg20_drift_detected else 0
-    expected_pre_tail = 49 + hg20_addition
-    expected_post_tail = 50 + hg20_addition
+    expected_pre_tail = 50 + hg20_addition
+    expected_post_tail = 51 + hg20_addition
 
     assert len(aggregate) == expected_pre_tail, (
         f"aggregate pre-tail key count drift: got {len(aggregate)}, "
-        f"expected {expected_pre_tail} (3d.2 base 49 + HG20 conditional "
+        f"expected {expected_pre_tail} (3d.3 base 50 + HG20 conditional "
         f"{hg20_addition}). Keys: {sorted(aggregate.keys())}"
     )
 
@@ -1831,7 +1866,7 @@ def build_aggregate_record(
     aggregate["write_completed_at"] = config.now_iso_fn()
     assert len(aggregate) == expected_post_tail, (
         f"aggregate final key count drift: got {len(aggregate)}, "
-        f"expected {expected_post_tail} (3d.2 base 50 + HG20 conditional "
+        f"expected {expected_post_tail} (3d.3 base 51 + HG20 conditional "
         f"{hg20_addition}). Keys: {sorted(aggregate.keys())}"
     )
     atomic_write_json(config.aggregate_record_path, aggregate)
