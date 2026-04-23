@@ -142,7 +142,11 @@ STAGE2D_STUB_INTER_CALL_SLEEP_SECONDS: float = 0.0
 
 # Aggregate schema identity
 STAGE_LABEL: str = "d7_stage2d"
-RECORD_VERSION: str = "1.0-patch2"
+RECORD_VERSION: str = "1.0-patch3c"
+
+# Reconciliation threshold — Stage 2c parity (structural_variant_risk >= 0.5
+# classified as HIGH; < 0.5 as LOW; exactly 0.5 tie-broken to HIGH).
+STRUCTURAL_VARIANT_RISK_HIGH_THRESHOLD: float = 0.5
 
 
 # ---------------------------------------------------------------------------
@@ -223,6 +227,14 @@ def _iso_now() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
+def _unix_to_iso(ts: int | None) -> str | None:
+    if ts is None:
+        return None
+    return datetime.fromtimestamp(ts, tz=timezone.utc).isoformat().replace(
+        "+00:00", "Z"
+    )
+
+
 def atomic_write_json(path: Path, payload: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(path.suffix + ".tmp")
@@ -259,6 +271,7 @@ class Stage2dConfig:
     raw_payload_root: Path
     ledger_path: Path
     api_call_kind_override: str
+    startup_audit_path: Path
 
     # Read-only inputs (identical for stub/live)
     selection_json_path: Path = STAGE2D_REPLAY_CANDIDATES_PATH
@@ -273,10 +286,21 @@ class Stage2dConfig:
     # with Stage 2c), stub = 0s (no API round-trip to pace).
     inter_call_sleep_seconds: float = STAGE2D_LIVE_INTER_CALL_SLEEP_SECONDS
 
-    # Captured at gate time; default empty / None until filled
+    # Captured at gate time; default empty / None until filled. The six
+    # SHA / commit-timestamp fields below feed §10.1 carry-forward and
+    # §10.2 aggregate keys. selection_tier / selection_warnings_count are
+    # intentionally absent — Stage 2d selection pipeline does not produce
+    # them, so the corresponding aggregate rows are deferred to Patch 3d.
     prompt_template_sha: str | None = None
     replay_candidates_sha: str | None = None
+    expectations_file_sha256: str | None = None
+    selection_commit_timestamp_utc: str | None = None
+    expectations_commit_timestamp_utc: str | None = None
+    deep_dive_candidates_sha256: str | None = None
+    test_retest_baselines_sha256: str | None = None
+    label_universe_analysis_sha256: str | None = None
     startup_audit: list[dict] = field(default_factory=list)
+    startup_completed_at_utc: str | None = None
 
     # Injectables (keeps pure-function gate logic unit-testable)
     anchor_hash_fn: Callable[[str, str], str | None] = field(default=_git_show_sha256)
@@ -304,6 +328,7 @@ def build_stage2d_config(confirm_live: bool, stub: bool) -> Stage2dConfig:
             stub=True,
             mode="stub",
             aggregate_record_path=DRYRUN_ROOT / "stage2d_aggregate_record.json",
+            startup_audit_path=DRYRUN_ROOT / "stage2d_startup_audit.json",
             raw_payload_root=DRYRUN_ROOT / "raw_payloads",
             ledger_path=DRYRUN_ROOT / "ledger_dryrun.db",
             api_call_kind_override="d7b_critic_stub",
@@ -316,6 +341,10 @@ def build_stage2d_config(confirm_live: bool, stub: bool) -> Stage2dConfig:
         aggregate_record_path=(
             RAW_PAYLOAD_ROOT / STAGE2D_BATCH_DIR_NAME / "critic"
             / "stage2d_aggregate_record.json"
+        ),
+        startup_audit_path=(
+            RAW_PAYLOAD_ROOT / STAGE2D_BATCH_DIR_NAME / "critic"
+            / "stage2d_startup_audit.json"
         ),
         raw_payload_root=RAW_PAYLOAD_ROOT,
         ledger_path=LEDGER_PATH,
@@ -359,6 +388,7 @@ def _assert_stub_isolation(config: Stage2dConfig) -> None:
 
     to_check = (
         ("aggregate_record_path", config.aggregate_record_path),
+        ("startup_audit_path", config.startup_audit_path),
         ("raw_payload_root", config.raw_payload_root),
         ("ledger_path", config.ledger_path),
     )
@@ -373,8 +403,8 @@ def _assert_stub_isolation(config: Stage2dConfig) -> None:
                 f"(resolved={resolved}). Stub mode must stay under "
                 f"{DRYRUN_ROOT}."
             )
-        # Positive-containment check for the two path fields.
-        if name in ("aggregate_record_path", "raw_payload_root"):
+        # Positive-containment check for the three path fields.
+        if name in ("aggregate_record_path", "startup_audit_path", "raw_payload_root"):
             if not _is_under(resolved, dryrun_root):
                 raise Stage2dStartupError(
                     f"stub isolation: {name}={p} (resolved={resolved}) "
@@ -495,13 +525,18 @@ def _gate_replay_candidates_invariants(config: Stage2dConfig) -> None:
 
 
 def _gate_expectations_exists(config: Stage2dConfig) -> None:
-    """Gate 5 / HG3 — expectations file must exist and be non-empty."""
+    """Gate 5 / HG3 — expectations file must exist, be non-empty, and have
+    its SHA-256 captured for the aggregate record (§10.1 row 10)."""
     p = config.expectations_path
     if not p.is_file():
         raise Stage2dStartupError(f"HG3: expectations file missing: {p}")
     if p.stat().st_size == 0:
         raise Stage2dStartupError(f"HG3: expectations file is empty: {p}")
-    _audit_pass(config, "expectations_exists")
+    config.expectations_file_sha256 = _file_sha256(p)
+    _audit_pass(
+        config, "expectations_exists",
+        sha256=config.expectations_file_sha256,
+    )
 
 
 def _gate_expectations_committed(config: Stage2dConfig) -> None:
@@ -534,8 +569,15 @@ def _gate_expectations_committed(config: Stage2dConfig) -> None:
         raise Stage2dStartupError(
             f"HG5: expectations commit ({exp_ts}) must be strictly < wall-clock ({now_ts})"
         )
-    _audit_pass(config, "expectations_committed",
-                selection_commit_ts=sel_ts, expectations_commit_ts=exp_ts)
+    config.selection_commit_timestamp_utc = _unix_to_iso(sel_ts)
+    config.expectations_commit_timestamp_utc = _unix_to_iso(exp_ts)
+    _audit_pass(
+        config, "expectations_committed",
+        selection_commit_ts=sel_ts,
+        expectations_commit_ts=exp_ts,
+        selection_commit_timestamp_utc=config.selection_commit_timestamp_utc,
+        expectations_commit_timestamp_utc=config.expectations_commit_timestamp_utc,
+    )
 
 
 def _gate_prompt_template_sha(config: Stage2dConfig) -> None:
@@ -549,11 +591,20 @@ def _gate_prompt_template_sha(config: Stage2dConfig) -> None:
 
 def _gate_read_only_inputs(config: Stage2dConfig) -> None:
     """Gate 8 — §10.2a / §10.2b / §3.x / §4.x auxiliary artifacts must exist
-    and parse as JSON. The fire script never derives these; it only reads."""
-    for label, path in (
-        ("test_retest_baselines", config.test_retest_path),
-        ("deep_dive_candidates", config.deep_dive_path),
-        ("label_universe_analysis", config.label_universe_path),
+    and parse as JSON. The fire script never derives these; it only reads.
+
+    SHA-256 of each auxiliary input is captured onto the Config so the
+    aggregate record (§10.2 rows 712-714) can carry them without a
+    separate re-hash pass.
+    """
+    captured: dict[str, str] = {}
+    for label, path, attr in (
+        ("test_retest_baselines", config.test_retest_path,
+            "test_retest_baselines_sha256"),
+        ("deep_dive_candidates", config.deep_dive_path,
+            "deep_dive_candidates_sha256"),
+        ("label_universe_analysis", config.label_universe_path,
+            "label_universe_analysis_sha256"),
     ):
         if not path.is_file():
             raise Stage2dStartupError(
@@ -565,7 +616,10 @@ def _gate_read_only_inputs(config: Stage2dConfig) -> None:
             raise Stage2dStartupError(
                 f"HG_RO_INPUTS: auxiliary input {label} at {path} is not valid JSON: {exc}"
             )
-    _audit_pass(config, "read_only_inputs")
+        sha = _file_sha256(path)
+        setattr(config, attr, sha)
+        captured[attr] = sha
+    _audit_pass(config, "read_only_inputs", **captured)
 
 
 def _gate_aggregate_record_absent(config: Stage2dConfig) -> None:
@@ -1209,7 +1263,442 @@ def should_abort(
 
 
 # ---------------------------------------------------------------------------
-# run_stage2d — Patch 2: 200-record main loop + minimal aggregate
+# Aggregate record helpers — ported from Stage 2c with Stage 2d adaptations
+# per ChatGPT Q1 ruling (universe_b_label label source; keep Stage 2c
+# bucket shape). Pos 116 contributions follow design spec §10.3.
+#
+# Parallel-discipline note: duplicated rather than imported so Stage 2c
+# and Stage 2d aggregates can diverge independently (scope-lock §10.2).
+# ---------------------------------------------------------------------------
+
+
+def _is_skipped_record(rec: dict) -> bool:
+    """True iff the per-call record is the synthetic pos 116 slot.
+
+    Inline position read follows the same fallback rule as ``should_abort``
+    rule (g) — normal records carry ``candidate_position``, synthetic pos
+    116 carries ``position`` (Lock 1.5).
+    """
+    if rec.get("critic_status") == "skipped_source_invalid":
+        return True
+    pos = rec.get("position", rec.get("candidate_position"))
+    return pos is not None and int(pos) in STAGE2D_SKIPPED_POSITIONS
+
+
+def _extract_d7a_scores(result_dict: dict | None) -> dict[str, float] | None:
+    if not result_dict:
+        return None
+    return result_dict.get("d7a_rule_scores")
+
+
+def _extract_d7b_scores(result_dict: dict | None) -> dict[str, float] | None:
+    if not result_dict:
+        return None
+    return result_dict.get("d7b_llm_scores")
+
+
+def is_consistent_with_label(
+    pre_registered_label: str | None,
+    structural_variant_risk: float | None,
+) -> bool | None:
+    """Mechanical reconciliation of D7b's structural_variant_risk to label.
+
+    Returns True / False / None (None on d7b_error, neutral label, or
+    absent label — pos 116 falls through as None per §10.3).
+    Exactly 0.5 classified as ``>= 0.5`` (HIGH). Ported from Stage 2c
+    verbatim.
+    """
+    if structural_variant_risk is None:
+        return None
+    if pre_registered_label == "divergence_expected":
+        return structural_variant_risk < STRUCTURAL_VARIANT_RISK_HIGH_THRESHOLD
+    if pre_registered_label == "agreement_expected":
+        return structural_variant_risk >= STRUCTURAL_VARIANT_RISK_HIGH_THRESHOLD
+    return None
+
+
+def reconciliation_rationale(
+    pre_registered_label: str | None,
+    structural_variant_risk: float | None,
+) -> str:
+    """Human-readable rationale embedded in the aggregate record.
+
+    Ported from Stage 2c. The pos 116 synthetic slot does not reach this
+    function; its rationale string is set to ``"skipped_source_invalid"``
+    directly in :func:`build_aggregate_record` per §10.3.
+    """
+    if structural_variant_risk is None:
+        return (
+            "d7b_error; no structural_variant_risk score produced; "
+            "cannot reconcile"
+        )
+    if pre_registered_label == "neutral":
+        return (
+            "neutral label has no per-candidate structural_variant_risk "
+            "prediction; aggregate-level reconciliation performed in sign-off"
+        )
+    direction = (
+        "low (< 0.5)"
+        if structural_variant_risk < STRUCTURAL_VARIANT_RISK_HIGH_THRESHOLD
+        else "high (>= 0.5)"
+    )
+    consistent = is_consistent_with_label(
+        pre_registered_label, structural_variant_risk,
+    )
+    verdict = "supports" if consistent else "contradicts"
+    return (
+        f"{pre_registered_label} with D7b structural_variant_risk "
+        f"{structural_variant_risk:.4f} = {direction} {verdict} "
+        f"pre-registered label"
+    )
+
+
+def _compute_theme_counts(candidates: list[dict]) -> dict[str, int]:
+    """Theme histogram over all 200 replay candidates (including pos 116)."""
+    counts: dict[str, int] = {}
+    for c in candidates:
+        theme = c.get("theme", "unknown")
+        counts[theme] = counts.get(theme, 0) + 1
+    return counts
+
+
+def _compute_label_counts(candidates: list[dict]) -> dict[str, int]:
+    """Pre-registered label histogram using Stage 2d ``universe_b_label``.
+
+    Buckets are fixed ``{agreement_expected, divergence_expected, neutral}``
+    to preserve Stage 2c consumer shape. Per ChatGPT Round 2 ruling, the
+    skipped-source record (pos 116) carries ``universe_b_label = None``
+    and is intentionally NOT folded into ``neutral``: the null bucket
+    falls through the ``if label in counts`` filter so the sum is 199
+    (not 200). Pos 116's absence is implicit in the 3-key shape.
+    """
+    counts: dict[str, int] = {
+        "agreement_expected": 0,
+        "divergence_expected": 0,
+        "neutral": 0,
+    }
+    for c in candidates:
+        label = c.get("universe_b_label")
+        if label in counts:
+            counts[label] += 1
+    return counts
+
+
+def _svr_by_label(per_call_records: list[dict]) -> dict[str, dict]:
+    """Partition completed structural_variant_risk scores by label.
+
+    Position read uses the ``rec.get("position", rec.get("candidate_position"))``
+    inline fallback so the synthetic pos 116 record — even though it
+    cannot contribute (no critic_result, no pre_registered_label) —
+    cannot raise a KeyError if it somehow reaches this function.
+
+    Only non-skipped records with a non-None SVR contribute.
+    """
+    buckets: dict[str, list[tuple[int, float]]] = {
+        "agreement_expected": [],
+        "divergence_expected": [],
+        "neutral": [],
+    }
+    for rec in per_call_records:
+        label = rec.get("pre_registered_label")
+        if label not in buckets:
+            continue
+        critic_result = rec.get("critic_result")
+        d7b = _extract_d7b_scores(critic_result)
+        if not d7b:
+            continue
+        svr = d7b.get("structural_variant_risk")
+        if svr is None:
+            continue
+        pos = rec.get("position", rec.get("candidate_position"))
+        if pos is None:
+            continue
+        buckets[label].append((int(pos), float(svr)))
+
+    out: dict[str, dict] = {}
+    for label, pairs in buckets.items():
+        pairs.sort(key=lambda t: t[0])
+        out[label] = {
+            "completed_count": len(pairs),
+            "positions": [p for p, _ in pairs],
+            "svr_values": [round(v, 6) for _, v in pairs],
+        }
+    return out
+
+
+def _compute_stratum_breakdown(
+    per_call_records: list[dict],
+    deep_dive_data: dict | None,
+) -> dict[str, dict]:
+    """Stratum-level breakdown over the 20 deep-dive candidates only.
+
+    Per ChatGPT Q2 ruling, coverage is deep-dive positions only (not all
+    200). Each bucket reports ``count`` (deep-dive records observed),
+    ``error_count`` (critic_status == 'd7b_error'), and ``error_rate``.
+    Skipped records (pos 116) are excluded from both numerator and
+    denominator. Stratum id is string-keyed for JSON stability.
+    """
+    out: dict[str, dict] = {}
+    if not deep_dive_data:
+        return out
+
+    dd_candidates = deep_dive_data.get("candidates") or []
+
+    # Index per-call records by position for O(1) lookup.
+    by_pos: dict[int, dict] = {}
+    for rec in per_call_records:
+        pos = rec.get("position", rec.get("candidate_position"))
+        if pos is None:
+            continue
+        by_pos[int(pos)] = rec
+
+    for dd in dd_candidates:
+        stratum = dd.get("primary_stratum_id")
+        position = dd.get("position")
+        if stratum is None or position is None:
+            continue
+        rec = by_pos.get(int(position))
+        if rec is None:
+            continue
+        if _is_skipped_record(rec):
+            continue  # pos 116 cannot land in deep-dive set; defensive.
+        key = str(stratum)
+        bucket = out.setdefault(
+            key, {"count": 0, "error_count": 0, "error_rate": 0.0},
+        )
+        bucket["count"] += 1
+        if rec.get("critic_status") == "d7b_error":
+            bucket["error_count"] += 1
+
+    for bucket in out.values():
+        n = bucket["count"]
+        bucket["error_rate"] = (
+            round(bucket["error_count"] / n, 6) if n > 0 else 0.0
+        )
+    return out
+
+
+def build_aggregate_record(
+    *,
+    config: "Stage2dConfig",
+    candidates: list[dict],
+    per_call_records: list[dict],
+    fire_timestamp_utc_start: str,
+    fire_timestamp_utc_end: str,
+    sequence_aborted: bool,
+    abort_reason: str | None,
+    abort_at_call_index: int | None,
+    total_wall_clock_seconds: float,
+    fire_script_command: str,
+    deep_dive_data: dict | None,
+) -> dict:
+    """Assemble the 49-key Stage 2d aggregate (no ``write_completed_at``).
+
+    Field coverage is the 3c target — 41 Stage 2c carry-forward keys
+    (``selection_tier`` and ``selection_warnings_count`` deferred to
+    Patch 3d because Stage 2d's selection pipeline produces no source
+    for them on disk) plus 8 Stage 2d additions (``critic_status_counts``,
+    ``stratum_breakdown``, 3 auxiliary-input SHAs, and the 3 explicit
+    self-documenting counts). Patch 3d will add HG20 conditionals,
+    ``checkpoint_log``, and ``stage2c_archive_sha256_by_file``.
+    """
+    # ----- Ordered-list fields (§10.1 rows 25-33) ---------------------------
+    reasoning_lengths: list[int | None] = []
+    actual_costs: list[float] = []
+    estimated_costs: list[float] = []
+    input_tokens_seq: list[int] = []
+    output_tokens_seq: list[int] = []
+    wall_clocks: list[float | None] = []
+    statuses: list[str] = []
+    error_cats: list[str | None] = []
+    is_overlap_seq: list[bool] = []
+
+    # ----- Per-call indexed dict fields (§10.1 rows 34-36) ------------------
+    d7a_by_call: dict[str, dict | None] = {}
+    d7b_by_call: dict[str, dict | None] = {}
+    reconciliation: dict[str, dict] = {}
+
+    for rec in per_call_records:
+        skipped = _is_skipped_record(rec)
+        # firing_order is 1..200 for all 200 records (Lock 1.4 invariant);
+        # keying the by-call dicts by firing_order preserves Stage 2c shape.
+        idx_key = str(rec["firing_order"])
+
+        if skipped:
+            # §10.3 — pos 116 contributions, verbatim.
+            reasoning_lengths.append(None)
+            actual_costs.append(0.0)
+            estimated_costs.append(0.0)
+            input_tokens_seq.append(0)
+            output_tokens_seq.append(0)
+            wall_clocks.append(None)
+            statuses.append("skipped_source_invalid")
+            error_cats.append("source_invalid")
+            is_overlap_seq.append(False)
+            d7a_by_call[idx_key] = None
+            d7b_by_call[idx_key] = None
+            reconciliation[idx_key] = {
+                "pre_registered_label": None,
+                "d7b_structural_variant_risk": None,
+                "observed_consistent_with_label": None,
+                "rationale": "skipped_source_invalid",
+            }
+            continue
+
+        critic_result = rec.get("critic_result")
+        d7b_scores = _extract_d7b_scores(critic_result)
+        reasoning_text = ""
+        if critic_result is not None:
+            reasoning_text = critic_result.get("d7b_reasoning") or ""
+        reasoning_lengths.append(len(reasoning_text))
+
+        actual_costs.append(float(rec.get("actual_cost_usd") or 0.0))
+        est = rec.get("cost", {}).get("estimated_usd", 0.0)
+        estimated_costs.append(float(est or 0.0))
+        input_tokens_seq.append(int(
+            (critic_result or {}).get("d7b_input_tokens") or 0
+        ))
+        output_tokens_seq.append(int(
+            (critic_result or {}).get("d7b_output_tokens") or 0
+        ))
+        wall_clocks.append(rec.get("wall_clock_seconds"))
+        statuses.append(rec["critic_status"])
+        error_cats.append(rec.get("d7b_error_category"))
+        is_overlap_seq.append(bool(rec.get("is_stage2b_overlap")))
+
+        d7a_by_call[idx_key] = _extract_d7a_scores(critic_result)
+        d7b_by_call[idx_key] = d7b_scores
+        svr = d7b_scores.get("structural_variant_risk") if d7b_scores else None
+        label = rec.get("pre_registered_label")
+        reconciliation[idx_key] = {
+            "pre_registered_label": label,
+            "d7b_structural_variant_risk": svr,
+            "observed_consistent_with_label": is_consistent_with_label(label, svr),
+            "rationale": reconciliation_rationale(label, svr),
+        }
+
+    # ----- Sum scalars (§10.1 rows 21-24) -----------------------------------
+    total_actual = sum(float(v or 0) for v in actual_costs)
+    total_estimated = sum(float(v or 0) for v in estimated_costs)
+    total_input = sum(int(v or 0) for v in input_tokens_seq)
+    total_output = sum(int(v or 0) for v in output_tokens_seq)
+
+    # ----- Sequence aggregates (§10.1 rows 37-42) ---------------------------
+    theme_counts = _compute_theme_counts(candidates)
+    label_counts = _compute_label_counts(candidates)
+    overlap_positions_sorted = sorted(STAGE2B_OVERLAP_POSITIONS)
+    overlap_completed = sum(
+        1 for rec in per_call_records
+        if not _is_skipped_record(rec)
+        and int(rec.get("candidate_position", -1)) in STAGE2B_OVERLAP_POSITIONS
+    )
+    svr_by_label = _svr_by_label(per_call_records)
+
+    # ----- Stage 2d additions (§10.2 rows subset — 8 of 10) -----------------
+    stratum_breakdown = _compute_stratum_breakdown(per_call_records, deep_dive_data)
+
+    return {
+        # --- §10.1 rows 1-9: identity + anchors ---------------------------
+        "stage_label": STAGE_LABEL,
+        "record_version": RECORD_VERSION,
+        "batch_uuid": STAGE2D_BATCH_UUID,
+        "fire_script_command": fire_script_command,
+        "fire_timestamp_utc_start": fire_timestamp_utc_start,
+        "fire_timestamp_utc_end": fire_timestamp_utc_end,
+        # write_completed_at is appended LAST by run_stage2d (Lock 11).
+        "d7b_prompt_template_sha256": config.prompt_template_sha,
+        "selection_json_sha256": config.replay_candidates_sha,
+
+        # --- §10.1 rows 10-12: provenance anchors -------------------------
+        "expectations_file_sha256": config.expectations_file_sha256,
+        "selection_commit_timestamp_utc": config.selection_commit_timestamp_utc,
+        "expectations_commit_timestamp_utc": config.expectations_commit_timestamp_utc,
+
+        # NOTE: §10.1 rows 13-14 (`selection_tier`, `selection_warnings_count`)
+        # are intentionally omitted from 3c. Stage 2d's selection pipeline
+        # does not produce a selection-tier artifact on disk (verified in
+        # 3c Round 2 rulings); these two rows are deferred to Patch 3d.
+        # Do NOT hardcode them here — that would invent data.
+
+        # --- §10.1 rows 15-20: sequence summary ---------------------------
+        "sequence_aborted": sequence_aborted,
+        "abort_reason": abort_reason,
+        "abort_at_call_index": abort_at_call_index,
+        "completed_call_count": len(per_call_records),
+        "total_wall_clock_seconds": round(total_wall_clock_seconds, 3),
+        "inter_call_sleep_seconds": config.inter_call_sleep_seconds,
+
+        # --- §10.1 rows 21-24: sum scalars --------------------------------
+        "total_actual_cost_usd": round(total_actual, 6),
+        "total_estimated_cost_usd": round(total_estimated, 6),
+        "total_input_tokens": total_input,
+        "total_output_tokens": total_output,
+
+        # --- §10.1 rows 25-33: ordered lists (pos 116 per §10.3) ----------
+        "reasoning_lengths_in_call_order": reasoning_lengths,
+        "actual_costs_in_call_order": [round(v, 6) for v in actual_costs],
+        "estimated_costs_in_call_order": [round(v, 6) for v in estimated_costs],
+        "input_tokens_in_call_order": input_tokens_seq,
+        "output_tokens_in_call_order": output_tokens_seq,
+        "wall_clock_seconds_in_call_order": wall_clocks,
+        "critic_statuses_in_call_order": statuses,
+        "d7b_error_categories_in_call_order": error_cats,
+        "is_stage2b_overlap_in_call_order": is_overlap_seq,
+
+        # --- §10.1 rows 34-36: by-call dicts (pos 116 per §10.3) ----------
+        "d7a_scores_by_call": d7a_by_call,
+        "d7b_scores_by_call": d7b_by_call,
+        "agreement_divergence_reconciliation_by_call": reconciliation,
+
+        # --- §10.1 rows 37-42: sequence-wide aggregates -------------------
+        "theme_counts_in_sequence": theme_counts,
+        "label_counts_in_sequence": label_counts,
+        "stage2b_overlap_count": len(STAGE2B_OVERLAP_POSITIONS),
+        "stage2b_overlap_positions": overlap_positions_sorted,
+        "stage2b_overlap_completed_count": overlap_completed,
+        "svr_by_label": svr_by_label,
+
+        # --- §10.2: Stage 2d additions (8 of 10; 2 deferred to 3d) --------
+        "critic_status_counts": _critic_status_counts(per_call_records),
+        "stratum_breakdown": stratum_breakdown,
+        "deep_dive_candidates_sha256": config.deep_dive_candidates_sha256,
+        "test_retest_baselines_sha256": config.test_retest_baselines_sha256,
+        "label_universe_analysis_sha256": config.label_universe_analysis_sha256,
+        "stage2d_skipped_positions": list(STAGE2D_SKIPPED_POSITIONS),
+        "stage2d_live_d7b_call_n": STAGE2D_LIVE_D7B_CALL_N,
+        "stage2d_source_n": STAGE2D_SOURCE_N,
+
+        # --- §10.1 row 43: per-call records -------------------------------
+        "per_call_records": per_call_records,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Startup-audit artifact — §12.1 mandates separate file, not embedded in
+# aggregate. Written once after startup gates complete successfully.
+# ---------------------------------------------------------------------------
+
+
+def _write_startup_audit_artifact(config: Stage2dConfig) -> None:
+    """Write ``stage2d_startup_audit.json`` alongside the aggregate.
+
+    Contains mode, completion timestamp, and the verbatim gate-by-gate
+    audit list. Kept separate from the aggregate per design spec §12.1
+    so the aggregate stays focused on sequence outcomes.
+    """
+    payload = {
+        "stage_label": STAGE_LABEL,
+        "batch_uuid": STAGE2D_BATCH_UUID,
+        "mode": config.mode,
+        "startup_gates_passed": True,
+        "startup_completed_at_utc": config.startup_completed_at_utc,
+        "startup_audit": config.startup_audit,
+    }
+    atomic_write_json(config.startup_audit_path, payload)
+
+
+# ---------------------------------------------------------------------------
+# run_stage2d — Patch 3c: 49-key aggregate + separate startup_audit artifact
 # ---------------------------------------------------------------------------
 
 
@@ -1237,7 +1726,8 @@ def run_stage2d(config: Stage2dConfig) -> dict:
 
     fire_start = config.now_iso_fn()
     _startup_gates(config)
-    startup_completed = config.now_iso_fn()
+    config.startup_completed_at_utc = config.now_iso_fn()
+    _write_startup_audit_artifact(config)
 
     fire_script_command = (
         "python scripts/run_d7_stage2d_batch.py "
@@ -1250,6 +1740,13 @@ def run_stage2d(config: Stage2dConfig) -> dict:
     )
     candidates: list[dict] = selection["candidates"]
     assert len(candidates) == STAGE2D_SOURCE_N, "gate 4 invariant drift"
+
+    # Deep-dive data loaded once; used by stratum_breakdown builder.
+    # Gate 8 already validated the JSON parse; a second read keeps the
+    # aggregate builder pure (no Config dependency on file contents).
+    deep_dive_data = json.loads(
+        config.deep_dive_path.read_text(encoding="utf-8")
+    )
 
     ledger = BudgetLedger(config.ledger_path)
     per_call_records: list[dict] = []
@@ -1301,48 +1798,19 @@ def run_stage2d(config: Stage2dConfig) -> dict:
     total_wall_clock_seconds = time.monotonic() - t0
     fire_timestamp_utc_end = config.now_iso_fn()
 
-    aggregate: dict[str, object] = {
-        "stage_label": STAGE_LABEL,
-        "record_version": RECORD_VERSION,
-        "batch_uuid": STAGE2D_BATCH_UUID,
-        "fire_script_command": fire_script_command,
-        "mode": config.mode,
-        "startup_gates_passed": True,
-        "fire_timestamp_utc_start": fire_start,
-        "startup_completed_at_utc": startup_completed,
-        "fire_timestamp_utc_end": fire_timestamp_utc_end,
-        "total_wall_clock_seconds": round(total_wall_clock_seconds, 3),
-        "inter_call_sleep_seconds": config.inter_call_sleep_seconds,
-
-        # Anchor hashes captured at startup.
-        # Design spec §10.1 row 9: ``selection_json_sha256`` hashes
-        # ``replay_candidates.json`` (Stage 2c name carried forward).
-        "selection_json_sha256": config.replay_candidates_sha,
-        "d7b_prompt_template_sha256": config.prompt_template_sha,
-
-        # Stage 2d self-documenting counts.
-        "stage2d_source_n": STAGE2D_SOURCE_N,
-        "stage2d_live_d7b_call_n": STAGE2D_LIVE_D7B_CALL_N,
-        "stage2d_skipped_positions": list(STAGE2D_SKIPPED_POSITIONS),
-
-        # Sequence summary — abort metadata populated from real Lock 7
-        # rule evaluation (Patch 3a). ``completed_call_count`` equals
-        # ``abort_at_call_index`` on abort (truncated sequence) and
-        # ``STAGE2D_SOURCE_N`` on normal completion. Patch 3c will add
-        # ``total_actual_cost_usd`` (design spec §10.1 row 21) and the
-        # rest of the 53-key aggregate shape.
-        "completed_call_count": len(per_call_records),
-        "sequence_aborted": sequence_aborted,
-        "abort_reason": abort_reason,
-        "abort_at_call_index": abort_at_call_index,
-        "critic_status_counts": _critic_status_counts(per_call_records),
-
-        # Startup audit preserved verbatim.
-        "startup_audit": config.startup_audit,
-
-        # Per-call records — 199 live/stub + 1 synthetic pos 116 = 200.
-        "per_call_records": per_call_records,
-    }
+    aggregate = build_aggregate_record(
+        config=config,
+        candidates=candidates,
+        per_call_records=per_call_records,
+        fire_timestamp_utc_start=fire_start,
+        fire_timestamp_utc_end=fire_timestamp_utc_end,
+        sequence_aborted=sequence_aborted,
+        abort_reason=abort_reason,
+        abort_at_call_index=abort_at_call_index,
+        total_wall_clock_seconds=total_wall_clock_seconds,
+        fire_script_command=fire_script_command,
+        deep_dive_data=deep_dive_data,
+    )
 
     # §10.5 vocabulary enforcement: abort_reason is None or a member
     # of STAGE2D_ABORT_REASON_VOCAB. Any other value is a programmer
@@ -1354,10 +1822,26 @@ def run_stage2d(config: Stage2dConfig) -> dict:
                 f"STAGE2D_ABORT_REASON_VOCAB {sorted(STAGE2D_ABORT_REASON_VOCAB)!r}"
             )
 
+    # 3c assertion — the aggregate builder returns 48 keys (41 Stage 2c
+    # carry-forward minus 2 deferred rows {selection_tier,
+    # selection_warnings_count} plus 8 Stage 2d additions minus the
+    # LAST-written ``write_completed_at`` tail key). After the tail
+    # assignment below the aggregate has 49 keys, the 3c target. HG20
+    # conditionals and Patch-3d additions will push this to 53 later.
+    assert len(aggregate) == 48, (
+        f"aggregate pre-tail key count drift: got {len(aggregate)}, "
+        f"expected 48 (3c target minus write_completed_at). Keys: "
+        f"{sorted(aggregate.keys())}"
+    )
+
     # Lock 11 invariant: ``write_completed_at`` is appended LAST. Keep the
     # assignment separate from the dict literal so that any future field
     # added upstream cannot dislodge it from tail position.
     aggregate["write_completed_at"] = config.now_iso_fn()
+    assert len(aggregate) == 49, (
+        f"aggregate final key count drift: got {len(aggregate)}, "
+        f"expected 49 (3c target). Keys: {sorted(aggregate.keys())}"
+    )
     atomic_write_json(config.aggregate_record_path, aggregate)
     return aggregate
 
@@ -1414,10 +1898,11 @@ def main(argv: list[str] | None = None) -> int:
     status_counts = aggregate["critic_status_counts"]
     print(
         f"[stage2d] aggregate written to {config.aggregate_record_path} "
-        f"(mode={config.mode}, gates={len(aggregate['startup_audit'])}, "
+        f"(mode={config.mode}, gates={len(config.startup_audit)}, "
         f"completed={aggregate['completed_call_count']}, "
         f"ok={status_counts['ok']}, d7b_error={status_counts['d7b_error']}, "
-        f"skipped={status_counts['skipped_source_invalid']})"
+        f"skipped={status_counts['skipped_source_invalid']}, "
+        f"audit={config.startup_audit_path})"
     )
     return 0
 
