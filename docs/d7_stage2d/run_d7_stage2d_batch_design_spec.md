@@ -663,8 +663,8 @@ Enumerated from `build_aggregate_record` (lines 990-1113):
 | 10 | `expectations_file_sha256` | str | As-is |
 | 11 | `selection_commit_timestamp_utc` | str \| null | As-is |
 | 12 | `expectations_commit_timestamp_utc` | str \| null | As-is |
-| 13 | `selection_tier` | int | As-is |
-| 14 | `selection_warnings_count` | int | As-is |
+| 13 | `selection_tier` | int | **Not carried forward** (Stage 2d candidate schema does not source this field — Patch 3d.0) |
+| 14 | `selection_warnings_count` | int | **Not carried forward** (Stage 2d candidate schema does not source this field — Patch 3d.0) |
 | 15 | `sequence_aborted` | bool | As-is |
 | 16 | `abort_reason` | str \| null | **Adapted** — new rule (g) string added to vocabulary |
 | 17 | `abort_at_call_index` | int \| null | As-is |
@@ -700,8 +700,12 @@ Enumerated from `build_aggregate_record` (lines 990-1113):
 - `selection_json_sha256_end: str`
 - `hg20_drift_detected: bool`
 
-These are excluded from the 43-key base enumeration above. With drift, the
-aggregate has 43 + 2 = 45 base Stage 2c keys (or 53 + 2 = 55 Stage 2d keys).
+These are excluded from the 43-key base enumeration above.
+
+For the Stage 2c aggregate: 43 + 2 = 45 keys with HG20 drift detected.
+
+For Stage 2d: 41 carried-forward fields + 10 Stage 2d additions = 51 base
+keys; with HG20 drift, 51 + 2 = 53 keys (per Patch 3d.0 amendment).
 
 ### §10.2 Stage 2d additions to aggregate record (per Lock 10.3)
 
@@ -718,8 +722,16 @@ aggregate has 43 + 2 = 45 base Stage 2c keys (or 53 + 2 = 55 Stage 2d keys).
 | `stage2d_live_d7b_call_n` | int | = 199; redundant with completed_call_count - skip_count but explicit |
 | `stage2d_source_n` | int | = 200 |
 
-**Stage 2d aggregate total**: 43 carry-forward + 10 additions = **53 top-level
-keys (base)**. With HG20 drift conditional: **55 keys**.
+**Stage 2d aggregate total**: 41 carry-forward + 10 additions = **51 top-level
+keys (base)**. With HG20 drift conditional: **53 keys** (Patch 3d.0 resolution).
+
+**Conditionality of Stage 2d additions**:
+
+- `checkpoint_log` — unconditional after Patch 3d lands; may be an empty list.
+- `stage2c_archive_sha256_by_file` — unconditional field: null in stub mode,
+  populated dict in live mode after Gate 11 passes.
+- `selection_json_sha256_end` and `hg20_drift_detected` — conditional fields:
+  present only when HG20 detects drift; absent otherwise.
 
 ### §10.3 Pos 116 contribution to ordered-list and by-call fields
 
@@ -1106,8 +1118,8 @@ earlier and with better error context than gate failure.
 
 | Artifact | Count |
 |---|---|
-| Stage 2d aggregate — base keys | 53 |
-| Stage 2d aggregate — with HG20 drift conditional | 55 |
+| Stage 2d aggregate — base keys | 51 |
+| Stage 2d aggregate — with HG20 drift conditional | 53 |
 | Stage 2d normal per-call record | 32 |
 | Stage 2d synthetic pos 116 record | 17 (Layer A 11 + Layer B 6) |
 | Abort-reason vocabulary members | 6 |
@@ -1136,3 +1148,8 @@ earlier and with better error context than gate failure.
   removed from the carried-forward set; `call_index` +
   `record_written_at_utc` documented as symmetry fields; normal-record
   total updated from 31 to 32.
+- Patch 3d.0 — §10.1/§10.2 amendment: `selection_tier` and
+  `selection_warnings_count` not carried forward to Stage 2d (Q3
+  Direction B resolution; Stage 2d candidate schema lacks source data).
+  Base count 53 → 51; drift conditional count 55 → 53; conditionality
+  of Stage 2d additions enumerated in §10.2.
