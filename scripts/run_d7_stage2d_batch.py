@@ -17,10 +17,10 @@ skeleton:
 * Minimal aggregate: ``completed_call_count``, three-counter
   ``critic_status_counts``, per-call records, trailing ``write_completed_at``
 
-Patch 3 will add abort-rule evaluation (Lock 7 rules a-g), the full
-53-key aggregate schema (stratum breakdown, HG20 input-drift guard,
-Stage 2c archive SHAs, checkpoint log), and richer per-call record
-expansion to the documented 31-key shape.
+Patch 3a–3d completed the Stage 2d fire path: abort rules, the final
+aggregate schema, HG20 drift guard, checkpoint_log, Stage 2c archive
+SHA inventory, and the signed-off normal/synthetic per-call record
+shapes are all implemented.
 
 Parallel discipline to ``scripts/run_d7_stage2c_batch.py`` — duplication
 is intentional per scope-lock §10.2. Do not refactor the two into a
@@ -296,7 +296,7 @@ class Stage2dConfig:
     # SHA / commit-timestamp fields below feed §10.1 carry-forward and
     # §10.2 aggregate keys. selection_tier / selection_warnings_count are
     # intentionally absent — Stage 2d selection pipeline does not produce
-    # them, so the corresponding aggregate rows are deferred to Patch 3d.
+    # them; not carried forward per Patch 3d.0 §10.1/§10.2 Direction B ruling.
     prompt_template_sha: str | None = None
     replay_candidates_sha: str | None = None
     expectations_file_sha256: str | None = None
@@ -903,10 +903,9 @@ def _build_normal_per_call_record(
     Mirrors Stage 2c's ``build_per_call_record`` shape with Stage 2d
     candidate schema adaptations (``universe_b_label`` → pre-registered
     label; ``stratum_id`` / ``is_deep_dive_candidate`` / ``test_retest_tier``
-    envelope fields added). Patch 3 will expand this into the full 31-key
-    shape specified in design spec §9.1; Patch 2 carries the minimum
-    fields required to support the 3-counter ``critic_status_counts``
-    and future abort-rule evaluation.
+    envelope fields added). Produces the Stage 2d normal-record shape
+    documented in design spec §9.1 (32 top-level keys after the Patch 3b
+    B1 amendment), including the fields used by abort-rule evaluation.
     """
     result_dict = result.to_dict()
     wall_clock_s = (response_ts - request_ts).total_seconds()
@@ -1957,9 +1956,11 @@ def run_stage2d(config: Stage2dConfig) -> dict:
     g → a → b → c → d → e (C.3 ruling). On first match the loop breaks
     and aggregate reflects truncated state.
 
-    Patch 3c will expand to the full 53-key schema (stratum breakdown,
-    HG20 input-drift guard, Stage 2c archive SHAs, checkpoint log,
-    ordered-list fields).
+    Aggregate is the full Stage 2d schema per design spec §10: 51 keys
+    on the non-drift path, 53 when HG20 drift fields are present.
+    Stratum breakdown, HG20 input-drift guard, Stage 2c archive SHAs,
+    checkpoint log, and ordered-list fields all shipped across
+    Patch 3a–3d.
     """
     _assert_stub_isolation(config)
 
@@ -1978,7 +1979,12 @@ def run_stage2d(config: Stage2dConfig) -> dict:
         config.selection_json_path.read_text(encoding="utf-8")
     )
     candidates: list[dict] = selection["candidates"]
-    assert len(candidates) == STAGE2D_SOURCE_N, "gate 4 invariant drift"
+    if len(candidates) != STAGE2D_SOURCE_N:
+        raise Stage2dStartupError(
+            f"HG1b: candidate count drift after startup gates. "
+            f"Expected {STAGE2D_SOURCE_N}, got {len(candidates)} "
+            f"from {config.selection_json_path}"
+        )
 
     # Deep-dive data loaded once; used by stratum_breakdown builder.
     # Gate 8 already validated the JSON parse; a second read keeps the
