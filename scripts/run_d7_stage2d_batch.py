@@ -42,6 +42,7 @@ import argparse
 import hashlib
 import json
 import os
+import platform
 import subprocess
 import sys
 import time
@@ -1679,19 +1680,58 @@ def build_aggregate_record(
 # ---------------------------------------------------------------------------
 
 
+def _capture_environment_fields() -> dict[str, str | None]:
+    """Capture fire-time environment per design spec §13.3.
+
+    Three fields: ``git_head``, ``python_version``, ``os_platform``.
+    ``git_head`` is best-effort: missing ``git`` binary or timeout resolves
+    to ``None`` rather than aborting startup_audit write.
+    """
+    git_head: str | None = None
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            cwd=str(_REPO_ROOT),
+        )
+        if result.returncode == 0:
+            git_head = result.stdout.strip() or None
+    except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
+        git_head = None
+    return {
+        "git_head": git_head,
+        "python_version": sys.version.split()[0],
+        "os_platform": platform.platform(),
+    }
+
+
 def _write_startup_audit_artifact(config: Stage2dConfig) -> None:
     """Write ``stage2d_startup_audit.json`` alongside the aggregate.
 
-    Contains mode, completion timestamp, and the verbatim gate-by-gate
-    audit list. Kept separate from the aggregate per design spec §12.1
-    so the aggregate stays focused on sequence outcomes.
+    Contains mode, completion timestamp, §13.3 environment fields, and
+    the verbatim gate-by-gate audit list. Kept separate from the
+    aggregate per design spec §12.1 so the aggregate stays focused on
+    sequence outcomes.
+
+    Patch 3c fix-forward: envelope expanded from 6 to 9 top-level keys
+    to satisfy §13.3 verbatim ("git HEAD, python version, OS"). Field
+    ordering matches the reviewer-ratified target:
+    stage_label, batch_uuid, mode, startup_gates_passed,
+    startup_completed_at_utc, git_head, python_version, os_platform,
+    startup_audit.
     """
+    env_fields = _capture_environment_fields()
     payload = {
         "stage_label": STAGE_LABEL,
         "batch_uuid": STAGE2D_BATCH_UUID,
         "mode": config.mode,
         "startup_gates_passed": True,
         "startup_completed_at_utc": config.startup_completed_at_utc,
+        "git_head": env_fields["git_head"],
+        "python_version": env_fields["python_version"],
+        "os_platform": env_fields["os_platform"],
         "startup_audit": config.startup_audit,
     }
     atomic_write_json(config.startup_audit_path, payload)
