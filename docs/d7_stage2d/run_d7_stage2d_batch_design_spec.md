@@ -553,7 +553,6 @@ forward verbatim with Stage-2d-specific mutations noted.
 | `firing_order` | Stage 2b | Unchanged |
 | `candidate_position` | Stage 2b | Unchanged |
 | `candidate_theme` | Stage 2b | Unchanged |
-| `candidate_hypothesis_hash` | Stage 2b | Unchanged |
 | `pre_registered_label` | Stage 2b | Unchanged |
 | `prior_factor_sets_count` | Stage 2b | Unchanged |
 | `theme_hint_factor_count` | Stage 2b | Unchanged |
@@ -575,8 +574,17 @@ forward verbatim with Stage-2d-specific mutations noted.
 | `is_deep_dive_candidate` | Stage 2d §10.3 | Boolean; True if position ∈ deep-dive candidates (read from `deep_dive_candidates.json`) |
 | `test_retest_tier` | Stage 2d §10.3 | Tier 1 / Tier 2 / null per `test_retest_baselines.json` |
 
-Total Stage 2d normal per-call record: **28 carried-forward + 3 new = 31
-top-level keys**.
+**Stage 2d symmetry additions to normal per-call record** (parity with synthetic pos 116 — both record types carry the same operational envelope):
+
+| Field | Source | Purpose |
+|---|---|---|
+| `call_index` | Stage 2d §9.2 Layer A parity | Canonical 1-indexed call counter; parallel to synthetic pos 116 Layer A `call_index` |
+| `record_written_at_utc` | Stage 2d §9.2 Layer B parity | ISO-8601 record-write timestamp; parallel to synthetic pos 116 Layer B `record_written_at_utc` |
+
+> Note: `call_index`, `call_index_in_sequence`, and `firing_order` all carry the same integer value (1-200, ascending) on normal records. `call_index_in_sequence` and `firing_order` are inherited Stage 2b/2c per-call schema; `call_index` is added for parity with Lock 1.5's mandated field on synthetic pos 116 records. The redundancy is intentional — downstream tooling may consume any of the three without ambiguity.
+
+Total Stage 2d normal per-call record: **27 carried-forward + 3 (§10.3
+additions) + 2 (symmetry additions per §9.2) = 32 top-level keys**.
 
 ### §9.2 Synthetic pos 116 record (Layer A + Layer B)
 
@@ -621,8 +629,11 @@ violates Lock 1.5 "no D7b call" framing):
 - `leakage_audit_result`, `forbidden_language_scan_result`,
   `refusal_scan_result` (no response to scan)
 - `prior_factor_sets_count`, `theme_hint_factor_count` (no prompt assembly)
-- `candidate_theme`, `candidate_hypothesis_hash`, `pre_registered_label`,
-  `candidate_position` (redundant with `position`)
+- `candidate_theme`, `pre_registered_label`, `candidate_position`
+  (redundant with `position`)
+- `candidate_hypothesis_hash` (not present in the current normal-record
+  schema; removed from §9.1 during Patch 3b B1 after the Patch 2
+  schema-gap audit)
 - `critic_error_signature` (no critic ran)
 - `inter_call_sleep_elapsed_seconds` (no inter-call sleep relevant)
 - `call_index_in_sequence` (redundant with `call_index`)
@@ -1097,7 +1108,7 @@ earlier and with better error context than gate failure.
 |---|---|
 | Stage 2d aggregate — base keys | 53 |
 | Stage 2d aggregate — with HG20 drift conditional | 55 |
-| Stage 2d normal per-call record | 31 |
+| Stage 2d normal per-call record | 32 |
 | Stage 2d synthetic pos 116 record | 17 (Layer A 11 + Layer B 6) |
 | Abort-reason vocabulary members | 6 |
 | Startup gates | 11 (9 both + 2 live-only) |
@@ -1121,3 +1132,7 @@ earlier and with better error context than gate failure.
 - Advisor Precision 3 (Option B — Layer B = 6 fields): §9.2, §10.3
 - Turn 5 Fix 5 (HG20 is input-drift guard, not output-integrity): §10.4
 - Turn 5 Fix 6 (6-member abort-reason vocabulary): §10.5
+- Patch 3b B1 — §9.1 schema-gap amendment: `candidate_hypothesis_hash`
+  removed from the carried-forward set; `call_index` +
+  `record_written_at_utc` documented as symmetry fields; normal-record
+  total updated from 31 to 32.
