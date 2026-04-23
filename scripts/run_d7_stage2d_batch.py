@@ -1105,23 +1105,6 @@ def _critic_status_counts(per_call_records: list[dict]) -> dict[str, int]:
 # ---------------------------------------------------------------------------
 
 
-def _record_position(rec: dict) -> int:
-    """Return the underlying candidate position for a per-call record.
-
-    Normal records (from ``_run_one_call``) carry ``candidate_position``.
-    Synthetic pos 116 records (from ``_synthesize_pos116_record``) carry
-    ``position`` per Lock 1.5. Rule (g) per design spec §7.7 reads
-    ``last["position"]``; this helper normalizes the two schemas so rule
-    evaluation does not need to care which shape produced the record.
-
-    Raises ``KeyError`` if neither key is present (indicates malformed
-    record — caller should surface rather than silently default).
-    """
-    if "position" in rec:
-        return int(rec["position"])
-    return int(rec["candidate_position"])
-
-
 def should_abort(
     idx: int,
     records: list[dict],
@@ -1166,11 +1149,18 @@ def should_abort(
     last = records[-1]
 
     # Rule (g) — §7.7 — unexpected skipped_source at unexpected position.
-    if (
-        last.get("critic_status") == "skipped_source_invalid"
-        and _record_position(last) not in STAGE2D_SKIPPED_POSITIONS
-    ):
-        return True, "unexpected_skipped_source"
+    # Normal records carry ``candidate_position`` (Stage 2c parity); synthetic
+    # pos 116 carries ``position`` (Lock 1.5). Read with inline fallback so
+    # the abort path tolerates both schemas without a normalization helper.
+    if last.get("critic_status") == "skipped_source_invalid":
+        last_pos = last.get("position", last.get("candidate_position"))
+        if last_pos is None:
+            raise AssertionError(
+                "should_abort: skipped record missing both 'position' and "
+                "'candidate_position' keys"
+            )
+        if int(last_pos) not in STAGE2D_SKIPPED_POSITIONS:
+            return True, "unexpected_skipped_source"
 
     # Non-skipped subsequence used by rules (a), (b), (c) per §7.8.
     non_skipped = [
