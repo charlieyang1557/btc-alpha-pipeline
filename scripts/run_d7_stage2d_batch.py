@@ -1492,16 +1492,35 @@ def build_aggregate_record(
     total_wall_clock_seconds: float,
     fire_script_command: str,
     deep_dive_data: dict | None,
+    hg20_drift_detected: bool,
+    selection_json_sha256_end: str | None,
 ) -> dict:
-    """Assemble the 49-key Stage 2d aggregate (no ``write_completed_at``).
+    """Assemble the Stage 2d aggregate AND own its finalization.
 
-    Field coverage is the 3c target — 41 Stage 2c carry-forward keys
-    (``selection_tier`` and ``selection_warnings_count`` deferred to
-    Patch 3d because Stage 2d's selection pipeline produces no source
-    for them on disk) plus 8 Stage 2d additions (``critic_status_counts``,
-    ``stratum_breakdown``, 3 auxiliary-input SHAs, and the 3 explicit
-    self-documenting counts). Patch 3d will add HG20 conditionals,
-    ``checkpoint_log``, and ``stage2c_archive_sha256_by_file``.
+    Builder responsibilities (Patch 3d.1 Path II ruling):
+
+    1. Build the base dict (41 Stage 2c carry-forward keys minus
+       ``selection_tier`` / ``selection_warnings_count`` per Patch 3d.0
+       §10.1 amendment, plus 8 Stage 2d additions —
+       ``critic_status_counts``, ``stratum_breakdown``, 3 auxiliary-input
+       SHAs, and the 3 explicit self-documenting counts).
+    2. Enforce §10.5 ``abort_reason`` vocabulary BEFORE any write so a
+       bad aggregate never reaches disk.
+    3. Conditionally insert the two HG20 drift fields
+       (``selection_json_sha256_end``, ``hg20_drift_detected``) when
+       drift is detected; enforce the coupled-kwargs invariant in both
+       directions (symmetric guard).
+    4. Append ``write_completed_at`` as the Lock 11 tail — always last.
+    5. ``atomic_write_json`` the aggregate to
+       ``config.aggregate_record_path`` and return the written dict.
+
+    Patch 3d.2 will add ``checkpoint_log`` and Patch 3d.3 will add
+    ``stage2c_archive_sha256_by_file``.
+
+    Key-count invariants (per Patch 3d.1):
+
+    - Non-drift: 48 pre-tail → 49 post-``write_completed_at``
+    - Drift: 50 pre-tail → 51 post-``write_completed_at``
     """
     # ----- Ordered-list fields (§10.1 rows 25-33) ---------------------------
     reasoning_lengths: list[int | None] = []
@@ -1598,7 +1617,7 @@ def build_aggregate_record(
     # ----- Stage 2d additions (§10.2 rows subset — 8 of 10) -----------------
     stratum_breakdown = _compute_stratum_breakdown(per_call_records, deep_dive_data)
 
-    return {
+    aggregate: dict = {
         # --- §10.1 rows 1-9: identity + anchors ---------------------------
         "stage_label": STAGE_LABEL,
         "record_version": RECORD_VERSION,
@@ -1606,7 +1625,9 @@ def build_aggregate_record(
         "fire_script_command": fire_script_command,
         "fire_timestamp_utc_start": fire_timestamp_utc_start,
         "fire_timestamp_utc_end": fire_timestamp_utc_end,
-        # write_completed_at is appended LAST by run_stage2d (Lock 11).
+        # write_completed_at is appended LAST (Lock 11) just before
+        # atomic_write_json; both HG20 conditional insertion and the
+        # tail are owned by this builder (Patch 3d.1 Path II ruling).
         "d7b_prompt_template_sha256": config.prompt_template_sha,
         "selection_json_sha256": config.replay_candidates_sha,
 
@@ -1672,6 +1693,61 @@ def build_aggregate_record(
         # --- §10.1 row 43: per-call records -------------------------------
         "per_call_records": per_call_records,
     }
+
+    # §10.5 vocabulary enforcement: abort_reason is None or a member of
+    # STAGE2D_ABORT_REASON_VOCAB. Any other value is a programmer error —
+    # surface it BEFORE the tail-append + atomic_write so a bad aggregate
+    # never reaches disk.
+    if aggregate["abort_reason"] is not None:
+        if aggregate["abort_reason"] not in STAGE2D_ABORT_REASON_VOCAB:
+            raise AssertionError(
+                f"abort_reason {aggregate['abort_reason']!r} not in "
+                f"STAGE2D_ABORT_REASON_VOCAB {sorted(STAGE2D_ABORT_REASON_VOCAB)!r}"
+            )
+
+    # HG20 conditional fields (§10.4 + Patch 3d.1) — present ONLY on
+    # drift. Inserted between the base dict literal and the Lock 11
+    # tail-append so ``write_completed_at`` remains last on both paths.
+    # Guard against a half-populated drift state: if drift is asserted,
+    # ``selection_json_sha256_end`` must also be populated.
+    if hg20_drift_detected:
+        assert selection_json_sha256_end is not None, (
+            "HG20 invariant: selection_json_sha256_end must be non-None "
+            "when hg20_drift_detected is True"
+        )
+        aggregate["selection_json_sha256_end"] = selection_json_sha256_end
+        aggregate["hg20_drift_detected"] = True
+    else:
+        assert selection_json_sha256_end is None, (
+            "HG20 invariant: selection_json_sha256_end must be None "
+            "when hg20_drift_detected is False"
+        )
+
+    # Dynamic key-count assertions — +2 on drift, +0 otherwise. Base is
+    # 48 pre-tail / 49 post-tail; Stage 2d diverges from Stage 2c's
+    # wrapper-ownership by keeping HG20 insertion + tail inside the
+    # builder for invariant locality (Patch 3d.1 Q1 ruling: Path II).
+    hg20_addition = 2 if hg20_drift_detected else 0
+    expected_pre_tail = 48 + hg20_addition
+    expected_post_tail = 49 + hg20_addition
+
+    assert len(aggregate) == expected_pre_tail, (
+        f"aggregate pre-tail key count drift: got {len(aggregate)}, "
+        f"expected {expected_pre_tail} (3d.1 base 48 + HG20 conditional "
+        f"{hg20_addition}). Keys: {sorted(aggregate.keys())}"
+    )
+
+    # Lock 11 invariant: ``write_completed_at`` is appended LAST. Keep
+    # the assignment separate from the dict literal so that any future
+    # field added upstream cannot dislodge it from tail position.
+    aggregate["write_completed_at"] = config.now_iso_fn()
+    assert len(aggregate) == expected_post_tail, (
+        f"aggregate final key count drift: got {len(aggregate)}, "
+        f"expected {expected_post_tail} (3d.1 base 49 + HG20 conditional "
+        f"{hg20_addition}). Keys: {sorted(aggregate.keys())}"
+    )
+    atomic_write_json(config.aggregate_record_path, aggregate)
+    return aggregate
 
 
 # ---------------------------------------------------------------------------
@@ -1838,6 +1914,25 @@ def run_stage2d(config: Stage2dConfig) -> dict:
     total_wall_clock_seconds = time.monotonic() - t0
     fire_timestamp_utc_end = config.now_iso_fn()
 
+    # HG20 — re-hash selection JSON at sequence end (§10.4 + Patch 3d.1).
+    # Non-fatal drift guard: on mismatch, log WARNING (Stage 2c verbatim
+    # format: ``startup_sha -> end_sha``) and thread the end hash into
+    # the builder so the two conditional fields are emitted. On
+    # non-drift, pass ``None`` so neither field is emitted.
+    end_sha_computed = _file_sha256(config.selection_json_path)
+    hg20_drift_detected = end_sha_computed != config.replay_candidates_sha
+
+    selection_json_sha256_end: str | None
+    if hg20_drift_detected:
+        print(
+            f"[stage2d] HG20 WARNING: selection JSON SHA-256 drift "
+            f"({config.replay_candidates_sha} -> {end_sha_computed})",
+            file=sys.stderr,
+        )
+        selection_json_sha256_end = end_sha_computed
+    else:
+        selection_json_sha256_end = None
+
     aggregate = build_aggregate_record(
         config=config,
         candidates=candidates,
@@ -1850,39 +1945,10 @@ def run_stage2d(config: Stage2dConfig) -> dict:
         total_wall_clock_seconds=total_wall_clock_seconds,
         fire_script_command=fire_script_command,
         deep_dive_data=deep_dive_data,
+        hg20_drift_detected=hg20_drift_detected,
+        selection_json_sha256_end=selection_json_sha256_end,
     )
 
-    # §10.5 vocabulary enforcement: abort_reason is None or a member
-    # of STAGE2D_ABORT_REASON_VOCAB. Any other value is a programmer
-    # error — surface it before writing an unreadable aggregate.
-    if aggregate["abort_reason"] is not None:
-        if aggregate["abort_reason"] not in STAGE2D_ABORT_REASON_VOCAB:
-            raise AssertionError(
-                f"abort_reason {aggregate['abort_reason']!r} not in "
-                f"STAGE2D_ABORT_REASON_VOCAB {sorted(STAGE2D_ABORT_REASON_VOCAB)!r}"
-            )
-
-    # 3c assertion — the aggregate builder returns 48 keys (41 Stage 2c
-    # carry-forward minus 2 deferred rows {selection_tier,
-    # selection_warnings_count} plus 8 Stage 2d additions minus the
-    # LAST-written ``write_completed_at`` tail key). After the tail
-    # assignment below the aggregate has 49 keys, the 3c target. HG20
-    # conditionals and Patch-3d additions will push this to 53 later.
-    assert len(aggregate) == 48, (
-        f"aggregate pre-tail key count drift: got {len(aggregate)}, "
-        f"expected 48 (3c target minus write_completed_at). Keys: "
-        f"{sorted(aggregate.keys())}"
-    )
-
-    # Lock 11 invariant: ``write_completed_at`` is appended LAST. Keep the
-    # assignment separate from the dict literal so that any future field
-    # added upstream cannot dislodge it from tail position.
-    aggregate["write_completed_at"] = config.now_iso_fn()
-    assert len(aggregate) == 49, (
-        f"aggregate final key count drift: got {len(aggregate)}, "
-        f"expected 49 (3c target). Keys: {sorted(aggregate.keys())}"
-    )
-    atomic_write_json(config.aggregate_record_path, aggregate)
     return aggregate
 
 
