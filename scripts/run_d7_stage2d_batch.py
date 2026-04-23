@@ -90,6 +90,11 @@ STAGE2D_ERROR_RATE_K_FLOOR: int = 3                # Rule (b) K
 STAGE2D_ERROR_RATE_THRESHOLD: float = 0.40         # Rule (b) > 40%
 STAGE2D_CONTENT_ERROR_ABS_THRESHOLD: int = 4       # Rule (c)
 
+# Lock 10.3 — checkpoint cadence (Patch 3d.2). Explicit tuple (NOT
+# ``idx % 50 == 0``) so no fourth checkpoint fires at idx=200; the
+# aggregate's end-of-sequence totals capture that state.
+STAGE2D_CHECKPOINT_INDICES: tuple[int, ...] = (50, 100, 150)
+
 # Lock 7 / design spec §10.5 — abort-reason vocabulary. `abort_reason`
 # field in the aggregate MUST be ``None`` or a member of this frozenset.
 # Enforcement: aggregate builder assertion before write.
@@ -1156,6 +1161,86 @@ def _critic_status_counts(per_call_records: list[dict]) -> dict[str, int]:
 
 
 # ---------------------------------------------------------------------------
+# Patch 3d.2 — checkpoint_log assembly (design spec §10.3 amendment)
+# ---------------------------------------------------------------------------
+
+
+def _compute_checkpoint_entry(
+    slice_records: list[dict],
+    trigger_idx: int,
+) -> dict:
+    """Compute one checkpoint entry from the per_call_records prefix slice.
+
+    All 10 fields are derived from ``slice_records`` alone (no runtime
+    clock / cumulative mutable state) so the entry is reproducible from
+    the written aggregate. Skipped records are excluded from the
+    non-skipped denominator to parallel Lock 7 abort-rule semantics.
+    """
+    non_skipped = [
+        r for r in slice_records
+        if r.get("critic_status") != "skipped_source_invalid"
+    ]
+    non_skipped_n = len(non_skipped)
+    d7b_error_count = sum(
+        1 for r in non_skipped if r.get("critic_status") == "d7b_error"
+    )
+    content_level = sum(
+        1 for r in non_skipped
+        if r.get("d7b_error_category") == "content_level"
+    )
+    api_level = sum(
+        1 for r in non_skipped
+        if r.get("d7b_error_category") == "api_level"
+    )
+    cumulative_actual = sum(
+        float(r.get("actual_cost_usd") or 0.0) for r in slice_records
+    )
+    cumulative_estimated = sum(
+        float((r.get("cost") or {}).get("estimated_usd") or 0.0)
+        for r in slice_records
+    )
+    # ``max(non_skipped_n, 1)`` guards against div-by-zero if a future
+    # STAGE2D_SKIPPED_POSITIONS change makes all-skipped prefixes
+    # possible; today pos 116 is the only skipped position so at idx=50
+    # non_skipped_n is always 50.
+    error_rate = d7b_error_count / max(non_skipped_n, 1)
+    return {
+        "call_index": trigger_idx,
+        "completed_call_count": len(slice_records),
+        "non_skipped_call_count": non_skipped_n,
+        "cumulative_actual_cost_usd": round(cumulative_actual, 6),
+        "cumulative_estimated_cost_usd": round(cumulative_estimated, 6),
+        "d7b_error_count": d7b_error_count,
+        "content_level_error_count": content_level,
+        "api_level_error_count": api_level,
+        "error_rate_non_skipped": round(error_rate, 6),
+        "critic_status_counts_snapshot": _critic_status_counts(slice_records),
+    }
+
+
+def _build_checkpoint_log(per_call_records: list[dict]) -> list[dict]:
+    """Assemble the checkpoint_log list per Patch 3d.2.
+
+    Triggers exactly at the indices in ``STAGE2D_CHECKPOINT_INDICES``.
+    If the sequence aborts before reaching a trigger, that entry and
+    all subsequent entries are omitted — empty list is a valid shape.
+
+    End-of-sequence (idx=200) is NOT a trigger; aggregate totals capture
+    final state. Entry order matches ``STAGE2D_CHECKPOINT_INDICES``.
+    """
+    entries: list[dict] = []
+    for trigger_idx in STAGE2D_CHECKPOINT_INDICES:
+        if len(per_call_records) < trigger_idx:
+            break
+        entries.append(
+            _compute_checkpoint_entry(
+                per_call_records[:trigger_idx], trigger_idx
+            )
+        )
+    return entries
+
+
+# ---------------------------------------------------------------------------
 # Lock 7 abort evaluation — design spec §7
 # ---------------------------------------------------------------------------
 
@@ -1497,13 +1582,15 @@ def build_aggregate_record(
 ) -> dict:
     """Assemble the Stage 2d aggregate AND own its finalization.
 
-    Builder responsibilities (Patch 3d.1 Path II ruling):
+    Builder responsibilities (Patch 3d.1 Path II ruling, extended by
+    Patch 3d.2):
 
     1. Build the base dict (41 Stage 2c carry-forward keys minus
        ``selection_tier`` / ``selection_warnings_count`` per Patch 3d.0
-       §10.1 amendment, plus 8 Stage 2d additions —
+       §10.1 amendment, plus 9 Stage 2d additions —
        ``critic_status_counts``, ``stratum_breakdown``, 3 auxiliary-input
-       SHAs, and the 3 explicit self-documenting counts).
+       SHAs, the 3 explicit self-documenting counts, and
+       ``checkpoint_log`` [Patch 3d.2]).
     2. Enforce §10.5 ``abort_reason`` vocabulary BEFORE any write so a
        bad aggregate never reaches disk.
     3. Conditionally insert the two HG20 drift fields
@@ -1514,13 +1601,12 @@ def build_aggregate_record(
     5. ``atomic_write_json`` the aggregate to
        ``config.aggregate_record_path`` and return the written dict.
 
-    Patch 3d.2 will add ``checkpoint_log`` and Patch 3d.3 will add
-    ``stage2c_archive_sha256_by_file``.
+    Patch 3d.3 will add ``stage2c_archive_sha256_by_file``.
 
-    Key-count invariants (per Patch 3d.1):
+    Key-count invariants (per Patch 3d.2):
 
-    - Non-drift: 48 pre-tail → 49 post-``write_completed_at``
-    - Drift: 50 pre-tail → 51 post-``write_completed_at``
+    - Non-drift: 49 pre-tail → 50 post-``write_completed_at``
+    - Drift: 51 pre-tail → 52 post-``write_completed_at``
     """
     # ----- Ordered-list fields (§10.1 rows 25-33) ---------------------------
     reasoning_lengths: list[int | None] = []
@@ -1680,12 +1766,13 @@ def build_aggregate_record(
         "stage2b_overlap_completed_count": overlap_completed,
         "svr_by_label": svr_by_label,
 
-        # --- §10.2: Stage 2d additions (8 of 10; 2 deferred to 3d) --------
+        # --- §10.2: Stage 2d additions (9 of 10; 1 deferred to 3d.3) -----
         "critic_status_counts": _critic_status_counts(per_call_records),
         "stratum_breakdown": stratum_breakdown,
         "deep_dive_candidates_sha256": config.deep_dive_candidates_sha256,
         "test_retest_baselines_sha256": config.test_retest_baselines_sha256,
         "label_universe_analysis_sha256": config.label_universe_analysis_sha256,
+        "checkpoint_log": _build_checkpoint_log(per_call_records),
         "stage2d_skipped_positions": list(STAGE2D_SKIPPED_POSITIONS),
         "stage2d_live_d7b_call_n": STAGE2D_LIVE_D7B_CALL_N,
         "stage2d_source_n": STAGE2D_SOURCE_N,
@@ -1724,16 +1811,17 @@ def build_aggregate_record(
         )
 
     # Dynamic key-count assertions — +2 on drift, +0 otherwise. Base is
-    # 48 pre-tail / 49 post-tail; Stage 2d diverges from Stage 2c's
+    # 49 pre-tail / 50 post-tail after Patch 3d.2 added ``checkpoint_log``
+    # (was 48/49 post-3d.1). Stage 2d diverges from Stage 2c's
     # wrapper-ownership by keeping HG20 insertion + tail inside the
     # builder for invariant locality (Patch 3d.1 Q1 ruling: Path II).
     hg20_addition = 2 if hg20_drift_detected else 0
-    expected_pre_tail = 48 + hg20_addition
-    expected_post_tail = 49 + hg20_addition
+    expected_pre_tail = 49 + hg20_addition
+    expected_post_tail = 50 + hg20_addition
 
     assert len(aggregate) == expected_pre_tail, (
         f"aggregate pre-tail key count drift: got {len(aggregate)}, "
-        f"expected {expected_pre_tail} (3d.1 base 48 + HG20 conditional "
+        f"expected {expected_pre_tail} (3d.2 base 49 + HG20 conditional "
         f"{hg20_addition}). Keys: {sorted(aggregate.keys())}"
     )
 
@@ -1743,7 +1831,7 @@ def build_aggregate_record(
     aggregate["write_completed_at"] = config.now_iso_fn()
     assert len(aggregate) == expected_post_tail, (
         f"aggregate final key count drift: got {len(aggregate)}, "
-        f"expected {expected_post_tail} (3d.1 base 49 + HG20 conditional "
+        f"expected {expected_post_tail} (3d.2 base 50 + HG20 conditional "
         f"{hg20_addition}). Keys: {sorted(aggregate.keys())}"
     )
     atomic_write_json(config.aggregate_record_path, aggregate)

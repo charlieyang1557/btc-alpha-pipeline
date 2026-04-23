@@ -507,25 +507,43 @@ aggregation (error-rate numerator excludes pos 116 per §7.8; cost sum excludes
 pos 116 automatically since `actual_cost_usd=0.0`). Ordered-list and by-call
 contributions are specified in §10.3.
 
-### Checkpoint logging (§10.3)
+### Checkpoint log assembly (§10.3) — Patch 3d.2 amendment
 
-```python
-def _log_checkpoint_if_due(idx, records, cumulative_cost):
-    if idx % STAGE2D_CHECKPOINT_EVERY_N != 0:
-        return
-    non_skipped = [r for r in records if r["critic_status"] != "skipped_source_invalid"]
-    K = len(non_skipped)
-    errors = sum(1 for r in non_skipped if r["critic_status"] == "d7b_error")
-    # Projected (from Lock 9 envelope)
-    projected_cost_per_50 = 50 * 0.020   # $0.020 midpoint
-    log.info(
-        f"[stage2d] checkpoint idx={idx} K={K} errors={errors} "
-        f"error_rate={errors/max(K,1):.3f} cumulative_cost=${cumulative_cost:.4f} "
-        f"projected_cost_so_far=${(idx/50)*projected_cost_per_50:.4f}"
-    )
-```
+`checkpoint_log` is an aggregate field assembled by `build_aggregate_record`
+post-loop (not a runtime logging side-effect). Entries fire at the exact
+call indices in `STAGE2D_CHECKPOINT_INDICES = (50, 100, 150)`. The explicit
+tuple (NOT `idx % 50 == 0`) is load-bearing: end-of-sequence at idx=200 is
+NOT a checkpoint trigger because aggregate totals already capture that
+state.
 
-Pure observability; never aborts.
+Per-entry schema (10 fields, fully derivable from `per_call_records` alone
+— no runtime clock or external mutable state):
+
+- `call_index: int` — trigger index, 1-indexed (50, 100, or 150)
+- `completed_call_count: int` — equals `call_index` on normal path
+- `non_skipped_call_count: int` — excludes `"skipped_source_invalid"` records
+- `cumulative_actual_cost_usd: float` — `sum(actual_cost_usd)` over prefix slice
+- `cumulative_estimated_cost_usd: float` — `sum(cost.estimated_usd)` over prefix slice
+- `d7b_error_count: int` — `critic_status == "d7b_error"` over non-skipped
+- `content_level_error_count: int` — `d7b_error_category == "content_level"` over non-skipped
+- `api_level_error_count: int` — `d7b_error_category == "api_level"` over non-skipped
+- `error_rate_non_skipped: float` — `d7b_error_count / max(non_skipped, 1)`
+- `critic_status_counts_snapshot: dict` — `_critic_status_counts(prefix_slice)`
+
+Skipped records are excluded from the non-skipped denominator to mirror
+Lock 7 abort-rule semantics. The `max(non_skipped, 1)` guard exists only
+for future-proofing (today pos 116 is the sole skipped position; at
+idx=50 non-skipped is always 50).
+
+Empty-list edge cases:
+
+- Sequence aborts before idx 50: `checkpoint_log = []`
+- Sequence aborts between idx 50 and 99: 1 entry
+- Sequence aborts between idx 100 and 149: 2 entries
+- Normal completion (idx 200) or abort at/after 150: 3 entries
+
+Entry order matches `STAGE2D_CHECKPOINT_INDICES`. Pure observability;
+no side effects; never aborts; fully deterministic in stub mode.
 
 ---
 
@@ -1153,3 +1171,10 @@ earlier and with better error context than gate failure.
   Direction B resolution; Stage 2d candidate schema lacks source data).
   Base count 53 → 51; drift conditional count 55 → 53; conditionality
   of Stage 2d additions enumerated in §10.2.
+- Patch 3d.2 — §10.3 amendment: replaced the `_log_checkpoint_if_due`
+  logging stub with the accurate `checkpoint_log` aggregate-field
+  specification (post-loop assembly inside `build_aggregate_record`,
+  10-field per-entry schema, explicit `STAGE2D_CHECKPOINT_INDICES =
+  (50, 100, 150)` trigger tuple, empty-list / partial-list edge cases,
+  non-skipped denominator parity with Lock 7). Aggregate key-count
+  progression: non-drift 49 → 50, drift 51 → 52.
