@@ -1025,30 +1025,211 @@ No D8.0 finding is silently dropped in D8.2.
 
 ## 9. Synthesis — What Does Stage 2d Teach?
 
-*(To be authored in D8.2.1.5.)*
+**Headline.** Stage 2d produced a mixed scientific result: the
+agreement axis and upper-tail redundancy expectation held strongly,
+the divergence axis was falsified directionally, the lower-tail
+distribution under-shot its pre-registered floor, and the fresh-7
+low-SVR structured claim passed. §9 synthesizes already-sealed
+findings from Sections 6, 7, and 8; it does not introduce new
+evidence, new tests, or methodology decisions.
 
-Claim-level synthesis. What Stage 2d validates, what it falsifies,
-where calibration shortfalls sit, and how the §6.6 observations qualify
-gate verdicts. No strategy triage; no methodology prescriptions.
+### 9.1 Gate-level outcome
+
+| Claim | Verdict | Observed | interpretation_tag | Follow-up |
+|---|---|---|---|---|
+| §6.2.1 agreement (SVR≥0.5) | PASS | 64/66 (≥50/66) | `pre_registered_claim_upheld` | — |
+| §6.2.2 divergence (SVR≥0.5) | FALSIFIED | 1/5 (≥4/5); direction contradicted | `likely_directional_model_misspecification` | D8.4 (divergence label / direction of prediction) |
+| §6.3(a) upper tail (SVR≥0.80) | PASS | 111/199 (≥60/199) | `pre_registered_claim_upheld` | — |
+| §6.3(b) lower tail (SVR≤0.30) | FAIL | 26/199 (≥40/199) | `calibration_shortfall` | D8.4 (lower-tail calibration) |
+| §6.3 joint distributional shape | PARTIAL | upper PASS + lower FAIL | `asymmetric_calibration` | D8.4 (joint-shape calibration) |
+| §6.4 fresh-7 RSI-absent vol_regime (SVR<0.5) | PASS | 3/7 (≥2/7) | `pre_registered_claim_upheld` | D8.3 (pos 138 / 143 test-retest) |
+| §6.6 (4 observation axes) + §6 forensic cross-tab | NOT_TESTABLE | observation only | `observation_only` | D8.3 / D8.4 per per-axis pointers |
+
+### 9.2 Main scientific conclusions
+
+1. **Agreement-axis generalization is strong.** 64/66 upholds the
+   §6.2.1 pre-registered expectation literally and replicates D8.0's
+   "agreement replicated at scale" observation with a formal verdict.
+2. **Divergence-axis prediction is directionally wrong, not merely
+   noisy.** The §6.2.2 FALSIFIED verdict is not a magnitude shortfall
+   — only 1 of 5 divergence_expected UB positions scored at SVR≥0.5,
+   and the remaining 4 scored low, i.e. in the opposite direction.
+   The divergence-axis falsification is corroborated by several
+   already-recorded observations (§6.3 tail placement — zero
+   divergence_expected in the upper tail and 4 of 5 cohort in the
+   lower tail; §6.4 pos 3 double-duty under the opposite directional
+   hypothesis; and §6.6(2)(B) LOW-SVR / HIGH-alignment clustering of
+   4 of 5 cohort positions). This upgrades the result from a local
+   threshold miss to evidence of directional model misspecification,
+   consistent with the `likely_directional_model_misspecification`
+   interpretation_tag recorded in §6.2.2. Methodology follow-up
+   (divergence-label definition, direction-of-prediction
+   recalibration) is owned by D8.4.
+3. **Structural redundancy upper-tail is robust.** §6.3(a) at 111/199
+   passes a pre-registered floor of 60/199 by a wide margin; the
+   observation-only §6.6(1) alignment distribution and §6 forensic
+   cross-tab both corroborate the upper-skew shape of SVR.
+4. **Lower-tail mass exists but was overestimated.** §6.3(b) at
+   26/199 under-shoots its 40/199 floor. The lower tail is populated
+   (lower-tail mass is not zero — mean_reversion and volatility_regime
+   neutral positions contribute materially per §6 cross-tab) but
+   thinner than the pre-registration anticipated.
+5. **Fresh-7 RSI-absent vol_regime claim survived.** §6.4 at 3/7
+   passes the ≥2/7 floor. The pos 138 RSI-absent pattern already
+   identified in D8.0 L149 sits inside this aggregate. §6.4 and
+   §6.2.2 give opposite directional predictions on pos 3 under
+   different structural hypotheses — both verdicts stand; D8.3
+   owns any test-retest follow-up.
+6. **§6.6 observations explain mechanisms but do not create gates.**
+   The four §6.6 axes plus the §6 forensic cross-tab describe
+   theme-level shape (mean_reversion bimodal, volatility_regime
+   neutral-heavy, calendar_effect weakest agreement) and SVR-alignment
+   decoupling structure. Per scope lock §3.4 and hard rule 5 these
+   remain `NOT_TESTABLE / observation_only`; they qualify gate
+   verdicts but do not add or override them.
+
+### 9.3 What changed after D8.1
+
+- **D8.0 remains valid as the phase-closeout signoff; D8.2 adds the
+  later claim-level adjudication layer that D8.0 explicitly deferred.**
+  D8.0 is not amended.
+- **D8.2 adds formal taxonomy and exposes §6.3(b) FAIL.** The
+  distributional-lower-tail FAIL was not surfaced in D8.0 (which
+  predates the D8.1 aggregate computation). §8 row 4 catalogues this
+  as NEW with neutral temporal framing.
+- **D8.2 reframes neutral-median comparison as observation-only.**
+  D8.0 L105/L140 declared the Stage 2c neutral interval falsified
+  at median; D8.2 §6.6(4) declines that comparison inside Stage 2d
+  pre-registration scope per hard rule 5 and records the Stage 2d
+  neutral-stratum median without comparative framing. D8.0's Stage 2c
+  finding stands as a Stage 2c observation.
+- **D8.2 supersedes D8.0 only for claim-level adjudication.**
+  Operational signoff, artifact-integrity findings, and the phase
+  verdict "PASS WITH FALSIFICATIONS" (D8.0 L163) are unchanged.
+
+### 9.4 Bottom-line scientific verdict
+
+Stage 2d is not a clean confirmation and not a failed fire. It is a
+useful falsification-bearing result:
+
+- **PASS** — §6.2.1 agreement, §6.3(a) upper tail, §6.4 fresh-7
+- **FAIL** — §6.3(b) lower tail, §6.3 joint (PARTIAL / asymmetric
+  calibration)
+- **FALSIFIED** — §6.2.2 divergence (directional misspecification,
+  corroborated by already-recorded observations in §6.3, §6.4, §6.6)
+- **NOT_TESTABLE / observation_only** — the four §6.6 axes and the
+  §6 forensic cross-tab
+
+Methodology decisions (divergence-label definition, lower-tail
+calibration, joint-shape calibration, direction-of-prediction
+recalibration, forensic cross-tab implications) are **out of scope
+for D8.2**; **D8.4 owns methodology decisions**. Per-strategy triage
+(§E3/§E4 Tier A/B/C/D assignment, pos 138 / 143 test-retest) is
+owned by **D8.3**.
 
 ---
 
 ## 10. Forward Pointers
 
-*(To be authored in D8.2.1.5.)*
+All items below are **observations, not prescriptions**. D8.2 routes
+already-recorded findings to their downstream owners; D8.3 and D8.4
+decide how to act on them within their own scope. D8.2 introduces no
+new items in this section — every pointer traces to a
+`methodology_followup` field or an §8.4 hand-off already sealed in
+Sections 6-8.
 
-- **D8.3** — strategy triage (per-candidate §E3/§E4 adjudication,
-  Tier A/B/C/D assignment)
-- **D8.4** — methodology fixes (prompt template, forbidden-language
-  refinement, cost-field semantics, direction-of-prediction recalibration
-  — scoped by `methodology_followup` pointers emitted in §6)
+### 10.1 Handoff to D8.3 (strategy triage)
+
+| Item | Source in D8.2 |
+|---|---|
+| §E3 / §E4 per-candidate adjudication (Tier A/B/C/D assignment across 197 ok-scored records) | scope lock Q2 deferral |
+| Pos 138 / 143 RSI-absent vol_regime twins — overlap test-retest | §6.4 `methodology_followup`, §8.4 |
+| Pos 138 RSI-absent pattern interpretive follow-up (from D8.0 L149) | §6.6(2) `methodology_followup`, §8.4 |
+
+### 10.2 Handoff to D8.4 (methodology refinement)
+
+| Item | Source in D8.2 |
+|---|---|
+| Divergence-label definition audit | §6.2.2 `methodology_followup` |
+| Direction-of-prediction recalibration (divergence axis) | §6.2.2 interpretation_tag (`likely_directional_model_misspecification`) |
+| Lower-tail calibration — pre-registered floor vs observed mass | §6.3(b) `methodology_followup` |
+| Joint-shape asymmetric-calibration implications | §6.3 joint `methodology_followup` |
+| Forensic cross-tab methodology implications (prompt / label discipline) | §7 forensic cross-tab `methodology_followup`, §8.4 |
+| Documentation drift: expectations.md "6 themes" vs operational 5 | §5 methodology recap |
+
+### 10.3 Not routed forward
+
+The four §6.6 observation axes plus the §6 forensic cross-tab are
+`NOT_TESTABLE / observation_only` per scope lock §3.4 and are not
+routed as standalone follow-up items in their own right. Where a specific
+observation within one of those axes has methodology implications
+(e.g. §6.6(2) pos 138 / 143, §6 cross-tab theme × label pattern),
+that specific item is listed above under §10.1 or §10.2.
 
 ---
 
 ## Appendices
 
-*(To be authored in D8.2.1.5.)*
+### Appendix A — SHA verification log
 
-- A. SHA verification log (anchors at authoring time)
-- B. D8.1 cell index (cell → claim row mapping)
-- C. Evidence references (per-claim citation table)
+Anchor inputs (external to the adjudication doc; byte-matched at
+every authoring turn per scope lock §7):
+
+| Anchor | File | SHA-256 |
+|---|---|---|
+| D8.0 signoff | `docs/closeout/PHASE2B_D7_STAGE2D_SIGNOFF.md` | `1fb1161cc1721878731b27604bac9653aac2ef5d6cf0a83900818d7398c5e998` |
+| Stage 2d aggregate | `raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/stage2d_aggregate_record.json` | `09eeda3278c96ccf7b945c5edc9dde9bcfa51ca35138a63d36258514be5c323f` |
+| Pre-registered expectations | `docs/d7_stage2d/stage2d_expectations.md` | `98b87a702cc80df2d993d51857d4142f93f2ab8be66438bd2937c5dd374010a5` |
+| D8.1 aggregate notebook | `docs/test_notebooks/D8_1_stage2d_aggregate_result_analysis.ipynb` | `20f58ed830cdafc35c01d59904568d8cd15be0f6bf47985de251527fcdbc6d60` (at commit `ac2586b`) |
+
+D8.2 adjudication doc progression (per-commit file SHAs of
+`docs/d8/D8_STAGE2D_RESULT_ADJUDICATION.md`):
+
+| Sub-phase | Commit | File SHA-256 |
+|---|---|---|
+| D8.2.0 scope lock | `c78ab10` | (pre-doc; no adjudication file at this commit) |
+| D8.2.1.0 skeleton | `39b8b61` | `405f7764f7ac7e2ad9837633df2843628d0f65e1d210cb7997ab9ca7aa411e87` |
+| D8.2.1.1 purpose + recap | `25f9c5e` | `20b2054f921600a047a1eabd078e39ddb032d832e25ba8793be75e99fa2f5439` |
+| D8.2.1.2 §6 per-claim adjudication | `e5b9c48` | `afe18ef08be8a5916b9288c8dcbfb8fec5b11fa8986176bf18828ce4df9f8613` |
+| D8.2.1.3 §7 + §6 forensic cross-tab | `739dc4b` | `276fce80824d073340d88f0e324546222070701b11e7dbfe189e81a09da00eb2` |
+| D8.2.1.4 §8 delta from D8.0 | `c1d885c` | `1d948a73f61a0fbf1683fdcb98678b085fa6592c4f6cbae3538fc0e02fa2b9f0` |
+| D8.2.1.5 §9 synthesis + §10 + appendices | *(this commit)* | *(finalized at commit time)* |
+
+### Appendix B — D8.1 cell index
+
+Mapping of D8.1 notebook cells to D8.2 sections. Cell numbering
+matches `docs/test_notebooks/D8_1_stage2d_aggregate_result_analysis.ipynb`
+at commit `ac2586b`.
+
+| D8.1 cell | Topic | D8.2 consumer section |
+|---|---|---|
+| 09 | Agreement gate adjudication | §6.2.1 |
+| 10 | Divergence gate adjudication | §6.2.2 |
+| 12 | Upper-tail and lower-tail distribution gates | §6.3(a), §6.3(b), §6.3 joint |
+| 16 | Fresh-7 RSI-absent vol_regime gate | §6.4 |
+| 18 | Alignment distribution (observation axis 1) | §7 / §6.6(1) |
+| 19 | SVR–alignment decoupling clusters (observation axis 2) | §7 / §6.6(2) |
+| 20 | Theme × UB-label contingency (observation axis 3) | §7 / §6.6(3) |
+| 21 | Neutral-stratum SVR readout (observation axis 4) | §7 / §6.6(4) |
+| 23 | Forensic theme × UB label × SVR bucket cross-tab | §7 forensic cross-tab |
+| 25 | Per-claim PASS/FAIL summary table | §6 (cross-check) + §9.1 |
+| 27 | D8.1 final analytical verdict (PARTIAL PASS) | §9 |
+
+### Appendix C — Per-claim evidence references
+
+Per-claim pointer chain from pre-registration to D8.2 verdict to
+D8.1 computation cell.
+
+| Pre-registered claim (expectations.md) | D8.2 verdict entry | Evidence (D8.1 cell) |
+|---|---|---|
+| §6.2.1 agreement (SVR≥0.5, ≥50/66) | §6.2.1 — PASS / `pre_registered_claim_upheld` | cell 09 |
+| §6.2.2 divergence (SVR≥0.5, ≥4/5) | §6.2.2 — FALSIFIED / `likely_directional_model_misspecification` | cell 10 |
+| §6.3(a) upper tail (SVR≥0.80, ≥60/199) | §6.3(a) — PASS / `pre_registered_claim_upheld` | cell 12 |
+| §6.3(b) lower tail (SVR≤0.30, ≥40/199) | §6.3(b) — FAIL / `calibration_shortfall` | cell 12 |
+| §6.3 joint distributional shape (derived) | §6.3 joint — PARTIAL / `asymmetric_calibration` | cell 12 (derived) |
+| §6.4 fresh-7 RSI-absent vol_regime (SVR<0.5, ≥2/7) | §6.4 — PASS / `pre_registered_claim_upheld` | cell 16 |
+| §6.6(1) alignment distribution (observation) | §7 §6.6(1) — NOT_TESTABLE / `observation_only` | cell 18 |
+| §6.6(2) SVR–alignment decoupling (observation) | §7 §6.6(2) — NOT_TESTABLE / `observation_only` | cell 19 |
+| §6.6(3) theme × label contingency (observation) | §7 §6.6(3) — NOT_TESTABLE / `observation_only` | cell 20 |
+| §6.6(4) neutral-stratum SVR readout (observation) | §7 §6.6(4) — NOT_TESTABLE / `observation_only` | cell 21 |
+| §6 forensic cross-tab (D8.1 extension, not pre-registered) | §7 forensic cross-tab — NOT_TESTABLE / `observation_only` with `methodology_followup: D8.4` | cell 23 |
