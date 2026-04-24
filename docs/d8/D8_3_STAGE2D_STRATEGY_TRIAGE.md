@@ -924,23 +924,198 @@ infrastructure phase.
 
 ## 10. Synthesis
 
-*Populated in D8.3.5.*
+*Populated in D8.3.5 against the D8.3.4-sealed document state.
+Synthesis cites already-authored §7 / §8 / §9 / Appendix content;
+no new analytical claims are issued; no bucket is reassigned.*
 
-Bucket-level synthesis, cross-bucket observations, lineage-integrity
-re-affirmations, and closing adjudication for the D8.3 sub-arc.
+### 10.1 Final bucket distribution
+
+The sealed D8.3 bucket distribution is 57 KEEP / 134 REVIEW /
+2 DEFER / 0 DROP-DUPLICATIVE / 4 METHOD-QUESTION, totalling 197
+rows after removal of the three quarantined positions (42, 87, 116)
+per Appendix A. Distribution breakdown with per-subsection detail
+is in §8 (per-bucket narrative) and §9 (pos 138 / 143 test-retest
+interpretation).
+
+### 10.2 Tier A vs Tier B composition
+
+Of the 197 rows, 194 were assigned by the Tier A rule matrix
+(Appendix B) and 3 by discretionary Tier B override (Appendix C).
+Tier A breakdown: 57 KEEP from the `SVR ≥ 0.80 × agreement_expected`
+cell; 133 REVIEW across five REVIEW-default cells (`neutral` UB
+drives four cells at 128 rows; the fifth cell
+`SVR [0.50, 0.80) × agreement_expected` contributes 7 rows under
+Q1 ratification); 4 METHOD-QUESTION from the
+`SVR ≤ 0.30 × divergence_expected` cell (pos 1, 2, 3, 5). Tier B
+breakdown: 2 non-rebuttable DEFER overrides from D8.3.2c (pos 138,
+143 per Appendix C.1) plus 1 rebuttable REVIEW override from
+D8.3.3a (pos 6 per Appendix C.2). Override rate is 3/197 ≈ 1.52%.
+
+The low override rate is a scope-lock-discipline observation, not
+a quality claim: scope lock Lock 2 ("default-to-REVIEW") and the
+§5.3 dual-anchor threshold for Tier B collectively constrain
+override eligibility to the small subset of rows where either an
+explicit D8.2 handoff anchor (pos 138, 143) or both individual-
+evidence-strength and a sole-contributor structural observation
+(pos 6) were available on disk.
+
+### 10.3 Cohort-level observations
+
+Three cohort-level patterns structure the sealed distribution.
+
+First, KEEP is the most homogeneous bucket: all 57 rows originate
+from a single Tier A cell (`SVR ≥ 0.80 × agreement_expected`)
+grounded by D8.1 §6.2.1 agreement gate PASS intersected with
+§6.3(a) upper-tail gate PASS. No other cell routes to KEEP under
+Tier A, and no Tier B KEEP-upgrade was identified. KEEP is the
+structural-redundancy upper shelf as characterised in §8.1.
+
+Second, all five §6.2.2 divergence-cohort positions (pos 1, 2, 3,
+5, 6) route to D8.4: four as METHOD-QUESTION (pos 1, 2, 3, 5)
+with `d8_followup = D8.4` per the §4.3 narrow rebuttable
+presumption upheld in D8.3.3a, and one as REVIEW (pos 6) with
+`d8_followup = D8.4` retained as methodology-advisory context
+under bucket/follow-up orthogonality. Pos 3 double-duty (member of
+both §6.2.2 divergence cohort and §6.4 fresh-7 cohort) is
+preserved: fresh-7 PASS co-occurrence did not satisfy §5.3
+dual-anchor discipline as an individual-strength rebuttal for
+pos 3, so the §6.2.2 vs §6.4 directional conflict is handed to
+D8.4 per §8.5 and Appendix C.2.
+
+Third, the RSI-absent vol_regime pair (pos 138, 143) is
+DEFER-retained per D8.3.4 §9 interpretation: the D8.3.2c
+non-rebuttable Tier B anchors (D8.2 §8.4 twins pointer + D8.2
+§6.6(B) LOW-SVR/HIGH-alignment cluster membership) established the
+DEFER routing, and the per-candidate test-retest outcome evidence
+required to resolve the handoff is absent at D8.3 evidence state.
+Pos 143 is NOT a fresh-7 literal member (twin anchor is §6.6(B)
+cluster, not §6.4 set) — this negation is preserved across
+master-table pos 143, Appendix C.1, §8.3, and §9.2.
+
+### 10.4 D8.4 handoff summary
+
+Five §7 rows carry `d8_followup = D8.4`: pos 1, 2, 3, 5
+(METHOD-QUESTION — Appendix C.2 upheld) and pos 6 (REVIEW
+Tier B — Appendix C.2 overridden, follow-up retained as
+methodology-advisory). Two additional rows (pos 138, 143) carry
+`d8_followup = D8.3.4` and, per §9.4, neither issues a methodology
+recommendation beyond forwarding the evidence gap to D8.4's
+methodology scope. D8.4 therefore inherits methodology
+implications for the full §6.2.2 divergence cohort plus the
+test-retest evidence gap from pos 138 / 143, with specific issue
+enumeration in §11.1.
+
+### 10.5 D8.3 scope characterization
+
+D8.3 produces evidence-based strategy-disposition assignments
+against the Stage 2d aggregate record and D8.1 / D8.2 claim-level
+adjudication outputs. Per scope lock §1, D8.3 does not re-score
+candidates, does not run new backtests or LLM calls, does not
+revise D7 / D8.1 / D8.2 methodology, and does not itself select
+candidates for downstream live-fire phases. Bucket assignment
+reflects disposition under the evidence state at D8.3 authoring
+time; any future evidence surfacing (D8.4 methodology outputs,
+post-D8 test-retest artifacts) triggers a fresh ratified
+re-triage cycle per scope lock §3.4 and the D8.3.2c Round 1
+wording fix, not a silent amendment.
 
 ---
 
 ## 11. Forward Pointers
 
+*Populated in D8.3.5 against the D8.3.4-sealed document state.
+Forward pointers cite specific downstream scope locks and §9.5
+unblock artifact requirements; no prescription beyond what
+scope lock §4.3 / §3.4 and §9.5 already establish.*
+
+### 11.1 D8.4 methodology-refinement sub-arc
+
+The six D8.4-known methodology issues enumerated in scope lock
+§4.3 are inherited by D8.4 with the following row-level context
+from D8.3:
+
+1. **Divergence-label definition audit**
+   (§6.2.2 `methodology_followup`). Binding anchor for
+   METHOD-QUESTION bucket assignments pos 1, 2, 3, 5 (§8.5 +
+   Appendix C.2 upheld rows) and methodology-advisory for pos 6
+   (§8.2 + Appendix C.2 overridden row). D8.4 owns the `ub_label`
+   semantics audit for `divergence_expected`.
+
+2. **Direction-of-prediction recalibration**
+   (§6.2.2 `interpretation_tag`). Paired with issue 1 as the
+   cohort-level interpretive correction authority; inherits the
+   same five-row context (pos 1 / 2 / 3 / 5 / 6).
+
+3. **Lower-tail calibration**
+   (§6.3(b) `methodology_followup`). D8.3 does not itself
+   produce a lower-tail row inventory; the inheritance is at
+   methodology scope only, not per-candidate routing.
+
+4. **Joint-shape asymmetric-calibration implications**
+   (§6.3 joint-shape). Same scope-level inheritance as issue 3;
+   no D8.3 per-candidate handoff.
+
+5. **Forensic cross-tab methodology implications / prompt /
+   label discipline** (§7 forensic cross-tab
+   `methodology_followup`; D8.2 §8.4). Includes the twin
+   handoff pathway that grounded pos 138 / 143 DEFER; D8.4
+   inherits the prompt / label methodology context.
+
+6. **Documentation drift — `expectations.md` "6 themes" vs
+   operational 5 themes**. A scope-level documentation-hygiene
+   item with no D8.3 per-candidate handoff.
+
+Issues 1, 2, 5 carry per-candidate D8.3 context; issues 3, 4, 6
+are scope-level only. D8.4 authoring order and prioritisation
+are at D8.4's discretion.
+
+### 11.2 Pos 138 / 143 re-triage (conditional on evidence)
+
+Per §9.5, any future re-triage of pos 138 and pos 143 requires a
+per-candidate test-retest outcome artifact (such as a populated
+`test_retest_tier` field or an equivalent ratified per-candidate
+result field in a downstream aggregate record) as a necessary but
+not sufficient condition, paired with a fresh cross-advisor
+ratified re-triage cycle and §5.3 dual-anchor on the new evidence.
+D8.3.5 issues no schedule or prescription for how that artifact is
+produced; the scope here is limited to recording the forward
+requirement.
+
+### 11.3 Post-D8 phases (scope-level pointer only)
+
+Phase 2B continuation beyond D8 is out of scope for this
+document. Any post-D8.4 re-triage cycle triggered by D8.4
+methodology outputs follows scope lock §3.4 discipline and the
+D8.3.2c Round 1 wording fix: bucket revision requires a fresh
+ratified re-triage cycle on new evidence, not a silent amendment
+to the D8.3 sealed distribution.
+
+---
+
+## 12. D8.3 Sub-Arc Closeout
+
 *Populated in D8.3.5.*
 
-- METHOD-QUESTION routings → D8.4 methodology-refinement sub-arc.
-- DEFER routings (other than pos 138 / 143) → downstream D8.3.x or
-  Stage 2e+ planning.
-- KEEP routings → Stage 2e+ or live-fire planning inputs.
-- DROP-DUPLICATIVE routings → no downstream routing required;
-  archival only.
+D8.3 sub-arc seals at this commit. The sealed state comprises:
+
+- §7 master table (197 rows) with the distribution 57 KEEP / 134
+  REVIEW / 2 DEFER / 0 DROP-DUPLICATIVE / 4 METHOD-QUESTION
+- Appendix A cohort and quarantine reconciliation
+- Appendix B Tier A rule eligibility matrix
+- Appendix C.1 (2 non-rebuttable Tier B overrides) and Appendix
+  C.2 (5 rebuttable-presumption adjudication rows)
+- §8 per-bucket narrative (5 subsections)
+- §9 pos 138 / 143 test-retest interpretation (5 subsections,
+  DEFER-retained)
+- §10 synthesis and §11 forward pointers (this commit)
+- Appendix D SHA and invariant log across D8.3.2a – D8.3.5
+
+Any revision to the sealed distribution requires a fresh
+cross-advisor ratified re-triage cycle per scope lock §3.4 and
+the D8.3.2c Round 1 wording fix. Downstream work proceeds under
+D8.4 (methodology refinement) and any post-D8 infrastructure
+phase that produces the per-candidate test-retest artifact
+described in §9.5 and §11.2.
 
 ---
 
@@ -1571,3 +1746,87 @@ aggregate record) + fresh cross-advisor ratified re-triage cycle +
 | Appendix C.2 D8.3.3a Round 1 wording fix intact | yes | yes |
 | §9 forbidden-language scan | 0 occurrences | 0 |
 | §10 D8.3.5 placeholder intact | yes | yes |
+
+#### D8.3.5 pre-authoring 7-anchor SHA verification (2026-04-24)
+
+Re-run of the 7-anchor byte-match gate prior to §10 / §11 / §12
+authoring. Triage document anchor advanced to D8.3.4 seal; all 6
+external anchors unchanged.
+
+| Anchor | Expected | Observed 2026-04-24 pre-D8.3.5 |
+|---|---|---|
+| `docs/closeout/PHASE2B_D7_STAGE2D_SIGNOFF.md` | `1fb1161c...8c5e998` | `1fb1161cc1721878731b27604bac9653aac2ef5d6cf0a83900818d7398c5e998` ✓ |
+| `raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/stage2d_aggregate_record.json` | `09eeda32...5c323f` | `09eeda3278c96ccf7b945c5edc9dde9bcfa51ca35138a63d36258514be5c323f` ✓ |
+| `docs/d7_stage2d/stage2d_expectations.md` | `98b87a70...4010a5` | `98b87a702cc80df2d993d51857d4142f93f2ab8be66438bd2937c5dd374010a5` ✓ |
+| `docs/test_notebooks/D8_1_stage2d_aggregate_result_analysis.ipynb` | `20f58ed8...dbc6d60` | `20f58ed830cdafc35c01d59904568d8cd15be0f6bf47985de251527fcdbc6d60` ✓ |
+| `docs/d8/D8_STAGE2D_RESULT_ADJUDICATION.md` | `89d54c98...03b4914` | `89d54c9821bb754d17b7085dbe6f344403da5b49824236aa8f1ee301003b4914` ✓ |
+| `docs/d8/D8_3_SCOPE_LOCK.md` | `f0a5598b...33439c` | `f0a5598b34342fb72277d5b344152e0efd6f05bd918699e880b776ead633439c` ✓ |
+| `docs/d8/D8_3_STAGE2D_STRATEGY_TRIAGE.md` | `16d7c970...062fe` (D8.3.4 seal) | `16d7c970...062fe` ✓ |
+
+All 7 anchors byte-match. D8.3.5 finalization proceeds against the
+D8.3.4-sealed document state: §10 synthesis drawn from sealed §7 / §8 /
+§9 / Appendix content; §11 forward pointers enumerating scope lock §4.3
+methodology issues and §9.5 conditional re-triage; §12 sub-arc closeout
+recording the sealed inventory. No §7 / §8 / §9 / Appendix A / B / C
+revision.
+
+#### D8.3.5 authoring summary
+
+§10 Synthesis populated across 5 subsections (10.1 Final bucket
+distribution; 10.2 Tier A vs Tier B composition with 194 / 3 row split
+and 1.52% override rate; 10.3 Cohort-level observations covering KEEP
+homogeneity, divergence-cohort D8.4 handoff, pos 138 / 143 DEFER
+retention; 10.4 D8.4 handoff summary; 10.5 D8.3 scope characterization
+per scope lock §1). §11 Forward Pointers populated across 3 subsections
+(11.1 D8.4 methodology-refinement sub-arc enumerating all six §4.3
+issues with per-candidate D8.3 context; 11.2 Pos 138 / 143 re-triage
+conditional on per-candidate test-retest outcome artifact plus fresh
+ratified re-triage cycle plus §5.3 dual-anchor; 11.3 Post-D8 scope-level
+pointer). §12 D8.3 Sub-Arc Closeout added as a new section recording
+the full sealed inventory. Pos 143 fresh-7 negation preserved (6th
+occurrence across the document). No §7 / §8 / §9 / Appendix A / B / C
+content changed; no bucket reassigned.
+
+#### D8.3.5 post-authoring invariant verification
+
+| Invariant | Expected | Observed |
+|---|---|---|
+| §7.5 bucket distribution unchanged | 57/134/2/0/4 | 57/134/2/0/4 |
+| `d8_followup` counts unchanged | 5 D8.4 / 2 D8.3.4 / 190 none | 5 / 2 / 190 |
+| §10 placeholder replaced with authored content | yes | yes |
+| §11 placeholder replaced with authored content | yes | yes |
+| §12 closeout authored | yes | yes |
+| §10 subsection count | 5 | 5 |
+| §10 subsections non-empty | 5 / 5 | 5 / 5 |
+| §10.1 cites sealed 57/134/2/0/4 + 197 + quarantined 42/87/116 | yes | yes |
+| §10.2 cites 194 / 3 Tier A/B split + 1.52% override + pos 138/143/6 + §5.3 | yes | yes |
+| §10.3 KEEP homogeneity + divergence D8.4 + pos 3 double-duty + pos 143 fresh-7 negation (6th) | yes | yes |
+| §10.4 enumerates D8.4 follow-up rows + refs §11.1 | yes | yes |
+| §10.5 scope-lock §1 + §3.4 + D8.3.2c wording fix | yes | yes |
+| §11 subsection count | 3 | 3 |
+| §11 subsections non-empty | 3 / 3 | 3 / 3 |
+| §11.1 enumerates all 6 D8.4 methodology issues by name | yes | yes |
+| §11.2 cites §9.5 + artifact form + necessary-not-sufficient + §5.3 | yes | yes |
+| §11.3 post-D8 + §3.4 + D8.3.2c wording fix + no silent amendment | yes | yes |
+| §12 cites full sealed inventory + §3.4 + D8.4 handoff | yes | yes |
+| §8 structure intact | yes | yes |
+| §9 structure intact | yes | yes |
+| Appendix B Tier A matrix intact | yes | yes |
+| Appendix C.1 row count | 2 | 2 |
+| Appendix C.3 not created | confirmed absent | absent |
+| Appendix C.2 row count | 5 (4 upheld / 1 overridden) | 5 (4 / 1) |
+| Appendix C.2 D8.3.3a Round 1 wording fix intact | yes | yes |
+| §10 + §11 + §12 forbidden-language scan | 0 occurrences | 0 |
+
+D8.3.4 and D8.3.3b regression scripts re-run from disk: all content
+invariants pass; only the D8.3.5 placeholder guards in those scripts
+supersede (scope-boundary supersession, not true regression — the
+guards correctly fire because D8.3.5 authors §10 / §11 / §12).
+D8.3.3a regression: 20 / 20 invariants pass from disk.
+
+#### D8.3 sub-arc closeout
+
+D8.3 sub-arc closes at this commit. Sealed state inventoried in §12.
+Downstream methodology work proceeds under D8.4 per §11.1; any
+post-D8 re-triage cycle follows scope lock §3.4 and the D8.3.2c Round 1
+wording fix per §11.3.
