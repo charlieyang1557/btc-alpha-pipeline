@@ -395,7 +395,7 @@ columns to the right of `d8_followup` are sourced directly from
 `QUARANTINE_POSITIONS = {42, 87, 116}`); no derivation or
 interpretation is applied.
 
-### 7.5 Master-table body (D8.3.2a scaffold + D8.3.2b Tier A evidence + D8.3.2c non-rebuttable Tier B overrides)
+### 7.5 Master-table body (D8.3.2a scaffold + D8.3.2b Tier A evidence + D8.3.2c non-rebuttable Tier B overrides + D8.3.3a rebuttable-presumption resolution)
 
 Sorted ascending by `position`. 197 rows. The seven scope-lock §5.3
 evidence columns (`bucket`, `primary_evidence`, `secondary_evidence`,
@@ -418,9 +418,22 @@ D8.3 handoff plus D8.2 §6.6(B) LOW-SVR/HIGH-alignment cluster
 membership. These two rows carry `d8_followup = D8.3.4` and have
 `secondary_evidence` populated per §5.3 dual-anchor discipline. No
 KEEP upgrades, no DROP-DUPLICATIVE assignments, and no rebuttable
-rebuttals are applied in D8.3.2c. Updated follow-up distribution:
-5 METHOD-QUESTION rows → `D8.4`; 2 DEFER rows (pos 138, 143) →
-`D8.3.4`; remaining 190 rows → `none`.
+rebuttals are applied in D8.3.2c.
+
+All five §6.2.2 divergence positions were reviewed under scope lock
+§3.4. Pos 6 was overridden to REVIEW; pos 1, 2, 3, and 5 retained
+METHOD-QUESTION. Pos 3 was explicitly evaluated as the double-duty
+case and retained at METHOD-QUESTION because fresh-7 membership is
+a competing observation, not a rebuttal. Pos 6's rationale uses the
+bucket/follow-up orthogonality framing: bucket = REVIEW (triage
+disposition after Tier B rebuttal), `d8_followup` = D8.4 (advisory
+methodology context for divergence-label audit, not bucket-blocking).
+The full 5-position adjudication log is recorded in Appendix C.2.
+
+Updated follow-up distribution after D8.3.3a: 4 METHOD-QUESTION rows
+(pos 1, 2, 3, 5) → `D8.4`; pos 6 REVIEW → `D8.4` (advisory); 2 DEFER
+rows (pos 138, 143) → `D8.3.4`; remaining 190 rows → `none`. Total:
+5 `D8.4` + 2 `D8.3.4` + 190 `none` = 197.
 
 SVR-bucket labels below use ASCII boundary tags for machine
 readability: `LE_0.30` = SVR ≤ 0.30; `GT_0.30_LT_0.50` = 0.30 < SVR
@@ -436,7 +449,7 @@ blank when false.
 | 3 | METHOD-QUESTION | aggregate_record.json per_call_records[2]: SVR=0.15, theme_alignment=0.85, plausibility=0.75, UB=divergence_expected, theme=volatility_regime |  | §4.3 narrow rebuttable METHOD-QUESTION presumption (Tier A); Appendix B cell 2 | Pos 3: UB label divergence_expected places this row in the 5-position §6.2.2 divergence cohort under D8.2 FALSIFIED (interpretation_tag = likely_directional_model_misspecification). Scope lock §4.3 narrow rebuttable METHOD-QUESTION presumption applies; triage depends on D8.4 divergence-label definition audit and direction-of-prediction recalibration. SVR = 0.15, theme_alignment = 0.85, plausibility = 0.75, theme volatility_regime; rebuttal requires Tier B override in D8.3.2c. | D8.4 | volatility_regime | divergence_expected | 0.15 | LE_0.30 | 0.85 | 0.75 | Y | Y |  |  | Y |
 | 4 | REVIEW | aggregate_record.json per_call_records[3]: SVR=0.3, theme_alignment=0.85, plausibility=0.75, UB=neutral, theme=volume_divergence |  | §4.2 Lock 2 default-to-REVIEW (Tier A); Appendix B cell 3 | Pos 4: SVR = 0.3 sits in the lower-tail bracket (SVR ≤ 0.30) but the pre-registered UB label is neutral, so neither the agreement gate nor the §6.3(b) lower-tail gate triggers. Scope lock §4.2 Lock 2 default-to-REVIEW applies; KEEP/DROP-DUPLICATIVE reachable only via Tier B override. theme_alignment = 0.85, plausibility = 0.75, theme volume_divergence. | none | volume_divergence | neutral | 0.3 | LE_0.30 | 0.85 | 0.75 |  |  |  |  | Y |
 | 5 | METHOD-QUESTION | aggregate_record.json per_call_records[4]: SVR=0.15, theme_alignment=0.85, plausibility=0.75, UB=divergence_expected, theme=calendar_effect |  | §4.3 narrow rebuttable METHOD-QUESTION presumption (Tier A); Appendix B cell 2 | Pos 5: UB label divergence_expected places this row in the 5-position §6.2.2 divergence cohort under D8.2 FALSIFIED (interpretation_tag = likely_directional_model_misspecification). Scope lock §4.3 narrow rebuttable METHOD-QUESTION presumption applies; triage depends on D8.4 divergence-label definition audit and direction-of-prediction recalibration. SVR = 0.15, theme_alignment = 0.85, plausibility = 0.75, theme calendar_effect; rebuttal requires Tier B override in D8.3.2c. | D8.4 | calendar_effect | divergence_expected | 0.15 | LE_0.30 | 0.85 | 0.75 |  | Y |  |  | Y |
-| 6 | METHOD-QUESTION | aggregate_record.json per_call_records[5]: SVR=0.75, theme_alignment=0.95, plausibility=0.85, UB=divergence_expected, theme=momentum |  | §4.3 narrow rebuttable METHOD-QUESTION presumption (Tier A); Appendix B cell 8 | Pos 6: UB label divergence_expected places this row in the 5-position §6.2.2 divergence cohort under D8.2 FALSIFIED (interpretation_tag = likely_directional_model_misspecification). Scope lock §4.3 narrow rebuttable METHOD-QUESTION presumption applies; triage depends on D8.4 divergence-label definition audit and direction-of-prediction recalibration. SVR = 0.75, theme_alignment = 0.95, plausibility = 0.85, theme momentum; rebuttal requires Tier B override in D8.3.2c. | D8.4 | momentum | divergence_expected | 0.75 | GE_0.50_LT_0.80 | 0.95 | 0.85 |  | Y |  |  |  |
+| 6 | REVIEW | aggregate_record.json per_call_records[5]: SVR=0.75, theme_alignment=0.95, plausibility=0.85, UB=divergence_expected, theme=momentum | D8.2 §6.2.2 aggregate gate 1/5 observation (pos 6 is sole SVR ≥ 0.5 contributor; only divergence-cohort row above threshold) | Tier B rebuttable rebuttal (D8.3.3a); REVIEW upgrade per §4.3 scope lock framing + dual-anchor (individual evidence strength + §6.2.2 gate structural-redundancy observation) | Pos 6: individual SVR 0.75 + theme_alignment 0.95 + plausibility 0.85 rebuts the §4.3 narrow rebuttable METHOD-QUESTION presumption, and pos 6 is the sole §6.2.2 gate SVR ≥ 0.5 contributor (1/5 observation), together satisfying the §5.3 Tier B dual-anchor threshold. REVIEW (not KEEP) because the divergence_expected label remains disconfirmed at claim-level and the §6.2.2 FALSIFIED verdict binds the cohort-context interpretation. `d8_followup = D8.4` carries methodology-advisory context (not bucket-blocking); bucket = REVIEW is triage disposition, follow-up = D8.4 is divergence-label-audit orthogonal context. | D8.4 | momentum | divergence_expected | 0.75 | GE_0.50_LT_0.80 | 0.95 | 0.85 |  | Y |  |  |  |
 | 7 | REVIEW | aggregate_record.json per_call_records[6]: SVR=0.75, theme_alignment=0.9, plausibility=0.65, UB=neutral, theme=mean_reversion |  | §4.2 Lock 2 default-to-REVIEW (Tier A); Appendix B cell 9 | Pos 7: SVR = 0.75 sits in the moderate bracket (0.50 ≤ SVR < 0.80) with UB label neutral. No Tier A KEEP/DROP rule fires at this cell; scope lock §4.2 Lock 2 default-to-REVIEW applies. theme_alignment = 0.9, plausibility = 0.65, theme mean_reversion. | none | mean_reversion | neutral | 0.75 | GE_0.50_LT_0.80 | 0.9 | 0.65 |  |  |  |  |  |
 | 8 | REVIEW | aggregate_record.json per_call_records[7]: SVR=0.7, theme_alignment=0.85, plausibility=0.65, UB=neutral, theme=volatility_regime |  | §4.2 Lock 2 default-to-REVIEW (Tier A); Appendix B cell 9 | Pos 8: SVR = 0.7 sits in the moderate bracket (0.50 ≤ SVR < 0.80) with UB label neutral. No Tier A KEEP/DROP rule fires at this cell; scope lock §4.2 Lock 2 default-to-REVIEW applies. theme_alignment = 0.85, plausibility = 0.65, theme volatility_regime. | none | volatility_regime | neutral | 0.7 | GE_0.50_LT_0.80 | 0.85 | 0.65 |  |  |  |  |  |
 | 9 | REVIEW | aggregate_record.json per_call_records[8]: SVR=0.3, theme_alignment=0.85, plausibility=0.75, UB=neutral, theme=volume_divergence |  | §4.2 Lock 2 default-to-REVIEW (Tier A); Appendix B cell 3 | Pos 9: SVR = 0.3 sits in the lower-tail bracket (SVR ≤ 0.30) but the pre-registered UB label is neutral, so neither the agreement gate nor the §6.3(b) lower-tail gate triggers. Scope lock §4.2 Lock 2 default-to-REVIEW applies; KEEP/DROP-DUPLICATIVE reachable only via Tier B override. theme_alignment = 0.85, plausibility = 0.75, theme volume_divergence. | none | volume_divergence | neutral | 0.3 | LE_0.30 | 0.85 | 0.75 |  |  |  |  | Y |
@@ -1005,6 +1018,25 @@ small override count).
 | 138 | REVIEW | DEFER | RSI-absent vol_regime twin (pos 138, 143) with explicit D8.2 §8.4 test-retest handoff to D8.3; scope lock §3.2 canonical DEFER case | D8.2 §8.4 "RSI-absent vol_regime twins" (pointer to D8.3 test-retest); D8.2 §6.6(B) LOW-SVR/HIGH-aln cluster membership (line 723); scope lock §3.2 canonical DEFER definition | spot_checked |
 | 143 | REVIEW | DEFER | RSI-absent vol_regime twin (pos 138, 143) with explicit D8.2 §8.4 test-retest handoff to D8.3; scope lock §3.2 canonical DEFER case; pos 143 NOT fresh-7 literal — anchor is §6.6(B) cluster, not §6.4 fresh-7 set | D8.2 §8.4 "RSI-absent vol_regime twins" (pointer to D8.3 test-retest); D8.2 §6.6(B) LOW-SVR/HIGH-aln cluster membership (line 723); scope lock §3.2 canonical DEFER definition | spot_checked |
 
+#### C.2 D8.3.3a rebuttable-presumption resolution (5 rows, full adjudication log)
+
+Scope lock §3.4 narrow rebuttable METHOD-QUESTION presumption applied
+to all five §6.2.2 divergence-cohort positions (pos 1, 2, 3, 5, 6).
+Per scope lock §6.2 discipline, 100% spot-check applied; all five
+positions carry `reviewer_check = spot_checked`. Four positions upheld
+the METHOD-QUESTION default; pos 6 was overridden to REVIEW under
+§5.3 Tier B dual-anchor discipline. Schema extended with a `decision`
+column (values: `upheld` / `overridden`) per D8.3.3a ratification for
+mechanical auditability of upheld-vs-overridden status.
+
+| `position` | `default_bucket` | `decision` | `override_bucket` | `rationale` | `evidence_anchor` | `reviewer_check` |
+|---|---|---|---|---|---|---|
+| 1 | METHOD-QUESTION | upheld | METHOD-QUESTION | SVR = 0.0 in LE_0.30 bracket with divergence_expected label disconfirmation; no sufficient dual-anchor rebuttal was identified under the D8.3.3a evidence standard (individual SVR well below §6.2.2 0.5 threshold and no §6.4 or stage2b_overlap secondary anchor applies). §4.3 narrow rebuttable presumption default stands; D8.4 divergence-label audit owns final interpretation. | primary: aggregate_record.json per_call_records[0] SVR=0.0, theme_alignment=0.85, plausibility=0.45; secondary: §4.3 narrow rebuttable default (no rebuttal anchor available) | spot_checked |
+| 2 | METHOD-QUESTION | upheld | METHOD-QUESTION | SVR = 0.15 in LE_0.30 bracket with divergence_expected label disconfirmation; no sufficient dual-anchor rebuttal was identified under the D8.3.3a evidence standard. §4.3 narrow rebuttable presumption default stands; D8.4 divergence-label audit owns final interpretation. | primary: aggregate_record.json per_call_records[1] SVR=0.15, theme_alignment=0.95, plausibility=0.75; secondary: §4.3 narrow rebuttable default | spot_checked |
+| 3 | METHOD-QUESTION | upheld | METHOD-QUESTION | Double-duty case: member of §6.2.2 divergence cohort (FALSIFIED) and §6.4 fresh-7 cohort (PASS contributor, SVR<0.5). Fresh-7 membership is a competing cohort-level observation, not an individual-strength rebuttal anchor; §6.4 PASS contribution co-occurs with pos 43 and 128 but does not satisfy §5.3 dual-anchor discipline for pos 3 specifically. Directional conflict (§6.2.2 FALSIFIED vs §6.4 PASS) remains unresolved and is handed to D8.4 divergence-label audit per scope lock §3.4 framing. | primary: aggregate_record.json per_call_records[2] SVR=0.15, theme_alignment=0.85, plausibility=0.75, fresh_7=Y; secondary: scope lock §3.4 pos 3 explicit adjudication clause; §4.3 narrow rebuttable default | spot_checked |
+| 5 | METHOD-QUESTION | upheld | METHOD-QUESTION | SVR = 0.15 in LE_0.30 bracket with divergence_expected label disconfirmation; no sufficient dual-anchor rebuttal was identified under the D8.3.3a evidence standard. §4.3 narrow rebuttable presumption default stands; D8.4 divergence-label audit owns final interpretation. | primary: aggregate_record.json per_call_records[4] SVR=0.15, theme_alignment=0.85, plausibility=0.75; secondary: §4.3 narrow rebuttable default | spot_checked |
+| 6 | METHOD-QUESTION | overridden | REVIEW | Tier B rebuttable rebuttal under §5.3 dual-anchor discipline: (1) individual evidence strength — SVR 0.75 in GE_0.50_LT_0.80 bracket + theme_alignment 0.95 + plausibility 0.85 (highest evidence quality among the 5 divergence positions); (2) pos 6 is the sole §6.2.2 aggregate gate SVR ≥ 0.5 contributor (1/5 observation) — the structural-redundancy observation that drove the §6.2.2 single contribution belongs to pos 6 specifically, rebutting the default presumption. REVIEW (not KEEP) because divergence_expected label disconfirmation binds at claim-level context regardless of individual SVR. `d8_followup = D8.4` retained as methodology-advisory (not bucket-blocking): bucket = REVIEW is triage disposition, follow-up = D8.4 is divergence-label-audit orthogonal context. | primary: aggregate_record.json per_call_records[5] SVR=0.75, theme_alignment=0.95, plausibility=0.85; secondary: D8.2 §6.2.2 aggregate gate 1/5 observation (pos 6 is sole SVR ≥ 0.5 contributor; only divergence-cohort row above threshold) | spot_checked |
+
 ### Appendix D — SHA Verification Log
 
 *Populated incrementally; closed in D8.3.5.*
@@ -1115,5 +1147,61 @@ D8.3.2c authoring:
 | Pos 143 rationale cites §8.4 + §6.6(B); NOT fresh-7 | yes (fresh-7 explicitly negated) | yes |
 | Pos 3 bucket still METHOD-QUESTION (D8.3.3 adjudication pending) | METHOD-QUESTION | METHOD-QUESTION |
 | Pos 6 bucket still METHOD-QUESTION (D8.3.3 adjudication pending) | METHOD-QUESTION | METHOD-QUESTION |
+| Forbidden language in rationale prose | 0 occurrences | 0 |
+| Rationale sentence count per row | ≤ 3 | 3 max observed |
+
+#### D8.3.3a pre-authoring SHA re-verification (2026-04-24)
+
+Mandatory 7-anchor byte-match re-verification per scope lock §2 before
+applying rebuttable-presumption resolution to the §7.5 master-table
+body and populating Appendix C.2.
+
+| Anchor | Expected (from D8.3.2c seal) | Observed 2026-04-24 pre-D8.3.3a |
+|---|---|---|
+| `docs/closeout/PHASE2B_D7_STAGE2D_SIGNOFF.md` | `1fb1161c...8c5e998` | `1fb1161cc1721878731b27604bac9653aac2ef5d6cf0a83900818d7398c5e998` ✓ |
+| `raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/stage2d_aggregate_record.json` | `09eeda32...5c323f` | `09eeda3278c96ccf7b945c5edc9dde9bcfa51ca35138a63d36258514be5c323f` ✓ |
+| `docs/d7_stage2d/stage2d_expectations.md` | `98b87a70...4010a5` | `98b87a702cc80df2d993d51857d4142f93f2ab8be66438bd2937c5dd374010a5` ✓ |
+| `docs/test_notebooks/D8_1_stage2d_aggregate_result_analysis.ipynb` | `20f58ed8...dbc6d60` | `20f58ed830cdafc35c01d59904568d8cd15be0f6bf47985de251527fcdbc6d60` ✓ |
+| `docs/d8/D8_STAGE2D_RESULT_ADJUDICATION.md` | `89d54c98...03b4914` | `89d54c9821bb754d17b7085dbe6f344403da5b49824236aa8f1ee301003b4914` ✓ |
+| `docs/d8/D8_3_SCOPE_LOCK.md` | `f0a5598b...33439c` | `f0a5598b34342fb72277d5b344152e0efd6f05bd918699e880b776ead633439c` ✓ |
+| `docs/d8/D8_3_STAGE2D_STRATEGY_TRIAGE.md` | `ebb6205f...98cc3c` (D8.3.2c seal) | `ebb6205fe7e46fb0f9d9da177dd03084fc2dcc4d355f7bfde7daa2e51798cc3c` ✓ |
+
+All 7 anchors byte-match. D8.3.3a rebuttable-presumption resolution
+proceeds against the locked inputs.
+
+#### D8.3.3a adjudication summary
+
+All five §6.2.2 divergence-cohort positions (pos 1, 2, 3, 5, 6) were
+explicitly evaluated under scope lock §3.4 narrow rebuttable
+METHOD-QUESTION presumption. One override applied (pos 6 → REVIEW);
+four upheld (pos 1, 2, 3, 5 stay METHOD-QUESTION). Pos 6's rebuttal
+rationale adopts bucket/follow-up orthogonality: bucket = REVIEW is
+triage disposition; `d8_followup = D8.4` is methodology-advisory
+context (not bucket-blocking). Full adjudication log recorded in
+Appendix C.2 with extended 7-column schema including a `decision`
+column (`upheld` / `overridden`) for mechanical auditability.
+
+#### D8.3.3a post-authoring invariant verification
+
+| Invariant | Expected | Observed |
+|---|---|---|
+| §7.5 master-table row count | 197 | 197 |
+| Quarantine absence (pos 42, 87, 116) | absent | absent |
+| Bucket distribution | 57 KEEP / 134 REVIEW / 2 DEFER / 0 DROP-DUPLICATIVE / 4 METHOD-QUESTION | 57 / 134 / 2 / 0 / 4 |
+| DEFER positions | [138, 143] | [138, 143] |
+| METHOD-QUESTION positions | [1, 2, 3, 5] | [1, 2, 3, 5] |
+| Pos 6 bucket | REVIEW (was METHOD-QUESTION) | REVIEW |
+| `d8_followup` = `D8.4` count | 5 (pos 1, 2, 3, 5 MQ + pos 6 REVIEW-advisory) | 5 |
+| `d8_followup` = `D8.3.4` count | 2 (DEFER pos 138, 143) | 2 |
+| `d8_followup` = `none` count | 190 | 190 |
+| `secondary_evidence` populated count | 3 (pos 6, 138, 143 Tier B) | 3 |
+| `secondary_evidence` blank count | 194 | 194 |
+| Appendix C.2 row count | 5 | 5 |
+| Appendix C.2 `decision` = `overridden` count | 1 (pos 6) | 1 |
+| Appendix C.2 `decision` = `upheld` count | 4 (pos 1, 2, 3, 5) | 4 |
+| Pos 6 rationale cites §6.2.2 gate + orthogonality framing | yes | yes |
+| Pos 3 double-duty explicitly adjudicated in C.2 | yes | yes |
+| Pos 3 double-duty flags preserved (fresh_7=Y, divergence_cohort=Y) | yes | yes |
+| Pos 138 stage2b_overlap=Y preserved | yes | yes |
 | Forbidden language in rationale prose | 0 occurrences | 0 |
 | Rationale sentence count per row | ≤ 3 | 3 max observed |
