@@ -639,17 +639,292 @@ pos 43 at 0.25, pos 128 at 0.30).
 
 ## 7. §6.6 Observation Findings
 
-*(To be authored in D8.2.1.3.)*
+Five non-gate observation entries corresponding to §4 claim
+inventory rows 7–11: four §6.6 observation axes plus one §6
+forensic cross-tab. The §6.6 axes are pre-registered observation
+readouts without PASS/FAIL thresholds; the forensic cross-tab is a
+D8.1 interpretive-input artifact (D8.1 cell 23) that is not a §6.6
+axis and is not pre-registered as a gate. Both categories share
+`primary_verdict = NOT_TESTABLE` / `interpretation_tag =
+observation_only` under scope lock §3.4, but the taxonomic
+distinction is preserved in the subsection labels below. Entries
+record interpretive evidence that supports or qualifies §6 gate
+adjudications without creating a new claim family. Cross-references
+back to §6 are authored bidirectionally: §6 entries already
+reference §7 axes; §7 entries here close the loop.
 
-One subsection per §6.6 axis (§4 rows 7–11). Each subsection:
+Counts are direct from D8.1 cells 18–23 (aggregate SHA
+`09eeda32...c323f`); no new statistical test, Wilson CI, or
+p-value is introduced (scope lock §4.2).
 
-- **Axis description**
-- **Observed summary** (D8.1 cell output reference)
-- **`primary_verdict = NOT_TESTABLE`** (structural, non-gate)
-- **`interpretation_tag`** (default `observation_only`; more specific
-  narrative tags permitted)
-- **Evidence role** — how the observation supports or qualifies a
-  §6 gate adjudication
+### §6.6(1) — Alignment distribution by UB label
+
+**Source** (D8.1 cell 18, aggregate SHA `09eeda32...c323f`):
+mean `semantic_theme_alignment` (aln) by `pre_registered_label`
+over the 197 ok-scored records.
+
+**Observation**:
+
+| UB label            | n   | mean(aln) | median(aln) | stdev(aln) |
+|---------------------|-----|-----------|-------------|------------|
+| agreement_expected  | 64  | 0.819     | 0.850       | 0.105      |
+| divergence_expected | 5   | 0.890     | 0.850       | 0.055      |
+| neutral             | 128 | 0.837     | 0.850       | 0.090      |
+
+The divergence_expected cohort has the highest mean alignment
+(0.890) but the smallest denominator (n=5); the three cohort means
+span only 0.071.
+
+**Adjudication**:
+
+| Field | Value |
+|---|---|
+| `primary_verdict` | `NOT_TESTABLE` |
+| `interpretation_tag` | `observation_only` |
+
+**Material findings.**
+
+1. *Consistent with §6.2.2 mechanism, stated conservatively.* The
+   §6.2.2 FALSIFIED adjudication observes that the divergence cohort
+   is assessed at low SVR (four of five at SVR ≤ 0.15) despite being
+   predicted to score high. §6.6(1) adds the alignment reading for
+   the same cohort: the same five positions have the highest mean
+   alignment of any cohort (0.890). The observation is that the
+   model treats these candidates as thematically coherent while
+   scoring them as structurally non-variant. No causal claim is made
+   here; this is recorded as corroborating context only, and the
+   n=5 caveat is flagged alongside.
+
+2. *Cohort means are tight overall.* All three cohort medians are
+   exactly 0.850, and the three means span 0.071 (0.819 to 0.890).
+   The alignment axis does not sharply discriminate by UB label;
+   its interpretive value is primarily in pair-wise correlation with
+   SVR (see §6.6(2)), not in standalone cohort comparison.
+
+---
+
+### §6.6(2) — SVR–alignment decoupling
+
+**Source** (D8.1 cell 19, aggregate SHA `09eeda32...c323f`): joint
+distribution of SVR × alignment over the 197 ok-scored records,
+isolating two structurally decoupled clusters.
+
+**Observation**:
+
+Two decoupled clusters (no overlap by construction):
+
+- **Cluster (A) — HIGH-SVR / LOW-aln** (`SVR ≥ 0.75` AND `aln ≤ 0.50`):
+  4 positions — pos 77, 82, 102, 117. All four carry
+  `candidate_theme = mean_reversion`. UB labels: 2 agreement_expected
+  (pos 82, 102), 2 neutral (pos 77, 117).
+
+- **Cluster (B) — LOW-SVR / HIGH-aln** (`SVR ≤ 0.25` AND `aln ≥ 0.75`):
+  15 positions — pos 1, 2, 3, 5, 33, 35, 38, 43, 66, 95, 99, 133,
+  138, 143, 178. Theme mix dominated by volatility_regime (8 of 15);
+  UB labels: 4 divergence_expected (pos 1, 2, 3, 5), 11 neutral.
+
+**Adjudication**:
+
+| Field | Value |
+|---|---|
+| `primary_verdict` | `NOT_TESTABLE` |
+| `interpretation_tag` | `observation_only` |
+
+**Material findings.**
+
+1. *Cluster (B) contains four of the five §6.2.2 divergence cohort
+   positions.* Pos 1, 2, 3, 5 all land in cluster (B); pos 6 (the
+   one §6.2.2 cohort member with SVR ≥ 0.5) does not, because its
+   SVR (0.75) exceeds the cluster (B) threshold of `SVR ≤ 0.25`.
+   This is the bidirectional completion of the §6.2.2 → §6.6(B)
+   cross-reference: §6.2.2 records the directional contradiction;
+   §6.6(2) records that the contradiction coincides with a broader
+   LOW-SVR/HIGH-aln decoupling cluster, not an isolated divergence-
+   cohort artifact.
+
+2. *Cluster (B) overlaps §6.3(b) lower tail.* All four
+   divergence_expected cluster-(B) members (pos 1, 2, 3, 5) also
+   appear in the §6.3(b) lower-tail (SVR ≤ 0.30) count of 26. This
+   overlap is mechanical: cluster (B) requires SVR ≤ 0.25, which
+   is a strict subset of SVR ≤ 0.30. Recorded as an observation
+   of how the §6.6(B) cluster and the §6.3(b) low-tail mass
+   co-locate; no additional verdict is derived.
+
+3. *Cluster (A) is theme-homogeneous (mean_reversion).* All four
+   cluster-(A) positions are mean_reversion-themed. This observation
+   interacts with §6 cross-tab finding 1 (mean_reversion × neutral
+   SVR-skew HIGH) rather than with any §6 gate verdict. Cluster (A)
+   is not pre-registered against any claim; the pattern is recorded
+   for D8.2 interpretive input only.
+
+---
+
+### §6.6(3) — Theme × UB label contingency
+
+**Source** (D8.1 cell 20, aggregate SHA `09eeda32...c323f`): counts
+over the 197 ok-scored records, cross-tabulated by
+`candidate_theme` × `pre_registered_label`.
+
+**Observation**:
+
+| theme              | agree | diverg | neutral | row n |
+|--------------------|-------|--------|---------|-------|
+| momentum           | 14    | 2      | 23      | 39    |
+| mean_reversion     | 20    | 1      | 17      | 38    |
+| volatility_regime  | 5     | 1      | 34      | 40    |
+| volume_divergence  | 16    | 0      | 24      | 40    |
+| calendar_effect    | 9     | 1      | 30      | 40    |
+
+Within-row percentages of note: mean_reversion runs ~53%
+agreement-heavy (20 / 38); volatility_regime runs 85% neutral-heavy
+(34 / 40); volume_divergence has zero divergence_expected candidates
+(0 / 40).
+
+**Adjudication**:
+
+| Field | Value |
+|---|---|
+| `primary_verdict` | `NOT_TESTABLE` |
+| `interpretation_tag` | `observation_only` |
+
+**Material findings.**
+
+1. *mean_reversion is agreement-heavy.* The mean_reversion row has
+   the highest within-row agreement share (~53%) among the five
+   themes. This is consistent with §6 cross-tab finding 1 (mean_
+   reversion × neutral SVR-skew HIGH): mean_reversion candidates,
+   even in the neutral stratum, exhibit high SVR. Recorded as
+   observation only; no claim is made about whether mean_reversion
+   is "overfit" to agreement.
+
+2. *volatility_regime is neutral-heavy.* 85% of volatility_regime
+   candidates are neutral-labelled (34 of 40). This is the
+   structural explanation for the §6.4 fresh-7 subset being drawn
+   from volatility_regime and being mostly neutral-labelled (5 of 7
+   fresh-7 entries carry UB = neutral). No §6.4 verdict is affected;
+   the theme-label coupling is recorded here to anchor §6.4's
+   cohort shape.
+
+3. *volume_divergence has zero divergence_expected calls.* Zero of
+   40 volume_divergence candidates carry UB = divergence_expected.
+   This is a candidate-selection observation, not a model-behavior
+   observation: D7's candidate generator produced no volume_divergence
+   proposals that the divergence-labelling convention flagged as
+   divergence-expected. A possible D8.4 question — whether the
+   labelling convention or the candidate generator should be tuned
+   to produce some volume_divergence ∩ divergence_expected cases for
+   future runs — is only flagged as a pointer, not adjudicated here.
+
+4. *Row sizes are roughly balanced (38–40).* No theme row is
+   pathologically sparse; the contingency-table shape is not
+   dominated by sample-size imbalance across themes.
+
+---
+
+### §6.6(4) — Neutral-stratum SVR readout
+
+**Source** (D8.1 cell 21, aggregate SHA `09eeda32...c323f`): SVR
+distribution restricted to the 128 ok-scored records with
+`pre_registered_label = neutral`.
+
+**Observation**:
+
+| Statistic | Value |
+|---|---|
+| n            | 128   |
+| median(SVR)  | 0.750 |
+| mean(SVR)    | 0.705 |
+
+The neutral-stratum SVR median (0.75) sits above the pre-registered
+agreement threshold of 0.5 and in the MOD-HIGH bucket [0.50, 0.80).
+
+**Adjudication**:
+
+| Field | Value |
+|---|---|
+| `primary_verdict` | `NOT_TESTABLE` |
+| `interpretation_tag` | `observation_only` |
+
+**Material findings.**
+
+1. *Observation only; no comparison to Stage 2c descriptive
+   heritage.* The Stage 2c critic produced a neutral-stratum SVR
+   descriptive band in a different context (smaller cohort, distinct
+   prompt + framing). Per hard rule 5, D8.2 does not compare the
+   Stage 2d neutral median against that Stage 2c band; doing so
+   would reinterpret the Stage 2d pre-registration, which anchored
+   the neutral stratum as observation-only. The median 0.75 is
+   recorded on its own terms.
+
+2. *Context for §6.3(a) upper-tail composition.* The 54 neutral
+   positions contributing to the §6.3(a) upper tail (SVR ≥ 0.80)
+   are consistent with a neutral-stratum distribution whose median
+   sits at 0.75: a neutral median above the §6.3(a) upper-tail
+   floor of 0.80 would imply a majority upper-tail contribution,
+   which the observed split (54 of 128 at SVR ≥ 0.80 ≈ 42%) does
+   not quite reach but approaches. Recorded as corroborating
+   context only; §6.3(a) is already PASS on its own count.
+
+---
+
+### §6 forensic cross-tab — Theme × UB label × SVR bucket
+
+**Source** (D8.1 cell 23, aggregate SHA `09eeda32...c323f`): three-
+way contingency over the 197 ok-scored records, cross-tabulated by
+`candidate_theme` × `pre_registered_label` × SVR bucket. Buckets
+are LOW `[0.00, 0.20)`, MOD-LOW `[0.20, 0.50)`, MOD-HIGH
+`[0.50, 0.80)`, HIGH `[0.80, 1.01]`.
+
+**Observation** (rows with notable skew):
+
+| theme × UB            | cell n | HIGH-bucket n | HIGH %  |
+|-----------------------|--------|---------------|---------|
+| momentum × agreement       | 14 | 13 | 93%  |
+| mean_reversion × neutral   | 17 | 12 | 71%  |
+| calendar_effect × agreement|  9 |  6 | 67%  |
+| volatility_regime × neutral| 34 |  6 | 18%  |
+
+Full cell enumeration is in D8.1 cell 23 output; only the rows with
+analytically relevant skews are reproduced here.
+
+**Adjudication**:
+
+| Field | Value |
+|---|---|
+| `primary_verdict` | `NOT_TESTABLE` |
+| `interpretation_tag` | `observation_only` |
+| `methodology_followup` | `D8.4` |
+
+**Material findings.**
+
+1. *mean_reversion × neutral SVR-skew HIGH (71%).* 12 of 17
+   mean_reversion × neutral positions land in the HIGH bucket. This
+   is the three-way completion of the §6.6(3) observation
+   (mean_reversion agreement-heavy) and the §6.6(2)(A) observation
+   (cluster (A) all mean_reversion): even when mean_reversion
+   candidates carry a neutral UB label, their SVR sits high. The
+   pattern is recorded as an observation; no verdict on
+   mean_reversion as a theme is derived.
+
+2. *volatility_regime × neutral SVR-skew contrast.* 18% of
+   volatility_regime × neutral positions land in the HIGH bucket,
+   ~4× lower than the mean_reversion × neutral share (71%). The two
+   themes, both heavily neutral-labelled (§6.6(3)), behave
+   differently at the SVR level. This contrast is recorded because
+   it affects D8.4's calibration scope: a uniform SVR-calibration
+   adjustment across themes would not match the observed
+   theme-conditional behavior. Recorded as observation only; no
+   calibration action is prescribed here.
+
+3. *momentum × agreement concentration (93%).* 13 of 14 momentum
+   agreement positions sit at SVR ≥ 0.80. This is consistent with
+   the §6.2.1 agreement-axis PASS and adds no new gate evidence;
+   it is retained here as a cross-tab cell rather than re-
+   adjudicating §6.2.1.
+
+4. *Scope guardrail.* The cross-tab is forensic, not a new claim
+   family. No threshold is pre-registered over any theme × label ×
+   bucket cell; all observations here are `NOT_TESTABLE`.
 
 ---
 
