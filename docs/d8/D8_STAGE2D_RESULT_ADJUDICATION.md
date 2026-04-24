@@ -11,16 +11,46 @@ are authored in D8.2.1.1+. No adjudication prose in this commit.
 
 ## 1. Purpose and Scope
 
-*(To be authored in D8.2.1.1.)*
+D8.2 is the **claim-level adjudication** of Stage 2d pre-registered
+expectations. D8.1 produced the mechanical evidence (gate numerators,
+observation readouts) in a 28-cell notebook across six per-section
+commits; D8.2 converts that evidence into scientific claim verdicts
+using the two-field taxonomy (`primary_verdict` +
+`interpretation_tag`) locked in the scope contract.
 
-D8.2 is the claim-level adjudication of Stage 2d pre-registered gates.
-Per the scope lock:
+**Governing constitution.** The binding scope contract for this
+document is `docs/d8/D8_2_SCOPE_LOCK.md` at commit `c78ab10`. Where
+§3 below summarizes the verdict taxonomy for reader convenience, the
+scope lock text is authoritative; any conflict is resolved in favor
+of the scope lock per its §8 sealing conditions.
 
-- Claim-driven, not strategy-driven
-- Six gate claims + §6.6 observation axes + §6 cross-tab + delta-from-D8.0
-- Per-candidate triage deferred to D8.3; methodology fixes deferred to D8.4
-- D8.0 stands as historical snapshot; D8.2 is the controlling
-  adjudication going forward
+**Scope boundary.** D8.2 is claim-driven, not strategy-driven and not
+methodology-driven:
+
+- Claim-driven — six gate adjudications (five individual gates plus
+  the §6.3 derived joint) and five §6.6 non-gate observation axes
+  (including the §6 forensic cross-tab recorded at §6.1 Lock +
+  expectations.md)
+- **Out of scope:** per-candidate §E3 / §E4 bucket adjudication and
+  strategy-level Tier A/B/C/D triage — deferred to **D8.3**
+- **Out of scope:** methodology reform (prompt-template refinement,
+  cost-field semantics, direction-of-prediction recalibration) —
+  deferred to **D8.4**. D8.2 emits `methodology_followup: D8.4`
+  pointers only; it does not author the fixes.
+- **Out of scope:** amendment of the D8.0 phase signoff at commit
+  `f28e2d2`. D8.0 is a historical snapshot; D8.2 is the controlling
+  claim-level adjudication going forward. Supersession is narrative,
+  not textual — see §8 delta.
+
+**Reader navigation.** §6 contains the six gate adjudications; §7
+contains the five §6.6 observation findings; §8 enumerates where
+D8.2 supersedes the D8.0 signoff narrative; §9 synthesizes what
+Stage 2d teaches at the claim level; §10 hands off to D8.3 / D8.4.
+
+**Durability.** D8.2 is the controlling claim-level adjudication for
+Stage 2d. Amendment of D8.2 requires the same ratification cycle
+used for the scope lock: explicit Charlie sign-off plus a new
+commit referencing the amendment rationale.
 
 ---
 
@@ -97,12 +127,78 @@ fills §6.6 rows.
 
 ## 5. Methodology Recap
 
-*(To be authored in D8.2.1.1.)*
+D8.2's gate verdicts derive from D8.1's computed evidence. This
+section records the methodology by which that evidence was produced
+so §6 adjudications can be read with full provenance. No new
+analysis is performed here; claim verdicts remain D8.1's mechanical
+outputs, adjudicated under the scope lock taxonomy.
 
-Brief summary of the D8.1 sub-arc's notebook-driven gate adjudication:
-inputs, cell-level decomposition, integrity-check discipline, and the
-scope in which verdicts were computed. No new analysis here; this
-section is narrative scaffolding for the per-claim rows in §6.
+**D8.1 sub-arc structure.** Six per-section commits authored a
+28-cell Jupyter notebook at
+`docs/test_notebooks/D8_1_stage2d_aggregate_result_analysis.ipynb`:
+
+- `3c19945` D8.1.2 — skeleton + integrity harness
+- `2f283c4` D8.1.3 — §§0–1 (inputs, schema, denominator derivation)
+- `5d2bb72` D8.1.4 — §6.2 agreement/divergence + §6.3 tail gates
+  (cells 09, 10, 12, 13)
+- `606e451` D8.1.5 — §6.4 fresh-7 gate (cells 15, 16)
+- `2f455fb` D8.1.6 — §6.6 observation readouts (cells 18–21)
+- `ac2586b` D8.1.7 — §6 forensic cross-tab + §7 synthesis (cells 23,
+  25, 26, 27); D8.1 sub-arc closed
+
+Every commit ran ~10 integrity checks (denominator invariants,
+per-call SVR parity, bucket closure, summary consistency); the
+notebook is stored restored-without-outputs per Phase 2B convention.
+
+**Denominator discipline.** Three denominator populations recur
+throughout D8.1 and are carried into §6 without re-derivation:
+
+- **200 source positions** — the full Stage 2d source universe,
+  every candidate position pre-registered in
+  `stage2d_expectations.md` regardless of scoring outcome, including
+  position 116
+- **199-call UB cohort denominator** — the 200 source positions
+  minus position 116 (skipped-source exclusion per §6.1 Lock; pos
+  116 uses the 17-key `position` shape rather than the 18-key
+  `candidate_position` shape carried by the other 199)
+- **197 scored universe denominator** — the 199 UB cohort minus
+  positions 42 and 87, which returned `d7b_error` without SVR. These
+  two error records remain counted in the 199 UB denominator and
+  contribute zero to any SVR-indexed numerator; they are excluded
+  only from SVR-indexed cross-tabs (e.g., the §6 theme × label × SVR
+  forensic cross-tab at cell 23 uses the 197 scored universe)
+
+No-imputation rule — D8.1 never fills an absent SVR and never
+substitutes a per-call score for a missing aggregate; missing values
+flow through as structural zeros in gate numerators. §6 adjudications
+inherit this discipline without exception.
+
+**Gate outputs and observation axes.** D8.1 emitted six gate
+adjudications (five individual plus the §6.3 derived joint) and five
+§6.6 observation axes (alignment distribution, SVR–alignment
+decoupling, theme × UB label contingency, neutral-stratum SVR
+readout, and the §6 theme × label × SVR forensic cross-tab). Each
+row in §4's claim inventory maps to one D8.1 cell output, cited by
+cell index in the §6 / §7 evidence fields.
+
+**Taxonomy application in §6.** Per the scope lock, each gate row
+in §6 is stamped with a `primary_verdict` from the closed six-class
+enum (`PASS` / `FAIL` / `FALSIFIED` / `PARTIAL` / `INCONCLUSIVE` /
+`NOT_TESTABLE`) and an advisory `interpretation_tag`. Observation
+axes in §7 receive `primary_verdict = NOT_TESTABLE` because §6.6 is
+not pre-registered as a gate; the NOT_TESTABLE assignment there is
+structural, not a fallback. Ambiguous gate adjudications — none are
+expected in D8.2 given D8.1's clean integrity-check run — would use
+`INCONCLUSIVE` with explicit rationale, never NOT_TESTABLE.
+
+**D8.0 delta policy.** D8.2 supersedes the D8.0 phase signoff
+narrative where D8.1 surfaced claim-level findings that the signoff
+did not record (notably §6.3(b) lower-tail FAIL). Per scope lock
+Q3 / Q5 rulings, D8.2 does not amend D8.0 at commit `f28e2d2`; it
+stands independently and records the supersession points explicitly
+in §8. Hard rule 5 (no reinterpretation of pre-registered claims)
+binds both documents: D8.2's job is adjudication, not
+pre-registration rewrite.
 
 ---
 
