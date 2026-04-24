@@ -411,38 +411,410 @@ in either direction at D8.4.2's evidence state.
 
 ### 4.2 Issue 2 — Direction-of-prediction recalibration
 
-*Populated in D8.4.3.*
+Issue 2 authors a methodology proposal addressing the
+direction-of-prediction recalibration gap surfaced by D8.2 §6.2.2's
+`likely_directional_model_misspecification` interpretation_tag. Where
+Issue 1 (D8.4.2) names the definitional boundary by splitting the
+`divergence_expected` label into cohort-membership,
+score-threshold-expectation, and directional-interpretation
+components, Issue 2 operationalizes the directional-interpretation
+component into a D7b output mechanism. Issue 2 consumes Issue 1's
+three-component split as upstream input; it does not re-author the
+split. The scope of Issue 2 is the specification of how D7b's
+score-axis structure should carry direction-of-prediction
+information, given that Issue 1 defers the choice of D7b axis to this
+issue.
 
-`proposal_confidence`: *(declared in D8.4.3)*
+`proposal_confidence`: **medium-low**. The diagnosis-to-spec internal
+coherence holds: D8.2 §6.2.2's verdict and interpretation_tag bind
+the diagnostic target to direction-of-prediction misspecification,
+and the revision spec names the structural mechanism (an explicit
+direction-of-prediction adjudication surface on D7b) that would carry
+direction information separable from SVR. But revision shape
+selection has irreducible spec-level uncertainty: multiple candidate
+shapes (new output field; composite rule over existing axes;
+prompt-scaffold change) are internally coherent, and D7b's production
+output schema is downstream of D8.4 scope, so the revision is
+spec-only with higher downstream-uncertainty than Issue 1's
+definitional split. The label is calibrated as `medium-low` rather
+than `medium` to flag this honestly without drifting toward
+`low`-territory, where the diagnosis itself would have to be in
+question. The label reflects diagnosis-to-spec internal coherence
+only and is not validation evidence (scope lock §5.1).
 
 #### Part 1 — Diagnosis
 
-*Populated in D8.4.3.*
+The direction-of-prediction misspecification surfaced by D8.2 §6.2.2
+is a structural absence, not a calibration error. D8.2 §6.2.2's
+primary verdict is `FALSIFIED` for the divergence_expected cohort:
+1/5 PASS at SVR ≥ 0.5 against a pre-registered floor of ≥ 4/5, with
+per-call SVRs `pos 1 = 0.00`, `pos 2 = 0.15`, `pos 3 = 0.15`,
+`pos 5 = 0.15`, and `pos 6 = 0.75`. The §6.2.2 interpretation_tag
+attached to this verdict is `likely_directional_model_misspecification`,
+which binds the diagnostic gap-type to direction-of-prediction
+rather than to score-threshold calibration alone.
+
+Issue 2's diagnostic scope is distinct from Issue 1's. Issue 1
+diagnosed the L77–85 label conflation (the definitional gap that
+allows three components — cohort membership, score-threshold
+expectation, and directional interpretation — to be collapsed into a
+single label). Issue 2 diagnoses **how D7b's score-axis structure
+fails to carry a direction-of-prediction signal orthogonal to SVR**.
+The label conflation is upstream context for Issue 2; the score-axis
+structural absence is the Issue 2 target.
+
+The structural absence is observable in two layers. At the
+**output-schema layer**, D7b's three scoring axes
+(`structural_variant_risk`, `semantic_theme_alignment`,
+`semantic_plausibility`) are all magnitude-only fields on the `[0, 1]`
+interval; none carries a sign or direction structure that could
+distinguish a `predicts_high_SVR` claim from a `predicts_low_SVR`
+claim. At the **elicitation layer**, the D7b prompt template does
+not ask the critic to commit to a direction-of-prediction; the
+prompt's reasoning surface treats direction as implicit context
+rather than as a scoring target.
+
+The four-of-five SVR ≤ 0.15 concentration observed in the §6.2.2
+cohort is consistent with directional inversion of the
+pre-registered claim, as Issue 1 noted. A calibration-only miss
+would scatter across the SVR range, whereas the observed
+concentration at SVR ≤ 0.15 inverts the pre-registered direction. But
+the current methodology cannot **attribute** the observed pattern to
+directional inversion specifically: a candidate at SVR = 0.15 could
+indicate (a) cohort-membership defect, (b) score-threshold shortfall
+under the pre-registered direction, or (c) directional inversion. The
+Issue 1 three-component split surfaces the conflation; Issue 2
+diagnoses the absence of a D7b mechanism that would let the
+methodology adjudicate among (a)/(b)/(c) given the same SVR
+observation.
+
+The pos 3 observation in D8.2 §6.4 corroborates the diagnostic claim
+at the per-row level. Pos 3 at SVR = 0.15 contributes to the §6.2.2
+cohort under one directional hypothesis (FALSIFIED) and contributes
+to the §6.4 fresh-7 PASS under the opposite directional hypothesis.
+The same SVR observation supports opposite directional readings under
+the current methodology, with no D7b output surface that
+distinguishes them. This is the per-row signature of the
+output-schema absence.
 
 #### Part 2 — Root cause
 
-*Populated in D8.4.3.*
+The Issue 2 root cause is named as a **prompt-design** gap-type per
+scope lock §5, with **calibration** as a secondary downstream
+consequence. D7b does not output direction because the prompt does
+not elicit it; the absence at the output-schema layer is downstream
+of the absence at the elicitation layer. If the prompt asked for
+direction (whether as an explicit field or via a structured
+reasoning-step schema), the calibration question — how D7b's
+direction expression maps to SVR-bearing cohort adjudication — would
+be the next problem, but it is not the current problem.
+
+The calibration component is secondary, not co-primary. Even with a
+direction signal in D7b's output, mapping the direction expression
+to the §6.2.2 cohort verdict requires a calibration spec (specifically,
+the joint-rule shape that combines direction with SVR threshold at
+adjudication time). This is a downstream consequence of the
+elicitation gap closing, not an independent root cause. Naming both
+as co-primary would conflate two distinct gap-types and violate
+scope lock §5's distinct-attribution requirement.
+
+The gap-type attribution carves cleanly against adjacent issues. The
+**definitional gap-type** (label conflation at L77–85) is Issue 1's
+scope; Issue 2 inherits the definitional split as input but does
+not re-author it. The **broader prompt-discipline scope** (cell-level
+methodology, theme-taxonomy alignment, label-mention consistency
+across the full taxonomy) is Issue 5's scope; Issue 2's prompt-design
+touch is narrowly scoped to direction-of-prediction elicitation only.
+The **lower-tail calibration gap** (the §6.3(b) `calibration_shortfall`
+at 26/199 actual vs ≥ 40/199 floor) is Issue 3's scope; Issue 2's
+secondary calibration component does not pre-empt Issue 3's
+calibration analysis.
 
 #### Part 3a — Proposed revision spec
 
-*Populated in D8.4.3.*
+The revision specifies that D7b's methodology must carry an
+**explicit direction-of-prediction adjudication surface**. The
+preferred shape is a new D7b output field paired with definition and
+mapping; equivalent structured alternatives that expose a
+machine-checkable direction surface remain admissible. The revision
+does not assume D7b currently has such a surface; the requirement is
+forward-looking, not a re-discovery of an existing axis.
+
+**Revision spec (four points):**
+
+1. **Explicit direction-of-prediction adjudication surface on D7b.**
+   The methodology requires D7b's output to expose a direction signal
+   that is machine-checkable and structurally separable from
+   magnitude. The likely implementation shape is a new D7b output
+   field carrying direction information; equivalent structured
+   alternatives remain admissible if they expose a machine-checkable
+   direction surface. The structural requirement is that direction
+   information must be **separable from magnitude**: a downstream
+   adjudicator must be able to read direction from the output without
+   inferring it from SVR or from any other magnitude axis. One
+   example of a value space satisfying this requirement is the
+   discrete set `{predicts_high_SVR, predicts_low_SVR,
+   no_direction_claimed}`; continuous signed forms or other
+   structured encodings that carry direction separable from magnitude
+   are also admissible. The spec does not lock the value-space form;
+   it locks the structural property.
+2. **Mapping to Issue 1's three-component split.** The new direction
+   surface carries Issue 1's *directional-interpretation component*
+   exclusively. Cohort membership and score-threshold expectation
+   remain on existing surfaces (cohort assignment for membership;
+   SVR threshold rule for score-threshold expectation). The mapping
+   makes Issue 1's three-component split implementable: each
+   component has a designated D7b surface, and a contradiction
+   between cohort outcome and pre-registered direction can be
+   attributed to the relevant component.
+3. **D7b prompt elicitation requirement.** The D7b prompt must
+   explicitly elicit direction-of-prediction at the scoring step.
+   Scaffold form (a chain-of-thought field, a structured
+   reasoning-step schema, or a direct declarative field) is left to
+   downstream implementation; the spec-level requirement is that
+   elicitation be present, so the new direction surface has substance
+   rather than being a structurally empty field. The elicitation
+   touch is narrowly scoped to direction-of-prediction; broader
+   prompt-discipline questions remain Issue 5's scope.
+4. **Adjudication mapping requirement.** The `divergence_expected`
+   cohort verdict is computed against the direction surface
+   **jointly** with SVR threshold, not against SVR alone. The
+   spec-level requirement is that the joint-rule form be specified;
+   the precise calibrated mapping (which combinations of direction
+   and SVR threshold produce PASS vs FAIL) is part of the secondary
+   calibration follow-up rather than part of Issue 2's spec.
+
+**The revision spec does not:**
+
+- Pretend that D7b currently has a direction-of-prediction axis. The
+  surface is a future requirement, not a re-discovered existing
+  output.
+- Specify the value-space form (discrete vs continuous, categorical
+  vs ordinal). The example `{predicts_high_SVR, predicts_low_SVR,
+  no_direction_claimed}` is illustrative; the structural requirement
+  is direction-separable-from-magnitude.
+- Author the D7b prompt revision itself. The elicitation requirement
+  is named at the spec level; prompt-discipline authoring is Issue 5.
+- Modify D7b production code, prompt templates, or output schemas.
+  D7b is downstream of D8.4 scope; D8.4 produces methodology specs
+  only.
+- Specify the calibrated joint-rule mapping at adjudication time.
+  Point 4 names the joint-rule shape requirement; the calibrated
+  mapping itself is downstream of Issue 2 (secondary calibration
+  component).
+
+The revision spec closes against Issue 1's open spec point cleanly:
+Issue 1's Part 3a "Adjudication mapping" point 4 required that the
+methodology specify which D7b axis carries direction-of-prediction.
+Issue 2's revision shape (explicit direction-of-prediction
+adjudication surface, likely a new field) satisfies that requirement
+as an explicit named surface, not as a derived composite rule. The
+dependency direction Issue 1 → Issue 2 is closed: Issue 1 specifies
+the requirement that direction must be specified; Issue 2 picks the
+mechanism that specifies it.
+
+The revision spec names what the revised methodology must specify
+(an explicit direction-of-prediction adjudication surface, a mapping
+to the three-component split, an elicitation requirement, and a
+joint-rule shape requirement). It does not name implementation
+files, prompt-template line numbers, output-schema field names in
+production code, or production-code edits.
 
 #### Part 3b — Expected behavior change
 
-*Populated in D8.4.3.*
+The revision **is intended to** make direction-of-prediction
+adjudicable as a distinct output of the D7b methodology, so that
+future divergence-axis cohort outcomes can be attributed to direction
+independent of SVR threshold and cohort membership. The revision
+**targets** the structural absence diagnosed in Part 1 — that D7b's
+current three-axis output cannot carry a direction signal separable
+from magnitude. The revision **is expected to** make future cohort
+verdicts decomposable along the direction axis, conditional on the
+revised D7b output structure surviving downstream design review and
+validation.
+
+The forward-looking behavior is stated as a structural attribute of
+the future methodology's output surface ("decomposable along the
+direction axis"), not as an outcome-quality claim. The revision does
+not eliminate the directional ambiguity, correct the
+misspecification, resolve pos 3's double-duty, or improve D7b
+performance. No claim is made that the revised methodology would
+produce a different verdict on the D8.2 cohort. Whether the revision
+produces the intended structural separation is established only by
+the validation procedure specified in Part 4, not by Part 3b's
+forward-looking statement.
+
+D8.2's `FALSIFIED` verdict stands at its evidence state; the revision
+is forward-looking only and does not retroactively recharacterize
+the D8.2 adjudication. The Part 3b forward-looking phrasing names a
+structural attribute the revised methodology *would expose*; it does
+not claim the D8.2 cohort *would have passed* under the revised
+methodology, and it does not claim the D8.2 verdict was incorrect at
+its evidence state.
 
 #### Part 4 — Validation plan
 
-*Populated in D8.4.3.*
+Validation does not happen in D8.4. D8.4.3 specifies the validation
+form only; the validation procedure executes downstream, at the
+phase where the revised D7b methodology is implemented and exercised
+against an evidence set.
+
+**Necessary validation form: synthetic sanity check.** Hand-construct
+candidates with known directional semantics — some pre-engineered
+to predict high SVR, some to predict low SVR, some directionally
+agnostic — and process them through the revised D7b prompt + new
+direction surface. The necessary condition is that the new
+direction surface's distribution distinguishes the three categories.
+This is a structural validation of the elicitation surface itself,
+not a cohort-level claim. Without this check, an absent direction
+signal in any subsequent re-fire could indicate either a methodology
+failure or a cohort-level property, with no way to discriminate.
+
+**Sufficient validation form (conditional on the synthetic check):
+re-fire aggregate under revised D7b spec.** A frozen copy of the
+Stage 2d candidate set and aggregate metadata, with the D7b layer
+only re-fired under the revised prompt and the new direction
+surface. The sufficient condition is that per-axis attribution
+surfaces direction as separable from SVR threshold — that the
+divergence_expected cohort under the recalibrated methodology can
+be adjudicated with direction attributed to the new surface and
+score-threshold expectation attributed to SVR independently.
+
+The synthetic sanity check is necessary; the re-fire is sufficient
+for downstream methodology adoption only if the synthetic check
+passes. Necessary and sufficient conditions are distinct and both
+must be specified for the validation plan to be complete.
+
+The re-fire is a future validation procedure for the recalibrated
+methodology; it is not a retroactive reinterpretation of D8.2's
+`FALSIFIED` verdict. D8.2's adjudication stands at its evidence
+state. The frozen copy of the Stage 2d candidate set and aggregate
+metadata is preserved as input to a forward-looking validation; the
+D8.2 adjudication record is not modified.
+
+The validation plan does not establish: that the revised methodology
+produces a different verdict on the D8.2 cohort; that pos 3's
+double-duty is resolved by the revision; that the recalibrated
+direction-of-prediction is correctly mapped to cohort outcomes (the
+calibrated joint-rule mapping is downstream of Issue 2's spec).
+Validation establishes only that the revised methodology produces a
+machine-checkable direction surface separable from magnitude.
 
 #### Part 5 — Affected rows or scope-level impact
 
-*Populated in D8.4.3. Row-anchored issue: cohort `{1, 2, 3, 5, 6}`
-expected; **pos 3 double-duty (§1.1)** must be restated explicitly.*
+Row attribution: cohort `{1, 2, 3, 5, 6}` per scope lock §5 Part 5.
+Identical to Issue 1's row attribution. No expansion; no contraction.
+Issue 2 is a row-anchored issue under the §5 Part 5 row-attribution
+rule.
+
+**Pos 3 double-duty restatement (third preservation site after §1.1
+and §4.1 Part 5; the ≥2-site preservation floor declared by scope
+lock §1.2 is satisfied).** Pos 3 contributes to the §6.2.2 cohort
+under the high-SVR-expected directional hypothesis and contributes to
+the §6.4 fresh-7 PASS observation under the opposite directional
+hypothesis. The same SVR = 0.15 observation attaches to **opposite
+directional hypotheses** under the two roles.
+
+Issue 2 recalibrates the *direction-of-prediction component* of the
+`divergence_expected` label per the three-component split surfaced
+by Issue 1. This recalibration **does not adjudicate** which of pos
+3's two directional hypotheses is correct. The two hypotheses remain
+explicitly separated under the revised methodology. Adjudication
+between them requires test-retest evidence under the recalibrated
+methodology or new evidence outside the Stage 2d candidate set, both
+of which are out of scope for D8.4.
+
+**Forbidden framings (literal negative list, not paraphrased):**
+
+- "Issue 2 resolves pos 3's double-duty by picking one direction."
+- "The recalibrated methodology selects between the two
+  hypotheses."
+- "Pos 3's directional ambiguity is closed by the revision."
+
+Each of these phrasings would collapse the pos 3 double-duty by
+asserting that Issue 2's revision picks one of the two directional
+hypotheses over the other. Scope lock §1.2 declares the double-duty
+a preservation obligation; Issue 2's recalibration of the directional
+interpretation component does not, and structurally cannot,
+adjudicate pos 3's competing hypotheses without test-retest or new
+evidence. The forbidden framings are listed literally so that any
+future editor scanning for them can verify they do not appear in the
+authored prose.
+
+Pos 138 and pos 143 are not cited under Issue 2: direction-of-prediction
+recalibration does not materially touch RSI-absent vol_regime
+test-retest framing, and the §5 Part 5 row-attribution rule restricts
+pos 138 / 143 citation to issues that materially touch that framing.
+The pos 143 fresh-7 negation restatement obligation does not activate
+in §4.2.
+
+The scope-level impact: Issue 2's revision does not change which
+rows are in scope for the divergence_expected cohort; positions 1,
+2, 3, 5, and 6 remain the affected rows. The revision changes how a
+future re-fire would *adjudicate* the direction-of-prediction
+attached to those rows, not which rows are adjudicated.
 
 #### Part 6 — Issue interaction check
 
-*Populated in D8.4.3.*
+**Upstream dependencies.** Issue 2 is downstream of **Issue 1
+(Divergence-label definition audit)**. Issue 2 consumes Issue 1's
+*directional-interpretation component* from the three-component split
+as its diagnostic substrate; Part 3a point 2 cites this consumption
+explicitly. Issue 2 operationalizes one of Issue 1's three components
+into a D7b mechanism; it does not re-author the definitional boundary
+Issue 1 establishes. **D8.4.3 does not re-author Issue 1.** The
+three-component split, the L77–85 label-conflation diagnosis, and
+the definitional gap-type attribution remain Issue 1's scope. The
+dependency direction Issue 1 → Issue 2 is the first cross-issue
+dependency in the D8.4 arc and is closed by Issue 2's revision shape
+pick.
+
+**Downstream dependencies.** Issue 2 has potential downstream
+interactions with **Issue 3 (Lower-tail calibration)** and **Issue 4
+(Joint-shape asymmetric-calibration implications)**. The mechanism
+in both cases is the joint-rule requirement (Issue 2 Part 3a point
+4): if the recalibrated joint rule (combining direction with SVR
+threshold) changes which candidates fall into the §6.3(b) lower tail,
+the lower-tail count is a function of the joint rule rather than of
+SVR alone. This may mechanically change both the lower-tail calibration
+analysis (Issue 3) and the joint-shape asymmetric calibration analysis
+(Issue 4). At D8.4.3's evidence state, the interaction is **potential,
+not claimed**: Issue 3's authoring (D8.4.4) and Issue 4's authoring
+(D8.4.5) will assess whether the joint rule materially changes their
+respective scopes. Issue 2 surfaces the interaction; it does not
+resolve it.
+
+Issue 2 has an indirect downstream interaction with **Issue 5
+(Forensic cross-tab methodology / prompt / label discipline)** via
+the prompt elicitation requirement (Part 3a point 3). Issue 2's
+prompt-design touch is narrowly scoped to direction-of-prediction
+elicitation only; the broader prompt-discipline scope remains Issue
+5's. The dependency is indirect: Issue 5's authoring may incorporate
+Issue 2's elicitation requirement as a constraint, but Issue 2 does
+not pre-empt Issue 5's scope.
+
+**Conflicts at D8.4.3's evidence state.** None observed.
+Specifically, the cross-spec coherence check between Issue 1 and
+Issue 2 holds: Issue 1's Part 3a "Adjudication mapping" point 4
+required that the methodology specify which D7b axis carries
+direction-of-prediction; Issue 2's revision shape (explicit
+direction-of-prediction adjudication surface, likely a new D7b
+output field) satisfies this requirement as an explicit named
+surface. Issue 1's Part 5 row attribution `{1, 2, 3, 5, 6}` and pos
+3 double-duty preservation framing are identical to Issue 2's Part
+5 framing.
+
+**Foreseeable conflicts at D8.4.4+.** If Issue 3's lower-tail
+recalibration produces a count or threshold framing that contradicts
+Issue 2's joint-rule shape requirement (Part 3a point 4), the
+conflict surfaces in D8.4.4 Part 6 or in §5 Synthesis. Similarly, if
+Issue 4's joint-shape asymmetric calibration analysis contradicts
+the joint-rule shape requirement, the conflict surfaces in D8.4.5
+Part 6 or in §5 Synthesis. D8.4.3 surfaces the *potential* for these
+conflicts at the joint-rule mechanism; it does not resolve them. The
+epistemic-humility qualifier "at D8.4.3's evidence state" applies to
+both the no-conflict-observed claim and the foreseeable-conflict
+notice.
 
 ---
 
