@@ -821,15 +821,104 @@ ratified re-triage cycle is authorized.
 
 ## 9. RSI-Absent Vol_Regime Test-Retest (pos 138 / 143)
 
-*Populated in D8.3.4.*
+*Populated in D8.3.4 against the D8.3.3b-sealed document state and
+the Stage 2d aggregate record. Scope lock §9: D8.1 / D8.2 evidence
+anchors only; no new backtests, no new LLM calls, no methodology
+revision.*
 
-Pos 138 and pos 143 are the fresh-7 RSI-absent vol_regime twin
-candidates flagged in D8.0 (§L149 routing) for dedicated test-retest
-analysis. D8.3.4 authors this subsection using only D8.1 / D8.2
-evidence anchors; no new backtests or LLM calls. Bucket assignment
-for pos 138 and pos 143 is deferred until D8.3.4 concludes; both
-positions receive `DEFER` provisionally in D8.3.2 with
-`d8_followup = "D8.3.4 test-retest"` per §5.3 schema.
+### 9.1 Purpose
+
+D8.3.4 examines the pos 138 / pos 143 test-retest handoff established
+by the D8.3.2c Tier B override (DEFER routing anchored by D8.2 §8.4
+"RSI-absent vol_regime twins" pointer + D8.2 §6.6(B) LOW-SVR/HIGH-
+alignment cluster membership; Appendix C.1 override rows). Its role
+is **interpretation of the handoff's current evidence state**, not
+execution of a new test-retest procedure and not bucket revision.
+Per scope lock §3.4 framing preserved by the D8.3.2c Round 1 wording
+fix, any bucket revision after this sub-phase requires a fresh
+cross-advisor ratified re-triage cycle.
+
+### 9.2 Available evidence at D8.3 state
+
+On-disk evidence for the two rows in the Stage 2d aggregate record
+(`raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/stage2d_aggregate_record.json`):
+
+| Field | Pos 138 | Pos 143 |
+|---|---|---|
+| theme | `volatility_regime` | `volatility_regime` |
+| pre-registered label | `neutral` | `neutral` |
+| SVR | 0.25 | 0.15 |
+| theme_alignment | 0.90 | 0.85 |
+| plausibility | 0.75 | 0.75 |
+| `stage2b_overlap` | `True` | `False` |
+| **`test_retest_tier`** | **`None`** | **`None`** |
+
+Aggregate-level fields: `test_retest_baselines_sha256 =
+5840b90a...dac2f` — a baseline-integrity pointer (attests that
+test-retest baselines exist and were hashed), not per-candidate
+test-retest *outcomes*. No separate on-disk per-candidate test-retest
+outcome artifact exists under `raw_payloads/` at D8.3 evidence
+state.
+
+Two distinctions matter for §9.3 interpretation. First, the
+aggregate-level baselines-SHA is a reference anchor, not a per-
+candidate result; it cannot be read as a test-retest outcome for
+either row. Second, pos 138's `stage2b_overlap = True` is a
+cross-batch structural-overlap cohort flag indicating the candidate
+co-occurs in the Stage 2b audit set; it provides replication
+*context* but is not itself per-candidate test-retest data. Pos 143
+carries `stage2b_overlap = False` and is NOT a fresh-7 literal
+member (the twin anchor with pos 138 is the §6.6(B) cluster, not
+the §6.4 fresh-7 set) — this negation, preserved across Appendix
+C.1 and §8.3, carries forward here.
+
+### 9.3 Interpretation
+
+D8.3.4 confirms the D8.3.2c test-retest handoff: pos 138 and pos
+143 are flagged for test-retest examination and were routed to
+DEFER on that basis. D8.3.4 cannot resolve the handoff because
+per-candidate test-retest outcome data is absent at D8.3 evidence
+state — `test_retest_tier` is unpopulated for both rows and no
+substitute per-candidate artifact exists on disk. Per Process
+Note 28, the absence of evidence is not evidence: trt_tier = None
+cannot be read as either stability or instability of the candidate
+under re-test, and the individual SVR / alignment / plausibility
+scores are not per-candidate test-retest outcomes either (they are
+the original D7b critic scores that already informed the Tier A
+default). The D8.2 §8.4 twin handoff and §6.6(B) cluster
+membership anchors that established DEFER are likewise not
+independent *rebuttals* of DEFER; they are the reasons it was
+assigned.
+
+### 9.4 Disposition
+
+Pos 138 and pos 143 remain DEFER. No master-table row is changed;
+no Appendix C.3 is created (there is no override to log); §8.3 is
+not revised (the D8.3.3b narrative is already coherent with
+DEFER-retained); no methodology recommendation is issued (D8.4
+owns any methodology revision implicated by this evidence gap).
+The bucket distribution (57 KEEP / 134 REVIEW / 2 DEFER / 0
+DROP-DUPLICATIVE / 4 METHOD-QUESTION = 197) and DEFER positions
+([138, 143]) are unchanged.
+
+### 9.5 Unblock condition
+
+A future re-triage of pos 138 and pos 143 requires, at minimum, a
+per-candidate test-retest outcome artifact for both rows — such as
+a populated `test_retest_tier` field or an equivalent ratified
+per-candidate result field in a downstream aggregate record
+produced by a ratified downstream sub-phase. The specific artifact
+form is not prescribed here; `test_retest_tier` is cited as one
+concrete example and not as a required schema. Availability of such
+an artifact is a necessary but not sufficient condition: per scope
+lock §3.4 and the D8.3.2c Round 1 wording fix, any bucket revision
+from DEFER to KEEP / REVIEW / DROP must proceed through a fresh
+cross-advisor ratified re-triage cycle and satisfy §5.3 dual-anchor
+discipline
+on the new evidence. D8.3.4 does not issue a methodology
+prescription for how that artifact should be produced; any such
+prescription belongs to D8.4 or a post-D8 test-retest
+infrastructure phase.
 
 ---
 
@@ -1398,3 +1487,87 @@ emptiness of DROP-DUPLICATIVE under D8.3 evidence state.
 | Appendix C.2 D8.3.3a Round 1 wording fix intact | yes | yes |
 | §8 forbidden-language scan | 0 occurrences | 0 |
 | §9 D8.3.4 placeholder intact | yes | yes |
+
+#### D8.3.4 pre-authoring SHA re-verification (2026-04-24)
+
+Mandatory 7-anchor byte-match re-verification per scope lock §2 before
+authoring §9 pos 138/143 test-retest interpretation.
+
+| Anchor | Expected | Observed 2026-04-24 pre-D8.3.4 |
+|---|---|---|
+| `docs/closeout/PHASE2B_D7_STAGE2D_SIGNOFF.md` | `1fb1161c...8c5e998` | `1fb1161cc1721878731b27604bac9653aac2ef5d6cf0a83900818d7398c5e998` ✓ |
+| `raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/stage2d_aggregate_record.json` | `09eeda32...5c323f` | `09eeda3278c96ccf7b945c5edc9dde9bcfa51ca35138a63d36258514be5c323f` ✓ |
+| `docs/d7_stage2d/stage2d_expectations.md` | `98b87a70...4010a5` | `98b87a702cc80df2d993d51857d4142f93f2ab8be66438bd2937c5dd374010a5` ✓ |
+| `docs/test_notebooks/D8_1_stage2d_aggregate_result_analysis.ipynb` | `20f58ed8...dbc6d60` | `20f58ed830cdafc35c01d59904568d8cd15be0f6bf47985de251527fcdbc6d60` ✓ |
+| `docs/d8/D8_STAGE2D_RESULT_ADJUDICATION.md` | `89d54c98...03b4914` | `89d54c9821bb754d17b7085dbe6f344403da5b49824236aa8f1ee301003b4914` ✓ |
+| `docs/d8/D8_3_SCOPE_LOCK.md` | `f0a5598b...33439c` | `f0a5598b34342fb72277d5b344152e0efd6f05bd918699e880b776ead633439c` ✓ |
+| `docs/d8/D8_3_STAGE2D_STRATEGY_TRIAGE.md` | `2695ac07...af012f` (D8.3.3b seal) | `2695ac07a0b4054e2ccde54546e07f91fdcd97966b37fd90280ea04c74af012f` ✓ |
+
+All 7 anchors byte-match. D8.3.4 §9 authoring proceeds against the
+D8.3.3b-sealed bucket state and the Stage 2d aggregate record.
+
+#### D8.3.4 evidence inventory result (pre-authoring)
+
+Disk inventory of per-candidate test-retest evidence for pos 138 and
+pos 143 against
+`raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/stage2d_aggregate_record.json`:
+
+| Field | Pos 138 | Pos 143 |
+|---|---|---|
+| `candidate_theme` | `volatility_regime` | `volatility_regime` |
+| `pre_registered_label` | `neutral` | `neutral` |
+| `d7b_llm_scores.structural_variant_risk` | 0.25 | 0.15 |
+| `d7b_llm_scores.semantic_theme_alignment` | 0.90 | 0.85 |
+| `d7b_llm_scores.semantic_plausibility` | 0.75 | 0.75 |
+| `is_stage2b_overlap` | True | False |
+| **`test_retest_tier`** | **`None`** | **`None`** |
+
+Aggregate-level: `test_retest_baselines_sha256 = 5840b90a57206b01e8109ea73b549cf50089964f5cb1f9f7e83b963569adac2f`
+— baseline-integrity reference pointer, not per-candidate outcome.
+No on-disk per-candidate test-retest outcome artifact exists under
+`raw_payloads/` at D8.3 evidence state.
+
+Finding: D8.3.4 does not have sufficient evidence to resolve the
+test-retest handoff. DEFER-retained disposition ratified by
+cross-advisor Round 1 adjudication immediately prior to authoring.
+
+#### D8.3.4 authoring summary
+
+§9 populated across 5 subsections (9.1 Purpose, 9.2 Available
+evidence at D8.3 state, 9.3 Interpretation, 9.4 Disposition, 9.5
+Unblock condition) as evidence-availability / deferral-retention
+analysis. No master-table row changed; no Appendix C.3 created; no
+§8.3 narrative revision; no methodology recommendation beyond
+forwarding the evidence gap to D8.4. Pos 143 fresh-7 negation
+preserved (5th occurrence across the document). Pos 138
+stage2b_overlap treated as replication-cohort context, not
+test-retest outcome. Unblock condition pinned to a specific artifact
+(per-candidate `test_retest_tier` populated in a downstream stage
+aggregate record) + fresh cross-advisor ratified re-triage cycle +
+§5.3 dual-anchor on new evidence.
+
+#### D8.3.4 post-authoring invariant verification
+
+| Invariant | Expected | Observed |
+|---|---|---|
+| §7.5 bucket distribution unchanged | 57/134/2/0/4 | 57/134/2/0/4 |
+| DEFER positions unchanged | [138, 143] | [138, 143] |
+| `d8_followup` counts unchanged | 5 D8.4 / 2 D8.3.4 / 190 none | 5 / 2 / 190 |
+| §9 placeholder removed | yes | yes |
+| §9 subsection count | 5 | 5 |
+| §9 subsections non-empty | 5 / 5 | 5 / 5 |
+| §9.1 cites D8.3.2c + §3.4 + wording fix + Appendix C.1 + §8.4/§6.6(B) | yes | yes |
+| §9.2 cites trt_tier=None + baselines-SHA distinction + stage2b_overlap | yes | yes |
+| §9.2 pos 143 fresh-7 negation preserved (5th occurrence) | yes | yes |
+| §9.3 confirms handoff + cannot-resolve + absence-is-not-evidence | yes | yes |
+| §9.4 DEFER retained + no master-table / Appendix C.3 / §8.3 change | yes | yes |
+| §9.4 D8.4 methodology handoff retained | yes | yes |
+| §9.5 unblock pinned to artifact + fresh re-triage + §5.3 dual-anchor | yes | yes |
+| §8 structure intact | yes | yes |
+| Appendix B Tier A matrix intact | yes | yes |
+| Appendix C.1 row count | 2 | 2 |
+| Appendix C.3 not created | confirmed absent | absent |
+| Appendix C.2 row count | 5 (4 upheld / 1 overridden) | 5 (4 / 1) |
+| Appendix C.2 D8.3.3a Round 1 wording fix intact | yes | yes |
+| §9 forbidden-language scan | 0 occurrences | 0 |
+| §10 D8.3.5 placeholder intact | yes | yes |
