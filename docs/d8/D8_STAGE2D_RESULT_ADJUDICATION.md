@@ -930,18 +930,96 @@ analytically relevant skews are reproduced here.
 
 ## 8. Delta from D8.0 Signoff
 
-*(To be authored in D8.2.1.4.)*
+### 8.0 Preamble
 
-Enumeration of where D8.2's claim-level adjudications supersede or
-extend the D8.0 phase signoff narrative. Per scope lock Q3/Q5 rulings:
-D8.0 is not amended; D8.2 is controlling going forward.
+D8.0 (`docs/closeout/PHASE2B_D7_STAGE2D_SIGNOFF.md`, SHA
+`1fb1161cc1721878731b27604bac9653aac2ef5d6cf0a83900818d7398c5e998`)
+remains the historically valid phase signoff for Stage 2d at the time
+it was written. Per scope lock Q3/Q5 rulings, D8.0 is **not amended**:
+D8.2 controls the claim-level adjudication narrative going forward;
+it does not supersede D8.0's operational signoff, artifact-integrity
+findings, or phase-closeout status. D8.2 only refines the claim-level
+narrative where the D8.1 aggregate analysis provided evidence that
+was not available at D8.0 signoff time. Operational, audit, budget,
+and raw-payload retention findings in D8.0 are not touched by D8.2.
 
-Expected itemization:
+### 8.1 Delta table
 
-- §6.3(b) lower-tail FAIL — not surfaced in D8.0 signoff; D8.1 revealed
-- §6.2.2 divergence FALSIFIED — D8.2 sharpens D8.0's narrative using
-  the FAIL-vs-FALSIFIED distinction locked in scope lock §3.1
-- Any other supersession points identified during D8.2.1.2 authoring
+| # | Claim / item | D8.0 position | D8.2 position | Disposition |
+|---|---|---|---|---|
+| 1 | §6.2.1 agreement axis | "Agreement-axis patterns replicated at scale" (§3, informal) | `PASS / pre_registered_claim_upheld` on 64/66 UB calls | REFINED |
+| 2 | §6.2.2 divergence axis | "Carried forward for D8+ re-adjudication" (L104) — narrative flag, no verdict | `FALSIFIED / likely_directional_model_misspecification` on 1/5 at SVR≥0.5 | REFINED |
+| 3 | §6.3(a) upper-tail distribution | Not adjudicated as a standalone gate | `PASS / pre_registered_claim_upheld` on 111/199 at SVR≥0.80 | NEW |
+| 4 | §6.3(b) lower-tail distribution | Not surfaced as a gate; not explicitly flagged | `FAIL / calibration_shortfall` on 26/199 at SVR≤0.30 | NEW |
+| 5 | §6.3 joint distributional pattern | No joint framing at signoff | Derived `PARTIAL / asymmetric_calibration` from upper-PASS + lower-FAIL | NEW |
+| 6 | §6.4 fresh-7 RSI-absent vol-regime | Pos 138 RSI-absent pattern noted (L149) | Formal gate adjudicated `PASS / pre_registered_claim_upheld` at 3/7 | REFINED |
+| 7 | §6.6 observation axes (4) | Treated as informal supporting evidence | Formal `NOT_TESTABLE / observation_only` taxonomy per scope lock §3.4 | REFINED |
+| 8 | §6 forensic cross-tab (theme × UB × SVR bucket) | Not present | `NOT_TESTABLE / observation_only` with `methodology_followup: D8.4` | NEW |
+| 9 | Multi-axis convergent evidence for §6.2.2 | Divergence reversal mentioned but not cross-referenced | Documented as 4-axis corroboration: §6.2.2 + §6.3(a) + §6.3(b) + §6.6(2)(B) | NEW |
+| 10 | Pos 3 double-duty | Not called out | Recorded: same SVR=0.15 observation supports §6.2.2 FALSIFIED and §6.4 PASS under opposite directional hypotheses | NEW |
+| 11 | Neutral-stratum vs Stage 2c interval | D8.0 (L105/L140) declared Stage 2c neutral-interval claim falsified at median | §6.6(4) records neutral-stratum median as observation only; declines Stage 2c comparison per hard rule 5 (no reinterpretation of pre-registered claims) | REFRAMED |
+
+### 8.2 Per-item rationale (non-table entries)
+
+1. **Row 1 (§6.2.1 REFINED).** D8.0 described agreement-axis behavior
+   narratively; D8.2 pins the verdict to the literal pre-registered
+   threshold (≥50/66 at SVR≥0.5) and records 64/66 as `PASS`.
+2. **Row 2 (§6.2.2 REFINED).** D8.0 L104 explicitly deferred
+   re-adjudication to D8+. D8.2 discharges that deferral by applying
+   the scope lock §3.1 FAIL-vs-FALSIFIED distinction and labelling the
+   outcome `FALSIFIED` (directional contradiction, not magnitude
+   shortfall). The taxonomy separation is new; the directional
+   reversal itself was already observed in D8.0.
+3. **Rows 3, 4, 5 (§6.3 NEW).** D8.1 is the first artifact to compute
+   the full distributional pattern at the pre-registered SVR tails;
+   D8.0 predates that computation.
+4. **Row 6 (§6.4 REFINED).** The specific pos 138 RSI-absent pattern
+   is already identified in D8.0 L149; what is new in D8.2 is the
+   formal gate adjudication (3/7 PASS) that places that pattern in the
+   aggregate 7-call fresh-7 context.
+5. **Row 7 (§6.6 REFINED).** D8.0 treated §6.6 axes as supporting
+   evidence under informal wording. D8.2 formalizes their status as
+   structurally non-gate observations under scope lock §3.4; this is a
+   taxonomy upgrade, not a verdict reversal.
+6. **Row 11 (Stage 2c comparison REFRAMED).** D8.0 L105/L140 concluded
+   the Stage 2c neutral-stratum interval was falsified at median. D8.2
+   does not contest that finding — it declines to re-adjudicate it
+   here because the Stage 2c claim was not pre-registered as a Stage
+   2d gate, and reinterpreting it inside D8.2 would violate hard rule
+   5. The D8.0 finding stands as an observation about Stage 2c; D8.2
+   records the Stage 2d neutral-stratum median as §6.6(4) without
+   comparative framing.
+
+### 8.3 Scope of D8.2 control
+
+D8.2 controls the **scientific claim-level narrative** of Stage 2d
+gate and observation outcomes going forward; it does not supersede
+D8.0's operational signoff, artifact-integrity findings, or
+phase-closeout status. Specifically unchanged:
+
+- Operational signoff (D8.0 §1-§2, §5-§7, §10-§13 — execution,
+  budget, audit, raw-payload retention, and phase-close decisions).
+- Phase 2B D7 Stage 2d's status as signed-off — D8.2 does not reopen
+  Stage 2d's phase-gate.
+- D8.0's sign-off verdict ("PASS WITH FALSIFICATIONS", L163) remains
+  the phase verdict. D8.2 refines what "WITH FALSIFICATIONS" means at
+  the per-claim level; it does not recast the phase verdict.
+
+### 8.4 Not superseded — handed off instead
+
+Items D8.0 flagged for post-signoff follow-up that D8.2 does **not**
+resolve (remain owned by downstream deliverables):
+
+- **Overlap test–retest** for pos 138 / 143 (RSI-absent vol_regime
+  twins) — deferred to **D8.3** per §6.4 methodology pointer.
+- **Pos 138 RSI-absent pattern** interpretive follow-up — deferred to
+  **D8.3** (test-retest) and **D8.4** (methodology refinement) per
+  §6.4 and §6.6(2) methodology pointers.
+- **§6 forensic cross-tab** methodology implications (prompt / label
+  discipline) — deferred to **D8.4** per §7 forensic-cross-tab
+  `methodology_followup`.
+
+No D8.0 finding is silently dropped in D8.2.
 
 ---
 
