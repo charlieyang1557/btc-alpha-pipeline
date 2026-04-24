@@ -646,33 +646,176 @@ blank when false.
 
 ## 8. Per-Bucket Analysis
 
-*Populated in D8.3.3.*
+*Populated in D8.3.3b against the D8.3.3a-sealed bucket state
+(57 KEEP / 134 REVIEW / 2 DEFER / 0 DROP-DUPLICATIVE / 4
+METHOD-QUESTION = 197).*
 
-Each subsection analyses the bucket's population after D8.3.2 closes
-and presents: bucket count, Tier A vs Tier B composition, salient
-sub-cohorts (e.g., divergence cohort members inside METHOD-QUESTION),
-and any cross-cutting observations. No new claims are adjudicated;
-analysis is evidence-anchored per §5.
+Each subsection describes the bucket's sealed population: bucket
+count, Tier A vs Tier B composition, salient sub-cohorts, and
+cross-cutting observations with forward pointers to D8.3.4 /
+D8.3.5 / D8.4 where applicable. No new claims are adjudicated, no
+bucket is reassigned, and no cohort statistic is re-derived — the
+analysis is evidence-anchored per §5 against the §7 master table
+and Appendices A–C. Per-candidate deep-dives are out of scope;
+narrative is cohort-level only.
 
 ### 8.1 KEEP
-*Populated in D8.3.3.*
+
+**Count: 57 rows. Composition: Tier A cell 10 only (SVR ≥ 0.80 ×
+`agreement_expected`). No Tier B overrides.**
+
+All 57 KEEP rows originate from the single high-confidence Tier A
+cell — `SVR ≥ 0.80` intersected with `agreement_expected` — per
+Appendix B's rule citation: D8.1 §6.2.1 agreement gate PASS
+intersected with §6.3(a) upper-tail gate PASS. No other `(SVR
+bucket × UB label)` cell routes to KEEP under Tier A, and no Tier B
+override promoted any row into KEEP during D8.3.2c or D8.3.3a.
+KEEP is therefore the most homogeneous bucket in the sealed
+distribution: every member satisfies the same two gate
+confirmations simultaneously.
+
+Bucket-level context: the 57 rows represent the D8.2
+structural-redundancy upper shelf — positions where the critic's
+SVR scoring agrees with the pre-registered `agreement_expected`
+label at the high-confidence threshold. These rows are the
+load-bearing subset for D8.2's claim-level upper-tail support and
+form the anchor for any downstream claim about "unambiguous KEEP
+evidence" at the D8 level.
+
+Forward pointer: no D8.3.4 / D8.4 follow-up is carried by KEEP
+rows. Any re-triage is reachable only via fresh cross-advisor
+ratified cycle if a new evidence anchor surfaces (e.g., a
+retroactive claim-level disconfirmation at the D8.4 methodology
+audit).
 
 ### 8.2 REVIEW
-*Populated in D8.3.3.*
+
+**Count: 134 rows. Composition: 133 Tier A defaults + 1 Tier B
+rebuttable override (pos 6). No DROP / KEEP-upgrade overrides.**
+
+REVIEW is the largest bucket (~68% of the sealed population) and
+draws from five Tier A cells plus one D8.3.3a rebuttable override.
+The five contributing Tier A cells (per Appendix B) are: `SVR ≤
+0.30 × neutral` (22), `SVR (0.30, 0.50) × neutral` (3), `SVR
+[0.50, 0.80) × agreement_expected` (7), `SVR [0.50, 0.80) ×
+neutral` (49), and `SVR ≥ 0.80 × neutral` (54). Pre-override
+subtotal: 135 rows. Net composition after D8.3.2c (−2 to DEFER for
+pos 138, 143) and D8.3.3a (+1 from METHOD-QUESTION for pos 6)
+equals 134.
+
+Per-cell framing: the `neutral` label is the structural driver in
+four of the five Tier A REVIEW cells (22 + 3 + 49 + 54 = 128
+rows); these rows default to REVIEW under scope lock §4.2 Lock 2
+because `neutral` UB labels neither confirm nor disconfirm the
+critic's SVR evidence and therefore warrant human inspection
+rather than mechanical KEEP / DROP routing. The fifth cell
+(`SVR [0.50, 0.80) × agreement_expected`, 7 rows) defaults to
+REVIEW per Appendix B Q1 ratification: KEEP is reserved for `SVR
+≥ 0.80`, and the moderate-evidence bracket does not clear the
+KEEP threshold without a Tier B dual-anchor override (none were
+identified).
+
+Pos 6 Tier B context: the single REVIEW override originates from
+the `SVR [0.50, 0.80) × divergence_expected` cell (Tier A default
+METHOD-QUESTION) and was adjudicated under scope lock §5.3 Tier B
+dual-anchor discipline in D8.3.3a. Cross-reference: Appendix C.2
+pos 6 row records the override rationale (individual evidence
+strength + sole §6.2.2 aggregate gate SVR ≥ 0.5 contributor) and
+retains `d8_followup = D8.4` as methodology-advisory context
+(bucket / follow-up orthogonality framing; bucket = REVIEW is
+triage disposition, follow-up = D8.4 is divergence-label-audit
+context).
+
+Forward pointer: REVIEW rows carry `d8_followup = none` except
+pos 6 (`d8_followup = D8.4`). Downstream disposition (human
+inspection decisions; any forward-phase re-triage criteria) is
+out of scope for D8.3 and surfaces in D8.3.5 synthesis.
 
 ### 8.3 DEFER
-*Populated in D8.3.3.*
+
+**Count: 2 rows. Composition: pos 138, 143 — both Tier B
+non-rebuttable overrides from D8.3.2c. No Tier A DEFER defaults
+exist.**
+
+Both DEFER rows are the "RSI-absent vol_regime twins" anchored by
+the D8.2 §8.4 explicit D8.3 test-retest handoff paired with the
+D8.2 §6.6(B) LOW-SVR/HIGH-alignment cluster membership. The Tier
+B override reflects scope lock §3.2 canonical DEFER semantics:
+the candidates require a methodology-controlled re-test before a
+bucket decision can be issued, and §7 does not have authority to
+substitute interpretation for a deferred test. Cross-reference:
+Appendix C.1 records both override rows.
+
+Pos 138 carries `stage2b_overlap = Y` (preserved in the master
+table); pos 143 does NOT carry fresh-7 literal membership — the
+twin anchor is the §6.6(B) cluster, not the §6.4 fresh-7 set.
+This distinction is preserved explicitly in the pos 143 rationale
+(Appendix C.1 override row) to prevent future readers from
+inferring fresh-7 membership by association with pos 138's
+stage2b overlap.
+
+Forward pointer: both rows carry `d8_followup = D8.3.4`. D8.3.4
+authors §9 against D8.1 / D8.2 evidence anchors only (no new
+backtests, no new LLM calls) and decides whether DEFER resolves
+to KEEP / REVIEW / DROP or remains DEFER pending D8.4 methodology
+fixes. No bucket revision occurs in D8.3.3b; that authority
+belongs to D8.3.4 per scope lock §3.4 framing.
 
 ### 8.4 DROP-DUPLICATIVE
-*Populated in D8.3.3.*
+
+**Count: 0 rows. Composition: empty bucket.**
+
+No row in the sealed population was assigned DROP-DUPLICATIVE.
+The reason is structural, not analytical: per D8.3.2c Tier B
+override inventory, no on-disk `factor_set` dedup key or
+equivalent duplication anchor was available at D8.3 authoring
+time, so the §5.3 dual-anchor threshold for a DROP-DUPLICATIVE
+override could not be met for any candidate pair. Tier A offers
+no DROP-DUPLICATIVE default under scope lock §3.2 (DROP routes
+are reachable only via Tier B).
+
+Forward pointer: if a later phase surfaces a reliable dedup
+anchor (e.g., a normalized factor-set hash at the D8.4
+methodology layer or a post-D8 dedup audit), the scope lock §7
+re-triage clause applies — any retroactive DROP-DUPLICATIVE
+assignment requires a fresh cross-advisor ratified re-triage
+cycle, not a silent amendment. This bucket's emptiness is a
+recorded fact of the D8.3 evidence state, not an oversight.
 
 ### 8.5 METHOD-QUESTION
-*Populated in D8.3.3, with:*
-- 100% triangulated spot-check per §5.4.
-- Per-candidate citation of the specific scope lock §4.3 methodology
-  issue (D8.4 anchor) that governs the routing.
-- Explicit resolution of the rebuttable-presumption overrides for
-  pos 1 / 2 / 3 / 5 / 6, including pos 3's double-duty treatment.
+
+**Count: 4 rows. Composition: pos 1, 2, 3, 5 — all Tier A
+defaults (`SVR ≤ 0.30 × divergence_expected`) per Appendix B.
+Pos 6 was overridden to REVIEW in D8.3.3a.**
+
+All four METHOD-QUESTION rows share a single Tier A cell (`SVR ≤
+0.30 × divergence_expected`) and the same scope lock §4.3 narrow
+rebuttable-presumption anchor: `divergence_expected` label with
+low SVR evidence, where the individual-strength rebuttal
+threshold was not cleared and no Tier B dual-anchor rebuttal was
+identified under the D8.3.3a evidence standard. Cross-reference:
+Appendix C.2 records each upheld decision with the specific
+reason. The cohort is a proper subset of the §6.2.2 divergence
+cohort (FALSIFIED verdict context) and inherits that cohort's
+claim-level framing.
+
+Pos 3 double-duty: pos 3 is a member of both the §6.2.2
+divergence cohort AND the §6.4 fresh-7 cohort (`fresh_7 = Y`
+preserved in the master table; `divergence_cohort = Y` likewise).
+Scope lock §3.4 adjudicated pos 3 explicitly: fresh-7 membership
+is a competing cohort-level observation, not an individual-
+strength rebuttal anchor, and the §6.4 PASS contribution
+co-occurring with pos 43 and 128 does not satisfy §5.3
+dual-anchor discipline for pos 3 specifically. The directional
+conflict (§6.2.2 FALSIFIED vs §6.4 PASS) remains unresolved at
+D8.3.3b close and is handed to D8.4 divergence-label audit.
+
+Forward pointer: all four rows carry `d8_followup = D8.4`. D8.4
+owns the divergence-label methodology decision (direction-of-
+prediction recalibration; UB-label semantics audit). No
+D8.3.3b-level re-bucketing occurs; METHOD-QUESTION is the sealed
+D8.3.3a disposition and persists through D8.3.5 unless a fresh
+ratified re-triage cycle is authorized.
 
 ---
 
@@ -1205,3 +1348,53 @@ column (`upheld` / `overridden`) for mechanical auditability.
 | Pos 138 stage2b_overlap=Y preserved | yes | yes |
 | Forbidden language in rationale prose | 0 occurrences | 0 |
 | Rationale sentence count per row | ≤ 3 | 3 max observed |
+
+#### D8.3.3b pre-authoring SHA re-verification (2026-04-24)
+
+Mandatory 7-anchor byte-match re-verification per scope lock §2 before
+authoring §8 per-bucket narrative.
+
+| Anchor | Expected | Observed 2026-04-24 pre-D8.3.3b |
+|---|---|---|
+| `docs/closeout/PHASE2B_D7_STAGE2D_SIGNOFF.md` | `1fb1161c...8c5e998` | `1fb1161cc1721878731b27604bac9653aac2ef5d6cf0a83900818d7398c5e998` ✓ |
+| `raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/stage2d_aggregate_record.json` | `09eeda32...5c323f` | `09eeda3278c96ccf7b945c5edc9dde9bcfa51ca35138a63d36258514be5c323f` ✓ |
+| `docs/d7_stage2d/stage2d_expectations.md` | `98b87a70...4010a5` | `98b87a702cc80df2d993d51857d4142f93f2ab8be66438bd2937c5dd374010a5` ✓ |
+| `docs/test_notebooks/D8_1_stage2d_aggregate_result_analysis.ipynb` | `20f58ed8...dbc6d60` | `20f58ed830cdafc35c01d59904568d8cd15be0f6bf47985de251527fcdbc6d60` ✓ |
+| `docs/d8/D8_STAGE2D_RESULT_ADJUDICATION.md` | `89d54c98...03b4914` | `89d54c9821bb754d17b7085dbe6f344403da5b49824236aa8f1ee301003b4914` ✓ |
+| `docs/d8/D8_3_SCOPE_LOCK.md` | `f0a5598b...33439c` | `f0a5598b34342fb72277d5b344152e0efd6f05bd918699e880b776ead633439c` ✓ |
+| `docs/d8/D8_3_STAGE2D_STRATEGY_TRIAGE.md` | `d55a2d05...9156ba` (D8.3.3a seal) | `d55a2d05ce08ba20ea480a8aa561e32c5e731c313f25d2284543157f029156ba` ✓ |
+
+All 7 anchors byte-match. D8.3.3b §8 narrative authoring proceeds
+against the locked D8.3.3a bucket state (57/134/2/0/4).
+
+#### D8.3.3b authoring summary
+
+§8 per-bucket narrative populated across 5 subsections (§8.1 KEEP,
+§8.2 REVIEW, §8.3 DEFER, §8.4 DROP-DUPLICATIVE, §8.5 METHOD-QUESTION)
+as cohort-level analytical prose. No re-bucketing, no new overrides,
+no re-derivation of gate verdicts. §8.3 forward-points to D8.3.4 for
+pos 138/143 test-retest; §8.5 forward-points to D8.4 for all four
+upheld METHOD-QUESTION rows. §8.4 records the recorded-fact
+emptiness of DROP-DUPLICATIVE under D8.3 evidence state.
+
+#### D8.3.3b post-authoring invariant verification
+
+| Invariant | Expected | Observed |
+|---|---|---|
+| §7.5 bucket distribution unchanged | 57/134/2/0/4 | 57/134/2/0/4 |
+| §7.5 `d8_followup` counts unchanged | 5 D8.4 / 2 D8.3.4 / 190 none | 5 / 2 / 190 |
+| §8 subsection count | 5 | 5 |
+| §8 subsections non-empty (placeholders removed) | 5 / 5 | 5 / 5 |
+| §8 intro cites sealed distribution | yes | yes |
+| §8.1 cites 57 + Tier A cell 10 + §6.2.1/§6.3(a) | yes | yes |
+| §8.2 cites 134 + pos 6 Tier B + Appendix C.2 + orthogonality | yes | yes |
+| §8.3 cites pos 138/143 + Appendix C.1 + §8.4/§6.6(B) + D8.3.4 | yes | yes |
+| §8.3 pos 143 fresh-7 negation preserved | yes | yes |
+| §8.4 states 0 rows + dedup anchor rationale | yes | yes |
+| §8.5 cites 4 rows + pos 1/2/3/5 + Appendix C.2 + double-duty + D8.4 | yes | yes |
+| Appendix B Tier A matrix rows intact | yes | yes |
+| Appendix C.1 row count | 2 | 2 |
+| Appendix C.2 row count | 5 (4 upheld / 1 overridden) | 5 (4 / 1) |
+| Appendix C.2 D8.3.3a Round 1 wording fix intact | yes | yes |
+| §8 forbidden-language scan | 0 occurrences | 0 |
+| §9 D8.3.4 placeholder intact | yes | yes |
