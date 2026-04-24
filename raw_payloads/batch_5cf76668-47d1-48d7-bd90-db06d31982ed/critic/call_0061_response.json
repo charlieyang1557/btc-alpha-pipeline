@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy constructs a momentum entry based on RSI crossing 55, positive 24h return exceeding 1%, positive MACD histogram, and close above SMA 50. This logic is internally coherent: the RSI cross signals neutral-zone breakout, return_24h confirms recent momentum, MACD histogram validates trend strength, and the SMA condition ensures directional bias. Exit logic via overbought RSI (>80) with negative 1h return or MACD reversal with RSI <45 provides dual momentum decay detection. The description narrative connects these elements into a plausible story about momentum acceleration. Theme alignment is strong: all entry factors (rsi_14, return_24h, macd_hist) appear in the hint vocabulary, and the overall logic captures momentum surge. However, structural variant risk is high. The factor set {close, macd_hist, return_1h, return_24h, rsi_14, sma_50} closely matches prior entry #16 {close, macd_hist, return_1h, rsi_14, sma_20, sma_50} with only minor substitution of SMA periods, and also resembles #50 {close, macd_hist, return_1h, rsi_14, sma_50, volume_zscore_24h}. The core structure (RSI, MACD, short/long returns, SMA trend filter) appears repeatedly in the prior list with threshold variations."
+}
+```

@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy combines classic momentum indicators (EMA crossover, MACD histogram, RSI) into a coherent entry logic requiring simultaneous confirmation across trend, momentum oscillator, and relative strength dimensions. The crosses_above operator on close versus ema_12, coupled with ema_12 > ema_26, establishes directional trend alignment. MACD histogram positivity and RSI > 55 add momentum confirmation. Exit logic offers dual paths: momentum reversal (MACD < 0 and RSI < 45) or profit target (4% return_24h). This structure is defensible for capturing momentum continuation phases. Theme alignment is strong, using four of five hint factors (macd_hist, return_24h, rsi_14, plus derived return_24h in exit). However, the factor set {close, ema_12, ema_26, macd_hist, return_24h, rsi_14} appears very similar to prior entry #42 {close, ema_26, macd_hist, return_24h, rsi_14} and #59 {close, ema_12, macd_hist, return_24h, rsi_14}, differing mainly by including both EMAs simultaneously. The structural pattern of combining MACD, RSI, EMAs, close, and return_24h has been explored extensively in the batch, making this a threshold/condition refinement rather than a novel structural bet."
+}
+```

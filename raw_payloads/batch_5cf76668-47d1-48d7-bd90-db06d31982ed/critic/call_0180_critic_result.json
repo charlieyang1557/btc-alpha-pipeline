@@ -1,0 +1,61 @@
+{
+  "critic_version": "d7_v1",
+  "critic_status": "ok",
+  "d7b_mode": "live",
+  "d7a_rule_scores": {
+    "theme_coherence": 0.2,
+    "structural_novelty": 1.0,
+    "default_momentum_fallback": 0.5,
+    "complexity_appropriateness": 0.55
+  },
+  "d7a_supporting_measures": {
+    "factor_set_prior_occurrences": 0,
+    "n_factors": 5,
+    "n_conditions": 7,
+    "description_length": 218,
+    "max_hold_bars": 168,
+    "n_entry_groups": 1,
+    "n_exit_groups": 2
+  },
+  "d7a_rule_flags": [
+    "thin_theme_momentum_bleed",
+    "n_conditions_heavy"
+  ],
+  "d7b_llm_scores": {
+    "semantic_plausibility": 0.65,
+    "semantic_theme_alignment": 0.85,
+    "structural_variant_risk": 0.75
+  },
+  "d7b_reasoning": "The strategy articulates a coherent mean-reversion thesis: weekend volatility spikes combined with oversold RSI conditions set up Monday reversals when institutional flows return. Entry logic requires day_of_week>=5 (Saturday/Sunday), realized_vol_24h>3%, rsi_14<40, and return_24h<-1.5%, forming a defensible multi-factor screen. Exit triggers include Monday (day_of_week==0) with rsi_14>50 or a 5% gain via return_168h, plus a 168-bar max hold that aligns with the week-long horizon. The calendar effect theme alignment is strong given explicit weekend timing filters (day_of_week) combined with volatility and momentum factors. However, structural variant risk is elevated because the factor set {day_of_week, realized_vol_24h, return_24h, rsi_14} appears highly similar to prior #37 and very close to #41 which adds hour_of_day. The exit also introduces return_168h, but the core entry factors overlap substantially with multiple calendar-themed predecessors. This appears to be a threshold and timing refinement rather than a fundamentally novel structural bet.",
+  "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0180_response.json",
+  "d7b_cost_actual_usd": 0.020949000000000002,
+  "d7b_input_tokens": 5343,
+  "d7b_output_tokens": 328,
+  "d7b_retry_count": 0,
+  "d7b_scan_results": {
+    "forbidden_language_scan": {
+      "status": "pass",
+      "hits": [],
+      "terms_checked_count": 21
+    },
+    "refusal_scan": {
+      "status": "pass",
+      "hits": [],
+      "patterns_checked": [
+        "\\bi cannot\\b",
+        "\\bi can't\\b",
+        "\\bunable to\\b",
+        "\\brefuse to\\b",
+        "\\bdecline to\\b",
+        "\\bcannot evaluate\\b",
+        "\\bcan not evaluate\\b"
+      ]
+    }
+  },
+  "critic_timing_ms": {
+    "d7a_ms": 0.169,
+    "d7b_ms": 11071.928
+  },
+  "critic_error_signature": null,
+  "critic_error_full_path": null
+}

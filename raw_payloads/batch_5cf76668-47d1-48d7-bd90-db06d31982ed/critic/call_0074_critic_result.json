@@ -22,14 +22,14 @@
   ],
   "d7b_llm_scores": {
     "semantic_plausibility": 0.75,
-    "semantic_theme_alignment": 0.9,
-    "structural_variant_risk": 0.75
+    "semantic_theme_alignment": 0.85,
+    "structural_variant_risk": 0.7
   },
-  "d7b_reasoning": "The strategy constructs a coherent breakout narrative: volume_zscore_24h exceeding 2.0 signals unusual activity, price crossing above sma_20 confirms directional momentum, and rsi_14 below 60 ensures the move hasn't already exhausted. Exit logic offers two paths—either volume normalization with price reversal, or a 10% profit target. The max_hold_bars parameter adds risk management. Theme alignment is strong; volume_zscore_24h is central to the volume_divergence theme and drives the entry logic. However, the factor set {close, return_168h, rsi_14, sma_20, volume_zscore_24h} closely resembles prior #55 {close, return_1h, return_24h, rsi_14, sma_20, volume_zscore_24h} and #19 {close, macd_hist, return_1h, rsi_14, sma_20, volume_zscore_24h}. While this substitutes return_168h for shorter-horizon returns and omits macd_hist, the core structure (close, rsi_14, sma_20, volume_zscore_24h, plus a return horizon) represents minor variation on an established pattern rather than a fundamentally new structural bet.",
+  "d7b_reasoning": "The strategy combines volume anomaly detection (volume_zscore_24h > 2.0) with price breakout (close crosses_above sma_20) while filtering for early momentum (rsi_14 < 60). This logic is internally coherent: high volume confirms breakout strength while the RSI cap aims to avoid overbought entries. Exit conditions balance mean-reversion (volume_zscore_24h < -0.5 or price crosses_below sma_20) with profit-taking (return_168h > 0.1). The 240-bar max_hold provides reasonable downside protection. Theme alignment is strong as volume_zscore_24h appears in both entry and exit, directly addressing volume divergence dynamics. However, structural variant risk is elevated because the factor set {close, return_168h, rsi_14, sma_20, volume_zscore_24h} closely resembles multiple priors: entry 19 uses {close, macd_hist, return_1h, rsi_14, sma_20, volume_zscore_24h} and entry 55 uses {close, return_1h, return_24h, rsi_14, sma_20, volume_zscore_24h}. The substitution of return_168h for shorter returns and removal of macd_hist represents threshold/factor substitution rather than novel structural logic.",
   "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0074_response.json",
-  "d7b_cost_actual_usd": 0.014937,
+  "d7b_cost_actual_usd": 0.015192,
   "d7b_input_tokens": 3204,
-  "d7b_output_tokens": 355,
+  "d7b_output_tokens": 372,
   "d7b_retry_count": 0,
   "d7b_scan_results": {
     "forbidden_language_scan": {
@@ -52,8 +52,8 @@
     }
   },
   "critic_timing_ms": {
-    "d7a_ms": 0.169,
-    "d7b_ms": 9408.106
+    "d7a_ms": 0.113,
+    "d7b_ms": 10123.695
   },
   "critic_error_signature": null,
   "critic_error_full_path": null

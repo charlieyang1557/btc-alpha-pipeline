@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.3500,
+  "semantic_theme_alignment": 0.7000,
+  "structural_variant_risk": 0.9500,
+  "reasoning": "The strategy attempts bullish divergence detection: price decline (return_24h < -0.015) with weak volume (volume_zscore_24h < -0.5) suggesting exhaustion. However, the entry logic contains an internal contradiction—requiring close > sma_50 (price above medium-term trend) while simultaneously demanding a 24h low and oversold RSI. This creates a narrow, potentially rare condition set that undermines coherence. The exit conditions mix momentum (RSI > 60) with volume spike and profit target, which is reasonable. Theme alignment is moderate-to-good: volume_zscore_24h is the hint factor and divergence narrative matches the theme name. Structurally, this is nearly identical to prior set {close, return_24h, rsi_14, sma_50, volume_zscore_24h}—the exact same five factors appear in entry conditions. The only distinction is threshold choice (e.g., -0.015 vs other values, RSI 40 vs 35), making this a clear parameter variant rather than a genuinely different structural hypothesis."
+}
+```

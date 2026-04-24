@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.3000,
+  "reasoning": "The strategy exhibits strong internal coherence: it enters when weekly momentum (return_168h > 3%) is paired with a tactical RSI pullback (< 45), price above EMA_26 trend filter, and MACD histogram crossing positive. This captures a defensible story of buying temporary weakness within an established uptrend. Exit logic splits between profit-taking (RSI > 62 with positive 24h return) and trend breakdown (close crosses below EMA_26 with negative MACD histogram). The 168-bar hold limit appropriately bounds the position. Theme alignment is excellent: all five factors (return_168h, return_24h, rsi_14, macd_hist, ema_26) directly relate to momentum measurement and timing. The factor set {close, ema_26, macd_hist, return_168h, return_24h, rsi_14} has meaningful structural distance from most priors. While return_24h and rsi_14 appear frequently, the inclusion of return_168h (7-day lookback) and ema_26 creates a different temporal structure. Set #3 shares macd_hist and return_24h but uses ema_12/sma_50 with realized_vol_24h. Set #20 has macd_hist/return_24h/rsi_14 but substitutes return_1h and realized_vol_24h for this strategy's return_168h and ema_26. The weekly momentum anchor differentiates this hypothesis sufficiently."
+}
+```

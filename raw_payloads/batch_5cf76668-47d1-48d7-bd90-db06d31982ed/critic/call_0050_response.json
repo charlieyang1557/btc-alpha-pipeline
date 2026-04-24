@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.6500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.3000,
+  "reasoning": "The strategy combines calendar constraints (Monday 00-06 UTC) with volatility and trend filters to capture purported institutional repositioning. Entry logic is coherent: day_of_week==0 plus hour_of_day<=6 defines the temporal window, realized_vol_24h>0.025 identifies volatility expansion, and close>sma_20 confirms uptrend context. Exit conditions include profit-taking (return_24h>0.035 AND rsi_14>68) or time-based closure (Tuesday midday). The 72-bar max hold provides backstop. Plausibility is moderate because the causal link between Monday morning volatility spikes and directional conviction is debatable, and the specific thresholds (0.025 vol, 68 RSI) lack justification. Theme alignment is strong: day_of_week and hour_of_day are both hint factors, and the narrative explicitly ties calendar timing to market microstructure. Structural variant risk is low-to-moderate: factor set {close, day_of_week, hour_of_day, realized_vol_24h, return_24h, rsi_14, sma_20} closely resembles prior #23 {close, day_of_week, hour_of_day, return_24h, rsi_14, sma_20}, differing only by the addition of realized_vol_24h. This is not a trivial threshold tweak but does share six of seven factors with an existing entry."
+}
+```

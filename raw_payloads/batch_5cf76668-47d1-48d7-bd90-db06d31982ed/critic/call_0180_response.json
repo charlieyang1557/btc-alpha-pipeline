@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.6500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy articulates a coherent mean-reversion thesis: weekend volatility spikes combined with oversold RSI conditions set up Monday reversals when institutional flows return. Entry logic requires day_of_week>=5 (Saturday/Sunday), realized_vol_24h>3%, rsi_14<40, and return_24h<-1.5%, forming a defensible multi-factor screen. Exit triggers include Monday (day_of_week==0) with rsi_14>50 or a 5% gain via return_168h, plus a 168-bar max hold that aligns with the week-long horizon. The calendar effect theme alignment is strong given explicit weekend timing filters (day_of_week) combined with volatility and momentum factors. However, structural variant risk is elevated because the factor set {day_of_week, realized_vol_24h, return_24h, rsi_14} appears highly similar to prior #37 and very close to #41 which adds hour_of_day. The exit also introduces return_168h, but the core entry factors overlap substantially with multiple calendar-themed predecessors. This appears to be a threshold and timing refinement rather than a fundamentally novel structural bet."
+}
+```

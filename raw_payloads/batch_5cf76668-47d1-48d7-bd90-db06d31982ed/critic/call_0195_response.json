@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.6500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.9000,
+  "reasoning": "The strategy presents a coherent mean-reversion logic: enter on Mondays when price shows oversold conditions (RSI<35, below SMA20, negative 24h return), then exit when momentum normalizes (RSI>55, price crosses above SMA20) or a profit target is hit (2.5% gain). The max_hold_bars constraint limits exposure. This structure is internally consistent. Theme alignment is strong because day_of_week is central to the entry logic, directly exploiting the calendar anomaly hypothesis that Monday dips reverse intraweek. However, structural variant risk is very high. The factor set {close, day_of_week, return_24h, rsi_14, sma_20} appears as prior #32 in the batch list. This strategy uses exactly those five factors; the only differences from prior work are threshold values (RSI 35 vs other cutoffs, specific return thresholds) and the crosses_above operator variant. The economic intuition is not structurally novel—it layers day_of_week onto a standard oversold mean-reversion template already explored multiple times in this batch."
+}
+```

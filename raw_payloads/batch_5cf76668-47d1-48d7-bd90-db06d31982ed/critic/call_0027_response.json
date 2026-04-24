@@ -1,8 +1,8 @@
 ```json
 {
-  "semantic_plausibility": 0.7500,
-  "semantic_theme_alignment": 0.9000,
+  "semantic_plausibility": 0.6500,
+  "semantic_theme_alignment": 0.8500,
   "structural_variant_risk": 0.8500,
-  "reasoning": "The strategy exhibits coherent mean-reversion logic: entry triggers on oversold RSI (<35), negative z-score (<-1.5), and low realized volatility (<0.03), while exits rely on RSI recovery (>55) and z-score normalization or profit-taking with price crossing above SMA. The description references lower Bollinger bands, yet the entry condition tests close <= bb_upper_24_2, which is structurally backward—the upper band check would capture most market states rather than lower-band touches. Despite this discrepancy, the overall signal combination (oversold RSI + negative z-score + volatility compression) aligns strongly with mean-reversion intuition and uses theme hint factors. However, structural variant risk is high: the factor set {bb_upper_24_2, close, realized_vol_24h, rsi_14, sma_24, zscore_48} exactly matches prior #21, differing only in threshold values (RSI 35 vs potentially different cutoffs, z-score -1.5 vs other values). This represents a shallow parameter tweak rather than a structurally novel factor combination."
+  "reasoning": "The strategy employs a mean-reversion logic by entering when price is near lower Bollinger band (via close <= bb_upper_24_2, though this condition is inverted from the description), combined with oversold RSI < 35, negative z-score < -1.5, and low realized volatility < 0.03. Exit logic triggers on RSI recovery above 55 or profit-taking at 2.5% return with SMA cross. However, the entry condition 'close <= bb_upper_24_2' appears contradictory to the stated goal of detecting lower band touches, weakening internal coherence. Theme alignment is strong given the use of z-score, Bollinger bands, RSI oversold levels, and SMA—all canonical mean-reversion signals from the hint vocabulary. Structurally, this factor set {bb_upper_24_2, close, realized_vol_24h, rsi_14, sma_24, zscore_48} is nearly identical to prior entries #17 and #21, differing only in the inclusion or exclusion of return_24h or return_1h. The core technical combination of BB, z-score, RSI, realized vol, and SMA appears repeatedly, making this a threshold/operator variant rather than a structurally novel approach."
 }
 ```

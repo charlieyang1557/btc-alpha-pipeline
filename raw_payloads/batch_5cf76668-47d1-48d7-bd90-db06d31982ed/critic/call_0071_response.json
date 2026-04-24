@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy constructs a coherent momentum continuation thesis: entering when RSI crosses 60 (indicating strength without extreme overbought), positive 24h return confirms upward move, MACD histogram above zero signals bullish momentum, and price above EMA(12) validates trend direction. Exit logic is sensible with dual paths—either momentum weakening (RSI below 50, MACD histogram negative) or sharp reversal (24h return below -2%). The 168-bar hold limit provides risk control. Theme alignment is excellent, using four of five hint factors (rsi_14, return_24h, macd_hist, and implicitly ema_12 for momentum trend). However, structural variant risk is high. The factor set {close, ema_12, macd_hist, return_24h, rsi_14} appears identical to prior #3 {close, ema_12, ema_26, macd_hist, realized_vol_24h, return_24h, sma_50} in its core momentum components (close, ema_12, macd_hist, return_24h, rsi_14), differing primarily in threshold choices (RSI 60 vs other levels) and operator nuances (crosses_above vs static comparisons). This represents threshold tuning rather than a fundamentally different structural hypothesis."
+}
+```

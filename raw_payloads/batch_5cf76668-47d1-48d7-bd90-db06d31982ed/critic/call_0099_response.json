@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.2500,
+  "reasoning": "The strategy constructs a coherent long entry logic: volume_zscore_24h exceeding 2.0 captures abnormal trading activity, realized_vol_24h below 0.03 enforces a low-volatility regime filter, close above sma_24 confirms trend direction, and zscore_48 below 0.5 ensures price has not extended too far. The exit conditions pair momentum profit-taking (return_24h > 0.025 when volume normalizes) with a trend-break stop (crosses_below sma_24 with weakening rsi_14). This maps well to the volume_divergence theme by centering on volume_zscore_24h as the primary signal in a controlled volatility environment. The factor set {close, realized_vol_24h, return_24h, rsi_14, sma_24, volume_zscore_24h, zscore_48} shares overlap with prior entries—particularly #17 and #21 which use bb_upper_24_2, close, realized_vol_24h, rsi_14, sma_24, zscore_48—but the substitution of volume_zscore_24h for bb_upper_24_2 and the addition of return_24h in exit logic creates meaningful structural differentiation. The volume spike during low volatility narrative is economically plausible as accumulation before breakout, though the 168-bar max hold may be long for event-driven positioning."
+}
+```

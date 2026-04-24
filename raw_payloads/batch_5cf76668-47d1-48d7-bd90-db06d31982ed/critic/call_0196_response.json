@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.9500,
+  "reasoning": "The strategy exhibits coherent momentum logic: entry requires MACD histogram turning positive (acceleration signal), positive 24h return (existing trend), RSI above 50 (bullish regime), and close above SMA_20 (trend filter). Exit triggers on MACD histogram reversal with overbought RSI, or sharp 2% drawdown. The structure supports a defensible story of riding accelerating uptrends while cutting losses on reversal or exhaustion. Theme alignment is strong, using four of five hint factors (macd_hist, return_24h, rsi_14 explicitly; ignoring return_1h and return_168h). However, structural variant risk is very high: the factor set {close, macd_hist, return_24h, rsi_14, sma_20} precisely matches prior entry #63. The current strategy differs only in threshold tuning (return_24h > 0.01 vs other values, close > sma_20 instead of alternative moving averages, RSI > 50 positioning) and the specific cross operator on macd_hist. This represents a shallow recombination of conditions already explored rather than a fundamentally novel structural hypothesis about market behavior."
+}
+```

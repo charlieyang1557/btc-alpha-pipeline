@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.9500,
+  "reasoning": "The strategy exhibits coherent internal logic: MACD histogram crossing above zero signals momentum shift, RSI 50-70 confirms bullish strength without overbought territory, and close above EMA(26) establishes trend direction. The exit logic combines momentum reversal (MACD histogram crosses below zero with RSI<45) and a profit target (5% gain), which is sensible. This aligns strongly with momentum theme, using MACD histogram and RSI as core theme-hinted factors plus return-based exit. However, the factor set {close, ema_26, macd_hist, return_24h, rsi_14} is nearly identical to prior entry #42 and very similar to entries #24, #59, #63, #73, and #113. The distinction lies only in using ema_26 instead of sma_20/sma_50 or adding/removing one or two peripheral factors. The specific threshold values (RSI 50-70, MACD=0, close>ema_26) differ operationally but don't represent a structurally different factor combination. This is a clear threshold variant of existing factor sets, presenting high risk of redundancy."
+}
+```

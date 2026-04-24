@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.9000,
+  "reasoning": "The strategy logic coheres around a volatility breakout thesis: elevated realized_vol_24h above 0.04 signals regime shift, while macd_hist > 0, close > sma_50, and return_24h > 0.015 confirm trending momentum. Exit on volatility normalization below 0.025 or macd_hist crossing negative, plus a -3% stop loss, forms a reasonable risk management structure. This aligns strongly with the volatility_regime theme; realized_vol_24h is a hint factor and the strategy explicitly frames volatility elevation as a regime indicator rather than mean-reversion signal. However, structural_variant_risk scores very high (0.9) because the factor set {close, macd_hist, realized_vol_24h, return_24h, sma_50} is nearly identical to prior #3 {close, ema_12, ema_26, macd_hist, realized_vol_24h, return_24h, sma_50}, differing only by removal of ema_12 and ema_26. The economic bet—volatility surge with trend confirmation—overlaps substantially with several earlier entries combining realized_vol_24h, macd_hist, and moving averages. Threshold choices (0.04 vs 0.025 volatility, 0.015 return) appear specific but do not constitute a fundamentally different structural hypothesis."
+}
+```

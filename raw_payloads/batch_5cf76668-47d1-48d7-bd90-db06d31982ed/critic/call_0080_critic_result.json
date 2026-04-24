@@ -1,0 +1,61 @@
+{
+  "critic_version": "d7_v1",
+  "critic_status": "ok",
+  "d7b_mode": "live",
+  "d7a_rule_scores": {
+    "theme_coherence": 0.2,
+    "structural_novelty": 0.5,
+    "default_momentum_fallback": 0.5,
+    "complexity_appropriateness": 0.55
+  },
+  "d7a_supporting_measures": {
+    "factor_set_prior_occurrences": 1,
+    "n_factors": 5,
+    "n_conditions": 7,
+    "description_length": 195,
+    "max_hold_bars": 168,
+    "n_entry_groups": 1,
+    "n_exit_groups": 2
+  },
+  "d7a_rule_flags": [
+    "thin_theme_momentum_bleed",
+    "n_conditions_heavy"
+  ],
+  "d7b_llm_scores": {
+    "semantic_plausibility": 0.75,
+    "semantic_theme_alignment": 0.85,
+    "structural_variant_risk": 0.85
+  },
+  "d7b_reasoning": "The strategy exhibits coherent internal logic: it enters long on Mondays when price shows oversold characteristics (RSI < 45, below SMA_20, negative 24h return), and exits when mean reversion completes (RSI > 58, above SMA_20) or via profit target. The max_hold_bars of 168 (one week) appropriately constrains exposure to the calendar-driven hypothesis. Theme alignment is strong as day_of_week is central to the entry logic, directly exploiting the Monday effect narrative around weekend sentiment resets. However, structural variant risk is high: the factor set {close, day_of_week, return_24h, rsi_14, sma_20} appears as the 32nd prior entry. This strategy differs only in threshold choices (RSI 45 vs typical 30-40 ranges, different exit RSI levels) and adds granular operator logic, but the fundamental factor combination is identical. The economic intuition remains a calendar-filtered mean reversion play using standard technical indicators, making this primarily a parameterization variant rather than a structurally novel approach.",
+  "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0080_response.json",
+  "d7b_cost_actual_usd": 0.014757000000000001,
+  "d7b_input_tokens": 3389,
+  "d7b_output_tokens": 306,
+  "d7b_retry_count": 0,
+  "d7b_scan_results": {
+    "forbidden_language_scan": {
+      "status": "pass",
+      "hits": [],
+      "terms_checked_count": 21
+    },
+    "refusal_scan": {
+      "status": "pass",
+      "hits": [],
+      "patterns_checked": [
+        "\\bi cannot\\b",
+        "\\bi can't\\b",
+        "\\bunable to\\b",
+        "\\brefuse to\\b",
+        "\\bdecline to\\b",
+        "\\bcannot evaluate\\b",
+        "\\bcan not evaluate\\b"
+      ]
+    }
+  },
+  "critic_timing_ms": {
+    "d7a_ms": 0.183,
+    "d7b_ms": 8541.234
+  },
+  "critic_error_signature": null,
+  "critic_error_full_path": null
+}

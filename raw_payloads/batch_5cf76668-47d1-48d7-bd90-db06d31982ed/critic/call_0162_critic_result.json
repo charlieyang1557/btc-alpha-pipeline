@@ -21,15 +21,15 @@
     "n_conditions_heavy"
   ],
   "d7b_llm_scores": {
-    "semantic_plausibility": 0.75,
-    "semantic_theme_alignment": 0.85,
-    "structural_variant_risk": 0.9
+    "semantic_plausibility": 0.4,
+    "semantic_theme_alignment": 0.75,
+    "structural_variant_risk": 0.95
   },
-  "d7b_reasoning": "The strategy exhibits coherent mean reversion logic: entering when price crosses below the lower Bollinger band (though the condition uses bb_upper_24_2, likely intending lower band), combined with oversold RSI (<35), negative z-score (<-1.5), and low volatility (<0.025). The exit uses mean reversion completion via crossing above SMA or RSI recovery (>55), plus a take-profit at 3% return. This dual-exit structure is sensible. Theme alignment is strong, incorporating Bollinger bands, z-score, and moving averages from the hint vocabulary. However, structural variant risk is high: the factor set {bb_upper_24_2, close, realized_vol_24h, return_24h, rsi_14, sma_24, zscore_48} appears identical to prior #17 and #21. The current strategy uses the same seven factors, differing only in threshold values (RSI 35 vs other cutoffs, vol 0.025 vs other levels). This represents a shallow parameter variation rather than a genuinely distinct structural hypothesis.",
+  "d7b_reasoning": "The strategy exhibits a coherent mean reversion narrative: entering when price is below upper Bollinger (though the description mentions lower band, inconsistent with the code), with negative z-score, low RSI, and subdued volatility. However, the entry logic contains a flaw: checking close < bb_upper_24_2 is nearly always true and doesn't align with the stated oversold condition. The exit structure combines mean reversion completion (price crosses above SMA with RSI recovery) and a profit target, which is defensible. Theme alignment is strong, utilizing Bollinger bands, z-score, and SMA – all core mean reversion factors from the hint vocabulary. The structural variant risk is very high: the factor set {bb_upper_24_2, close, realized_vol_24h, return_24h, rsi_14, sma_24, zscore_48} appears as entry 17 in the prior list, making this an almost exact duplicate with only threshold and operator adjustments (RSI 35 vs other values, volatility threshold changes). This represents a shallow parametric variant rather than a genuinely distinct structural hypothesis.",
   "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0162_response.json",
-  "d7b_cost_actual_usd": 0.019383,
+  "d7b_cost_actual_usd": 0.019473,
   "d7b_input_tokens": 4936,
-  "d7b_output_tokens": 305,
+  "d7b_output_tokens": 311,
   "d7b_retry_count": 0,
   "d7b_scan_results": {
     "forbidden_language_scan": {
@@ -52,8 +52,8 @@
     }
   },
   "critic_timing_ms": {
-    "d7a_ms": 0.161,
-    "d7b_ms": 8934.277
+    "d7a_ms": 0.107,
+    "d7b_ms": 10386.319
   },
   "critic_error_signature": null,
   "critic_error_full_path": null

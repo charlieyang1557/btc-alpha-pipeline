@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.9500,
+  "reasoning": "The strategy presents coherent logic: entering when MACD histogram crosses above zero with RSI confirming momentum (>55) and price above SMA_20, while constraining to low volatility environments (<0.035). Exit logic is sensible with dual paths—either momentum reversal (histogram crosses below zero and RSI<48) or profit-taking at overbought levels (return>3% and RSI>72). This aligns strongly with momentum theme intuition, using multiple hint factors (macd_hist, rsi_14, return_24h) to capture trend acceleration with volatility filtering. However, the factor set {close, macd_hist, realized_vol_24h, rsi_14, sma_20} is nearly identical to prior entry #63 which uses exactly this combination. The only structural difference is the specific threshold values and operator choices (crosses_above vs simple comparisons), making this a clear parametric variant rather than a genuinely different structural bet on factor interactions."
+}
+```

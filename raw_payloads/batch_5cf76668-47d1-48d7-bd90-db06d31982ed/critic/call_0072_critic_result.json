@@ -25,11 +25,11 @@
     "semantic_theme_alignment": 0.85,
     "structural_variant_risk": 0.75
   },
-  "d7b_reasoning": "The strategy exhibits strong mean reversion logic by combining multiple oversold indicators: Bollinger band breach, RSI below 30, negative z-score, and elevated realized volatility. The exit logic is coherent, capturing reversal when RSI crosses above 50 or when returns exceed 4%. However, the entry condition uses bb_upper_24_2 in a less-than comparison with close, which appears to be targeting lower band behavior but references the upper band factor name. Theme alignment is strong as it employs canonical mean reversion signals (Bollinger bands, z-score, RSI extremes) from the hint vocabulary. Structurally, this factor set {bb_upper_24_2, close, realized_vol_24h, return_24h, rsi_14, zscore_48} matches prior set #17 exactly, differing only in threshold values (RSI 30 vs other thresholds, volatility 0.03 vs other constants). The structural variant risk is high because the same six factors appear together in an earlier hypothesis, making this a parameter variation rather than a genuinely distinct structural approach.",
+  "d7b_reasoning": "The strategy logic is internally coherent: it enters when price touches a Bollinger band threshold with RSI under 30, volatility spike above 0.03, and z-score under -1.5, all indicating extreme oversold conditions. Exit logic pairs RSI mean reversion crossing 50 with z-score normalization, plus a 4% profit target, which is sensible for capturing rebounds. The mean reversion theme alignment is strong, combining Bollinger bands, z-score, and RSI—all canonical mean reversion indicators. The volatility spike filter adds a volatility expansion lens consistent with crypto market dynamics. However, structural variant risk is elevated: the factor set {bb_upper_24_2, close, realized_vol_24h, return_24h, rsi_14, zscore_48} appears as prior #17, differing only by the presence of sma_24 there and its absence here. The current strategy uses identical core factors (bb_upper_24_2, close, realized_vol_24h, rsi_14, zscore_48) with return_24h in exit, making this a threshold-adjusted variant rather than a structurally novel approach. The bb_upper comparison in entry uses < instead of the typical lower band reference, which is unusual but interpretable as a constraint rather than the primary signal.",
   "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0072_response.json",
-  "d7b_cost_actual_usd": 0.014223,
+  "d7b_cost_actual_usd": 0.014943,
   "d7b_input_tokens": 3206,
-  "d7b_output_tokens": 307,
+  "d7b_output_tokens": 355,
   "d7b_retry_count": 0,
   "d7b_scan_results": {
     "forbidden_language_scan": {
@@ -52,8 +52,8 @@
     }
   },
   "critic_timing_ms": {
-    "d7a_ms": 0.131,
-    "d7b_ms": 9176.07
+    "d7a_ms": 0.123,
+    "d7b_ms": 10760.151
   },
   "critic_error_signature": null,
   "critic_error_full_path": null

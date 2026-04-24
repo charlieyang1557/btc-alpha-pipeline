@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.4500,
+  "semantic_theme_alignment": 0.7500,
+  "structural_variant_risk": 0.9500,
+  "reasoning": "The strategy combines volatility regime detection via realized_vol_24h with trend-following signals (close crosses_above sma_50) and momentum confirmation (rsi_14 > 60, macd_hist > 0). Entry logic attempts to capture breakouts during elevated volatility. However, the economic coherence is questionable: high volatility typically increases trend-reversal risk rather than enhancing trend-following reliability. The exit conditions mixing volatility normalization with profit targets creates internal tension. Theme alignment is moderate-to-strong because realized_vol_24h is a core hint factor and the strategy explicitly focuses on volatility regimes. Structural variant risk is very high: the factor set {close, macd_hist, realized_vol_24h, rsi_14, sma_50} appears nearly identical to prior #22 {close, macd_hist, realized_vol_24h, rsi_14, sma_50} and very close to prior #3 {close, ema_12, ema_26, macd_hist, realized_vol_24h, return_24h, sma_50}. The only difference from #22 is the inclusion of return_24h in exit conditions, making this a shallow threshold/exit variant."
+}
+```

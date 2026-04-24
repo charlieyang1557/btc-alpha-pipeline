@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.9000,
+  "reasoning": "The strategy exhibits coherent internal logic: entering long when volatility contracts below a threshold while price momentum confirms via SMA crossover and positive MACD histogram, with an additional return filter to ensure directional movement. The exit logic appropriately triggers on either volatility expansion or mean reversion below SMA, plus a profit-taking condition at 10% weekly gain. This compression-expansion framework is economically defensible for crypto markets. Theme alignment is strong, as realized_vol_24h is a core theme hint factor and the entire hypothesis centers on volatility regime transitions from low to high states. However, structural variant risk is high: the factor set {close, ema_12, macd_hist, realized_vol_24h, return_24h, sma_50} appears verbatim as the third prior entry. While this strategy adds return_168h in exit conditions, the entry logic uses an identical factor combination. The distinction lies primarily in threshold choices (0.015 vs potentially different values) and the specific operator sequence, making this appear as a parameter variation rather than a structurally novel approach."
+}
+```

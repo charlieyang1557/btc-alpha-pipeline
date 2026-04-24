@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy exhibits coherent internal logic: it enters long on Mondays when price shows oversold characteristics (RSI < 45, below SMA_20, negative 24h return), and exits when mean reversion completes (RSI > 58, above SMA_20) or via profit target. The max_hold_bars of 168 (one week) appropriately constrains exposure to the calendar-driven hypothesis. Theme alignment is strong as day_of_week is central to the entry logic, directly exploiting the Monday effect narrative around weekend sentiment resets. However, structural variant risk is high: the factor set {close, day_of_week, return_24h, rsi_14, sma_20} appears as the 32nd prior entry. This strategy differs only in threshold choices (RSI 45 vs typical 30-40 ranges, different exit RSI levels) and adds granular operator logic, but the fundamental factor combination is identical. The economic intuition remains a calendar-filtered mean reversion play using standard technical indicators, making this primarily a parameterization variant rather than a structurally novel approach."
+}
+```

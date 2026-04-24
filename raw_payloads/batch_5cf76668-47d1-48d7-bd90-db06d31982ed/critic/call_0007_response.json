@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.6500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy constructs a mean reversion entry using three aligned signals: price below Bollinger upper band, oversold RSI below 30, and negative z-score below -1.5. However, the entry condition comparing close < bb_upper_24_2 is trivially satisfied in nearly all market conditions, reducing the constraint to effectively rsi_14 < 30 AND zscore_48 < -1.5. Exit logic is coherent with two paths: partial reversion (close crosses sma_24 AND rsi > 55) or full overbought (rsi > 70). The theme alignment is strong, employing Bollinger bands, z-score, moving averages, and RSI—all canonical mean reversion indicators from the hint vocabulary. Structural variant risk is elevated because the factor set {bb_upper_24_2, close, rsi_14, sma_24, zscore_48} overlaps substantially with the second prior {bb_upper_24_2, close, return_24h, sma_24, zscore_48}, differing only by substituting return_24h with rsi_14 and adjusting thresholds. This appears to be a minor variation on an already-explored factor combination rather than a fundamentally new structural approach."
+}
+```

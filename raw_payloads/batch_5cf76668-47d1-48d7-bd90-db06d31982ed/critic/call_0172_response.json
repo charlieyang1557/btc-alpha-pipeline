@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.9500,
+  "reasoning": "The strategy exhibits coherent mean-reversion logic: entering long when price crosses below the Bollinger upper band while RSI exceeds 65 and recent returns are positive captures overextension exhaustion, while exiting at the SMA centerline or via a stop-loss aligns with the reversion thesis. The dual exit path (target at sma_24 with RSI normalization, or protective stop at -3%) is well-constructed. Theme alignment is strong, using bb_upper_24_2 and sma_24 from the hint vocabulary alongside classic overbought detection. However, structural variant risk is very high: the factor set {bb_upper_24_2, close, return_24h, rsi_14, sma_24} appears in prior #29, and #7 uses {bb_upper_24_2, close, rsi_14, sma_24, zscore_48}, differing only by swapping zscore_48 for return_24h. The current hypothesis represents a shallow threshold variant (RSI 65 vs other thresholds, return_24h 0.02 vs other values) rather than a structurally novel factor combination."
+}
+```

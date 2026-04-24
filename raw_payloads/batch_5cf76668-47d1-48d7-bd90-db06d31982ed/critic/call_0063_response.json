@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy constructs a coherent volatility fade narrative: entering when realized_vol_24h exceeds 0.045 (implying elevated regime), close is below sma_24, rsi_14 is oversold (<38), and zscore_48 confirms price deviation (<-1.2). Exit logic targets volatility normalization (realized_vol_24h <0.025) with rsi_14 recovery (>58), or a profit target (return_24h >0.035). The multi-condition entry synthesizes regime identification with price weakness and momentum oversold characteristics, which is economically sensible for mean reversion in crypto volatility spikes. Theme alignment is strong: realized_vol_24h directly matches hint factors and the description explicitly frames this as a volatility regime play. However, structural_variant_risk is elevated because the factor set {close, realized_vol_24h, return_24h, rsi_14, sma_24, zscore_48} closely resembles prior #17 which used {bb_upper_24_2, close, realized_vol_24h, return_24h, rsi_14, sma_24, zscore_48}. The only material difference is substitution of bb_upper_24_2 for direct close<sma_24 comparison, while zscore_48, rsi_14, realized_vol_24h, return_24h remain identical. This represents a minor structural rearrangement rather than a fundamentally new factor combination."
+}
+```

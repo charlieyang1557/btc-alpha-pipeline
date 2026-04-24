@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy constructs a coherent narrative: enter on EMA crossover during low volatility (realized_vol_24h < 0.025), requiring bullish confirmation (RSI > 50, close above SMA50), and exit either on crossover reversal with overbought RSI or when volatility spikes with negative returns. The logic is internally consistent, though the dual exit paths introduce complexity. Theme alignment is strong—realized_vol_24h is a core hint factor, and the entire premise revolves around volatility regime detection and compression-to-breakout dynamics. However, structural variant risk is elevated: the factor set {close, ema_12, ema_26, realized_vol_24h, return_1h, rsi_14, sma_50} overlaps substantially with prior #3 {close, ema_12, ema_26, macd_hist, realized_vol_24h, return_24h, sma_50}. Both use the same EMA cross structure, realized_vol_24h regime filter, RSI, and SMA50 trend confirmation. The substitution of return_1h for return_24h and removal of macd_hist represents threshold/operator tuning rather than a fundamentally distinct structural bet on market microstructure."
+}
+```

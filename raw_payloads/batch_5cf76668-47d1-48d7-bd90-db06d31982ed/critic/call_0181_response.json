@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy exhibits coherent internal logic: entry combines MACD histogram zero crossover (trend acceleration signal) with RSI>60 (momentum confirmation), close>EMA(26) (uptrend filter), and volume_zscore>0.5 (liquidity validation). Exit logic is sensible with dual paths: momentum reversal (MACD crosses below zero AND RSI<50) or profit target (6% gain). The max_hold_bars constraint limits exposure. Theme alignment is strong, using macd_hist, rsi_14, and return_168h from the hint vocabulary while capturing momentum continuation through overbought strength and histogram crossover dynamics. However, structural_variant_risk is high: the factor set {close, ema_26, macd_hist, return_168h, rsi_14, volume_zscore_24h} closely resembles prior #24 {close, ema_26, macd_hist, return_168h, return_24h, rsi_14} and #107 {close, ema_26, macd_hist, return_168h, rsi_14, volume_zscore_24h}, differing only by substituting return_24h with volume_zscore_24h or vice versa. The core momentum thesis (MACD histogram + RSI + EMA filter) mirrors multiple existing entries with minor threshold variations."
+}
+```

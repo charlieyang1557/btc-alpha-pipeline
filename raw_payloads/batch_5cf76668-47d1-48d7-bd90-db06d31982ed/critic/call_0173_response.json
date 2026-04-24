@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.6500,
+  "semantic_theme_alignment": 0.8000,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy combines volatility spike detection with trend-following via EMA crossover and MACD momentum confirmation. The logic is moderately coherent: high realized volatility paired with positive MACD histogram and volume surge seeks breakout continuation rather than mean-reversion. However, the absolute realized_vol_24h threshold of 0.05 lacks adaptive context, and the fixed 6% profit target may not align with typical volatility regime dynamics. Theme alignment is strong as it directly uses realized_vol_24h, a hint factor, and the narrative connects elevated volatility to directional momentum appropriately. The exit logic combines trend failure (EMA cross-down plus negative MACD) with a profit target, which is reasonable. Structurally, this factor set {close, ema_12, macd_hist, realized_vol_24h, return_24h, volume_zscore_24h} is nearly identical to prior #4 {close, ema_12, macd_hist, return_24h, volume_zscore_24h} with only realized_vol_24h added, making it a close variant. The prior set already contains the core momentum and volume components; adding one volatility factor represents an incremental modification rather than a fundamentally distinct structural hypothesis."
+}
+```

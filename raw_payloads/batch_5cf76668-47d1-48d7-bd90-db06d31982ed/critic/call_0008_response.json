@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.6500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.7000,
+  "reasoning": "The strategy presents a coherent volatility regime thesis: entering when realized_vol_24h exceeds atr_14 signals a volatility spike, combined with a Bollinger band breakout and elevated volume. The exit logic is sensible, closing when volatility normalizes or RSI becomes overbought. However, the plausibility score reflects concern that realized_vol_24h > atr_14 may not reliably identify regime shifts since both measure volatility over similar horizons. Theme alignment is strong as all three hint factors (atr_14, bb_upper_24_2, realized_vol_24h) appear explicitly, directly addressing volatility regime detection. The structural variant risk is elevated because this factor set {atr_14, bb_upper_24_2, close, realized_vol_24h, rsi_14, sma_24, volume_zscore_24h} overlaps substantially with prior entry 7 {bb_upper_24_2, close, rsi_14, sma_24, zscore_48}, differing primarily by substituting zscore_48 with volume_zscore_24h and adding volatility comparisons. The core structure—Bollinger breakout with RSI confirmation and z-score volume filter—remains similar, suggesting this may be a parametric variation rather than a fundamentally distinct approach."
+}
+```

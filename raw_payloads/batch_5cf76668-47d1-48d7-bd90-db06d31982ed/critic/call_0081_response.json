@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy exhibits coherent internal logic: entering when MACD histogram crosses above zero while price exceeds SMA-20, positive 24h returns, and RSI above 50 creates a multi-layered momentum confirmation filter. The exit via MACD histogram crossing below zero or RSI exceeding 70 (overbought) plus a profit-taking condition at 12% weekly return demonstrates reasonable risk management. Theme alignment is strong—all factors (macd_hist, return_24h, return_168h, rsi_14) appear in the hint vocabulary and directly capture momentum dynamics. However, structural variant risk is high: the factor set {close, macd_hist, return_24h, return_168h, rsi_14, sma_20} closely resembles prior entry #63 {close, macd_hist, return_24h, rsi_14, sma_20}, differing only by the addition of return_168h which appears in the exit condition. The core entry logic—MACD histogram, price-to-SMA comparison, RSI, and 24h returns—mirrors already-explored territory with minor threshold variations. This represents primarily a parametric tweak rather than a fundamentally novel structural approach to momentum capture."
+}
+```

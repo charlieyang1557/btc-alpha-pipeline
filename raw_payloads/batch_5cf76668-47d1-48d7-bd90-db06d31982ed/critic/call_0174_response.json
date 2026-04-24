@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.3500,
+  "semantic_theme_alignment": 0.6500,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy enters on SMA(50) crossover with low volume (z-score < -0.5), RSI > 45, and positive MACD histogram. The narrative posits that breakouts on unusually low volume signal reduced selling pressure, yet this contradicts conventional technical analysis where breakouts typically require volume confirmation. Low volume breakouts are often considered weak and prone to reversal. The exit logic mixes mean-reversion (crosses_below SMA(50), RSI < 40) with profit-taking (8% gain), creating conflicting directional assumptions. For theme alignment, volume_zscore_24h is central to both entry and the stated economic intuition around divergence, though the divergence interpretation is unconventional. Structurally, the factor set {close, macd_hist, return_168h, rsi_14, sma_50, volume_zscore_24h} closely resembles prior #50 {close, macd_hist, return_1h, rsi_14, sma_50, volume_zscore_24h}, differing only in substituting return_168h for return_1h—a clear threshold-level variant rather than a novel structural bet."
+}
+```

@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.9500,
+  "reasoning": "The strategy combines calendar-based entry (day_of_week==0 for Monday) with mean-reversion signals: RSI<40 oversold, close below SMA(20), and negative 24h return. Exit logic uses RSI recovery above 55, SMA crossover, or profit target (5% weekly return), with max hold of 168 bars (one week). This creates a coherent Monday weakness reversal narrative. Theme alignment is strong because it explicitly leverages a calendar anomaly (Monday effect) alongside technical oversold conditions, directly using the day_of_week hint factor. However, structural variant risk is very high. Prior #32 already used {close, day_of_week, return_24h, rsi_14, sma_20}, which is precisely the factor set in this strategy's entry conditions. The only structural difference is the addition of return_168h in one exit branch, but the core entry logic duplicates an existing bet with merely different threshold values (RSI 40 vs another threshold, operator tweaks). This represents a shallow parameter variant rather than a genuinely novel structural hypothesis."
+}
+```

@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.1500,
+  "reasoning": "The strategy builds a coherent volatility compression narrative: entry requires realized_vol_24h below 1.5% (compression signal), price crossing above ema_12 (momentum confirmation), and rsi_14 exceeding 55 (bullish strength). Exit logic is sensible with two paths: volatility expansion above 3% combined with ema_12 cross below (regime shift), or profit target at 3.5% return_24h. The internal logic supports the 'coiled spring' intuition where low volatility precedes directional moves. Theme alignment is strong—realized_vol_24h is a hint factor and the entire strategy centers on volatility regime transitions. The factor set {close, ema_12, realized_vol_24h, return_24h, rsi_14} has substantial overlap with prior #3 {close, ema_12, ema_26, macd_hist, realized_vol_24h, return_24h, sma_50} and #18 {close, ema_12, ema_26, realized_vol_24h, return_1h, rsi_14, sma_50}, but the exclusion of ema_26, macd_hist, and longer moving averages while focusing tightly on a single EMA creates a structurally distinct bet on shorter-term breakout mechanics rather than dual-EMA trend filtering."
+}
+```

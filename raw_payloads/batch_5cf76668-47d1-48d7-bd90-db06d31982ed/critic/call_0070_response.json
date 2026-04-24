@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.6500,
+  "semantic_theme_alignment": 0.7500,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy combines day-of-week calendar effects with technical momentum filters. Entry logic is internally coherent: Monday entry (day_of_week==0) plus low realized volatility (<0.02) plus bullish MACD histogram and price above SMA(20) creates a multi-condition regime filter. Exit conditions offer two paths: either Thursday/Friday profit-taking (day_of_week>=4 AND return_24h>0.03) or momentum reversal (MACD negative AND price crosses below SMA). The 168-bar max hold (one week) aligns with the Monday-to-Friday cycle. Theme alignment is strong as day_of_week is explicitly used and the narrative invokes Monday calendar anomalies. However, structural variant risk is high. The factor set {close, day_of_week, macd_hist, realized_vol_24h, return_24h, sma_20} overlaps substantially with prior set #38 {close, day_of_week, macd_hist, realized_vol_24h, return_24h, sma_20}, which is nearly identical. The current strategy adds only realized_vol_24h threshold variance and swaps threshold values. This appears to be a shallow threshold-tuning variant rather than a fundamentally different structural approach."
+}
+```

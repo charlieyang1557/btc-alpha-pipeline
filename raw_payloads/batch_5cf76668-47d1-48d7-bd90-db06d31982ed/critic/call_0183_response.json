@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy constructs a coherent narrative: enter when realized volatility compresses below 2% while price breaks above SMA(50) with momentum confirmation (RSI>55, MACD_hist>0), then exit on either trend reversal or volatility re-expansion above 3.5%. This represents a defensible volatility compression/expansion cycle paired with technical breakout confirmation. Theme alignment is strong given the explicit use of realized_vol_24h as the primary regime filter, directly addressing volatility state transitions. However, structural variant risk is high: the factor set {close, macd_hist, realized_vol_24h, rsi_14, sma_50} appears identical to prior entry #22, and closely resembles #3 which uses {close, ema_12, ema_26, macd_hist, realized_vol_24h, return_24h, sma_50}. The distinguishing element here is threshold tuning (realized_vol < 0.02 versus other cutoffs) and the crosses_above operator choice, but the underlying factor combination is already well-explored in this batch."
+}
+```

@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.3500,
+  "semantic_theme_alignment": 0.6500,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy combines day_of_week filtering (Sunday) with technical indicators to capture alleged weekend sentiment reversals. The entry logic contains an internal tension: it requires MACD histogram positive (bullish momentum) while simultaneously demanding RSI<40 (oversold) and price below SMA(20) (bearish position). This creates a contradictory signal structure—MACD histogram positivity suggests upward momentum while the other conditions suggest weakness. The exit conditions are reasonable with RSI normalization and mean reversion targets. Theme alignment is moderate; day_of_week is a core calendar factor, but the narrative about reduced weekend trading creating mispricings is questionable in 24/7 crypto markets where Sunday activity differs less dramatically than in traditional equity markets. Structurally, the factor set {close, day_of_week, macd_hist, rsi_14, sma_20} appears in the prior list at position 63 and very similar variants appear at positions 6, 10, 32, 58, and others. This represents a threshold/operator adjustment rather than a genuinely novel structural hypothesis, yielding high variant risk."
+}
+```

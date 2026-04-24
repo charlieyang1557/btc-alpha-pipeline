@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.9500,
+  "reasoning": "The strategy combines return_24h > 3%, macd_hist > 0, rsi_14 > 60, and close > ema_26 for entry, with dual exit conditions on macd_hist crossing below zero with rsi_14 < 50, or return_24h < -2%. This logic is internally coherent: it captures momentum acceleration through positive price action, expanding MACD histogram, overbought RSI, and price above trend, then exits when momentum stalls or reversal occurs. The narrative of continuation-then-exhaustion is defensible. Theme alignment is strong: all entry factors (return_24h, macd_hist, rsi_14) appear in the hint list, and the strategy directly targets momentum continuation through multiple confirming signals. However, structural variant risk is very high. The factor set {close, ema_26, macd_hist, return_24h, rsi_14} has already appeared as prior #42, and the exact triplet {macd_hist, return_24h, rsi_14} appears as prior #28. The addition of close and ema_26 comparison is a minor threshold-based variation on an already-explored combination, representing a shallow permutation rather than a genuinely novel structural hypothesis."
+}
+```

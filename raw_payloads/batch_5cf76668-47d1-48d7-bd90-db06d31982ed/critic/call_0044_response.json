@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.3500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.9500,
+  "reasoning": "The strategy claims to capture exhaustion reversals by entering long when price rises with falling volume z-score, yet simultaneously requires RSI above 55 and positive MACD histogram—momentum indicators that contradict the reversal thesis. This creates internal tension: the description argues for fade logic (distribution signals imminent reversion) while the entry requires confirmation of continued momentum. The exit conditions split into two branches: one for volume spike with negative return, another for momentum decay, which offers some coherence but does not resolve the entry contradiction. Theme alignment is strong as volume_zscore_24h is central to both entry and exit, directly matching the volume_divergence theme vocabulary. However, structural variant risk is very high: the factor set {macd_hist, return_24h, rsi_14, volume_zscore_24h} appears verbatim as prior #33 in the batch. This hypothesis differs only in threshold values (RSI 55 vs other cuts, volume z-score -0.5 vs other levels) and operator choices, making it a shallow parameter variant rather than a structurally novel exploration."
+}
+```

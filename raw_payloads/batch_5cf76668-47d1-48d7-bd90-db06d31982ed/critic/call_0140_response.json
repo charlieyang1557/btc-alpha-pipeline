@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.8000,
+  "reasoning": "The strategy presents a coherent mean reversion narrative: enter long on Mondays when price is oversold (zscore_48 < -1, rsi_14 < 45), exit when price recovers (zscore_48 > 0.5 or return_24h > 1.5%) or by Friday. This logic is internally consistent with entry seeking oversold conditions and exits targeting recovery. The calendar effect alignment is strong, explicitly leveraging day_of_week to time entry on Mondays and offering a Friday exit path, directly invoking weekly cyclical patterns mentioned in the description. However, structural variant risk is high: the factor set {day_of_week, return_24h, rsi_14, zscore_48} closely resembles prior entry #5 {day_of_week, rsi_14, zscore_48} with the addition of return_24h which already appears in numerous combinations. The core Monday-oversold concept using day_of_week, rsi_14, and zscore_48 is structurally identical to prior work, differing mainly in threshold values (rsi_14 < 45 vs other cutoffs) and the addition of return_24h in exit logic. This represents threshold tuning on a previously explored factor architecture rather than a fundamentally new structural bet."
+}
+```

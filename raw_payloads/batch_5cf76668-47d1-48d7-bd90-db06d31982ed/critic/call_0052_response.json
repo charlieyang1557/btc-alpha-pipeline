@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.9500,
+  "reasoning": "The strategy employs a coherent mean-reversion logic: entry when price falls below Bollinger bands, z-score indicates oversold conditions, RSI confirms oversold momentum, and returns are negative. Exit triggers when z-score normalizes or RSI rebounds above 55, plus a quick profit-take at 1.5% gain. This structure is internally consistent and defensible. The alignment with the mean-reversion theme is strong, utilizing bb_upper_24_2, zscore_48, and close—all hint factors—alongside RSI to capture price extremes likely to revert. However, structural variant risk is very high: the factor set {bb_upper_24_2, close, return_24h, rsi_14, zscore_48} is nearly identical to prior #34, differing only in threshold values (RSI 35 vs potentially different thresholds, z-score -1.8 vs other cutoffs). This represents a parameter tweak rather than a novel structural hypothesis, as the same five factors appear in the same mean-reversion context."
+}
+```

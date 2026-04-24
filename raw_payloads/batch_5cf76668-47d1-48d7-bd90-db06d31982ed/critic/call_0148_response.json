@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.3000,
+  "reasoning": "The strategy articulates a coherent volatility compression breakout thesis: low realized volatility (below 2%) combined with a bullish EMA(12) crossover signals entry, anticipating volatility expansion. The RSI > 45 and volume_zscore_24h > 0.5 filters add momentum confirmation. Exit logic mirrors the entry by triggering when volatility expands above 4% or price crosses below EMA(12), with a profit-taking clause at 3% return. This structure is internally consistent. Theme alignment is strong: realized_vol_24h is a core hint factor, and the narrative explicitly centers on volatility regime transitions (compression to expansion). The factor set {close, ema_12, realized_vol_24h, return_24h, rsi_14, volume_zscore_24h} appears in the prior list as entry #13, with identical structural components. However, the current strategy uses different operators (crosses_above vs generic comparisons) and distinctly different thresholds (vol < 0.02 entry vs prior configurations), plus a unique exit structure with dual volatility and profit conditions. While sharing the same factor vocabulary with one prior, the operational logic and economic story (compression-breakout) differ sufficiently to represent a moderate rather than high variant risk."
+}
+```

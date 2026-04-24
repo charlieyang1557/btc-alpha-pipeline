@@ -21,15 +21,15 @@
     "n_conditions_heavy"
   ],
   "d7b_llm_scores": {
-    "semantic_plausibility": 0.75,
+    "semantic_plausibility": 0.7,
     "semantic_theme_alignment": 0.85,
     "structural_variant_risk": 0.95
   },
-  "d7b_reasoning": "The strategy exhibits coherent logic: entering on volatility regime expansion (realized_vol crossing above 0.025) combined with price momentum confirmation (close > sma_50 and positive macd_hist), then exiting when volatility contracts below 0.015 or price breaks sma_50, with a profit target at 8% weekly return. The narrative of capturing sustained trends following volatility regime shifts is economically sound for crypto markets. Theme alignment is strong, using realized_vol_24h (a hint factor) as the primary signal and explicitly targeting volatility regime transitions. However, structural variant risk is very high. The factor set {close, ema_12, ema_26, macd_hist, realized_vol_24h, return_24h, sma_50} appears in prior #3, and the current strategy uses {close, macd_hist, realized_vol_24h, return_168h, sma_50}, which differs only by substituting return_168h for (return_24h, ema_12, ema_26). This constitutes threshold-level variation on an existing structural template rather than a genuinely novel factor composition.",
+  "d7b_reasoning": "The strategy exhibits coherent internal logic: entering when realized volatility spikes above a threshold while price momentum (SMA breakout and MACD histogram) confirms upward movement, then exiting when volatility subsides or price reverses. The dual exit path (vol compression OR profit target) adds defensible flexibility. Theme alignment is strong; realized_vol_24h is a core theme hint factor, and the narrative of capturing regime shifts in crypto volatility is economically sound. However, structural variant risk is very high. The factor set {close, ema_12, ema_26, macd_hist, realized_vol_24h, return_24h, sma_50} appears in the third prior entry and is nearly identical. This hypothesis uses {close, macd_hist, realized_vol_24h, return_168h, sma_50}, differing only by substituting return_168h for {ema_12, ema_26, return_24h}. The core structure—realized vol with MACD and SMA trend filters—remains unchanged, representing primarily a threshold and timeframe tweak rather than a fundamentally distinct structural approach.",
   "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0073_response.json",
-  "d7b_cost_actual_usd": 0.014331,
+  "d7b_cost_actual_usd": 0.014270999999999999,
   "d7b_input_tokens": 3192,
-  "d7b_output_tokens": 317,
+  "d7b_output_tokens": 313,
   "d7b_retry_count": 0,
   "d7b_scan_results": {
     "forbidden_language_scan": {
@@ -52,8 +52,8 @@
     }
   },
   "critic_timing_ms": {
-    "d7a_ms": 0.15,
-    "d7b_ms": 10251.791
+    "d7a_ms": 0.126,
+    "d7b_ms": 9397.832
   },
   "critic_error_signature": null,
   "critic_error_full_path": null

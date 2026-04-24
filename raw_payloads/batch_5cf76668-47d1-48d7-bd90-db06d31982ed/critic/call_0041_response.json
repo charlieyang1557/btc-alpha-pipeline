@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.9500,
+  "reasoning": "The strategy exhibits coherent momentum logic: MACD histogram crossing above zero signals trend acceleration, volume_zscore_24h > 0.5 confirms institutional participation, return_24h > 0.005 ensures positive price action, and rsi_14 > 50 filters for bullish momentum. Exit conditions are sensible with MACD reversal or overbought RSI paired with negative returns. The 336-bar (14-day) max hold aligns with swing momentum timeframes. Theme alignment is strong; all five factors (macd_hist, return_24h, rsi_14, volume_zscore_24h, and implicitly return_24h in exit) directly relate to momentum. However, structural variant risk is very high. The factor set {macd_hist, return_24h, rsi_14, volume_zscore_24h} appears verbatim as prior #33 in the batch. While this strategy uses crosses_above on MACD and adds specific threshold values (0.5 for volume_zscore, 0.005 for return_24h, 50 for RSI), the underlying factor combination is identical. This represents a threshold/operator refinement rather than a structurally distinct bet, making it nearly certain to be a shallow variant of existing work."
+}
+```

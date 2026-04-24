@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9500,
+  "structural_variant_risk": 0.1500,
+  "reasoning": "The strategy exhibits strong mean reversion logic: entering on oversold signals when price is below the Bollinger band upper threshold and z-score drops below -1.5, combined with negative 24h returns to confirm downward momentum. Exit triggers when price crosses above the simple moving average or z-score recovers above 0.5, capturing the reversion phase. The 240-bar max hold provides reasonable downside protection. Theme alignment is excellent, deploying bb_upper_24_2, zscore_48, sma_24, and close directly from the hint vocabulary in contextually appropriate ways. One minor plausibility concern: the entry condition uses bb_upper rather than bb_lower for a mean reversion oversold entry, which is structurally valid but economically counterintuitive since oversold conditions typically manifest near the lower band. Structurally, this differs significantly from the prior {return_24h, rsi_14} set by introducing Bollinger bands, z-score thresholds, and SMA crossover logic rather than RSI momentum indicators. The factor set {close, bb_upper_24_2, zscore_48, return_24h, sma_24} represents a distinct statistical approach to mean reversion detection."
+}
+```

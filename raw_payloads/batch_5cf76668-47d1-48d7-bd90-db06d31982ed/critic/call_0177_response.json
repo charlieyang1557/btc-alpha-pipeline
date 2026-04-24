@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.4500,
+  "semantic_theme_alignment": 0.7500,
+  "structural_variant_risk": 0.9500,
+  "reasoning": "The strategy employs classic mean-reversion elements: zscore_48 below -1.5, RSI under 35, and negative return_24h to identify oversold conditions. However, entry condition checking close < bb_upper_24_2 (upper band) contradicts the description which claims \"price closes below Bollinger lower band.\" This mismatch reduces plausibility significantly. Exit logic is coherent: rsi_14 > 55 and zscore_48 > 0 signal return to normal, while return_168h > 0.06 captures profit targets. Theme alignment is moderately strong given the explicit use of zscore, RSI oversold thresholds, and Bollinger bands despite the upper/lower discrepancy. Structurally, this factor set {bb_upper_24_2, close, return_24h, rsi_14, zscore_48} is nearly identical to prior entry 34: {bb_upper_24_2, close, return_24h, rsi_14, zscore_48}. The only distinction lies in threshold values (RSI 35 vs potentially different values, zscore -1.5 vs others), making this a clear parametric variant rather than a structurally novel combination."
+}
+```

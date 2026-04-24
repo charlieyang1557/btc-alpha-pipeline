@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.4500,
+  "semantic_theme_alignment": 0.7000,
+  "structural_variant_risk": 0.9500,
+  "reasoning": "The strategy combines return_24h, volume_zscore_24h, and rsi_14 to detect price-volume divergence. Entry logic seeks positive returns with weak volume (negative z-score) and low RSI, proposing a contrarian setup where price rises without volume support. However, the economic narrative is internally inconsistent: the description claims this signals \"retail exhaustion before institutional accumulation drives continuation,\" yet the entry itself is long when price is already rising. This contradicts typical fade logic where one would expect mean reversion rather than continuation. Exit conditions mixing volume normalization, RSI breakout, and profit targets create ambiguity about whether this is momentum continuation or mean reversion. The theme alignment is moderate because volume_zscore_24h is central and divergence is explicitly invoked, matching the volume_divergence theme vocabulary. Structural variant risk is very high: the exact factor set {return_24h, rsi_14, volume_zscore_24h} appears as entry #26 in the prior list, and nearly identical sets appear in entries #33, #36, #55, #70, #93. Only threshold values differ here (e.g., volume z-score -0.5 vs other cutoffs), making this a clear parameter tweak rather than a structurally novel approach."
+}
+```

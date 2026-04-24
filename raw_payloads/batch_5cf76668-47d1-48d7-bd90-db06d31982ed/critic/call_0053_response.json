@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.7000,
+  "reasoning": "The strategy articulates a coherent volatility regime shift narrative: entering when realized volatility drops below 0.018 after elevated levels, combined with price crossing above SMA-50 and RSI exceeding 50. The exit logic includes both volatility expansion (>0.032) with overbought RSI, and breakdown scenarios. The 168h positive return filter adds a longer-term context filter. This produces a defensible mean-reversion-from-volatility-spike story. Theme alignment is strong, directly using realized_vol_24h (a hint factor) as the primary regime indicator and structuring entry/exit around volatility thresholds. The factor set {close, realized_vol_24h, return_168h, return_24h, rsi_14, sma_50} closely resembles prior #25 {close, realized_vol_24h, return_24h, rsi_14, sma_50, zscore_48}, differing only in substituting return_168h for zscore_48. This substitution represents a similar structural bet on volatility regime with momentum and trend confirmation, making it a moderate variant rather than a fundamentally distinct approach."
+}
+```

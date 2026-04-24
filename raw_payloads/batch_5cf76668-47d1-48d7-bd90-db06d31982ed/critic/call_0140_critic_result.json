@@ -1,0 +1,61 @@
+{
+  "critic_version": "d7_v1",
+  "critic_status": "ok",
+  "d7b_mode": "live",
+  "d7a_rule_scores": {
+    "theme_coherence": 0.25,
+    "structural_novelty": 1.0,
+    "default_momentum_fallback": 0.5,
+    "complexity_appropriateness": 0.7
+  },
+  "d7a_supporting_measures": {
+    "factor_set_prior_occurrences": 0,
+    "n_factors": 4,
+    "n_conditions": 6,
+    "description_length": 235,
+    "max_hold_bars": 120,
+    "n_entry_groups": 1,
+    "n_exit_groups": 2
+  },
+  "d7a_rule_flags": [
+    "thin_theme_momentum_bleed",
+    "n_conditions_heavy"
+  ],
+  "d7b_llm_scores": {
+    "semantic_plausibility": 0.75,
+    "semantic_theme_alignment": 0.85,
+    "structural_variant_risk": 0.8
+  },
+  "d7b_reasoning": "The strategy presents a coherent mean reversion narrative: enter long on Mondays when price is oversold (zscore_48 < -1, rsi_14 < 45), exit when price recovers (zscore_48 > 0.5 or return_24h > 1.5%) or by Friday. This logic is internally consistent with entry seeking oversold conditions and exits targeting recovery. The calendar effect alignment is strong, explicitly leveraging day_of_week to time entry on Mondays and offering a Friday exit path, directly invoking weekly cyclical patterns mentioned in the description. However, structural variant risk is high: the factor set {day_of_week, return_24h, rsi_14, zscore_48} closely resembles prior entry #5 {day_of_week, rsi_14, zscore_48} with the addition of return_24h which already appears in numerous combinations. The core Monday-oversold concept using day_of_week, rsi_14, and zscore_48 is structurally identical to prior work, differing mainly in threshold values (rsi_14 < 45 vs other cutoffs) and the addition of return_24h in exit logic. This represents threshold tuning on a previously explored factor architecture rather than a fundamentally new structural bet.",
+  "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0140_response.json",
+  "d7b_cost_actual_usd": 0.018795,
+  "d7b_input_tokens": 4505,
+  "d7b_output_tokens": 352,
+  "d7b_retry_count": 0,
+  "d7b_scan_results": {
+    "forbidden_language_scan": {
+      "status": "pass",
+      "hits": [],
+      "terms_checked_count": 21
+    },
+    "refusal_scan": {
+      "status": "pass",
+      "hits": [],
+      "patterns_checked": [
+        "\\bi cannot\\b",
+        "\\bi can't\\b",
+        "\\bunable to\\b",
+        "\\brefuse to\\b",
+        "\\bdecline to\\b",
+        "\\bcannot evaluate\\b",
+        "\\bcan not evaluate\\b"
+      ]
+    }
+  },
+  "critic_timing_ms": {
+    "d7a_ms": 0.154,
+    "d7b_ms": 10594.515
+  },
+  "critic_error_signature": null,
+  "critic_error_full_path": null
+}

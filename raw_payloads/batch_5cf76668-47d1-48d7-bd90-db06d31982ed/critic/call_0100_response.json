@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy articulates a coherent mean-reversion story: enter long on Monday mornings (day_of_week=0, hour_of_day<=4) when realized_vol_24h is low and rsi_14 indicates oversold conditions, exit when rsi_14 rises or after 24h gains, or cut losses by Wednesday if price declines. The entry logic combines calendar timing with technical conditions in a defensible way. The theme alignment is strong because day_of_week and hour_of_day are explicitly used to target Monday morning UTC hours, directly matching the calendar_effect theme's hint factors. However, structural_variant_risk is high: factor set {day_of_week, hour_of_day, realized_vol_24h, return_1h, return_24h, rsi_14} closely resembles prior #41 ({close, day_of_week, hour_of_day, realized_vol_24h, return_24h, rsi_14, sma_20}), differing primarily by omitting close and sma_20 while adding return_1h. The core calendar+volatility+momentum+RSI structure is nearly identical, making this appear as a threshold/operator variation rather than a fundamentally distinct structural hypothesis."
+}
+```

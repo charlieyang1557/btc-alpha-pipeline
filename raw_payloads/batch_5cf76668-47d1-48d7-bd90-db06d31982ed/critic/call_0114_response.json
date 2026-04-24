@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy employs coherent momentum breakout logic: volume z-score confirms institutional interest, EMA crossover signals trend shift, positive MACD histogram validates momentum, and return_1h ensures recent price strength. Exit logic is reasonable with dual paths: deteriorating conditions (volume collapse + MACD reversal) or profit-taking (return_24h threshold + overbought RSI). The theme alignment is strong, as volume_zscore_24h plays a central role in both entry (surge detection at >1.5) and exit (collapse detection at <-0.5), directly capturing volume divergence dynamics. However, structural variant risk is high: the factor set {close, ema_12, macd_hist, return_1h, return_24h, rsi_14, volume_zscore_24h} closely resembles multiple priors. Specifically, prior #19 uses {close, macd_hist, return_1h, rsi_14, sma_20, volume_zscore_24h}, differing only by substituting ema_12 for sma_20 and adding return_24h. Prior #45 is {close, ema_12, return_1h, return_24h, rsi_14, volume_zscore_24h}, missing only macd_hist. The current hypothesis appears to be a recombination of existing factor components with adjusted thresholds rather than a structurally novel approach."
+}
+```

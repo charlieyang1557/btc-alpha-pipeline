@@ -21,15 +21,15 @@
     "n_conditions_heavy"
   ],
   "d7b_llm_scores": {
-    "semantic_plausibility": 0.15,
+    "semantic_plausibility": 0.2,
     "semantic_theme_alignment": 0.3,
     "structural_variant_risk": 0.85
   },
-  "d7b_reasoning": "The strategy contains a critical logical inconsistency: the description claims to enter when price crosses above the Bollinger lower band, but the DSL specifies crossing above bb_upper_24_2 (the upper band). This creates a fundamental contradiction where the entry condition triggers on breakouts rather than mean-reversion bounces, undermining the entire narrative. The combination of crossing the upper band while simultaneously requiring RSI below 38, negative z-score below -1.2, and elevated volatility is internally contradictory—price crossing above the upper band typically indicates overbought conditions, not oversold. Exit logic is more coherent with RSI exceeding 60 and positive z-score signaling mean reversion completion. Theme alignment suffers from the same entry contradiction: upper band crossings represent momentum breakouts rather than mean-reversion setups. The factor set {bb_upper_24_2, close, macd_hist, realized_vol_24h, rsi_14, zscore_48} closely mirrors prior #12 {bb_upper_24_2, close, realized_vol_24h, return_1h, rsi_14, zscore_48} and #60 {bb_upper_24_2, close, realized_vol_24h, return_24h, rsi_14, zscore_48}, differing only by substituting return_1h/return_24h with macd_hist—a shallow operator-level variant.",
+  "d7b_reasoning": "The strategy contains a critical internal contradiction: the description claims entry occurs when price crosses above the Bollinger lower band, but the DSL specifies crossing above bb_upper_24_2 (upper band). This logical error undermines plausibility. A mean-reversion bounce from oversold conditions would require entry near the lower band, not the upper band, making the current configuration counterproductive to the stated thesis. The exit logic combining RSI recovery, z-score normalization, and profit-taking with MACD momentum reversal is internally coherent. Theme alignment suffers because crossing above the upper Bollinger band signals potential overbought extension rather than oversold mean-reversion opportunity, contradicting the mean_reversion premise. The factor set {bb_upper_24_2, close, macd_hist, realized_vol_24h, return_24h, rsi_14, zscore_48} closely resembles multiple prior submissions, particularly entries 12, 17, 21, 53, 60, and 77, which combine bb_upper_24_2, close, realized_vol_24h, rsi_14, and zscore_48 in various configurations. The addition of macd_hist and return_24h represents only minor incremental variation rather than structural innovation.",
   "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0117_response.json",
-  "d7b_cost_actual_usd": 0.018486000000000002,
+  "d7b_cost_actual_usd": 0.017901,
   "d7b_input_tokens": 4247,
-  "d7b_output_tokens": 383,
+  "d7b_output_tokens": 344,
   "d7b_retry_count": 0,
   "d7b_scan_results": {
     "forbidden_language_scan": {
@@ -52,8 +52,8 @@
     }
   },
   "critic_timing_ms": {
-    "d7a_ms": 0.16,
-    "d7b_ms": 9733.336
+    "d7a_ms": 0.154,
+    "d7b_ms": 9236.118
   },
   "critic_error_signature": null,
   "critic_error_full_path": null

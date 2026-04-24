@@ -1,0 +1,60 @@
+{
+  "critic_version": "d7_v1",
+  "critic_status": "ok",
+  "d7b_mode": "live",
+  "d7a_rule_scores": {
+    "theme_coherence": 0.5,
+    "structural_novelty": 1.0,
+    "default_momentum_fallback": 1.0,
+    "complexity_appropriateness": 0.55
+  },
+  "d7a_supporting_measures": {
+    "factor_set_prior_occurrences": 0,
+    "n_factors": 6,
+    "n_conditions": 7,
+    "description_length": 208,
+    "max_hold_bars": 240,
+    "n_entry_groups": 1,
+    "n_exit_groups": 2
+  },
+  "d7a_rule_flags": [
+    "n_conditions_heavy"
+  ],
+  "d7b_llm_scores": {
+    "semantic_plausibility": 0.75,
+    "semantic_theme_alignment": 0.9,
+    "structural_variant_risk": 0.75
+  },
+  "d7b_reasoning": "The strategy constructs a coherent momentum capture mechanism by requiring MACD histogram crossing zero (acceleration signal), RSI above 50 (strength confirmation), price above EMA-26 (trend filter), and elevated volume z-score. Exit logic provides two paths: momentum exhaustion (MACD flip + RSI drop) or profit-taking at 2.5% gain. This multi-layered confirmation structure is defensible. Theme alignment is strong—all entry factors (macd_hist, rsi_14, close vs ema_26, volume_zscore_24h) and exit signals directly measure momentum properties from the hint vocabulary. However, structural variant risk is elevated: the factor set {close, ema_26, macd_hist, rsi_14, volume_zscore_24h} closely resembles prior #42 {close, ema_26, macd_hist, return_24h, rsi_14} and #59 {close, ema_12, macd_hist, return_24h, rsi_14}, differing mainly by substituting ema_26 for ema_12 and volume_zscore_24h for return_24h. The crosses_above operator applied to macd_hist at zero and the specific RSI threshold are parameter tweaks rather than a fundamentally novel structural bet.",
+  "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0151_response.json",
+  "d7b_cost_actual_usd": 0.019757999999999998,
+  "d7b_input_tokens": 4801,
+  "d7b_output_tokens": 357,
+  "d7b_retry_count": 0,
+  "d7b_scan_results": {
+    "forbidden_language_scan": {
+      "status": "pass",
+      "hits": [],
+      "terms_checked_count": 21
+    },
+    "refusal_scan": {
+      "status": "pass",
+      "hits": [],
+      "patterns_checked": [
+        "\\bi cannot\\b",
+        "\\bi can't\\b",
+        "\\bunable to\\b",
+        "\\brefuse to\\b",
+        "\\bdecline to\\b",
+        "\\bcannot evaluate\\b",
+        "\\bcan not evaluate\\b"
+      ]
+    }
+  },
+  "critic_timing_ms": {
+    "d7a_ms": 0.165,
+    "d7b_ms": 10436.632
+  },
+  "critic_error_signature": null,
+  "critic_error_full_path": null
+}

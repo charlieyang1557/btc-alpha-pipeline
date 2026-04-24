@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy presents coherent logic: entering on volatility compression (realized_vol_24h < 0.015) followed by price breakout above sma_20, positive momentum (return_24h > 0.005), and confirming strength (rsi_14 > 50). Exit triggers on elevated volatility (> 0.035) with overbought RSI or downside breach with negative hourly return. This volatility-compression-to-expansion narrative is economically sensible. Theme alignment is strong, using realized_vol_24h as the primary regime filter with explicit thresholds defining low and high volatility states, directly addressing the volatility_regime concept. However, structural variant risk is elevated: the factor set {close, realized_vol_24h, return_1h, return_24h, rsi_14, sma_20} appears nearly identical to prior entry #13 which contains all six factors. The distinction lies only in threshold values (0.015 vs other volatility thresholds) and operator choice (crosses_above vs simple comparison), making this a parameter variant rather than a structurally novel combination. The strategy is logically sound but recombines existing factor architecture."
+}
+```

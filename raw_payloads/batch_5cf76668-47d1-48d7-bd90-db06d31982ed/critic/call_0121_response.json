@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy employs a coherent momentum-capture logic: entry requires MACD histogram crossing above zero (trend reversal signal), RSI above 55 (moderate strength without overbought extremes), and price above SMA_50 (longer-term directional filter). Exit logic accommodates both momentum exhaustion (MACD crosses below zero and RSI drops below 45) and profit-taking at extremes (RSI above 78 with 4% daily gain). This multi-condition structure is defensible. Theme alignment is strong: all factors (macd_hist, rsi_14, return_24h, sma_50) are either explicitly listed in the hint vocabulary or standard momentum filters, and the narrative of capturing early-stage acceleration fits momentum investing principles well. However, structural variant risk is high. The factor set {close, macd_hist, rsi_14, sma_50} appears in prior #73, and the combination {close, macd_hist, return_24h, rsi_14, sma_50} is extremely similar to multiple priors including #52 and others. While threshold values differ (RSI 55 vs other cutoffs), the core structural bet—MACD histogram reversals combined with RSI levels, price-to-moving-average filters, and return checks—has been explored repeatedly in this batch."
+}
+```

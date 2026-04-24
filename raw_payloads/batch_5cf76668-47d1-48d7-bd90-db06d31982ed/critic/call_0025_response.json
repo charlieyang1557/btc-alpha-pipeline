@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.6500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.7000,
+  "reasoning": "The strategy proposes a Monday morning mean-reversion play combining temporal filters (day_of_week==0, hour_of_day<=11) with oversold conditions (close<sma_20, rsi_14<40). The entry logic is internally consistent: waiting for price weakness below trend with oversold momentum during a specific calendar window. Exit conditions offer two paths: either mean-reversion completion (rsi>58 AND close crosses_above sma_20) or a time-based profit-take (Tuesday+ with positive 24h return). The dual exit structure is reasonable, though the max_hold_bars of 168 (one week) extends well beyond the Monday focus. Theme alignment is strong because the core hypothesis explicitly leverages calendar effects via day_of_week and hour_of_day filters, targeting weekend-to-Monday sentiment shifts. However, structural variant risk is elevated: prior hypothesis {close, day_of_week, return_1h, return_24h, rsi_14, sma_20} shares the key factor set {close, day_of_week, rsi_14, sma_20}, differing primarily by the addition of hour_of_day granularity and swapping return signals for a crosses_above operator. This appears to be a temporal refinement of an existing factor combination rather than a fundamentally distinct structural bet."
+}
+```

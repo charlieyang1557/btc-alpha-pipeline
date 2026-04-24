@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.9500,
+  "reasoning": "The strategy constructs a coherent trading narrative: entering on EMA crossovers during low volatility with momentum confirmation, and exiting on reversal signals or profit targets. Entry logic combines trend detection (EMA cross), regime filter (realized_vol_24h < 0.03), momentum (RSI > 50), and trend alignment (close > SMA_50). Exit uses both momentum reversal (EMA cross-back with RSI < 45) and profit-taking (return > 3.5% with overbought RSI). This structure is internally consistent. Theme alignment is strong as realized_vol_24h serves as the primary regime filter, directly addressing volatility-conditioned behavior. However, structural_variant_risk scores high (0.95) because this factor set {close, ema_12, ema_26, realized_vol_24h, return_24h, rsi_14, sma_50} appears almost identical to prior #3 {close, ema_12, ema_26, macd_hist, realized_vol_24h, return_24h, sma_50}, differing only by substituting RSI for MACD_hist. The economic bet (EMA crossover in low-vol regime) remains structurally the same; only the momentum indicator changes. This represents a shallow operator-level variant rather than a genuinely distinct approach."
+}
+```

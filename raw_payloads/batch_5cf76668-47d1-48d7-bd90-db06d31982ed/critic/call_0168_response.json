@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.6500,
+  "semantic_theme_alignment": 0.8000,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy proposes entering long when realized volatility contracts below an absolute threshold while price remains above SMA(20) and zscore_48 indicates consolidation. The exit logic triggers on volatility expansion with gains or on price/RSI weakness. This structure is internally coherent: low volatility with neutral positioning sets up breakout anticipation, and exits capture either the realized breakout or invalidation signals. However, the entry does not explicitly verify that realized_vol_24h is below half its 24-bar average as the description claims; it uses a fixed 0.015 threshold instead, creating a disconnect between narrative and implementation. Theme alignment is strong because realized_vol_24h is a core volatility regime factor and the strategy explicitly models compression-to-expansion transitions. Structural variant risk is elevated: the factor set {close, realized_vol_24h, rsi_14, sma_20, zscore_48} closely resembles prior #54 which uses {close, realized_vol_24h, return_24h, rsi_14, sma_24, zscore_48}. Both share the volatility-zscore-price trend combination, differing mainly in SMA period and substituting return_24h for the entry side, making this a likely threshold/operator variant rather than a fundamentally distinct structural bet."
+}
+```

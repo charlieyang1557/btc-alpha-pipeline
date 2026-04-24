@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7000,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.9000,
+  "reasoning": "The strategy constructs a coherent mean-reversion narrative: enter long on Mondays when prices have declined (-1.5%) and RSI indicates oversold conditions (RSI < 40), but only when above SMA_50 to confirm broader uptrend context. Exit logic uses either Friday timing (day_of_week == 4) with moderate RSI recovery (> 55) or a profit target (3% gain). The 168-bar max hold (one week) aligns with the Monday-to-Friday calendar logic. Theme alignment is strong as the strategy explicitly exploits day-of_week effects, hypothesizing Monday oversold reversals as a systematic calendar pattern. However, structural variant risk is high: the factor set {close, day_of_week, return_24h, rsi_14, sma_50} closely matches prior #69 ({close, day_of_week, return_24h, rsi_14, sma_50}), differing only in threshold values (RSI 40 vs likely different thresholds, return -1.5% vs other cutoffs). This is a threshold-tweaked variant rather than a structurally novel combination, representing shallow exploration of the same factor space already examined."
+}
+```

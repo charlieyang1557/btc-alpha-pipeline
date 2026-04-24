@@ -23,13 +23,13 @@
   "d7b_llm_scores": {
     "semantic_plausibility": 0.75,
     "semantic_theme_alignment": 0.9,
-    "structural_variant_risk": 0.3
+    "structural_variant_risk": 0.25
   },
-  "d7b_reasoning": "The strategy exhibits strong internal coherence: entering when realized volatility exceeds 3% while price crosses above sma_20 and volume surges creates a defensible regime-shift narrative. Exit logic balances mean reversion (volatility contracting below 1.5%, price crossing below sma_20) with profit-taking (3% gain). The dual exit paths acknowledge that high-volatility breakouts may either exhaust quickly or sustain trends. Theme alignment is excellent, directly employing realized_vol_24h (a hint factor) as the primary filter and volume_zscore_24h to confirm conviction during turbulence. The factor set {close, realized_vol_24h, return_24h, sma_20, volume_zscore_24h} shares realized_vol_24h and volume_zscore_24h with prior entry 74, but crucially omits rsi_14 and substitutes sma_20 for diverse moving averages in other priors. The crosses_above operator on sma_20 paired with volatility creates a mechanically different entry trigger than zscore or Bollinger-based entries seen in priors 8, 17, 21, 64. The structural bet—volatility expansion coinciding with price momentum confirmation via moving average crossover—represents a distinct architectural choice rather than threshold variation.",
+  "d7b_reasoning": "The strategy presents a coherent logic: entering when realized volatility exceeds a threshold (0.03), price crosses above SMA 20, and volume is elevated (z-score > 1.0), while exiting on volatility compression (< 0.015), downward price crosses, or a 3% gain. This combination of volatility regime shift plus directional confirmation plus volume validation forms a defensible narrative about entering turbulent upward breakouts. Theme alignment is strong given the direct use of realized_vol_24h (a hint factor) as the primary regime detector, combined with volume_zscore_24h to confirm participation during expansion. The strategy captures the volatility_regime concept explicitly. Structural variant risk is moderate-low: the factor set {close, realized_vol_24h, return_24h, sma_20, volume_zscore_24h} has not appeared verbatim in priors. While realized_vol_24h appears in many combinations with rsi_14, this strategy replaces RSI with pure SMA crosses and volume confirmation, representing a structurally different betting mechanism focused on breakout rather than mean-reversion or momentum oscillators.",
   "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0138_response.json",
-  "d7b_cost_actual_usd": 0.01875,
+  "d7b_cost_actual_usd": 0.018179999999999998,
   "d7b_input_tokens": 4475,
-  "d7b_output_tokens": 355,
+  "d7b_output_tokens": 317,
   "d7b_retry_count": 0,
   "d7b_scan_results": {
     "forbidden_language_scan": {
@@ -52,8 +52,8 @@
     }
   },
   "critic_timing_ms": {
-    "d7a_ms": 0.186,
-    "d7b_ms": 11309.437
+    "d7a_ms": 0.148,
+    "d7b_ms": 10635.609
   },
   "critic_error_signature": null,
   "critic_error_full_path": null

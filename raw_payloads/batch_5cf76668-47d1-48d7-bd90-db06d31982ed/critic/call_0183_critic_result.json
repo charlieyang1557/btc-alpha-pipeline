@@ -1,0 +1,61 @@
+{
+  "critic_version": "d7_v1",
+  "critic_status": "ok",
+  "d7b_mode": "live",
+  "d7a_rule_scores": {
+    "theme_coherence": 0.2,
+    "structural_novelty": 0.5,
+    "default_momentum_fallback": 0.5,
+    "complexity_appropriateness": 0.55
+  },
+  "d7a_supporting_measures": {
+    "factor_set_prior_occurrences": 1,
+    "n_factors": 5,
+    "n_conditions": 7,
+    "description_length": 220,
+    "max_hold_bars": 504,
+    "n_entry_groups": 1,
+    "n_exit_groups": 2
+  },
+  "d7a_rule_flags": [
+    "thin_theme_momentum_bleed",
+    "n_conditions_heavy"
+  ],
+  "d7b_llm_scores": {
+    "semantic_plausibility": 0.75,
+    "semantic_theme_alignment": 0.85,
+    "structural_variant_risk": 0.85
+  },
+  "d7b_reasoning": "The strategy constructs a coherent narrative: enter when realized volatility compresses below 2% while price breaks above SMA(50) with momentum confirmation (RSI>55, MACD_hist>0), then exit on either trend reversal or volatility re-expansion above 3.5%. This represents a defensible volatility compression/expansion cycle paired with technical breakout confirmation. Theme alignment is strong given the explicit use of realized_vol_24h as the primary regime filter, directly addressing volatility state transitions. However, structural variant risk is high: the factor set {close, macd_hist, realized_vol_24h, rsi_14, sma_50} appears identical to prior entry #22, and closely resembles #3 which uses {close, ema_12, ema_26, macd_hist, realized_vol_24h, return_24h, sma_50}. The distinguishing element here is threshold tuning (realized_vol < 0.02 versus other cutoffs) and the crosses_above operator choice, but the underlying factor combination is already well-explored in this batch.",
+  "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0183_response.json",
+  "d7b_cost_actual_usd": 0.020886,
+  "d7b_input_tokens": 5422,
+  "d7b_output_tokens": 308,
+  "d7b_retry_count": 0,
+  "d7b_scan_results": {
+    "forbidden_language_scan": {
+      "status": "pass",
+      "hits": [],
+      "terms_checked_count": 21
+    },
+    "refusal_scan": {
+      "status": "pass",
+      "hits": [],
+      "patterns_checked": [
+        "\\bi cannot\\b",
+        "\\bi can't\\b",
+        "\\bunable to\\b",
+        "\\brefuse to\\b",
+        "\\bdecline to\\b",
+        "\\bcannot evaluate\\b",
+        "\\bcan not evaluate\\b"
+      ]
+    }
+  },
+  "critic_timing_ms": {
+    "d7a_ms": 0.196,
+    "d7b_ms": 12516.205
+  },
+  "critic_error_signature": null,
+  "critic_error_full_path": null
+}

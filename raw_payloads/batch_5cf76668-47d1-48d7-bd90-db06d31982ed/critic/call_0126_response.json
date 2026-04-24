@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.9500,
+  "reasoning": "The strategy exhibits coherent internal logic: entering when MACD histogram crosses above zero (momentum strengthening) while price remains below SMA-20 and RSI is oversold (RSI < 45) aims to capture early momentum recovery before price confirmation. The exit logic is structured with two paths: either price breakout above SMA-20 with RSI > 60 (successful reversal) or MACD histogram crossing back below zero (failed reversal). This creates a defensible trading narrative around divergence-based momentum capture. Theme alignment is strong as MACD histogram is a core momentum indicator from the hint vocabulary, combined with RSI (also in hints) to filter oversold conditions—this directly addresses momentum detection and timing. However, structural variant risk is very high: the factor set {close, macd_hist, rsi_14, sma_20} exactly matches entry #6 in the prior list. While this strategy uses different thresholds (RSI < 45 vs likely other values) and the crosses_above operator on macd_hist, the underlying factors are identical. This represents a threshold/operator variation on previously explored structural territory rather than a genuinely distinct factor combination."
+}
+```

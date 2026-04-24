@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.3000,
+  "reasoning": "The strategy exhibits coherent internal logic: it identifies exhaustion selling (negative return with below-average volume captured by volume_zscore_24h < -0.5) combined with oversold momentum (rsi_14 < 40) while requiring price to remain above sma_50 to confirm the broader uptrend context. The exit conditions are sensible, capturing either profit-taking at moderate gains or stopping out when volume surges on negative price action. Theme alignment is strong because volume_zscore_24h is the central theme factor and the strategy explicitly articulates price-volume divergence logic. The factor set {return_24h, volume_zscore_24h, rsi_14, close, sma_50} shares partial overlap with prior hypothesis 4 {close, ema_12, macd_hist, return_24h, volume_zscore_24h}, using three common factors (return_24h, volume_zscore_24h, close), but substitutes rsi_14 and sma_50 for macd_hist and ema_12, creating a momentum/trend context rather than MACD momentum. This represents moderate structural differentiation rather than mere threshold adjustment, as the trading logic shifts from MACD-based to RSI-based oversold detection with MA trend filtering."
+}
+```

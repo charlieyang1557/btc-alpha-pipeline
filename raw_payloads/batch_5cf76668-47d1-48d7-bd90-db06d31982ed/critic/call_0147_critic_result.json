@@ -21,15 +21,15 @@
     "n_conditions_heavy"
   ],
   "d7b_llm_scores": {
-    "semantic_plausibility": 0.35,
+    "semantic_plausibility": 0.45,
     "semantic_theme_alignment": 0.75,
     "structural_variant_risk": 0.95
   },
-  "d7b_reasoning": "The strategy attempts a mean-reversion logic: enter when price crosses below bb_upper_24_2 (odd, as lower band would be more typical), zscore_48 < -1.5, rsi_14 < 35, and realized_vol_24h > 0.025. Exit when close crosses above sma_24 and rsi_14 > 55, or when return_24h > 0.025. The entry has an internal contradiction: comparing close < bb_upper_24_2 does not capture oversold extremes as described; the lower band would be appropriate. The zscore and RSI conditions do align with oversold logic, and the exit toward the moving average centerline is coherent. Theme alignment is moderate-to-strong given the use of Bollinger bands, zscore, RSI, and moving averages - all core mean-reversion tools from the hint vocabulary. However, the structural factor set {bb_upper_24_2, close, realized_vol_24h, return_24h, rsi_14, sma_24, zscore_48} appears nearly identical to prior entries #17, #21, #29, and #64, differing only in threshold values or minor operator choices. This is a clear shallow variant of already-explored factor combinations.",
+  "d7b_reasoning": "The strategy employs a mean reversion framework targeting oversold conditions via RSI < 35, zscore < -1.5, and realized volatility filters, exiting when price crosses back above SMA or RSI recovers. However, the entry logic exhibits internal tension: it requires close < bb_upper_24_2 (typically true most of the time) rather than close < bb_lower_24_2 as the description suggests, undermining coherence between stated intent and implementation. The exit paths are sensible: mean reversion completion via SMA crossover or profit target. Theme alignment is strong—Bollinger bands, zscore, RSI, and SMA are all canonical mean reversion indicators from the hint vocabulary. Structural variant risk is very high: the factor set {bb_upper_24_2, close, realized_vol_24h, rsi_14, sma_24, zscore_48} matches prior hypothesis #21 exactly, and differs from #17 and #60 only by minor additions or removals. This appears to be a threshold parameter adjustment (RSI 35 vs other cutoffs, zscore -1.5 vs other values) rather than a structurally novel combination.",
   "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0147_response.json",
-  "d7b_cost_actual_usd": 0.019452,
+  "d7b_cost_actual_usd": 0.019107,
   "d7b_input_tokens": 4734,
-  "d7b_output_tokens": 350,
+  "d7b_output_tokens": 327,
   "d7b_retry_count": 0,
   "d7b_scan_results": {
     "forbidden_language_scan": {
@@ -52,8 +52,8 @@
     }
   },
   "critic_timing_ms": {
-    "d7a_ms": 0.171,
-    "d7b_ms": 10224.727
+    "d7a_ms": 0.156,
+    "d7b_ms": 10205.422
   },
   "critic_error_signature": null,
   "critic_error_full_path": null

@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy exhibits strong internal coherence: entering on price advances (return_24h > 2%) paired with below-normal volume (volume_zscore_24h < -0.5) while requiring bullish positioning (rsi_14 > 50, close > sma_50) creates a defensible narrative around quiet accumulation. The exit logic is well-structured with two branches—one capturing volume surge with overbought conditions (volume_zscore_24h > 1.5, rsi_14 > 72) for profit-taking, and another for trend breakdown (crosses_below sma_20 with negative 1h return). This aligns excellently with the volume_divergence theme, directly utilizing volume_zscore_24h as the core signal and building a story around low-volume rallies preceding higher-volume breakouts. However, the factor set {close, return_1h, return_24h, rsi_14, sma_50, volume_zscore_24h} overlaps substantially with prior entry #9 and shares significant commonality with entries #11 and #13. The primary distinction is the inclusion of sma_50 versus sma_20, which constitutes a threshold-level variation rather than a fundamentally different structural approach. The cross operator on sma_20 in the exit adds modest differentiation, but the core entry logic remains a close variant of already-explored territory."
+}
+```

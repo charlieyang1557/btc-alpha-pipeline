@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.6500,
+  "semantic_theme_alignment": 0.7500,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy combines mean-reversion signals (price below SMA-50, negative 24h return, RSI<40) with a calendar constraint (Monday/Tuesday). The entry logic is coherent: identifying oversold conditions early in the week. Exit conditions are reasonable, with both mean-reversion completion (crosses above SMA-50, RSI>55) and momentum profit-taking (3% gain). However, the economic narrative—that institutional buying resumes early-week after weekend dips—is speculative, as institutional flows are not uniformly calendar-driven in crypto markets. The theme alignment is moderate to strong: day_of_week is a core calendar factor, though the strategy leans heavily on technical indicators rather than purely calendar-driven mechanics. Structural risk is high: the factor set {close, day_of_week, return_24h, rsi_14, sma_50} is nearly identical to prior entry #69, differing only in threshold values (RSI 40 vs potentially different levels, day_of_week <=1 vs other thresholds). This appears to be a parameter tweak rather than a structurally novel approach, making it a likely shallow variant of already-explored territory."
+}
+```

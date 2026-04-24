@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy implements a coherent mean-reversion logic by entering on multiple oversold signals (z-score < -1.5, RSI < 35, negative 24h return) and exiting when either mean reversion occurs (z-score > 0, RSI > 55) or extreme deterioration triggers a stop (return < -4%, RSI < 25). However, the entry condition checking close <= bb_upper_24_2 is problematic; the description mentions entering at the lower band, but this condition is nearly always satisfied and adds no meaningful constraint. Theme alignment is strong: the strategy directly employs hint factors (bb_upper_24_2, close, zscore_48) alongside classic mean-reversion indicators (RSI, return thresholds) in a textbook oversold-to-neutral framework. Structural variant risk is high because the factor set {bb_upper_24_2, close, return_24h, rsi_14, zscore_48} is essentially identical to prior entry #29, differing only in threshold values (RSI 35 vs other levels, z-score -1.5 vs other cutoffs). This represents a parameter tweak rather than a fundamentally distinct structural hypothesis."
+}
+```

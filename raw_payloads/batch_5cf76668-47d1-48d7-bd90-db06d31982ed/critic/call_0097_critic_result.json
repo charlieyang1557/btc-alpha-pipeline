@@ -23,13 +23,13 @@
   "d7b_llm_scores": {
     "semantic_plausibility": 0.75,
     "semantic_theme_alignment": 0.9,
-    "structural_variant_risk": 0.95
+    "structural_variant_risk": 0.85
   },
-  "d7b_reasoning": "The strategy exhibits coherent mean reversion logic: entry requires simultaneous signals of overextension (price at upper Bollinger Band, elevated z-score above 1.8, RSI above 68, and positive 24h return), while exit triggers on mean reversion completion (z-score normalizing below 0.5 with price crossing below SMA) or stop-loss conditions. The conjunction of multiple overbought indicators creates a plausible thesis that extremes will revert. Theme alignment is strong, utilizing four of five hint factors (bb_upper_24_2, close, sma_24 via exit, zscore_48) in a textbook mean reversion setup. However, structural variant risk is very high: the factor set {bb_upper_24_2, close, return_24h, rsi_14, sma_24, zscore_48} appears verbatim as the 29th prior entry. This hypothesis differs only in threshold values (z-score 1.8 vs likely different cutoffs, RSI 68 vs other levels) and exit operator choices, making it a parameter variation rather than a structurally novel exploration of factor space.",
+  "d7b_reasoning": "The strategy exhibits coherent mean-reversion logic: entering long when price reaches the upper Bollinger Band (bb_upper_24_2 >= close), z-score exceeds 1.8, RSI surpasses 68, and 24-hour return is positive, collectively signaling overextension. Exit conditions appropriately capture reversion through z-score normalization below 0.5 or price crossing below the moving average, with a stop-loss path via negative return and RSI drop. This multi-confirmatory entry design is economically defensible. Theme alignment is strong; all entry factors (Bollinger Band, z-score, RSI, short-term return) directly target overbought extremes, and the sma_24 exit anchor aligns with the hint vocabulary (sma_20, sma_50, bb_upper_24_2, zscore_48, close). However, structural variant risk is high: the factor set {bb_upper_24_2, close, return_24h, rsi_14, sma_24, zscore_48} is nearly identical to prior entry #29 {bb_upper_24_2, close, return_24h, rsi_14, zscore_48}, differing only by the addition of sma_24. This represents a minor augmentation rather than a fundamentally distinct structural hypothesis, suggesting threshold or operator adjustments to an existing configuration.",
   "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0097_response.json",
-  "d7b_cost_actual_usd": 0.016125,
+  "d7b_cost_actual_usd": 0.01695,
   "d7b_input_tokens": 3780,
-  "d7b_output_tokens": 319,
+  "d7b_output_tokens": 374,
   "d7b_retry_count": 0,
   "d7b_scan_results": {
     "forbidden_language_scan": {
@@ -52,8 +52,8 @@
     }
   },
   "critic_timing_ms": {
-    "d7a_ms": 0.212,
-    "d7b_ms": 9104.771
+    "d7a_ms": 0.166,
+    "d7b_ms": 8585.608
   },
   "critic_error_signature": null,
   "critic_error_full_path": null

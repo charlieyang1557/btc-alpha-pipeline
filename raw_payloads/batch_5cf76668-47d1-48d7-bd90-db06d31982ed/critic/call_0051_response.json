@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy constructs a coherent momentum capture framework: MACD histogram crossing above zero signals acceleration, price above EMA-26 confirms trend context, RSI below 70 ensures room for upside, and positive 24h return adds directional confirmation. Exit logic mirrors entry with histogram reversal and overbought RSI (72), plus a profit target at 4%. The multi-condition entry creates a layered filter that is internally consistent. Theme alignment is strong, as MACD histogram is a core momentum acceleration indicator explicitly listed in the theme vocabulary, complemented by RSI and return_24h. However, the factor set {close, ema_26, macd_hist, return_24h, rsi_14} closely resembles prior #24 {close, ema_26, macd_hist, return_168h, return_24h, rsi_14}, differing only by the absence of return_168h. Both use the same core momentum indicators (MACD histogram, RSI, short-term return) with close and ema_26 for price context. The distinction is narrow, primarily involving one fewer factor rather than a fundamentally different structural approach to capturing momentum."
+}
+```

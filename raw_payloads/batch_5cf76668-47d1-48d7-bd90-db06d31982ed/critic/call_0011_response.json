@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9500,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy constructs a coherent momentum capture narrative: MACD histogram crossing above zero signals trend acceleration, validated by positive 24h returns (1.5%), elevated RSI (>55), and volume confirmation. The exit logic is well-structured with two paths—either momentum exhaustion (MACD turns negative OR RSI overbought >70) or rapid reversal (1h drop >1.5% with RSI <45). This creates a defensible asymmetric trade around momentum inflection points. Theme alignment is excellent: all five factors (macd_hist, return_24h, return_1h, rsi_14, volume_zscore_24h) directly measure momentum properties as specified in the hint vocabulary. However, structural variant risk is elevated because the factor set {macd_hist, return_24h, rsi_14, volume_zscore_24h} substantially overlaps with prior #4: {close, ema_12, macd_hist, return_24h, volume_zscore_24h}, differing primarily by substituting close+ema_12 with rsi_14. While the cross logic and thresholds create operational differences, the core momentum factor combination is largely redundant with existing exploration."
+}
+```

@@ -1,0 +1,61 @@
+{
+  "critic_version": "d7_v1",
+  "critic_status": "ok",
+  "d7b_mode": "live",
+  "d7a_rule_scores": {
+    "theme_coherence": 0.1667,
+    "structural_novelty": 0.5,
+    "default_momentum_fallback": 0.35,
+    "complexity_appropriateness": 0.4
+  },
+  "d7a_supporting_measures": {
+    "factor_set_prior_occurrences": 1,
+    "n_factors": 6,
+    "n_conditions": 8,
+    "description_length": 229,
+    "max_hold_bars": 144,
+    "n_entry_groups": 1,
+    "n_exit_groups": 2
+  },
+  "d7a_rule_flags": [
+    "thin_theme_momentum_bleed",
+    "n_conditions_heavy"
+  ],
+  "d7b_llm_scores": {
+    "semantic_plausibility": 0.35,
+    "semantic_theme_alignment": 0.75,
+    "structural_variant_risk": 0.95
+  },
+  "d7b_reasoning": "The strategy employs volume_zscore_24h (negative) alongside positive return_24h to identify weak rallies, which aligns well with the volume_divergence theme. However, the internal logic exhibits significant contradictions. Entry requires positive 24h return (>1.5%) yet RSI below 45 and price under SMA_50, describing a weak rally in a downtrend. The description claims to 'enter long' on oversold conditions, yet RSI<45 is not oversold territory. Exit logic combines momentum targets (RSI>62, return>2.5%) with a volume normalization condition that seems disconnected from the entry thesis. The factor set {close, return_1h, return_24h, rsi_14, sma_50, volume_zscore_24h} exactly matches prior hypothesis #9 in the batch list, indicating this is a pure threshold variant rather than a structurally novel approach. The only differentiation is in the specific numerical thresholds applied to an identical factor combination, representing high structural variant risk.",
+  "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0094_response.json",
+  "d7b_cost_actual_usd": 0.015444,
+  "d7b_input_tokens": 3683,
+  "d7b_output_tokens": 293,
+  "d7b_retry_count": 0,
+  "d7b_scan_results": {
+    "forbidden_language_scan": {
+      "status": "pass",
+      "hits": [],
+      "terms_checked_count": 21
+    },
+    "refusal_scan": {
+      "status": "pass",
+      "hits": [],
+      "patterns_checked": [
+        "\\bi cannot\\b",
+        "\\bi can't\\b",
+        "\\bunable to\\b",
+        "\\brefuse to\\b",
+        "\\bdecline to\\b",
+        "\\bcannot evaluate\\b",
+        "\\bcan not evaluate\\b"
+      ]
+    }
+  },
+  "critic_timing_ms": {
+    "d7a_ms": 0.164,
+    "d7b_ms": 9421.145
+  },
+  "critic_error_signature": null,
+  "critic_error_full_path": null
+}

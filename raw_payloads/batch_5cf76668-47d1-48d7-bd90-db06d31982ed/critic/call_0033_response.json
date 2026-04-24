@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.1500,
+  "reasoning": "The strategy exhibits strong internal coherence: entry requires simultaneous realized volatility spike (>3.5%), elevated volume (z-score >1.5), positive momentum (return >1.5%), and neutral-positive RSI (>52), capturing the regime shift from compression to expansion. Exit logic provides two pathways: volatility collapse with RSI decline, or sharp drawdown with volume exhaustion. The 240-bar max hold prevents indefinite exposure. Theme alignment is excellent, directly leveraging realized_vol_24h from the hint vocabulary and interpreting volatility expansion as a directional signal rather than mean-reversion, which is economically defensible during breakouts. Structural analysis reveals this factor set {realized_vol_24h, volume_zscore_24h, return_24h, rsi_14} is notably distinct from prior sets. While element #{26} uses an identical subset, the current strategy adds realized_vol_24h as the primary filter, fundamentally changing the structural thesis from simple momentum-RSI to volatility-regime-driven momentum. The multi-factor volatility context (volume spike plus realized vol threshold) distinguishes it from prior attempts that either omit volatility or embed it within broader technical indicator combinations."
+}
+```

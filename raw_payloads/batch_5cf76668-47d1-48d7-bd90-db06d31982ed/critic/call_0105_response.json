@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7000,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy logic is internally coherent: it enters long on Mondays when RSI indicates oversold conditions (below 40) while price remains above the 50-bar SMA, requiring a recent negative return, then exits when RSI recovers above 58 or at Friday close. This constructs a defensible mean-reversion narrative. The theme alignment is strong—the strategy explicitly uses day_of_week and hour_of_day as entry/exit criteria, anchoring its logic to calendar effects and institutional flow patterns around weekends. However, structural variant risk is high. The factor set {close, day_of_week, hour_of_day, return_24h, rsi_14, sma_50} overlaps substantially with multiple priors: entry #23 used {close, day_of_week, hour_of_day, return_24h, rsi_14, sma_20}, entry #41 used {close, day_of_week, hour_of_day, realized_vol_24h, return_24h, rsi_14, sma_20}, and entry #69 used {close, day_of_week, return_24h, rsi_14, sma_50}. The difference here is primarily the SMA window (50 vs 20) and inclusion of hour_of_day in exit—a threshold/parameter tweak rather than a novel structural bet on different market dynamics."
+}
+```

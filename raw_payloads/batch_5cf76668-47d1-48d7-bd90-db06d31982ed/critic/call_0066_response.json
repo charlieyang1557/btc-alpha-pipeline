@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.2500,
+  "reasoning": "The strategy exhibits coherent momentum logic: MACD histogram zero-line crossover signals trend acceleration, confirmed by price positioning above both EMAs and positive 24h return. The exit uses histogram reversal or profit-taking at 8% over 168h, with a max hold constraint that prevents indefinite exposure. This multi-layered confirmation structure avoids whipsaw and aligns with momentum continuation theory. Theme alignment is strong, using macd_hist (primary hint factor), return_24h, and return_168h from the momentum vocabulary. The factor set {close, ema_12, ema_26, macd_hist, return_24h, return_168h} differs from prior entries: factor set #3 included realized_vol_24h and sma_50 instead of return_168h; factor set #4 included volume_zscore_24h instead of ema_26 and return_168h; factor set #24 included rsi_14 instead of ema_12. This combination of MACD histogram with dual EMA filters and return_168h in exit logic has not appeared, making it structurally distinct rather than a threshold adjustment of an existing configuration."
+}
+```

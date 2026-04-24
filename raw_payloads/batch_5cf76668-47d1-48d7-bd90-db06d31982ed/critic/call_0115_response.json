@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.6500,
+  "semantic_theme_alignment": 0.7500,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy combines Monday timing with oversold RSI and declining realized volatility to capture mean reversion. Entry logic is coherent: oversold condition (rsi_14 < 35), stabilizing volatility (realized_vol_24h < 0.018), trend filter (close > sma_50), all gated by day_of_week == 0. Exit conditions offer two paths: profit-taking when RSI normalizes above 62 with 3% gain, or Friday defensive exit on minor drawdown. The narrative around weekend-driven panic and institutional re-entry is economically plausible though speculative. Theme alignment is strong since day_of_week is central to both entry and exit, directly exploiting calendar effects. However, structural variant risk is high: the factor set {close, day_of_week, realized_vol_24h, return_1h, return_24h, rsi_14, sma_50} appears extremely similar to prior #85 {close, day_of_week, realized_vol_24h, return_1h, return_24h, rsi_14, sma_20} which differs only in using sma_20 versus sma_50. The thresholds and operators may vary, but the structural composition—calendar effect, RSI, volatility, returns, and SMA trend filter—is nearly identical, suggesting this is largely a parameter tweak rather than a genuinely novel structural hypothesis."
+}
+```

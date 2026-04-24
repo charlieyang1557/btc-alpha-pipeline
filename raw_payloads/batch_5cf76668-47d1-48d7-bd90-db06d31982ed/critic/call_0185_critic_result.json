@@ -1,0 +1,61 @@
+{
+  "critic_version": "d7_v1",
+  "critic_status": "ok",
+  "d7b_mode": "live",
+  "d7a_rule_scores": {
+    "theme_coherence": 0.2,
+    "structural_novelty": 0.5,
+    "default_momentum_fallback": 0.5,
+    "complexity_appropriateness": 0.55
+  },
+  "d7a_supporting_measures": {
+    "factor_set_prior_occurrences": 1,
+    "n_factors": 5,
+    "n_conditions": 7,
+    "description_length": 223,
+    "max_hold_bars": 120,
+    "n_entry_groups": 1,
+    "n_exit_groups": 2
+  },
+  "d7a_rule_flags": [
+    "thin_theme_momentum_bleed",
+    "n_conditions_heavy"
+  ],
+  "d7b_llm_scores": {
+    "semantic_plausibility": 0.65,
+    "semantic_theme_alignment": 0.75,
+    "structural_variant_risk": 0.85
+  },
+  "d7b_reasoning": "The strategy employs a coherent mean-reversion logic: entering long on Monday when RSI<35, price below SMA(20), and negative 24h return, then exiting when RSI>60 and price crosses above SMA(20), or on Friday. The dual exit paths (momentum recovery vs. end-of-week timing) provide structural consistency. However, the narrative about 'institutional repositioning' and 'market maker liquidity provision' is somewhat speculative for what is essentially a calendar-anchored oversold bounce play. Theme alignment is moderate-to-good: day_of_week is central to both entry and exit logic, fitting calendar_effect research, though the bulk of the signal derives from technical mean-reversion indicators. Structural variant risk is high: the factor set {close, day_of_week, return_24h, rsi_14, sma_20} appears verbatim as prior #32, and this strategy differs only in threshold values (RSI 35 vs other cuts, Friday exit vs other days). This is a clear threshold/operator tweak rather than a structurally novel combination.",
+  "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0185_response.json",
+  "d7b_cost_actual_usd": 0.02097,
+  "d7b_input_tokens": 5450,
+  "d7b_output_tokens": 308,
+  "d7b_retry_count": 0,
+  "d7b_scan_results": {
+    "forbidden_language_scan": {
+      "status": "pass",
+      "hits": [],
+      "terms_checked_count": 21
+    },
+    "refusal_scan": {
+      "status": "pass",
+      "hits": [],
+      "patterns_checked": [
+        "\\bi cannot\\b",
+        "\\bi can't\\b",
+        "\\bunable to\\b",
+        "\\brefuse to\\b",
+        "\\bdecline to\\b",
+        "\\bcannot evaluate\\b",
+        "\\bcan not evaluate\\b"
+      ]
+    }
+  },
+  "critic_timing_ms": {
+    "d7a_ms": 0.283,
+    "d7b_ms": 10009.791
+  },
+  "critic_error_signature": null,
+  "critic_error_full_path": null
+}

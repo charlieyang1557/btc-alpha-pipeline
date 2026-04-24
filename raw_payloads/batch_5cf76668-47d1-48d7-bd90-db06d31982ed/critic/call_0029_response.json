@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy combines volume z-score anomaly detection with momentum and RSI filters to identify breakout continuation. Entry logic is internally coherent: elevated volume (>1.5 std) signals unusual participation, positive 24h returns confirm directional momentum, and RSI bounds (45-65) ensure neither oversold nor overbought conditions. Exit conditions are sensible, triggering on volume collapse with negative returns OR overbought RSI with strong gains. The theme alignment is strong—volume_zscore_24h is the core theme hint factor and plays a central role in both entry and exit. However, structural variant risk is elevated. The factor set {volume_zscore_24h, return_24h, rsi_14} appears highly similar to prior entry #11 {macd_hist, return_1h, return_24h, rsi_14, volume_zscore_24h}. While this strategy omits macd_hist and return_1h, the core volume-return-RSI triplet is shared, differing primarily in threshold choices (1.5 vs potentially other cutoffs) and the specific momentum horizon emphasis. This represents a moderate structural overlap rather than a wholly novel factor combination."
+}
+```

@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7000,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy constructs a coherent logic: enter on early weekdays (Mon-Wed) when momentum indicators align (EMA cross, positive return, RSI>48), exit on late-week overbought (Friday+, RSI>70) or when trend reverses (EMA cross-down with negative hourly return). The 168-bar max hold reinforces the weekly calendar cycle. Theme alignment is strong—day_of_week gates both entry and exit, directly targeting institutional weekday flow patterns mentioned in the description. However, structural_variant_risk is elevated: the factor set {close, day_of_week, ema_26, return_1h, return_24h, rsi_14} overlaps heavily with prior #10 {close, day_of_week, return_1h, return_24h, rsi_14, sma_20} and #15 {close, day_of_week, return_1h, rsi_14, sma_20, sma_50}. The substitution of ema_26 for sma_20/sma_50 and the addition of crosses_above/crosses_below operators represent threshold and moving-average variant tweaks rather than a genuinely distinct structural hypothesis. The core combination of calendar gating with return and RSI momentum filters has been explored multiple times in the prior batch."
+}
+```

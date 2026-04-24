@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy constructs a coherent momentum capture logic: MACD histogram crossing above zero signals acceleration, price above SMA-50 confirms medium-term uptrend, and RSI bounds (48-70) filter out weak or overheated conditions. Exit logic is structured with two alternatives—MACD reversal paired with overbought RSI, or price breakdown below SMA-20 with sharp negative return—both defensible for momentum exhaustion. The factor selection (macd_hist, close, sma_50, sma_20, rsi_14, return_1h) aligns strongly with momentum theme vocabulary, using trend-following and oscillator signals from the hint list. However, structural variant risk is elevated: the factor set {close, macd_hist, rsi_14, sma_20} appears in prior #6, and prior #14 uses {close, return_1h, return_24h, rsi_14, sma_20, sma_50, volume_zscore_24h}. This hypothesis shares macd_hist, close, rsi_14, sma_20, sma_50, and return_1h with existing combinations, differing mainly in omission of volume_zscore_24h and return_24h. The structural composition overlaps substantially, suggesting threshold or operator variation rather than a fundamentally novel factor combination."
+}
+```

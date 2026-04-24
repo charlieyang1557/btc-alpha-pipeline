@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.6500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.9500,
+  "reasoning": "The strategy combines Bollinger band proximity, z-score deviation, RSI oversold condition, and low volatility to identify mean reversion opportunities. The logic is internally coherent: entering when price shows extreme deviation (zscore < -1.5) with low volatility (0.015 threshold) and oversold momentum (RSI < 35) captures the classic mean reversion setup. Exit logic is sensible, closing when price normalizes (zscore > 0, RSI > 55) or hits a 2% profit target. The theme alignment is strong, utilizing core mean reversion factors including bb_upper_24_2, zscore_48, and close from the hint vocabulary. However, the entry condition checks close < bb_upper_24_2, which is almost always true and appears to be a placeholder rather than meaningful signal. The structural variant risk is very high: the factor set {bb_upper_24_2, close, realized_vol_24h, return_24h, rsi_14, zscore_48} matches prior hypothesis #60 exactly. This hypothesis differs only in threshold values (RSI 35 vs other cutoffs, volatility 0.015, zscore -1.5) and operator choices, making it a shallow parameter variant rather than a structurally novel approach."
+}
+```

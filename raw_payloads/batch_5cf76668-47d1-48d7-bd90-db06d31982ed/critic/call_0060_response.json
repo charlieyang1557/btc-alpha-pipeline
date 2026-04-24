@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy constructs a coherent narrative: enter long on Mondays when RSI indicates oversold conditions (below 42) but price remains above the 50-bar SMA, suggesting trend integrity. The return_24h filter prevents entries during severe drawdowns. Exit logic includes both profit-taking (RSI recovery above 62 with positive 1h momentum) and end-of-week liquidation (Friday with positive weekly returns). This structure aligns well with calendar effect themes by explicitly targeting Monday entries and Friday exits, leveraging hypothesized weekly cyclical patterns. However, the factor set {close, day_of_week, return_168h, return_1h, return_24h, rsi_14, sma_50} closely resembles multiple prior entries, particularly #10 {close, day_of_week, return_1h, return_24h, rsi_14, sma_20} and #15 {close, day_of_week, return_1h, rsi_14, sma_20, sma_50}. The primary differences are the substitution of sma_50 for sma_20 and the addition of return_168h in the exit condition. These appear as threshold and moving average period variations rather than fundamentally different structural bets, elevating variant risk."
+}
+```

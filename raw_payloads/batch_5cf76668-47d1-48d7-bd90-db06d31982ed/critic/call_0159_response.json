@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy exhibits coherent logic around volume divergence: elevated volume (z-score > 2) during price decline (-1% return_24h) with resilient RSI (> 50) aims to capture institutional accumulation. The close > sma_50 filter adds trend confirmation. Exit logic via volume normalization (< 0) and RSI deterioration (< 45), or profit target (2.5% gain), forms a reasonable risk framework. Theme alignment is strong since volume_zscore_24h is the core theme factor and the narrative directly addresses volume-price divergence dynamics. However, structural variant risk is high: the factor set {close, return_24h, rsi_14, sma_50, volume_zscore_24h} appears as the 36th prior entry and {return_24h, rsi_14, volume_zscore_24h} as the 26th. The current strategy uses exactly these five factors with only threshold adjustments (volume z > 2.0 vs likely different thresholds, RSI > 50 vs other cuts, close vs sma_50 comparison). This represents a parameter-tuning variant rather than a structurally novel approach, despite the well-articulated divergence narrative."
+}
+```

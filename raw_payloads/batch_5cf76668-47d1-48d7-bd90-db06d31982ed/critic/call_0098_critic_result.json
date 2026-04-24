@@ -1,0 +1,61 @@
+{
+  "critic_version": "d7_v1",
+  "critic_status": "ok",
+  "d7b_mode": "live",
+  "d7a_rule_scores": {
+    "theme_coherence": 0.1429,
+    "structural_novelty": 0.5,
+    "default_momentum_fallback": 0.5,
+    "complexity_appropriateness": 0.4
+  },
+  "d7a_supporting_measures": {
+    "factor_set_prior_occurrences": 1,
+    "n_factors": 7,
+    "n_conditions": 8,
+    "description_length": 216,
+    "max_hold_bars": 240,
+    "n_entry_groups": 1,
+    "n_exit_groups": 2
+  },
+  "d7a_rule_flags": [
+    "thin_theme_momentum_bleed",
+    "n_conditions_heavy"
+  ],
+  "d7b_llm_scores": {
+    "semantic_plausibility": 0.75,
+    "semantic_theme_alignment": 0.85,
+    "structural_variant_risk": 0.85
+  },
+  "d7b_reasoning": "The strategy exhibits coherent internal logic: entering on EMA crossover during low volatility (<2.5%) with RSI confirmation (>52) and price above SMA_50 creates a multi-layered filter for trend inception. Exit conditions mirror entry logic (EMA cross reversal with RSI<45) and add a volatility spike regime-change escape (vol>4.5% with negative 1h return). This structure supports the narrative of capturing momentum in stable regimes while avoiding whipsaw. Theme alignment is strong: realized_vol_24h drives both entry regime filter and exit regime-change detection, directly implementing volatility-regime conditioning as specified. The factor set {close, ema_12, ema_26, realized_vol_24h, return_1h, rsi_14, sma_50} matches exactly with prior #18, indicating this is a threshold/operator variant rather than a structurally novel bet. The crossover operators and specific thresholds (0.025 vs potential alternatives, RSI 52 vs 50) constitute parametric tweaks on an already-explored factor combination, elevating structural variant risk substantially.",
+  "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0098_response.json",
+  "d7b_cost_actual_usd": 0.016035,
+  "d7b_input_tokens": 3780,
+  "d7b_output_tokens": 313,
+  "d7b_retry_count": 0,
+  "d7b_scan_results": {
+    "forbidden_language_scan": {
+      "status": "pass",
+      "hits": [],
+      "terms_checked_count": 21
+    },
+    "refusal_scan": {
+      "status": "pass",
+      "hits": [],
+      "patterns_checked": [
+        "\\bi cannot\\b",
+        "\\bi can't\\b",
+        "\\bunable to\\b",
+        "\\brefuse to\\b",
+        "\\bdecline to\\b",
+        "\\bcannot evaluate\\b",
+        "\\bcan not evaluate\\b"
+      ]
+    }
+  },
+  "critic_timing_ms": {
+    "d7a_ms": 0.175,
+    "d7b_ms": 9930.185
+  },
+  "critic_error_signature": null,
+  "critic_error_full_path": null
+}

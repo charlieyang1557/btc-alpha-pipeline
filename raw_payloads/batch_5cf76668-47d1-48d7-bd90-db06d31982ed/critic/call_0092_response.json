@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy implements a coherent mean reversion logic: entering long when price shows oversold conditions (zscore_48 < -1.5, rsi_14 < 38) during low volatility (realized_vol_24h < 0.025), then exiting when either mean reversion completes (zscore normalizes, RSI recovers) or volatility expands with positive returns. The narrative about volatility compression followed by expansion is economically sound. Theme alignment is strong, utilizing core hint factors bb_upper_24_2, close, and zscore_48 alongside complementary mean reversion signals. However, structural variant risk is high: the factor set {bb_upper_24_2, close, realized_vol_24h, rsi_14, zscore_48} is extremely similar to prior entry #12 and #60, differing primarily in the absence of return_1h or return_24h from entry conditions. The core structural bet—combining Bollinger bands, z-score, RSI, and realized volatility—has been explored multiple times in this batch with only threshold variations."
+}
+```

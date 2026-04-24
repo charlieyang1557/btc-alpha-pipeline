@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.7000,
+  "reasoning": "The strategy logic is coherent: entering on realized volatility expansion above 3.5% combined with a price breakout above SMA-20, volume confirmation via z-score > 1.2, and RSI momentum filter > 52 creates a multi-dimensional signal for volatility regime shifts. Exit logic using volatility compression below 2.2% with overbought RSI, or price breakdown with negative return, provides symmetric regime detection. The theme alignment is strong as realized_vol_24h is a core theme hint factor and the narrative of volatility expansion preceding directional moves fits the volatility_regime concept well. However, structural variant risk is elevated because the factor set {close, realized_vol_24h, rsi_14, sma_20, volume_zscore_24h} closely resembles multiple priors: factor set 13 uses identical factors with sma_50 substitution, factor set 19 uses the same set minus close, factor set 35 uses the identical factors but includes atr_14, and factor set 49 matches exactly. The primary distinction here is the specific threshold on realized_vol_24h (0.035 vs implicit comparisons) and the crosses_above operator, but these represent operator/threshold variants rather than structural novelty."
+}
+```

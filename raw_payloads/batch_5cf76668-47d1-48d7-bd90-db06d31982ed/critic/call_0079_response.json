@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.3500,
+  "semantic_theme_alignment": 0.7000,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy enters on strong 24h return (>2%), declining volume z-score (<-0.5), bullish EMA cross (12>26), and moderate RSI (>55). The logic appears internally contradictory: the description claims low-volume breakouts precede sustained trends as 'late entrants chase price,' but if volume is declining (z-score <-0.5), there are fewer participants, not more chasers. Exit triggers on high volume (z>1.5) plus overbought RSI (>72), or a 10% weekly gain, which is coherent for profit-taking. The theme alignment is moderate-to-good since volume_zscore_24h is central to both entry and exit, directly invoking volume divergence. However, the economic story conflates breakout mechanics with contrarian volume signals in a way that weakens plausibility. Structurally, the factor set {ema_12, ema_26, return_24h, return_168h, rsi_14, volume_zscore_24h} overlaps heavily with prior #4 {close, ema_12, ema_26, macd_hist, return_24h, volume_zscore_24h} and shares the same core divergence theme with many others using return_24h, rsi_14, and volume_zscore_24h. The addition of return_168h and removal of macd_hist/close represent minor substitutions rather than a fundamentally different structural hypothesis."
+}
+```

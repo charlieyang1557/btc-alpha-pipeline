@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy constructs a coherent Monday mean-reversion play: entering when day_of_week equals 0 (Monday), return_24h shows weekend weakness below -1.8%, RSI_14 signals oversold conditions below 42, and price sits beneath SMA_50. Exit logic targets reversal via return_24h exceeding 2.5% with RSI_14 recovery above 55, or forces exit on Wednesday (day_of_week equals 2), with max_hold_bars at 72 hours providing a reasonable time limit. This forms a defensible trading narrative around institutional re-entry reversing weekend retail sentiment. Theme alignment is strong: day_of_week is a core calendar_effect hint factor and the strategy explicitly exploits day-of-week patterns through Monday entry timing. However, the factor set {close, day_of_week, return_24h, rsi_14, sma_50} closely resembles prior #32 {close, day_of_week, return_24h, rsi_14, sma_20}, differing only in the SMA window (50 vs 20). This constitutes a parameter variant rather than a structurally novel approach, raising variant risk substantially despite the clear economic rationale."
+}
+```

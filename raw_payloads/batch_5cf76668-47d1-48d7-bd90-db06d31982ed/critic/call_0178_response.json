@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7000,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.2500,
+  "reasoning": "The strategy logic is coherent: entering on low realized volatility with price crossing above SMA(50) and declining ATR creates a consistent volatility contraction setup, while the RSI filter adds momentum screening. Exit on high realized volatility or profit target aligns with capturing post-compression expansion. The theme alignment is strong, using realized_vol_24h and atr_14 (both theme hint factors) as core volatility regime signals. The description explicitly targets volatility regime transitions. However, the hard-coded thresholds (realized_vol < 0.015, atr < 1200.0) appear asset-specific and may not generalize. Structurally, this factor set {atr_14, close, realized_vol_24h, return_168h, rsi_14, sma_20, sma_50} is distinct from most priors. While similar combinations exist (entries 13, 35, 40, 44, 49), this precise set with return_168h in exit and both SMA windows together is unique. The structural novelty is moderate: it combines volatility regime factors with dual moving averages in a configuration not seen before, though individual components overlap heavily with the batch."
+}
+```

@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy constructs a coherent narrative: enter when realized volatility crosses above a threshold while price momentum is confirmed through multiple filters (zscore, EMA crossover, positive returns). Exit logic includes both volatility normalization and profit-taking conditions. The multi-condition entry reduces false signals, and the 240-bar max hold provides risk management. Theme alignment is strong—realized_vol_24h is a hint factor and the strategy explicitly targets volatility regime transitions. The zscore_48 and EMA conditions reinforce the regime-shift concept with trend confirmation. However, structural variant risk is elevated. The factor set {ema_12, ema_26, realized_vol_24h, return_24h, return_168h, rsi_14, zscore_48} shares substantial overlap with prior #3 {close, ema_12, ema_26, macd_hist, realized_vol_24h, return_24h, sma_50} and #18 {close, ema_12, ema_26, realized_vol_24h, return_1h, rsi_14, sma_50}. The primary differentiation is the use of crosses_above operator on realized_vol_24h and zscore_48 as a filter rather than a moving average difference, but the core factor combination (dual EMA, realized_vol, returns, momentum indicator) appears in multiple prior entries. The threshold values differ, but the structural bet remains similar."
+}
+```

@@ -1,0 +1,61 @@
+{
+  "critic_version": "d7_v1",
+  "critic_status": "ok",
+  "d7b_mode": "live",
+  "d7a_rule_scores": {
+    "theme_coherence": 0.2,
+    "structural_novelty": 1.0,
+    "default_momentum_fallback": 0.35,
+    "complexity_appropriateness": 0.4
+  },
+  "d7a_supporting_measures": {
+    "factor_set_prior_occurrences": 0,
+    "n_factors": 5,
+    "n_conditions": 8,
+    "description_length": 191,
+    "max_hold_bars": 240,
+    "n_entry_groups": 1,
+    "n_exit_groups": 2
+  },
+  "d7a_rule_flags": [
+    "thin_theme_momentum_bleed",
+    "n_conditions_heavy"
+  ],
+  "d7b_llm_scores": {
+    "semantic_plausibility": 0.75,
+    "semantic_theme_alignment": 0.85,
+    "structural_variant_risk": 0.75
+  },
+  "d7b_reasoning": "The strategy embodies a coherent contrarian logic: entering when price declines (-1.5% over 24h) coincide with abnormally low volume (z-score < -1), RSI below 45, and negative price z-score, suggesting weak conviction selling. Exit conditions capture either successful mean reversion (positive return with RSI recovery) or deteriorating conditions (volume spike with fresh losses). The narrative of volume divergence signaling exhaustion is economically sensible for fade strategies. Theme alignment is strong because volume_zscore_24h is central to both entry and exit logic, directly addressing volume divergence. However, structural variant risk is elevated: the factor set {return_1h, return_24h, rsi_14, volume_zscore_24h, zscore_48} closely resembles prior #9 {close, return_1h, return_24h, rsi_14, sma_50, volume_zscore_24h} and #11 {macd_hist, return_1h, return_24h, rsi_14, volume_zscore_24h}. The substitution of zscore_48 for close/sma_50/macd_hist represents threshold recalibration rather than a fundamentally different structural bet on market dynamics.",
+  "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0034_response.json",
+  "d7b_cost_actual_usd": 0.012144,
+  "d7b_input_tokens": 2318,
+  "d7b_output_tokens": 346,
+  "d7b_retry_count": 0,
+  "d7b_scan_results": {
+    "forbidden_language_scan": {
+      "status": "pass",
+      "hits": [],
+      "terms_checked_count": 21
+    },
+    "refusal_scan": {
+      "status": "pass",
+      "hits": [],
+      "patterns_checked": [
+        "\\bi cannot\\b",
+        "\\bi can't\\b",
+        "\\bunable to\\b",
+        "\\brefuse to\\b",
+        "\\bdecline to\\b",
+        "\\bcannot evaluate\\b",
+        "\\bcan not evaluate\\b"
+      ]
+    }
+  },
+  "critic_timing_ms": {
+    "d7a_ms": 0.102,
+    "d7b_ms": 8153.268
+  },
+  "critic_error_signature": null,
+  "critic_error_full_path": null
+}

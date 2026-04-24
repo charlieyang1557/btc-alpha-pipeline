@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.1500,
+  "reasoning": "The strategy constructs a coherent mean-reversion narrative: enter long on weekends (day_of_week >= 5) when price is oversold (zscore_48 < -1 and rsi_14 < 40), then exit either when normalizing (zscore_48 > 0) or weekdays resume (day_of_week < 5). The dual-exit logic is sensible, though the 72-bar max hold provides backstop coverage. Theme alignment is strong because the core hypothesis depends explicitly on calendar timing (weekend effect) combined with technical oversold signals. The weekend period naturally has lower liquidity and different participant mix, making mean-reversion behavior plausible. Structurally, this introduces {day_of_week, zscore_48, rsi_14}, which differs from all prior sets. While rsi_14 appeared in the first prior alongside return_24h, and zscore_48 appeared in the second prior with bollinger and moving average factors, no prior combined day_of_week with these mean-reversion technicals. The calendar factor fundamentally changes the structural bet from pure price-momentum to calendar-conditional reversion. Minor concern: the exit on day_of_week < 5 might trigger Monday morning regardless of position profitability, potentially cutting winners early."
+}
+```

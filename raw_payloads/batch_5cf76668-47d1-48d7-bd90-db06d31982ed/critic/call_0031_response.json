@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy exhibits coherent momentum logic: entering on MACD histogram zero-crossover while RSI resides in a neutral-to-bullish zone (50-70) and recent returns are positive creates a multi-layered confirmation of accelerating trend strength. The exit logic balances mean-reversion risk (RSI drop below 45 or MACD histogram reversal) with profit-taking on extreme extension (RSI above 75 with 3% gain). The 336-bar hold limit provides downside protection. Theme alignment is strong, employing four of five hint factors (macd_hist, return_24h, rsi_14) in a way that directly captures momentum acceleration. However, structural variant risk is elevated: the factor set {macd_hist, return_24h, rsi_14} is a subset of prior entry #20 {macd_hist, realized_vol_24h, return_1h, return_24h, rsi_14} and conceptually overlaps with entries #11, #16, #19, and #22, all pairing MACD histogram with RSI and return signals. The operator choice (crosses_above versus simple thresholds) provides some differentiation, but the core structural bet on MACD-RSI confirmation remains similar."
+}
+```

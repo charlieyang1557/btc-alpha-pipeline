@@ -22,10 +22,10 @@
   ],
   "d7b_llm_scores": {
     "semantic_plausibility": 0.3,
-    "semantic_theme_alignment": 0.6,
-    "structural_variant_risk": 0.95
+    "semantic_theme_alignment": 0.4,
+    "structural_variant_risk": 0.9
   },
-  "d7b_reasoning": "The strategy contains a significant logical contradiction: the description claims entering on crosses below the lower Bollinger band, but the entry condition checks for crosses_below bb_upper_24_2 (the upper band). This fundamental mismatch undermines the trading narrative—crossing below the upper band is a different price regime than crossing below the lower band, which would signal genuine oversold conditions. The exit logic (mean reversion to SMA and RSI recovery) is internally consistent and aligns with typical mean-reversion exit patterns. Theme alignment is moderate: using Bollinger bands, RSI, and moving averages fits mean-reversion intuition, though the implementation error reduces coherence. Structurally, the factor set {bb_upper_24_2, close, realized_vol_24h, return_24h, rsi_14, sma_24} overlaps almost completely with prior #17 and #21, which both use {bb_upper_24_2, close, realized_vol_24h, return_24h, rsi_14, sma_24, zscore_48}. The only difference is the absence of zscore_48, making this a clear subset variant with threshold adjustments rather than a novel structural approach.",
+  "d7b_reasoning": "The strategy exhibits a logical inconsistency in its entry condition: it requires close to cross below bb_upper_24_2 (the upper band), not the lower band as the description claims. Crossing below the upper band signals weakening upward momentum but not oversold conditions. The combination of realized_vol_24h < 0.025 and rsi_14 < 40 adds filters but the primary Bollinger band signal contradicts the stated mean reversion logic. Exit conditions combine mean reversion targets (crossing above sma_24, rsi_14 > 55) with a profit target (return_24h > 0.04), which is internally coherent. Theme alignment is moderate: the strategy uses Bollinger bands and RSI which are standard mean reversion tools, but the entry trigger targets the wrong band extreme. Structurally, the factor set {bb_upper_24_2, close, realized_vol_24h, return_24h, rsi_14, sma_24} is nearly identical to prior #17 which uses the exact same six factors, differing only in threshold values and operator choices (crosses_below vs other comparisons). This represents a shallow threshold variant rather than a novel structural approach.",
   "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0077_response.json",
   "d7b_cost_actual_usd": 0.014783999999999999,
   "d7b_input_tokens": 3273,
@@ -53,7 +53,7 @@
   },
   "critic_timing_ms": {
     "d7a_ms": 0.136,
-    "d7b_ms": 9206.761
+    "d7b_ms": 10124.74
   },
   "critic_error_signature": null,
   "critic_error_full_path": null

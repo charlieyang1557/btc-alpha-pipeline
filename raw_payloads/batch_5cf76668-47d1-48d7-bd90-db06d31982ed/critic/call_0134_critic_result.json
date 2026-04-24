@@ -1,0 +1,61 @@
+{
+  "critic_version": "d7_v1",
+  "critic_status": "ok",
+  "d7b_mode": "live",
+  "d7a_rule_scores": {
+    "theme_coherence": 0.3333,
+    "structural_novelty": 0.5,
+    "default_momentum_fallback": 0.5,
+    "complexity_appropriateness": 0.7
+  },
+  "d7a_supporting_measures": {
+    "factor_set_prior_occurrences": 1,
+    "n_factors": 3,
+    "n_conditions": 6,
+    "description_length": 241,
+    "max_hold_bars": 168,
+    "n_entry_groups": 1,
+    "n_exit_groups": 2
+  },
+  "d7a_rule_flags": [
+    "thin_theme_momentum_bleed",
+    "n_conditions_heavy"
+  ],
+  "d7b_llm_scores": {
+    "semantic_plausibility": 0.45,
+    "semantic_theme_alignment": 0.7,
+    "structural_variant_risk": 0.95
+  },
+  "d7b_reasoning": "The strategy combines return_24h, volume_zscore_24h, and rsi_14 to detect price-volume divergence. Entry logic seeks positive returns with weak volume (negative z-score) and low RSI, proposing a contrarian setup where price rises without volume support. However, the economic narrative is internally inconsistent: the description claims this signals \"retail exhaustion before institutional accumulation drives continuation,\" yet the entry itself is long when price is already rising. This contradicts typical fade logic where one would expect mean reversion rather than continuation. Exit conditions mixing volume normalization, RSI breakout, and profit targets create ambiguity about whether this is momentum continuation or mean reversion. The theme alignment is moderate because volume_zscore_24h is central and divergence is explicitly invoked, matching the volume_divergence theme vocabulary. Structural variant risk is very high: the exact factor set {return_24h, rsi_14, volume_zscore_24h} appears as entry #26 in the prior list, and nearly identical sets appear in entries #33, #36, #55, #70, #93. Only threshold values differ here (e.g., volume z-score -0.5 vs other cutoffs), making this a clear parameter tweak rather than a structurally novel approach.",
+  "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0134_response.json",
+  "d7b_cost_actual_usd": 0.018471,
+  "d7b_input_tokens": 4427,
+  "d7b_output_tokens": 346,
+  "d7b_retry_count": 0,
+  "d7b_scan_results": {
+    "forbidden_language_scan": {
+      "status": "pass",
+      "hits": [],
+      "terms_checked_count": 21
+    },
+    "refusal_scan": {
+      "status": "pass",
+      "hits": [],
+      "patterns_checked": [
+        "\\bi cannot\\b",
+        "\\bi can't\\b",
+        "\\bunable to\\b",
+        "\\brefuse to\\b",
+        "\\bdecline to\\b",
+        "\\bcannot evaluate\\b",
+        "\\bcan not evaluate\\b"
+      ]
+    }
+  },
+  "critic_timing_ms": {
+    "d7a_ms": 0.153,
+    "d7b_ms": 11549.282
+  },
+  "critic_error_signature": null,
+  "critic_error_full_path": null
+}

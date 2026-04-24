@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy employs a coherent mean-reversion logic: enter long on Mondays when multiple oversold indicators align (RSI below 40, price below SMA, z-score below -1), exit when momentum recovers (RSI above 60 with price crossing above SMA) or a profit target is hit. The multi-condition entry creates a defensive filter, and the dual exit paths (mean-reversion completion vs. profit-taking) are sensible. Theme alignment is strong given the explicit day_of_week constraint on Monday (value 0.0) combined with mean-reversion factors, directly targeting calendar-driven behavior. However, structural variant risk is elevated: the factor set {close, day_of_week, rsi_14, sma_20, zscore_48} is nearly identical to prior entry #32 {close, day_of_week, return_24h, rsi_14, sma_20}, differing only by swapping return_24h for zscore_48—both measure price deviation. The conceptual overlap with entries #10, #15, #23, #32, and #41 (all combining day_of_week with rsi_14, close, and sma_20 in various configurations) suggests this is a threshold/factor substitution variant rather than a structurally novel approach."
+}
+```

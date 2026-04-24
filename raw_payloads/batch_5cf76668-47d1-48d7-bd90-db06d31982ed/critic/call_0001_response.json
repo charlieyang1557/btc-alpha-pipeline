@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.4500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.0000,
+  "reasoning": "The strategy combines RSI oversold conditions (below 30) with positive 24-hour momentum for entry, exiting at RSI overbought (above 70). This creates a logical but somewhat conflicting narrative: RSI below 30 indicates strong selling pressure, yet the strategy requires simultaneous positive 24h return, creating a narrow window where price has rebounded from deeper oversold levels. The exit logic is coherent, waiting for overbought conditions. Theme alignment is strong as it uses rsi_14 and return_24h directly from the hint vocabulary and clearly targets momentum reversal dynamics. However, the semantic tension between requiring both oversold RSI and positive momentum simultaneously may limit entry opportunities significantly, as these conditions are somewhat contradictory in typical market behavior. The structural uniqueness is absolute given the prior list is empty, establishing this as the first factor combination in the batch. The max_hold_bars parameter provides reasonable downside protection for momentum trades."
+}
+```

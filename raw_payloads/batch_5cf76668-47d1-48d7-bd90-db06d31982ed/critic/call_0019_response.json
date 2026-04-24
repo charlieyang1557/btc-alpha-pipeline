@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy exhibits coherent logic: it enters on a breakout (close crosses above sma_20) confirmed by elevated volume (volume_zscore_24h > 1.5), positive momentum (macd_hist > 0), and mild strength (rsi_14 > 52). The dual exit paths provide risk management via either momentum deterioration (macd_hist crosses below zero with low volume) or price breakdown (close crosses below sma_20 with negative 1h return). This aligns strongly with the volume_divergence theme by requiring volume surge at entry and using volume collapse as an exit signal, directly leveraging the theme hint factor. However, structural variant risk is elevated: the factor set {close, macd_hist, return_1h, rsi_14, sma_20, volume_zscore_24h} closely resembles prior entries. Specifically, prior set 11 used {macd_hist, return_1h, return_24h, rsi_14, volume_zscore_24h} and prior set 16 used {close, macd_hist, return_1h, rsi_14, sma_20, sma_50}. The current strategy essentially combines these with sma_20 instead of sma_50 and omits return_24h, representing threshold and operator adjustments rather than a fundamentally new structural approach to the theme."
+}
+```

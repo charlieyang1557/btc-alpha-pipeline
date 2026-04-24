@@ -1,0 +1,61 @@
+{
+  "critic_version": "d7_v1",
+  "critic_status": "ok",
+  "d7b_mode": "live",
+  "d7a_rule_scores": {
+    "theme_coherence": 0.1429,
+    "structural_novelty": 1.0,
+    "default_momentum_fallback": 0.5,
+    "complexity_appropriateness": 0.55
+  },
+  "d7a_supporting_measures": {
+    "factor_set_prior_occurrences": 0,
+    "n_factors": 7,
+    "n_conditions": 7,
+    "description_length": 239,
+    "max_hold_bars": 336,
+    "n_entry_groups": 1,
+    "n_exit_groups": 2
+  },
+  "d7a_rule_flags": [
+    "thin_theme_momentum_bleed",
+    "n_conditions_heavy"
+  ],
+  "d7b_llm_scores": {
+    "semantic_plausibility": 0.75,
+    "semantic_theme_alignment": 0.85,
+    "structural_variant_risk": 0.85
+  },
+  "d7b_reasoning": "The strategy employs a coherent mean-reversion logic: entering when price reaches oversold conditions (zscore_48 < -1.8, rsi_14 < 40, return_24h < -0.015) alongside low volume (volume_zscore_24h < -1.0), then exiting on RSI recovery above 60 or price crossing above SMA, or capturing 5% profit. The volume divergence narrative—declining volume during downward price moves suggesting seller exhaustion—is economically sensible for reversal trades. Theme alignment is strong; volume_zscore_24h is the core theme factor and is used logically to identify weakening selling pressure. However, structural variant risk is high. The factor set {close, return_24h, rsi_14, sma_24, volume_zscore_24h, zscore_48} overlaps substantially with prior entry #77 {close, realized_vol_24h, return_24h, rsi_14, sma_24, volume_zscore_24h, zscore_48}, differing only by substituting zscore_48 for realized_vol_24h and using sma_24 in exit via crosses_above. The core combination of return_24h, rsi_14, volume_zscore_24h, and zscore_48 appears in multiple priors, making this largely a threshold/operator variant rather than a structurally novel approach.",
+  "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0184_response.json",
+  "d7b_cost_actual_usd": 0.022005,
+  "d7b_input_tokens": 5415,
+  "d7b_output_tokens": 384,
+  "d7b_retry_count": 0,
+  "d7b_scan_results": {
+    "forbidden_language_scan": {
+      "status": "pass",
+      "hits": [],
+      "terms_checked_count": 21
+    },
+    "refusal_scan": {
+      "status": "pass",
+      "hits": [],
+      "patterns_checked": [
+        "\\bi cannot\\b",
+        "\\bi can't\\b",
+        "\\bunable to\\b",
+        "\\brefuse to\\b",
+        "\\bdecline to\\b",
+        "\\bcannot evaluate\\b",
+        "\\bcan not evaluate\\b"
+      ]
+    }
+  },
+  "critic_timing_ms": {
+    "d7a_ms": 0.176,
+    "d7b_ms": 11194.628
+  },
+  "critic_error_signature": null,
+  "critic_error_full_path": null
+}

@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy exhibits coherent internal logic: it enters when realized volatility falls below a threshold while RSI crosses above 32 (oversold bounce), MACD histogram turns positive, and price exceeds EMA_12, forming a multi-factor convergence setup for regime shifts. Exit logic is sensible with profit-taking when RSI exceeds 68 and returns reach 4%, or when volatility re-elevates above 0.025 with negative MACD momentum. This captures a defensible volatility mean-reversion thesis combined with momentum confirmation. Theme alignment is strong: realized_vol_24h is central to both entry and exit, directly matching the volatility_regime theme and its hint factors. The narrative of entering low-vol regimes with momentum reversal aligns well with regime-shift economics. However, structural variant risk is elevated: the factor set {close, ema_12, macd_hist, realized_vol_24h, return_24h, rsi_14} exactly matches prior hypothesis #3, differing only in threshold values (RSI 32 vs crosses, volatility 0.015 vs dynamic comparison, MACD>0 positioning). This represents a parameter variation rather than a structurally novel factor combination, making it a likely shallow variant despite its coherent economic story."
+}
+```

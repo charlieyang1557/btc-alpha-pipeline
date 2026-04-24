@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy demonstrates coherent mean reversion logic: entering long when zscore_48 drops below -1.5 signals statistical underpricing, while rsi_14 > 35 filters out severe downtrends. The close > sma_50 entry condition adds a trend filter requiring price above the medium-term moving average, which creates internal tension with the mean reversion thesis but may prevent catching falling knives. Exit logic is sensible: either profit-taking when zscore normalizes above 0.5 with rsi_14 > 58, or stop-loss when zscore deteriorates further below -2.2 with negative return_1h. The theme alignment is strong, using zscore_48 (a hint factor) as the primary signal and sma_50 (another hint factor) as a structural filter, directly targeting statistical deviations from equilibrium. However, the factor set {close, return_1h, rsi_14, sma_50, zscore_48} closely resembles multiple prior entries, particularly #12 {bb_upper_24_2, close, realized_vol_24h, return_1h, rsi_14, zscore_48} and #25 {close, realized_vol_24h, return_24h, rsi_14, sma_50, zscore_48}. The core combination of zscore_48, rsi_14, close, sma_50, and a return factor appears in various forms throughout the batch, suggesting this is primarily a threshold adjustment rather than a fundamentally novel structural approach."
+}
+```

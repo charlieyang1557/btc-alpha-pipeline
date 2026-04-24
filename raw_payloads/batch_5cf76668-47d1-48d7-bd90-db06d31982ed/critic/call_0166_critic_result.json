@@ -1,0 +1,60 @@
+{
+  "critic_version": "d7_v1",
+  "critic_status": "ok",
+  "d7b_mode": "live",
+  "d7a_rule_scores": {
+    "theme_coherence": 0.6,
+    "structural_novelty": 0.5,
+    "default_momentum_fallback": 1.0,
+    "complexity_appropriateness": 0.55
+  },
+  "d7a_supporting_measures": {
+    "factor_set_prior_occurrences": 1,
+    "n_factors": 5,
+    "n_conditions": 7,
+    "description_length": 283,
+    "max_hold_bars": 120,
+    "n_entry_groups": 1,
+    "n_exit_groups": 2
+  },
+  "d7a_rule_flags": [
+    "n_conditions_heavy"
+  ],
+  "d7b_llm_scores": {
+    "semantic_plausibility": 0.75,
+    "semantic_theme_alignment": 0.9,
+    "structural_variant_risk": 0.85
+  },
+  "d7b_reasoning": "The strategy employs coherent mean-reversion logic: entering long when RSI drops below 35 (oversold), MACD histogram crosses below zero (momentum weakening), price stays above SMA(50) (preserving uptrend context), and 24h return is negative (confirming recent decline). Exit logic is sensible, targeting RSI recovery above 55 or a 3% gain. This constructs a plausible counter-trend entry within trend-following constraints. Theme alignment is strong—all factors (rsi_14, macd_hist, return_24h) appear in the hint vocabulary, and the momentum exhaustion premise fits the momentum theme well. However, structural variant risk is high: the factor set {close, macd_hist, return_24h, rsi_14, sma_50} is essentially identical to prior entry #73 {close, macd_hist, return_24h, rsi_14, sma_50}, differing only in threshold values (RSI 35 vs other levels, MACD crossing zero, etc.). This represents a shallow parametric variant rather than a structurally novel factor combination.",
+  "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0166_response.json",
+  "d7b_cost_actual_usd": 0.019842,
+  "d7b_input_tokens": 5039,
+  "d7b_output_tokens": 315,
+  "d7b_retry_count": 0,
+  "d7b_scan_results": {
+    "forbidden_language_scan": {
+      "status": "pass",
+      "hits": [],
+      "terms_checked_count": 21
+    },
+    "refusal_scan": {
+      "status": "pass",
+      "hits": [],
+      "patterns_checked": [
+        "\\bi cannot\\b",
+        "\\bi can't\\b",
+        "\\bunable to\\b",
+        "\\brefuse to\\b",
+        "\\bdecline to\\b",
+        "\\bcannot evaluate\\b",
+        "\\bcan not evaluate\\b"
+      ]
+    }
+  },
+  "critic_timing_ms": {
+    "d7a_ms": 0.135,
+    "d7b_ms": 11730.293
+  },
+  "critic_error_signature": null,
+  "critic_error_full_path": null
+}

@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy exhibits coherent internal logic: entry requires price breakout above SMA-50, elevated volume (z-score > 1.5), positive MACD histogram, and RSI > 52, forming a multi-layered confirmation structure. Exit conditions split between momentum exhaustion (volume collapse, MACD crossover) and profit-taking on overbought conditions (4% gain + RSI > 75). This creates a defensible breakout-capture narrative. Theme alignment is strong—volume_zscore_24h anchors both entry and exit, directly addressing volume divergence as the core signal, with MACD and price confirming institutional accumulation. However, structural variant risk is high: the factor set {close, macd_hist, rsi_14, sma_50, volume_zscore_24h} closely resembles prior #50 {close, macd_hist, return_1h, rsi_14, sma_50, volume_zscore_24h}, differing only by substituting return_1h with return_24h in exit conditions. The core factors (close, macd_hist, rsi_14, sma_50, volume_zscore_24h) form an identical structural backbone, suggesting this is primarily a threshold or operator variation rather than a novel factor combination."
+}
+```

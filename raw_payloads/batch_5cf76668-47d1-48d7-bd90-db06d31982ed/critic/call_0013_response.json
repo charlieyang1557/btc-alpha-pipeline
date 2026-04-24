@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.7000,
+  "reasoning": "The strategy articulates a coherent volatility regime thesis: enter when realized volatility compresses below 2.5%, price crosses above SMA50, RSI confirms momentum above 50, and volume is elevated. Exit either when volatility expands above 5.5% with overbought RSI, or on sharp drawdown with SMA20 breach. The logic chains volatility compression to expansion breakouts, which is economically defensible. Theme alignment is strong: realized_vol_24h anchors both entry and exit, directly invoking the hint factor vocabulary and capturing regime transitions. The 144-bar hold limit and dual exit paths address both profit-taking and stop-loss scenarios. However, structural risk is elevated because this factor set {close, realized_vol_24h, return_1h, rsi_14, sma_50, volume_zscore_24h} substantially overlaps with prior #9 {close, return_1h, return_24h, rsi_14, sma_50, volume_zscore_24h}, differing primarily by substituting return_24h with realized_vol_24h. While the volatility factor changes the economic story meaningfully, five of six factors remain identical, suggesting this may be a thematic refinement rather than a fundamentally distinct structural bet."
+}
+```

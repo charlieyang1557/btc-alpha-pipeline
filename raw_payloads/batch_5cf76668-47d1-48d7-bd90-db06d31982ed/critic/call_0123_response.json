@@ -1,0 +1,9 @@
+```json
+{
+  "semantic_plausibility": 0.6500,
+  "semantic_theme_alignment": 0.7500,
+  "structural_variant_risk": 0.3000,
+  "reasoning": "The strategy proposes a volatility compression breakout logic: entry when realized_vol_24h drops below atr_14, RSI crosses above 50, and price is above ema_12. Exit logic includes dual paths—either momentum loss (RSI/EMA breakdown) or volatility expansion with profit-taking (realized_vol_24h exceeds atr_14 plus 4% gain). Semantically, the entry condition has internal tension: comparing realized_vol_24h (actual volatility) directly to atr_14 (average true range) conflates two different volatility measures with potentially different scales, weakening plausibility. The theme alignment is strong: volatility regime transitions are central, using realized_vol_24h and atr_14 to detect compression-to-expansion dynamics. Structurally, the factor set {atr_14, close, ema_12, realized_vol_24h, return_24h, rsi_14} is novel—no prior combines atr_14 with ema_12 and realized_vol_24h. Prior #35 uses {atr_14, close, realized_vol_24h, return_24h, rsi_14, sma_20}, differing by trend indicator (ema_12 vs sma_20). This represents a distinct structural hypothesis rather than threshold manipulation.",
+  "structural_variant_risk": 0.3000
+}
+```

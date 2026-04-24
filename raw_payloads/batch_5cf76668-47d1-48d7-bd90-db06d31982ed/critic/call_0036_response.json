@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy exhibits strong internal logic: entering on a MACD histogram zero-crossing from below signals momentum acceleration, the RSI<48 filter ensures recent weakness (though not truly oversold), return_24h>-0.01 excludes sharp drops, and volume_zscore_24h>0.3 confirms participation. Exit logic is well-structured with two paths: momentum exhaustion (histogram crosses below zero with RSI>65 overbought) or failed reversal (return_24h<-0.03 with RSI<40). This structure is coherent and defensible as a reversal-to-continuation play. Theme alignment is excellent: macd_hist, rsi_14, return_24h, and volume_zscore_24h are all canonical momentum indicators, with the histogram zero-cross being a classic momentum inflection signal. However, structural variant risk is high. The factor set {macd_hist, return_24h, rsi_14, volume_zscore_24h} appears identical to prior #11 and extremely similar to #26 and #28 which use subsets. The distinguishing element here is the specific operator choice (crosses_above/crosses_below on macd_hist) rather than a fundamentally different factor combination, making this appear as a threshold and operator variation on already-explored territory."
+}
+```

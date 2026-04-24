@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy presents coherent internal logic: it enters on Monday when multiple oversold signals align (RSI below 45, price below SMA_20, negative 24h return) and exits either when momentum recovers (RSI above 60 and price crosses above SMA_20) or on Friday with small positive return. The multi-condition entry reduces false signals while the dual exit paths provide both profit-taking and calendar-based closure mechanisms. Theme alignment is strong, as day_of_week appears in both entry and exit conditions, directly exploiting the Monday dip / end-of-week patterns central to calendar effects. However, the factor set {day_of_week, rsi_14, close, sma_20, return_24h, return_1h} overlaps substantially with prior #6 {close, macd_hist, rsi_14, sma_20} and #9 {close, return_1h, return_24h, rsi_14, sma_50, volume_zscore_24h}. The main distinction is the calendar factor and threshold choices rather than a fundamentally different structural bet. The combination is plausible but represents moderate variant risk."
+}
+```

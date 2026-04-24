@@ -23,13 +23,13 @@
   "d7b_llm_scores": {
     "semantic_plausibility": 0.3,
     "semantic_theme_alignment": 0.7,
-    "structural_variant_risk": 0.9
+    "structural_variant_risk": 0.95
   },
-  "d7b_reasoning": "The strategy attempts a mean reversion entry by detecting oversold conditions through Bollinger band crossing, RSI, z-score, and negative returns. However, the entry logic contains a critical flaw: the condition 'close crosses_below bb_upper_24_2' signals a move from above to below the upper band, which typically indicates weakening momentum from overbought territory, not an oversold condition. The description claims entry at the lower band, but the DSL uses the upper band. This contradiction undermines plausibility. Theme alignment is moderate because the factors (Bollinger bands, z-score, RSI) are conceptually appropriate for mean reversion despite the implementation error. The exit logic using SMA crossover and RSI recovery is coherent. Structurally, this factor set {bb_upper_24_2, close, return_24h, rsi_14, zscore_48, sma_24} is nearly identical to prior entry #7: {bb_upper_24_2, close, rsi_14, sma_24, zscore_48}, differing only by the addition of return_24h, which constitutes a minor augmentation rather than a fundamentally different structural approach. This represents a high-risk shallow variant.",
+  "d7b_reasoning": "The strategy exhibits a critical internal contradiction that undermines its logic: the description states entry occurs when price crosses below the lower Bollinger band, yet the DSL specifies crosses_below bb_upper_24_2 (the upper band). This misalignment between narrative and implementation is a severe coherence issue. The multi-condition entry (low RSI, negative zscore, negative return) does support a mean reversion concept if the Bollinger condition were corrected. Exit conditions using crosses_above sma_24 and elevated RSI values are structurally coherent with capturing mean reversion profits. Theme alignment is moderate-to-good because the factors (Bollinger bands, zscore, RSI, SMA) are classic mean reversion indicators from the hint vocabulary, despite the implementation error. Structural variant risk is very high: the factor set {bb_upper_24_2, close, return_24h, rsi_14, sma_24, zscore_48} exactly matches prior entry #7 in the batch list. This is not a novel structural approach but merely different threshold values (RSI 35 vs another threshold, zscore -1.5 vs another level) applied to an already-explored factor combination.",
   "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0032_response.json",
-  "d7b_cost_actual_usd": 0.011859,
+  "d7b_cost_actual_usd": 0.011769,
   "d7b_input_tokens": 2278,
-  "d7b_output_tokens": 335,
+  "d7b_output_tokens": 329,
   "d7b_retry_count": 0,
   "d7b_scan_results": {
     "forbidden_language_scan": {
@@ -52,8 +52,8 @@
     }
   },
   "critic_timing_ms": {
-    "d7a_ms": 0.114,
-    "d7b_ms": 8594.555
+    "d7a_ms": 0.126,
+    "d7b_ms": 10222.001
   },
   "critic_error_signature": null,
   "critic_error_full_path": null

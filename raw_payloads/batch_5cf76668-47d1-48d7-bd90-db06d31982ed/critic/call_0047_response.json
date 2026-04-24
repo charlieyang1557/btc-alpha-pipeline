@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy employs a coherent mean reversion logic: entry triggers when multiple oversold indicators align (price below Bollinger band, z-score < -1.5, RSI < 35, negative 24h return), and exits when reversion occurs (z-score crosses zero, RSI recovers) or a profit target is hit. The dual-exit structure with both mean-reversion confirmation and take-profit is sound. Theme alignment is strong, utilizing four of five hint factors (bb_upper_24_2, close, zscore_48, plus close-related derivations) with clear oversold/rebound economic intuition. However, structural variant risk is high: the factor set {bb_upper_24_2, close, return_24h, rsi_14, zscore_48} appears almost identical to prior #34, differing only in threshold values and the comparison operator for bb_upper_24_2 (here checking close < bb_upper rather than a more typical lower-band check). This represents primarily a parameter adjustment rather than a structurally novel combination, making it a likely shallow variant of existing work in this batch."
+}
+```

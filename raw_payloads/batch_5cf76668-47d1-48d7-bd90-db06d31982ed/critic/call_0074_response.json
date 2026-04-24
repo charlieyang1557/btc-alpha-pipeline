@@ -1,8 +1,8 @@
 ```json
 {
   "semantic_plausibility": 0.7500,
-  "semantic_theme_alignment": 0.9000,
-  "structural_variant_risk": 0.7500,
-  "reasoning": "The strategy constructs a coherent breakout narrative: volume_zscore_24h exceeding 2.0 signals unusual activity, price crossing above sma_20 confirms directional momentum, and rsi_14 below 60 ensures the move hasn't already exhausted. Exit logic offers two paths—either volume normalization with price reversal, or a 10% profit target. The max_hold_bars parameter adds risk management. Theme alignment is strong; volume_zscore_24h is central to the volume_divergence theme and drives the entry logic. However, the factor set {close, return_168h, rsi_14, sma_20, volume_zscore_24h} closely resembles prior #55 {close, return_1h, return_24h, rsi_14, sma_20, volume_zscore_24h} and #19 {close, macd_hist, return_1h, rsi_14, sma_20, volume_zscore_24h}. While this substitutes return_168h for shorter-horizon returns and omits macd_hist, the core structure (close, rsi_14, sma_20, volume_zscore_24h, plus a return horizon) represents minor variation on an established pattern rather than a fundamentally new structural bet."
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.7000,
+  "reasoning": "The strategy combines volume anomaly detection (volume_zscore_24h > 2.0) with price breakout (close crosses_above sma_20) while filtering for early momentum (rsi_14 < 60). This logic is internally coherent: high volume confirms breakout strength while the RSI cap aims to avoid overbought entries. Exit conditions balance mean-reversion (volume_zscore_24h < -0.5 or price crosses_below sma_20) with profit-taking (return_168h > 0.1). The 240-bar max_hold provides reasonable downside protection. Theme alignment is strong as volume_zscore_24h appears in both entry and exit, directly addressing volume divergence dynamics. However, structural variant risk is elevated because the factor set {close, return_168h, rsi_14, sma_20, volume_zscore_24h} closely resembles multiple priors: entry 19 uses {close, macd_hist, return_1h, rsi_14, sma_20, volume_zscore_24h} and entry 55 uses {close, return_1h, return_24h, rsi_14, sma_20, volume_zscore_24h}. The substitution of return_168h for shorter returns and removal of macd_hist represents threshold/factor substitution rather than novel structural logic."
 }
 ```
