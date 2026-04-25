@@ -1281,39 +1281,561 @@ future phase's scope per scope lock §10.
 
 ---
 
-### 4.4 Issue 4 — Joint-shape asymmetric-calibration implications
+### 4.4 Issue 4 — Paired-floor calibration coherence under derived joint failure
 
-*Populated in D8.4.5.*
+Issue 4 authors a methodology proposal addressing the paired-floor
+calibration coherence question surfaced by the observed component
+pattern at the §6.3 joint surface: §6.3(a) PASS at +21 headroom
+alongside §6.3(b) FAIL at −4 shortfall, under a structurally-derived
+joint failure tagged `derived_joint_failure` per D8.2 §6.3 joint
+detailed record at L529–545. The §6.3 joint verdict itself is
+structurally derived from the §6.3(b) component failure under the
+conjunction rule (D8.2 L541–545: "the failure is structurally
+derived, not an independently observed methodological gap"); D8.4.5
+does not re-adjudicate the joint verdict and does not treat the
+verdict tag as carrying independent methodology content beyond what
+§6.3(b) carries. The diagnostic target of Issue 4 is the
+**paired-floor calibration coherence** of the pre-registration
+methodology that produced the upper and lower floors jointly: did
+the methodology calibrate upper and lower floors against compatible
+inferential steps under a single coherent calibration framework, or
+did it produce systematically asymmetric floors as a separable
+methodology gap from Issue 3's lower-tail-specific question? Issue 4
+is a scope-level issue per scope lock §5 Part 5; no row-attribution
+citations appear in the analysis, and the §6.3(a) upper-tail count
+(111 observations at SVR ≥ 0.80) and §6.3(b) lower-tail composition
+(D8.2 L459–461) are recorded as composition fact, not as
+row-attribution evidence for Issue 4.
 
-`proposal_confidence`: *(declared in D8.4.5)*
+**Framing-correction note (single paragraph, title-level inheritance
+form per D8.4.5 framing constraint 7).** D8.4.5 retitles Issue 4
+from the inherited "Joint-shape asymmetric-calibration implications"
+to "Paired-floor calibration coherence under derived joint failure".
+The inherited title was sourced from the D8.2 §9 / appendix
+summary-layer tag `asymmetric_calibration` (D8.2 L1044, L1229),
+which is drift from the authoritative D8.2 §6.3 joint detailed
+record at L529–545 (`primary_verdict = FAIL`,
+`interpretation_tag = derived_joint_failure`). The four-drift
+catalog at [`D8_4_METHODOLOGY_REFINEMENT.md` §4.3 Part 6](D8_4_METHODOLOGY_REFINEMENT.md#L1284)
+(D8.4.4, sealed at `86d69b1`) records the tag drift as observation
+row 4; D8.4.5 cross-references that catalog row rather than
+re-cataloguing the same drift, preserving single-entry catalog
+discipline (Lock D held). Prior sealed sites (D8.3 §4.3, D8.4
+scope-lock §2.3, D8.4.1 §3 inventory line 122) retain the inherited
+title and stand at their evidence state per scope-lock §10.
+"Asymmetric" remains a defensible descriptive term for the observed
+component-outcome pattern (upper +21 headroom alongside lower −4
+shortfall) but is not the formal D8.2 interpretation tag. The
+corrected title makes the analytical object — paired-floor
+calibration coherence — visible up front, addressing Round 1
+reviewer feedback that any title naming only the formal anchor would
+hide the substantive scope from face-value reading.
+
+`proposal_confidence`: **medium**. The diagnosis-to-spec internal
+coherence holds, anchored on the empirically clean observed
+paired-pattern asymmetry — §6.3(a) PASS at +21 headroom (D8.2
+L388–395) alongside §6.3(b) FAIL at −4 shortfall (D8.2 L444–457) —
+under a structurally-derived joint failure (D8.2 L529–545,
+`derived_joint_failure`). The diagnosis-to-spec chain runs:
+observed paired asymmetry at the §6.3 joint surface →
+paired-floor calibration coherence gap at the pre-registration
+methodology layer → paired-floor calibration methodology spec under
+revision shape (I + IV) at the paired-floor unit. The revision
+shape is structurally parallel to D8.4.4 / Issue 3's (I + IV) at the
+single-floor unit, applied to a different unit of calibration. The
+(Y) Reduced framing operates on what Issue 4 *claims about itself*
+— no independent verdict tag, formal anchor is `derived_joint_failure`
+not `asymmetric_calibration`, paired-floor coherence is the
+analytical object not the joint verdict — and does not weaken the
+empirical grounding of the diagnostic. Per scope lock §5.1 strict
+semantics, `proposal_confidence` reflects diagnosis-to-spec internal
+coherence and is not validation evidence; the label MUST NOT be
+cited as proof that the proposed methodology works. The label
+calibrates to `medium` to reflect internal coherence; it does not
+extend to claim-space breadth.
 
 #### Part 1 — Diagnosis
 
-*Populated in D8.4.5.*
+The §6.3 joint verdict is `FAIL` under `interpretation_tag =
+derived_joint_failure` per D8.2 §6.3 joint detailed record at
+L529–545. D8.2 L541–545 explicit narrative records the derivation:
+"the failure is structurally derived, not an independently observed
+methodological gap." The joint verdict adds no independent evidence
+beyond §6.3(b)'s component failure; the conjunction
+`PASS ∧ FAIL = FAIL` mechanically resolves the joint outcome from
+the component verdicts.
+
+But the **observed component pattern** at the joint surface carries
+information that neither component verdict captures alone. D8.2
+§6.3(a) detailed record at L382–438 records `primary_verdict = PASS`
+with observed 111 / 199 against pre-registered floor ≥ 90 / 199 —
+**+21 headroom**. D8.2 §6.3(b) detailed record at L440–510 records
+`primary_verdict = FAIL` with observed 26 / 199 against pre-registered
+floor ≥ 30 / 199 — **−4 shortfall**, `interpretation_tag =
+calibration_shortfall`. Reading the two component outcomes jointly,
+the methodology that produced the calibration profile produced an
+upper tail wildly over-floor and a lower tail just-under-floor. That
+asymmetric realization of paired floors is the diagnostic target of
+Issue 4: it is observable at the joint surface, attributable to the
+pre-registration methodology that produced both floors jointly, and
+not derivable from either component verdict alone (each component
+verdict reports a single-tail outcome against a single floor, not
+the cross-tail relationship between paired floors).
+
+**Diagnostic target.** The pre-registration methodology that
+produced the **paired floors** — ≥ 90 / 199 at SVR ≥ 0.80 (upper)
+and ≥ 30 / 199 at SVR ≤ 0.30 (lower). Specifically: did the
+methodology derive both floors from a single coherent calibration
+framework with consistent inferential steps, or did it derive each
+floor under independent steps that produced systematically
+asymmetric prevalence predictions? `expectations.md` L99 and L105–107
+document the cut-points (SVR ≥ 0.80 upper, SVR ≤ 0.30 lower) and a
+neutral-stratum-share rationale for the lower floor; the upper-floor
+provenance and the paired-floor coherence between them are not
+specified at the level required to adjudicate whether the +21 / −4
+asymmetric realization reflects framework-internal asymmetry the
+methodology accepted at pre-registration or framework-external drift
+the methodology did not anticipate.
+
+**What Issue 4 does NOT diagnose.** The §6.3(b) lower-tail-specific
+calibration (Issue 3's exclusive scope at D8.4.4), the SVR ≤ 0.30
+cut-point (out of D8.4 scope; documented in `expectations.md`
+L105–107 with its own rationale), the SVR ≥ 0.80 cut-point (out of
+D8.4 scope; documented in `expectations.md` L99 with its own
+rationale), the formal joint verdict (which is structurally derived
+per D8.2 L541–545; D8.4.5 does not re-adjudicate), and
+direction-of-prediction × SVR adjudication-time joint rules (Issue
+2's exclusive scope at D8.4.3).
+
+D8.2's `FAIL` verdict at §6.3(b) and `derived_joint_failure`
+interpretation tag at §6.3 joint stand at their evidence state.
+D8.2's `PASS` verdict at §6.3(a) stands at its evidence state.
 
 #### Part 2 — Root cause
 
-*Populated in D8.4.5.*
+**Gap-type attribution: calibration (primary, single attribution per
+scope lock §5).** The Issue 4 root cause is named as a calibration
+gap-type at the **paired-floor coherence layer**. Issue 3 (D8.4.4)
+diagnosed the calibration gap-type at the **single-floor layer**
+(specifically the lower-tail floor methodology behind ≥ 30 / 199 at
+SVR ≤ 0.30). Issue 4 diagnoses a different unit of calibration: the
+methodology that produces both upper and lower floors jointly, and
+whether it anchors them against a coherent calibration framework
+that constrains their cross-tail relationship, or whether the upper
+and lower floors were derived under independent inferential steps
+that produce systematic asymmetry as a structural property of the
+methodology.
+
+**Why the calibration gap-type repeats but is not Issue 3
+expansion.** The gap-type attribution carves cleanly against Issue
+3 by the **unit of calibration**: Issue 3 = single floor methodology
+(one floor, one SVR threshold, one inferential step from prior
+information to floor value); Issue 4 = paired-floor methodology
+coherence (two floors jointly, the framework that links them, and
+the inferential consistency between their derivations). The boundary
+is mechanically enforceable at the prose-anchor level per D8.4.5
+framing constraint 5: Issue 3 cites §6.3(b) only; Issue 4 cites
+§6.3(a) + §6.3(b) jointly + §6.3 joint detailed record. Issue 3's
+revision spec at the single-floor layer does not pre-empt Issue 4's
+revision spec at the paired-floor layer; the two revisions operate
+on different calibration units and may reconcile or coexist at
+synthesis level (§5 of `D8_4_METHODOLOGY_REFINEMENT.md`).
+
+**Documentation gap-type rejection.** Issue 6 owns
+documentation-of-existing-state drift in `expectations.md` ("6
+themes vs 5"). The four-drift forward-pointer catalog at D8.4.4 §4.3
+Part 6 (cross-referenced in the framing-correction note) routes D8.2
+§9 / appendix internal drift to a post-D8 documentation-correction
+sub-phase. Neither of these catches Issue 4's substantive scope.
+Paired-floor calibration coherence is a methodology-spec question at
+the pre-registration layer; it is not documentation drift in
+`expectations.md` (Issue 6) and it is not D8.2 internal-presentation
+drift (D8.4.4 catalog row 4). Naming documentation as a co-primary
+attribution would conflate the paired-floor methodology question
+with documentation-of-existing-state drift and violate scope lock
+§5's distinct-attribution requirement.
+
+**Definitional gap-type rejection.** Issue 1 owns definitional gaps
+at the divergence-label boundary in `expectations.md` L77–85.
+§6.3(a) and §6.3(b) operate on definitionally-clean cut-points
+(SVR ≥ 0.80 upper, SVR ≤ 0.30 lower) over a definitionally-clean
+cohort (all 199 UB calls). No L77–L85-class definitional ambiguity
+is at play in the paired-floor methodology layer.
+
+**Prompt-design gap-type rejection.** Issue 5 owns prompt-discipline
+scope (cell-level methodology, theme-taxonomy alignment,
+label-mention consistency across the full taxonomy). §6.3 is a
+structural-shape gate family on the SVR distribution; no
+prompt-design surface produces or fails to produce the paired floors.
+
+The calibration attribution is single, not co-primary. Same
+distinct-attribution discipline as D8.4.4 / Issue 3, applied at the
+paired-floor unit instead of the single-floor unit.
 
 #### Part 3a — Proposed revision spec
 
-*Populated in D8.4.5.*
+The revision specifies that future paired floors must be derived
+under a coherent calibration framework with documented internal
+consistency at pre-registration time and a documented diagnostic
+procedure for asymmetric outcomes at post-fire time. The revision
+shape is **(I + IV) combination at the paired-floor layer**:
+
+- **(I)** re-derive future paired floors (upper and lower jointly)
+  under a single coherent calibration framework.
+- **(IV)** specify the pre-registration methodology that produces
+  the paired floors, with internal-consistency machinery at
+  pre-registration time and a diagnostic procedure at post-fire time.
+
+The revision shape is structurally parallel to Issue 3's (I + IV) at
+the single-floor layer, applied to a different unit of calibration.
+Standalone (I) leaves the methodological gap open (paired floors
+re-derived without a documented framework have the same coherence
+gap as the original). Standalone (IV) does not instantiate (a method
+without re-derived paired floors is procedural-only). The
+combination addresses both. Revision shape (II) — adjust upper
+and/or lower floor values without specifying a methodology — is
+rejected because it would re-introduce the same gap at different
+values. Revision shape (III) — fold paired-floor coherence into
+Issue 3's single-floor revision — is rejected because it would
+collapse the unit-of-calibration distinction that carves the Issue
+3 / Issue 4 boundary; the rejection is independently grounded in
+Issue 4's own scope (the analytical object is paired-floor
+coherence, not a per-tail methodology question), not solely in Issue
+3 boundary protection.
+
+**Revision spec (five points):**
+
+1. **Coherent paired-floor calibration framework (structural
+   property locked, source choice not locked).** The methodology
+   must derive upper and lower floors from a single coherent
+   calibration framework — for example: (a) a historical reference
+   cohort with both upper and lower tails populated and their
+   relative prevalences documented, (b) a theoretical bound
+   consistent across tails (e.g., a paired-tail prevalence model
+   under stratum-composition assumptions that constrains both
+   tails), or (c) an empirical-Bayes prior that calibrates both
+   tails jointly from a shared posterior over the full SVR
+   distribution. The spec **does not lock** which framework is
+   chosen; it locks the structural requirement that upper and lower
+   floors must come from a single framework rather than from
+   independent inferential steps that would produce systematic
+   asymmetry as a structural property of the methodology. This
+   mirrors D8.4.4 §4.3 Part 3a point 1 structural-property-not-form
+   discipline, applied at the paired-floor layer.
+
+2. **Pre-registration internal-consistency check on paired-floor
+   predictions.** The methodology must specify, at pre-registration
+   time, an internal-consistency check on the framework's own
+   predictions: predicted upper-tail prevalence and predicted
+   lower-tail prevalence are derived from the same underlying
+   distributional assumptions and do not imply contradictory base
+   rates, marginal-probability sums, or framework parameters. The
+   check operates on the framework's *pre-registered predictions
+   only*, not on observed-vs-floor comparisons. The spec **does not
+   lock** the form of the consistency check (sum-to-known-total
+   constraint on the predicted prevalences, ratio-bound on the
+   predicted upper/lower prevalence ratio under the framework's
+   stated assumptions, posterior-marginal compatibility check under
+   the framework's prior, or other equivalently named test); it
+   locks the structural requirement that *some* such check exists at
+   pre-registration time, operating on predictions only. **The check
+   operates on the framework's pre-registered predictions only and
+   does not import observation. Post-fire observation is the scope
+   of point 5.**
+
+3. **Per-fire applicability (next future fire only).** The
+   methodology must specify how it applies to a future Stage
+   2-class fire's pre-registration of paired-floor expectations
+   without ad-hoc derivation at fire time. Application to fires
+   beyond the next is **out of D8.4 scope**; multi-fire
+   applicability is forward-pointed to Stage 2e+ planning. This
+   narrowing is deliberate — committing the methodology to all
+   future fires inside D8.4 would commit Stage 2e+'s scope, which
+   scope lock §10 forbids; narrowing to the next fire keeps the
+   spec instantiable without overreach. Same narrowing as Issue 3
+   Part 3a point 3.
+
+4. **Documented provenance (calibration-spec internal requirement).**
+   Each future paired floor must carry documented provenance for
+   **both** floors and the framework that produced them jointly:
+   which calibration framework produced the pair, what prior
+   information it consumed, what inferential step linked the
+   predicted prevalences to the floor values, and what consistency
+   check (per point 2) was applied. This is a **calibration-spec
+   internal requirement** — provenance is part of the calibration
+   spec, not a separable documentation concern. It is not a
+   documentation-drift gap-type, does not pre-empt or expand Issue
+   6 (whose scope is `expectations.md` "6 themes vs 5"), and does
+   not pre-empt or expand the four-drift forward-pointer catalog at
+   D8.4.4 §4.3 Part 6 (whose scope is D8.2 §9 / appendix
+   internal-presentation drift). The distinction is reinforced in
+   Part 6 below.
+
+5. **Post-fire asymmetry diagnostic.** The methodology must specify
+   a post-fire diagnostic procedure for cases where the paired-floor
+   framework produces asymmetric headroom/shortfall outcomes (such
+   as the +21 / −4 pattern observed at Stage 2d). The diagnostic
+   adjudicates between (a) framework-internal asymmetry the
+   methodology accepted at pre-registration — i.e., the framework
+   predicted asymmetric prevalences and the observation realized
+   that prediction within tolerance — and (b) framework-external
+   drift — i.e., the framework predicted symmetric or near-symmetric
+   prevalences and the observation diverged from those predictions.
+   The spec **does not lock** the form of the diagnostic
+   (predicted-vs-observed difference under the framework's posterior,
+   residual-against-predicted-distribution test, or other equivalently
+   named procedure); it locks the structural requirement that *some*
+   such diagnostic exists at post-fire time, operating on observed
+   headroom/shortfall outcomes. **The diagnostic operates on
+   observed headroom/shortfall outcomes only and does not
+   retroactively change the pre-registered floors. Pre-registration
+   internal-consistency is the scope of point 2.**
+
+**The revision spec does not:**
+
+- Propose specific replacement floor values for upper or lower (the
+  spec is methodology-level; the values are downstream of the chosen
+  calibration framework).
+- Re-adjudicate the formal joint verdict — which is structurally
+  derived per D8.2 L541–545 and stands at its evidence state.
+- Treat `asymmetric_calibration` as the formal interpretation tag
+  (it remains a descriptive term for the observed component pattern,
+  not the formal D8.2 anchor).
+- Edit `expectations.md`, D8.2 verdicts, D8.3 buckets, or any sealed
+  Stage 2d artifact (Lock A).
+- Adjudicate the SVR ≥ 0.80 or SVR ≤ 0.30 cut-points (out of D8.4
+  scope; cut-points are documented in `expectations.md` L99 and
+  L105–107 with their own rationales).
+- Pre-empt Issue 3's lower-tail floor methodology revision (Issue 3
+  owns the single-floor methodology layer; Issue 4 owns the
+  paired-floor coherence layer; the boundary is the unit of
+  calibration).
+- Pre-empt Issue 2's joint-rule shape requirement (Issue 2 operates
+  at adjudication time on direction × SVR; Issue 4 operates at
+  pre-registration time on paired-floor calibration; different
+  layer, different mechanism).
 
 #### Part 3b — Expected behavior change
 
-*Populated in D8.4.5.*
+The revision **is intended to** make future paired floors traceable
+to a single coherent calibration framework, with documented
+internal-consistency at pre-registration time (Part 3a point 2) and
+a documented diagnostic procedure for asymmetric outcomes at
+post-fire time (Part 3a point 5). The revision **targets** the
+under-specified paired-floor calibration coherence diagnosed in
+Part 1. The revision **is expected to** make future upper-vs-lower
+observed-pattern asymmetries diagnosable as either
+(a) framework-internal asymmetry the methodology accepted at
+pre-registration, via the Part 3a point 5 post-fire diagnostic, or
+(b) framework-external drift the methodology did not anticipate, via
+the same diagnostic, conditional on the revised methodology
+surviving downstream design review and validation.
+
+The pre-registration check (Part 3a point 2) gives the methodology
+its consistency-at-spec-time guarantee; the post-fire diagnostic
+(Part 3a point 5) gives the methodology its
+diagnosable-at-observation-time capability. Both are needed for the
+diagnostic capability above to have implementable spec hooks. The
+two points operate at different temporal layers (ex-ante vs ex-post)
+and do not collapse into each other — the pre-registration check
+cannot diagnose post-fire asymmetry (it cannot import observation,
+per the closing sentence of Part 3a point 2), and the post-fire
+diagnostic cannot retroactively revise pre-registered floors (it
+operates on observation only, per the closing sentence of Part 3a
+point 5).
+
+The forward-looking behavior is stated as a structural attribute of
+the future methodology's specification ("traceable to a single
+calibration framework", "internal-consistency at pre-registration",
+"diagnostic capability at post-fire"), not as an outcome-quality
+claim. The revision **does not** correct the §6.3(a) headroom, the
+§6.3(b) shortfall, the joint conjunction outcome, or guarantee a
+future fire would `PASS` at the joint surface. No claim is made that
+the revised methodology would produce a different verdict on the
+Stage 2d cohort. Whether the revision produces the intended
+structural traceability is established only by the validation
+procedure specified in Part 4 below, not by Part 3b's forward-looking
+statement.
+
+D8.2's `FAIL` verdict at §6.3(b) and `derived_joint_failure`
+interpretation tag at §6.3 joint stand at their evidence state.
+D8.2's `PASS` verdict at §6.3(a) stands at its evidence state. The
+revision is forward-looking only and does not retroactively
+recharacterize the D8.2 adjudications. The Part 3b forward-looking
+phrasing names structural attributes the revised methodology *would
+expose*; it does not claim the §6.3(b) gate or the §6.3 joint
+verdict *would have passed* under the revised methodology, and it
+does not claim D8.2's verdicts were incorrect at their evidence
+state.
 
 #### Part 4 — Validation plan
 
-*Populated in D8.4.5.*
+Validation does not happen in D8.4. D8.4.5 specifies the validation
+form only; the validation procedure executes downstream, at the
+phase where the revised paired-floor calibration methodology is
+implemented and exercised against an evidence set.
+
+**Necessary validation form: synthetic / simulation sanity check at
+the paired-floor layer.** Construct synthetic
+Universe-B-composition draws under controlled paired-tail-prevalence
+parameters and process them through the revised paired-floor
+calibration framework. The necessary condition is that the framework
+produces calibrated paired floors traceable to the controlled
+parameters AND triggers the pre-registration internal-consistency
+check (Part 3a point 2) at the calibrated values AND, if the
+controlled parameters introduce asymmetry, triggers the post-fire
+asymmetry diagnostic (Part 3a point 5) at observation time. This is
+a structural validation of the calibration spec itself at both
+temporal layers (ex-ante consistency and ex-post diagnosability),
+not a cohort-level claim about Stage 2d or any future cohort.
+Without this check, an absent consistency-check trigger or absent
+diagnostic trigger in any subsequent re-fire could indicate either
+a methodology failure or a cohort-level property, with no way to
+discriminate between them.
+
+**Sufficient validation form (conditional on the synthetic check):
+out-of-sample replication on a fresh Stage 2-class cohort.**
+Out-of-sample replication is structurally privileged over re-firing
+on the same Stage 2d evidence the calibration was derived from.
+Re-firing on the same evidence carries a circularity risk: the
+calibration's framework is being tested against the data it was
+calibrated to fit. A fresh-cohort replication breaks the
+circularity. The sufficient condition is that the revised
+methodology produces paired floors whose calibration framework can
+be cited and whose observed-vs-floor comparisons can be diagnosed
+along the framework axis at both tails, with the post-fire
+diagnostic surfacing whether the observed asymmetry (if any) was
+framework-internal or framework-external. The same circularity
+discipline applied at D8.4.4 / Issue 3 Part 4 holds here, applied
+to the paired-floor layer.
+
+The synthetic sanity check is necessary; the out-of-sample
+replication is **sufficient to support a downstream adoption
+decision, not to prove future calibration performance**. Same-evidence
+replay against the Stage 2d cohort may be used as a reproducibility
+or sanity check only, not as primary validation evidence — the
+circularity discipline is what privileges out-of-sample replication
+over same-evidence re-fire for paired-floor coherence questions, in
+the same way it privileges out-of-sample replication for single-floor
+calibration questions at D8.4.4.
+
+The validation plan does not establish: that the revised methodology
+produces a different verdict at §6.3(a), §6.3(b), or §6.3 joint on
+the Stage 2d cohort; that paired-floor asymmetry is eliminated; that
+future fires will `PASS` at the joint surface. Validation establishes
+only that the revised methodology produces a calibration-framework-
+traceable paired floor with an active pre-registration consistency
+check and an active post-fire asymmetry diagnostic.
 
 #### Part 5 — Affected rows or scope-level impact
 
-*Populated in D8.4.5. Scope-level issue: no row attribution.*
+Scope-level. **No row attribution.** Per scope lock §5 Part 5,
+Issue 4 is a scope-level issue (mirrors D8.4.4 / Issue 3);
+row-attribution citations would be a defect under the §5 Part 5
+rule. The §6.3(a) **upper-tail count: 111 observations at SVR ≥ 0.80
+across the 197 scored subset** (D8.2 L388–395) and §6.3(b)
+lower-tail composition (D8.2 L459–461: 22 neutral, 4
+divergence_expected, 0 agreement_expected) are composition fact
+recorded by D8.2 itself, not row-attribution evidence for Issue 4.
+Issue 4's proposed revision operates on the pre-registration
+methodology that produces paired floors and the post-fire diagnostic
+that interprets observed asymmetry; it does not operate on
+individual rows.
+
+Pos 138 and pos 143 are not cited under Issue 4: paired-floor
+calibration coherence does not materially touch RSI-absent
+vol_regime test-retest framing, and the §5 Part 5 row-attribution
+rule restricts pos 138 / 143 citation to issues that materially
+touch that framing. The pos 143 fresh-7 negation restatement
+obligation does not activate in §4.4.
+
+Pos 3 is not cited under Issue 4: Issue 4 does not touch the
+divergence-label cohort interpretation or the score-axis structure.
+The pos 3 double-duty preservation obligation (scope lock §1.2,
+≥ 2-site floor) is satisfied by §1.1, §4.1 Part 5, and §4.2 Part 5;
+Issue 4's scope does not interact with the double-duty surface.
+
+The scope-level impact: Issue 4's revision operates on the
+pre-registration methodology that produces paired prevalence floors
+and on the post-fire diagnostic that interprets observed asymmetry;
+it does not change the §6.3(a) or §6.3(b) cut-points (SVR ≥ 0.80,
+SVR ≤ 0.30), does not change the §6.3 cohort (all 199 UB calls),
+and does not re-bucket any D8.3 candidate.
 
 #### Part 6 — Issue interaction check
 
-*Populated in D8.4.5.*
+**Upstream dependencies.** None. Issue 4's paired-floor calibration
+coherence revision is upstream of any issue consuming a calibrated
+paired-floor framework; no other issue's revision is a prerequisite
+for Issue 4's spec.
+
+**Downstream dependencies — Issue 2 (Direction-of-prediction
+recalibration).** Issue 2's joint-rule shape requirement (D8.4.3
+§4.2 Part 3a point 4, sealed at commit `95109f7`) operates on
+direction-of-prediction × SVR threshold at **adjudication time**.
+Issue 4's paired-floor calibration coherence operates on the
+**pre-registration methodology** that produces upper and lower
+floors at SVR thresholds, plus the **post-fire diagnostic** that
+interprets observed asymmetry. Different layer, different
+mechanism, no scope overlap (per D8.4.5 framing constraint 6).
+Synthesis (§5 of `D8_4_METHODOLOGY_REFINEMENT.md`) may surface joint
+reconciliation if Issue 2's recalibrated joint rule changes which
+candidates fall into either tail under a revised joint adjudication,
+but Issue 4 surfaces the potential reconciliation point without
+resolving it.
+
+**Downstream dependencies — Issue 3 (Lower-tail calibration).**
+Issue 3 (sealed at commit `86d69b1`) owns the **single-floor
+lower-tail methodology** at the gate level (§6.3(b) only,
+`calibration_shortfall` tag). Issue 4 owns the **paired-floor
+calibration coherence** at the cross-tail level (§6.3(a) + §6.3(b)
+jointly + §6.3 joint detailed record, `derived_joint_failure` tag).
+The boundary is held by anchor scope per D8.4.5 framing constraint
+5: Issue 3 cites §6.3(b) only; Issue 4 cites §6.3(a) + §6.3(b)
+jointly + §6.3 joint detailed record. The boundary is mechanically
+enforceable at the prose-anchor level. **Issue 3's revision shape
+(I + IV) at the single-floor layer does not pre-empt Issue 4's
+revision shape (I + IV) at the paired-floor layer** — the two
+revisions operate at different units of calibration. Synthesis may
+need to reconcile the single-floor framework (Issue 3) with the
+paired-floor framework (Issue 4) if both are adopted; D8.4.5
+surfaces the reconciliation point without resolving.
+
+**Downstream dependencies — Issue 6 (Documentation drift).** Part
+3a point 4's documented-provenance requirement is **internal to the
+calibration methodology spec, not a documentation-drift gap-type**.
+Issue 6's exclusive scope is documentation-of-existing-state drift
+in `expectations.md` (specifically, the "6 themes vs 5" mismatch
+recorded at `docs/d8/D8_3_SCOPE_LOCK.md` §4.3 issue 6). Issue 4's
+documented-provenance requirement is documentation-of-future-
+methodology — a different artifact (the paired-floor calibration
+spec itself, not yet written), a different scope (internal
+completeness of a proposed methodology spec, not drift between a
+written document and its intended state), and a different
+remediation path (specifying the methodology, not editing
+`expectations.md`). No Issue 6 expansion. Lock D held. Same
+distinction discipline as D8.4.4 / Issue 3 Part 6 Issue 6 section.
+
+**Forward-pointer cross-reference (NOT new catalog).** Per D8.4.5
+framing constraint 8, Issue 4's framing-correction note (preamble
+above) cross-references D8.4.4 §4.3 Part 6 forward-pointer catalog
+row 4 (`§6.3 joint verdict + tag: FAIL / derived_joint_failure
+detailed vs PARTIAL / asymmetric_calibration drift`). Issue 4 does
+**NOT** create a new drift catalog or a new forward-pointer entry
+for the same drift. Single-entry catalog discipline preserved
+across the D8.4 sub-arc (Lock D held, scope lock §3.3).
+
+**Conflicts at D8.4.5's evidence state.** None observed within
+Issue 4's scope. Foreseeable conflict: if synthesis (§5) surfaces
+incompatibilities between Issue 3's single-floor framework and
+Issue 4's paired-floor framework — for example, if a paired-floor
+framework adopted under Issue 4's revision implies a different
+single-floor calibration source than Issue 3's revision adopted —
+reconciliation routes to synthesis-level work, not to Issue 4
+prose. D8.4.5 surfaces the *potential* reconciliation point without
+resolving. The epistemic-humility qualifier "at D8.4.5's evidence
+state" applies to both the no-conflict-observed claim and the
+foreseeable-conflict notice.
 
 ---
 
