@@ -2364,39 +2364,473 @@ prose. D8.4.6 surfaces the *potential* without resolving.
 
 ---
 
-### 4.6 Issue 6 — Documentation drift
+### 4.6 Issue 6 — Operational-vs-documentation alignment under-specification (no resolution layer pre-selected at diagnosis time)
 
-*Populated in D8.4.7.*
+**Inheritance / framing-correction note.** Scope lock §2.3 inherits
+this issue under the framing "Documentation drift, expectations.md '6
+themes' vs operational 5". Pre-outline anchor verification at D8.4.7
+surfaced that the inheritance framing structurally compresses the
+diagnostic shape. Documented and canonical sources converge on six
+themes across four anchors: `docs/d7_stage2d/stage2d_expectations.md`
+line 159 ("6 themes × 3 labels = 18-cell count table"); the
+`THEMES: tuple[str, ...]` definition in `agents/themes.py`
+(`momentum`, `mean_reversion`, `volatility_regime`,
+`volume_divergence`, `calendar_effect`,
+`multi_factor_combination`); `CLAUDE.md` line 226 ("THEMES is the
+canonical 6-theme list defined in D6"); and
+`blueprint/PHASE2_BLUEPRINT.md` line 657 (six-theme `THEMES` list).
+The Stage 2d operational fire at D8.2 §6.6(3) lines 762-822 records
+five themes observed in the ok-scored cohort with
+`multi_factor_combination` producing zero calls, classified as
+`primary_verdict = NOT_TESTABLE`,
+`interpretation_tag = observation_only`. The drift is between
+(multi-source documented and canonical methodology) and (single-source
+operational-fire observation), with the resolution layer not
+pre-selected at diagnosis time. Lock C held: the broaden operates on
+scope-lock §2.3 inheritance framing, not on D8.2 §6.6(3) evidence
+state; the `NOT_TESTABLE / observation_only` adjudication stands at
+its evidence state. The retitling is structurally analogous to D8.4.5
+§4.4 title retirement (inherited
+`asymmetric_calibration` → scope-explicit
+`Paired-floor calibration coherence under derived joint failure`)
+and to D8.4.6 §4.5 Part 2 broadening (prompt-design-primary →
+theme-conditional surfacing mechanism under-specification with no
+methodology layer pre-selected at diagnosis time); three instances
+across the D8.4 sub-arc now form a discipline pattern (Process Note
+43 candidate, recorded for D8.4.10 closeout). Prior sealed sites
+(scope-lock §2.3 inventory, D8.4.1 §3 inventory) retain the
+inherited title and stand at their evidence state per scope lock §10
+immutability.
 
-`proposal_confidence`: *(declared in D8.4.7)*
+`proposal_confidence`: **medium-low**.
+
+Diagnosis-to-spec internal coherence holds at the operational-vs-
+documentation alignment surface. The diagnosis-to-spec chain runs:
+multi-source documented and canonical convergence on six themes →
+single-source operational-fire observation of five themes with
+`multi_factor_combination` zero-call observation → operational-vs-
+documentation alignment under-specification at the methodology-design
+layer → adjudication-and-routing spec describing how each candidate
+resolution layer would be tested, authorized, and sequenced if
+selected, with no resolution layer pre-selected at diagnosis time.
+The label calibrates to medium-low because the load-bearing
+resolution layer is not yet identified at the spec level; open-
+resolution-layer uncertainty at the spec level distinguishes Issue 6
+from issues with clearly bounded resolution layers. Rationale
+anchored on absolute terms per scope lock §5.1 strict semantics: the
+label is internal-coherence signal under open-resolution-layer
+uncertainty at the spec level; per scope lock §5.1 it is not
+validation evidence and MUST NOT be cited as proof that the proposed
+adjudication-and-routing spec works.
 
 #### Part 1 — Diagnosis
 
-*Populated in D8.4.7.*
+The diagnostic surface is operational-vs-documentation alignment
+under-specification observed at D8.2 §6.6(3) Theme × UB label
+contingency (lines 762-822). The documented and canonical methodology
+specifies six themes: this specification is recoverable from four
+distinct anchors that converge byte-equivalently on the six-theme
+list. (1) `docs/d7_stage2d/stage2d_expectations.md` line 159
+specifies "6 themes × 3 labels = 18-cell count table" as the
+pre-registered cross-tab structure. (2) The
+`THEMES: tuple[str, ...]` definition in `agents/themes.py`
+enumerates the six themes (`momentum`, `mean_reversion`,
+`volatility_regime`, `volume_divergence`, `calendar_effect`,
+`multi_factor_combination`) as the canonical operational
+identifiers, marked with a `CONTRACT BOUNDARY` comment that names
+the six-theme tuple as the binding canonical list. (3) `CLAUDE.md`
+line 226 records the canonical specification ("THEMES is the
+canonical 6-theme list defined in D6") at the project-instruction
+level. (4) `blueprint/PHASE2_BLUEPRINT.md` line 657 lists the
+six-theme `THEMES` list at the blueprint planning-document level.
+All four anchors specify the same six themes; no inconsistency among
+documented or canonical sources is observed.
+
+The Stage 2d operational fire produced 199 UB calls, of which 197
+records constitute the ok-scored cohort referenced at §6.6(3) (and
+referenced upstream at D8.2 §3). D8.2 §6.6(3) records the Theme × UB
+label contingency for the ok-scored cohort: five themes are observed
+in the contingency table (`momentum`, `mean_reversion`,
+`volatility_regime`, `volume_divergence`, `calendar_effect`); the
+sixth canonical theme `multi_factor_combination` produces zero calls
+in the observed fire. D8.2 adjudicates the §6.6(3) observation as
+`primary_verdict = NOT_TESTABLE`,
+`interpretation_tag = observation_only`, preserving evidence-state
+without pre-attributing the gap to any specific resolution layer.
+
+The under-specification surface is the alignment relationship between
+documented + canonical methodology and the operational fire, not any
+specific defect within either side. Documented + canonical sources
+are internally consistent (all four anchors specify six themes
+identically). The operational fire is internally consistent (the
+ok-scored cohort observation is faithfully recorded at §6.6(3) with
+explicit cell counts and `NOT_TESTABLE` adjudication). What is
+under-specified is the methodology-design relationship between the
+two: whether the documented six-theme specification is intended to be
+operationally enforced (such that any fire that produces fewer themes
+indicates an operational-pipeline defect), is intended as an
+upper-bound specification (such that any fire that produces a subset
+is operationally valid), is intended to be revised based on observed
+operational behavior, or is intended to remain as-is with the
+operational variance accepted as design tolerance. Each of these
+methodology-design positions is consistent with the observed evidence
+at this diagnosis stage; none is pre-selected by D8.2's
+`NOT_TESTABLE / observation_only` adjudication.
 
 #### Part 2 — Root cause
 
-*Populated in D8.4.7.*
+Gap-type attribution: **operational-vs-documentation alignment
+under-specification (primary, single attribution per scope lock §5;
+no resolution layer pre-selected at diagnosis time)**. The
+under-specification is at the methodology-design layer, operating on
+the relationship between documented + canonical methodology and
+operational-fire observation, not within either side independently.
+The single-primary attribution discipline is satisfied at one unit:
+the alignment surface between the two sides. Distinct from Issue 5's
+theme-conditional surfacing mechanism under-specification (Issue 5
+operates on the design-time vs post-hoc surfacing question across
+prompt + label + cross-tab construction; Issue 6 operates on the
+documented-vs-operational alignment question across multi-source
+documentation and single-source observation). Distinct from Issues
+3 and 4's calibration units (single-floor vs paired-floor); Issue 6
+is not a calibration question. Distinct from Issues 1 and 2's
+divergence-label and direction-of-prediction units; Issue 6 is not a
+classification or directional question.
+
+Candidate resolution layers, layer-agnostic at diagnosis time, with
+open-set qualifier:
+
+- (a) **Documentation update.** The six-theme specification is
+  over-specified relative to operational design intent; documented +
+  canonical sources are revised to reflect the operationally
+  realized theme set. Resolution sub-cases include reducing to five
+  themes if `multi_factor_combination` is genuinely never
+  operationally produced; documenting `multi_factor_combination` as
+  optional or theoretical; or annotating the six-theme list with
+  operational-realization caveats.
+- (b) **Operational-path investigation or enforcement.** The
+  documented six-theme specification is intended to be operationally
+  enforced; the operational pipeline should produce all six themes
+  but did not in the observed Stage 2d fire. Resolution sub-cases
+  include investigating why `multi_factor_combination` produced zero
+  calls (proposer-side selection bias, candidate-generation gap,
+  prompt-conditional theme exclusion, or other operational
+  mechanism); enforcing six-theme coverage at the operational layer;
+  or instrumenting the operational pipeline to detect theme-coverage
+  gaps as part of fire validation.
+- (c) **Candidate-generation investigation.** A subset of
+  operational-path framing focused specifically on the candidate-
+  generation surface: the proposer or candidate-surfacing mechanism
+  should produce candidates spanning all six themes but did not for
+  `multi_factor_combination` in the observed fire. Resolution
+  sub-cases include investigating the proposer's theme-conditional
+  candidate-generation behavior; checking whether
+  `multi_factor_combination` requires more complex candidate
+  conditions that are not satisfied at the proposer level; or
+  examining whether prompt-design properties bias candidate
+  generation away from `multi_factor_combination`.
+- (d) **Methodology-acceptance / no-edit.** The operational variance
+  observed at §6.6(3) is consistent with the six-theme specification
+  as design-tolerance: the documented six-theme list specifies the
+  set of *possible* operational themes, not the set of *required*
+  operational themes; any given fire may legitimately produce a
+  subset. Resolution sub-cases include accepting the observed
+  variance as in-tolerance; documenting the design-tolerance
+  interpretation explicitly; or specifying minimum theme-coverage
+  expectations across multi-fire aggregates rather than per-fire.
+- (e) **Equivalent named framing not yet enumerated.** The candidate
+  list (a)-(d) is not asserted to be exhaustive at diagnosis time.
+  An equivalent named framing not yet articulated may be the correct
+  resolution layer; the open-set qualifier preserves the under-
+  specification at the spec level rather than constraining
+  resolution to the four enumerated framings.
+
+No layer pre-selected at diagnosis time. D8.4.7 surfaces the under-
+specification and routes to the appropriate sub-phase or authorized
+future work for layer-resolution. The four candidate framings (a),
+(b), (c), (d) each pre-select a different methodology-design
+position; without a resolution-layer-selection adjudication, none is
+load-bearing for D8.4.7's diagnosis. The structural-property-not-
+form discipline parallel to D8.4.4 §4.3 Part 3a point 1, D8.4.5 §4.4
+Part 3a point 1, and D8.4.6 §4.5 Part 3a point 1 (d) is satisfied at
+this Part 2 layer-agnostic enumeration: the structural property
+(operational-vs-documentation alignment under-specification with no
+resolution layer pre-selected at diagnosis time) is locked; the
+resolution-layer choice is not locked.
 
 #### Part 3a — Proposed revision spec
 
-*Populated in D8.4.7.*
+D8.4.7 produces an adjudication-and-routing spec, not a methodology-
+revision spec. The structural shape of the proposed revision is
+documentation-routing rather than methodology-rewrite: D8.4.7 does
+not propose a specific edit to the documented six-theme
+specification, the operational pipeline, or the methodology-design
+contract; D8.4.7 proposes the spec for how the candidate resolution
+layers would be tested, authorized, and sequenced if any one of them
+were selected.
+
+Five framing options enumerated for routing-spec authoring,
+corresponding one-to-one to Part 2 candidate resolution layers:
+
+1. **Documentation-completeness framing (corresponds to candidate
+   (a)).** The adjudication asks whether the documented six-theme
+   specification is over-specified relative to operational design
+   intent; if so, the documentation update routes to a
+   documentation-correction sub-phase (post-D8.4 sub-arc) where the
+   four documented + canonical anchors are updated coherently with
+   explicit cross-anchor consistency verification.
+2. **Operational-path framing (corresponds to candidate (b)).** The
+   adjudication asks whether the operational pipeline should produce
+   all six themes and failed to do so in Stage 2d; if so, the
+   operational-path investigation or enforcement routes to an
+   operational-pipeline sub-phase where the candidate-generation,
+   proposer-selection, and theme-coverage surfaces are investigated
+   for the mechanism that produced zero `multi_factor_combination`
+   calls.
+3. **Candidate-generation framing (corresponds to candidate (c)).**
+   The adjudication asks whether the proposer or candidate-surfacing
+   mechanism is the locus of the under-specification; if so, the
+   candidate-generation investigation routes to a proposer-mechanism
+   sub-phase examining theme-conditional candidate-generation
+   behavior.
+4. **Methodology-acceptance framing (corresponds to candidate (d)).**
+   The adjudication asks whether the observed operational variance
+   is in-tolerance for the six-theme specification interpreted as
+   design-tolerance; if so, the methodology-acceptance routes to an
+   acknowledgment sub-phase recording the design-tolerance
+   interpretation explicitly without methodology revision.
+5. **Open-set framing (corresponds to candidate (e)).** The
+   adjudication acknowledges that the four enumerated framings may
+   not exhaust the resolution-layer space; if a not-yet-enumerated
+   framing is the correct resolution layer, the routing-spec
+   accommodates the un-enumerated framing by deferring resolution-
+   layer selection to authorized future work without committing to
+   the (a)/(b)/(c)/(d) enumeration as exhaustive.
+
+The adjudication spec consumes the Stage 2d 5-theme observation as
+evidence but does not let that observation pre-select the resolution
+layer. The observation motivates the adjudication question; the
+framing choice remains deferred to a future authorized phase.
+Validation-form pre-registration at Part 4 operates pre-replication.
 
 #### Part 3b — Expected behavior change
 
-*Populated in D8.4.7.*
+The expected behavior change at the methodology-design layer is the
+disambiguation of the operational-vs-documentation alignment
+relationship: post-resolution, one of the four enumerated framings or
+an equivalent un-enumerated framing carries the load of the alignment
+specification, with the chosen framing's resolution applied to the
+documented + canonical sources, the operational pipeline, the
+methodology-design contract, or some combination per the chosen
+framing's scope.
+
+D8.4.7 does not commit to a specific behavior change because Part 2
+leaves the resolution layer open. The revised methodology's behavior
+is expected to surface a coherent operational-vs-documentation
+alignment specification at whichever methodology-design layer carries
+the load (per Part 3a's open-set qualifier), not at a pre-selected
+layer. Cross-Part coherence pattern parallel to D8.4.6 §4.5 Part 3b
+layer-agnostic-vs-implementation non-collapse and to D8.4.5 §4.4 Part
+3b temporal-boundary non-collapse.
+
+Out-of-scope explicitly:
+
+1. **Selecting any specific resolution layer.** Lock A (proposal-
+   only): D8.4.7 surfaces the under-specification and routes to the
+   appropriate sub-phase or authorized future work; D8.4.7 does not
+   pre-select among the (a)/(b)/(c)/(d)/(e) candidate framings.
+   Resolution-layer selection is deferred to authorized future
+   sub-phase per Lock A.
+2. **Editing documented sources.** Lock B (no edits to D8.0 / D8.1 /
+   D8.2 / D8.3 sealed artifacts and, by extension, no edits to the
+   four documented + canonical anchors at this sub-phase): D8.4.7
+   does not edit `docs/d7_stage2d/stage2d_expectations.md`,
+   `agents/themes.py`, `CLAUDE.md`, or
+   `blueprint/PHASE2_BLUEPRINT.md`. If the documentation-completeness
+   framing is selected at the authorized future sub-phase, those
+   edits route to a post-D8.4 documentation-correction sub-phase, not
+   to D8.4.7.
+3. **Editing the operational pipeline.** Lock A (proposal-only) and
+   Lock B (no-edit): D8.4.7 does not modify candidate generation,
+   proposer-selection, theme-assignment, or any other operational
+   pipeline surface. If the operational-path or candidate-generation
+   framings are selected at the authorized future sub-phase, those
+   edits route to an operational-pipeline sub-phase, not to D8.4.7.
+4. **Re-running Stage 2d or any new operational fire.** Lock A
+   (proposal-only): D8.4.7 does not propose new operational fires or
+   re-runs of sealed Stage 2d. The observed §6.6(3) evidence stands
+   at its evidence state; resolution-layer selection operates on the
+   observed evidence plus authorized future work, not on new
+   operational data.
 
 #### Part 4 — Validation plan
 
-*Populated in D8.4.7.*
+**Structural-distinction acknowledgment.** Issue 6's revision is
+documentation-routing-spec rather than methodology-revision-spec. The
+validation form structurally cannot mirror Issues 3, 4, and 5's
+necessary (synthetic / controlled) plus sufficient (out-of-sample /
+natural) pattern, which couples two evidential surfaces of the same
+methodology behavior. Issue 6's validation operates on two distinct
+artifacts: the adjudication artifact (this sub-phase) and the
+operational behavior or documentation revision under whichever
+framing is selected (authorized future sub-phase). The two surfaces
+do not compose the way Issues 3, 4, and 5's necessary and sufficient
+surfaces compose; the adjudication-completeness check operates on
+the routing spec, the framing-specific verification operates on the
+chosen-framing's behavior. Acknowledging the structural distinction
+explicitly avoids the artifact-mixing failure mode where a
+methodology-revision Part 4 pattern is applied to a documentation-
+routing Part 4 substantive shape.
+
+The validation form has two layers:
+
+1. **Adjudication-artifact completeness check (this sub-phase).** The
+   routing spec is complete iff it enumerates all candidate
+   resolution layers, each with a testable framing, no layer pre-
+   selected, no observation imported as resolution-layer pre-
+   selection, and scope boundaries explicit at Part 3b out-of-scope
+   items. The completeness check is satisfied at D8.4.7 if Part 2
+   enumerates (a)-(e) layer-agnostic with open-set qualifier; Part 3a
+   enumerates the five framings with one-to-one correspondence to
+   Part 2 candidates and explicit observation-consumption-without-
+   resolution-pre-selection language; Part 3b enumerates the four
+   out-of-scope items with explicit Lock A and Lock B citations; and
+   Part 6 enumerates the three drift classes with explicit Lock D
+   preservation language. Completeness is the validation criterion
+   for the adjudication artifact; the artifact does not need to
+   prove that any specific resolution-layer choice is correct, only
+   that the routing spec is complete.
+2. **Framing-specific downstream verification (authorized future
+   sub-phase, conditional on resolution-layer selection).** Once a
+   resolution layer is selected at authorized future work, framing-
+   specific verification operates on the operational behavior or
+   documentation revision under that framing. The verification form
+   depends on the framing: documentation-completeness framing
+   verifies cross-anchor consistency post-update; operational-path
+   framing verifies that the operational pipeline produces all six
+   themes post-investigation or post-enforcement; candidate-
+   generation framing verifies that the proposer or candidate-
+   surfacing mechanism produces theme-balanced candidates post-
+   investigation; methodology-acceptance framing verifies that the
+   design-tolerance interpretation is documented coherently; open-
+   set framing verifies the un-enumerated framing's specific
+   verification surface as articulated at the future selection.
+
+Issue 6 validates routing-spec completeness at this sub-phase;
+methodology-behavior verification is deferred to authorized future
+work per Lock A.
 
 #### Part 5 — Affected rows or scope-level impact
 
-*Populated in D8.4.7. Documentation-only issue: no row attribution.*
+Scope-level. No row attribution per scope lock §5 Part 5 (row
+attribution is restricted to Issues 1 or 2; pos 3 and pos 138 / 143
+double-duty preservation obligation is satisfied at §1.1 + §4.1 Part
+5 + §4.2 Part 5). Issue 6 operates at scope level: the (multi-source
+documented + canonical) ↔ (single-source operational fire) alignment
+surface, not specific row identifiers. The
+`multi_factor_combination` zero-call observation is a theme-level
+cohort-cardinality observation, not a per-row diagnostic anchor.
+Pos 138 / 143 not cited (operational-vs-documentation alignment
+under-specification does not materially touch RSI-absent
+`vol_regime` test-retest framing). Pos 3 not cited (Issue 6 does not
+touch divergence-label cohort interpretation or score-axis
+structure; double-duty preservation obligation satisfied at §1.1 +
+§4.1 Part 5 + §4.2 Part 5 per scope lock §5 Part 5 "issues 1 or 2"
+restriction; non-citation declaration at §4.6 Part 5 does not count
+toward satisfaction floor; mirrors D8.4.4 §4.3 Part 5, D8.4.5 §4.4
+Part 5, and D8.4.6 §4.5 Part 5 sealed convention).
 
 #### Part 6 — Issue interaction check
 
-*Populated in D8.4.7.*
+Three drift classes now distinguished across the D8.4 sub-arc, with
+Lock D six-issue boundary preserved by distinguishing rather than
+merging:
+
+- **D8.4.4 §4.3 Part 6 forward-pointer catalog (internal-presentation
+  drift class).** D8.2 §9 / appendix summary tables at lines 1043,
+  1073, and 1228 carry numeric and tag drift relative to the per-
+  claim authoritative records at §6.2.1 (≥52/66 detailed vs ≥50/66
+  summary), §6.3(a) (≥90/199 detailed vs ≥60/199 summary), §6.3(b)
+  (≥30/199 detailed vs ≥40/199 summary), and §6.3 joint
+  (FAIL / `derived_joint_failure` detailed vs PARTIAL /
+  `asymmetric_calibration` summary). The four-row catalog routes to
+  a post-D8 documentation-correction sub-phase at single-entry
+  forward-pointer discipline. Drift class: internal-presentation
+  drift within D8.2 between detailed records and summary tables; not
+  a methodology-design gap.
+- **D8.4.6 §4.5 Part 1 preamble (reference-frame variation class).**
+  Scope-lock §2.3 issue 5 (line 131) and D8.4.1 §3 inventory (line
+  123) cite the forensic cross-tab anchor as "§7 forensic cross-
+  tab", while D8.2's own internal subsection header at line 870
+  reads "§6 forensic cross-tab"; D8.4.6 prose uses "D8.2 §6 forensic
+  cross-tab" matching D8.2's own internal header. Two accurate
+  citation forms point to the same cross-tab content via different
+  reference frames (physical container vs claim-family). Drift
+  class: reference-frame variation across two accurate citation
+  forms; not anchor drift; no new drift catalog entry; no
+  methodology-design gap.
+- **D8.4.7 (this sub-phase, documented/canonical-vs-operational-fire
+  alignment drift class).** Documented + canonical sources (four
+  anchors) converge on six themes; the Stage 2d operational fire at
+  §6.6(3) records five themes observed with
+  `multi_factor_combination` zero-call. Drift class: alignment
+  surface between (multi-source documented + canonical) and (single-
+  source operational fire); operational-vs-documentation alignment
+  under-specification at the methodology-design layer with no
+  resolution layer pre-selected at diagnosis time.
+
+The three drift classes are structurally distinct: internal-
+presentation drift operates within a single sealed artifact (D8.2)
+between its detailed and summary representations; reference-frame
+variation operates across multiple accurate citations of the same
+content via different framing conventions; documented/canonical-vs-
+operational-fire alignment drift operates across the multi-source
+documentation + canonical surface and the single-source operational
+observation surface. No merging into a unified drift catalog; no
+seventh issue surfaced; the D8.4.4 §4.3 Part 6 four-drift catalog
+remains reserved for D8.2 §9 / appendix internal-presentation drift;
+the D8.4.6 §4.5 reference-frame variation acknowledgment remains
+non-cataloguing; the D8.4.7 documented-vs-operational alignment is
+its own distinct class. Lock D six-issue boundary held.
+
+Forward-pointer routing for Issue 6 resolution-layer selection
+deferred to authorized future sub-phase (post-D8.4 sub-arc). Routing
+sub-cases by chosen framing: documentation-completeness framing, if
+selected, routes to a post-D8 documentation-correction sub-phase
+(distinct from D8.4.4 §4.3 Part 6 four-drift catalog; the four-drift
+catalog operates on D8.2 internal-presentation drift, while Issue 6
+documentation-completeness operates on documented + canonical anchor
+revision); operational-path framing or candidate-generation framing,
+if selected, routes to an operational-pipeline sub-phase examining
+the candidate-generation, proposer-selection, or theme-coverage
+surfaces; methodology-acceptance framing, if selected, routes to an
+acknowledgment sub-phase recording the design-tolerance
+interpretation explicitly without methodology revision; open-set
+framing, if selected, routes to whichever sub-phase the un-
+enumerated framing's resolution requires.
+
+Conflicts at D8.4.7's evidence state: none observed against Issues
+1, 2, 3, 4, or 5. Issue 6 operates at the operational-vs-
+documentation alignment surface, which is structurally distinct from
+Issues 1's divergence-label definition unit, Issue 2's direction-of-
+prediction unit, Issue 3's single-floor calibration unit, Issue 4's
+paired-floor calibration unit, and Issue 5's theme-conditional
+surfacing mechanism unit. Potential interactions: Issue 5's theme-
+conditional surfacing mechanism under-specification and Issue 6's
+operational-vs-documentation alignment under-specification both
+involve theme-related observations at D8.2 §6.6, but at structurally
+distinct units (Issue 5 at the cell-level methodology layer per
+§6.6(3) skews and adjacent material findings; Issue 6 at the theme-
+cardinality alignment layer per the
+`multi_factor_combination` zero-call observation). The two issues
+do not collapse: Issue 5's resolution operates on the design-time
+vs post-hoc surfacing question across prompt + label + cross-tab
+construction; Issue 6's resolution operates on the documented-vs-
+operational alignment question across multi-source documentation
+and single-source observation. Reconciliation between Issue 5 and
+Issue 6 resolutions, if both proceed to authorized future work,
+routes to synthesis-level work, not to Issue 6 prose. D8.4.7
+surfaces the *potential* interaction without resolving.
 
 ---
 
