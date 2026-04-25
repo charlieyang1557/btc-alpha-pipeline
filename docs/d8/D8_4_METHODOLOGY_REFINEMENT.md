@@ -2836,35 +2836,299 @@ surfaces the *potential* interaction without resolving.
 
 ## 5. Synthesis
 
-*Populated in D8.4.8.*
+D8.4.8 collapses synthesis, forward pointers, and sub-arc closeout
+into a single commit per Option C-collapsed (Charlie authorization
+2026-04-25) after a candid mid-arc review surfaced that the locked
+Bucket-1 sub-sequence was generating protocol-of-protocol
+elaboration disproportionate to substantive output for the lighter-
+density issues. The substantive findings and per-issue concrete
+next actions are recorded below in plain prose; the issue-
+interaction matrix follows; sub-arc seal and forward pointers
+collapse into §6; Appendix D.2 records the SHA log.
 
-Cross-issue themes, the **issue-interaction matrix** (recording
-artifact only — MUST NOT propose joint or cross-issue fixes per scope
-lock §7.3), newly surfaced (out-of-scope) methodology questions
-deferred to a future phase, aggregate impact on D8.3
-METHOD-QUESTION rows + scope-level implications, and the aggregate
-`proposal_confidence` distribution across the six issues
-(informational, not gating).
+### 5.1 Substantive findings and concrete next actions per issue
+
+**Issue 1 — Divergence-label definition audit (sealed at `3a8314d`).**
+The pre-registered divergence-label definition at
+`stage2d_expectations.md` L77-85 carries a definitional gap that
+allows record-set ambiguity at the cohort interpretation layer.
+Concrete next action: decide whether the L77-85 definition needs an
+amendment for the next Stage 2-class fire. Probably yes; ~1 hour to
+draft a proposed amendment that closes the cohort-interpretation
+ambiguity. Decision owner: Charlie. Sequencing: before next Stage 2-
+class operational fire, not blocking on D8.4 closeout.
+
+**Issue 2 — Direction-of-prediction recalibration (sealed at
+`95109f7`).** D7b prompt does not elicit direction (long/short) at
+the candidate level, leaving the directional interpretation to
+downstream framing rather than to the Critic's pre-registered
+output. Concrete next action: either fold direction-of-prediction
+elicitation into the next D7b prompt iteration, or accept current
+behavior with explicit documentation that direction is downstream-
+inferred. Binary decision, not investigation. Decision owner:
+Charlie. Sequencing: at next D7b prompt revision touch.
+
+**Issue 3 — Lower-tail calibration (sealed at `86d69b1`).** The
+pre-registered ≥30/199 lower-tail floor was missed by 4 (observed
+26/199, shortfall 4, `calibration_shortfall` tag). Two paths:
+(a) re-derive the floor against an explicit calibration model
+before the next fire so subsequent floors are anchored on a stated
+methodology rather than inherited heuristic; (b) accept the 26/199
+outcome as in-tolerance and continue with the existing floor
+heuristic. Binary decision. Decision owner: Charlie. Sequencing:
+before next pre-registration of any Stage 2-class floor; can be
+folded with Issue 4's decision since they share the calibration
+question.
+
+**Issue 4 — Paired-floor calibration coherence under derived joint
+failure (sealed at `50e4731`).** Same calibration question as
+Issue 3 at the paired surface (≥90/199 upper PASS with +21
+headroom alongside ≥30/199 lower FAIL with -4 shortfall, joint
+PASS ∧ FAIL = FAIL `derived_joint_failure`). Concrete next action:
+collapses into Issue 3's calibration-model decision. If Issue 3
+chooses to re-derive against an explicit calibration model, the
+paired-floor coherence is naturally addressed; if Issue 3 accepts
+in-tolerance, Issue 4 is also accepted as in-tolerance.
+
+**Issue 5 — Forensic cross-tab methodology / prompt / label
+discipline (sealed at `7d6378b`).** Cell-level theme-conditional
+skews observed at D8.2 §6 forensic cross-tab (most notably
+`mean_reversion × neutral` 71% HIGH and `volatility_regime ×
+neutral` 18% HIGH). Operational question: does this theme-
+conditional pattern materially affect what the pipeline produces
+downstream (selection of strategies for shortlisting, alpha-
+generation pathways)? If yes, the pattern shapes the next D7b
+prompt or label-discipline revision; if no, the pattern stays at
+evidence state as a forensic note. Concrete next action: a one-
+session look at whether the cell-level skew correlates with
+shortlist outcomes — if `mean_reversion × neutral` HIGH-SVR
+candidates are systematically over- or under-represented in
+shortlists, the pattern matters; if not, accept as forensic-only.
+Decision owner: Charlie. Sequencing: before next D7b prompt or
+label-discipline revision touch; not blocking.
+
+**Issue 6 — Operational-vs-documentation alignment under-
+specification (sealed at `03112aa`).** Stage 2d operational fire
+produced 5 themes; documented + canonical methodology specifies 6
+themes; `multi_factor_combination` produced zero calls in the
+observed fire. Concrete next action: read the proposer logs and
+the D6 prompt to identify why `multi_factor_combination` produced
+no candidates. If candidates were generated and filtered, find the
+filter; if candidates were never generated, the prompt is the
+locus. ~30 minutes of work as a focused investigation. Outcome
+routes to one of: (a) fix the filter or prompt to surface the
+sixth theme; (b) document the design-tolerance interpretation
+(operational variance accepted as in-spec); (c) document
+`multi_factor_combination` as optional or theoretical in the
+canonical four-anchor sources. Decision owner: Charlie. Sequencing:
+30-minute task, can be done immediately or before next Stage 2-
+class fire.
+
+### 5.2 Issue-interaction matrix
+
+Recording artifact only per scope lock §7.3. The matrix has 15
+unique pairs across the 6 issues; most cells are "no substantive
+interaction" because the issues operate at structurally distinct
+methodological units.
+
+| Pair | Interaction shape |
+|---|---|
+| 1 × 2 | No interaction (definitional vs prompt-elicitation units) |
+| 1 × 3 | No interaction (definitional vs calibration units) |
+| 1 × 4 | No interaction |
+| 1 × 5 | No interaction (definitional vs cross-tab) |
+| 1 × 6 | No interaction (definitional vs alignment) |
+| 2 × 3 | No interaction (prompt vs calibration) |
+| 2 × 4 | No interaction |
+| 2 × 5 | Potential weak interaction (prompt-elicitation revision could affect cell-level cross-tab structure if direction-of-prediction is folded into label scheme); evidence does not require resolution |
+| 2 × 6 | Potential weak interaction (prompt revision is one resolution layer for Issue 6 candidate (b)/(c); not a co-issue) |
+| 3 × 4 | **Substantive interaction** (paired-floor coherence question collapses into single-floor calibration-model decision; Issue 4 resolves with Issue 3) |
+| 3 × 5 | No interaction (calibration vs cross-tab structure) |
+| 3 × 6 | No interaction |
+| 4 × 5 | No interaction |
+| 4 × 6 | No interaction |
+| 5 × 6 | Potential weak interaction (both touch theme-related observations at D8.2 §6.6, but at distinct units — Issue 5 cell-level methodology, Issue 6 theme-cardinality alignment); evidence does not require resolution |
+
+Substantive interaction count: 1 (Issue 3 × Issue 4).
+Potential weak interactions: 3 (2 × 5, 2 × 6, 5 × 6).
+No-interaction cells: 11.
+
+The 6 issues cohere as a system in the sense that they are
+substantively distinct rather than overlapping; the framework
+produced disjoint methodology questions that can be resolved
+independently except for the Issue 3 × Issue 4 calibration-model
+collapse.
+
+### 5.3 Aggregate `proposal_confidence` distribution
+
+Issue 1: medium; Issue 2: medium; Issue 3: medium; Issue 4: medium;
+Issue 5: medium-low; Issue 6: medium-low. Distribution: 4×medium +
+2×medium-low. Per scope lock §5.1 strict semantics, each issue's
+`proposal_confidence` is internal-coherence signal, not validation
+evidence. The aggregate distribution is informational only and does
+not constitute aggregate validation evidence. Lighter labels at
+Issues 5 and 6 reflect open-resolution-layer uncertainty at their
+respective spec levels (multi-layer methodology uncertainty for
+Issue 5; open-resolution-layer uncertainty for Issue 6); they do
+not signal that those issues' diagnostic findings are weaker than
+Issues 1-4's findings.
+
+### 5.4 Newly surfaced out-of-scope methodology questions (deferred)
+
+Surfaced during D8.4 sub-arc but explicitly out of scope for
+D8.4 per scope lock §3.2 / §10:
+
+- D8.2 §9 / appendix internal-presentation drift four-row catalog
+  (D8.4.4 §4.3 Part 6) — routes to post-D8 documentation-
+  correction sub-phase
+- Bucket 3 production-code findings from Codex audit (10
+  findings) — routes to separate ~30-60 minute triage session per
+  Claude advisor recommendation; **NOT bundled into D8.4 closeout**
+- Future protocol iteration with "lightweight track" for
+  definitional or documentation-class issues whose substantive
+  scope fits in a paragraph (recorded as design observation; no
+  commitment)
 
 ---
 
-## 6. Forward Pointers
+## 6. Forward Pointers and Sub-arc Seal
 
-*Populated in D8.4.9.*
+### 6.1 Per-issue forward pointers
 
-Per-issue forward pointer specifying receiving phase, implementation
-owner, validation owner, and explicit non-promise that D8.4 does not
-commit any future phase's scope.
+Per-issue receiving phase / decision owner / sequencing collapsed
+into §5.1 substantive findings above (each issue's "Concrete next
+action" + "Decision owner" + "Sequencing" lines). Explicit non-
+promise: D8.4 does not commit any future phase's scope; each per-
+issue concrete next action is a recommendation Charlie can adopt,
+modify, or decline.
+
+### 6.2 Bucket 3 production-code triage routing
+
+Codex independent verification at D8.4.7 surfaced 10 production-
+code findings (Bucket 3). These are deferred to a separate ~30-60
+minute triage session per the discipline that Bucket 3 should not
+be bundled into D8.4 closeout. Triage prompt template (Claude
+advisor recommendation):
+
+- **Fix now:** patch the file, commit, done. Highest priority for
+  `bulk_download.py` canonical-write-without-archive (HIGH severity;
+  the operational guardrail dissipates after D8.4 closes) and
+  `dsl_compiler.py` filename-inconsistency-with-CLAUDE.md-spec
+  (will silently bite future code that trusts the spec).
+- **Fix at next data refresh / next code touch:** defer until the
+  file is being opened anyway. Probably right for parquet-feed
+  fabrication and `incremental_update` fallback (only fire under
+  specific conditions).
+- **Accept as documented risk:** write 1-2 sentences in CLAUDE.md
+  or a code comment naming the risk and why. Probably right for
+  broad-catch strategy import and git metadata try/except: pass
+  (low severity, low blast radius).
+
+Per finding: ~3-5 minutes to triage. Total session: ~30-45 minutes.
+The `bulk_download` fix itself is ~15-20 minutes of code (add
+archive-before-canonical-write).
+
+### 6.3 Process Notes 36-44 brief summary
+
+Process Notes captured during the D8.4 sub-arc — the genuinely
+useful disciplines that prevented real defects, recorded here as
+brief text (3-5 sentences each) rather than canonical text commits
+per Option C-collapsed simplification. Sub-clauses, sub-refinements,
+and three-layer framings are recoverable from the conversation
+transcript if a future sub-arc of similar shape requires them.
+
+- **PN 36 (numeric anchor cross-check, authoring):** Authors
+  cross-check numeric anchors against per-claim authoritative
+  sources before drafting prose, not against summary-table
+  inheritance. Caught the ≥30/199 vs ≥40/199 drift at D8.4.4 R1
+  before any prose was authored. Generalizes to: pre-execution
+  gates inheriting canonical composition must verify against
+  sealed source (Bash invocation extraction, sealed commit body
+  text, or sealed appendix), not against recollection.
+- **PN 37 (reviewer numeric anchor cross-check):** Reviewers verify
+  authored numeric anchors against same authoritative sources;
+  catches drift that survives author-side checks. Operating cleanly
+  across all six issue prose ratifications.
+- **PN 38 (sub-phase-boundary independent verification):** Round 2
+  prose ratification requires verbatim inline prose-paste in the
+  conversation transcript, not on-disk content + line-index map.
+  The conversation transcript is the canonical record of what was
+  ratified; on-disk-only ratification creates audit-trail gaps.
+- **PN 39 (convergence-check explicitness):** Parallel reviewer
+  verdicts must convert procedural-acknowledgment-class responses
+  to explicit per-item PASS/FAIL via Option A discipline before
+  convergence-check. Discipline-fatigue signal observed: comparative-
+  framing residuals against scope-lock §5.1 reproduced at decreasing
+  severity across iterations.
+- **PN 40 (temporal-boundary discipline):** Methodology specs
+  preserve explicit non-collapse statements between temporal layers
+  (ex-ante pre-registration vs ex-post observation) and between
+  spec-internal layers (layer-agnostic vs implementation). Generalized
+  scope-coherence pattern.
+- **PN 41 (chain-trust verification):** Chain-trust applies to
+  reviewer claims, reviewer recommendations, implementer's prior
+  precedent citations, implementer's own pre-execution-gate
+  composition, and reviewer's own recollection-based proposals.
+  Symmetric application across all five sub-clauses.
+- **PN 42 (operational guardrails):** Production-code findings with
+  HIGH severity that are dormant only because of runtime context
+  (no data refresh during sub-arc) require explicit invocation +
+  modification gating during the sub-arc, with follow-through in a
+  separate triage session before the gating dissipates. Applied to
+  `bulk_download.py` canonical-write-without-archive at D8.4.7.
+- **PN 43 (scope-lock inheritance broaden discipline):** Three-
+  instance discipline pattern observed: D8.4.5 §4.4 title retirement
+  (`asymmetric_calibration` → scope-explicit), D8.4.6 §4.5 Part 2
+  broaden (prompt-design-primary → theme-conditional surfacing),
+  D8.4.7 §4.6 issue retitle (Documentation drift → operational-vs-
+  documentation alignment under-specification). Inherited scope-lock
+  framings can be broadened within issue substantive boundary when
+  pre-outline anchor verification surfaces structural compression.
+- **PN 44 (SHA gate three-layer composition):** SHA gate composition
+  has three layers — (a) scope-lock-anchored textual canonical;
+  (b) sub-phase-specific active-edit target extension; (c) sub-
+  phase-specific evidence extensions. Layer (b) emerged at D8.4.4
+  R2 as additive practice without explicit scope-lock amendment.
+  Future sub-arcs inheriting D8.4 patterns either textually seal
+  layer (b) or accept behavioral-provenance discipline.
+
+### 6.4 Mid-arc review and Option C-collapsed adoption
+
+Mid-arc review at D8.4.7 → D8.4.8 boundary (Claude advisor stepping
+out of role; ChatGPT concurrence; implementer concurrence; Charlie
+authorization) surfaced that the locked Bucket-1 sub-sequence was
+generating protocol-of-protocol elaboration disproportionate to
+substantive output for definitional / documentation-class issues
+(Issues 1, 2, 6 lighter than Issues 3, 4, 5). Option C-collapsed
+adopted: single closeout commit (this commit) instead of three
+sub-phases (synthesis / forward pointers / closeout) at full Bucket-
+1 cadence. Substantive findings preserved; protocol-of-protocol
+elaboration absorbed into the brief Process Notes summary above.
+Worth recording for future sub-arc design: the Bucket-1 sub-sequence
+is structurally appropriate for calibration / paired-floor / cross-
+tab methodology depth; a lightweight track is worth designing for
+definitional / documentation-class issues.
+
+### 6.5 Sub-arc seal
+
+D8.4 methodology refinement sub-arc closes with this commit. Issues
+1-6 sealed at their per-issue commits. The substantive findings,
+concrete next actions, and Bucket 3 routing-to-separate-session
+constitute the operational output of the sub-arc. Phase 2C strategy
+mining is the next priority.
 
 ---
 
-## 7. Closeout
+## 7. Phase 2C Priority Statement
 
-*Populated in D8.4.10.*
-
-Full SHA log across the D8.4 sub-arc commits (mirroring D8.3 Appendix
-D discipline), invariant verification log, and D8.4 sub-arc seal
-entry.
+The pipeline's purpose is BTC algorithmic trading alpha. D8.4 was
+methodology refinement on a Stage 2d critic forensic exercise and
+is now closed. The next priority is Phase 2C strategy mining; the
+methodology questions surfaced at Issues 1-6 are recommendations
+Charlie can adopt, modify, or decline at the appropriate operational
+touch points (D7b prompt revision, pre-registration for next Stage
+2-class fire, or as separate focused investigations). No sub-phase
+commitment beyond this commit.
 
 ---
 
@@ -2896,16 +3160,18 @@ records under D.2, D.3, ... in the same format.
 
 ### D.2 D8.4 sub-arc commit SHA log
 
-| Sub-phase | Commit | Document SHA | Date (UTC) |
+Sub-arc closed at D8.4.8 per Option C-collapsed (sub-phases D8.4.9
+and D8.4.10 absorbed into this commit; original 11-sub-phase plan
+collapsed to 9 actual commits).
+
+| Sub-phase | Commit | Date (UTC) | Notes |
 |---|---|---|---|
-| D8.4.0 | `7841a89` | scope lock at `43f7e09851e86788677af2518379a35a9e5d565de80fff9c66e8a6c4037f8bac` | 2026-04-24 |
-| D8.4.1 | *(this commit)* | *(captured in D8.4.10)* | 2026-04-24 |
-| D8.4.2 | *(D8.4.2)* | *(D8.4.10)* | *(D8.4.10)* |
-| D8.4.3 | *(D8.4.3)* | *(D8.4.10)* | *(D8.4.10)* |
-| D8.4.4 | *(D8.4.4)* | *(D8.4.10)* | *(D8.4.10)* |
-| D8.4.5 | *(D8.4.5)* | *(D8.4.10)* | *(D8.4.10)* |
-| D8.4.6 | *(D8.4.6)* | *(D8.4.10)* | *(D8.4.10)* |
-| D8.4.7 | *(D8.4.7)* | *(D8.4.10)* | *(D8.4.10)* |
-| D8.4.8 | *(D8.4.8)* | *(D8.4.10)* | *(D8.4.10)* |
-| D8.4.9 | *(D8.4.9)* | *(D8.4.10)* | *(D8.4.10)* |
-| D8.4.10 | *(D8.4.10)* | *(D8.4.10)* | *(D8.4.10)* |
+| D8.4.0 (scope lock) | `7841a89` | 2026-04-24 | Methodology refinement scope locked |
+| D8.4.1 (skeleton) | `eaf8d63` | 2026-04-24 | Skeleton commit; per-issue analysis deferred to D8.4.2-D8.4.7 |
+| D8.4.2 (Issue 1) | `3a8314d` | 2026-04-24 | Divergence-label definition audit |
+| D8.4.3 (Issue 2) | `95109f7` | 2026-04-24 | Direction-of-prediction recalibration |
+| D8.4.4 (Issue 3) | `86d69b1` | 2026-04-24 | Lower-tail calibration |
+| D8.4.5 (Issue 4) | `50e4731` | 2026-04-24 | Paired-floor calibration coherence under derived joint failure |
+| D8.4.6 (Issue 5) | `7d6378b` | 2026-04-25 | Forensic cross-tab methodology / prompt / label discipline |
+| D8.4.7 (Issue 6) | `03112aa` | 2026-04-25 | Operational-vs-documentation alignment under-specification |
+| D8.4.8 (closeout) | *(this commit)* | 2026-04-25 | Synthesis + forward pointers + sub-arc seal collapsed per Option C-collapsed |
