@@ -820,37 +820,464 @@ notice.
 
 ### 4.3 Issue 3 — Lower-tail calibration
 
-*Populated in D8.4.4.*
+Issue 3 authors a methodology proposal addressing the lower-tail
+prevalence floor-calibration gap surfaced by D8.2 §6.3(b)'s
+`calibration_shortfall` interpretation tag. The §6.3(b) gate asks
+whether the model produces enough low-SVR observations to populate
+the distribution's lower tail at the pre-registered prevalence floor;
+the gate failed at 26 / 199 observed against a pre-registered floor of
+≥ 30 / 199, a shortfall of −4. The diagnostic target of Issue 3 is
+the floor-calibration methodology that produced the ≥ 30 / 199 figure
+at pre-registration time, not the SVR ≤ 0.30 cut-point itself (whose
+documented derivation in `expectations.md` L105–107 is not in
+question). Issue 3 is a scope-level issue per scope lock §5 Part 5;
+no row-attribution citations appear in the analysis, and the
+composition observation in D8.2 §6.3(b) detailed record (22 neutral,
+4 divergence_expected; L459–461) is recorded as composition fact, not
+as row-attribution evidence for Issue 3.
 
-`proposal_confidence`: *(declared in D8.4.4)*
+`proposal_confidence`: **medium**. The diagnosis-to-spec internal
+coherence holds: the §6.3(b) detailed-record numerics
+(L444 / L446 / L453 / L455 / L457) bind the diagnostic target to the
+lower-tail prevalence floor with `calibration_shortfall` as the
+interpretation tag (L467), and the revision spec names a structural
+mechanism (re-derive future floors under an explicitly specified
+calibration model and specify the pre-registration methodology that
+produced them) that addresses the diagnosed gap. The shortfall is
+**modest** — 26 / 199 against a ≥ 30 / 199 floor is −4 in absolute
+terms, ~2 percentage points on the 199-position denominator, and
+~13% relative to the floor itself; the observed magnitude does not
+support the rhetorical force of "the floor was substantially
+overestimated", and the diagnosis is accordingly framed as a
+methodology under-specification rather than a large overestimation.
+The proposal is forward-looking only and is not validated, and the
+choice between point-floor and interval-floor form is a downstream
+design question. The label is calibrated to `medium` to reflect
+internal coherence under a modest-magnitude observed miss; it is not
+validation evidence and MUST NOT be cited as proof that the proposed
+methodology works (scope lock §5.1, strict semantics).
 
 #### Part 1 — Diagnosis
 
-*Populated in D8.4.4.*
+The §6.3(b) lower-tail prevalence floor was not upheld by Stage 2d
+evidence at its calibrated level. D8.2 §6.3(b) detailed record
+(L444 / L446 / L453 / L455 / L457 / L467) records the pre-registered
+claim verbatim from `expectations.md` L100 ("≥ 30 have SVR ≤ 0.30"),
+with operational definition `count(call.svr <= 0.30) over {all 199 UB
+calls} >= 30`, observed numerator 26, observed ratio 26 / 199, and
+shortfall vs threshold −4. The interpretation tag attached at L467
+is `calibration_shortfall`. Cross-anchored to
+`expectations.md` L100 ("Of all 199 UB calls, **≥ 30 have SVR ≤
+0.30** (lower tail).") and `expectations.md` L107 ("The ≥ 30 / 199
+lower bound is …").
+
+**Diagnostic target.** The diagnostic target is the
+floor-calibration methodology that produced the ≥ 30 / 199 figure at
+pre-registration. The SVR ≤ 0.30 cut-point itself is documented at
+`expectations.md` L105–107 with a neutral-stratum-share rationale and
+is not the diagnostic target. The pre-registered floor was not upheld
+at its calibrated level under Stage 2d evidence; D8.4.4 does not
+retroactively label the floor wrong, does not retroactively label
+D8.2's `FAIL` verdict wrong, and does not claim a different floor
+would have produced a `PASS` on the Stage 2d cohort.
+
+D8.2's `FAIL` verdict and `calibration_shortfall` interpretation tag
+stand at their evidence state.
+
+**Numeric-anchor drift note (five-point structured).** A drift
+between D8.2's per-claim detailed adjudication and its later summary /
+appendix presentations was surfaced during D8.4.4 pre-authoring
+cross-check and independently confirmed by a Codex read-only
+verification pass. The five points below record the discovery, the
+inherited drift sites in D8.4 itself, the anchor decision adopted by
+D8.4.4, the scope discipline that governs the surfacing, and the
+forward pointer for a post-D8 documentation-correction sub-phase.
+
+1. **Discovery.** D8.2 has internal numeric drift between its
+   §6.3(b) detailed record (≥ 30 / 199 floor, shortfall −4;
+   L444 / L446 / L453 / L457) and its later §9 / appendix summary
+   presentations (≥ 40 / 199 floor; L1043 row 4, L1073, L1228).
+   Codex independent verification (read-only) confirmed the
+   §6.3(b) discrepancy and surfaced three additional drifts of the
+   same class in §6.2.1, §6.3(a), and §6.3 joint (catalogued at
+   §4.3 Part 6 forward pointer below).
+2. **Inherited drift sites in D8.4.** [`docs/d8/D8_4_METHODOLOGY_REFINEMENT.md:121`](D8_4_METHODOLOGY_REFINEMENT.md#L121)
+   (D8.4.1 §3 inventory, sealed at commit `eaf8d63`) and
+   [`docs/d8/D8_4_METHODOLOGY_REFINEMENT.md:529`](D8_4_METHODOLOGY_REFINEMENT.md#L529)
+   (D8.4.3 §4.2 Part 2 cross-reference, sealed at commit
+   `95109f7`) carry the drifted ≥ 40 / 199 anchor by inheritance
+   from D8.2 §9.1 row 4 (L1043). The D8.4.1 inventory and D8.4.3
+   cross-reference both stand at their evidence state per scope
+   lock §10 immutability and are not edited by D8.4.4.
+3. **Anchor decision.** D8.4.4 §4.3 anchors every numeric to D8.2
+   §6.3(b) detailed record (L444 / L446 / L453 / L455 / L457 / L467)
+   and `expectations.md` L100 / L107. Pre-registered floor:
+   ≥ 30 / 199. Observed: 26 / 199. Shortfall: −4. Interpretation tag:
+   `calibration_shortfall`. This is consumption of the per-claim
+   authoritative source per D8.4 scope lock §1, not re-adjudication
+   of D8.2's verdict.
+4. **Scope discipline.** Prior sealed sites (D8.4.1 inventory,
+   D8.4.3 §4.2 Part 2 cross-reference) stand at their evidence state
+   per D8.4 scope lock §10 immutability; D8.4 does not edit D8.2
+   internal text per scope lock §3.2 ("No edits to D8.0, D8.1, D8.2,
+   or D8.3 artifacts"). The drift is observed-and-surfaced, not
+   edited. D8.2's `FAIL` verdict and `calibration_shortfall`
+   interpretation tag stand at their evidence state.
+5. **Forward pointer.** The four-drift family (§6.2.1 floor,
+   §6.3(a) floor, §6.3(b) floor, §6.3 joint verdict tag) is
+   catalogued at §4.3 Part 6 below as a single forward-pointer
+   entry routed to a post-D8 documentation-correction sub-phase.
+   That sub-phase is distinct from Issue 6's `expectations.md` "6
+   themes vs 5" scope; the four-drift catalog is not a seventh
+   methodology issue (Lock D, scope lock §3.3, held).
 
 #### Part 2 — Root cause
 
-*Populated in D8.4.4.*
+**Gap-type attribution: calibration (primary, single attribution per
+scope lock §5).** The §6.3(b) `FAIL` is a calibration gap-type. The
+pre-registered floor of ≥ 30 / 199 was set by a methodology whose
+calibration provenance is not recorded with sufficient specificity
+to support stress-testing the floor value. `expectations.md` L105–107
+documents a neutral-stratum-share rationale ("Universe B has 128 / 199
+neutral-labeled, larger low-SVR mass is expected"), but the
+inferential step from "neutral share is large" to "≥ 30 / 199 is the
+right lower-tail prevalence floor" is not specified. The shortfall
+observed at Stage 2d (−4 on 199, ~2 percentage points) is the
+consequence of pre-registering a floor without an explicit
+calibration model: there is no recorded basis for adjudicating
+whether ≥ 30 / 199 was the right floor, whether a different
+calibration source would have produced a different floor, or what
+prior information the floor consumed.
+
+**Documentation gap-type rejection.** A documentation gap-type
+attribution ("the floor's provenance was simply not written down,
+but the methodology was sound") is rejected as Issue 3's primary
+attribution because `expectations.md` L105–107 already documents
+*some* rationale (the neutral-stratum-share argument). The gap is
+not absence-of-documentation; the gap is **under-specification of
+the calibration model itself** — the documented rationale does not
+specify the inferential step from prior information to floor value.
+Documentation-of-existing-state drift in `expectations.md` (the "6
+themes vs 5" mismatch) is Issue 6's exclusive scope. Issue 3's
+documented-provenance requirement (Part 3a point 4) is a
+calibration-spec internal requirement, not a documentation-drift
+gap-type — the distinction is articulated in Part 6 below and does
+not pre-empt or expand Issue 6.
+
+**Definitional gap-type rejection.** Issue 1 owns definitional gaps
+at the divergence-label boundary (`expectations.md` L77–85). §6.3(b)
+operates on a definitionally-clean cut-point (SVR ≤ 0.30) over a
+definitionally-clean cohort (all 199 UB calls). No L77–L85-class
+definitional ambiguity is at play.
+
+**Prompt-design gap-type rejection.** Issue 5 owns prompt-discipline
+scope (cell-level methodology, theme-taxonomy alignment, label-mention
+consistency across the full taxonomy). §6.3(b) is a structural-shape
+gate on the SVR distribution; no prompt-design surface produces or
+fails to produce the floor.
+
+The calibration attribution is single, not co-primary. Naming
+documentation, definitional, or prompt-design as co-primary would
+conflate gap-types and violate scope lock §5's distinct-attribution
+requirement.
 
 #### Part 3a — Proposed revision spec
 
-*Populated in D8.4.4.*
+The revision specifies that future lower-tail prevalence floors must
+be derived under an explicitly specified calibration model and that
+the methodology producing those floors must itself be specified at
+pre-registration time. The revision shape is **(I + IV) combination**
+per the D8.4.4 outline:
+
+- **(I)** re-derive future lower-tail prevalence floors under an
+  explicitly specified calibration model.
+- **(IV)** specify the pre-registration methodology that produces
+  those floors.
+
+Standalone (I) leaves the methodological gap open (a re-derived
+floor without a documented method has the same provenance gap as the
+original). Standalone (IV) does not instantiate (a method without a
+re-derived floor is procedural-only). The combination addresses both.
+Revision shape (II) — raise or lower the floor without specifying a
+methodology — is rejected because it would re-introduce the same gap
+at a different value. Revision shape (III) — consume Issue 4's joint-
+shape calibration into Issue 3's revision spec — is rejected because
+it would cross the Issue 3 ↔ Issue 4 boundary (Lock D, scope lock
+§3.3); the rejection is independently grounded in Issue 3's own
+scope (calibration methodology that produces the floor, not joint-
+rule consumption), not solely in Issue 4 boundary protection.
+
+**Revision spec (four points):**
+
+1. **Calibration sources (structural property locked, source choice
+   not locked).** A future lower-tail prevalence floor must be
+   derived from at least one of: (a) a historical reference cohort
+   (e.g., a prior Stage 2-class fire or a comparable evidence set
+   with documented composition), (b) a theoretical bound on
+   lower-tail prevalence given the stratum composition, or (c) an
+   empirical-Bayes prior over the lower-tail mass conditional on
+   Universe B composition. The spec **does not lock** which of
+   (a) / (b) / (c) is chosen; it locks the structural requirement
+   that the floor must be derived from one of these (or an
+   equivalent named source) rather than asserted without provenance.
+   This mirrors the structural-property-not-form discipline applied
+   in D8.4.3 §4.2 Part 3a point 1 (value-space form not locked;
+   structural requirement locked).
+2. **Floor form (point vs interval).** The spec admits both a point
+   floor (e.g., "≥ N at SVR ≤ 0.30") and an interval floor (e.g.,
+   "between N₁ and N₂ at SVR ≤ 0.30"). The form choice is downstream
+   and depends on the calibration source — empirical-Bayes naturally
+   produces an interval, a theoretical bound naturally produces a
+   point. The spec **does not lock** point vs interval; it requires
+   the form to follow from the calibration source.
+3. **Per-fire applicability (next future fire only).** The
+   methodology must specify how it applies to a future Stage
+   2-class fire's pre-registration of lower-tail-prevalence
+   expectations without ad-hoc derivation at fire time. Application
+   to fires beyond the next is **out of D8.4 scope**; multi-fire
+   applicability is forward-pointed to Stage 2e+ planning. This
+   narrowing is deliberate — committing the methodology to all
+   future fires inside D8.4 would commit Stage 2e+'s scope, which
+   scope lock §10 forbids; narrowing to the next fire keeps the
+   spec instantiable without overreach.
+4. **Documented provenance (calibration-spec internal requirement).**
+   Each future floor must carry documented provenance: which
+   calibration source produced it, what prior information it
+   consumed, what inferential step it used. This is a
+   **calibration-spec internal requirement** — provenance is part of
+   the calibration spec, not a separable documentation concern. It
+   is not a documentation-drift gap-type, does not pre-empt Issue 6
+   (whose scope is `expectations.md` "6 themes vs 5"), and does not
+   expand Issue 6 mid-arc. The distinction is reinforced in Part 6
+   below.
+
+**The revision spec does not:**
+
+- Propose a specific replacement floor value (e.g., "≥ 26", "≥ 25",
+  "between 24 and 32"). The spec is methodology-level; the value is
+  downstream of the chosen calibration source.
+- Edit `expectations.md`, D8.2 verdicts, D8.3 buckets, or any
+  sealed Stage 2d artifact. D8.4 is proposal-only per scope lock §1
+  and Lock A.
+- Adjudicate the SVR ≤ 0.30 cut-point. The cut-point's documented
+  derivation in `expectations.md` L105–107 is outside Issue 3's
+  scope.
+- Claim the proposed methodology is corrected, validated, or fixed
+  (Lock A). The revision is a proposed calibration methodology, not
+  a corrected one.
+- Pre-empt Issue 4's authoring at D8.4.5. Issue 4's framing question
+  is forward-pointed to D8.4.5's pre-authorization gate (Part 6
+  below).
 
 #### Part 3b — Expected behavior change
 
-*Populated in D8.4.4.*
+The revision **is intended to** make a future lower-tail prevalence
+floor traceable to a named calibration source and a documented
+inferential step, so that a future-fire shortfall (or surplus) can be
+diagnosed as a calibration-source mismatch rather than as an
+unprovenanced methodology drift. The revision **targets** the
+under-specified calibration-methodology gap diagnosed in Part 1. The
+revision **is expected to** make future floor-vs-observed comparisons
+interpretable along the calibration-source axis, conditional on the
+revised methodology surviving downstream design review and validation.
+
+The forward-looking behavior is stated as a structural attribute of
+the future methodology's specification ("traceable to a named
+calibration source"), not as an outcome-quality claim. The revision
+**does not** correct the §6.3(b) shortfall, eliminate calibration
+error, or guarantee a future fire would `PASS`. No claim is made that
+the revised methodology would produce a different verdict on the
+Stage 2d cohort. Whether the revision produces the intended
+structural traceability is established only by the validation
+procedure specified in Part 4 below, not by Part 3b's forward-looking
+statement.
+
+D8.2's `FAIL` verdict and `calibration_shortfall` interpretation tag
+stand at their evidence state. The revision is forward-looking only
+and does not retroactively recharacterize the D8.2 adjudication. The
+Part 3b forward-looking phrasing names a structural attribute the
+revised methodology *would expose*; it does not claim the §6.3(b)
+gate *would have passed* under the revised methodology, and it does
+not claim the D8.2 verdict was incorrect at its evidence state.
 
 #### Part 4 — Validation plan
 
-*Populated in D8.4.4.*
+Validation does not happen in D8.4. D8.4.4 specifies the validation
+form only; the validation procedure executes downstream, at the
+phase where the revised lower-tail-calibration methodology is
+implemented and exercised against an evidence set.
+
+**Necessary validation form: synthetic / simulation sanity check.**
+Construct synthetic Universe-B-composition draws under controlled
+lower-tail-prevalence parameters and process them through the
+revised calibration methodology. The necessary condition is that the
+revised methodology produces calibration sources and floors traceable
+to the controlled parameters — i.e., the methodology is
+self-describing under controlled inputs. This is a structural
+validation of the calibration spec itself, not a cohort-level claim
+about Stage 2d or any future cohort.
+
+**Sufficient validation form (conditional on the synthetic check):
+out-of-sample replication on a fresh Stage 2-class cohort.**
+Out-of-sample replication is structurally privileged over re-firing
+on the same Stage 2d evidence the calibration was derived from:
+re-firing on the same evidence carries a circularity risk (the
+calibration's method is being tested against the data it was
+calibrated to fit). A fresh-cohort replication breaks the
+circularity. The sufficient condition is that the revised
+methodology produces a floor whose calibration source can be cited
+and whose observed-vs-floor comparison can be diagnosed along the
+source axis.
+
+The synthetic sanity check is necessary; the out-of-sample
+replication is **sufficient to support a downstream adoption
+decision, not to prove future calibration performance**. Same-evidence
+replay against the Stage 2d cohort may be used as a reproducibility
+or sanity check only, not as primary validation evidence — the
+circularity discipline is what privileges out-of-sample replication
+over same-evidence re-fire for calibration questions.
+
+The validation plan does not establish: that the revised methodology
+produces a different verdict on the Stage 2d cohort; that calibration
+error is eliminated; that the proposed methodology will outperform
+the pre-registered methodology on any specific future fire.
+Validation establishes only that the revised methodology produces a
+calibration-source-traceable floor and that observed-vs-floor
+comparisons under the revised methodology are diagnosable along the
+calibration-source axis.
 
 #### Part 5 — Affected rows or scope-level impact
 
-*Populated in D8.4.4. Scope-level issue: no row attribution.*
+Scope-level. **No row attribution.** Per scope lock §5 Part 5, Issue
+3 is a scope-level issue; row-attribution citations would be a
+defect under the §5 Part 5 rule. The §6.3(b) lower-tail composition
+recorded at D8.2 L459–461 (22 neutral, 4 divergence_expected, 0
+agreement_expected) is composition fact recorded by D8.2 itself, not
+row-attribution evidence for Issue 3. Issue 3's proposed revision
+operates on the pre-registration methodology that produces the floor,
+not on individual rows.
+
+Pos 138 and pos 143 are not cited under Issue 3: lower-tail
+calibration does not materially touch RSI-absent vol_regime
+test-retest framing, and the §5 Part 5 row-attribution rule restricts
+pos 138 / 143 citation to issues that materially touch that framing.
+The pos 143 fresh-7 negation restatement obligation does not
+activate in §4.3.
+
+Pos 3 is not cited under Issue 3: Issue 3 does not touch the
+divergence-label cohort interpretation or the score-axis structure.
+The pos 3 double-duty preservation obligation (scope lock §1.2,
+≥ 2-site floor) is satisfied by §1.1, §4.1 Part 5, and §4.2 Part 5;
+Issue 3's scope does not interact with the double-duty surface.
+
+The scope-level impact: Issue 3's revision operates on the
+pre-registration methodology that produces the lower-tail prevalence
+floor; it does not change the §6.3(b) cut-point (SVR ≤ 0.30), does
+not change the §6.3(b) cohort (all 199 UB calls), and does not
+re-bucket any D8.3 candidate.
 
 #### Part 6 — Issue interaction check
 
-*Populated in D8.4.4.*
+**Upstream dependencies.** None. Issue 3's calibration-methodology
+revision is upstream of any issue that consumes a calibrated floor;
+no other issue's revision is a prerequisite for Issue 3's spec.
+
+**Downstream dependencies — Issue 2 (Direction-of-prediction
+recalibration).** Per D8.4.3 §4.2 Part 6 (sealed at commit
+`95109f7`), Issue 2's joint-rule shape requirement (D8.4.3 §4.2
+Part 3a point 4) may mechanically change which candidates fall into
+the §6.3(b) lower tail under a recalibrated joint rule, which would
+change the lower-tail count as a function of the joint rule rather
+than of SVR alone. **Issue 2 does not control the D8.4.4 revision
+shape under the selected (I + IV) path** — Issue 3's revision
+operates on the calibration methodology that produces the floor, not
+on the joint rule that produces the lower-tail count. Later
+synthesis (§5 of `D8_4_METHODOLOGY_REFINEMENT.md`) may need to
+reconcile Issue 2's joint-rule surface with Issue 3's
+floor-calibration methodology; D8.4.4 surfaces the potential
+reconciliation point without resolving it.
+
+**Downstream dependencies — Issue 4 (Joint-shape calibration
+implications).** The Issue 3 ↔ Issue 4 boundary is set against the
+**authoritative D8.2 §6.3 joint adjudication** at
+[`docs/d8/D8_STAGE2D_RESULT_ADJUDICATION.md:537-538`](D8_STAGE2D_RESULT_ADJUDICATION.md#L537),
+which records `primary_verdict = FAIL` and `interpretation_tag =
+derived_joint_failure`. Codex independent verification surfaced that
+the D8.2 §9 / appendix presentations at L1044 and L1229 use
+`PARTIAL` / `asymmetric_calibration`, and that the Issue 4 framing
+inherited into D8.3 §4.3, D8.4 scope lock §2.3 issue 4, and
+[`D8_4_METHODOLOGY_REFINEMENT.md:122`](D8_4_METHODOLOGY_REFINEMENT.md#L122)
+("Joint-shape asymmetric-calibration implications") was sourced from
+the D8.2 summary-layer presentation rather than from the detailed
+adjudication. **Issue 4 title/framing note.** The formal D8.2
+detailed joint adjudication records `FAIL / derived_joint_failure`.
+Later D8.2 summary rows use `PARTIAL / asymmetric_calibration`, and
+D8.3 / D8.4 inherited the issue title "Joint-shape
+asymmetric-calibration implications" from that summary-layer
+framing. D8.4.4 does not decide whether the inherited Issue 4 title
+remains analytically useful. D8.4.5 must adjudicate the Issue 4
+framing against the authoritative detailed joint record before
+authoring Issue 4 prose.
+
+**Issue 3's revision shape (I + IV) stands regardless of D8.4.5's
+adjudication outcome.** The rejection of revision shape (III)
+(joint-rule consumption into Issue 3) was independently justified by
+Issue 3's own scope (calibration methodology that produces the floor,
+not joint-rule consumption), not solely by Issue 4 boundary
+protection.
+
+**Downstream dependencies — Issue 6 (Documentation drift).** Part
+3a point 4's documented-provenance requirement is **internal to the
+calibration methodology spec, not a documentation-drift gap-type**.
+Issue 6's exclusive scope is documentation-of-existing-state drift
+in `expectations.md` (specifically, the "6 themes vs 5" mismatch
+recorded at `docs/d8/D8_3_SCOPE_LOCK.md` §4.3 issue 6). Issue 3's
+documented-provenance requirement is documentation-of-future-
+methodology — a different artifact (the calibration spec itself,
+not yet written), a different scope (internal completeness of a
+proposed methodology spec, not drift between a written document and
+its intended state), and a different remediation path (specifying
+the methodology, not editing `expectations.md`). No Issue 6
+expansion. Lock D held.
+
+**Conflicts at D8.4.4's evidence state.** None observed within Issue
+3's scope. Foreseeable conflict: if D8.4.5 adjudicates Issue 4 in a
+way that reframes "asymmetric calibration" as a calibration-
+methodology question rather than a joint-shape question, the Issue
+3 ↔ Issue 4 boundary may need synthesis-level reconciliation at §5
+of `D8_4_METHODOLOGY_REFINEMENT.md`. D8.4.4 surfaces the *potential*
+without resolving.
+
+**Forward-pointer catalog — D8.2 §9 / appendix internal-presentation
+drift (single forward-pointer entry, four rows, Lock D held).** The
+following four drifts between D8.2's per-claim detailed adjudication
+subsections (governing) and D8.2's §9 / appendix summary
+presentations (inherited drift) are surfaced for routing to a
+post-D8 documentation-correction sub-phase. The catalog is a single
+forward-pointer entry; the four rows are observations within that
+single entry, not four separate methodology issues. The catalog is
+distinct from Issue 6's `expectations.md` "6 themes vs 5" scope
+(different artifact, different drift class) and is not a seventh
+methodology issue (Lock D, scope lock §3.3).
+
+| # | Gate / verdict | D8.2 detailed (governing) | D8.2 §9 / appendix (drift) |
+|---|---|---|---|
+| 1 | §6.2.1 agreement floor | ≥ 52 / 66 (L236; +12 headroom) | ≥ 50 / 66 (L1040, L1225) |
+| 2 | §6.3(a) upper-tail floor | ≥ 90 / 199 (L388–395; +21 headroom) | ≥ 60 / 199 (L1042, L1227) |
+| 3 | §6.3(b) lower-tail floor | ≥ 30 / 199 (L444–457; −4 shortfall) | ≥ 40 / 199 (L1043, L1073, L1228) |
+| 4 | §6.3 joint verdict + tag | `FAIL` / `derived_joint_failure` (L529–545) | `PARTIAL` / `asymmetric_calibration` (L1044, L1229) |
+
+All four are inherited drift between the detailed §6.x adjudication
+subsections and the §9 / appendix summary presentations inside the
+same sealed D8.2 doc. D8.4 does not edit D8.2 (scope lock §3.2);
+prior sealed D8.4 sites that inherited the drift (D8.4.1 §3
+inventory line 121; D8.4.3 §4.2 Part 2 cross-reference line 529)
+stand at their evidence state per scope lock §10. Drifts are
+observed-and-surfaced, not edited. The catalog routes to a
+**post-D8 documentation-correction sub-phase** — implementation
+owner: future research-layer documentation phase; validation owner:
+that future phase; explicit non-promise: D8.4 does not commit any
+future phase's scope per scope lock §10.
 
 ---
 
