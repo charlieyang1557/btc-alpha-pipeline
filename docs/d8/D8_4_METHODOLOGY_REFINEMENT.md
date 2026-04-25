@@ -1841,38 +1841,526 @@ foreseeable-conflict notice.
 
 ### 4.5 Issue 5 — Forensic cross-tab methodology / prompt / label discipline
 
-*Populated in D8.4.6.*
+Issue 5 authors a methodology proposal addressing the
+**theme-conditional surfacing mechanism under-specification** in the
+coupled methodology surface comprising forensic cross-tab
+construction, D7b prompt design, and pre-registered label discipline.
+The diagnostic target is layer-agnostic at diagnosis time: D8.2 §6
+forensic cross-tab evidence (L870–928) records cell-level
+theme-conditional skews (specifically `mean_reversion × neutral` at
+12 / 17 HIGH = 71% contrasted with `volatility_regime × neutral` at
+6 / 34 HIGH = 18%, both neutral-label cells under different themes)
+but does not adjudicate which methodology layer should be revised.
+Issue 5 is a cross-tab methodology issue per scope-lock §5 Part 5
+("cross-tab issue 5 cites cell-level evidence with no row
+positions"); no row-attribution citations appear in the analysis.
+Issue 5 is **not** a row-level issue, **not** a single-tail or
+paired-tail calibration issue (Issues 3 and 4 own calibration),
+**not** a divergence-label definitional issue (Issue 1 owns L77–85
+definitional gap), **not** a direction-of-prediction recalibration
+issue (Issue 2 owns D7b score-axis structure for direction), and
+**not** a documentation-of-existing-state drift issue (Issue 6 owns
+`expectations.md` "6 themes vs 5").
 
-`proposal_confidence`: *(declared in D8.4.6)*
+`proposal_confidence`: **medium-low**.
+
+Rationale (absolute, non-comparative per scope-lock §5.1 strict
+semantics): the diagnosis-to-spec internal coherence holds at the
+cell-level methodology layer — D8.2 §6 forensic cross-tab L880–886
+records empirically clean cell-level observations with notable
+theme-conditional skews (`mean_reversion × neutral` 71% HIGH vs
+`volatility_regime × neutral` 18% HIGH, both neutral-label cells
+under different themes), and D8.2 L909–917 records a
+calibration-adjacent implication: uniform SVR calibration across
+themes would not match the observed theme-conditional behavior. The
+diagnosis-to-spec chain runs: observed theme-conditional cell-level
+skew → theme-conditional surfacing mechanism under-specification at
+the methodology design layer → multi-surface methodology revision
+spec at the prompt + label + cross-tab construction coupled layer
+with the load-bearing layer left open at the spec level. The label
+calibrates to `medium-low` because the load-bearing methodology
+layer is not yet identified at the spec level — the revision spec
+admits multiple methodology layers as compatible with the structural
+requirement, and which layer carries the load is downstream design
+work conditional on Stage 2e+ scope and prompt-design /
+label-taxonomy / cross-tab-construction trade-off analysis. The
+label is internal-coherence signal under multi-layer methodology
+uncertainty at the spec level; per scope-lock §5.1 it is not
+validation evidence and MUST NOT be cited as proof that the proposed
+methodology works.
 
 #### Part 1 — Diagnosis
 
-*Populated in D8.4.6.*
+**Citation-form note (preamble, single paragraph).** Scope-lock §2.3
+issue 5 (line 131) and D8.4.1 §3 inventory (line 123) cite the
+forensic cross-tab anchor as "§7 forensic cross-tab
+`methodology_followup`, §8.4". D8.2's own internal subsection header
+at L870 reads "§6 forensic cross-tab — Theme × UB label × SVR
+bucket". The cross-tab content is physically located at L870–928
+inside D8.2's §7 container ("§6.6 Observation Findings"), with the
+internal header preserving the §6 claim-family framing. Both
+citation forms point to the same cross-tab content via different
+reference frames (physical container vs claim-family). D8.4.6 prose
+uses "D8.2 §6 forensic cross-tab" (matching D8.2's own internal
+header, the load-bearing citation form), with the L870–928 physical
+location cited explicitly. Scope-lock's "§7" framing references the
+§7 container per D8.2's TOC structure; this is reference-frame
+variation across two accurate citation forms, not anchor drift, and
+does not require entry into the four-drift forward-pointer catalog
+at D8.4.4 §4.3 Part 6 (which is reserved for D8.2 §9 / appendix
+internal-presentation drift).
+
+**Authoritative anchors (D8.2 detailed records, never §9 / appendix
+summary tags):**
+
+- **D8.2 §6 forensic cross-tab detailed record (L870–928):**
+  - Source: D8.1 cell 23, three-way contingency over 197 ok-scored
+    records, cross-tabulated by `candidate_theme` ×
+    `pre_registered_label` × SVR bucket (LOW `[0.00, 0.20)`, MOD-LOW
+    `[0.20, 0.50)`, MOD-HIGH `[0.50, 0.80)`, HIGH `[0.80, 1.01]`)
+  - Cell-level observations with notable skews (D8.2 L880–886):
+    - `momentum × agreement`: 14 cell, **13 HIGH (93%)**
+    - `mean_reversion × neutral`: 17 cell, **12 HIGH (71%)**
+    - `calendar_effect × agreement`: 9 cell, **6 HIGH (67%)**
+    - `volatility_regime × neutral`: 34 cell, **6 HIGH (18%)**
+  - Adjudication: `primary_verdict = NOT_TESTABLE`,
+    `interpretation_tag = observation_only`,
+    `methodology_followup = D8.4` (D8.2 L894–896)
+  - Material findings (D8.2 L900–928): four enumerated observations
+    including the `mean_reversion × neutral` SVR-skew vs
+    `volatility_regime × neutral` SVR-skew contrast; D8.2 L909–917
+    records a calibration-adjacent implication that uniform SVR
+    calibration across themes would not match the observed
+    theme-conditional behavior; D8.2 L925–927 explicitly notes the
+    cross-tab is forensic, not a new claim family — no threshold is
+    pre-registered over any theme × label × bucket cell
+
+- **D8.2 §6.6(3) detailed record (L762–822):** Theme × UB label
+  contingency over 197 ok-scored records, supporting the cell-level
+  observations in §6 forensic cross-tab. `NOT_TESTABLE /
+  observation_only` per §6.6 framework.
+
+- **D8.2 §6.6(2) detailed record (L706–760):** SVR–alignment
+  decoupling cluster observations, supporting the cell-level
+  structure that the cross-tab surfaces.
+
+**Diagnostic statement.** Issue 5 diagnoses a methodology question
+that the D8.2 §6 forensic cross-tab `NOT_TESTABLE / observation_only`
+adjudication does not carry forward as a verdict but does carry
+forward as a `methodology_followup = D8.4` pointer (D8.2 L896, §8.4
+L1018–1020). The cross-tab is forensic, not a new claim family — no
+threshold is pre-registered over any theme × label × bucket cell, and
+all observations are `NOT_TESTABLE` per L925–927.
+
+But the cell-level observations carry methodology content that the
+existing methodology surface (prompt design, label taxonomy, and
+cross-tab construction collectively) does not anticipate.
+Specifically, `mean_reversion × neutral` (17 cell, 12 HIGH = 71%) and
+`volatility_regime × neutral` (34 cell, 6 HIGH = 18%) are both
+neutral-label cells under different themes, and produce dramatically
+different SVR-bucket distributions — a ~4× difference in HIGH-bucket
+share. The model's actual scoring behavior partitions neutral by
+theme, but the pre-registered methodology surfaces this partitioning
+post-hoc through the forensic cross-tab construction, not at design
+time at any of the coupled methodology layers (prompt elicitation,
+label taxonomy, cross-tab construction).
+
+**Diagnostic target (theme-conditional surfacing mechanism,
+layer-agnostic at diagnosis time).** The theme-conditional surfacing
+mechanism in the coupled methodology surface comprising:
+
+1. **Forensic cross-tab construction methodology.** Whether the
+   cross-tab construction (theme × UB label × SVR bucket) anticipates
+   or accommodates theme-conditional behavior within label categories.
+2. **D7b prompt design.** Whether the D7b prompt elicits scoring
+   information that distinguishes theme-conditional behavior within
+   label categories.
+3. **Pre-registered label discipline.** Whether the
+   `pre_registered_label` taxonomy at the cell-level granularity
+   anticipates that themes within a label category may behave
+   structurally differently at SVR level.
+
+The diagnostic target is layer-agnostic: D8.2 evidence records the
+observation (theme-conditional cell-level skews) and the
+calibration-adjacent implication (uniform calibration adjustment
+across themes would not match the observed behavior at L909–917),
+but does not adjudicate which methodology layer should be revised.
+The diagnosis names the under-specification of the theme-conditional
+surfacing mechanism across the coupled methodology surface; layer
+attribution is downstream design work, not a diagnosis-stage
+question.
+
+**What Issue 5 does NOT diagnose.** Lower-tail or upper-tail
+prevalence floor calibration (Issues 3 and 4 own calibration);
+divergence-label L77–85 definitional gap (Issue 1's exclusive scope);
+direction-of-prediction recalibration on D7b score axes (Issue 2's
+exclusive scope at D8.4.3); documentation drift in `expectations.md`
+"6 themes vs 5" (Issue 6's exclusive scope); the formal joint
+verdict at §6.3 (Issue 4's framing scope, structurally derived per
+D8.2 L541–545).
+
+D8.2's `NOT_TESTABLE / observation_only` adjudication on the §6
+forensic cross-tab stands at its evidence state. Adjacent gate
+verdicts (§6.2.1 PASS, §6.2.2 FALSIFIED, §6.3(a) PASS, §6.3(b) FAIL,
+§6.3 joint FAIL / `derived_joint_failure`, §6.4 PASS) all stand at
+their evidence state.
 
 #### Part 2 — Root cause
 
-*Populated in D8.4.6.*
+**Gap-type attribution: theme-conditional surfacing mechanism
+under-specification (primary, single attribution per scope-lock §5;
+no methodology layer pre-selected at diagnosis time).** The Issue 5
+root cause is named as a methodology surfacing gap. D8.2 §6 forensic
+cross-tab evidence (L870–928) shows that theme-conditional behavior
+within label categories is methodologically load-bearing — the
+`mean_reversion × neutral` 71% HIGH vs `volatility_regime × neutral`
+18% HIGH contrast at neutral-label cells under different themes
+(D8.2 L880–886) demonstrates that the model's scoring methodology
+produces theme-conditional SVR distributions within label categories.
+But the current methodology does not specify whether that behavior
+should be surfaced at the prompt elicitation layer, the
+label-taxonomy layer, or the cross-tab construction layer. The root
+cause is therefore **under-specification of the theme-conditional
+surfacing mechanism**, not a proven prompt-only failure or a proven
+label-discipline-only failure or a proven cross-tab-construction-only
+failure.
+
+**Why no single layer is primary at diagnosis time.** D8.2
+establishes that the methodology surfaces theme-conditional behavior
+post-hoc through the forensic cross-tab construction (the cross-tab
+is *where* the partitioning becomes visible), but it does not
+establish whether the prompt, label taxonomy, or cross-tab
+construction is the **correct load-bearing revision layer**. D8.2
+L909–917 records a calibration-adjacent implication: uniform SVR
+calibration across themes would not match the observed
+theme-conditional behavior. This is evidence about what a
+calibration-layer revision would not adequately resolve, not
+evidence about which surfacing-layer revision is structurally
+primary. D8.4.6 therefore locks the structural requirement that
+theme-conditional surfacing must exist at some named methodology
+layer, while leaving the implementation layer open at the spec
+level.
+
+**Calibration gap-type rejection.** Issues 3 and 4 own calibration
+(single-floor and paired-floor respectively). The Issue 5 cell-level
+methodology questions are not calibration questions in the Issues 3
+/ 4 sense — they are about what the methodology surface (prompt +
+label + cross-tab construction) elicits and surfaces at design
+time, not about pre-registered prevalence floors. D8.2 L909–917's
+calibration-adjacent implication flags the *adjacency* between
+Issue 5's theme-conditional surfacing question and the calibration
+scope owned by Issues 3 / 4: a uniform calibration adjustment would
+not resolve the theme-conditional behavior, which means Issue 5's
+surfacing methodology must be in place before any calibration
+revision can be theme-conditional. Adjacency, not co-primary
+attribution.
+
+**Definitional gap-type rejection.** Issue 1 owns definitional gaps
+at the L77–85 divergence-label boundary. The cross-tab cell-level
+observations do not surface an L77–L85-class definitional ambiguity;
+they surface a theme × label × SVR cell-level partitioning that the
+existing label taxonomy does not anticipate.
+
+**Direction-of-prediction gap-type rejection.** Issue 2 owns
+direction-of-prediction recalibration via the D7b score-axis
+structure. The cross-tab cell-level observations do not surface a
+direction-of-prediction question — they surface a theme-conditional
+magnitude question on SVR distributions within label categories.
+
+**Documentation gap-type rejection.** Issue 6 owns documentation
+drift in `expectations.md` "6 themes vs 5". The Issue 5 cell-level
+methodology questions are about the theme-conditional surfacing
+mechanism at the methodology design layer, not about
+documentation-of-existing-state drift in `expectations.md`.
+
+The theme-conditional surfacing mechanism attribution is
+single-primary, not co-primary across calibration / definitional /
+direction / documentation. Same distinct-attribution discipline as
+D8.4.4 / D8.4.5, applied at the cross-tab cell-level methodology
+unit instead of the gate-level or paired-gate-level units.
 
 #### Part 3a — Proposed revision spec
 
-*Populated in D8.4.6.*
+Revision shape: **multi-surface coupled revision at the prompt +
+label + cross-tab construction layer with load-bearing layer left
+open at the spec level.** Issue 5 differs structurally from Issues
+1–4 because the methodology surface is three-coupled (prompt design
++ label taxonomy + cross-tab construction) and the load-bearing
+revision could plausibly live at any of the three (or at an
+equivalent named methodology layer not enumerated). The Round 1b
+outline locks the **structural requirement** — that the methodology
+must surface theme-conditional behavior within label categories at
+some elicitation, taxonomy, or construction layer — without
+pre-locking which layer carries the load.
+
+This is a different revision-shape pattern than D8.4.4 / D8.4.5's
+(I + IV). Issues 3 and 4 had clearly-bounded calibration units
+(single floor / paired floors); Issue 5's cross-tab is a forensic
+surface over a three-coupled-surface methodology. The
+structural-property-not-form discipline (D8.4.3 §4.2 Part 3a point
+1; D8.4.4 / D8.4.5 mirrors) applies at a higher granularity here:
+the spec locks "theme-conditional surfacing must exist at some
+methodology layer", not "the cross-tab construction must be
+theme-aware".
+
+**Revision spec (three points):**
+
+1. **Theme-conditional surfacing requirement (structural property
+   locked, layer choice not locked).** The methodology must surface
+   theme-conditional behavior within label categories at one or more
+   of: (a) prompt elicitation layer (the D7b prompt asks the critic
+   to commit to theme-conditional context); (b) label taxonomy layer
+   (the pre-registered label encodes theme as an orthogonal
+   structural axis); (c) cross-tab construction layer (the forensic
+   cross-tab construction is theme-aware at construction time, with
+   pre-registered theme-conditional readout rules or diagnostic
+   structure); or (d) an equivalent named methodology layer that
+   surfaces theme-conditional behavior within label categories at
+   design time rather than post-hoc as observation. The spec **does
+   not lock** which of (a) / (b) / (c) / (d) is chosen; it locks the
+   structural requirement that theme-conditional surfacing exists at
+   some named methodology layer rather than emerging only post-hoc
+   as observation in the cross-tab. This mirrors D8.4.4 / D8.4.5
+   structural-property-not-form discipline at the multi-surface
+   methodology unit, generalized via the open-set qualifier (d) for
+   parity with D8.4.4 §4.3 Part 3a point 1 ("or an equivalent named
+   source") and D8.4.5 §4.4 Part 3a point 1 (analogous open-set
+   framing).
+
+2. **Per-fire applicability (next future fire only).** Same
+   narrowing as Issues 3 and 4 Part 3a point 3 (D8.4.4 §4.3 Part 3a
+   point 3; D8.4.5 §4.4 Part 3a point 3). The methodology must
+   specify how it applies to a future Stage 2-class fire's
+   pre-registration of theme-conditional surfacing without ad-hoc
+   derivation at fire time. Application to fires beyond the next is
+   **out of D8.4 scope**; multi-fire applicability is forward-pointed
+   to Stage 2e+ planning.
+
+3. **Documented provenance (methodology-spec internal
+   requirement).** The chosen layer's methodology must carry
+   documented provenance: which layer is chosen (or which equivalent
+   named methodology layer is chosen per (d)), what prior
+   information justifies the choice, what inferential or design step
+   links the chosen layer to the surfacing requirement. Same
+   calibration-spec-internal-requirement discipline as Issues 3 and
+   4 Part 3a point 4, generalized to methodology-spec-internal-
+   requirement for Issue 5's broader surface. Does not pre-empt or
+   expand Issue 6 (whose scope is `expectations.md` "6 themes vs
+   5"). Does not pre-empt or expand the four-drift forward-pointer
+   catalog at D8.4.4 §4.3 Part 6 (whose scope is D8.2 §9 / appendix
+   internal-presentation drift).
+
+**The revision spec does not:**
+
+- Re-adjudicate the §6 forensic cross-tab `NOT_TESTABLE /
+  observation_only` adjudication (which stands at its evidence
+  state)
+- Edit `expectations.md`, D8.2 verdicts, D8.3 buckets, the D7b
+  prompt template, the label taxonomy, or any sealed Stage 2d
+  artifact (Lock A)
+- Pre-lock which methodology layer carries the revision load (the
+  layer choice is downstream design work)
+- Pre-empt Issue 1's prompt-scaffold clarification narrowly scoped
+  to divergence-label interpretation (D8.4.2 §4.1 Part 3a)
+- Pre-empt Issue 2's prompt elicitation requirement narrowly scoped
+  to direction-of-prediction (D8.4.3 §4.2 Part 3a point 3)
+- Pre-empt Issue 6's documentation drift in `expectations.md`
 
 #### Part 3b — Expected behavior change
 
-*Populated in D8.4.6.*
+The revision **is intended to** make future cross-tab observations
+diagnosable as either (a) theme-conditional patterns the methodology
+anticipated and surfaced at the chosen design-time layer (whichever
+of prompt / label / cross-tab construction / equivalent named layer
+carries the load), or (b) cross-tab observations that surface
+unanticipated patterns requiring further methodology refinement.
+The revision **targets** the theme-conditional surfacing mechanism
+gap diagnosed in Part 1. The revision **is expected to** make future
+cell-level methodology questions interpretable along the
+theme-conditional surfacing axis, conditional on the revised
+methodology surviving downstream design review and validation.
+
+The forward-looking phrasing preserves Part 2's open-layer
+attribution: Part 3b does not commit to a specific design-time layer
+that Part 2 leaves open. The revised methodology's behavior is
+expected to surface theme-conditional patterns at *whichever*
+methodology layer carries the load (per Part 3a's open-set
+qualifier), not at a pre-selected layer.
+
+Forward-looking behavior stated as a structural attribute of the
+future methodology's specification, not as an outcome-quality claim.
+The revision **does not** correct the §6 forensic cross-tab
+observation, eliminate cell-level surprises, or guarantee future
+cross-tab observations will all be anticipated. Forbidden phrasings
+(per scope-lock §5 and §5.1): "fixes the cross-tab", "eliminates
+cell-level surprises", "anticipates all theme-conditional
+behavior", any past-tense or magnitude claim. Required phrasing
+pattern: "is intended to ...", "expected to ...", "the revision
+targets ...".
+
+D8.2's `NOT_TESTABLE / observation_only` adjudication on §6 forensic
+cross-tab and adjacent gate verdicts all stand at their evidence
+state. The revision is forward-looking only.
 
 #### Part 4 — Validation plan
 
-*Populated in D8.4.6.*
+Validation does not happen in D8.4. D8.4.6 specifies the validation
+form only.
+
+**Necessary validation form: synthetic / simulation sanity check at
+the methodology surface.** Construct synthetic candidates with
+controlled theme × label characteristics (e.g., synthetic
+mean_reversion × neutral with controlled SVR distribution; synthetic
+volatility_regime × neutral with deliberately-different SVR
+distribution). Process them through the revised methodology
+(whichever layer carries the load per Part 3a). The necessary
+condition is that **the chosen methodology layer surfaces the
+controlled theme-conditional pattern at design time** — i.e., the
+methodology surface is self-describing under controlled inputs.
+**This validation checks the methodology surface (whether the
+chosen layer surfaces theme-conditional behavior as required), not
+D7b scoring quality** (which would be a model-performance
+validation, not a methodology-adequacy validation).
+
+**Sufficient validation form (conditional on the synthetic check):
+out-of-sample replication on a fresh Stage 2-class cohort.** Same
+circularity discipline as Issues 3 and 4 Part 4 — out-of-sample
+replication is structurally privileged over re-firing on the same
+Stage 2d evidence the cross-tab was constructed from. The sufficient
+condition is that the revised methodology produces a cross-tab
+whose theme-conditional surfacing layer can be cited (per Part 3a
+point 3 documented provenance) and whose cell-level observations can
+be diagnosed along the surfacing axis. Validation again operates on
+the methodology surface, not on D7b scoring quality.
+
+The synthetic sanity check is necessary; the out-of-sample
+replication is **sufficient to support a downstream adoption
+decision, not to prove future cross-tab interpretability**.
+Same-evidence replay against the Stage 2d cohort may be used as a
+reproducibility / sanity check only.
+
+The validation plan does not establish: that the revised methodology
+produces a different §6 forensic cross-tab adjudication on the
+Stage 2d cohort; that all theme-conditional patterns are
+anticipated; that future cross-tab observations will all be
+expected; or that D7b scoring quality is improved (D7b scoring is
+downstream of the methodology surface that Issue 5 revises).
 
 #### Part 5 — Affected rows or scope-level impact
 
-*Populated in D8.4.6. Cross-tab issue: cell-level evidence, no row
-positions.*
+Cross-tab. **Cell-level evidence with no row positions.** Per
+scope-lock §5 Part 5 ("cross-tab issue 5 cites cell-level evidence
+with no row positions"), Issue 5 cites the cross-tab cells (theme ×
+UB label × SVR bucket) recorded in D8.2 §6 forensic cross-tab
+L880–886. Cell counts: `momentum × agreement` 14 cell / 13 HIGH;
+`mean_reversion × neutral` 17 cell / 12 HIGH; `calendar_effect ×
+agreement` 9 cell / 6 HIGH; `volatility_regime × neutral` 34 cell /
+6 HIGH. These are cell composition facts recorded by D8.2 itself,
+not row-attribution evidence for Issue 5. Asserting row positions
+for Issue 5 would be a defect under §5 Part 5.
+
+Pos 138 and pos 143 are not cited under Issue 5: cross-tab
+methodology / prompt / label discipline does not materially touch
+RSI-absent vol_regime test-retest framing at the row-attribution
+level. The pos 143 fresh-7 negation restatement obligation does not
+activate in §4.5.
+
+Pos 3 is not cited under Issue 5: Issue 5 does not touch the
+divergence-label cohort interpretation or the score-axis structure.
+The pos 3 double-duty preservation obligation (scope-lock §1.2,
+≥ 2-site floor) is satisfied at §1.1, §4.1 Part 5, and §4.2 Part 5
+per scope-lock §5 Part 5 "issues 1 or 2" restriction; Issue 5's
+scope does not interact with the double-duty surface (mirrors
+D8.4.4 §4.3 Part 5 and D8.4.5 §4.4 Part 5 sealed convention —
+non-citation declarations at scope-level / cross-tab issue Part 5
+sites do not count toward the satisfaction floor).
+
+The cross-tab-level impact: Issue 5's revision operates on the
+prompt design + label taxonomy + cross-tab construction methodology
+that produces cell-level observations; it does not change the §6
+forensic cross-tab adjudication, does not change which cells exist,
+and does not re-bucket any D8.3 candidate.
 
 #### Part 6 — Issue interaction check
 
-*Populated in D8.4.6.*
+**Upstream dependencies.** None. Issue 5's prompt + label +
+cross-tab revision is upstream of any issue consuming the cross-tab
+evidence base; no other issue's revision is a prerequisite for
+Issue 5's spec.
+
+**Downstream dependencies — Issue 1.** D8.4.2 §4.1 Part 3a includes
+a "prompt-scaffold clarification scoped narrowly to divergence-label
+interpretation" (sealed at commit `3a8314d`, §4.1 lines 394–401).
+Issue 5's broader prompt + label + cross-tab methodology scope
+inherits the narrowly-scoped Issue 1 clarification as input but does
+not re-author it. The boundary discipline holds across the broader
+Part 2 framing: Issue 1 owns divergence-label-specific prompt
+scaffolding (a layer-specific scope that is one of the surfaces
+Issue 5 ranges over); Issue 5 owns the broader theme-conditional
+surfacing mechanism question across the prompt + label + cross-tab
+coupled surface (layer-agnostic at diagnosis per Part 2).
+Mechanically enforceable in the prose-anchor level: Issue 1's
+prompt-scaffold reference cites L77–85 specifically; Issue 5's
+methodology-surface reference cites the cell-level granularity
+across the coupled surface.
+
+**Downstream dependencies — Issue 2.** D8.4.3 §4.2 Part 3a point 3
+includes a "D7b prompt elicitation requirement" narrowly scoped to
+direction-of-prediction (sealed at commit `95109f7`, §4.2 lines
+570–578). Issue 5's broader methodology-surface scope inherits the
+narrowly-scoped Issue 2 elicitation requirement as input but does
+not re-author it. Same boundary discipline as Issue 1: Issue 2 owns
+direction-of-prediction-specific prompt elicitation (a layer-
+specific scope at the prompt elicitation layer); Issue 5 owns the
+broader theme-conditional surfacing mechanism across the coupled
+methodology surface. The boundary holds under the broader Part 2
+framing because Issue 5's scope is layer-agnostic at diagnosis:
+Issue 2's prompt-elicitation-specific scope is contained within
+Issue 5's broader methodology-surface scope at one of the four
+candidate revision layers (Part 3a (a)).
+
+**Downstream dependencies — Issues 3 and 4.** Issues 3 and 4 own
+calibration (single-floor and paired-floor). Issue 5's prompt +
+label + cross-tab revision does not pre-empt or interact with
+calibration scope. The cross-tab cells inform calibration adjacent
+issues — D8.2 §6 forensic cross-tab L909–917 records a
+calibration-adjacent implication that uniform SVR calibration
+across themes would not match the observed theme-conditional
+behavior — but Issue 5 surfaces the cross-tab methodology question
+at the theme-conditional surfacing mechanism layer (layer-agnostic
+at diagnosis), not at the calibration layer. **Adjacency, not
+co-primary attribution:** the theme-conditional surfacing question
+is structurally upstream of any theme-conditional calibration
+question that Issues 3 / 4 might consider in synthesis (§5 of
+`D8_4_METHODOLOGY_REFINEMENT.md`); reconciliation routes to
+synthesis-level work, not to Issue 5 prose.
+
+**Downstream dependencies — Issue 6.** Part 3a point 3
+documented-provenance requirement is **internal to the methodology
+spec, not a documentation-drift gap-type**. Issue 6's exclusive
+scope is documentation-of-existing-state drift in `expectations.md`
+"6 themes vs 5". Issue 5's documented-provenance requirement is
+documentation-of-future-methodology — same distinction discipline
+as D8.4.4 / D8.4.5 Part 6 Issue 6 sections.
+
+**Forward-pointer (no new catalog).** Per Lock D and the D8.4
+single-document discipline, Issue 5 does NOT create a new drift
+catalog. The four-drift forward-pointer catalog at D8.4.4 §4.3
+Part 6 (cross-referenced in D8.4.5 §4.4 framing-correction note)
+covers D8.2 §9 / appendix internal drift; no Issue 5 drift surfaces
+have been observed at outline drafting time. The scope-lock §2.3 /
+D8.4.1 §3 inventory citation form "§7 forensic cross-tab" vs D8.2's
+internal header "§6 forensic cross-tab" is a citation-form question
+at different reference frames, not a tag or numeric drift; addressed
+at the Part 1 preamble note above.
+
+**Conflicts at D8.4.6's evidence state.** None observed within
+Issue 5's scope. Foreseeable conflict: if synthesis (§5 of
+`D8_4_METHODOLOGY_REFINEMENT.md`) surfaces incompatibilities between
+Issue 5's chosen methodology layer (downstream design choice across
+(a) / (b) / (c) / (d)) and Issues 1, 2, 3, or 4's revisions,
+reconciliation routes to synthesis-level work, not to Issue 5
+prose. D8.4.6 surfaces the *potential* without resolving.
 
 ---
 
