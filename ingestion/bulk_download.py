@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import io
 import logging
+import shutil
 import sys
 import zipfile
 from datetime import datetime, timezone
@@ -43,6 +44,7 @@ logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 OUTPUT_PATH = PROJECT_ROOT / "data" / "raw" / "btcusdt_1h.parquet"
+ARCHIVE_DIR = PROJECT_ROOT / "data" / "raw" / "archive"
 QUALITY_DIR = PROJECT_ROOT / "data" / "quality"
 
 BASE_URL = "https://data.binance.vision/data/spot/monthly/klines"
@@ -482,6 +484,17 @@ def main() -> int:
     parser.add_argument(
         "--output", type=str, default=str(OUTPUT_PATH), help="Output parquet path"
     )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help=(
+            "Override the CLAUDE.md rule that only reconcile.py modifies "
+            "the canonical dataset. Use only for explicit re-bootstrap; "
+            "the existing canonical is archived to data/raw/archive/ before "
+            "overwrite. Normal updates should use incremental_update.py + "
+            "reconcile.py."
+        ),
+    )
     args = parser.parse_args()
 
     month_keys = generate_month_keys(args.start, args.end)
@@ -540,10 +553,59 @@ def main() -> int:
         logger.error("Validation FAILED — refusing to write parquet. Review quality report.")
         return 1
 
-    # Save parquet only after validation passes
+    # Save parquet only after validation passes.
+    # Canonical-write protection per CLAUDE.md ("Raw data is NEVER modified
+    # by any process other than reconcile.py"): if the output path already
+    # exists, refuse to overwrite unless --force is explicitly set; if
+    # --force is set with an existing canonical, archive the existing file
+    # before atomic-promote of the new one. All paths use staging-then-
+    # atomic-rename for safety against mid-write crash.
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    df.to_parquet(output_path, engine="pyarrow", index=False)
+
+    if output_path.exists() and not args.force:
+        logger.error(
+            "Refusing to overwrite existing canonical file: %s. "
+            "Per CLAUDE.md, only reconcile.py modifies the canonical "
+            "dataset. For normal updates, use:\n"
+            "  python -m ingestion.incremental_update --pair %s --interval %s\n"
+            "  python -m ingestion.reconcile --existing %s --new %s\n"
+            "If you genuinely need to re-bootstrap (e.g. data corruption "
+            "recovery), re-run with --force; the existing canonical will "
+            "be archived to %s/ before overwrite.",
+            output_path,
+            args.pair,
+            args.interval,
+            output_path,
+            output_path.with_suffix(".update.parquet"),
+            ARCHIVE_DIR,
+        )
+        return 1
+
+    if output_path.exists() and args.force:
+        # Override case: user is explicitly overriding the CLAUDE.md rule.
+        # Archive the existing canonical to data/raw/archive/ before
+        # overwrite. Mirrors the archive_file() pattern in reconcile.py.
+        ARCHIVE_DIR.mkdir(parents=True, exist_ok=True)
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        archive_name = f"{output_path.stem}_{timestamp}{output_path.suffix}"
+        archive_path = ARCHIVE_DIR / archive_name
+        shutil.copy2(output_path, archive_path)
+        logger.warning(
+            "--force override: existing canonical %s archived to %s. "
+            "This bypasses the CLAUDE.md rule that only reconcile.py "
+            "modifies the canonical dataset; the archive is the recovery "
+            "path if the override turns out to have been a mistake.",
+            output_path,
+            archive_path,
+        )
+
+    # Atomic-promote: write to staging path, then rename to canonical.
+    # Path.replace() is atomic on POSIX when source and destination are on
+    # the same filesystem (which they are, both under data/raw/).
+    staging_path = output_path.with_suffix(output_path.suffix + ".staging")
+    df.to_parquet(staging_path, engine="pyarrow", index=False)
+    staging_path.replace(output_path)
     logger.info("Saved %d rows to %s", len(df), output_path)
 
     return 0

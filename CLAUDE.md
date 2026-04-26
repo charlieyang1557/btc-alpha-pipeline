@@ -108,7 +108,7 @@ If any two documents in this project contradict each other, resolve by this hier
 3. **`config/schemas.yaml`** — column definitions and validation rules
 4. **`CLAUDE.md`** (this file) — hard constraints and prohibitions
 5. **`data_dictionary.md`** — human-readable schema reference
-6. **`PHASE2_BLUEPRINT_v2.md`** — Phase 2 implementation plan (current phase)
+6. **`PHASE2_BLUEPRINT.md`** (v2) — Phase 2 implementation plan (current phase)
 7. **`PHASE1_BLUEPRINT.md`** — Phase 1 reference (completed)
 8. **`PHASE0_BLUEPRINT.md`** — Phase 0 reference (completed)
 
@@ -154,7 +154,7 @@ These rules are defined in `config/execution.yaml` and enforced by `backtest/exe
 - The first eligible fill is the bar after that signal
 - Metrics (Sharpe, drawdown, etc.) are computed ONLY on the post-warmup period
 - If a strategy attempts to trade during warmup, the engine must block it
-- **Phase 2 DSL compiler**: `WARMUP_BARS` is auto-set to `registry.max_warmup(factors_used)` — see D2 in `PHASE2_BLUEPRINT_v2.md`
+- **Phase 2 DSL compiler**: `WARMUP_BARS` is auto-set to `registry.max_warmup(factors_used)` — see D2 in `PHASE2_BLUEPRINT.md`
 
 ## Timestamp & Timezone Rules
 
@@ -203,7 +203,7 @@ These rules are defined in `config/execution.yaml` and enforced by `backtest/exe
 - Strategies may ONLY be trained/optimized on data within the training window.
 - Validation data is for hyperparameter selection and early stopping only.
 - Test data is touched ONCE for final evaluation. If you peek and iterate, it becomes validation data.
-- **Phase 2 regime holdout (2022)**: an additional in-train stress test. Agents never see its results. Only hypotheses that pass `regime_holdout_passed` advance to validation. See D4 in `PHASE2_BLUEPRINT_v2.md` for the 4-condition passing criteria.
+- **Phase 2 regime holdout (2022)**: an additional in-train stress test. Agents never see its results. Only hypotheses that pass `regime_holdout_passed` advance to validation. See D4 in `PHASE2_BLUEPRINT.md` for the 4-condition passing criteria.
 
 ## Phase 2 DSL Rules
 

@@ -14,7 +14,7 @@ that:
   Phase 1-validated engine runs it unchanged.
 - Honors an optional ``max_hold_bars`` cap.
 
-Hard design decisions (see PHASE2_BLUEPRINT_v2.md D2 and CLAUDE.md):
+Hard design decisions (see blueprint/PHASE2_BLUEPRINT.md D2 and CLAUDE.md):
 
 1. **Crosses use the explicit two-bar form**.
    For operand types ``factor-vs-scalar`` and ``factor-vs-factor``,

@@ -4,7 +4,7 @@ Usage:
     python -m factors.build_features --pair BTCUSDT --interval 1h
     python -m factors.build_features --force-rebuild
 
-Hard rules (enforced here, see PHASE2_BLUEPRINT_v2.md D1):
+Hard rules (enforced here, see PHASE2_BLUEPRINT.md D1):
 - The factor parquet is computed over the **full OHLCV range** of the
   canonical raw parquet. There is no CLI flag that restricts the output
   to a date subset.
