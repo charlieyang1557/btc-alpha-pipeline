@@ -229,8 +229,17 @@ class TrainOnlyStrategy(BaseStrategy):
         self._closed = False
 
     def next(self) -> None:
+        # Buy gate is a CLOSED window [BUY_OPEN_DATE, BUY_CLOSE_DATE).
+        # The upper bound is load-bearing under the wrapper: without it,
+        # the wrapper-suppressed-then-released first next() call (at
+        # bar_dt = test_start = 2024-05-01) satisfies bar_dt >= BUY_OPEN
+        # and the buy fires post-test_start, defeating the train-only
+        # intent.
         bar_dt = self.data.datetime.datetime(0)
-        if not self._opened and bar_dt >= self.BUY_OPEN_DATE:
+        if (
+            not self._opened
+            and self.BUY_OPEN_DATE <= bar_dt < self.BUY_CLOSE_DATE
+        ):
             self.buy(size=self.SIZE)
             self._opened = True
         elif (

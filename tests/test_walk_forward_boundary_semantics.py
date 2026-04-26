@@ -22,7 +22,7 @@ from tests.fixtures.wf_boundary.synthetic_data import (
     write_to_parquet,
 )
 from tests.fixtures.wf_boundary.strategies import (
-    TrainProfitTestFlat,
+    TrainOnlyStrategy,
     StatefulTestStrategy,
     IndicatorWarmupStrategy,
     TrainProfitable,
@@ -49,14 +49,15 @@ def test_test_period_return_excludes_train_period_pnl(
 ):
     """T1: canonical wf_total_return reflects only test-period broker activity.
 
-    Setup: TrainProfitTestFlat buys on bar 0 of training, closes at end of
-    train, sits flat in test. Train-period gain is large; test-period
-    activity is zero. Under (iii), wf_total_return for the test window
-    should be 0.0 — not the cumulative-from-inception return.
+    Setup: TrainOnlyStrategy buys at 2024-01-15 (deep train, ~$123),
+    closes at 2024-04-15 (deep train, ~$275). Train-period gain is
+    large (~15% on $10k portfolio with size=10); test-period activity
+    is zero. Under (iii), wf_total_return for the test window should
+    be 0.0 — not the cumulative-from-inception return.
     """
     db_path = tmp_path / "wf_t1.db"
     result = run_walk_forward(
-        strategy_cls=TrainProfitTestFlat,
+        strategy_cls=TrainOnlyStrategy,
         parquet_path=trending_then_flat_parquet,
         db_path=db_path,
         walk_forward_config={
@@ -82,12 +83,18 @@ def test_zero_test_trades_implies_zero_test_return(
 ):
     """T2: zero test-opened trades + no carried position → zero return/sharpe.
 
-    Same setup as T1. Under (iii): no trades open during test, no position
-    at test_start, total_return = sharpe = 0.0.
+    Same setup as T1 (TrainOnlyStrategy with absolute-timestamp
+    train-only window). Under (iii): no trades open during test,
+    no position at test_start, total_return = sharpe = 0.0. The
+    `total_trades == 0` and `abs(total_return) < 0.01` assertions
+    are independently meaningful — the first matches the broken
+    engine's filter behavior, the second catches the equity-curve
+    contamination bug shape (zero visible trades, nonzero reported
+    return).
     """
     db_path = tmp_path / "wf_t2.db"
     result = run_walk_forward(
-        strategy_cls=TrainProfitTestFlat,
+        strategy_cls=TrainOnlyStrategy,
         parquet_path=trending_then_flat_parquet,
         db_path=db_path,
         walk_forward_config={

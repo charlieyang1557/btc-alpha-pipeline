@@ -7,7 +7,7 @@ from tests.fixtures.wf_boundary.synthetic_data import (
     write_to_parquet,
 )
 from tests.fixtures.wf_boundary.strategies import (
-    TrainProfitTestFlat,
+    TrainOnlyStrategy,
     StatefulTestStrategy,
     IndicatorWarmupStrategy,
     TrainProfitable,
@@ -60,7 +60,7 @@ def test_write_to_parquet_roundtrip(tmp_path):
 
 
 def test_fixture_strategies_have_required_attributes():
-    for cls in [TrainProfitTestFlat, StatefulTestStrategy,
+    for cls in [TrainOnlyStrategy, StatefulTestStrategy,
                 IndicatorWarmupStrategy, TrainProfitable, TrainLosing]:
         assert hasattr(cls, "STRATEGY_NAME")
         assert hasattr(cls, "WARMUP_BARS")
