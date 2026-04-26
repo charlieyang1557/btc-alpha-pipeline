@@ -227,24 +227,70 @@ class StatefulTestStrategy(BaseStrategy):
     """Increments a counter every `next()` call. Never trades.
 
     Used by T3 to verify decision-state isolation: under (iii),
+    next() is suppressed during train (pre-test_start bars), so
     `_train_phase_counter` should be 0 at the first test-period
-    `next()` call (because `next()` is suppressed during warmup).
-    Under (i), the counter would reflect warmup-period iterations.
+    next() call. Under (i) — the broken engine — next() fires
+    during train too, so the counter reflects all pre-test_start
+    iterations when the test period is first entered.
+
+    Capture is timestamp-driven: the class-level `_test_start_date`
+    must be set by the test before calling run_walk_forward so that
+    the strategy knows which bar is the test-period boundary.
     """
     STRATEGY_NAME = "stateful_test_strategy"
     WARMUP_BARS = 0
-    _captured_first_next_counter: int | None = None  # class-level capture
+    # Class-level capture: set to counter value at first test-period bar.
+    _captured_first_next_counter: int | None = None
+    # Test must set this before run to define the test-period boundary.
+    _test_start_date: "datetime | None" = None
 
     def __init__(self) -> None:
         self._train_phase_counter: int = 0
         self._captured: bool = False
 
     def next(self) -> None:
-        # Capture the counter value at the very first next() call.
-        if not self._captured:
-            type(self)._captured_first_next_counter = self._train_phase_counter
-            self._captured = True
+        # Capture the counter value at the first bar on or after
+        # _test_start_date (the boundary between train and test).
+        # Under broken engine: next() fires during train, so by the
+        # time we first see test_start_date, counter > 0.
+        # Under patched engine: next() suppressed during train, so
+        # counter = 0 at the first test-period bar.
+        if not self._captured and type(self)._test_start_date is not None:
+            from datetime import datetime as _dt
+            bar_dt = self.data.datetime.datetime(0)
+            test_start = type(self)._test_start_date
+            # Compare as naive datetimes (Backtrader strips timezone).
+            if isinstance(test_start, _dt) and test_start.tzinfo is not None:
+                test_start_naive = test_start.replace(tzinfo=None)
+            else:
+                test_start_naive = test_start
+            if bar_dt >= test_start_naive:
+                type(self)._captured_first_next_counter = self._train_phase_counter
+                self._captured = True
         self._train_phase_counter += 1
+
+
+# DESIGN-PROVENANCE NOTE — StatefulTestStrategy timestamp-driven capture:
+# The original plan draft (commit 3acb6d7) defined StatefulTestStrategy
+# to capture _train_phase_counter at the very first next() call. That
+# design had a logic defect: capture happens BEFORE the first increment,
+# so the captured value is always 0 regardless of whether the engine
+# fires next() during train. T3 would always pass — defeating its purpose
+# as a bug-class catcher.
+#
+# During Task 4 execution (commit bfbd3e5), the implementer correctly
+# identified this defect and switched to timestamp-driven capture: the
+# strategy now captures the counter only when it sees a bar whose
+# datetime is at or after _test_start_date (set by the test before
+# invoking run_walk_forward). This makes T3 actually catch the bug
+# class — under broken engine, counter increments throughout train
+# (~2880-2904 bars for the T3 fixture), so capture at first test-period
+# bar yields counter > 0 and T3 fails as intended; under the patched
+# wrapper, next() is suppressed pre-test_start so counter stays at 0
+# and T3 passes.
+#
+# This plan amendment (commit TBD) reflects the corrected fixture
+# design back into the plan doc to keep plan and code aligned.
 
 
 class IndicatorWarmupStrategy(BaseStrategy):
@@ -749,11 +795,17 @@ def test_no_strategy_state_carryover_from_train_to_test(
     """T3: strategy decision-state at first test bar matches fresh instantiation.
 
     StatefulTestStrategy increments _train_phase_counter every next() call
-    and captures the counter value at the very first next() call (class-level).
-    Under (iii): next() is suppressed during warmup, so counter=0 at first
-    test-period next(). Under (i): next() fires during warmup too, so
-    counter > 0 at first test-period next().
+    and captures the counter value at the first test-period next() call
+    (identified by timestamp >= test_start_date, set as a class attribute
+    before the run). Under (iii): next() is suppressed during train, so
+    counter=0 at first test-period next(). Under broken engine: next()
+    fires during all train bars (~2880-2904), so counter is large at
+    test_start.
     """
+    # Set the test_start_date boundary so the strategy knows when to capture.
+    # test_start = 2024-05-01 (train_window_months=4 from 2024-01-01).
+    test_start = datetime(2024, 5, 1, tzinfo=timezone.utc)
+    StatefulTestStrategy._test_start_date = test_start
     # Reset class-level capture before run (in case other tests touched it).
     StatefulTestStrategy._captured_first_next_counter = None
 
