@@ -88,6 +88,11 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from agents.hypothesis_hash import hash_dsl  # noqa: E402
 from backtest.engine import WalkForwardResult, run_walk_forward  # noqa: E402
+from backtest.wf_lineage import (  # noqa: E402
+    CORRECTED_WF_ENGINE_COMMIT,
+    WF_SEMANTICS_TAG,
+    enforce_corrected_engine_lineage,
+)
 from strategies.dsl import StrategyDSL  # noqa: E402
 from strategies.dsl_compiler import (  # noqa: E402
     ManifestDriftError,
@@ -102,55 +107,19 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Corrected-engine lineage guard (Task 7.6)
 #
-# Refuses to run if HEAD is not descended from the corrected WF engine
-# commit (`eb1c87f`, "fix(engine): WF gated wrapper implements Q2 (iii)").
-# This is the minimum mechanical guard against Section RS of
-# docs/decisions/WF_TEST_BOUNDARY_SEMANTICS.md: pre-correction WF
-# artifacts must not be producible by this script.
+# The producer-side guard helper and lineage constants now live in
+# `backtest/wf_lineage.py` (imported above) — that module is the single
+# source of truth for both producer- and consumer-side enforcement of
+# Section RS of docs/decisions/WF_TEST_BOUNDARY_SEMANTICS.md.
 #
 # Corrected runs additionally:
 #   - write outputs to a `_corrected` suffixed directory so corrected
 #     and pre-correction artifacts live in adjacent siblings.
 #   - stamp `wf_semantics: corrected_test_boundary_v1` (load-bearing,
-#     downstream consumers MUST check this before ingestion) and
-#     three auditor-facing lineage fields into walk_forward_summary.json.
+#     downstream consumers MUST check this before ingestion via
+#     `backtest.wf_lineage.check_wf_semantics_or_raise`) and three
+#     auditor-facing lineage fields into walk_forward_summary.json.
 # ---------------------------------------------------------------------------
-
-CORRECTED_WF_ENGINE_COMMIT = "eb1c87f"
-WF_SEMANTICS_TAG = "corrected_test_boundary_v1"
-
-
-def _enforce_corrected_engine_lineage() -> str:
-    """Refuse to run if HEAD does not contain the corrected WF engine commit.
-
-    Returns the current HEAD SHA on success. Raises SystemExit (clear
-    error message) on failure. This is the minimum mechanical guard
-    against Section RS violation: pre-correction WF artifacts must not
-    be producible by this script.
-    """
-    try:
-        head_sha = subprocess.check_output(
-            ["git", "rev-parse", "HEAD"], text=True
-        ).strip()
-    except subprocess.CalledProcessError as exc:
-        sys.exit(
-            f"ERROR: cannot resolve HEAD SHA (not in a git repo?): {exc}"
-        )
-
-    rc = subprocess.call(
-        ["git", "merge-base", "--is-ancestor",
-         CORRECTED_WF_ENGINE_COMMIT, "HEAD"]
-    )
-    if rc != 0:
-        sys.exit(
-            f"ERROR: this script requires the corrected WF engine "
-            f"(commit {CORRECTED_WF_ENGINE_COMMIT} or descendant). "
-            f"Current HEAD ({head_sha}) is not descended from "
-            f"{CORRECTED_WF_ENGINE_COMMIT}. Refusing to run to prevent "
-            f"production of pre-correction WF artifacts. See "
-            f"docs/decisions/WF_TEST_BOUNDARY_SEMANTICS.md Section RS."
-        )
-    return head_sha
 
 
 # ---------------------------------------------------------------------------
@@ -1098,7 +1067,7 @@ def main() -> int:
 
     # Task 7.6: refuse to run on a pre-correction engine commit. Captured
     # SHA is stamped into walk_forward_summary.json for auditor traceability.
-    head_sha = _enforce_corrected_engine_lineage()
+    head_sha = enforce_corrected_engine_lineage()
 
     args = _build_argparser().parse_args()
 
