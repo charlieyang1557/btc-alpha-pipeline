@@ -60,23 +60,46 @@ class StatefulTestStrategy(BaseStrategy):
     """Increments a counter every `next()` call. Never trades.
 
     Used by T3 to verify decision-state isolation: under (iii),
+    next() is suppressed during train (pre-test_start bars), so
     `_train_phase_counter` should be 0 at the first test-period
-    `next()` call (because `next()` is suppressed during warmup).
-    Under (i), the counter would reflect warmup-period iterations.
+    next() call. Under (i) — the broken engine — next() fires
+    during train too, so the counter reflects all pre-test_start
+    iterations when the test period is first entered.
+
+    Capture is timestamp-driven: the class-level `_test_start_date`
+    must be set by the test before calling run_walk_forward so that
+    the strategy knows which bar is the test-period boundary.
     """
     STRATEGY_NAME = "stateful_test_strategy"
     WARMUP_BARS = 0
-    _captured_first_next_counter: int | None = None  # class-level capture
+    # Class-level capture: set to counter value at first test-period bar.
+    _captured_first_next_counter: int | None = None
+    # Test must set this before run to define the test-period boundary.
+    _test_start_date: "datetime | None" = None
 
     def __init__(self) -> None:
         self._train_phase_counter: int = 0
         self._captured: bool = False
 
     def next(self) -> None:
-        # Capture the counter value at the very first next() call.
-        if not self._captured:
-            type(self)._captured_first_next_counter = self._train_phase_counter
-            self._captured = True
+        # Capture the counter value at the first bar on or after
+        # _test_start_date (the boundary between train and test).
+        # Under broken engine: next() fires during train, so by the
+        # time we first see test_start_date, counter > 0.
+        # Under patched engine: next() suppressed during train, so
+        # counter = 0 at the first test-period bar.
+        if not self._captured and type(self)._test_start_date is not None:
+            from datetime import datetime as _dt
+            bar_dt = self.data.datetime.datetime(0)
+            test_start = type(self)._test_start_date
+            # Compare as naive datetimes (Backtrader strips timezone).
+            if isinstance(test_start, _dt) and test_start.tzinfo is not None:
+                test_start_naive = test_start.replace(tzinfo=None)
+            else:
+                test_start_naive = test_start
+            if bar_dt >= test_start_naive:
+                type(self)._captured_first_next_counter = self._train_phase_counter
+                self._captured = True
         self._train_phase_counter += 1
 
 
