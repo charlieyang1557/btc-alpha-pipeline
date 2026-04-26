@@ -26,7 +26,7 @@ This section is the load-bearing reference artifact. Reading it should answer "w
 | `run_walk_forward` | (iii) — fresh strategy at `test_start`, fresh $10,000, warmup-history-only | pre-`test_start` history (no signal dead zone) | Test windows are 3 months; losing WARMUP_BARS hours could be 7-8% of evaluation period for high-warmup strategies. Pre-history warmup keeps the test window fully evaluable. |
 | `run_regime_holdout` | unchanged — fresh strategy at `holdout_start`, fresh $10,000, warmup-from-inside | inside the holdout window (~50-bar dead zone at start of 2022) | Holdout window is 1 year (~8,760 bars); losing ~50 bars is negligible (~0.6%). Matches Phase 1A single-run convention everywhere. Documented as Phase 2A D4 design invariant. |
 | `run_backtest` (single-run) | mathematically correct as-is — fresh broker at `start_date` with declared `cash`, no boundary trimming | inside the backtest window | Single run; no train/test boundary exists. Already correct under any semantic. |
-| Future Phase 4 lifetime simulator (TBD) | continuity / carry-in semantic (separate metric family) | TBD | Deployment-performance forecasting requires the actual lifetime equity curve including carry-in. Not built yet; tracked as separate apparatus, not as a mode of the existing engine functions. |
+| Future Phase 4 lifetime simulator (TBD — see FP3) | continuity / carry-in semantic (separate metric family) | TBD — see FP3 | Deployment-performance forecasting requires the actual lifetime equity curve including carry-in. Not built yet; tracked as separate apparatus, not as a mode of the existing engine functions. |
 
 ### Consumer-to-function mapping
 
@@ -37,7 +37,7 @@ This section is the load-bearing reference artifact. Reading it should answer "w
 | Phase 1A single-run baselines | `run_backtest` | single-run, no boundary issue |
 | Phase 2A DSL parity tests | `run_backtest` (single-run) | single-run, structurally insulated from WF bug |
 | Future DSR / PBO / CPCV / MDS (per TECHNIQUE_BACKLOG §2.2.2-§2.2.4 + §2.4.1) | `run_walk_forward` outputs | depends on (iii) being canonical |
-| Future Phase 4 paper-trading harness | future lifetime simulator (TBD) | continuity semantic, separate apparatus |
+| Future Phase 4 paper-trading harness | future lifetime simulator (TBD — see FP3) | continuity semantic, separate apparatus |
 
 ### Hard prohibition
 
@@ -258,20 +258,24 @@ The six locked answers (Q1, Q2, Q3a, Q3b, Q3c, Q3d) have a strict execution orde
 | 3 | **Patch engine** to satisfy (iii) for `run_walk_forward`. Iterate until T1–T10 pass. Apply test updates per the classification table for "needs update after patch" entries. | If T1–T10 cannot be made to pass under a chosen implementation approach, switch to a different implementation. The semantic requirement is fixed; the implementation is flexible. |
 | 4 | **Run targeted-scope tests.** All tests in the enumeration scope must pass. | Failures here are real regressions in the patched code; debug and re-iterate. |
 | 5 | **Run full pytest suite.** Triage any failures: real regression, or stale test that was asserting the pre-correction value? | Each failure is classified as "real regression" (debug, re-iterate) or "stale test, update assertion" (document the update with rationale, then patch the test). Auto-classification as "stale test" without rationale is forbidden. |
-| 8 | **Update TECHNIQUE_BACKLOG.md dependency-flagging** for the four named entries (PBO §2.2.2, DSR §2.2.3, CPCV §2.2.4, MDS §2.4.1). Each entry adds a "Depends on: corrected WF test-period semantics per `docs/decisions/WF_TEST_BOUNDARY_SEMANTICS.md`, commit `<corrected-engine-commit-SHA>`" line. Narrow gate scope: this verification covers only these four entries, not the backlog as a whole. | If the four entries lack the dependency lines, add them. ~5-minute task. |
 | 9a | **Adversarial review of patched engine + regression tests + test classification table.** Use `/codex:adversarial-review` with patch + tests + classification in scope. | Material findings must be resolved or explicitly accepted as known issues before patch ships. The mechanism that caught the original bug is not skipped for the fix of that same bug class. |
 
 ### Post-patch validation checkpoints (must clear before downstream consumer work uses corrected-engine outputs)
+
+**Parallelism note.** Steps 6, 7, 8, and 9b are post-patch validation checkpoints that may run in parallel after the patch ships. The order presented here is logical (re-runs feed errata which feed adversarial review; backlog dependency-flagging is independent of the others) but does not represent a strict execution sequence. Step 9b is the only checkpoint with explicit dependencies (it consumes the erratum content produced by steps 6 and 7). Steps 6, 7, and 8 are mutually independent and can run concurrently.
+
+**Step 8 framing note.** Step 8 was originally framed as a "narrow gate" at engine commit, but logically requires the corrected-engine commit SHA to exist (which means the engine commit must have already happened). Step 8 is therefore structurally a post-patch task. Its narrow-gate property is preserved: it is an observable, bounded, hard-required verification — but it gates *downstream consumer work* (DSR/PBO/CPCV/MDS implementation, Phase 2C re-interpretation, strategy shortlist decisions), not the engine commit itself.
 
 | Step | Action | Outcome handling |
 |---|---|---|
 | 6 | **Re-run sealed Phase 1B baselines** (Q3a Option C-lite). All four baselines on v2 split. Document numerical deltas. Write `docs/closeout/PHASE1_ENGINE_ERRATUM.md`. | Findings recorded. If qualitative claims survive, note in erratum and proceed. If a claim does NOT survive, record as superseded; flag downstream backlog entries whose validity depends on the superseded claim; warrant separate re-evaluation outside this arc. |
 | 7 | **Re-run Phase 2C Tier 3** (all 198 batch-1 candidates) under the corrected engine. Write to a new artifact path (do not overwrite pre-correction artifacts). Write `docs/closeout/PHASE2C_5_PHASE1_RESULTS_ERRATUM.md`. | Corrected distribution stats and binary verdict count documented. If the corrected distribution materially differs from pre-correction, flag for separate research-direction conversation. |
+| 8 | **Update TECHNIQUE_BACKLOG.md dependency-flagging** for the four named entries (PBO §2.2.2, DSR §2.2.3, CPCV §2.2.4, MDS §2.4.1). Each entry adds a "Depends on: corrected WF test-period semantics per `docs/decisions/WF_TEST_BOUNDARY_SEMANTICS.md`, commit `<corrected-engine-commit-SHA>`" line. Narrow scope: this verification covers only these four entries, not the backlog as a whole. | If the four entries lack the dependency lines, add them. ~5-minute task. Hard-required before downstream consumer work; not a soft outcome. |
 | 9b | **Adversarial review of erratum files and regenerated artifacts.** Runs after steps 6 and 7 complete. | Findings folded into a final commit if material; documented as forward-pointers if non-blocking. |
 
 ### Hard rule
 
-The engine patch may be committed after patch acceptance gates (1, 2, 3, 4, 5, 8, 9a) clear. No DSR/PBO/CPCV/MDS implementation, Phase 2C re-interpretation, strategy shortlist, or research-direction decision may use corrected-engine outputs until the post-patch validation checkpoints (6, 7, 9b) are completed or explicitly deferred by a separate decision.
+The engine patch may be committed after patch acceptance gates (1, 2, 3, 4, 5, 9a) clear. No DSR/PBO/CPCV/MDS implementation, Phase 2C re-interpretation, strategy shortlist, or research-direction decision may use corrected-engine outputs until the post-patch validation checkpoints (6, 7, 8, 9b) are completed or explicitly deferred by a separate decision.
 
 ---
 
@@ -315,7 +319,12 @@ This design was reached through a 6-question brainstorm with adversarial input a
 - Q3d (regime_holdout scope): both reviewers locked Option A; T10 added per Claude advisor's discipline argument.
 
 Cross-cutting decisions reached through the four-batch consolidation pass:
-- Step 8 narrow-gate framing (verify four named backlog entries reference corrected-engine commit SHA).
+- Step 8 narrow-gate framing — verify four named backlog entries reference corrected-engine commit SHA. Operationally placed as a post-patch validation checkpoint (since it requires the commit SHA to exist), but with hard-required not soft-outcome semantics; gates downstream consumer work, not engine commit itself.
 - Step 9 split into 9a (gate, patch+tests+classification) and 9b (checkpoint, erratum files).
 - FP3 in-scope metric renaming with bounded scope.
 - Section RS positioned at top as load-bearing reference artifact.
+
+Spec amendments (post-initial-commit):
+- Cross-references added to RS table TBD entries pointing to FP3.
+- Parallelism note added to post-patch validation block.
+- Step 8 re-categorized from patch-acceptance-gate to post-patch-validation-checkpoint to resolve the chicken-and-egg of needing the commit SHA before verification could happen. Discipline preserved (hard-required, narrow scope, observable verification); placement corrected.
