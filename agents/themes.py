@@ -14,6 +14,11 @@ per CLAUDE.md).
 
 from __future__ import annotations
 
+# Note: Stage 2c/2d operational rotation currently uses the first 5
+# themes only (THEME_CYCLE_LEN = 5 in stage2c_batch.py and
+# stage2d_batch.py). multi_factor_combination remains canonical but is
+# not in current operational rotation pending separate validation.
+# See CLAUDE.md "Theme rotation operational boundary" for rationale.
 THEMES: tuple[str, ...] = (
     "momentum",
     "mean_reversion",
