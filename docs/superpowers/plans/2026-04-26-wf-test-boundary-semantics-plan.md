@@ -4,7 +4,9 @@
 
 **Goal:** Correct the walk-forward test-boundary semantic in `backtest/engine.py` so that test-window metrics measure only test-period strategy decisions, not cumulative-from-inception activity. Re-validate sealed Phase 1B baselines and the Phase 2C Phase 1 closeout under the corrected engine. Lock the new semantic with regression tests T1–T10.
 
-**Architecture:** Per-window data-range narrowing. Each WF window's `run_backtest` call loads `[test_start - WARMUP_BARS - 5_bar_buffer, test_end]` instead of `[train_start, test_end]`. Backtrader's existing minperiod machinery suppresses `next()` until `test_start` (no trading during warmup → broker stays at $10k → custom decision-state fields don't get mutated). Post-hoc trim/filter logic in `run_walk_forward` is removed since each window is now a self-contained test-period evaluation by construction.
+**Architecture:** Engine-level gated wrapper. The strategy class is wrapped to suppress `next()`, `prenext()`, and `nextstart()` execution before `test_start`. Indicator/factor warmup state is allowed to populate during the warmup period (data flows through Backtrader to the indicators regardless); decision logic, order submission, broker mutation, and decision-state mutation are all blocked until `test_start`. Each WF window's `run_backtest` call loads `[train_start, test_end]` (unchanged from current behavior), but the wrapper enforces the (iii) semantic: at the first non-suppressed `next()` call (= `test_start`), the broker holds $10k cash, no positions, no custom decision-state mutations.
+
+**Architecture-pick provenance.** An earlier draft of this plan proposed per-window data-range narrowing (`[test_start - WARMUP_BARS - 5, test_end]`) relying on Backtrader's minperiod machinery to suppress `next()` until `test_start`. Both ChatGPT (analyzing the minperiod machinery directly) and Claude advisor (analyzing the test fixtures' interaction with the proposed engine) independently identified that the 5-bar buffer would allow `next()` to fire pre-test_start once minperiod was satisfied, failing to satisfy Q2 (iii) — particularly for strategies with `WARMUP_BARS=0`. The two reviewers landed on the same defect from methodologically independent angles, which makes the convergence stronger evidence than two reviewers happening to agree. The engine-level gated wrapper enforces the spec via explicit timestamp comparison rather than implicit minperiod alignment, and works for all strategy patterns regardless of `WARMUP_BARS` value.
 
 **Tech Stack:** Python 3.11+, Backtrader 1.9.78+, pandas, pyarrow, pytest, sqlite3, pyyaml. No new dependencies.
 
@@ -29,7 +31,7 @@
 - `docs/closeout/PHASE2C_5_PHASE1_RESULTS_ERRATUM.md` — post-patch erratum for Phase 2C closeout (Task 9 output).
 
 ### Modified
-- `backtest/engine.py` — patched `run_walk_forward` per-window data-range narrowing; remove post-hoc trim/filter (current lines 870–892).
+- `backtest/engine.py` — added `_TestStartGatedStrategy` wrapper class; modified `run_walk_forward` per-window loop to use the wrapped strategy (the post-hoc trim at current lines 870–892 is retained as canonical-metric scope isolation, with a defensive assertion that the wrapper prevented pre-test trades).
 - `tests/test_regime_holdout.py` — append T10 (`test_regime_holdout_equity_curve_starts_at_initial_capital`).
 - `tests/test_walk_forward.py` — audit per classification table; sibling tests added if classification finds "needs sibling test."
 - `scripts/run_phase2c_batch_walkforward.py` — FP3 in-scope renaming: `wf_*` → `wf_test_period_*` for `_CSV_FIELDS` tuple, `CandidateOutcome` dataclass, downstream references. Sole file in code that uses `wf_*` field names.
@@ -47,15 +49,21 @@
 
 The spec leaves implementation choice to writing-plans. Picked approach:
 
-**Per-window data-range narrowing.** In the `run_walk_forward` inner loop, change `data_start_dt` from `train_start` to `test_start - WARMUP_BARS - 5_bar_buffer`. Drop the post-hoc equity-curve trim (current `engine.py:872-873`) and trade-list filter (current `engine.py:875-880`) and `_save_trade_csv` overwrite (current line 889) — they become unnecessary because each window's `run_backtest` call now loads only warmup+test data, so the equity curve and trade list are already test-period-only by construction.
+**Engine-level gated wrapper.** Implement a strategy wrapper class (factory or mixin) in `backtest/engine.py` that intercepts `next()`, `prenext()`, and `nextstart()` calls. Before each call, check whether the current bar's datetime is at or after `test_start`. If before, suppress (return immediately without invoking the user strategy's hook). If at or after, delegate to the wrapped strategy normally.
 
-**Why this satisfies T3.** Backtrader instantiates the strategy class once per `run_backtest` call. The strategy's `__init__` runs at the start of the data feed (= `test_start - WARMUP_BARS - 5`). Indicators populate over the warmup span via Backtrader's internal machinery. `next()` is suppressed during warmup by the strategy's existing minperiod (= `WARMUP_BARS` for hand-written baselines, `WARMUP_BARS + (1 or 2)` for DSL-compiled per `dsl_compiler.py:660`). Because `next()` doesn't fire during warmup, no trades execute (broker stays at $10k), and any custom decision-state fields the strategy mutates in `next()` (e.g., `_entry_bar`, `_train_phase_counter`) stay at their `__init__` values until `test_start`.
+**Wrapper-class implementation requirement.** The wrapper must preserve the base strategy's params, class attributes, and Backtrader strategy registration behavior. If direct subclassing changes parameter handling (Backtrader uses class-level params with metaclass behavior), the implementation must switch to a tested wrapper/factory pattern that preserves Backtrader semantics. Otherwise a strategy with custom params could break silently.
 
-**Trap warning from spec Q2 implementation note:** if a strategy mutates state in `prenext()` (Backtrader's pre-warmup hook), this approach does NOT close that contamination path. T3 would fail in that case, signaling the need for a different implementation (e.g., explicit two-phase Cerebro with strategy re-instantiation). The current DSL-compiled and hand-written baselines all leave `prenext()` empty (per `CLAUDE.md`'s warmup-handling rule: "Strategies must only emit signals inside Backtrader's `next()` method, NEVER in `prenext()`"), so the trap doesn't apply for the existing strategy population. T3 explicitly catches future violations.
+**Why this satisfies T3.** The wrapper is the explicit semantic enforcement mechanism. Under the wrapper, no user-strategy decision logic runs before `test_start` — regardless of `WARMUP_BARS` value, regardless of whether the strategy mutates state in `prenext()`, regardless of Backtrader's internal minperiod handling. T3 (state carryover) passes by construction because the wrapped strategy's `next()` body never executes pre-test_start, so custom decision-state fields stay at their `__init__` values until the first post-`test_start` bar.
 
-**5-bar buffer rationale.** DSL-compiled strategies with cross operators have effective minperiod `WARMUP_BARS + 2` (per the DESIGN INVARIANT at `dsl_compiler.py:644-661`). Hand-written baselines use `WARMUP_BARS` exactly. The 5-bar buffer absorbs both cases plus any future strategy variants without per-strategy interrogation of `effective_minperiod`. Extra warmup bars are harmless (no trading, broker unchanged).
+**Why this satisfies T1, T2, T4, T5, T8.** The wrapper's pre-test_start suppression means no orders can be submitted, no broker activity happens, and indicator state is the only thing that populates. At `test_start`, the broker holds initial_capital ($10k) by definition (no orders fired), the equity curve's first observation at or after `test_start` equals $10k, and the strategy's first decision logic execution happens with all indicators warm.
 
-**Drop test_start_dt-based trim/filter.** The current `run_walk_forward` inner loop trims `ec` to `ec[ec.index >= test_start_naive]` and filters trades by `entry_time_utc >= test_start_naive`. Under the new approach these operations are no-ops (the equity curve and trade list are already test-period-only). Remove them rather than leaving dead code.
+**Why this satisfies T7.** The wrapper consumes data from `train_start` through `test_end` (unchanged data range), but suppresses decision logic until `test_start`. Varying `train_start` changes what data flows through the indicators during the suppressed window — but the indicator state at `test_start` only depends on the WARMUP_BARS-most-recent pre-test_start bars (by definition of "warmup"). So train ranges *beyond the warmup horizon* produce bit-identical test-window metrics. T7's invariant becomes stronger under this approach: it asserts wrapper correctness, not just data-range isolation.
+
+**Trap warning preserved from spec Q2.** If a strategy mutates state in `__init__` based on data that depends on the train period, the wrapper does NOT close that contamination path (init runs once, before any bars). The current DSL-compiled and hand-written baselines all have data-independent `__init__` (they only set up indicators and `_entry_bar = None`), so the trap doesn't apply for the existing strategy population. T3 catches future violations.
+
+**Canonical-metric semantics under the wrapper.** The canonical metric slice from `test_start` onward reflects only test-period activity by construction. Pre-test equity observations, if present in the raw run artifact, must not enter canonical metric computation or persisted test-period artifacts. (Under the gated wrapper, the equity curve may still contain pre-test flat equity observations because the run loads `[train_start, test_end]`; those observations are at the constant `initial_capital` value because no trades fire pre-test, so they're harmless to include or exclude from the curve, but the metric computation must use only the post-`test_start` slice for return/sharpe/drawdown.)
+
+**Removed.** The post-hoc equity-curve trim and trade-list filter at `engine.py:870-892` become unnecessary under the wrapper approach in their current form. The wrapper enforces test-period-only semantics at `next()` time; the post-hoc trim becomes a clean equity-curve slice from `test_start` onward (which is mechanically the same as the current trim, but now its purpose is "isolate the canonical metric slice from the constant-equity warmup observations" rather than "filter contaminated data").
 
 ---
 
@@ -170,28 +178,49 @@ from strategies.template import BaseStrategy
 
 
 class TrainProfitTestFlat(BaseStrategy):
-    """Buys on bar 0, sells on bar (train_bars - 1), then does nothing.
+    """Buys on the second next() call, closes 24 next() calls later, then idle.
 
-    With a strong upward train trajectory, the position closes profitable.
-    Test period sees no trades. Used by T1 (test return excludes train PnL)
-    and T2 (zero test trades implies zero test return).
+    Decision logic uses the strategy's own bar-count tracking (not absolute
+    timestamps and not test_start coupling) to be robust to whatever WF
+    window configuration the test invokes. Intent: trade early in the
+    feed (which under broken engine = train period; under wrapper =
+    suppressed). Under broken engine, these trades fire pre-test_start
+    and contaminate test metrics. Under gated wrapper, next() is
+    suppressed pre-test_start so the trades never fire and only the
+    first 26 post-test_start bars contain the buy/close window.
 
-    Param `train_bars` controls when the position closes.
+    Used by T1 (test return excludes train PnL): under broken engine,
+    train trades produce PnL that contaminates "test return"; under
+    wrapper, no train trades → clean test return.
+
+    Used by T2 (zero test trades implies zero test return): under
+    wrapper, the buy fires on the second post-test_start next() and
+    closes 24 bars later — but with a flat-test-period synthetic price,
+    the trade has zero PnL. Combined with synthetic data that produces
+    flat test prices, T2's "zero test return" assertion holds because
+    no trades net any PnL.
+
+    Note for fixture authors: this strategy assumes the test author
+    constructs synthetic data such that (a) under broken engine, the
+    buy fires at feed bar 0/1 (during train period with profitable
+    trajectory) and closes at bar 25 (still in train, still profitable);
+    (b) under wrapper, _bar_count starts incrementing at the first
+    post-test_start next() call, so the buy fires deep in test where
+    prices are flat. Both scenarios are exercised by `make_trending_then_flat`
+    fixture data.
     """
     STRATEGY_NAME = "train_profit_test_flat"
-    WARMUP_BARS = 0  # No indicators; trades on bar 0.
-    params = (("train_bars", 100),)
+    WARMUP_BARS = 0
 
     def __init__(self) -> None:
-        self._sold = False
+        self._bar_count = 0
 
     def next(self) -> None:
-        bar = len(self) - 1  # 0-indexed bar count
-        if bar == 0 and not self.position:
+        self._bar_count += 1
+        if self._bar_count == 2 and not self.position:
             self.buy()
-        elif bar == self.p.train_bars - 1 and self.position:
+        elif self._bar_count == 26 and self.position:
             self.close()
-            self._sold = True
 
 
 class StatefulTestStrategy(BaseStrategy):
@@ -245,48 +274,55 @@ class IndicatorWarmupStrategy(BaseStrategy):
 
 
 class TrainProfitable(BaseStrategy):
-    """Profits during train (bar 0 buy, exit at train end).
+    """Profits early in feed (bar-count 2 buy, bar-count 26 close).
 
-    Used by T5 (cross-strategy comparability) — paired with TrainLosing
-    to verify both start the test window with $10k regardless of train
-    behavior.
+    Used by T5 (cross-strategy comparability) — paired with TrainLosing.
+    Bar-count tracking via self._bar_count (not absolute timestamps) so
+    the strategy's intent is robust to whatever WF window configuration
+    the test invokes. Under broken engine, fires during train period
+    with profit (rising synthetic prices). Under wrapper, suppressed
+    pre-test_start; trades fire post-test_start where prices are flat
+    (zero PnL).
+
+    Both TrainProfitable and TrainLosing must produce identical test-
+    window starting equity ($10k) under the wrapper, regardless of
+    pre-test_start behavior.
     """
     STRATEGY_NAME = "train_profitable"
     WARMUP_BARS = 0
-    params = (("train_bars", 100),)
 
     def __init__(self) -> None:
-        pass
+        self._bar_count = 0
 
     def next(self) -> None:
-        bar = len(self) - 1
-        if bar == 0 and not self.position:
+        self._bar_count += 1
+        if self._bar_count == 2 and not self.position:
             self.buy()
-        elif bar == self.p.train_bars - 1 and self.position:
+        elif self._bar_count == 26 and self.position:
             self.close()
 
 
 class TrainLosing(BaseStrategy):
-    """Loses during train (buys at the train top, sells at the bottom).
+    """Loses by buying late in train trajectory (bar-count 50 buy, 75 close).
 
-    Paired with TrainProfitable for T5. Both classes have identical
-    test-period behavior (no trades) but different train-period PnL.
-    Under (iii), both should show identical test-window starting equity.
+    Paired with TrainProfitable for T5. Different bar-count thresholds
+    produce different PnL outcomes under broken engine (TrainProfitable
+    captures the early train uptrend; TrainLosing buys after the trend
+    has played out and sells flat or down). Under wrapper, both are
+    suppressed pre-test_start; identical test-window starting equity
+    ($10k) regardless.
     """
     STRATEGY_NAME = "train_losing"
     WARMUP_BARS = 0
-    params = (("train_bars", 100),)
 
     def __init__(self) -> None:
-        pass
+        self._bar_count = 0
 
     def next(self) -> None:
-        bar = len(self) - 1
-        # Buy near the top of train trajectory, sell near the end.
-        # Combined with a non-monotonic synthetic price, this loses money.
-        if bar == self.p.train_bars // 2 and not self.position:
+        self._bar_count += 1
+        if self._bar_count == 50 and not self.position:
             self.buy()
-        elif bar == self.p.train_bars - 1 and self.position:
+        elif self._bar_count == 75 and self.position:
             self.close()
 ```
 
@@ -650,7 +686,7 @@ def test_test_period_return_excludes_train_period_pnl(
     db_path = tmp_path / "wf_t1.db"
     result = run_walk_forward(
         strategy_cls=TrainProfitTestFlat,
-        strategy_params={"train_bars": 2880},
+
         parquet_path=trending_then_flat_parquet,
         db_path=db_path,
         walk_forward_config={
@@ -685,7 +721,7 @@ def test_zero_test_trades_implies_zero_test_return(
     db_path = tmp_path / "wf_t2.db"
     result = run_walk_forward(
         strategy_cls=TrainProfitTestFlat,
-        strategy_params={"train_bars": 2880},
+
         parquet_path=trending_then_flat_parquet,
         db_path=db_path,
         walk_forward_config={
@@ -798,7 +834,7 @@ def test_two_strategies_with_different_train_pnl_have_same_test_starting_capital
 
     result_a = run_walk_forward(
         strategy_cls=TrainProfitable,
-        strategy_params={"train_bars": 2880},
+
         parquet_path=trending_then_flat_parquet,
         db_path=db_path_a,
         walk_forward_config={
@@ -811,7 +847,7 @@ def test_two_strategies_with_different_train_pnl_have_same_test_starting_capital
     )
     result_b = run_walk_forward(
         strategy_cls=TrainLosing,
-        strategy_params={"train_bars": 2880},
+
         parquet_path=trending_then_flat_parquet,
         db_path=db_path_b,
         walk_forward_config={
@@ -1002,13 +1038,65 @@ def test_summary_aggregation_uses_corrected_per_window_metrics():
     assert summary["total_trades"] == 30
 ```
 
-- [ ] **Step 10: Verify ALL tests fail against current (broken) engine**
+- [ ] **Step 10: Add T10 to `tests/test_regime_holdout.py` (asymmetry anchor; expected to PASS pre-patch)**
 
-```bash
-python -m pytest tests/test_walk_forward_boundary_semantics.py -v
+T10 belongs in the failing-tests-first phase regardless of whether it can fail. Its expected pre-patch state is PASS (not FAIL), distinct from T1-T9 — because `run_regime_holdout` is unchanged by this engine patch. T10 is the asymmetry anchor that catches future violations (someone "fixing" `run_regime_holdout` to match the new WF semantic, which would break the calibrated 4-condition gate thresholds in environments.yaml).
+
+Append at the end of `tests/test_regime_holdout.py`:
+
+```python
+class TestRegimeHoldoutBoundaryAnchor:
+    """T10 — asymmetry anchor for run_regime_holdout boundary semantic.
+
+    Per docs/decisions/WF_TEST_BOUNDARY_SEMANTICS.md Q3d (Option A):
+    run_regime_holdout intentionally uses warmup-from-inside semantic
+    (different from run_walk_forward's warmup-from-pre-history under
+    the corrected (iii) semantic). This test asserts the structural
+    property that protects the asymmetry: regime_holdout starts with
+    fresh $10k, no inherited broker state, no carry-in.
+
+    If a future change "fixes" run_regime_holdout to match WF's new
+    semantic, this test catches it (and the calibrated 4-condition
+    gate thresholds in environments.yaml would need recalibration —
+    see the CONTRACT GAP at engine.py:1175-1183).
+    """
+
+    def test_regime_holdout_equity_curve_starts_at_initial_capital(
+        self, tmp_path
+    ):
+        """T10: regime_holdout starts with fresh $10k, no inherited state."""
+        from backtest.engine import run_regime_holdout
+        from strategies.baseline.sma_crossover import SMACrossover
+
+        result = run_regime_holdout(
+            dsl=None,
+            batch_id="t10-test-batch",
+            parent_run_id="t10-test-parent",
+            strategy_cls=SMACrossover,
+            db_path=tmp_path / "regime_t10.db",
+        )
+        # The initial_capital field on the metrics dict must be $10k.
+        assert result.metrics.get("initial_capital") == pytest.approx(10_000.0), (
+            f"T10: regime_holdout initial_capital = "
+            f"{result.metrics.get('initial_capital')}; expected $10k. "
+            f"If this fails, regime_holdout has been changed to inherit "
+            f"capital from a prior run — and the 4-condition gate "
+            f"thresholds in environments.yaml need recalibration "
+            f"(see CONTRACT GAP at engine.py:1175-1183)."
+        )
 ```
 
-Expected pre-patch: T1, T2, T3, T4, T5, T7, T8 FAIL (with diagnostic messages); T6 may PASS (broken engine is deterministic) and T9 may PASS (aggregator is correct as a function); document any unexpected results in chat before proceeding.
+- [ ] **Step 11: Verify pre-patch state — T1-T9 FAIL, T10 PASS**
+
+```bash
+python -m pytest tests/test_walk_forward_boundary_semantics.py tests/test_regime_holdout.py::TestRegimeHoldoutBoundaryAnchor -v
+```
+
+**Expected:** T1-T9 FAIL (with diagnostic messages), T10 PASSES.
+
+If T10 FAILS pre-patch, the wrapper or fixture has a defect — investigate before proceeding (regime_holdout is unchanged by this engine patch; T10 should pass against both the broken and patched engines).
+
+If any of T1-T9 PASS pre-patch, the test setup doesn't actually exercise the bug — investigate before proceeding (the test's assertion may not be checking what it should, or the fixture may not be triggering the bug class).
 
 Record one-line provenance per test:
 
@@ -1022,53 +1110,132 @@ T6 passes: engine is deterministic even under broken semantic (T6 checks the pro
 T7 fails: test metrics differ across train choices (train state leaks)
 T8 fails: equity curves don't start at $10k at test_start
 T9 passes: _aggregate_walk_forward_metrics is structurally correct (T9 protects against future regression)
+T10 passes: regime_holdout unchanged by this patch; T10 is the asymmetry anchor that catches future violations
 ```
 
-If any test passes against the broken engine in a way that's not explained by the above provenance, STOP and resolve before proceeding.
+If any test behavior diverges from the expected pattern, STOP and resolve before proceeding.
 
-- [ ] **Step 11: Commit (failing tests are the patch's positive acceptance criteria)**
+- [ ] **Step 12: Commit (failing tests are the patch's positive acceptance criteria)**
 
 ```bash
-git add tests/test_walk_forward_boundary_semantics.py
-git commit -m "test: WF test-boundary semantics regression tests T1-T9 (RED)
+git add tests/test_walk_forward_boundary_semantics.py tests/test_regime_holdout.py
+git commit -m "test: WF + regime_holdout boundary semantics regression tests T1-T10
 
-Tests fail against the current (broken) engine. They are the positive
-acceptance criteria for the engine patch in Task 5. Pre-patch failure
-provenance recorded in commit description.
+T1-T9 in tests/test_walk_forward_boundary_semantics.py are RED against
+the current (broken) engine. They are the positive acceptance criteria
+for the engine patch in Task 5.
 
-Provenance (must hold for the patch to be accepted):
-- T1, T2: total_return reflects cumulative train PnL leaked into test
-- T3: strategy state counter > 0 at first test next() under broken engine
-- T4, T5, T8: equity curves don't start at \$10k at test_start
-- T7: test metrics differ across train choices (train state leakage)
-- T6, T9: pass pre-patch; protect against future regressions"
+T10 in tests/test_regime_holdout.py is GREEN pre-patch (run_regime_holdout
+is unchanged by this patch). T10 is the asymmetry anchor per spec Q3d:
+catches future changes that match WF's new semantic and would break
+the calibrated 4-condition gate thresholds in environments.yaml.
+
+Pre-patch state (must hold for the patch to be accepted):
+- T1, T2: FAIL — total_return reflects cumulative train PnL leaked into test
+- T3: FAIL — strategy state counter > 0 at first test next() under broken engine
+- T4, T5, T8: FAIL — equity curves don't start at \$10k at test_start
+- T7: FAIL — test metrics differ across train choices (train state leakage)
+- T6, T9: PASS — protect against future regressions in respective properties
+- T10: PASS — asymmetry anchor; regime_holdout unchanged"
 ```
 
 **Acceptance criteria for Task 4 (= spec gate step 2):**
-- All 9 tests written and committed.
-- Each test that should fail does fail; each test that passes pre-patch is explained in provenance.
-- Failures match the expected bug class manifestation.
+- All 10 tests written and committed (T1-T9 in new file; T10 in existing test_regime_holdout.py).
+- Pre-patch state matches expected: T1-T9 FAIL with provenance, T10 PASSES.
+- Each pre-patch result explained.
 
-**Wall-clock estimate:** 90 minutes.
+**Wall-clock estimate:** 90-120 minutes.
 
 ---
 
 ### Task 5: Patch the engine (Q2 (iii) implementation)
 
-**Why:** Per spec Section S step 3 and Q2: implement the per-window data-range narrowing approach so each window's metrics are test-period-only by construction.
+**Why:** Per spec Section S step 3 and Q2: implement the gated-wrapper approach so each window's metrics are test-period-only by construction.
 
 **Files:**
 - Modify: `backtest/engine.py:837-892` (the `run_walk_forward` inner per-window loop)
 
-- [ ] **Step 1: Modify the per-window data range and remove post-hoc trim/filter**
+- [ ] **Step 1a: Implement the gated wrapper class in `backtest/engine.py`**
 
-Current `run_walk_forward` inner loop (lines 837–892) loads `[train_start, test_end]`, runs full backtest, then trims equity curve and filters trades post-hoc.
+Add the wrapper class above the `run_walk_forward` function:
 
-Replace with: load `[test_start - WARMUP_BARS - 5, test_end]`, run backtest fresh per window, no post-hoc trim.
+```python
+class _TestStartGatedStrategy:
+    """Factory for strategy wrappers that suppress hooks before test_start.
 
-Locate the block at `backtest/engine.py:837` starting with `for i, (w_train_start, w_train_end, w_test_start, w_test_end) in enumerate(windows):`.
+    Per docs/decisions/WF_TEST_BOUNDARY_SEMANTICS.md Q2 (iii):
+    no user-strategy decision logic, order submission, broker mutation,
+    or decision-state mutation may occur before test_start. Indicator/
+    factor warmup state is allowed to populate during the warmup span.
 
-Change the data range computation:
+    This wrapper enforces (iii) via explicit timestamp comparison
+    rather than relying on Backtrader's minperiod alignment, which
+    is fragile (minperiod-suppressed next() can still fire 1+ bars
+    before test_start under some buffer/strategy combinations).
+
+    Note: when nextstart() fires post-test_start, the wrapper's
+    nextstart() delegates to super().nextstart() which (by Backtrader
+    convention) invokes next() once. The wrapper's next() will
+    redundantly verify the timestamp on that first call. This is a
+    benign double-check; do not optimize away the next() timestamp
+    check, as that would create a bypass path through nextstart().
+    """
+
+    @staticmethod
+    def make_wrapped_class(
+        base_cls: type[bt.Strategy],
+        test_start_dt: datetime,
+    ) -> type[bt.Strategy]:
+        """Return a subclass of base_cls with next/prenext/nextstart gated.
+
+        The subclass preserves base_cls's params, class attributes, and
+        Backtrader strategy registration behavior. If direct subclassing
+        is found to break param handling (Backtrader uses a metaclass
+        for params), switch to a tested wrapper/factory pattern that
+        preserves Backtrader semantics — silent param-handling breakage
+        would invalidate any test that uses parameterized strategies.
+        """
+        # Backtrader uses naive datetimes internally (parquet feed strips tz).
+        test_start_naive = test_start_dt.replace(tzinfo=None)
+
+        class GatedStrategy(base_cls):
+            """Subclass with test_start gating."""
+
+            def _is_pre_test(self) -> bool:
+                """True if current bar is before test_start."""
+                cur_dt = self.data.datetime.datetime(0)
+                return cur_dt < test_start_naive
+
+            def prenext(self) -> None:
+                # Always suppress — prenext is by definition pre-warmup.
+                # Both pre-test_start (suppressed) and post-test_start-
+                # pre-warmup (impossible since test_start is post-warmup
+                # given correct WARMUP_BARS) are handled by suppression.
+                return
+
+            def nextstart(self) -> None:
+                # The first call where minperiod is satisfied. May fire
+                # before test_start if minperiod aligns earlier. Suppress
+                # if pre-test; delegate to parent's nextstart (which by
+                # Backtrader convention calls next() once) if not.
+                if self._is_pre_test():
+                    return
+                super().nextstart()
+
+            def next(self) -> None:
+                if self._is_pre_test():
+                    return
+                super().next()
+
+        GatedStrategy.__name__ = f"Gated_{base_cls.__name__}"
+        GatedStrategy.STRATEGY_NAME = getattr(base_cls, "STRATEGY_NAME", base_cls.__name__)
+        GatedStrategy.WARMUP_BARS = getattr(base_cls, "WARMUP_BARS", 0)
+        return GatedStrategy
+```
+
+- [ ] **Step 1b: Modify the `run_walk_forward` per-window loop to use the wrapped strategy**
+
+Locate the block at `backtest/engine.py:837` starting with `for i, (w_train_start, w_train_end, w_test_start, w_test_end) in enumerate(windows):`. Replace the current implementation with:
 
 ```python
     for i, (w_train_start, w_train_end, w_test_start, w_test_end) in enumerate(windows):
@@ -1078,36 +1245,35 @@ Change the data range computation:
             w_train_start, w_train_end, w_test_start, w_test_end,
         )
 
-        # Q2 (iii) per-window data-range narrowing: load only warmup
-        # history + test window, not the full train period. Backtrader's
-        # minperiod machinery (set by strategy WARMUP_BARS) suppresses
-        # next() until the warmup buffer is consumed (= test_start). No
-        # trades fire during warmup → broker keeps $10k → strategy state
-        # not mutated → test-window metrics are test-period-only by
-        # construction.
-        # Buffer of 5 extra bars absorbs DSL-compiled cross-operator
-        # off-by-one (effective_minperiod = WARMUP_BARS + 2) and any
-        # future strategy variants without per-strategy interrogation.
-        warmup_bars = getattr(strategy_cls, "WARMUP_BARS", 0)
-        warmup_buffer_bars = warmup_bars + 5
-
-        # Test start as datetime
-        test_start_dt = datetime(
-            w_test_start.year, w_test_start.month, w_test_start.day,
+        # Convert dates to UTC datetimes for run_backtest (unchanged)
+        data_start_dt = datetime(
+            w_train_start.year, w_train_start.month, w_train_start.day,
             tzinfo=timezone.utc,
         )
-        # Pull data_start back by warmup_buffer_bars hours.
-        data_start_dt = test_start_dt - timedelta(hours=warmup_buffer_bars)
-
-        # Include all bars on the last day
         data_end_dt = datetime(
             w_test_end.year, w_test_end.month, w_test_end.day,
             hour=23, tzinfo=timezone.utc,
         )
+        test_start_dt = datetime(
+            w_test_start.year, w_test_start.month, w_test_start.day,
+            tzinfo=timezone.utc,
+        )
 
-        # Run the Phase 1A engine on warmup+test data only.
+        # Q2 (iii) enforcement via gated wrapper:
+        # wrap the strategy class so its next/prenext/nextstart are
+        # suppressed before test_start. Decision logic, orders, broker
+        # mutation, and decision-state mutation are all blocked pre-test;
+        # indicator warmup state populates normally.
+        gated_cls = _TestStartGatedStrategy.make_wrapped_class(
+            strategy_cls, test_start_dt
+        )
+
+        # Run engine on FULL train+test span (unchanged data range);
+        # the wrapper enforces test-period-only semantics via explicit
+        # timestamp comparison in next/prenext/nextstart, not via
+        # data-range manipulation.
         result = run_backtest(
-            strategy_cls=strategy_cls,
+            strategy_cls=gated_cls,
             start_date=data_start_dt,
             end_date=data_end_dt,
             strategy_params=strategy_params,
@@ -1116,16 +1282,32 @@ Change the data range computation:
             write_registry=False,
         )
 
-        # Per Q2 (iii): equity_curve and trades are already test-period-only
-        # by construction (next() didn't fire during warmup). No post-hoc
-        # trim or filter required.
-        ec_test = result.equity_curve
-        trades_test = result.trades
+        # Canonical-metric slice: equity from test_start onward.
+        # Pre-test equity observations (if any) are at the constant
+        # initial_capital value (no trades fired pre-test); slice them
+        # out so the metric computation uses only the test-period
+        # post-test_start observations.
+        ec = result.equity_curve
+        test_start_naive = test_start_dt.replace(tzinfo=None)
+        ec_test = ec[ec.index >= test_start_naive]
 
-        # Trade CSV from run_backtest is already correct (test-period-only).
-        # No overwrite needed.
+        # Trades are also test-period-only by wrapper construction
+        # (next() suppression prevented pre-test orders from firing),
+        # but apply the entry-time filter as a defensive belt-and-
+        # suspenders check. Should be a no-op under correct wrapper.
+        trades_test = [
+            t for t in result.trades
+            if pd.Timestamp(t["entry_time_utc"]).tz_localize(None)
+               >= test_start_naive
+        ]
+        # Defensive assertion: wrapper should have prevented all pre-test trades.
+        if len(trades_test) != len(result.trades):
+            raise RuntimeError(
+                f"Window {i+1}: wrapper failed — {len(result.trades) - len(trades_test)} "
+                f"pre-test trades present in result. Engine patch is broken."
+            )
 
-        # Compute metrics on test-only data
+        # Compute metrics on test-only slice (canonical Q2 (iii) metrics).
         test_metrics = compute_all_metrics(ec_test, trades_test, cash)
 
         # Determine effective_start for the test portion
@@ -1168,11 +1350,12 @@ Change the data range computation:
 ```
 
 The diff vs current code:
-- Removed: `data_start_dt = datetime(w_train_start.year, ...)` (was using train_start)
-- Removed: `test_start_naive = test_start_dt.replace(tzinfo=None)`, `ec_test = ec[ec.index >= test_start_naive]`, the trade-list filter, the `_save_trade_csv(result.run_id, trades_test)` overwrite, and trade_id renumbering loop.
-- Added: warmup-buffer computation, `data_start_dt = test_start_dt - timedelta(hours=warmup_buffer_bars)`, comments explaining the (iii) semantic.
-
-Make sure to also import `timedelta` at the top of the file if not already imported (it is — line 34: `from datetime import date, datetime, timedelta, timezone`).
+- Added: gated wrapper class (`_TestStartGatedStrategy`) above `run_walk_forward`.
+- Added: `gated_cls = _TestStartGatedStrategy.make_wrapped_class(strategy_cls, test_start_dt)` per window; pass `gated_cls` instead of `strategy_cls` to `run_backtest`.
+- Added: defensive assertion that filtered trades count matches raw trades count (since wrapper should prevent all pre-test trades).
+- Removed: `_save_trade_csv(result.run_id, trades_test)` overwrite call (the wrapper-produced CSV is already correct; no overwrite needed; defensive assertion verifies wrapper correctness).
+- Removed: trade_id renumbering loop (under wrapper, all trades are test-period; trade_ids from `run_backtest` are already correctly sequenced from 1 within the test window because no pre-test trades exist to consume earlier IDs).
+- Unchanged: `data_start_dt`, `data_end_dt`, `test_start_dt` computations.
 
 - [ ] **Step 2: Update the engine docstring at line 740 to reflect the corrected behavior**
 
@@ -1185,18 +1368,23 @@ def run_walk_forward(
     """Execute walk-forward backtesting across rolling windows.
 
     Per Q2 (iii) of WF_TEST_BOUNDARY_SEMANTICS decision:
-    each window loads only [test_start - WARMUP_BARS - 5_buffer, test_end]
-    of data. The strategy is freshly instantiated per window with $10,000
-    starting capital. Backtrader's minperiod machinery suppresses next()
-    during warmup, so no trades fire there — broker stays at $10k,
-    strategy decision state stays uninitialized. Test-window metrics
-    (return, Sharpe, drawdown, trades) reflect only test-period activity
-    by construction.
+    each window wraps the strategy class in a _TestStartGatedStrategy
+    that suppresses next/prenext/nextstart before test_start. The data
+    feed loads [train_start, test_end] (unchanged from prior behavior),
+    but the wrapper's explicit timestamp comparison ensures no
+    user-strategy decision logic, order submission, broker mutation,
+    or decision-state mutation occurs pre-test_start. At the first
+    non-suppressed next() call (= test_start), the broker holds $10k,
+    no positions are open, and custom decision-state fields are at
+    their __init__ values. Test-window metrics (return, Sharpe,
+    drawdown, trades) reflect only test-period activity by construction.
 
     For Phase 1B baselines, no parameter optimization is performed.
-    The train window is recorded in registry metadata for lineage but
-    is not loaded into the engine's data feed (it would only contribute
-    indicator warmup, which is served from a smaller pre-test buffer).
+    The train window is loaded into the data feed (so indicators warm
+    up across the full pre-test history), but the wrapper suppresses
+    decision logic until test_start. The post-hoc equity-curve trim
+    isolates the canonical metric slice from the constant-equity
+    warmup observations.
 
     Range resolution precedence (highest first):
         1. Explicit ``train_ranges`` argument (list of disjoint ranges).
@@ -1229,30 +1417,76 @@ Expected: ALL 9 tests PASS.
 
 If any test fails, the patch is not yet correct. Iterate on the engine code until all 9 pass. Do NOT modify the tests to make them pass — that defeats the regression-test discipline.
 
+- [ ] **Step 3.5: Verify trade CSV correctness post-patch**
+
+Run a sample WF execution with a strategy that produces trades, and verify the wrapper actually does what it claims:
+
+```bash
+python -c "
+from datetime import date
+from backtest.engine import run_walk_forward
+from strategies.baseline.sma_crossover import SMACrossover
+import pandas as pd
+from pathlib import Path
+
+result = run_walk_forward(strategy_cls=SMACrossover)
+# Pull the first window's trade CSV path
+csv = Path(f'data/results/trades_{result.window_results[0].run_id}.csv')
+df = pd.read_csv(csv)
+# Verify: trade_id starts at 1 and is sequential within the test window
+if len(df) > 0:
+    assert df['trade_id'].iloc[0] == 1, f'trade_id should start at 1; got {df[\"trade_id\"].iloc[0]}'
+    assert (df['trade_id'].diff().dropna() == 1).all(), 'trade_ids not sequential'
+    # Verify: no entry_time_utc < first window's test_start
+    test_start = result.windows[0][2]
+    earliest = pd.to_datetime(df['entry_time_utc']).min().date()
+    assert earliest >= test_start, (
+        f'wrapper failed: earliest entry {earliest} predates test_start {test_start}'
+    )
+print('Trade CSV verification PASS')
+"
+```
+
+Expected: `Trade CSV verification PASS`. If any assertion fails, the gated-wrapper implementation has a defect — investigate before committing the patch. Common failure modes: (a) wrapper not applied to all windows; (b) wrapper's timestamp comparison off by one bar; (c) Backtrader strategy params not preserved through the wrapper (causing the strategy to behave differently than expected).
+
 - [ ] **Step 4: Commit the engine patch**
+
+**Do NOT push to origin yet.** Task 7.5 (adversarial review) and Task 10a (TECHNIQUE_BACKLOG dependency-flagging) must complete before push. Pushing now would ship the engine patch without dependency lines pointing to it, silently violating the discipline Task 10a is designed to enforce. The push happens after Task 10a's commit lands, not after this commit.
 
 ```bash
 git add backtest/engine.py
-git commit -m "fix(engine): WF per-window data-range narrowing implements Q2 (iii)
+git commit -m "fix(engine): WF gated wrapper implements Q2 (iii)
 
 Per docs/decisions/WF_TEST_BOUNDARY_SEMANTICS.md: each WF window now
-loads only [test_start - WARMUP_BARS - 5, test_end] instead of
-[train_start, test_end]. Backtrader's minperiod machinery suppresses
-next() until test_start, so no trades fire during warmup and the
-broker stays at \$10k. Test-window metrics (return, Sharpe, drawdown,
-trades) are test-period-only by construction.
+wraps the strategy class in a _TestStartGatedStrategy that suppresses
+next(), prenext(), and nextstart() until the current bar's datetime
+is at or after test_start. Decision logic, order submission, broker
+mutation, and decision-state mutation are all blocked pre-test;
+indicator/factor warmup state populates normally.
 
-Removed: post-hoc equity-curve trim, trade-list filter, trade_id
-renumbering, and trade CSV overwrite (lines 870-892 of pre-patch
-engine.py). All become unnecessary because each window is now a
-self-contained test-period evaluation.
+Architecture-pick provenance: an earlier draft proposed per-window
+data-range narrowing relying on Backtrader's minperiod machinery; both
+ChatGPT and Claude advisor independently identified that the
+WARMUP_BARS+buffer approach would allow next() to fire pre-test_start
+once minperiod was satisfied, failing to satisfy Q2 (iii). The gated
+wrapper enforces the spec via explicit timestamp comparison.
+
+Equity-curve and trade-list slicing at test_start retained (the wrapper
+ensures the slice is harmless — pre-test equity is constant initial_capital
+and pre-test trades don't exist), now serving as canonical-metric scope
+isolation rather than contaminated-data filtering. A defensive assertion
+verifies the wrapper actually prevented all pre-test trades.
 
 Closes the carry-in PnL contamination identified by Codex adversarial
 review (2026-04-26) and quantified in the magnitude audit (82.1% of
 windows affected, median 92% carry-in PnL share, 36/48 binary winners
 carry-in dominated).
 
-Tests: T1-T9 in tests/test_walk_forward_boundary_semantics.py all pass."
+Tests: T1-T9 in tests/test_walk_forward_boundary_semantics.py all pass.
+T10 in tests/test_regime_holdout.py passes (regime_holdout unchanged
+by this patch; T10 is the asymmetry anchor).
+
+DO NOT PUSH until Task 7.5 + Task 10a complete."
 ```
 
 **Acceptance criteria for Task 5 (= spec gate step 3):**
@@ -1324,83 +1558,9 @@ For each failure not anticipated by the classification table:
 
 ---
 
-### Task 7: T10 — `test_regime_holdout_equity_curve_starts_at_initial_capital`
+### Task 7 (deprecated — T10 moved into Task 4)
 
-**Why:** Per spec Q3c and Q3d: T10 is the asymmetry anchor for `run_regime_holdout`. Lives in `tests/test_regime_holdout.py` (existing file). Catches future "fixes" that match WF semantic and break the calibrated 4-condition gate.
-
-**Files:**
-- Modify: `tests/test_regime_holdout.py` (append new test class or function).
-
-- [ ] **Step 1: Add T10 to test_regime_holdout.py**
-
-Append at the end of `tests/test_regime_holdout.py`:
-
-```python
-class TestRegimeHoldoutBoundaryAnchor:
-    """T10 — asymmetry anchor for run_regime_holdout boundary semantic.
-
-    Per docs/decisions/WF_TEST_BOUNDARY_SEMANTICS.md Q3d (Option A):
-    run_regime_holdout intentionally uses warmup-from-inside semantic
-    (different from run_walk_forward's warmup-from-pre-history under
-    the corrected (iii) semantic). This test asserts the structural
-    property that protects the asymmetry: regime_holdout starts with
-    fresh $10k, no inherited broker state, no carry-in.
-
-    If a future change "fixes" run_regime_holdout to match WF's new
-    semantic, this test catches it (and the calibrated 4-condition
-    gate thresholds in environments.yaml would need recalibration —
-    see the CONTRACT GAP at engine.py:1175-1183).
-    """
-
-    def test_regime_holdout_equity_curve_starts_at_initial_capital(
-        self, tmp_path
-    ):
-        """T10: regime_holdout starts with fresh $10k, no inherited state."""
-        from backtest.engine import run_regime_holdout
-        from strategies.baseline.sma_crossover import SMACrossover
-
-        result = run_regime_holdout(
-            dsl=None,
-            batch_id="t10-test-batch",
-            parent_run_id="t10-test-parent",
-            strategy_cls=SMACrossover,
-            db_path=tmp_path / "regime_t10.db",
-        )
-        # The initial_capital field on the metrics dict must be $10k.
-        assert result.metrics.get("initial_capital") == pytest.approx(10_000.0), (
-            f"T10: regime_holdout initial_capital = "
-            f"{result.metrics.get('initial_capital')}; expected $10k. "
-            f"If this fails, regime_holdout has been changed to inherit "
-            f"capital from a prior run — and the 4-condition gate "
-            f"thresholds in environments.yaml need recalibration "
-            f"(see CONTRACT GAP at engine.py:1175-1183)."
-        )
-```
-
-- [ ] **Step 2: Run T10 to verify it passes**
-
-```bash
-python -m pytest tests/test_regime_holdout.py::TestRegimeHoldoutBoundaryAnchor -v
-```
-
-Expected: PASS. (run_regime_holdout was not changed by the engine patch; its existing semantic already starts with fresh $10k.)
-
-- [ ] **Step 3: Commit T10**
-
-```bash
-git add tests/test_regime_holdout.py
-git commit -m "test: T10 regime_holdout boundary asymmetry anchor
-
-Per spec Q3d Option A + T10 framing: asserts run_regime_holdout
-starts with fresh \$10k initial capital. Catches future changes
-that match WF's new semantic, which would break calibrated
-4-condition gate thresholds in environments.yaml."
-```
-
-**Acceptance criteria for Task 7:**
-- T10 passes.
-
-**Wall-clock estimate:** 15 minutes.
+T10 is now part of Task 4 (regression test set). It was originally a separate task but per amendment from the dual-reviewer pass: T10 belongs in the failing-tests-first phase regardless of whether it can fail. T10's expected pre-patch state is PASS (not FAIL), distinct from T1-T9. See Task 4 step 10 for the implementation. This Task 7 placeholder is preserved for sequencing-reference purposes only.
 
 ---
 
@@ -1424,13 +1584,15 @@ node "/Users/yutianyang/.claude/plugins/cache/openai-codex/codex/1.0.4/scripts/c
      Determine whether the fix correctly implements (iii) per the spec at
      docs/superpowers/specs/2026-04-26-wf-test-boundary-semantics-design.md.
 
-     Attack: (a) does the per-window data-range narrowing achieve (iii)
-     for all strategies that don't mutate state in prenext()? (b) are
+     Attack: (a) does the gated wrapper (_TestStartGatedStrategy)
+     correctly suppress next/prenext/nextstart for all strategy patterns,
+     including ones with custom params or metaclass behavior? (b) are
      T1-T9 sufficient to catch the bug class, or are there additional
      failure modes the test set misses? (c) does the test classification
      table miss any tests that would silently codify the bug? (d) does
-     the engine patch introduce any new bugs (e.g., off-by-one in warmup
-     buffer, broken regime_holdout, broken single-run mode)?
+     the engine patch introduce any new bugs (e.g., wrapper not preserving
+     base strategy params, broken regime_holdout, broken single-run mode,
+     wrapper bypass via some Backtrader hook the wrapper doesn't intercept)?
 
      Output: CRITICAL BLOCKERS / MAJOR CONCERNS / MINOR CONCERNS.
      Verdict: TRUSTED, TRUSTED_WITH_CAVEATS, or NOT_TRUSTED."
@@ -1444,15 +1606,16 @@ If MAJOR CONCERNS: assess each. If material to the patch's correctness, address 
 
 If TRUSTED or TRUSTED_WITH_CAVEATS (with documented caveats): proceed to commit.
 
-- [ ] **Step 3: Push the patch commits to origin**
+- [ ] **Step 3: DO NOT push yet — Task 10a runs next**
 
-```bash
-git push origin claude/setup-structure-validators-JNqoI
-```
+**Do NOT push to origin at this step.** Task 10a (TECHNIQUE_BACKLOG dependency-flagging) is the post-commit pre-push gate. Push only happens after Task 10a's commit lands. See Task 10a step 4 for the actual push command.
+
+The discipline this enforces: PBO/DSR/CPCV/MDS implementers months from now must encounter dependency lines pointing to the corrected-engine commit when they read TECHNIQUE_BACKLOG.md. Pushing before Task 10a means the engine fix is in the world without those dependency lines, and a future implementer could implement against the wrong semantic without any signal that pre-correction WF metrics produce meaningless results.
 
 **Acceptance criteria for Task 7.5 (= spec gate step 9a):**
 - Codex review verdict is TRUSTED or TRUSTED_WITH_CAVEATS.
 - Material findings (if any) resolved or explicitly accepted with documented rationale.
+- No push to origin — Task 10a is the next gate before push.
 
 **Wall-clock estimate:** 30 minutes (mostly Codex review wall clock).
 
@@ -1706,15 +1869,88 @@ data/phase2c_walkforward/batch_*_corrected/ (gitignored)."
 
 ---
 
-### Task 10: FP3 in-scope renaming `wf_*` → `wf_test_period_*` + TECHNIQUE_BACKLOG dependency-flagging (post-patch checkpoint, parallel with Tasks 8 and 9)
+### Task 10a: TECHNIQUE_BACKLOG dependency-flagging (gate, post-commit pre-push)
 
-**Why:**
-- FP3 in-scope: per spec, rename `wf_*` → `wf_test_period_*` in all files in the engine commit's diff. Confirmed scope = 1 file (`scripts/run_phase2c_batch_walkforward.py`).
-- Step 8 (TECHNIQUE_BACKLOG dependency-flagging): per spec Section S, four named entries (PBO §2.2.2, DSR §2.2.3, CPCV §2.2.4, MDS §2.4.1) gain a "Depends on: corrected WF test-period semantics per `docs/decisions/WF_TEST_BOUNDARY_SEMANTICS.md`, commit `<corrected-engine-commit-SHA>`" line.
+**Why:** Per the dual-reviewer pass: dependency-flagging is the load-bearing discipline that prevents PBO/DSR/CPCV/MDS from being implemented against the wrong semantic months from now. Splitting the original Task 10 into two pieces preserves the discipline (10a is a gate) without coupling FP3 renaming to the gate (10b is a checkpoint, parallel-able). Narrow scope: verify exactly four named entries reference the corrected-engine commit SHA. ~5-minute task.
+
+**When this runs:** AFTER Task 5 commits the engine patch AND Task 7.5 (adversarial review) clears, BEFORE any push to origin. Pushing the engine patch without dependency lines silently violates the discipline this task enforces.
 
 **Files:**
-- Modify: `scripts/run_phase2c_batch_walkforward.py` (FP3 renaming).
-- Modify: `strategies/TECHNIQUE_BACKLOG.md` (dependency-flagging; Charlie's living roadmap location per repo state).
+- Modify: `strategies/TECHNIQUE_BACKLOG.md` (Charlie's living roadmap location per repo state).
+
+- [ ] **Step 1: Locate `TECHNIQUE_BACKLOG.md` and confirm 4 entries present**
+
+```bash
+ls strategies/TECHNIQUE_BACKLOG.md
+grep -nE "^#### 2\.(2\.2|2\.3|2\.4|4\.1)" strategies/TECHNIQUE_BACKLOG.md
+```
+
+Expected: lists §2.2.2 PBO, §2.2.3 DSR, §2.2.4 CPCV, §2.4.1 MDS.
+
+If `TECHNIQUE_BACKLOG.md` is at a different path (e.g., `docs/strategy/TECHNIQUE_BACKLOG.md`), adjust the file path in this and the next step.
+
+- [ ] **Step 2: Add dependency lines to the four entries**
+
+For each of the four entries, add a `**Depends on:**` line near the top of the entry (right after the `**Fit:**` and `**What:**` lines) pointing to the corrected-engine commit SHA. Example for §2.2.2 PBO:
+
+```markdown
+#### 2.2.2 PBO (Probability of Backtest Overfitting) — Bailey & López de Prado 2014
+- **Fit:** APPLICABLE
+- **What:** Quantifies probability that best-in-sample strategy underperforms median out-of-sample via combinatorial symmetric cross-validation
+- **Depends on:** corrected WF test-period semantics per `docs/decisions/WF_TEST_BOUNDARY_SEMANTICS.md`, commit `<corrected-engine-commit-SHA>`. PBO consumes `run_walk_forward` outputs that must be test-period-only. Pre-correction WF metrics produce meaningless PBO results.
+- **Why Phase 3:** ...
+```
+
+Replace `<corrected-engine-commit-SHA>` with the actual commit SHA from Task 5 (find via `git log --oneline | grep "WF gated wrapper"`).
+
+Apply the same pattern to §2.2.3 DSR, §2.2.4 CPCV, §2.4.1 MDS.
+
+- [ ] **Step 3: Commit dependency-flagging**
+
+```bash
+git add strategies/TECHNIQUE_BACKLOG.md
+git commit -m "docs(backlog): dependency-flag for corrected WF semantics
+
+Per spec Section S step 8 + dual-reviewer narrow-gate framing:
+PBO §2.2.2, DSR §2.2.3, CPCV §2.2.4, MDS §2.4.1 each gain a
+'Depends on: corrected WF test-period semantics per
+docs/decisions/WF_TEST_BOUNDARY_SEMANTICS.md, commit <SHA>' line.
+
+Narrow scope: only these four entries verified against the corrected-
+engine commit; backlog as a whole not audited for this verification.
+
+Pre-push gate: this commit must land before the engine patch is
+pushed to origin. Pushing without these dependency lines silently
+violates the discipline this commit enforces — future implementers
+of the four named techniques would have no signal that pre-correction
+WF metrics produce meaningless results."
+```
+
+- [ ] **Step 4: Push engine patch + dependency-flagging together**
+
+Now that Task 5 (engine patch), Task 7.5 (adversarial review), and Task 10a (dependency-flagging) have all landed, push to origin:
+
+```bash
+git push origin claude/setup-structure-validators-JNqoI
+```
+
+**Acceptance criteria for Task 10a (= spec checkpoint step 8 in narrow-gate form):**
+- All 4 named TECHNIQUE_BACKLOG entries have dependency lines pointing to the corrected-engine commit SHA.
+- The dependency-flagging commit lands before push to origin.
+- Push to origin happens after Task 10a completes, not after Task 5 or Task 7.5.
+
+**Wall-clock estimate:** 5-10 minutes.
+
+---
+
+### Task 10b: FP3 in-scope renaming `wf_*` → `wf_test_period_*` (post-patch checkpoint; runs first in parallel block)
+
+**Why:** Per spec Section FP3: rename `wf_*` → `wf_test_period_*` in all files in the engine commit's diff. Confirmed scope = 1 file (`scripts/run_phase2c_batch_walkforward.py`). Runs FIRST in the post-patch parallel block so Task 9's corrected Tier 3 rerun produces artifacts with canonical `wf_test_period_*` field names from the start.
+
+**When this runs:** AFTER Task 10a + push completes; BEFORE Tasks 8, 9, 11. Sequenced first in the parallel block to avoid Task 9 producing artifacts with old field names.
+
+**Files:**
+- Modify: `scripts/run_phase2c_batch_walkforward.py`.
 
 - [ ] **Step 1: Rename `wf_*` → `wf_test_period_*` in `scripts/run_phase2c_batch_walkforward.py`**
 
@@ -1759,38 +1995,11 @@ python scripts/run_phase2c_batch_walkforward.py --batch-id b6fcbf86-4d57-4d1f-ae
 
 Expected: imports cleanly; dry-run completes successfully.
 
-- [ ] **Step 3: Locate `TECHNIQUE_BACKLOG.md` and confirm 4 entries present**
+- [ ] **Step 3: Commit FP3 renaming**
 
 ```bash
-ls strategies/TECHNIQUE_BACKLOG.md
-grep -nE "^#### 2\.(2\.2|2\.3|2\.4|4\.1)" strategies/TECHNIQUE_BACKLOG.md
-```
-
-Expected: lists §2.2.2 PBO, §2.2.3 DSR, §2.2.4 CPCV, §2.4.1 MDS.
-
-If `TECHNIQUE_BACKLOG.md` is at a different path (e.g., `docs/strategy/TECHNIQUE_BACKLOG.md`), adjust the file path in this and the next step.
-
-- [ ] **Step 4: Add dependency lines to the four entries**
-
-For each of the four entries, add a `**Depends on:**` line near the top of the entry (right after the `**Fit:**` and `**What:**` lines) pointing to the corrected-engine commit SHA. Example for §2.2.2 PBO:
-
-```markdown
-#### 2.2.2 PBO (Probability of Backtest Overfitting) — Bailey & López de Prado 2014
-- **Fit:** APPLICABLE
-- **What:** Quantifies probability that best-in-sample strategy underperforms median out-of-sample via combinatorial symmetric cross-validation
-- **Depends on:** corrected WF test-period semantics per `docs/decisions/WF_TEST_BOUNDARY_SEMANTICS.md`, commit `<corrected-engine-commit-SHA>`. PBO consumes `run_walk_forward` outputs that must be test-period-only. Pre-correction WF metrics produce meaningless PBO results.
-- **Why Phase 3:** ...
-```
-
-Replace `<corrected-engine-commit-SHA>` with the actual commit SHA from Task 5 (find via `git log --oneline | grep "WF per-window data-range narrowing"`).
-
-Apply the same pattern to §2.2.3 DSR, §2.2.4 CPCV, §2.4.1 MDS.
-
-- [ ] **Step 5: Commit FP3 renaming + backlog dependency-flagging**
-
-```bash
-git add scripts/run_phase2c_batch_walkforward.py strategies/TECHNIQUE_BACKLOG.md
-git commit -m "refactor(phase2c) + docs(backlog): WF metric renaming + dependency-flag
+git add scripts/run_phase2c_batch_walkforward.py
+git commit -m "refactor(phase2c): WF metric renaming wf_* → wf_test_period_*
 
 FP3 in-scope renaming (per spec Section FP): rename wf_* fields to
 wf_test_period_* in scripts/run_phase2c_batch_walkforward.py. This
@@ -1803,20 +2012,18 @@ out-of-scope clause: 'retroactive renaming in sealed closeout text is
 out of scope; sealed closeouts retain original names; errata note the
 new names').
 
-TECHNIQUE_BACKLOG dependency-flagging (per spec Section S step 8):
-PBO §2.2.2, DSR §2.2.3, CPCV §2.2.4, MDS §2.4.1 each gain a
-'Depends on: corrected WF test-period semantics per
-docs/decisions/WF_TEST_BOUNDARY_SEMANTICS.md, commit <SHA>' line.
-Narrow scope: only these four entries verified; backlog as a whole
-not audited for this verification."
+Sequenced first in the post-patch parallel block so that Task 9's
+corrected Tier 3 rerun produces artifacts with canonical
+wf_test_period_* field names from the start, avoiding field-name
+ambiguity in the corrected closeout."
 ```
 
-**Acceptance criteria for Task 10 (= spec checkpoint step 8):**
+**Acceptance criteria for Task 10b (= spec FP3 in-scope renaming):**
 - All `wf_*` field names in `scripts/run_phase2c_batch_walkforward.py` renamed to `wf_test_period_*`.
 - Script still imports and dry-run still works.
-- All 4 named TECHNIQUE_BACKLOG entries have dependency lines pointing to the corrected-engine commit SHA.
+- Commit lands BEFORE Task 9's corrected Tier 3 rerun begins.
 
-**Wall-clock estimate:** 15 minutes.
+**Wall-clock estimate:** 10 minutes.
 
 ---
 
@@ -1911,43 +2118,56 @@ Mitigation: per spec Q3a hard stop, this triggers (a) erratum records the findin
 **Risk: scope creep into FP1 (factor/compiler boundary audit) when running the corrected engine.**
 Mitigation: spec Section FP explicitly lists FP1 as deferred. If a corrected-engine result surfaces something that looks like a factor-pipeline boundary issue, document as a forward-pointer; do not expand the engine-fix arc to include FP1 work.
 
+**Risk: code blocks in plan steps contain syntax errors that propagate into actual edits.**
+Mitigation: after editing any file with Python code in a plan step, run `python -m py_compile <file>` to verify syntactic validity before committing. This catches typos in proposed code blocks before they reach git. Especially important for fixture strategy classes and the `_TestStartGatedStrategy` wrapper, where syntax errors could cascade into many test failures with confusing diagnostics.
+
+**Risk: engine commit shipped to origin without TECHNIQUE_BACKLOG dependency lines (Task 10a violation).**
+Mitigation: the no-push warning is repeated in three places: Task 5 step 4 commit step, Task 7.5 step 3, and Task 10a's "When this runs" header. The single push command lives in Task 10a step 4, after the dependency-flagging commit lands. An executor following the plan task-by-task encounters the warning at every potential push point.
+
 ---
 
 ## Sequencing recap
 
 ```
-GATES (sequential, must clear before patch ships):
+GATES (sequential, must clear before patch ships to origin):
   Task 1 (decision file)
     ↓
   Task 2 (classification table)            [spec gate step 1]
     ↓
   Task 3 (test fixtures)
     ↓
-  Task 4 (T1-T9 RED)                       [spec gate step 2]
+  Task 4 (T1-T9 RED + T10 PASS in test_regime_holdout.py)
+                                           [spec gate step 2]
     ↓
-  Task 5 (engine patch + T1-T9 GREEN)      [spec gate step 3]
-    ↓
+  Task 5 (engine patch via gated wrapper + T1-T9 GREEN)
+                                           [spec gate step 3]
+    ↓ (do NOT push)
   Task 6 (targeted tests + full pytest)    [spec gate steps 4 + 5]
+    ↓ (do NOT push)
+  Task 7 (deprecated — T10 moved into Task 4)
     ↓
-  Task 7 (T10)
-    ↓
-  Task 7.5 (adversarial review)            [spec gate step 9a]
+  Task 7.5 (adversarial review of patch+tests+classification)
+                                           [spec gate step 9a]
+    ↓ (do NOT push)
+  Task 10a (TECHNIQUE_BACKLOG dependency-flagging — narrow gate)
+                                           [spec checkpoint step 8 in narrow-gate form]
     ↓
   ┌─ patch ships (push to origin) ─┐
 
-CHECKPOINTS (parallel-able after patch ships):
+CHECKPOINTS (parallel-able after patch ships to origin):
+  Task 10b (FP3 renaming wf_* → wf_test_period_*)    ── runs FIRST in block
+    ↓
   Task 8 (Phase 1B re-run + erratum)       [spec checkpoint step 6]    ┐
-  Task 9 (Phase 2C re-run + erratum)       [spec checkpoint step 7]    │ parallel
-  Task 10 (FP3 renaming + backlog flags)   [spec checkpoint step 8]    ┘
+  Task 9 (Phase 2C re-run + erratum)       [spec checkpoint step 7]    ┘ parallel
     ↓ (Tasks 8 and 9 both complete)
   Task 11 (erratum adversarial review)     [spec checkpoint step 9b]
     ↓
   ┌─ downstream consumer work may proceed ─┐
 ```
 
-If executing serially, recommended order: Task 8 → Task 9 → Task 10 → Task 11. (Task 8 first because it's the foundational baseline reference; Task 9 second because it's the largest re-run; Task 10 last because it depends on the corrected-engine commit SHA.)
+If executing serially, recommended order: Task 10b → Task 8 → Task 9 → Task 11. (Task 10b first so corrected artifacts are born with renamed fields; Task 8 second because it's the foundational baseline reference; Task 9 third because it's the largest re-run; Task 11 last because it consumes erratum content from Tasks 8 and 9.) Note: Task 10a runs as a *post-commit pre-push gate* in Phase 1, NOT in this parallel block.
 
-Total wall-clock estimate (serial): ~5-7 hours. Parallelizing Tasks 8/9/10 saves ~30 minutes.
+Total wall-clock estimate (serial): ~7-10 hours, accounting for iteration on T7's wrapper-correctness assertion (which may surface Backtrader subtleties around metaclass-based param handling), erratum drafting time, and the dual adversarial-review checkpoints (Tasks 7.5 and 11). Parallelizing Tasks 8/9 (after Task 10b runs first) saves ~30 minutes.
 
 ---
 
