@@ -854,6 +854,19 @@ def _build_argparser() -> argparse.ArgumentParser:
             "(data/phase2c_walkforward/batch_<batch-id>/)."
         ),
     )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help=(
+            "Overwrite an existing walk_forward_results.csv in the output "
+            "dir. Without --force, the script refuses to overwrite a "
+            "prior run's results — sequential tier runs (smoke → pilot → "
+            "full) must use distinct --output-dir paths to retain each "
+            "tier's CSV. This default is opt-out destructive: an "
+            "accidental re-run never silently overwrites a canonical "
+            "result file."
+        ),
+    )
     return parser
 
 
@@ -1058,6 +1071,20 @@ def main() -> int:
     # Component B + Component C
     output_dir = _resolve_output_dir(args, args.batch_id)
     output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Overwrite protection: refuse to clobber an existing canonical CSV
+    # unless --force is set. Tier sequences (smoke → pilot → full) must
+    # use distinct --output-dir paths to retain each tier's results.
+    existing_csv = output_dir / "walk_forward_results.csv"
+    if existing_csv.exists() and not args.force:
+        print(
+            f"\nERROR: {existing_csv} already exists. Re-run with --force "
+            f"to overwrite, or pass --output-dir <new-path> to keep both "
+            f"results.",
+            file=sys.stderr,
+        )
+        return 1
+
     print(f"\n[Phase 1] output_dir: {output_dir}")
     print(f"[Phase 1] starting walk-forward loop over "
           f"{len(extracted)} candidate(s)...")
