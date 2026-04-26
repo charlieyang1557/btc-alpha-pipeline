@@ -13,8 +13,8 @@
 **Spec:** `docs/superpowers/specs/2026-04-26-wf-test-boundary-semantics-design.md` (commit `bd513e5`). All design decisions are sealed; this plan implements them without re-litigating.
 
 **Scope summary (per spec Section S):**
-- **Patch acceptance gates (sequential):** Tasks 1–7 (corresponds to spec steps 1–5 + 9a; classification table + failing tests + engine patch + targeted tests + full suite + adversarial review)
-- **Post-patch validation checkpoints (parallel-able):** Tasks 8–11 (corresponds to spec steps 6, 7, 8, 9b; sealed-baseline re-run + Phase 2C re-run + backlog dependency-flagging + erratum adversarial review)
+- **Patch acceptance gates (sequential):** Tasks 1–7.5 + Task 7.6 (corresponds to spec steps 1–5 + 9a + RS-enforceability gate; classification table + failing tests + engine patch + targeted tests + full suite + adversarial review + lineage guard added during 7.5 dual-reviewer adjudication of Codex's RS-enforceability BLOCKER)
+- **Post-patch validation checkpoints:** Tasks 8, 9, 10a, 10b, 11. Sequencing: Task 7.6 → Task 10a → push → Task 10b → Tasks 8/9 (parallel-able) → Task 11 (depends on 8 + 9). Task 10a is the post-7.6 pre-push gate; Task 7.6 is the post-7.5 pre-10a gate.
 
 ---
 
@@ -457,7 +457,7 @@ T10 uses one of the existing baseline strategies (e.g., `SMACrossover`) with the
 
 ## Tasks
 
-The plan is decomposed into 11 tasks. Tasks 1–7 are sequential patch-acceptance gates (must clear before engine commit ships). Tasks 8–11 are post-patch validation (8, 9, 10 can run in parallel; 11 depends on 8 and 9).
+The plan is decomposed into 12 tasks (Tasks 1, 2, 3, 4, 5, 6, 7.5, 7.6, 8, 9, 10a, 10b, 11; Task 7 is deprecated — T10 moved into Task 4). Tasks 1–6 + 7.5 are sequential patch-acceptance gates (must clear before engine commit ships). Task 7.6 was added during 7.5 dual-reviewer adjudication of Codex's RS-enforceability BLOCKER; it is a sequential pre-push gate. Tasks 10a, 10b, 8, 9, 11 are post-patch validation per the sequencing in the §"Scope summary".
 
 ---
 
@@ -1742,18 +1742,242 @@ If MAJOR CONCERNS: assess each. If material to the patch's correctness, address 
 
 If TRUSTED or TRUSTED_WITH_CAVEATS (with documented caveats): proceed to commit.
 
-- [ ] **Step 3: DO NOT push yet — Task 10a runs next**
+- [ ] **Step 3: DO NOT push yet — Task 7.6 runs next**
 
-**Do NOT push to origin at this step.** Task 10a (TECHNIQUE_BACKLOG dependency-flagging) is the post-commit pre-push gate. Push only happens after Task 10a's commit lands. See Task 10a step 4 for the actual push command.
+**Do NOT push to origin at this step.** Task 7.6 (RS-enforceability lineage guard + stale-artifact quarantine) was added during Task 7.5 dual-reviewer adjudication of Codex's CRITICAL BLOCKER. Task 10a (TECHNIQUE_BACKLOG dependency-flagging) is the post-7.6 pre-push gate. Push only happens after Task 10a's commit lands.
 
-The discipline this enforces: PBO/DSR/CPCV/MDS implementers months from now must encounter dependency lines pointing to the corrected-engine commit when they read TECHNIQUE_BACKLOG.md. Pushing before Task 10a means the engine fix is in the world without those dependency lines, and a future implementer could implement against the wrong semantic without any signal that pre-correction WF metrics produce meaningless results.
+The discipline this enforces: PBO/DSR/CPCV/MDS implementers months from now must encounter dependency lines pointing to the corrected-engine commit when they read TECHNIQUE_BACKLOG.md. Pushing before Task 10a means the engine fix is in the world without those dependency lines, and a future implementer could implement against the wrong semantic without any signal that pre-correction WF metrics produce meaningless results. Pushing before Task 7.6 means the corrected-engine commit ships without operational guards against pre-correction artifact consumption — the exact failure mode Codex identified.
 
 **Acceptance criteria for Task 7.5 (= spec gate step 9a):**
-- Codex review verdict is TRUSTED or TRUSTED_WITH_CAVEATS.
-- Material findings (if any) resolved or explicitly accepted with documented rationale.
-- No push to origin — Task 10a is the next gate before push.
+- Codex review verdict is TRUSTED, TRUSTED_WITH_CAVEATS, or NOT_TRUSTED-with-procedural-fix-defined-in-Task-7.6 (the actual Task 7.5 outcome).
+- Material findings (if any) resolved or explicitly captured as a follow-up task with concrete scope.
+- No push to origin — Task 7.6 is the next gate.
 
 **Wall-clock estimate:** 30 minutes (mostly Codex review wall clock).
+
+**Actual outcome (recorded post-execution):** Codex returned NOT_TRUSTED on a single CRITICAL BLOCKER — RS-enforceability gap in `scripts/run_phase2c_batch_walkforward.py:712-718`. The Phase 2C rerun script does not enforce corrected-engine lineage, and the workspace already contains two pre-correction Phase 2C summaries (batch_b6fcbf86-..., git_sha=0531741, runtime_status=ok, phase1_binary_success_criterion_met=true) that downstream consumers could ingest as if they were corrected. The wrapper itself was TRUSTED across all six attack surfaces (A through F). The procedural BLOCKER is resolved by Task 7.6.
+
+---
+
+### Task 7.6: RS-enforceability lineage guard + stale-artifact quarantine (gate, post-Task-7.5 pre-push)
+
+**Why:** During Task 7.5 adversarial review, Codex returned a CRITICAL BLOCKER with concrete reproducer: `scripts/run_phase2c_batch_walkforward.py` records the current HEAD SHA into the summary but never checks that HEAD contains the corrected engine commit. The workspace already has two pre-correction Phase 2C summaries (`data/phase2c_walkforward/batch_b6fcbf86-4d57-4d1f-ae41-1778296b1ae9{,_tier3_snapshot}/walk_forward_summary.json`) stamped `git_sha=0531741`, which is NOT a descendant of the corrected-engine commit `eb1c87f`. They report `runtime_status=ok` for 198 candidates, making them indistinguishable at the artifact layer from corrected reruns. Section RS of the spec ("no DSR, PBO, CPCV, MDS, or strategy-shortlist decision may consume `run_walk_forward` outputs computed under the pre-correction engine") is therefore documentation-only; this task adds the minimum mechanical guard.
+
+**Dual-reviewer convergence:** ChatGPT and Claude advisor independently arrived at the same scope (narrow: Phase 2C + Phase 1B rerun entrypoints; not registry-wide). Registry-wide enforcement is a forward-pointer (FP8 candidate) but does not need to land before push. The hybrid scope addresses the immediate blast radius without expanding the patch's surface area.
+
+**Files:**
+- Modify: `scripts/run_phase2c_batch_walkforward.py` — add lineage guard + corrected-output path + corrected metadata fields.
+- Create (or modify if it already exists in Task 8): the Phase 1B rerun entrypoint — same guard. If Task 8 introduces this script, the guard is added at creation; this task only adds it if a Phase 1B rerun script exists pre-Task-8.
+- Create: `tests/test_wf_lineage_guard.py` — unit test for the guard helper (mocked subprocess return codes).
+- Move: `data/phase2c_walkforward/batch_b6fcbf86-4d57-4d1f-ae41-1778296b1ae9/` → `data/quarantine/pre_correction_wf/batch_b6fcbf86-4d57-4d1f-ae41-1778296b1ae9_STALE_PRE_CORRECTION/`.
+- Move: `data/phase2c_walkforward/batch_b6fcbf86-4d57-4d1f-ae41-1778296b1ae9_tier3_snapshot/` → `data/quarantine/pre_correction_wf/batch_b6fcbf86-4d57-4d1f-ae41-1778296b1ae9_tier3_snapshot_STALE_PRE_CORRECTION/`.
+- Create: `data/quarantine/pre_correction_wf/README.md` — explanation pointing to `eb1c87f` and Section RS.
+
+**Constants (used by guard + tests + metadata):**
+- `CORRECTED_WF_ENGINE_COMMIT = "eb1c87f"` — the engine patch commit. Bumped only if the wrapper itself is replaced (which would require a new spec-amendment).
+- `WF_SEMANTICS_TAG = "corrected_test_boundary_v1"` — the metadata tag downstream consumers check before ingestion. Versioned (`v1`) so a future correction of the correction can introduce `v2` without colliding with `v1` artifacts.
+
+- [ ] **Step 1: Implement the lineage guard helper**
+
+Create a small helper at module top of `scripts/run_phase2c_batch_walkforward.py` (or a shared utility if multiple scripts will use it; for now, inline duplication is acceptable per YAGNI):
+
+```python
+import subprocess
+import sys
+
+CORRECTED_WF_ENGINE_COMMIT = "eb1c87f"
+WF_SEMANTICS_TAG = "corrected_test_boundary_v1"
+
+def _enforce_corrected_engine_lineage() -> str:
+    """Refuse to run if HEAD does not contain the corrected WF engine commit.
+
+    Returns the current HEAD SHA on success. Raises SystemExit (clear
+    error message) on failure. This is the minimum mechanical guard
+    against Section RS violation: pre-correction WF artifacts must not
+    be producible by this script.
+    """
+    try:
+        head_sha = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], text=True
+        ).strip()
+    except subprocess.CalledProcessError as exc:
+        sys.exit(
+            f"ERROR: cannot resolve HEAD SHA (not in a git repo?): {exc}"
+        )
+
+    rc = subprocess.call(
+        ["git", "merge-base", "--is-ancestor",
+         CORRECTED_WF_ENGINE_COMMIT, "HEAD"]
+    )
+    if rc != 0:
+        sys.exit(
+            f"ERROR: this script requires the corrected WF engine "
+            f"(commit {CORRECTED_WF_ENGINE_COMMIT} or descendant). "
+            f"Current HEAD ({head_sha}) is not descended from "
+            f"{CORRECTED_WF_ENGINE_COMMIT}. Refusing to run to prevent "
+            f"production of pre-correction WF artifacts. See "
+            f"docs/decisions/WF_TEST_BOUNDARY_SEMANTICS.md Section RS."
+        )
+    return head_sha
+```
+
+Call `_enforce_corrected_engine_lineage()` at the top of `main()` (or wherever the script's entrypoint is), capturing the returned SHA for use in metadata.
+
+- [ ] **Step 2: Write corrected outputs to a distinct path**
+
+Modify the script's output-directory derivation to write corrected runs to `data/phase2c_walkforward_corrected/<batch_id>/` (or equivalent path-suffix scheme — e.g., `data/phase2c_walkforward/<batch_id>_corrected/`). Either is acceptable; the requirement is visual distinguishability from existing pre-correction artifacts. Pick the suffix scheme to minimize churn (existing script paths get an `_corrected` suffix).
+
+- [ ] **Step 3: Add corrected metadata to summary JSON**
+
+Modify the summary-writing path to include these fields in `walk_forward_summary.json`:
+
+```json
+{
+  "wf_semantics": "corrected_test_boundary_v1",
+  "corrected_wf_semantics_commit": "eb1c87f",
+  "current_git_sha": "<HEAD>",
+  "lineage_check": "passed"
+}
+```
+
+`wf_semantics` is the load-bearing field downstream consumers MUST check (`if summary.get("wf_semantics") != "corrected_test_boundary_v1": raise`). The other fields are auditor-facing reproducibility metadata.
+
+- [ ] **Step 4: Add lineage guard to Phase 1B rerun entrypoint**
+
+If a Phase 1B rerun script exists at this point, apply the same guard. If Task 8 introduces the rerun script, the guard MUST be present from the first commit of that script (no "add later" pattern). Either way, the guard helper is callable by both scripts.
+
+- [ ] **Step 5: Quarantine the pre-correction Phase 2C artifacts**
+
+```bash
+mkdir -p data/quarantine/pre_correction_wf
+git mv data/phase2c_walkforward/batch_b6fcbf86-4d57-4d1f-ae41-1778296b1ae9 \
+       data/quarantine/pre_correction_wf/batch_b6fcbf86-4d57-4d1f-ae41-1778296b1ae9_STALE_PRE_CORRECTION
+git mv data/phase2c_walkforward/batch_b6fcbf86-4d57-4d1f-ae41-1778296b1ae9_tier3_snapshot \
+       data/quarantine/pre_correction_wf/batch_b6fcbf86-4d57-4d1f-ae41-1778296b1ae9_tier3_snapshot_STALE_PRE_CORRECTION
+```
+
+Drop a README at `data/quarantine/pre_correction_wf/README.md`:
+
+```markdown
+# Pre-Correction WF Artifact Quarantine
+
+These artifacts were produced by `scripts/run_phase2c_batch_walkforward.py`
+under the pre-correction WF engine (commit `0531741` and ancestors). They
+are kept for historical reproducibility of the original Phase 2C Phase 1
+closeout but MUST NOT be consumed by any downstream decision (DSR, PBO,
+CPCV, MDS, strategy shortlist, research-direction, erratum sign-off).
+
+The corrected WF engine commit is `eb1c87f` (`fix(engine): WF gated wrapper
+implements Q2 (iii)`). Corrected re-runs live at `data/phase2c_walkforward_corrected/`
+(or the canonical path with `_corrected` suffix) and carry the metadata
+field `wf_semantics: corrected_test_boundary_v1`.
+
+See `docs/decisions/WF_TEST_BOUNDARY_SEMANTICS.md` Section RS for the
+canonical hard prohibition.
+```
+
+NOTE: these artifacts may also be referenced by `docs/closeout/PHASE2C_5_PHASE1_RESULTS.md`. The quarantine move breaks any relative path references in that closeout. Per spec Q3a, the sealed closeout is preserved as historical record (not modified); the path break is acceptable because the closeout's corrected counterpart (Task 9 erratum) will reference the corrected-rerun artifacts at the new path.
+
+- [ ] **Step 6: Add unit tests for the lineage guard**
+
+Create `tests/test_wf_lineage_guard.py`:
+
+```python
+"""Unit tests for the corrected-engine lineage guard."""
+import subprocess
+from unittest.mock import patch
+import pytest
+
+from scripts.run_phase2c_batch_walkforward import (
+    _enforce_corrected_engine_lineage,
+    CORRECTED_WF_ENGINE_COMMIT,
+)
+
+
+def test_guard_accepts_descendant_head():
+    """When HEAD is descended from the corrected commit, returns SHA."""
+    with patch("subprocess.check_output", return_value="abcd1234\n"), \
+         patch("subprocess.call", return_value=0):
+        result = _enforce_corrected_engine_lineage()
+    assert result == "abcd1234"
+
+
+def test_guard_rejects_pre_correction_head():
+    """When HEAD is NOT descended from the corrected commit, exits."""
+    with patch("subprocess.check_output", return_value="0531741\n"), \
+         patch("subprocess.call", return_value=1):
+        with pytest.raises(SystemExit) as exc_info:
+            _enforce_corrected_engine_lineage()
+    msg = str(exc_info.value)
+    assert CORRECTED_WF_ENGINE_COMMIT in msg
+    assert "Section RS" in msg
+
+
+def test_guard_rejects_outside_git_repo():
+    """When git rev-parse fails, exits with clear error."""
+    with patch(
+        "subprocess.check_output",
+        side_effect=subprocess.CalledProcessError(128, ["git"]),
+    ):
+        with pytest.raises(SystemExit) as exc_info:
+            _enforce_corrected_engine_lineage()
+    assert "cannot resolve HEAD" in str(exc_info.value)
+```
+
+Run: `python -m pytest tests/test_wf_lineage_guard.py -v`
+Expected: all 3 PASS.
+
+- [ ] **Step 7: Focused Codex re-review of the implemented guard**
+
+After the Task 7.6 commit lands locally, run a NARROW Codex adversarial review with this focus prompt (verbatim):
+
+```
+Focused re-review of Task 7.6 lineage guard. Prior Codex review (Task 7.5)
+identified RS-enforceability as a CRITICAL BLOCKER: pre-correction WF
+artifacts could be silently consumed even after the wrapper patch existed.
+This task implemented a lineage guard, corrected-output path, corrected
+metadata fields, artifact quarantine, and unit tests.
+
+Files in scope:
+- scripts/run_phase2c_batch_walkforward.py (guard + path + metadata)
+- tests/test_wf_lineage_guard.py (guard unit tests)
+- data/quarantine/pre_correction_wf/ (quarantined pre-correction artifacts + README)
+- (optionally) Phase 1B rerun entrypoint if it exists at this commit
+
+Question: Does the implementation actually close the RS-enforceability
+hole you identified in the prior review?
+
+Specifically attack:
+(a) Bypass paths: Can the guard be skipped via env var, --force flag,
+    alternate entrypoint, or by invoking inner functions directly?
+(b) Edge cases: Detached HEAD; uncommitted changes that would make the
+    SHA reporting misleading; running from a worktree; CI vs local execution.
+(c) Verification gap: Does the metadata-based downstream check actually
+    catch all consumption paths, or are there scripts/notebooks that
+    read summaries without checking `wf_semantics`?
+(d) Quarantine completeness: Are there other pre-correction WF artifacts
+    in the workspace beyond the two batch_b6fcbf86 directories?
+
+Verdict: TRUSTED if the guard closes the hole; ITERATE_REQUIRED if not,
+with specific bypass paths or coverage gaps.
+```
+
+Run via `/codex:adversarial-review --background` with the above as args.
+
+Acceptance: Codex returns TRUSTED. If ITERATE_REQUIRED, address the specific findings and re-run before push.
+
+**Acceptance criteria for Task 7.6:**
+- Lineage guard implemented in `scripts/run_phase2c_batch_walkforward.py` (and Phase 1B rerun entrypoint if it exists).
+- Guard helper has 3 passing unit tests in `tests/test_wf_lineage_guard.py`.
+- Pre-correction Phase 2C artifacts moved to `data/quarantine/pre_correction_wf/` with README explaining the prohibition.
+- Corrected outputs go to a visually distinct path (`_corrected` suffix or equivalent).
+- Corrected summary JSON carries the four metadata fields (`wf_semantics`, `corrected_wf_semantics_commit`, `current_git_sha`, `lineage_check`).
+- Focused Codex re-review returns TRUSTED.
+- One commit (or commit chain) covers all six steps; commit message references Codex review IDs and Section RS.
+
+**Wall-clock estimate:** 1.5–2 hours (15 min plan amendment, 1 hour implementation, 10 min quarantine, 15 min tests, 30 min Codex re-review wall clock).
+
+**FP8 candidate (methodology note):** Future engine-correction work that produces a new artifact format or invalidates existing artifacts must include "artifact-lifecycle adversarial review" as a standard surface in the focus prompt. This iteration's prompt covered engine-recurrence (Section F: Bug class recurrence) but not artifact-recurrence; Codex caught the latter via Section E (Spec compliance / RS-enforceability). The two surfaces are distinct threats and both should be explicit in any future engine-correction adversarial review.
 
 ---
 
