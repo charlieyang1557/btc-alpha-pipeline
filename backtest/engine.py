@@ -722,6 +722,101 @@ def _load_v2_train_ranges(env_config: dict[str, Any]) -> list[tuple[date, date]]
     return ranges
 
 
+class _TestStartGatedStrategy:
+    """Factory for strategy wrappers that suppress hooks before test_start.
+
+    Per docs/decisions/WF_TEST_BOUNDARY_SEMANTICS.md Q2 (iii):
+    no user-strategy decision logic, order submission, broker mutation,
+    or decision-state mutation may occur before test_start. Indicator/
+    factor warmup state is allowed to populate during the warmup span.
+
+    This wrapper enforces (iii) via explicit timestamp comparison
+    rather than relying on Backtrader's minperiod alignment, which
+    is fragile (minperiod-suppressed next() can still fire 1+ bars
+    before test_start under some buffer/strategy combinations).
+
+    Note: when nextstart() fires post-test_start, the wrapper's
+    nextstart() delegates to super().nextstart() which (by Backtrader
+    convention) invokes next() once. The wrapper's next() will
+    redundantly verify the timestamp on that first call. This is a
+    benign double-check; do not optimize away the next() timestamp
+    check, as that would create a bypass path through nextstart().
+    """
+
+    @staticmethod
+    def make_wrapped_class(
+        base_cls: type[bt.Strategy],
+        test_start_dt: datetime,
+    ) -> type[bt.Strategy]:
+        """Return a subclass of base_cls with next/prenext/nextstart gated.
+
+        The subclass preserves base_cls's params, class attributes, and
+        Backtrader strategy registration behavior. If direct subclassing
+        is found to break param handling (Backtrader uses a metaclass
+        for params), switch to a tested wrapper/factory pattern that
+        preserves Backtrader semantics — silent param-handling breakage
+        would invalidate any test that uses parameterized strategies.
+        """
+        # Backtrader uses naive datetimes internally (parquet feed strips tz).
+        test_start_naive = test_start_dt.replace(tzinfo=None)
+
+        class GatedStrategy(base_cls):
+            """Subclass with test_start gating."""
+
+            def _is_pre_test(self) -> bool:
+                """True if current bar is before test_start."""
+                cur_dt = self.data.datetime.datetime(0)
+                return cur_dt < test_start_naive
+
+            def prenext(self) -> None:
+                # Always suppress — prenext is by definition pre-warmup.
+                # Both pre-test_start (suppressed) and post-test_start-
+                # pre-warmup (impossible since test_start is post-warmup
+                # given correct WARMUP_BARS) are handled by suppression.
+                return
+
+            def nextstart(self) -> None:
+                # The first call where minperiod is satisfied. May fire
+                # before test_start if minperiod aligns earlier. Suppress
+                # if pre-test; delegate to parent's nextstart (which by
+                # Backtrader convention calls next() once) if not.
+                if self._is_pre_test():
+                    return
+                # Temporarily reset __class__ to base_cls so that
+                # type(self) inside base_cls.nextstart() resolves to
+                # base_cls, not GatedStrategy. This ensures that
+                # strategies using type(self) for class-attribute writes
+                # (e.g., class-level capture variables) write to the
+                # correct class rather than to GatedStrategy.
+                _saved_class = self.__class__
+                self.__class__ = base_cls
+                try:
+                    base_cls.nextstart(self)
+                finally:
+                    self.__class__ = _saved_class
+
+            def next(self) -> None:
+                if self._is_pre_test():
+                    return
+                # Temporarily reset __class__ to base_cls so that
+                # type(self) inside base_cls.next() resolves to base_cls,
+                # not GatedStrategy. This ensures that strategies using
+                # type(self) for class-attribute writes (e.g., class-level
+                # capture variables) write to the correct class rather
+                # than to GatedStrategy.
+                _saved_class = self.__class__
+                self.__class__ = base_cls
+                try:
+                    base_cls.next(self)
+                finally:
+                    self.__class__ = _saved_class
+
+        GatedStrategy.__name__ = f"Gated_{base_cls.__name__}"
+        GatedStrategy.STRATEGY_NAME = getattr(base_cls, "STRATEGY_NAME", base_cls.__name__)
+        GatedStrategy.WARMUP_BARS = getattr(base_cls, "WARMUP_BARS", 0)
+        return GatedStrategy
+
+
 def run_walk_forward(
     strategy_cls: type[bt.Strategy],
     strategy_params: dict[str, Any] | None = None,
@@ -735,13 +830,24 @@ def run_walk_forward(
 ) -> WalkForwardResult:
     """Execute walk-forward backtesting across rolling windows.
 
-    Orchestration layer over the Phase 1A single-run engine. Each window
-    calls run_backtest() unchanged — the strategy runs across the full
-    train+test span so indicators evolve continuously, but metrics are
-    computed only on the test portion.
+    Per Q2 (iii) of WF_TEST_BOUNDARY_SEMANTICS decision:
+    each window wraps the strategy class in a _TestStartGatedStrategy
+    that suppresses next/prenext/nextstart before test_start. The data
+    feed loads [train_start, test_end] (unchanged from prior behavior),
+    but the wrapper's explicit timestamp comparison ensures no
+    user-strategy decision logic, order submission, broker mutation,
+    or decision-state mutation occurs pre-test_start. At the first
+    non-suppressed next() call (= test_start), the broker holds $10k,
+    no positions are open, and custom decision-state fields are at
+    their __init__ values. Test-window metrics (return, Sharpe,
+    drawdown, trades) reflect only test-period activity by construction.
 
     For Phase 1B baselines, no parameter optimization is performed.
-    The train window represents in-sample context and is logged as such.
+    The train window is loaded into the data feed (so indicators warm
+    up across the full pre-test history), but the wrapper suppresses
+    decision logic until test_start. The post-hoc equity-curve trim
+    isolates the canonical metric slice from the constant-equity
+    warmup observations.
 
     Range resolution precedence (highest first):
         1. Explicit ``train_ranges`` argument (list of disjoint ranges).
@@ -841,12 +947,11 @@ def run_walk_forward(
             w_train_start, w_train_end, w_test_start, w_test_end,
         )
 
-        # Convert dates to UTC datetimes for run_backtest
+        # Convert dates to UTC datetimes for run_backtest (unchanged)
         data_start_dt = datetime(
             w_train_start.year, w_train_start.month, w_train_start.day,
             tzinfo=timezone.utc,
         )
-        # Include all bars on the last day
         data_end_dt = datetime(
             w_test_end.year, w_test_end.month, w_test_end.day,
             hour=23, tzinfo=timezone.utc,
@@ -856,9 +961,21 @@ def run_walk_forward(
             tzinfo=timezone.utc,
         )
 
-        # Run the Phase 1A engine unchanged — no registry write
+        # Q2 (iii) enforcement via gated wrapper:
+        # wrap the strategy class so its next/prenext/nextstart are
+        # suppressed before test_start. Decision logic, orders, broker
+        # mutation, and decision-state mutation are all blocked pre-test;
+        # indicator warmup state populates normally.
+        gated_cls = _TestStartGatedStrategy.make_wrapped_class(
+            strategy_cls, test_start_dt
+        )
+
+        # Run engine on FULL train+test span (unchanged data range);
+        # the wrapper enforces test-period-only semantics via explicit
+        # timestamp comparison in next/prenext/nextstart, not via
+        # data-range manipulation.
         result = run_backtest(
-            strategy_cls=strategy_cls,
+            strategy_cls=gated_cls,
             start_date=data_start_dt,
             end_date=data_end_dt,
             strategy_params=strategy_params,
@@ -867,34 +984,44 @@ def run_walk_forward(
             write_registry=False,
         )
 
-        # Trim equity curve to test period only
+        # Canonical-metric slice: equity from test_start onward.
+        # Pre-test equity observations (if any) are at the constant
+        # initial_capital value (no trades fired pre-test); slice them
+        # out so the metric computation uses only the test-period
+        # post-test_start observations.
         ec = result.equity_curve
         test_start_naive = test_start_dt.replace(tzinfo=None)
         ec_test = ec[ec.index >= test_start_naive]
 
-        # Filter trades to test period (entry in test window)
+        # Trades are also test-period-only by wrapper construction
+        # (next() suppression prevented pre-test orders from firing),
+        # but apply the entry-time filter as a defensive belt-and-
+        # suspenders check. Should be a no-op under correct wrapper.
         trades_test = [
             t for t in result.trades
             if pd.Timestamp(t["entry_time_utc"]).tz_localize(None)
                >= test_start_naive
         ]
+        # Defensive assertion: wrapper should have prevented all pre-test trades.
+        if len(trades_test) != len(result.trades):
+            raise RuntimeError(
+                f"Window {i+1}: wrapper failed — {len(result.trades) - len(trades_test)} "
+                f"pre-test trades present in result. Engine patch is broken."
+            )
 
-        # Renumber trade_ids sequentially within the test-only set
-        for idx, t in enumerate(trades_test, start=1):
-            t["trade_id"] = idx
-
-        # Overwrite the trade CSV with test-only trades.
-        # run_backtest() already saved the full train+test CSV; we must
-        # replace it so the persisted artifact is test-window isolated.
-        _save_trade_csv(result.run_id, trades_test)
-
-        # Recompute metrics on test-only data
+        # Compute metrics on test-only slice (canonical Q2 (iii) metrics).
         test_metrics = compute_all_metrics(ec_test, trades_test, cash)
 
         # Determine effective_start for the test portion
         test_effective_start = None
         if len(ec_test) > 0:
             test_effective_start = ec_test.index[0].to_pydatetime()
+
+        # Update result.metrics to test-only so window_result.metrics
+        # reflects canonical test-period activity (required for T7:
+        # same test window with different train lengths must be
+        # bit-identical on window_result.metrics).
+        result.metrics = test_metrics
 
         # Write window registry row
         window_run_id = result.run_id
