@@ -26,7 +26,7 @@
 - `tests/test_walk_forward_boundary_semantics.py` — new file holding T1–T9 regression tests.
 - `tests/fixtures/wf_boundary/__init__.py` — fixture package initializer.
 - `tests/fixtures/wf_boundary/synthetic_data.py` — synthetic OHLCV data generator (deterministic, reproducible, no parquet dependency).
-- `tests/fixtures/wf_boundary/strategies.py` — fixture strategy classes (`TrainProfitTestFlat`, `StatefulTestStrategy`, `IndicatorWarmupStrategy`, `TrainProfitable`, `TrainLosing`).
+- `tests/fixtures/wf_boundary/strategies.py` — fixture strategy classes (`TrainOnlyStrategy`, `StatefulTestStrategy`, `IndicatorWarmupStrategy`, `TrainProfitable`, `TrainLosing`). (`TrainProfitTestFlat` was retired during Task 5 T2 resolution — see plan amendment commit and design-provenance note in §"Test Fixture Design".)
 - `docs/closeout/PHASE1_ENGINE_ERRATUM.md` — post-patch erratum for Phase 1B sealed numbers (Task 8 output).
 - `docs/closeout/PHASE2C_5_PHASE1_RESULTS_ERRATUM.md` — post-patch erratum for Phase 2C closeout (Task 9 output).
 
@@ -173,54 +173,122 @@ machinery (no custom prenext, no exotic state) so they're representative
 of the project's actual strategy population.
 """
 from __future__ import annotations
+from datetime import datetime
 import backtrader as bt
 from strategies.template import BaseStrategy
 
 
-class TrainProfitTestFlat(BaseStrategy):
-    """Buys on the second next() call, closes 24 next() calls later, then idle.
+class TrainOnlyStrategy(BaseStrategy):
+    """Trades only inside an absolute-timestamp window strictly inside train.
 
-    Decision logic uses the strategy's own bar-count tracking (not absolute
-    timestamps and not test_start coupling) to be robust to whatever WF
-    window configuration the test invokes. Intent: trade early in the
-    feed (which under broken engine = train period; under wrapper =
-    suppressed). Under broken engine, these trades fire pre-test_start
-    and contaminate test metrics. Under gated wrapper, next() is
-    suppressed pre-test_start so the trades never fire and only the
-    first 26 post-test_start bars contain the buy/close window.
+    Decision logic uses ABSOLUTE timestamps (not bar counts) so the
+    strategy's intent — "trade only during a train-period window" — is
+    preserved across both engine states. Bar-count fixtures are a trap
+    here because the wrapper's pre-test_start suppression makes the
+    in-strategy bar counter implicitly reset across the boundary,
+    converting an intended train-only fixture into a test-period
+    fixture under the wrapper. Absolute timestamps are immune to that
+    failure mode.
 
-    Used by T1 (test return excludes train PnL): under broken engine,
-    train trades produce PnL that contaminates "test return"; under
-    wrapper, no train trades → clean test return.
+    BUY_OPEN_DATE / BUY_CLOSE_DATE are hardcoded to the T1/T2 WF config:
+      train = [2024-01-01, 2024-04-30], test = [2024-05-01, 2024-05-31]
+      BUY_OPEN_DATE  = 2024-01-15  (~bar 336, train uptrend ~$123)
+      BUY_CLOSE_DATE = 2024-04-15  (~bar 2520, train uptrend ~$275)
 
-    Used by T2 (zero test trades implies zero test return): under
-    wrapper, the buy fires on the second post-test_start next() and
-    closes 24 bars later — but with a flat-test-period synthetic price,
-    the trade has zero PnL. Combined with synthetic data that produces
-    flat test prices, T2's "zero test return" assertion holds because
-    no trades net any PnL.
+    Used by T1 and T2.
 
-    Note for fixture authors: this strategy assumes the test author
-    constructs synthetic data such that (a) under broken engine, the
-    buy fires at feed bar 0/1 (during train period with profitable
-    trajectory) and closes at bar 25 (still in train, still profitable);
-    (b) under wrapper, _bar_count starts incrementing at the first
-    post-test_start next() call, so the buy fires deep in test where
-    prices are flat. Both scenarios are exercised by `make_trending_then_flat`
-    fixture data.
+    Behavior under broken engine (pre-patch reference): next() fires
+    during train. The strategy enters at $123, exits at $275, banking
+    ~$1517 on $10k portfolio (15.17% return) with size=10. The trade
+    is filtered from the test-period trade list (entry + exit both
+    pre-test_start), so total_trades=0 — but the equity-curve
+    contamination yields total_return ≈ 0.15. T1 and T2 fail on the
+    return assertion (the bug shape: zero visible trades, nonzero
+    reported return).
+
+    Behavior under gated wrapper (post-patch): next() is suppressed
+    pre-test_start. The strategy never sees BUY_OPEN_DATE or
+    BUY_CLOSE_DATE inside next(). Post-test_start the bar's datetime
+    is always >= 2024-05-01 > BUY_CLOSE_DATE > BUY_OPEN_DATE, so
+    neither branch fires. No trades anywhere → total_trades=0,
+    total_return=0, sharpe_ratio=0. Both T1 and T2 pass; T2's
+    `total_trades == 0` and `abs(total_return) < 0.01` assertions
+    are independently meaningful.
     """
-    STRATEGY_NAME = "train_profit_test_flat"
+    STRATEGY_NAME = "train_only_strategy"
     WARMUP_BARS = 0
+    # Backtrader's self.data.datetime.datetime(0) returns NAIVE datetimes
+    # (timezone information is stripped). Class attributes are naive to
+    # match.
+    BUY_OPEN_DATE = datetime(2024, 1, 15)
+    BUY_CLOSE_DATE = datetime(2024, 4, 15)
+    SIZE = 10  # ensures train-period PnL >> 1% threshold under broken engine
 
     def __init__(self) -> None:
-        self._bar_count = 0
+        self._opened = False
+        self._closed = False
 
     def next(self) -> None:
-        self._bar_count += 1
-        if self._bar_count == 2 and not self.position:
-            self.buy()
-        elif self._bar_count == 26 and self.position:
+        bar_dt = self.data.datetime.datetime(0)
+        if not self._opened and bar_dt >= self.BUY_OPEN_DATE:
+            self.buy(size=self.SIZE)
+            self._opened = True
+        elif (
+            self._opened
+            and not self._closed
+            and bar_dt >= self.BUY_CLOSE_DATE
+        ):
             self.close()
+            self._closed = True
+
+
+# DESIGN-PROVENANCE NOTE — TrainOnlyStrategy replaces TrainProfitTestFlat:
+# The original plan (commit 3acb6d7) and Task 3 fixture commit (bf2be4a)
+# defined TrainProfitTestFlat using bar-count tracking (`_bar_count`
+# incremented inside next()`; buy at count==2, close at count==26). The
+# stated reason was robustness to WF window configuration. That reason
+# was wrong: bar-count fixtures are a trap under the gated wrapper
+# because the wrapper's pre-test_start `next()` suppression makes
+# `_bar_count` implicitly reset across the boundary. Under the wrapper,
+# a fixture whose intent was "trade only during train" actually produces
+# a test-period trade (buy at test-bar 2, close at test-bar 26). For
+# T1, the post-wrapper trade happened to net zero PnL (flat synthetic
+# test prices), so the assertion passed by coincidence-of-data, not
+# by structural correctness. For T2, the post-wrapper trade incremented
+# total_trades to 1, breaking T2's invariant ("zero test trades implies
+# zero test return") and producing a confusing "wrapper works but T2
+# fails" state.
+#
+# Both reviewers (ChatGPT, Claude advisor) independently arrived at
+# the same diagnosis during Task 5 BLOCKED resolution: use absolute
+# timestamps so the strategy's intent is preserved across both engine
+# states. Under broken engine, the strategy fires its train-only trade
+# pre-test_start, leaving train PnL in the equity curve and a filtered-
+# out trade list — exactly the production bug shape Codex's audit
+# identified (zero visible trades, nonzero reported return). Under the
+# wrapper, the strategy's trading-window-check never fires inside
+# next() because next() is suppressed pre-test_start and the window
+# is closed by the time test_start arrives — no trades anywhere.
+#
+# T2's two assertions become independently meaningful under the new
+# fixture: `total_trades == 0` matches both engine states (broken
+# filters the trade out, patched never makes it), and `total_return == 0`
+# is the assertion that actually catches the equity-curve contamination
+# bug shape.
+#
+# Methodology lesson: fixture designs must be validated by mentally
+# executing them under BOTH engine states (broken and patched) before
+# approval. "Robust to WF window configuration" is not a sufficient
+# review criterion. The three review questions for any future fixture
+# in engine-fix work:
+#   1. Under the broken engine, does this fixture produce the failure
+#      values the test asserts against?
+#   2. Under the patched engine, does this fixture produce the values
+#      the test expects to see for a pass?
+#   3. Are those two outcomes the right ones for the bug class the
+#      test is meant to catch?
+# If any answer is "no" or "unclear from the fixture alone," redesign
+# the fixture before locking the plan.
 
 
 class StatefulTestStrategy(BaseStrategy):
@@ -564,7 +632,7 @@ Write `tests/fixtures/wf_boundary/synthetic_data.py` with the `make_ohlcv`, `mak
 
 - [ ] **Step 3: Write fixture strategies (full content from "Test Fixture Design" section above)**
 
-Write `tests/fixtures/wf_boundary/strategies.py` with `TrainProfitTestFlat`, `StatefulTestStrategy`, `IndicatorWarmupStrategy`, `TrainProfitable`, `TrainLosing` exactly as specified.
+Write `tests/fixtures/wf_boundary/strategies.py` with `TrainOnlyStrategy`, `StatefulTestStrategy`, `IndicatorWarmupStrategy`, `TrainProfitable`, `TrainLosing` exactly as specified. (Plan-amendment commit during Task 5 retired the original `TrainProfitTestFlat` and replaced it with `TrainOnlyStrategy`; Task 3 implementations that pre-date that commit may carry the retired class — Task 5's plan-amendment commit removes it.)
 
 - [ ] **Step 4: Write smoke test for the fixtures**
 
@@ -579,7 +647,7 @@ from tests.fixtures.wf_boundary.synthetic_data import (
     write_to_parquet,
 )
 from tests.fixtures.wf_boundary.strategies import (
-    TrainProfitTestFlat,
+    TrainOnlyStrategy,
     StatefulTestStrategy,
     IndicatorWarmupStrategy,
     TrainProfitable,
@@ -632,7 +700,7 @@ def test_write_to_parquet_roundtrip(tmp_path):
 
 
 def test_fixture_strategies_have_required_attributes():
-    for cls in [TrainProfitTestFlat, StatefulTestStrategy,
+    for cls in [TrainOnlyStrategy, StatefulTestStrategy,
                 IndicatorWarmupStrategy, TrainProfitable, TrainLosing]:
         assert hasattr(cls, "STRATEGY_NAME")
         assert hasattr(cls, "WARMUP_BARS")
@@ -697,7 +765,7 @@ from tests.fixtures.wf_boundary.synthetic_data import (
     write_to_parquet,
 )
 from tests.fixtures.wf_boundary.strategies import (
-    TrainProfitTestFlat,
+    TrainOnlyStrategy,
     StatefulTestStrategy,
     IndicatorWarmupStrategy,
     TrainProfitable,
@@ -724,14 +792,15 @@ def test_test_period_return_excludes_train_period_pnl(
 ):
     """T1: canonical wf_total_return reflects only test-period broker activity.
 
-    Setup: TrainProfitTestFlat buys on bar 0 of training, closes at end of
-    train, sits flat in test. Train-period gain is large; test-period
-    activity is zero. Under (iii), wf_total_return for the test window
-    should be 0.0 — not the cumulative-from-inception return.
+    Setup: TrainOnlyStrategy buys at 2024-01-15 (deep train, ~$123),
+    closes at 2024-04-15 (deep train, ~$275). Train-period gain is
+    large (~15% on $10k portfolio with size=10); test-period activity
+    is zero. Under (iii), wf_total_return for the test window should
+    be 0.0 — not the cumulative-from-inception return.
     """
     db_path = tmp_path / "wf_t1.db"
     result = run_walk_forward(
-        strategy_cls=TrainProfitTestFlat,
+        strategy_cls=TrainOnlyStrategy,
 
         parquet_path=trending_then_flat_parquet,
         db_path=db_path,
@@ -761,12 +830,18 @@ def test_zero_test_trades_implies_zero_test_return(
 ):
     """T2: zero test-opened trades + no carried position → zero return/sharpe.
 
-    Same setup as T1. Under (iii): no trades open during test, no position
-    at test_start, total_return = sharpe = 0.0.
+    Same setup as T1 (TrainOnlyStrategy with absolute-timestamp
+    train-only window). Under (iii): no trades open during test,
+    no position at test_start, total_return = sharpe = 0.0. The
+    `total_trades == 0` and `abs(total_return) < 0.01` assertions
+    are independently meaningful — the first matches the broken
+    engine's filter behavior, the second catches the equity-curve
+    contamination bug shape (zero visible trades, nonzero reported
+    return).
     """
     db_path = tmp_path / "wf_t2.db"
     result = run_walk_forward(
-        strategy_cls=TrainProfitTestFlat,
+        strategy_cls=TrainOnlyStrategy,
 
         parquet_path=trending_then_flat_parquet,
         db_path=db_path,
