@@ -1842,19 +1842,61 @@ Modify the summary-writing path to include these fields in `walk_forward_summary
 
 `wf_semantics` is the load-bearing field downstream consumers MUST check (`if summary.get("wf_semantics") != "corrected_test_boundary_v1": raise`). The other fields are auditor-facing reproducibility metadata.
 
-- [ ] **Step 4: Add lineage guard to Phase 1B rerun entrypoint**
+- [ ] **Step 4: Add lineage guard to Phase 1B rerun entrypoint (with discovery sub-step)**
 
-If a Phase 1B rerun script exists at this point, apply the same guard. If Task 8 introduces the rerun script, the guard MUST be present from the first commit of that script (no "add later" pattern). Either way, the guard helper is callable by both scripts.
+**Step 4a (discovery — MUST run before 4b):**
 
-- [ ] **Step 5: Quarantine the pre-correction Phase 2C artifacts**
+```bash
+grep -rn 'phase1.*rerun\|run_phase1\|rerun_phase1' scripts/ Makefile pyproject.toml 2>/dev/null
+```
+
+Three possible outcomes:
+- A single existing Phase 1B rerun script is found → apply the guard to it (Step 4b).
+- Multiple candidates found → report BLOCKED to the controller; do NOT pick one without explicit decision.
+- Nothing found → DO NOT invent a Phase 1B rerun script just to put the guard in. Record in the Task 7.6 commit message that the Phase 1B guard will be added inline during Task 8 when the entrypoint is created. The guard helper itself (Step 1) is the load-bearing artifact and can be imported by any future entrypoint without modification.
+
+**Step 4b (apply guard if entrypoint exists):**
+
+If discovery found a single entrypoint, import `_enforce_corrected_engine_lineage` from the helper module and call it at the script's `main()` entry, same pattern as the Phase 2C script. Add the same metadata stamping (Step 3) to whatever summary artifact the script produces.
+
+**Anti-pattern protection:** the subagent must not invent a new Phase 1B rerun script. The guard's value is enforced at-the-call-site; if there's no call site yet, that's a Task 8 concern, not a Task 7.6 scope-creep opportunity.
+
+- [ ] **Step 5: Quarantine the pre-correction Phase 2C artifacts (with verification sub-step)**
+
+**Step 5a (verification — MUST run before 5b):**
+
+Programmatically identify which Phase 2C artifacts are pre-correction. Do NOT rely on Codex's enumeration alone (which named two specific batch directories); Codex may have missed sibling artifacts, and additional artifacts may have been created since the review. Run:
+
+```bash
+for dir in data/phase2c_walkforward/batch_*/; do
+    summary="$dir/walk_forward_summary.json"
+    if [ -f "$summary" ]; then
+        sha=$(jq -r '.git_sha' "$summary" 2>/dev/null)
+        if [ -n "$sha" ] && [ "$sha" != "null" ]; then
+            if git merge-base --is-ancestor eb1c87f "$sha" 2>/dev/null; then
+                echo "POST-CORRECTION (keep): $dir (sha=$sha)"
+            else
+                echo "PRE-CORRECTION (quarantine): $dir (sha=$sha)"
+            fi
+        else
+            echo "NO-SHA (manual review needed): $dir"
+        fi
+    fi
+done
+```
+
+Report the full classified list to the controller before proceeding. The list of directories the script identifies as PRE-CORRECTION is what gets quarantined in Step 5b. NO-SHA entries surface to the controller for manual decision (do not auto-quarantine; do not auto-keep).
+
+**Step 5b (quarantine identified pre-correction artifacts):**
 
 ```bash
 mkdir -p data/quarantine/pre_correction_wf
-git mv data/phase2c_walkforward/batch_b6fcbf86-4d57-4d1f-ae41-1778296b1ae9 \
-       data/quarantine/pre_correction_wf/batch_b6fcbf86-4d57-4d1f-ae41-1778296b1ae9_STALE_PRE_CORRECTION
-git mv data/phase2c_walkforward/batch_b6fcbf86-4d57-4d1f-ae41-1778296b1ae9_tier3_snapshot \
-       data/quarantine/pre_correction_wf/batch_b6fcbf86-4d57-4d1f-ae41-1778296b1ae9_tier3_snapshot_STALE_PRE_CORRECTION
+# For each directory the verification step identified as PRE-CORRECTION:
+git mv data/phase2c_walkforward/<batch_dir> \
+       data/quarantine/pre_correction_wf/<batch_dir>_STALE_PRE_CORRECTION
 ```
+
+The Task 7.6 commit message MUST list the exact directories that were moved (not "the pre-correction artifacts" — explicit paths) so the move is auditable.
 
 Drop a README at `data/quarantine/pre_correction_wf/README.md`:
 
@@ -1927,53 +1969,43 @@ def test_guard_rejects_outside_git_repo():
 Run: `python -m pytest tests/test_wf_lineage_guard.py -v`
 Expected: all 3 PASS.
 
-- [ ] **Step 7: Focused Codex re-review of the implemented guard**
+- [ ] **Step 7a (subagent): Draft the focused Codex re-review prompt**
 
-After the Task 7.6 commit lands locally, run a NARROW Codex adversarial review with this focus prompt (verbatim):
+After Steps 1–6 are committed, the subagent's FINAL action before reporting DONE is to draft the focus prompt for the upcoming Codex re-review. The subagent knows the implementation details better than the controller will after-the-fact, so it drafts; the controller + dual reviewers approve before invocation.
 
-```
-Focused re-review of Task 7.6 lineage guard. Prior Codex review (Task 7.5)
-identified RS-enforceability as a CRITICAL BLOCKER: pre-correction WF
-artifacts could be silently consumed even after the wrapper patch existed.
-This task implemented a lineage guard, corrected-output path, corrected
-metadata fields, artifact quarantine, and unit tests.
+Write the draft to: `docs/superpowers/reviews/2026-04-26-task7-6-lineage-guard-focus.md`
 
-Files in scope:
-- scripts/run_phase2c_batch_walkforward.py (guard + path + metadata)
-- tests/test_wf_lineage_guard.py (guard unit tests)
-- data/quarantine/pre_correction_wf/ (quarantined pre-correction artifacts + README)
-- (optionally) Phase 1B rerun entrypoint if it exists at this commit
+The draft MUST include:
+- A concrete enumeration of what was implemented (file paths + line ranges of the changes), not "the lineage guard."
+- Attack surface (a) **Bypass paths**: Can the guard be skipped via env var, `--force` flag, monkey-patching, alternate entrypoint, or by invoking inner functions directly?
+- Attack surface (b) **Edge cases**: Detached HEAD; worktrees; shallow clones; uncommitted changes that make SHA reporting misleading; CI vs local execution.
+- Attack surface (c) **Verification gap**: Does the metadata-based downstream check actually catch all consumption paths, or are there scripts/notebooks that read summaries without checking `wf_semantics`? (Subagent should grep for downstream consumers and enumerate them.)
+- Attack surface (d) **Quarantine completeness**: Could a stale artifact still be discovered by glob patterns that don't respect the quarantine directory structure? Are there other pre-correction WF artifacts beyond what Step 5a identified?
+- Verdict bar: TRUSTED if the guard closes the hole; ITERATE_REQUIRED if not, with specific bypass paths or coverage gaps as concrete reproducers.
 
-Question: Does the implementation actually close the RS-enforceability
-hole you identified in the prior review?
+The subagent reports DONE with the path to the draft prompt and the list of attack surfaces it covered. The subagent does NOT invoke `/codex:adversarial-review` itself.
 
-Specifically attack:
-(a) Bypass paths: Can the guard be skipped via env var, --force flag,
-    alternate entrypoint, or by invoking inner functions directly?
-(b) Edge cases: Detached HEAD; uncommitted changes that would make the
-    SHA reporting misleading; running from a worktree; CI vs local execution.
-(c) Verification gap: Does the metadata-based downstream check actually
-    catch all consumption paths, or are there scripts/notebooks that
-    read summaries without checking `wf_semantics`?
-(d) Quarantine completeness: Are there other pre-correction WF artifacts
-    in the workspace beyond the two batch_b6fcbf86 directories?
+- [ ] **Step 7b (controller + dual reviewers): Approve the focus prompt, then invoke the review**
 
-Verdict: TRUSTED if the guard closes the hole; ITERATE_REQUIRED if not,
-with specific bypass paths or coverage gaps.
-```
+After the subagent reports DONE, the controller reviews the draft focus prompt with both dual reviewers (ChatGPT + Claude advisor) — same review-before-invocation discipline as the original Task 7.5 dispatch. Adjust the prompt as needed, then the user invokes `/codex:adversarial-review --background` with the approved prompt.
 
-Run via `/codex:adversarial-review --background` with the above as args.
+Acceptance: Codex returns TRUSTED. If ITERATE_REQUIRED, address the specific findings (new sub-task or amended Task 7.6) and re-run before push.
 
-Acceptance: Codex returns TRUSTED. If ITERATE_REQUIRED, address the specific findings and re-run before push.
+**Containment instruction for the subagent (load-bearing — repeat in dispatch prompt):**
+- DO NOT modify `backtest/engine.py`, `backtest/metrics.py`, `tests/test_walk_forward_boundary_semantics.py`, `tests/test_regime_holdout.py`, or any file under `tests/fixtures/wf_boundary/`. All sealed at this point.
+- Unit tests for the guard helper go in a NEW file: `tests/test_wf_lineage_guard.py`. Do not modify any existing test file.
+- Task 7.6 is purely about the artifact pipeline — scripts, metadata, quarantine, tests of the guard helper. The engine and regression suite are untouched.
 
 **Acceptance criteria for Task 7.6:**
-- Lineage guard implemented in `scripts/run_phase2c_batch_walkforward.py` (and Phase 1B rerun entrypoint if it exists).
-- Guard helper has 3 passing unit tests in `tests/test_wf_lineage_guard.py`.
-- Pre-correction Phase 2C artifacts moved to `data/quarantine/pre_correction_wf/` with README explaining the prohibition.
+- Lineage guard implemented in `scripts/run_phase2c_batch_walkforward.py`. Phase 1B rerun entrypoint guard applied IF discovery (Step 4a) finds an existing entrypoint; otherwise deferral to Task 8 documented in commit message.
+- Guard helper has 3 passing unit tests in NEW file `tests/test_wf_lineage_guard.py` (no existing test file modified).
+- Pre-correction Phase 2C artifacts identified by Step 5a's classification script and moved to `data/quarantine/pre_correction_wf/` with README explaining the prohibition. Commit message lists exact moved paths.
 - Corrected outputs go to a visually distinct path (`_corrected` suffix or equivalent).
 - Corrected summary JSON carries the four metadata fields (`wf_semantics`, `corrected_wf_semantics_commit`, `current_git_sha`, `lineage_check`).
-- Focused Codex re-review returns TRUSTED.
-- One commit (or commit chain) covers all six steps; commit message references Codex review IDs and Section RS.
+- Engine code (`backtest/engine.py`), regression tests (`tests/test_walk_forward_boundary_semantics.py`), and fixture code (`tests/fixtures/wf_boundary/*`) are untouched.
+- Subagent draft of focused Codex re-review prompt exists at `docs/superpowers/reviews/2026-04-26-task7-6-lineage-guard-focus.md`.
+- After dual-reviewer approval of the focus prompt and user invocation, focused Codex re-review returns TRUSTED.
+- One commit (or commit chain) covers Steps 1–7a; commit message references Codex review IDs and Section RS. Step 7b (the actual re-review run) is a separate user-billed action and lands its result as a follow-up.
 
 **Wall-clock estimate:** 1.5–2 hours (15 min plan amendment, 1 hour implementation, 10 min quarantine, 15 min tests, 30 min Codex re-review wall clock).
 
