@@ -100,6 +100,60 @@ logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
+# Corrected-engine lineage guard (Task 7.6)
+#
+# Refuses to run if HEAD is not descended from the corrected WF engine
+# commit (`eb1c87f`, "fix(engine): WF gated wrapper implements Q2 (iii)").
+# This is the minimum mechanical guard against Section RS of
+# docs/decisions/WF_TEST_BOUNDARY_SEMANTICS.md: pre-correction WF
+# artifacts must not be producible by this script.
+#
+# Corrected runs additionally:
+#   - write outputs to a `_corrected` suffixed directory so corrected
+#     and pre-correction artifacts live in adjacent siblings.
+#   - stamp `wf_semantics: corrected_test_boundary_v1` (load-bearing,
+#     downstream consumers MUST check this before ingestion) and
+#     three auditor-facing lineage fields into walk_forward_summary.json.
+# ---------------------------------------------------------------------------
+
+CORRECTED_WF_ENGINE_COMMIT = "eb1c87f"
+WF_SEMANTICS_TAG = "corrected_test_boundary_v1"
+
+
+def _enforce_corrected_engine_lineage() -> str:
+    """Refuse to run if HEAD does not contain the corrected WF engine commit.
+
+    Returns the current HEAD SHA on success. Raises SystemExit (clear
+    error message) on failure. This is the minimum mechanical guard
+    against Section RS violation: pre-correction WF artifacts must not
+    be producible by this script.
+    """
+    try:
+        head_sha = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], text=True
+        ).strip()
+    except subprocess.CalledProcessError as exc:
+        sys.exit(
+            f"ERROR: cannot resolve HEAD SHA (not in a git repo?): {exc}"
+        )
+
+    rc = subprocess.call(
+        ["git", "merge-base", "--is-ancestor",
+         CORRECTED_WF_ENGINE_COMMIT, "HEAD"]
+    )
+    if rc != 0:
+        sys.exit(
+            f"ERROR: this script requires the corrected WF engine "
+            f"(commit {CORRECTED_WF_ENGINE_COMMIT} or descendant). "
+            f"Current HEAD ({head_sha}) is not descended from "
+            f"{CORRECTED_WF_ENGINE_COMMIT}. Refusing to run to prevent "
+            f"production of pre-correction WF artifacts. See "
+            f"docs/decisions/WF_TEST_BOUNDARY_SEMANTICS.md Section RS."
+        )
+    return head_sha
+
+
+# ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
 
@@ -652,6 +706,7 @@ def _build_summary(
     run_started_utc: str,
     run_finished_utc: str,
     total_elapsed_seconds: float,
+    head_sha: str,
 ) -> dict[str, Any]:
     """Distribution stats + run metadata for the summary JSON.
 
@@ -715,6 +770,13 @@ def _build_summary(
         "run_started_utc": run_started_utc,
         "run_finished_utc": run_finished_utc,
         "git_sha": _git_head_sha(),
+        # Task 7.6 lineage stamping. `wf_semantics` is the load-bearing
+        # field downstream consumers (DSR, PBO, CPCV, MDS, shortlist)
+        # MUST check before ingestion. The other three are auditor-facing.
+        "wf_semantics": WF_SEMANTICS_TAG,
+        "corrected_wf_semantics_commit": CORRECTED_WF_ENGINE_COMMIT,
+        "current_git_sha": head_sha,
+        "lineage_check": "passed",
         "total_candidates": len(outcomes),
         "total_elapsed_seconds": round(total_elapsed_seconds, 3),
         "mean_elapsed_per_candidate_seconds": (
@@ -920,10 +982,17 @@ def _print_compile_report(
 
 
 def _resolve_output_dir(args: argparse.Namespace, batch_id: str) -> Path:
-    """Resolve the output directory for Component C artifacts."""
+    """Resolve the output directory for Component C artifacts.
+
+    Task 7.6: corrected runs write to a `_corrected` suffixed directory
+    so they are visually distinguishable from any pre-correction artifacts
+    that may exist as adjacent siblings under
+    ``data/phase2c_walkforward/``. The `--output-dir` override is left
+    untouched (caller takes full responsibility).
+    """
     if args.output_dir:
         return Path(args.output_dir).resolve()
-    return DEFAULT_OUTPUT_ROOT / f"batch_{batch_id}"
+    return DEFAULT_OUTPUT_ROOT / f"batch_{batch_id}_corrected"
 
 
 def _build_compile_index(
@@ -1026,6 +1095,11 @@ def main() -> int:
         datefmt="%Y-%m-%dT%H:%M:%SZ",
         level=logging.INFO,
     )
+
+    # Task 7.6: refuse to run on a pre-correction engine commit. Captured
+    # SHA is stamped into walk_forward_summary.json for auditor traceability.
+    head_sha = _enforce_corrected_engine_lineage()
+
     args = _build_argparser().parse_args()
 
     raw_payloads_dir = Path(args.raw_payloads_dir).resolve()
@@ -1103,6 +1177,7 @@ def main() -> int:
         run_started_utc=run_started_utc,
         run_finished_utc=run_finished_utc,
         total_elapsed_seconds=loop_elapsed,
+        head_sha=head_sha,
     )
     summary_path = output_dir / "walk_forward_summary.json"
     summary_path.write_text(
