@@ -161,23 +161,31 @@ comparison is the closeout's load-bearing finding and is treated
 in §5.
 
 **Sanity reproduction.** The 44-candidate primary subset within the
-audit_v1 run reproduces the standalone primary_v1 run exactly. The
-survivor identity is identical (`bf83ffec97485f47` in both runs).
-The survivor's 2022 holdout Sharpe is bit-identical across runs
-(`+0.013751` in primary_v1 CSV, `+0.013751` in audit_v1 CSV — string
-match, not just float-precision match). The corrected engine is
-deterministic across separate orchestration invocations: the same
-candidate evaluated under the same input data and gate produces
-the same downstream metric values regardless of whether the
-evaluation runs in a 44-candidate or 198-candidate orchestration.
+audit_v1 run reproduces the standalone primary_v1 run on every
+metric and identity field. A row-aligned diff against
+`hypothesis_hash` shows zero differences across `holdout_passed`,
+`holdout_sharpe`, `holdout_max_drawdown`, `holdout_total_return`,
+and `holdout_total_trades` (44 of 44 rows bit-identical on each
+field). The survivor's 2022 holdout Sharpe is bit-identical across
+runs (`+0.013751` in primary_v1 CSV, `+0.013751` in audit_v1 CSV —
+string match, not just float-precision match). One field, the
+runtime measurement `wall_clock_seconds`, differs across all 44
+rows as expected (it measures wall-clock time per candidate, which
+varies across orchestration invocations and is not a determinism-
+relevant output). The corrected engine is deterministic across
+separate orchestration invocations: the same candidate evaluated
+under the same input data and gate produces the same downstream
+metric values regardless of whether the evaluation runs in a
+44-candidate or 198-candidate orchestration.
 
 This reproducibility check matters for closeout integrity. If
-primary_v1 and audit_v1's primary-subset rows had differed,
-either (a) a non-deterministic component existed in the
-orchestration pipeline, or (b) something in the evaluation
-sequence (e.g., shared mutable state, ordering effects) was
-introducing run-dependent drift. The bit-identical match rules
-out both failure modes in this observed comparison.
+primary_v1 and audit_v1's primary-subset rows had differed on any
+metric or identity field, either (a) a non-deterministic component
+existed in the orchestration pipeline, or (b) something in the
+evaluation sequence (e.g., shared mutable state, ordering effects)
+was introducing run-dependent drift. The metric-field bit-identical
+match rules out both failure modes in this observed comparison;
+the `wall_clock_seconds` divergence is expected and orthogonal.
 
 **Survivor distribution by population.** Across all 13 survivors:
 
@@ -854,6 +862,26 @@ print(f"audit-only:        {ao_pass}/{len(audit_only)} = "
       f"{ao_pass/len(audit_only)*100:.2f}%")
 # expected: primary subset: 1/44 = 2.27%
 #           audit-only: 12/154 = 7.79%
+
+# §4 sanity reproduction: primary subset of audit_v1 matches
+# standalone primary_v1 on every metric/identity field. The
+# wall_clock_seconds field is expected to differ (runtime, not
+# output) and is excluded from this check.
+DETERMINISTIC_FIELDS = ["hypothesis_hash", "position", "theme", "name",
+                        "wf_test_period_sharpe", "lifecycle_state",
+                        "holdout_passed", "holdout_sharpe",
+                        "holdout_max_drawdown", "holdout_total_return",
+                        "holdout_total_trades", "error_message"]
+pri_sorted = sorted(rows, key=lambda r: r["hypothesis_hash"])
+aud_pri_sorted = sorted(primary_subset, key=lambda r: r["hypothesis_hash"])
+for f in DETERMINISTIC_FIELDS:
+    diffs = sum(1 for p, a in zip(pri_sorted, aud_pri_sorted)
+                if p[f] != a[f])
+    assert diffs == 0, f"field {f}: {diffs} rows differ"
+print("sanity reproduction: 44 of 44 rows bit-identical on all "
+      "metric and identity fields")
+# expected: sanity reproduction: 44 of 44 rows bit-identical on all
+#           metric and identity fields
 
 # §8 by-theme breakdown
 from collections import defaultdict
