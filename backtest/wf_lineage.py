@@ -23,6 +23,13 @@ from pathlib import Path
 CORRECTED_WF_ENGINE_COMMIT = "eb1c87f"
 WF_SEMANTICS_TAG = "corrected_test_boundary_v1"
 
+# Anchor git subprocess calls to the repo root containing this file, NOT
+# to the caller's CWD. Without this anchor the producer guard false-rejects
+# legitimate corrected runs invoked from /tmp, notebooks, CI wrappers, or
+# any absolute-path launch (Codex Task 7.6 re-review finding,
+# 2026-04-26).
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+
 
 def enforce_corrected_engine_lineage() -> str:
     """Producer-side: refuse to run if HEAD doesn't contain the corrected commit.
@@ -33,10 +40,17 @@ def enforce_corrected_engine_lineage() -> str:
 
     Hard-fails (sys.exit) because callers are scripts at startup —
     aborting is the appropriate response.
+
+    Both git subprocess calls run with cwd anchored to the repo root
+    that contains this file, so the guard is independent of the
+    caller's CWD. The ancestry check uses the resolved head_sha (not
+    the symbolic "HEAD") so the SHA stamped into the summary metadata
+    is the same SHA whose ancestry was verified — eliminating any
+    HEAD-shift race between the two subprocess calls.
     """
     try:
         head_sha = subprocess.check_output(
-            ["git", "rev-parse", "HEAD"], text=True
+            ["git", "rev-parse", "HEAD"], text=True, cwd=_REPO_ROOT
         ).strip()
     except subprocess.CalledProcessError as exc:
         sys.exit(
@@ -45,7 +59,8 @@ def enforce_corrected_engine_lineage() -> str:
 
     rc = subprocess.call(
         ["git", "merge-base", "--is-ancestor",
-         CORRECTED_WF_ENGINE_COMMIT, "HEAD"]
+         CORRECTED_WF_ENGINE_COMMIT, head_sha],
+        cwd=_REPO_ROOT,
     )
     if rc != 0:
         sys.exit(
