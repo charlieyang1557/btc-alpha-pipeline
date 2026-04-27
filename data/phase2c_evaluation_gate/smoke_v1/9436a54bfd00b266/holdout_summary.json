@@ -1,0 +1,36 @@
+{
+  "current_git_sha": "72c12703654e99b4a934f7bf03e892565241620a",
+  "engine_commit": "eb1c87f",
+  "engine_corrected_lineage": "wf-corrected-v1",
+  "error_message": null,
+  "evaluation_semantics": "single_run_holdout_v1",
+  "gate_pass_per_criterion": {
+    "drawdown_passed": false,
+    "return_passed": false,
+    "sharpe_passed": false,
+    "trades_passed": true
+  },
+  "holdout_metrics": {
+    "max_drawdown": 0.4360846794961893,
+    "sharpe_ratio": -1.1584915375510605,
+    "total_return": -0.36848133229866376,
+    "total_trades": 77
+  },
+  "holdout_passed": false,
+  "hypothesis_hash": "9436a54bfd00b266",
+  "lifecycle_state": "holdout_failed",
+  "lineage_check": "passed",
+  "name": "oversold_bb_reversion_mean",
+  "passing_criteria": {
+    "max_drawdown": 0.25,
+    "min_sharpe": -0.5,
+    "min_total_return": -0.15,
+    "min_total_trades": 5
+  },
+  "position": 42,
+  "run_id": "smoke_v1",
+  "source_batch_id": "b6fcbf86-4d57-4d1f-ae41-1778296b1ae9",
+  "theme": "mean_reversion",
+  "wall_clock_seconds": 1.1509,
+  "wf_test_period_sharpe": 0.295311
+}

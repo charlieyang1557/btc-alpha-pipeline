@@ -1,0 +1,5 @@
+hypothesis_hash,position,theme,name,wf_test_period_sharpe,lifecycle_state,holdout_passed,holdout_sharpe,holdout_max_drawdown,holdout_total_return,holdout_total_trades,wall_clock_seconds,error_message
+0bf34de1eeb57782,194,volume_divergence,volume_divergence_momentum_194,2.789089,holdout_failed,0,-1.563165,0.111829,-0.076978,2,1.3404,
+812216d4f9123035,62,mean_reversion,bb_squeeze_oversold_reversal,0.948479,holdout_failed,0,-1.015343,0.476338,-0.376150,67,1.1702,
+56def67e133498e1,172,mean_reversion,bollinger_mean_reversion_172,0.569389,holdout_failed,0,-1.408781,0.469195,-0.411001,100,1.168,
+9436a54bfd00b266,42,mean_reversion,oversold_bb_reversion_mean,0.295311,holdout_failed,0,-1.158492,0.436085,-0.368481,77,1.1509,
