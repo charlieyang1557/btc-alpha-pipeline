@@ -1,0 +1,45 @@
+{
+  "audit_only_holdout_passed": 0,
+  "audit_only_total": 0,
+  "by_theme": {
+    "calendar_effect": {
+      "holdout_passed": 1,
+      "total": 7
+    },
+    "mean_reversion": {
+      "holdout_passed": 0,
+      "total": 14
+    },
+    "momentum": {
+      "holdout_passed": 0,
+      "total": 3
+    },
+    "volatility_regime": {
+      "holdout_passed": 0,
+      "total": 8
+    },
+    "volume_divergence": {
+      "holdout_passed": 0,
+      "total": 12
+    }
+  },
+  "counts": {
+    "holdout_error": 0,
+    "holdout_failed": 43,
+    "holdout_passed": 1,
+    "total": 44
+  },
+  "current_git_sha": "ca096ef4f980b78ede35f245514893437a894fbf",
+  "engine_commit": "eb1c87f",
+  "engine_corrected_lineage": "wf-corrected-v1",
+  "evaluation_semantics": "single_run_holdout_v1",
+  "explicit_candidate_hashes": null,
+  "lineage_check": "passed",
+  "primary_universe_holdout_passed": 1,
+  "primary_universe_total": 44,
+  "run_finished_utc": "2026-04-27T06:19:48Z",
+  "run_id": "primary_v1",
+  "run_started_utc": "2026-04-27T06:18:56Z",
+  "source_batch_id": "b6fcbf86-4d57-4d1f-ae41-1778296b1ae9",
+  "universe": "primary"
+}

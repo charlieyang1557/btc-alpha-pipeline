@@ -1,0 +1,36 @@
+{
+  "current_git_sha": "d6f481a3692d48d95b6cb39af686fa6dfc34f964",
+  "engine_commit": "eb1c87f",
+  "engine_corrected_lineage": "wf-corrected-v1",
+  "error_message": null,
+  "evaluation_semantics": "single_run_holdout_v1",
+  "gate_pass_per_criterion": {
+    "drawdown_passed": false,
+    "return_passed": true,
+    "sharpe_passed": true,
+    "trades_passed": true
+  },
+  "holdout_metrics": {
+    "max_drawdown": 0.35461740514523105,
+    "sharpe_ratio": -0.031113750871107772,
+    "total_return": -0.06152815037183168,
+    "total_trades": 40
+  },
+  "holdout_passed": false,
+  "hypothesis_hash": "e5dfab684dbda2bb",
+  "lifecycle_state": "holdout_failed",
+  "lineage_check": "passed",
+  "name": "monday_dip_buying",
+  "passing_criteria": {
+    "max_drawdown": 0.25,
+    "min_sharpe": -0.5,
+    "min_total_return": -0.15,
+    "min_total_trades": 5
+  },
+  "position": 50,
+  "run_id": "audit_v1",
+  "source_batch_id": "b6fcbf86-4d57-4d1f-ae41-1778296b1ae9",
+  "theme": "calendar_effect",
+  "wall_clock_seconds": 1.158,
+  "wf_test_period_sharpe": 0.197425
+}
