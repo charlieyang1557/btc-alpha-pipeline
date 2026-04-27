@@ -7,7 +7,10 @@ corrected candidates. Per docs/phase2c/PHASE2C_6_EVALUATION_GATE_PLAN.md.
 Three reusable engine entry points called by this script:
     - backtest.engine.run_regime_holdout: top-level wrapper
     - backtest.engine._evaluate_regime_holdout_pass: 4-condition AND gate
-    - backtest.engine._load_regime_holdout_config: env config loader
+    - backtest.engine._load_regime_block_config: parameterized env config
+      loader (renamed from _load_regime_holdout_config in PHASE2C_7.1
+      sub-step 1.2 to support multi-regime evaluation; the
+      regime_holdout block remains the default for backward-compat)
 
 Two attestation domains kept separate per backtest/wf_lineage.py:
     - WF artifacts: walk_forward_results / walk_forward_summary use

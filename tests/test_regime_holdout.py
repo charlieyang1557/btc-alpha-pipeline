@@ -961,3 +961,294 @@ class TestRegimeHoldoutBoundaryAnchor:
             f"thresholds in environments.yaml need recalibration "
             f"(see CONTRACT GAP at engine.py:1175-1183)."
         )
+
+
+# ===========================================================================
+# PHASE2C_7.1 §3 / §6 — regime_key parameterization (sub-step 1.2)
+# ===========================================================================
+
+
+def _make_v2_env_config_with_validation() -> dict:
+    """v2 env config with both regime_holdout AND validation blocks.
+
+    The validation block intentionally has no passing_criteria field
+    (mirroring environments.yaml). PHASE2C_7.1 §3 / Q1 specifies the
+    cross-block inheritance: when regime_key=v2.validation, the engine
+    inherits passing_criteria from regime_holdout and emits an explicit
+    INFO log line documenting the coupling.
+    """
+    env = _make_v2_env_config()
+    env["splits"]["validation"] = {
+        "start": "2024-01-01",
+        "end": "2024-12-31",
+        "purpose": "Hyperparameter selection",
+        "notes": "BTC ETF approval era",
+    }
+    return env
+
+
+class TestLoadRegimeBlockConfig:
+    """``_load_regime_block_config`` parameterized block lookup."""
+
+    def test_default_loads_regime_holdout(self):
+        """Default regime_key preserves PHASE2C_6 behavior (regime_holdout block)."""
+        from backtest.engine import _load_regime_block_config
+
+        env = _make_v2_env_config()
+        block = _load_regime_block_config(env)
+        assert block["start"] == "2022-01-01"
+        assert block["end"] == "2022-12-31"
+        assert block["label"] == "bear_2022"
+
+    def test_explicit_regime_holdout_key_loads_same_block(self):
+        from backtest.engine import _load_regime_block_config
+
+        env = _make_v2_env_config()
+        block = _load_regime_block_config(env, regime_key="v2.regime_holdout")
+        assert block["label"] == "bear_2022"
+        assert "passing_criteria" in block
+
+    def test_validation_key_loads_validation_block(self):
+        """v2.validation routes to the validation block (no label, no criteria)."""
+        from backtest.engine import _load_regime_block_config
+
+        env = _make_v2_env_config_with_validation()
+        block = _load_regime_block_config(env, regime_key="v2.validation")
+        assert block["start"] == "2024-01-01"
+        assert block["end"] == "2024-12-31"
+        # Validation block intentionally has no passing_criteria —
+        # inheritance is _resolve_passing_criteria_with_inheritance's
+        # responsibility, not the block loader's.
+        assert "passing_criteria" not in block
+        assert "label" not in block
+
+    def test_malformed_regime_key_raises(self):
+        """regime_key without '.' separator raises with clear message."""
+        from backtest.engine import _load_regime_block_config
+
+        env = _make_v2_env_config()
+        with pytest.raises(ValueError) as exc_info:
+            _load_regime_block_config(env, regime_key="regime_holdout")
+        assert "regime_key" in str(exc_info.value)
+        assert "regime_holdout" in str(exc_info.value)
+
+    def test_version_mismatch_raises(self):
+        """regime_key version prefix that mismatches env_config['version'] raises."""
+        from backtest.engine import _load_regime_block_config
+
+        env = _make_v2_env_config()
+        with pytest.raises(ValueError) as exc_info:
+            _load_regime_block_config(env, regime_key="v3.regime_holdout")
+        msg = str(exc_info.value)
+        assert "v3" in msg
+        assert "v2" in msg
+
+    def test_unknown_block_name_raises(self):
+        """regime_key referencing a non-existent splits block raises."""
+        from backtest.engine import _load_regime_block_config
+
+        env = _make_v2_env_config()
+        with pytest.raises(ValueError) as exc_info:
+            _load_regime_block_config(env, regime_key="v2.does_not_exist")
+        assert "does_not_exist" in str(exc_info.value)
+
+
+class TestResolvePassingCriteriaInheritance:
+    """``_resolve_passing_criteria_with_inheritance`` — Q1 cross-block coupling.
+
+    The validation block has no passing_criteria field (per
+    config/environments.yaml); PHASE2C_7.1 §3 specifies that
+    passing_criteria for the validation gate is inherited from the
+    canonical regime_holdout block. This makes the cross-block coupling
+    visible and testable rather than buried inside run_regime_holdout.
+    """
+
+    def test_regime_holdout_uses_own_criteria(self):
+        """regime_holdout block has its own passing_criteria; no inheritance."""
+        from backtest.engine import _resolve_passing_criteria_with_inheritance
+
+        env = _make_v2_env_config_with_validation()
+        criteria, source = _resolve_passing_criteria_with_inheritance(
+            env, regime_key="v2.regime_holdout"
+        )
+        assert criteria == env["splits"]["regime_holdout"]["passing_criteria"]
+        assert source == "regime_holdout"
+
+    def test_validation_inherits_from_regime_holdout(self):
+        """validation block has no criteria; inherits from regime_holdout."""
+        from backtest.engine import _resolve_passing_criteria_with_inheritance
+
+        env = _make_v2_env_config_with_validation()
+        criteria, source = _resolve_passing_criteria_with_inheritance(
+            env, regime_key="v2.validation"
+        )
+        # Inherited criteria must equal the regime_holdout block's.
+        assert criteria == env["splits"]["regime_holdout"]["passing_criteria"]
+        # Source field signals the cross-block coupling for logging /
+        # diagnostics. NOT the requested block.
+        assert source == "regime_holdout"
+
+
+class TestRunRegimeHoldoutRegimeKey:
+    """``run_regime_holdout`` regime_key parameter — Q1/Q2 PHASE2C_7.1."""
+
+    def test_default_regime_key_unchanged_behavior(self, tmp_path):
+        """No regime_key kwarg → PHASE2C_6 production behavior unchanged.
+
+        The default (regime_key omitted) must produce the same
+        passing_criteria source ("regime_holdout") and same gate result
+        as before sub-step 1.2's introduction of the parameter. This is
+        the backward-compat contract for PHASE2C_6 reproducibility.
+        """
+        from backtest.engine import run_regime_holdout
+        from strategies.baseline.sma_crossover import SMACrossover
+
+        parquet = _make_holdout_parquet(tmp_path)
+        result = run_regime_holdout(
+            dsl=None,
+            batch_id="rk-default-batch",
+            parent_run_id="rk-default-parent",
+            strategy_cls=SMACrossover,
+            strategy_params={"fast_period": 20, "slow_period": 50},
+            parquet_path=parquet,
+            db_path=tmp_path / "rk_default.db",
+            env_config=_make_v2_env_config(),
+        )
+        # Passing criteria stamped into the result must equal the
+        # regime_holdout block's verbatim (default path, no inheritance).
+        assert result.passing_criteria == {
+            "min_sharpe": -0.5,
+            "max_drawdown": 0.25,
+            "min_total_return": -0.15,
+            "min_total_trades": 5,
+        }
+
+    def test_validation_regime_key_inherits_criteria_and_logs(
+        self, tmp_path, caplog
+    ):
+        """regime_key=v2.validation: validation block dates + inherited criteria + INFO log.
+
+        Q1 refinement: the cross-block passing_criteria coupling is
+        explicit in the run-time log so a future maintainer can trace
+        where the validation gate's thresholds came from.
+        """
+        import logging
+        from backtest.engine import run_regime_holdout
+        from strategies.baseline.sma_crossover import SMACrossover
+
+        # Synthesize 2023-10 .. 2024-12 hourly bars so the validation
+        # window has natural pre-window history for warmup.
+        import numpy as np
+        import pandas as pd
+
+        timestamps = pd.date_range(
+            start="2023-10-01", end="2024-12-31 23:00", freq="h", tz="UTC"
+        )
+        n = len(timestamps)
+        t = np.arange(n, dtype=float)
+        close = 100.0 + 0.0005 * t + 5.0 * np.sin(t / 240.0)
+        df = pd.DataFrame({
+            "open_time_utc": timestamps.astype("datetime64[ms, UTC]"),
+            "open": close - 0.05,
+            "high": close + 0.5,
+            "low": close - 0.5,
+            "close": close,
+            "volume": np.full(n, 1000.0),
+            "quote_volume": np.full(n, 100_000.0),
+            "trade_count": np.arange(n, dtype="int64") + 5000,
+            "ingested_at_utc": pd.Timestamp.now(tz="UTC").floor("ms"),
+            "source": pd.array(["binance_vision"] * n, dtype="string"),
+        })
+        df["ingested_at_utc"] = df["ingested_at_utc"].astype(
+            "datetime64[ms, UTC]"
+        )
+        parquet = tmp_path / "validation.parquet"
+        df.to_parquet(parquet, engine="pyarrow", index=False)
+
+        with caplog.at_level(logging.INFO, logger="backtest.engine"):
+            result = run_regime_holdout(
+                dsl=None,
+                batch_id="rk-val-batch",
+                parent_run_id="rk-val-parent",
+                regime_key="v2.validation",
+                strategy_cls=SMACrossover,
+                strategy_params={"fast_period": 20, "slow_period": 50},
+                parquet_path=parquet,
+                db_path=tmp_path / "rk_val.db",
+                env_config=_make_v2_env_config_with_validation(),
+            )
+
+        # Inherited criteria — same as regime_holdout block's.
+        assert result.passing_criteria == {
+            "min_sharpe": -0.5,
+            "max_drawdown": 0.25,
+            "min_total_return": -0.15,
+            "min_total_trades": 5,
+        }
+
+        # Registry row's test window is 2024, not 2022.
+        conn = sqlite3.connect(str(tmp_path / "rk_val.db"))
+        conn.row_factory = sqlite3.Row
+        try:
+            row = dict(conn.execute(
+                "SELECT * FROM runs WHERE run_id = ?", (result.run_id,)
+            ).fetchone())
+        finally:
+            conn.close()
+        assert row["test_start"] == "2024-01-01T00:00:00Z"
+        assert row["test_end"] == "2024-12-31T23:00:00Z"
+
+        # The cross-block coupling MUST be logged at INFO level. Without
+        # this, a future maintainer wondering where validation gate
+        # thresholds came from has no run-time breadcrumb.
+        log_messages = [r.getMessage() for r in caplog.records]
+        coupling_log = [
+            m for m in log_messages
+            if "v2.validation" in m and "regime_holdout" in m
+            and "passing_criteria" in m
+        ]
+        assert coupling_log, (
+            f"Expected INFO log line documenting passing_criteria "
+            f"inheritance from regime_holdout for regime_key=v2.validation. "
+            f"Captured logs: {log_messages}"
+        )
+
+    def test_default_regime_key_does_not_emit_inheritance_log(
+        self, tmp_path, caplog
+    ):
+        """Default regime_key (own criteria) must NOT emit the inheritance log.
+
+        Asymmetry test paired with the inheritance-log test above: when
+        the requested block has its own passing_criteria, no
+        cross-block coupling occurred and no log line should fire.
+        Otherwise the log becomes noise on every PHASE2C_6
+        reproducibility run.
+        """
+        import logging
+        from backtest.engine import run_regime_holdout
+        from strategies.baseline.sma_crossover import SMACrossover
+
+        parquet = _make_holdout_parquet(tmp_path)
+
+        with caplog.at_level(logging.INFO, logger="backtest.engine"):
+            run_regime_holdout(
+                dsl=None,
+                batch_id="rk-noinh-batch",
+                parent_run_id="rk-noinh-parent",
+                strategy_cls=SMACrossover,
+                strategy_params={"fast_period": 20, "slow_period": 50},
+                parquet_path=parquet,
+                db_path=tmp_path / "rk_noinh.db",
+                env_config=_make_v2_env_config(),
+            )
+
+        log_messages = [r.getMessage() for r in caplog.records]
+        coupling_log = [
+            m for m in log_messages
+            if "passing_criteria inherited" in m or "inherited from" in m
+        ]
+        assert not coupling_log, (
+            f"Default regime_key should not emit inheritance log "
+            f"(regime_holdout block has its own passing_criteria). "
+            f"Captured: {coupling_log}"
+        )

@@ -1248,30 +1248,97 @@ class RegimeHoldoutResult:
     metrics: dict[str, Any]
 
 
-def _load_regime_holdout_config(
+def _load_regime_block_config(
     env_config: dict[str, Any] | None = None,
+    regime_key: str = "v2.regime_holdout",
 ) -> dict[str, Any]:
-    """Read ``splits.regime_holdout`` from environments.yaml.
+    """Read a named regime block from environments.yaml.
+
+    Generalizes the prior ``_load_regime_holdout_config`` to support
+    multiple regime blocks (PHASE2C_7.1 §3 — 2024 validation block as
+    a sibling to the 2022 regime_holdout block).
+
+    The ``regime_key`` is parsed as ``"<schema_version>.<block_name>"``;
+    ``schema_version`` is validated against ``env_config["version"]`` and
+    ``block_name`` is the key under ``env_config["splits"]``.
 
     Args:
         env_config: Pre-loaded env config dict (testing). When None,
             reads ``config/environments.yaml`` from disk.
+        regime_key: Dotted regime identifier, e.g.
+            ``"v2.regime_holdout"`` or ``"v2.validation"``. Default
+            preserves the PHASE2C_6 production path for backward-compat.
 
     Returns:
-        The regime_holdout block. Raises if v2 schema is missing.
+        The named splits block.
+
+    Raises:
+        ValueError: If ``regime_key`` is malformed, the schema version
+            mismatches ``env_config["version"]``, or the named block is
+            absent from ``env_config["splits"]``.
     """
     if env_config is None:
         import yaml
         env_path = PROJECT_ROOT / "config" / "environments.yaml"
         with open(env_path) as f:
             env_config = yaml.safe_load(f)
-    block = env_config.get("splits", {}).get("regime_holdout")
+
+    if "." not in regime_key:
+        raise ValueError(
+            f"regime_key must be of the form '<version>.<block_name>'; "
+            f"got {regime_key!r}"
+        )
+    schema_version, block_name = regime_key.split(".", 1)
+    actual_version = env_config.get("version")
+    if actual_version != schema_version:
+        raise ValueError(
+            f"regime_key={regime_key!r} requires environments.yaml "
+            f"version {schema_version!r}; found {actual_version!r}"
+        )
+    block = env_config.get("splits", {}).get(block_name)
     if not block:
         raise ValueError(
-            "environments.yaml is missing splits.regime_holdout; "
-            "expected v2 schema."
+            f"environments.yaml is missing splits.{block_name} "
+            f"(regime_key={regime_key!r})"
         )
     return block
+
+
+def _resolve_passing_criteria_with_inheritance(
+    env_config: dict[str, Any],
+    regime_key: str,
+) -> tuple[dict[str, float], str]:
+    """Resolve the 4-criterion passing_criteria for a regime evaluation.
+
+    PHASE2C_7.1 §3 / Q1 cross-block coupling. The validation block in
+    environments.yaml has no ``passing_criteria`` field; the gate
+    thresholds inherit from the canonical ``regime_holdout`` block so
+    multi-regime evaluation arcs share a single source of truth for
+    "what does it mean to pass". This function makes the inheritance
+    visible and testable rather than burying it inside
+    ``run_regime_holdout``.
+
+    Args:
+        env_config: Pre-loaded env config dict.
+        regime_key: Dotted regime identifier (see
+            :func:`_load_regime_block_config`).
+
+    Returns:
+        ``(passing_criteria, source_block_name)`` — ``source_block_name``
+        is the name of the block from which the criteria were loaded
+        (``"regime_holdout"`` on inheritance, the requested block name
+        otherwise). Used by callers for explicit run-time logging of
+        the cross-block coupling.
+    """
+    block = _load_regime_block_config(env_config, regime_key)
+    requested_block_name = regime_key.split(".", 1)[1]
+    if "passing_criteria" in block:
+        return block["passing_criteria"], requested_block_name
+
+    # Inherit from the canonical regime_holdout block. Re-uses the
+    # same env_config dict, so no additional disk I/O.
+    fallback = _load_regime_block_config(env_config, "v2.regime_holdout")
+    return fallback["passing_criteria"], "regime_holdout"
 
 
 def _evaluate_regime_holdout_pass(
@@ -1367,6 +1434,12 @@ def run_regime_holdout(
     batch_id: str,
     parent_run_id: str,
     *,
+    regime_key: str = "v2.regime_holdout",
+    # FUTURE-DEPRECATION: the default preserves PHASE2C_6 reproducibility
+    # (single-regime 2022 evaluation). Once multi-regime evaluation
+    # callers (PHASE2C_7.1+) are the production norm, this default is a
+    # candidate for removal so callers must be explicit about regime
+    # identity. Remove only when no implicit-default callers remain.
     strategy_cls: type[bt.Strategy] | None = None,
     strategy_params: dict[str, Any] | None = None,
     parquet_path: str | Path | None = None,
@@ -1424,10 +1497,38 @@ def run_regime_holdout(
     Returns:
         RegimeHoldoutResult with the per-criterion outcome and run_id.
     """
-    block = _load_regime_holdout_config(env_config)
+    # Resolve env config once, then thread to both block + criteria
+    # lookups so disk I/O is paid at most once per call.
+    if env_config is None:
+        import yaml
+        env_path = PROJECT_ROOT / "config" / "environments.yaml"
+        with open(env_path) as f:
+            resolved_env_config = yaml.safe_load(f)
+    else:
+        resolved_env_config = env_config
+
+    block = _load_regime_block_config(resolved_env_config, regime_key)
+    passing_criteria, criteria_source_block = (
+        _resolve_passing_criteria_with_inheritance(
+            resolved_env_config, regime_key
+        )
+    )
+
+    requested_block_name = regime_key.split(".", 1)[1]
+    if criteria_source_block != requested_block_name:
+        # PHASE2C_7.1 §3 / Q1 cross-block coupling: explicit run-time
+        # breadcrumb so a future maintainer can trace where the gate
+        # thresholds came from when running against a regime block
+        # that has no passing_criteria of its own (e.g. validation).
+        logger.info(
+            "Regime evaluation regime_key=%s: passing_criteria inherited "
+            "from %s block (no passing_criteria field on %s block in "
+            "environments.yaml; cross-block coupling per PHASE2C_7.1 §3)",
+            regime_key, criteria_source_block, requested_block_name,
+        )
+
     holdout_start = date.fromisoformat(block["start"])
     holdout_end = date.fromisoformat(block["end"])
-    passing_criteria = block["passing_criteria"]
 
     start_dt = datetime(
         holdout_start.year, holdout_start.month, holdout_start.day,
