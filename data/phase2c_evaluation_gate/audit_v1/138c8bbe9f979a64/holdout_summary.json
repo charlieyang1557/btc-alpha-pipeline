@@ -1,0 +1,36 @@
+{
+  "current_git_sha": "d6f481a3692d48d95b6cb39af686fa6dfc34f964",
+  "engine_commit": "eb1c87f",
+  "engine_corrected_lineage": "wf-corrected-v1",
+  "error_message": null,
+  "evaluation_semantics": "single_run_holdout_v1",
+  "gate_pass_per_criterion": {
+    "drawdown_passed": false,
+    "return_passed": true,
+    "sharpe_passed": true,
+    "trades_passed": true
+  },
+  "holdout_metrics": {
+    "max_drawdown": 0.27378439029380863,
+    "sharpe_ratio": -0.43877102803841583,
+    "total_return": -0.09549747514252926,
+    "total_trades": 14
+  },
+  "holdout_passed": false,
+  "hypothesis_hash": "138c8bbe9f979a64",
+  "lifecycle_state": "holdout_failed",
+  "lineage_check": "passed",
+  "name": "weekend_momentum_fade_200",
+  "passing_criteria": {
+    "max_drawdown": 0.25,
+    "min_sharpe": -0.5,
+    "min_total_return": -0.15,
+    "min_total_trades": 5
+  },
+  "position": 200,
+  "run_id": "audit_v1",
+  "source_batch_id": "b6fcbf86-4d57-4d1f-ae41-1778296b1ae9",
+  "theme": "calendar_effect",
+  "wall_clock_seconds": 1.1712,
+  "wf_test_period_sharpe": 1.023064
+}
