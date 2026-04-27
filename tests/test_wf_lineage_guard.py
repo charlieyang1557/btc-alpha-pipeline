@@ -165,3 +165,155 @@ def test_check_wf_semantics_raises_on_wrong_commit():
     assert "0531741" in msg
     assert CORRECTED_WF_ENGINE_COMMIT in msg
     assert "Section RS" in msg
+
+
+# --- Single-run holdout consumer-side helper tests ---
+# (check_evaluation_semantics_or_raise — PHASE2C_6 evaluation gate work)
+
+from backtest.wf_lineage import (
+    check_evaluation_semantics_or_raise,
+    EVALUATION_SEMANTICS_TAG,
+    ENGINE_CORRECTED_LINEAGE_TAG,
+)
+
+
+def _valid_eval_summary() -> dict:
+    """Helper: construct a valid single-run holdout summary for tests."""
+    return {
+        "evaluation_semantics": EVALUATION_SEMANTICS_TAG,
+        "engine_commit": CORRECTED_WF_ENGINE_COMMIT,
+        "engine_corrected_lineage": ENGINE_CORRECTED_LINEAGE_TAG,
+        "lineage_check": "passed",
+        "current_git_sha": "abcd1234567890",
+    }
+
+
+def test_check_evaluation_semantics_passes_on_correct_summary():
+    """Valid single-run holdout summary dict passes silently."""
+    # Should not raise.
+    check_evaluation_semantics_or_raise(_valid_eval_summary())
+
+
+def test_check_evaluation_semantics_raises_on_missing_tag():
+    """Missing evaluation_semantics field raises ValueError with field name + path."""
+    summary = _valid_eval_summary()
+    del summary["evaluation_semantics"]
+    with pytest.raises(ValueError) as exc_info:
+        check_evaluation_semantics_or_raise(
+            summary, artifact_path="/tmp/holdout.json"
+        )
+    msg = str(exc_info.value)
+    assert "evaluation_semantics" in msg
+    assert "missing" in msg
+    assert EVALUATION_SEMANTICS_TAG in msg
+    assert "Section RS" in msg
+    assert "/tmp/holdout.json" in msg
+
+
+def test_check_evaluation_semantics_raises_on_wrong_tag():
+    """Wrong evaluation_semantics value raises ValueError with both expected and actual."""
+    summary = _valid_eval_summary()
+    summary["evaluation_semantics"] = "single_run_validation_v1"  # wrong tag
+    with pytest.raises(ValueError) as exc_info:
+        check_evaluation_semantics_or_raise(summary)
+    msg = str(exc_info.value)
+    assert "single_run_validation_v1" in msg
+    assert EVALUATION_SEMANTICS_TAG in msg
+    assert "Section RS" in msg
+
+
+def test_check_evaluation_semantics_raises_on_wf_tag_cross_contamination():
+    """A WF artifact (with wf_semantics tag, no evaluation_semantics) is rejected.
+
+    Explicit cross-domain rejection test — proves that calling this
+    helper on a walk-forward artifact correctly rejects it. Per the
+    module-level docstring: the two attestation domains stay
+    semantically separate.
+    """
+    wf_summary = {
+        "wf_semantics": WF_SEMANTICS_TAG,
+        "corrected_wf_semantics_commit": CORRECTED_WF_ENGINE_COMMIT,
+        # Note: does NOT have evaluation_semantics or related fields
+    }
+    with pytest.raises(ValueError) as exc_info:
+        check_evaluation_semantics_or_raise(wf_summary)
+    msg = str(exc_info.value)
+    assert "evaluation_semantics" in msg
+    assert "missing" in msg
+
+
+def test_check_evaluation_semantics_raises_on_wrong_engine_commit():
+    """Mismatched engine_commit raises ValueError with field name and both values."""
+    summary = _valid_eval_summary()
+    summary["engine_commit"] = "0531741"  # pre-correction
+    with pytest.raises(ValueError) as exc_info:
+        check_evaluation_semantics_or_raise(summary)
+    msg = str(exc_info.value)
+    assert "engine_commit" in msg
+    assert "0531741" in msg
+    assert CORRECTED_WF_ENGINE_COMMIT in msg
+    assert "Section RS" in msg
+
+
+def test_check_evaluation_semantics_raises_on_wrong_lineage_tag():
+    """Mismatched engine_corrected_lineage raises ValueError."""
+    summary = _valid_eval_summary()
+    summary["engine_corrected_lineage"] = "wf-broken-v0"
+    with pytest.raises(ValueError) as exc_info:
+        check_evaluation_semantics_or_raise(summary)
+    msg = str(exc_info.value)
+    assert "engine_corrected_lineage" in msg
+    assert "wf-broken-v0" in msg
+    assert ENGINE_CORRECTED_LINEAGE_TAG in msg
+    assert "Section RS" in msg
+
+
+def test_check_evaluation_semantics_raises_on_failed_lineage_check():
+    """lineage_check != 'passed' raises ValueError.
+
+    Asymmetry vs check_wf_semantics_or_raise: the WF helper does NOT gate
+    on lineage_check (treats it as auditor breadcrumb). The single-run
+    holdout helper DOES gate on it (load-bearing — locks in the stricter
+    discipline that the corrected-engine arc taught us is needed).
+    """
+    summary = _valid_eval_summary()
+    summary["lineage_check"] = "failed"
+    with pytest.raises(ValueError) as exc_info:
+        check_evaluation_semantics_or_raise(summary)
+    msg = str(exc_info.value)
+    assert "lineage_check" in msg
+    assert "failed" in msg
+    assert "passed" in msg
+    assert "Section RS" in msg
+
+
+def test_check_evaluation_semantics_raises_on_missing_git_sha():
+    """Missing or empty current_git_sha raises ValueError."""
+    summary = _valid_eval_summary()
+    del summary["current_git_sha"]
+    with pytest.raises(ValueError) as exc_info:
+        check_evaluation_semantics_or_raise(summary)
+    msg = str(exc_info.value)
+    assert "current_git_sha" in msg
+    assert "missing or empty" in msg
+    assert "Section RS" in msg
+
+    # Empty string also fails
+    summary = _valid_eval_summary()
+    summary["current_git_sha"] = ""
+    with pytest.raises(ValueError) as exc_info:
+        check_evaluation_semantics_or_raise(summary)
+    msg = str(exc_info.value)
+    assert "current_git_sha" in msg
+
+
+def test_check_evaluation_semantics_artifact_path_in_message():
+    """When artifact_path is provided, error message includes it for diagnostics."""
+    summary = _valid_eval_summary()
+    summary["evaluation_semantics"] = "wrong"
+    with pytest.raises(ValueError) as exc_info:
+        check_evaluation_semantics_or_raise(
+            summary, artifact_path="/data/holdout/foo.json"
+        )
+    msg = str(exc_info.value)
+    assert "/data/holdout/foo.json" in msg
