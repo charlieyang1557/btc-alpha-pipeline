@@ -394,14 +394,14 @@ class CandidateOutcome:
     Field-name semantics (per contract section 4 Component C, verified
     against ``backtest/engine.py:_aggregate_walk_forward_metrics``):
 
-    - ``wf_sharpe``, ``wf_return``, ``wf_max_drawdown``, ``wf_total_trades``,
-      ``wf_win_rate`` are mean/max/sum aggregations across walk-forward
+    - ``wf_test_period_sharpe``, ``wf_test_period_return``, ``wf_test_period_max_drawdown``, ``wf_test_period_total_trades``,
+      ``wf_test_period_win_rate`` are mean/max/sum aggregations across walk-forward
       sub-windows, where each sub-window's metric is computed on its
       *test portion only* (the engine trims per-window equity curves
       to ``test_start`` before recomputing). This is why the columns
       are named ``wf_*`` and not ``train_*`` — they describe the WF
       output, which is itself a test-window aggregation.
-    - ``wf_window_count`` is the number of WF sub-windows that produced
+    - ``wf_test_period_window_count`` is the number of WF sub-windows that produced
       metrics (v2 split with disjoint train ranges 2020-2021 + 2023
       yields a fixed count per candidate).
     """
@@ -413,12 +413,12 @@ class CandidateOutcome:
     factors_used: str  # semicolon-joined; CSV-friendly
     compile_status: str  # ok | manifest_drift | compile_error | re_validation_failed | duplicate_skipped
     runtime_status: str  # ok | error | not_attempted
-    wf_sharpe: float | None
-    wf_return: float | None
-    wf_max_drawdown: float | None
-    wf_total_trades: int | None
-    wf_win_rate: float | None
-    wf_window_count: int | None
+    wf_test_period_sharpe: float | None
+    wf_test_period_return: float | None
+    wf_test_period_max_drawdown: float | None
+    wf_test_period_total_trades: int | None
+    wf_test_period_win_rate: float | None
+    wf_test_period_window_count: int | None
     elapsed_seconds: float
     error_message: str  # one-line; empty for ok runs
 
@@ -432,12 +432,12 @@ _CSV_FIELDS: tuple[str, ...] = (
     "factors_used",
     "compile_status",
     "runtime_status",
-    "wf_sharpe",
-    "wf_return",
-    "wf_max_drawdown",
-    "wf_total_trades",
-    "wf_win_rate",
-    "wf_window_count",
+    "wf_test_period_sharpe",
+    "wf_test_period_return",
+    "wf_test_period_max_drawdown",
+    "wf_test_period_total_trades",
+    "wf_test_period_win_rate",
+    "wf_test_period_window_count",
     "elapsed_seconds",
     "error_message",
 )
@@ -471,12 +471,12 @@ def _outcome_from_compile_failure(
         factors_used=";".join(candidate.factors_used),
         compile_status=failure.failure_kind,
         runtime_status="not_attempted",
-        wf_sharpe=None,
-        wf_return=None,
-        wf_max_drawdown=None,
-        wf_total_trades=None,
-        wf_win_rate=None,
-        wf_window_count=None,
+        wf_test_period_sharpe=None,
+        wf_test_period_return=None,
+        wf_test_period_max_drawdown=None,
+        wf_test_period_total_trades=None,
+        wf_test_period_win_rate=None,
+        wf_test_period_window_count=None,
         elapsed_seconds=elapsed_seconds,
         error_message=failure.error_message[:200],
     )
@@ -531,12 +531,12 @@ def run_one_candidate_wf(
             factors_used=";".join(candidate.factors_used),
             compile_status="ok",
             runtime_status="error",
-            wf_sharpe=None,
-            wf_return=None,
-            wf_max_drawdown=None,
-            wf_total_trades=None,
-            wf_win_rate=None,
-            wf_window_count=None,
+            wf_test_period_sharpe=None,
+            wf_test_period_return=None,
+            wf_test_period_max_drawdown=None,
+            wf_test_period_total_trades=None,
+            wf_test_period_win_rate=None,
+            wf_test_period_window_count=None,
             elapsed_seconds=elapsed,
             error_message=f"{type(exc).__name__}: {str(exc)[:160]}",
         )
@@ -552,12 +552,12 @@ def run_one_candidate_wf(
         factors_used=";".join(candidate.factors_used),
         compile_status="ok",
         runtime_status="ok",
-        wf_sharpe=float(sm["sharpe_ratio"]),
-        wf_return=float(sm["total_return"]),
-        wf_max_drawdown=float(sm["max_drawdown"]),
-        wf_total_trades=int(sm["total_trades"]),
-        wf_win_rate=float(sm["win_rate"]),
-        wf_window_count=len(wf_result.window_results),
+        wf_test_period_sharpe=float(sm["sharpe_ratio"]),
+        wf_test_period_return=float(sm["total_return"]),
+        wf_test_period_max_drawdown=float(sm["max_drawdown"]),
+        wf_test_period_total_trades=int(sm["total_trades"]),
+        wf_test_period_win_rate=float(sm["win_rate"]),
+        wf_test_period_window_count=len(wf_result.window_results),
         elapsed_seconds=elapsed,
         error_message="",
     )
@@ -578,12 +578,12 @@ def _build_duplicate_skip_outcome(
         factors_used=";".join(candidate.factors_used),
         compile_status="duplicate_skipped",
         runtime_status="not_attempted",
-        wf_sharpe=None,
-        wf_return=None,
-        wf_max_drawdown=None,
-        wf_total_trades=None,
-        wf_win_rate=None,
-        wf_window_count=None,
+        wf_test_period_sharpe=None,
+        wf_test_period_return=None,
+        wf_test_period_max_drawdown=None,
+        wf_test_period_total_trades=None,
+        wf_test_period_win_rate=None,
+        wf_test_period_window_count=None,
         elapsed_seconds=0.0,
         error_message=f"hypothesis_hash first seen at position {first_position_seen}",
     )
@@ -620,18 +620,18 @@ def _write_csv_row(file_obj: Any, writer: Any, outcome: CandidateOutcome) -> Non
         "factors_used": outcome.factors_used,
         "compile_status": outcome.compile_status,
         "runtime_status": outcome.runtime_status,
-        "wf_sharpe": "" if outcome.wf_sharpe is None else f"{outcome.wf_sharpe:.6f}",
-        "wf_return": "" if outcome.wf_return is None else f"{outcome.wf_return:.6f}",
-        "wf_max_drawdown": (
-            "" if outcome.wf_max_drawdown is None
-            else f"{outcome.wf_max_drawdown:.6f}"
+        "wf_test_period_sharpe": "" if outcome.wf_test_period_sharpe is None else f"{outcome.wf_test_period_sharpe:.6f}",
+        "wf_test_period_return": "" if outcome.wf_test_period_return is None else f"{outcome.wf_test_period_return:.6f}",
+        "wf_test_period_max_drawdown": (
+            "" if outcome.wf_test_period_max_drawdown is None
+            else f"{outcome.wf_test_period_max_drawdown:.6f}"
         ),
-        "wf_total_trades": (
-            "" if outcome.wf_total_trades is None else outcome.wf_total_trades
+        "wf_test_period_total_trades": (
+            "" if outcome.wf_test_period_total_trades is None else outcome.wf_test_period_total_trades
         ),
-        "wf_win_rate": "" if outcome.wf_win_rate is None else f"{outcome.wf_win_rate:.6f}",
-        "wf_window_count": (
-            "" if outcome.wf_window_count is None else outcome.wf_window_count
+        "wf_test_period_win_rate": "" if outcome.wf_test_period_win_rate is None else f"{outcome.wf_test_period_win_rate:.6f}",
+        "wf_test_period_window_count": (
+            "" if outcome.wf_test_period_window_count is None else outcome.wf_test_period_window_count
         ),
         "elapsed_seconds": f"{outcome.elapsed_seconds:.3f}",
         "error_message": outcome.error_message,
@@ -684,9 +684,9 @@ def _build_summary(
     failure-mode counts.
     """
     sharpes = [
-        o.wf_sharpe for o in outcomes
-        if o.runtime_status == "ok" and o.wf_sharpe is not None
-        and not math.isnan(o.wf_sharpe)
+        o.wf_test_period_sharpe for o in outcomes
+        if o.runtime_status == "ok" and o.wf_test_period_sharpe is not None
+        and not math.isnan(o.wf_test_period_sharpe)
     ]
 
     compile_status_counts: dict[str, int] = {}
@@ -754,7 +754,7 @@ def _build_summary(
         ),
         "compile_status_counts": compile_status_counts,
         "runtime_status_counts": runtime_status_counts,
-        "wf_sharpe_distribution": distribution,
+        "wf_test_period_sharpe_distribution": distribution,
         "phase1_binary_success_criterion_met": binary_pass,
         "phase1_success_threshold": 0.5,
     }
@@ -764,10 +764,10 @@ def _print_leaderboard(outcomes: list[CandidateOutcome], summary: dict[str, Any]
     """Stdout report: top-10 by Sharpe + distribution stats + binary verdict."""
     ok_outcomes = [
         o for o in outcomes
-        if o.runtime_status == "ok" and o.wf_sharpe is not None
-        and not math.isnan(o.wf_sharpe)
+        if o.runtime_status == "ok" and o.wf_test_period_sharpe is not None
+        and not math.isnan(o.wf_test_period_sharpe)
     ]
-    ranked = sorted(ok_outcomes, key=lambda o: o.wf_sharpe, reverse=True)
+    ranked = sorted(ok_outcomes, key=lambda o: o.wf_test_period_sharpe, reverse=True)
 
     print("\n" + "=" * 80)
     print("PHASE 1 WALK-FORWARD RESULTS")
@@ -786,8 +786,8 @@ def _print_leaderboard(outcomes: list[CandidateOutcome], summary: dict[str, Any]
     for k, v in sorted(summary["runtime_status_counts"].items()):
         print(f"  {k:30s} {v}")
 
-    dist = summary["wf_sharpe_distribution"]
-    print("\n--- wf_sharpe distribution (compile+runtime ok, non-NaN) ---")
+    dist = summary["wf_test_period_sharpe_distribution"]
+    print("\n--- wf_test_period_sharpe distribution (compile+runtime ok, non-NaN) ---")
     print(f"  n={dist['n']}")
     if dist["n"] > 0:
         print(f"  median={dist['median']:.4f}  mean={dist['mean']:.4f}  "
@@ -798,24 +798,24 @@ def _print_leaderboard(outcomes: list[CandidateOutcome], summary: dict[str, Any]
         print(f"  count > 0.0:  {dist['count_gt_0_0']}")
         print(f"  count > -0.3: {dist['count_gt_neg_0_3']}")
 
-    print("\n--- top-10 by wf_sharpe ---")
+    print("\n--- top-10 by wf_test_period_sharpe ---")
     if not ranked:
-        print("  (no candidates produced a valid wf_sharpe)")
+        print("  (no candidates produced a valid wf_test_period_sharpe)")
     else:
         print(f"  {'rank':>4}  {'pos':>4}  {'sharpe':>8}  {'return':>8}  "
               f"{'maxdd':>7}  {'trades':>6}  hash               name")
         for i, o in enumerate(ranked[:10], start=1):
             print(f"  {i:>4}  {o.position:>4}  "
-                  f"{o.wf_sharpe:>8.4f}  {o.wf_return:>8.4f}  "
-                  f"{o.wf_max_drawdown:>7.4f}  {o.wf_total_trades:>6d}  "
+                  f"{o.wf_test_period_sharpe:>8.4f}  {o.wf_test_period_return:>8.4f}  "
+                  f"{o.wf_test_period_max_drawdown:>7.4f}  {o.wf_test_period_total_trades:>6d}  "
                   f"{o.hypothesis_hash}  {o.name}")
 
     print("\n--- BINARY VERDICT (Phase 1 success criterion) ---")
     threshold = summary["phase1_success_threshold"]
     if summary["phase1_binary_success_criterion_met"]:
-        print(f"  ✓ MET — {dist['count_gt_0_5']} candidate(s) with wf_sharpe > {threshold}")
+        print(f"  ✓ MET — {dist['count_gt_0_5']} candidate(s) with wf_test_period_sharpe > {threshold}")
     else:
-        print(f"  ✗ NOT MET — 0 candidates with wf_sharpe > {threshold}")
+        print(f"  ✗ NOT MET — 0 candidates with wf_test_period_sharpe > {threshold}")
     print("=" * 80)
 
 
@@ -1034,8 +1034,8 @@ def _run_walk_forward_loop(
                         "sharpe=%.4f return=%.4f trades=%d windows=%d "
                         "elapsed=%.1fs",
                         i, n, cand.position, cand.hypothesis_hash,
-                        outcome.wf_sharpe, outcome.wf_return,
-                        outcome.wf_total_trades, outcome.wf_window_count,
+                        outcome.wf_test_period_sharpe, outcome.wf_test_period_return,
+                        outcome.wf_test_period_total_trades, outcome.wf_test_period_window_count,
                         time.time() - cand_start,
                     )
                 elif outcome.runtime_status == "error":
