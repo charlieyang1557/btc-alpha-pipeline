@@ -1,0 +1,53 @@
+{
+  "artifact_schema_version": "phase2c_7_1",
+  "audit_only_holdout_passed": 60,
+  "audit_only_total": 112,
+  "by_theme": {
+    "calendar_effect": {
+      "holdout_passed": 19,
+      "total": 26
+    },
+    "mean_reversion": {
+      "holdout_passed": 13,
+      "total": 26
+    },
+    "momentum": {
+      "holdout_passed": 20,
+      "total": 35
+    },
+    "volatility_regime": {
+      "holdout_passed": 4,
+      "total": 21
+    },
+    "volume_divergence": {
+      "holdout_passed": 23,
+      "total": 36
+    }
+  },
+  "counts": {
+    "holdout_error": 0,
+    "holdout_failed": 65,
+    "holdout_passed": 79,
+    "total": 144
+  },
+  "current_git_sha": "bdcf62d88b215ef7675cc21a6b4c780bb8ce8cd9",
+  "derived_from_run_id": "audit_2024_v1",
+  "engine_commit": "eb1c87f",
+  "engine_corrected_lineage": "wf-corrected-v1",
+  "evaluation_semantics": "single_run_holdout_v1",
+  "explicit_candidate_hashes": null,
+  "filter_excluded_count": 54,
+  "filter_predicate": "holdout_metrics.total_trades >= N",
+  "filter_primary_total": 198,
+  "filter_threshold": 20,
+  "lineage_check": "passed",
+  "primary_universe_holdout_passed": 19,
+  "primary_universe_total": 32,
+  "regime_key": "v2.validation",
+  "regime_label": "validation_2024",
+  "run_finished_utc": "2026-04-27T12:05:44Z",
+  "run_id": "audit_2024_v1_filtered",
+  "run_started_utc": "2026-04-27T12:01:51Z",
+  "source_batch_id": "b6fcbf86-4d57-4d1f-ae41-1778296b1ae9",
+  "universe": "audit"
+}
