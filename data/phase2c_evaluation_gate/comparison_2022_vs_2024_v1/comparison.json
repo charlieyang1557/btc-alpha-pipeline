@@ -1,0 +1,42 @@
+{
+  "comparison_schema_version": "comparison_schema_v1",
+  "filter_excluded_cross_tab": {
+    "audit_only": {
+      "failed_2022_failed_2024": 37,
+      "failed_2022_passed_2024": 5,
+      "passed_2022_failed_2024": 0,
+      "passed_2022_passed_2024": 0
+    },
+    "primary": {
+      "failed_2022_failed_2024": 9,
+      "failed_2022_passed_2024": 3,
+      "passed_2022_failed_2024": 0,
+      "passed_2022_passed_2024": 0
+    }
+  },
+  "filter_survivor_cross_tab": {
+    "audit_only": {
+      "failed_2022_failed_2024": 48,
+      "failed_2022_passed_2024": 52,
+      "passed_2022_failed_2024": 4,
+      "passed_2022_passed_2024": 8
+    },
+    "primary": {
+      "failed_2022_failed_2024": 12,
+      "failed_2022_passed_2024": 19,
+      "passed_2022_failed_2024": 1,
+      "passed_2022_passed_2024": 0
+    }
+  },
+  "lineage_inputs": {
+    "audit_2024_v1_filtered_path": "data/phase2c_evaluation_gate/audit_2024_v1_filtered",
+    "audit_2024_v1_path": "data/phase2c_evaluation_gate/audit_2024_v1",
+    "audit_v1_path": "data/phase2c_evaluation_gate/audit_v1"
+  },
+  "produced_at_utc": "2026-04-27T12:39:57Z",
+  "totals": {
+    "n_candidates": 198,
+    "n_filter_excluded": 54,
+    "n_filter_survivor": 144
+  }
+}
