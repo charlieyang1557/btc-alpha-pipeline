@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.6500,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy combines volume_zscore_24h with momentum indicators (macd_hist, sma_20, rsi_14) to capture continuation patterns. The entry logic is coherent: high volume (z-score > 1.8) alongside positive MACD histogram, price above SMA-20, and RSI above 50 creates a defensible narrative of institutional accumulation during an uptrend. Exit logic uses volume collapse or MACD reversal, plus a profit-taking condition combining 4.5% gain with RSI > 75. The theme is volume_divergence, yet the strategy focuses on volume confirmation rather than divergence between price and volume trends. The factor set {close, macd_hist, rsi_14, sma_20, volume_zscore_24h} appears structurally very similar to prior entry #70: {close, macd_hist, return_24h, rsi_14, sma_20, volume_zscore_24h}, differing only by substituting return_24h with direct usage in exit conditions. This represents a parameter or threshold adjustment rather than a fundamentally new structural approach, elevating variant risk significantly."
+}
+```

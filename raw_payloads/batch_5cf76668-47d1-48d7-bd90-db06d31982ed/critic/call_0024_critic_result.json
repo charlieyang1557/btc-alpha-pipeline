@@ -1,0 +1,61 @@
+{
+  "critic_version": "d7_v1",
+  "critic_status": "ok",
+  "d7b_mode": "live",
+  "d7a_rule_scores": {
+    "theme_coherence": 0.2,
+    "structural_novelty": 0.5,
+    "default_momentum_fallback": 0.2,
+    "complexity_appropriateness": 0.4
+  },
+  "d7a_supporting_measures": {
+    "factor_set_prior_occurrences": 1,
+    "n_factors": 5,
+    "n_conditions": 8,
+    "description_length": 216,
+    "max_hold_bars": 120,
+    "n_entry_groups": 1,
+    "n_exit_groups": 2
+  },
+  "d7a_rule_flags": [
+    "thin_theme_momentum_bleed",
+    "n_conditions_heavy"
+  ],
+  "d7b_llm_scores": {
+    "semantic_plausibility": 0.35,
+    "semantic_theme_alignment": 0.7,
+    "structural_variant_risk": 0.85
+  },
+  "d7b_reasoning": "The strategy exhibits internal contradictions that weaken its plausibility. The narrative describes a 'momentum fade' setup anticipating mean reversion, yet entry requires positive momentum signals (RSI>52, macd_hist>0, return_24h>0.01) alongside contracting volume. This creates tension: if genuine exhaustion is occurring, why demand bullish momentum confirmation? The exit logic compounds this by triggering on volume expansion plus RSI>65 OR downside move with MACD cross, mixing trend-continuation and reversal signals without clear unification. Theme alignment is moderate-to-strong: volume_zscore_24h is the thematic anchor, and the divergence concept (volume contracts while price rises) directly invokes volume_divergence economics. However, the factor set {macd_hist, return_1h, return_24h, rsi_14, volume_zscore_24h} appears in prior hypothesis 11, and hypothesis 19 uses {close, macd_hist, return_1h, rsi_14, sma_20, volume_zscore_24h}. The current strategy differs only by omitting close/sma and adjusting thresholds (RSI 52 vs other values, volume_zscore -1.0 vs other cutoffs). This represents threshold tuning on a nearly identical factor combination, yielding high structural variant risk.",
+  "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0024_response.json",
+  "d7b_cost_actual_usd": 0.011799,
+  "d7b_input_tokens": 2103,
+  "d7b_output_tokens": 366,
+  "d7b_retry_count": 0,
+  "d7b_scan_results": {
+    "forbidden_language_scan": {
+      "status": "pass",
+      "hits": [],
+      "terms_checked_count": 21
+    },
+    "refusal_scan": {
+      "status": "pass",
+      "hits": [],
+      "patterns_checked": [
+        "\\bi cannot\\b",
+        "\\bi can't\\b",
+        "\\bunable to\\b",
+        "\\brefuse to\\b",
+        "\\bdecline to\\b",
+        "\\bcannot evaluate\\b",
+        "\\bcan not evaluate\\b"
+      ]
+    }
+  },
+  "critic_timing_ms": {
+    "d7a_ms": 0.058,
+    "d7b_ms": 10780.445
+  },
+  "critic_error_signature": null,
+  "critic_error_full_path": null
+}

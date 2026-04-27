@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.6500,
+  "semantic_theme_alignment": 0.7500,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy combines Monday timing (day_of_week==0), oversold RSI (<35), price below SMA(50), and realized volatility filters to enter long positions. Exit logic uses RSI normalization (>55), upward crosses of SMA(20), or profit targets (2% return_24h). The internal logic is coherent: entering on calendar-driven oversold bounces during volatile conditions and exiting on momentum recovery or profit. The 168-bar max hold provides a reasonable timeout. Theme alignment is moderate-to-strong as it explicitly uses day_of_week for Monday entries and frames the strategy around institutional post-weekend flows, though the bulk of the logic relies on technical mean-reversion factors rather than pure calendar effects. Structural variant risk is high: the factor set {close, day_of_week, realized_vol_24h, return_24h, rsi_14, sma_50} is very similar to multiple priors, particularly entry 87 which uses {close, day_of_week, realized_vol_24h, return_1h, return_24h, rsi_14, sma_50}. The primary difference is return_24h appearing only in exit conditions here versus entry conditions in priors, making this appear as a threshold/condition rearrangement rather than a structurally novel hypothesis."
+}
+```

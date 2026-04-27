@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.3500,
+  "semantic_theme_alignment": 0.6500,
+  "structural_variant_risk": 0.8000,
+  "reasoning": "The strategy employs volume_zscore_24h paired with return_24h, rsi_14, close, and sma_24. Structural variant risk is high because this factor set {close, return_24h, rsi_14, sma_24, volume_zscore_24h} appears nearly identical to prior combinations such as #{9} {close, return_1h, return_24h, rsi_14, sma_50, volume_zscore_24h}, #{36} {close, return_24h, rsi_14, sma_50, volume_zscore_24h}, and #{93} {close, return_24h, rsi_14, sma_20, volume_zscore_24h}, differing mainly in moving average window choice. Theme alignment is moderate: the strategy uses volume_zscore_24h as the core divergence signal, aligning with volume_divergence intent. However, semantic plausibility is weak. The narrative claims below-zero volume z-score indicates institutional accumulation preceding retail chasing, yet this interpretation lacks economic foundation. Lower volume during price strength typically signals weak conviction rather than stealth accumulation. The exit logic combining volume surge with overbought RSI is reasonable, but entry requiring both momentum (return_24h > 1.5%, RSI > 55) and declining volume creates a contradictory signal that undermines the divergence thesis."
+}
+```

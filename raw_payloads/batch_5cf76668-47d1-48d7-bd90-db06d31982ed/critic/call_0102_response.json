@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.2000,
+  "semantic_theme_alignment": 0.4000,
+  "structural_variant_risk": 0.9500,
+  "reasoning": "The strategy exhibits a critical internal inconsistency that severely undermines its plausibility: the description claims entry when price crosses above the lower Bollinger band during oversold conditions, yet the DSL specifies crossing above bb_upper_24_2 (the upper band). This creates a contradiction where the strategy triggers on breakout signals (crossing above upper band) while claiming to capture mean reversion from oversold extremes. The exit logic combining price crossing above sma_24 with RSI normalization is internally consistent with mean reversion. Theme alignment receives moderate scoring because while bb_upper_24_2, close, sma_24, and zscore_48 all appear in the hint vocabulary, the actual entry mechanism (upper band breakout) contradicts mean reversion intuition despite the description's framing. Structural variant risk is extremely high: the factor set {bb_upper_24_2, close, realized_vol_24h, rsi_14, sma_24, zscore_48} appears nearly identical to prior entry #21, differing only by the addition of return_24h in that prior variant and the substitution of return_1h with return_24h in another prior. The core mean reversion signal structure (BB bands + RSI + volatility + zscore + close vs moving average) has been extensively explored across multiple prior hypotheses, making this a threshold/operator modification rather than a genuinely novel structural approach."
+}
+```

@@ -1,0 +1,61 @@
+{
+  "critic_version": "d7_v1",
+  "critic_status": "ok",
+  "d7b_mode": "live",
+  "d7a_rule_scores": {
+    "theme_coherence": 0.1429,
+    "structural_novelty": 1.0,
+    "default_momentum_fallback": 0.5,
+    "complexity_appropriateness": 0.4
+  },
+  "d7a_supporting_measures": {
+    "factor_set_prior_occurrences": 0,
+    "n_factors": 7,
+    "n_conditions": 8,
+    "description_length": 186,
+    "max_hold_bars": 144,
+    "n_entry_groups": 1,
+    "n_exit_groups": 2
+  },
+  "d7a_rule_flags": [
+    "thin_theme_momentum_bleed",
+    "n_conditions_heavy"
+  ],
+  "d7b_llm_scores": {
+    "semantic_plausibility": 0.75,
+    "semantic_theme_alignment": 0.85,
+    "structural_variant_risk": 0.7
+  },
+  "d7b_reasoning": "The strategy articulates a coherent volatility regime thesis: enter when realized volatility compresses below 2.5%, price crosses above SMA50, RSI confirms momentum above 50, and volume is elevated. Exit either when volatility expands above 5.5% with overbought RSI, or on sharp drawdown with SMA20 breach. The logic chains volatility compression to expansion breakouts, which is economically defensible. Theme alignment is strong: realized_vol_24h anchors both entry and exit, directly invoking the hint factor vocabulary and capturing regime transitions. The 144-bar hold limit and dual exit paths address both profit-taking and stop-loss scenarios. However, structural risk is elevated because this factor set {close, realized_vol_24h, return_1h, rsi_14, sma_50, volume_zscore_24h} substantially overlaps with prior #9 {close, return_1h, return_24h, rsi_14, sma_50, volume_zscore_24h}, differing primarily by substituting return_24h with realized_vol_24h. While the volatility factor changes the economic story meaningfully, five of six factors remain identical, suggesting this may be a thematic refinement rather than a fundamentally distinct structural bet.",
+  "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0013_response.json",
+  "d7b_cost_actual_usd": 0.010458,
+  "d7b_input_tokens": 1756,
+  "d7b_output_tokens": 346,
+  "d7b_retry_count": 0,
+  "d7b_scan_results": {
+    "forbidden_language_scan": {
+      "status": "pass",
+      "hits": [],
+      "terms_checked_count": 21
+    },
+    "refusal_scan": {
+      "status": "pass",
+      "hits": [],
+      "patterns_checked": [
+        "\\bi cannot\\b",
+        "\\bi can't\\b",
+        "\\bunable to\\b",
+        "\\brefuse to\\b",
+        "\\bdecline to\\b",
+        "\\bcannot evaluate\\b",
+        "\\bcan not evaluate\\b"
+      ]
+    }
+  },
+  "critic_timing_ms": {
+    "d7a_ms": 0.112,
+    "d7b_ms": 8942.412
+  },
+  "critic_error_signature": null,
+  "critic_error_full_path": null
+}

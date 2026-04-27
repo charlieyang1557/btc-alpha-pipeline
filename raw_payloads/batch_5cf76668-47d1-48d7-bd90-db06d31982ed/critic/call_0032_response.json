@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.3000,
+  "semantic_theme_alignment": 0.7000,
+  "structural_variant_risk": 0.9500,
+  "reasoning": "The strategy exhibits a critical internal contradiction that undermines its logic: the description states entry occurs when price crosses below the lower Bollinger band, yet the DSL specifies crosses_below bb_upper_24_2 (the upper band). This misalignment between narrative and implementation is a severe coherence issue. The multi-condition entry (low RSI, negative zscore, negative return) does support a mean reversion concept if the Bollinger condition were corrected. Exit conditions using crosses_above sma_24 and elevated RSI values are structurally coherent with capturing mean reversion profits. Theme alignment is moderate-to-good because the factors (Bollinger bands, zscore, RSI, SMA) are classic mean reversion indicators from the hint vocabulary, despite the implementation error. Structural variant risk is very high: the factor set {bb_upper_24_2, close, return_24h, rsi_14, sma_24, zscore_48} exactly matches prior entry #7 in the batch list. This is not a novel structural approach but merely different threshold values (RSI 35 vs another threshold, zscore -1.5 vs another level) applied to an already-explored factor combination."
+}
+```

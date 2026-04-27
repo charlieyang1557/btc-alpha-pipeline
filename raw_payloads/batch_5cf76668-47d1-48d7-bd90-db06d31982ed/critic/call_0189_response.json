@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.9500,
+  "reasoning": "The strategy exhibits coherent logic: it enters on oversold signals (return_24h < -0.02, rsi_14 < 40) combined with low volume (volume_zscore_24h < -0.5) and price below sma_20, suggesting capitulation without volume conviction. Exit conditions are sensible: either volume surge plus price recovery (crosses_above sma_20) or profit target (2.5%). The max_hold_bars of 288 provides downside protection. This aligns strongly with volume_divergence theme by explicitly seeking price weakness coinciding with volume dryness, a classic divergence setup. However, the factor set {close, return_24h, rsi_14, sma_20, volume_zscore_24h} is nearly identical to prior #93 which uses the same five factors. The only variation lies in threshold values and the operator for close (here '<' versus other relational comparisons), making this an extremely shallow variant of an existing structural bet. The core combination of mean reversion signals plus volume_zscore_24h has been extensively explored in entries #35, #36, #55, #71, #93, and others."
+}
+```

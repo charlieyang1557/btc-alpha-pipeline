@@ -1,0 +1,58 @@
+{
+  "critic_version": "d7_v1",
+  "critic_status": "ok",
+  "d7b_mode": "live",
+  "d7a_rule_scores": {
+    "theme_coherence": 1.0,
+    "structural_novelty": 1.0,
+    "default_momentum_fallback": 1.0,
+    "complexity_appropriateness": 1.0
+  },
+  "d7a_supporting_measures": {
+    "factor_set_prior_occurrences": 0,
+    "n_factors": 2,
+    "n_conditions": 3,
+    "description_length": 132,
+    "max_hold_bars": 168,
+    "n_entry_groups": 1,
+    "n_exit_groups": 1
+  },
+  "d7a_rule_flags": [],
+  "d7b_llm_scores": {
+    "semantic_plausibility": 0.45,
+    "semantic_theme_alignment": 0.85,
+    "structural_variant_risk": 0.0
+  },
+  "d7b_reasoning": "The strategy combines RSI oversold conditions (below 30) with positive 24-hour momentum for entry, exiting at RSI overbought (above 70). This creates a logical but somewhat conflicting narrative: RSI below 30 indicates strong selling pressure, yet the strategy requires simultaneous positive 24h return, creating a narrow window where price has rebounded from deeper oversold levels. The exit logic is coherent, waiting for overbought conditions. Theme alignment is strong as it uses rsi_14 and return_24h directly from the hint vocabulary and clearly targets momentum reversal dynamics. However, the semantic tension between requiring both oversold RSI and positive momentum simultaneously may limit entry opportunities significantly, as these conditions are somewhat contradictory in typical market behavior. The structural uniqueness is absolute given the prior list is empty, establishing this as the first factor combination in the batch. The max_hold_bars parameter provides reasonable downside protection for momentum trades.",
+  "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0001_response.json",
+  "d7b_cost_actual_usd": 0.007674,
+  "d7b_input_tokens": 1233,
+  "d7b_output_tokens": 265,
+  "d7b_retry_count": 0,
+  "d7b_scan_results": {
+    "forbidden_language_scan": {
+      "status": "pass",
+      "hits": [],
+      "terms_checked_count": 21
+    },
+    "refusal_scan": {
+      "status": "pass",
+      "hits": [],
+      "patterns_checked": [
+        "\\bi cannot\\b",
+        "\\bi can't\\b",
+        "\\bunable to\\b",
+        "\\brefuse to\\b",
+        "\\bdecline to\\b",
+        "\\bcannot evaluate\\b",
+        "\\bcan not evaluate\\b"
+      ]
+    }
+  },
+  "critic_timing_ms": {
+    "d7a_ms": 0.032,
+    "d7b_ms": 7701.925
+  },
+  "critic_error_signature": null,
+  "critic_error_full_path": null
+}

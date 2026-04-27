@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.9000,
+  "reasoning": "The strategy exhibits coherent mean-reversion logic: entering when price breaks below SMA(50) with negative return_24h and low volume_zscore_24h, while RSI confirms oversold territory below 40. The exit structure is sensible with both a momentum exit (return_24h > 0.035) and a mean-reversion completion signal (price crosses above SMA(50) with RSI > 55). The volume divergence concept aligns well with the theme—subdued volume during price declines suggests exhaustion rather than strong directional conviction, supporting reversal expectations. The combination of price weakness with muted volume activity captures the theme's economic intuition effectively. However, structural variant risk is high: the exact factor set {close, return_24h, rsi_14, sma_50, volume_zscore_24h} appears at position 36 in the prior list. While the threshold values differ (RSI 40 vs other cutoffs, volume_zscore -0.5 vs other levels), this represents a threshold adjustment rather than a genuinely novel structural approach. The underlying signal combination is identical to a previously explored hypothesis."
+}
+```

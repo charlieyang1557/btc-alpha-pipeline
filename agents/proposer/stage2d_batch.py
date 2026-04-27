@@ -109,7 +109,13 @@ STAGE2D_MONTHLY_CAP_USD = 100.0
 STAGE2D_CUMULATIVE_CAP_USD = 30.0
 APPROVED_EXAMPLES_CAP = 3
 THEME_ROTATION_MODE = "interleaved_cyclic"
-THEME_CYCLE_LEN = 5
+THEME_CYCLE_LEN = 5  # multi_factor_combination excluded from rotation;
+# canonical THEMES tuple in agents/themes.py retains all 6 themes. The
+# 6th theme (multi_factor_combination) remains canonical/theoretical
+# but is not included in current Stage 2c/2d operational rotation
+# pending separate validation. See CLAUDE.md "Theme rotation" note for
+# rationale and Issue 6 of D8.4 (commit 03112aa) for the diagnostic
+# context.
 CHARS_PER_TOKEN = 2.9
 EST_OUTPUT_TOKENS = 500
 RAW_PAYLOAD_DIR = Path("raw_payloads")

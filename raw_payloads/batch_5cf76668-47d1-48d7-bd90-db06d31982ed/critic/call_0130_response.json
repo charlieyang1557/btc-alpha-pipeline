@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7000,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.3500,
+  "reasoning": "The strategy exhibits coherent internal logic: it enters long on Mondays when price crosses below EMA-26 and RSI-14 drops below 35, then exits when price crosses back above EMA-26 with RSI above 55, or when 24h return exceeds 3%. The narrative of contrarian Monday weakness buying is economically defensible, though empirical support for systematic Monday dips in crypto markets is debated. Theme alignment is strong because day_of_week is the central factor, directly exploiting calendar effects as intended, combined with technical confirmation via RSI oversold and EMA crossover. The factor set {close, day_of_week, ema_26, return_24h, rsi_14} appears structurally distinct from most priors. While prior #32 uses {close, day_of_week, return_24h, rsi_14, sma_20} and #69 uses {close, day_of_week, return_24h, rsi_14, sma_50}, this hypothesis substitutes ema_26 for simple moving averages and employs crosses_below/crosses_above operators rather than static threshold comparisons, constituting a meaningful structural difference rather than mere parameter tuning."
+}
+```

@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy exhibits coherent internal logic: entering on EMA crossover during low volatility (<2.5%) with RSI confirmation (>52) and price above SMA_50 creates a multi-layered filter for trend inception. Exit conditions mirror entry logic (EMA cross reversal with RSI<45) and add a volatility spike regime-change escape (vol>4.5% with negative 1h return). This structure supports the narrative of capturing momentum in stable regimes while avoiding whipsaw. Theme alignment is strong: realized_vol_24h drives both entry regime filter and exit regime-change detection, directly implementing volatility-regime conditioning as specified. The factor set {close, ema_12, ema_26, realized_vol_24h, return_1h, rsi_14, sma_50} matches exactly with prior #18, indicating this is a threshold/operator variant rather than a structurally novel bet. The crossover operators and specific thresholds (0.025 vs potential alternatives, RSI 52 vs 50) constitute parametric tweaks on an already-explored factor combination, elevating structural variant risk substantially."
+}
+```

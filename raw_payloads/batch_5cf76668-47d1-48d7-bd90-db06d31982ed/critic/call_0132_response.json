@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.3000,
+  "semantic_theme_alignment": 0.7500,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy exhibits internal logical inconsistency: entry condition requires close to cross below bb_upper_24_2 (not bb_lower, despite description claiming lower band), which contradicts the oversold/mean-reversion narrative. The description claims entry occurs when price crosses below the lower Bollinger band, but the DSL references bb_upper_24_2. This mismatch undermines coherence. However, the combination of RSI < 30, elevated realized volatility, and exit at SMA crossover does align with mean-reversion intuition. Theme alignment is moderately strong because RSI oversold conditions, Bollinger band references, and SMA targets are canonical mean-reversion components matching the hint vocabulary (bb_upper_24_2, close, sma_20/50, zscore_48). The factor set {bb_upper_24_2, close, realized_vol_24h, return_24h, rsi_14, sma_24} exactly matches prior #17 and is nearly identical to #21 (which adds zscore_48) and #64 (identical except no return_24h). This represents a high structural variant risk, differing only in threshold values and operator choices from multiple existing hypotheses."
+}
+```

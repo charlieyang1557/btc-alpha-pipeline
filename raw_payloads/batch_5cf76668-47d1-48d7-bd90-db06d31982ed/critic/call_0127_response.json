@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.9500,
+  "reasoning": "The strategy exhibits coherent mean-reversion logic: it enters on price below Bollinger lower band (implied by bb_upper_24_2 condition), negative z-score indicating statistical undervaluation, and oversold RSI below 30. The exit logic—price crossing above the 24-bar mean with RSI recovering to neutral territory, or a 4% profit target—supports a defensible snapback thesis. Semantically, the factor selection strongly aligns with mean-reversion themes using Bollinger bands, z-score, and moving average crossover mechanics from the hint vocabulary. However, structural variant risk is extremely high: the factor set {bb_upper_24_2, close, return_24h, rsi_14, sma_24, zscore_48} appears at position 29 in the prior list, and the set {bb_upper_24_2, close, rsi_14, sma_24, zscore_48} appears at position 7. The current strategy uses exactly the same six factors as position 29, differing only in threshold values (RSI 30 vs potentially other cutoffs, z-score -1.5 vs other thresholds) and operator choices. This represents a shallow parameter variant rather than a structurally distinct hypothesis."
+}
+```

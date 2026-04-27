@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy implements a volume divergence signal by entering long when price zscore falls below -1.5 (price weakness) while volume_zscore remains below 0 (declining volume), complemented by RSI below 40 and negative 24h return. This captures the classic divergence hypothesis: sellers are exhausted when price makes new lows on declining participation. Exit logic shows coherence with mean reversion (zscore>0) or profit target (2.5% gain), alongside RSI recovery. The internal logic is sound and defensible as a reversal play. Theme alignment is strong; the core entry relies on volume_zscore_24h paired with price extremes, directly operationalizing volume divergence. However, the factor set {return_24h, rsi_14, volume_zscore_24h, zscore_48} closely resembles prior #31 which uses {return_1h, return_24h, rsi_14, volume_zscore_24h, zscore_48}. The only structural difference is substituting return_1h for absence and adjusting thresholds. This represents a shallow variant: same conceptual quartet (return signal, RSI, volume divergence, price zscore) with minor threshold and timeframe tweaks rather than a fundamentally distinct structural bet."
+}
+```

@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.6500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy constructs a coherent mean reversion narrative: entering when price crosses below the lower Bollinger band (bb_upper_24_2 used as upper reference), z-score below -1.8, RSI under 35, and negative 24h return all signal oversold conditions. Exit logic via zscore returning above zero with RSI recovery or a quick 2.5% gain aligns with mean reversion completion. However, the entry condition uses 'close < bb_upper_24_2' which appears misaligned—the description mentions lower Bollinger band breach, but the DSL compares against the upper band, creating a semantic inconsistency. Theme alignment is strong given the use of Bollinger bands, z-score, and mean reversion exit conditions, all canonical to the theme hint factors. The factor set {bb_upper_24_2, close, return_1h, return_24h, rsi_14, zscore_48} is nearly identical to prior entry #43 and structurally very similar to entries #12, #21, #34, and #53, differing only in threshold values or minor factor substitutions. This represents a high-risk shallow variant of previously explored factor combinations."
+}
+```

@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy combines volume divergence with momentum breakout logic: entry requires elevated volume (z-score > 1.5), RSI crossing above 50, price crossing above SMA_20, and positive 24h return. Exit triggers on volume contraction with weak RSI or 3% profit target. This logic is coherent—high volume confirming breakouts is a defensible trading narrative, and the multi-condition entry filters for conviction signals. The exit on volume collapse and momentum decay aligns with the entry thesis reversal. Theme alignment is strong: volume_zscore_24h is central to both entry and exit, directly addressing volume divergence concepts. However, structural variant risk is elevated. The factor set {close, return_1h, return_24h, rsi_14, sma_20, volume_zscore_24h} appears in prior #14, differing only by the absence of sma_50. This strategy uses the same core factors with threshold and operator variations (crosses_above versus simple comparisons). While the specific combination of crossover operators adds nuance, the underlying factor set overlaps substantially with existing variants, suggesting this is a parameter refinement rather than a fundamentally distinct structural approach."
+}
+```

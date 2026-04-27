@@ -1,0 +1,60 @@
+{
+  "critic_version": "d7_v1",
+  "critic_status": "ok",
+  "d7b_mode": "live",
+  "d7a_rule_scores": {
+    "theme_coherence": 0.4286,
+    "structural_novelty": 0.5,
+    "default_momentum_fallback": 0.5,
+    "complexity_appropriateness": 0.55
+  },
+  "d7a_supporting_measures": {
+    "factor_set_prior_occurrences": 1,
+    "n_factors": 7,
+    "n_conditions": 7,
+    "description_length": 235,
+    "max_hold_bars": 144,
+    "n_entry_groups": 1,
+    "n_exit_groups": 2
+  },
+  "d7a_rule_flags": [
+    "n_conditions_heavy"
+  ],
+  "d7b_llm_scores": {
+    "semantic_plausibility": 0.45,
+    "semantic_theme_alignment": 0.7,
+    "structural_variant_risk": 0.85
+  },
+  "d7b_reasoning": "The strategy attempts mean reversion by entering when price is near lower Bollinger band (close <= bb_upper_24_2, zscore_48 < -1.2), RSI is oversold (< 35), and volatility is low (realized_vol_24h < 0.03). However, the entry logic contains a critical flaw: the condition 'close <= bb_upper_24_2' tests against the upper band rather than the lower band, contradicting the description's claim of touching the lower band. This undermines internal coherence. The exit via crosses_above sma_24 or 2% profit makes sense for mean reversion. Theme alignment is moderate-to-good because it uses Bollinger bands, z-scores, and moving averages from the hint vocabulary, though the upper-band error weakens alignment. Structurally, this factor set {bb_upper_24_2, close, realized_vol_24h, return_24h, rsi_14, sma_24, zscore_48} exactly matches prior entry #17, differing only in threshold values (RSI 35 vs likely other thresholds, volatility 0.03, etc.). This is a clear threshold variant of an already-seen combination.",
+  "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0197_response.json",
+  "d7b_cost_actual_usd": 0.021825,
+  "d7b_input_tokens": 5575,
+  "d7b_output_tokens": 340,
+  "d7b_retry_count": 0,
+  "d7b_scan_results": {
+    "forbidden_language_scan": {
+      "status": "pass",
+      "hits": [],
+      "terms_checked_count": 21
+    },
+    "refusal_scan": {
+      "status": "pass",
+      "hits": [],
+      "patterns_checked": [
+        "\\bi cannot\\b",
+        "\\bi can't\\b",
+        "\\bunable to\\b",
+        "\\brefuse to\\b",
+        "\\bdecline to\\b",
+        "\\bcannot evaluate\\b",
+        "\\bcan not evaluate\\b"
+      ]
+    }
+  },
+  "critic_timing_ms": {
+    "d7a_ms": 0.174,
+    "d7b_ms": 9445.906
+  },
+  "critic_error_signature": null,
+  "critic_error_full_path": null
+}

@@ -1,0 +1,61 @@
+{
+  "critic_version": "d7_v1",
+  "critic_status": "ok",
+  "d7b_mode": "live",
+  "d7a_rule_scores": {
+    "theme_coherence": 0.1667,
+    "structural_novelty": 1.0,
+    "default_momentum_fallback": 0.35,
+    "complexity_appropriateness": 0.55
+  },
+  "d7a_supporting_measures": {
+    "factor_set_prior_occurrences": 0,
+    "n_factors": 6,
+    "n_conditions": 7,
+    "description_length": 254,
+    "max_hold_bars": 72,
+    "n_entry_groups": 1,
+    "n_exit_groups": 2
+  },
+  "d7a_rule_flags": [
+    "thin_theme_momentum_bleed",
+    "n_conditions_heavy"
+  ],
+  "d7b_llm_scores": {
+    "semantic_plausibility": 0.35,
+    "semantic_theme_alignment": 0.65,
+    "structural_variant_risk": 0.85
+  },
+  "d7b_reasoning": "The strategy combines day_of_week filtering (Sunday) with technical indicators to capture alleged weekend sentiment reversals. The entry logic contains an internal tension: it requires MACD histogram positive (bullish momentum) while simultaneously demanding RSI<40 (oversold) and price below SMA(20) (bearish position). This creates a contradictory signal structure—MACD histogram positivity suggests upward momentum while the other conditions suggest weakness. The exit conditions are reasonable with RSI normalization and mean reversion targets. Theme alignment is moderate; day_of_week is a core calendar factor, but the narrative about reduced weekend trading creating mispricings is questionable in 24/7 crypto markets where Sunday activity differs less dramatically than in traditional equity markets. Structurally, the factor set {close, day_of_week, macd_hist, rsi_14, sma_20} appears in the prior list at position 63 and very similar variants appear at positions 6, 10, 32, 58, and others. This represents a threshold/operator adjustment rather than a genuinely novel structural hypothesis, yielding high variant risk.",
+  "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0165_response.json",
+  "d7b_cost_actual_usd": 0.019593,
+  "d7b_input_tokens": 4986,
+  "d7b_output_tokens": 309,
+  "d7b_retry_count": 0,
+  "d7b_scan_results": {
+    "forbidden_language_scan": {
+      "status": "pass",
+      "hits": [],
+      "terms_checked_count": 21
+    },
+    "refusal_scan": {
+      "status": "pass",
+      "hits": [],
+      "patterns_checked": [
+        "\\bi cannot\\b",
+        "\\bi can't\\b",
+        "\\bunable to\\b",
+        "\\brefuse to\\b",
+        "\\bdecline to\\b",
+        "\\bcannot evaluate\\b",
+        "\\bcan not evaluate\\b"
+      ]
+    }
+  },
+  "critic_timing_ms": {
+    "d7a_ms": 0.168,
+    "d7b_ms": 10120.98
+  },
+  "critic_error_signature": null,
+  "critic_error_full_path": null
+}

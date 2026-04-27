@@ -920,3 +920,44 @@ class TestNoHoldoutCli:
             "_cli_walk_forward must not invoke run_regime_holdout — "
             "holdout is orchestrator-internal only."
         )
+
+
+class TestRegimeHoldoutBoundaryAnchor:
+    """T10 — asymmetry anchor for run_regime_holdout boundary semantic.
+
+    Per docs/decisions/WF_TEST_BOUNDARY_SEMANTICS.md Q3d (Option A):
+    run_regime_holdout intentionally uses warmup-from-inside semantic
+    (different from run_walk_forward's warmup-from-pre-history under
+    the corrected (iii) semantic). This test asserts the structural
+    property that protects the asymmetry: regime_holdout starts with
+    fresh $10k, no inherited broker state, no carry-in.
+
+    If a future change "fixes" run_regime_holdout to match WF's new
+    semantic, this test catches it (and the calibrated 4-condition
+    gate thresholds in environments.yaml would need recalibration —
+    see the CONTRACT GAP at engine.py:1175-1183).
+    """
+
+    def test_regime_holdout_equity_curve_starts_at_initial_capital(
+        self, tmp_path
+    ):
+        """T10: regime_holdout starts with fresh $10k, no inherited state."""
+        from backtest.engine import run_regime_holdout
+        from strategies.baseline.sma_crossover import SMACrossover
+
+        result = run_regime_holdout(
+            dsl=None,
+            batch_id="t10-test-batch",
+            parent_run_id="t10-test-parent",
+            strategy_cls=SMACrossover,
+            db_path=tmp_path / "regime_t10.db",
+        )
+        # The initial_capital field on the metrics dict must be $10k.
+        assert result.metrics.get("initial_capital") == pytest.approx(10_000.0), (
+            f"T10: regime_holdout initial_capital = "
+            f"{result.metrics.get('initial_capital')}; expected $10k. "
+            f"If this fails, regime_holdout has been changed to inherit "
+            f"capital from a prior run — and the 4-condition gate "
+            f"thresholds in environments.yaml need recalibration "
+            f"(see CONTRACT GAP at engine.py:1175-1183)."
+        )

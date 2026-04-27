@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy presents a coherent dual-momentum entry logic: MACD histogram crossing above zero signals trend inception, RSI above 50 confirms bullish momentum, close above SMA_20 validates trend direction, and return_24h > 0.008 ensures recent price strength. Exit logic is sensible with overbought RSI or MACD reversal triggering one path, and price breakdown with negative hourly return providing an alternate stop. The 168-bar hold limit constrains excessive exposure. Theme alignment is strong—all entry factors (macd_hist, rsi_14, return_24h) appear in the hint vocabulary, and the strategy explicitly targets momentum convergence. However, structural variant risk is high: the factor set {close, macd_hist, return_1h, return_24h, rsi_14, sma_20} closely resembles prior entry #16 {close, macd_hist, return_1h, rsi_14, sma_20, sma_50}, differing primarily by swapping sma_50 for return_24h and minor threshold adjustments. The core structural bet—MACD histogram with RSI filtered by moving average crossover—duplicates multiple prior proposals."
+}
+```

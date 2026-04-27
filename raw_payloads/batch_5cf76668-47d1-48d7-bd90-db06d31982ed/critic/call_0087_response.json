@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.3500,
+  "semantic_theme_alignment": 0.7500,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy combines Bollinger band breach, volatility compression, RSI oversold, and z-score extremity to capture mean reversion. However, the entry logic contains a critical flaw: the condition 'close < bb_upper_24_2' is trivially satisfied in almost all market states, failing to actually test for lower band breach as the description claims. This undermines the core thesis. The exit logic is sound, targeting return to neutral z-score or moderate RSI recovery, with a profit target alternative. Theme alignment is strong given the use of z-score, RSI oversold, and volatility filters typical of mean reversion approaches, plus explicit use of theme hint factors (bb_upper_24_2, close, zscore_48). Structurally, this factor set {bb_upper_24_2, close, realized_vol_24h, return_24h, rsi_14, zscore_48} is extremely similar to multiple priors: entry #12 is identical except for return_1h vs return_24h in exit, entry #17 adds sma_24, entry #21 swaps return_1h for return_24h, and entry #60 is identical. The substitution of return_24h for return_1h in exit conditions represents only a minor threshold-level variation rather than a structural innovation."
+}
+```

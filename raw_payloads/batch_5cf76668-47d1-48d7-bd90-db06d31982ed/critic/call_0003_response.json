@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.1500,
+  "reasoning": "The strategy logic is coherent: entering when volatility (realized_vol_24h) falls below a threshold while momentum indicators (return_24h, ema_12>ema_26, close>sma_50) confirm uptrend, then exiting when volatility spikes or momentum reverses (macd_hist negative). This presents a defensible trading story of capturing trend continuation in calm markets. Theme alignment is strong because realized_vol_24h is explicitly listed in the hint factors and the entire strategy is organized around volatility regime shifts combined with trend filters. The entry requires low volatility (< 0.015) and exit triggers on high volatility (> 0.03), directly implementing regime detection. Structural variant risk is low: this factor set {realized_vol_24h, return_24h, ema_12, ema_26, close, sma_50, macd_hist} shares only return_24h with the first prior and no factors with the second prior. The combination of realized volatility with EMA crossover and MACD histogram constitutes a distinct structural approach compared to RSI-based or Bollinger Band z-score approaches seen earlier."
+}
+```

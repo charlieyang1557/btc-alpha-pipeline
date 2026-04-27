@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7000,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy exhibits coherent internal logic: it enters on strong 24h momentum (>3%) confirmed by MACD histogram crossing positive, with elevated volatility and RSI above 55 indicating sustained bullish pressure. The dual exit logic addresses both exhaustion (RSI>75 with MACD reversal) and risk management (sharp 1h drawdown with extreme volatility). This structure supports a defensible narrative of capturing trend acceleration while monitoring for reversal signals. Theme alignment is strong, employing four of five hint factors (return_24h, macd_hist, return_1h, rsi_14) in ways that directly express momentum continuation logic. However, structural variant risk is elevated: the factor set {macd_hist, realized_vol_24h, return_1h, return_24h, rsi_14} closely resembles prior entry #11 {macd_hist, return_1h, return_24h, rsi_14, volume_zscore_24h}, differing only in the substitution of realized_vol_24h for volume_zscore_24h. Both volatility measures serve similar risk-expansion roles. This appears as a threshold and volatility-proxy variation rather than a fundamentally distinct structural hypothesis."
+}
+```

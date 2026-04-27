@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.7000,
+  "reasoning": "The strategy builds a coherent weekend mean-reversion logic: entering Sunday (day_of_week==6) after weekly declines (return_168h<-0.03) when oversold (rsi_14<38) and below trend (close<sma_50), exiting Monday (day_of_week==1) on trend recovery (crosses_above sma_20) or profit target (return_24h>0.025). The 72-bar max hold caps downside. This logic is defensible and internally consistent. The theme alignment is strong; day_of_week is a core calendar factor, and the narrative explicitly targets weekday transitions with institutional-retail behavior assumptions. However, structural variant risk is elevated: the factor set {close, day_of_week, return_168h, rsi_14, sma_20, sma_50} closely resembles prior #75 {close, day_of_week, return_168h, return_1h, return_24h, rsi_14, sma_20, sma_50} and #51 {close, day_of_week, return_168h, return_1h, return_24h, rsi_14, sma_50}, differing mainly by substituting return_168h for return_1h/return_24h combinations while retaining the same day_of_week + rsi_14 + dual moving average structure."
+}
+```

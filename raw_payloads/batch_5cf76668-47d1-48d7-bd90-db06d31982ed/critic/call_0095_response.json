@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.1500,
+  "reasoning": "The strategy proposes a coherent Monday-only entry mechanism anchored by day_of_week filter (==0), combined with 168h (weekly) momentum above 4%, RSI above 55, and price above SMA50. The exit logic includes both momentum exhaustion (RSI>72 with 24h gain>3.5%) and reversal detection (cross below SMA20 with sharp 1h decline). This structure is economically defensible: weekend positioning effects could create systematic opportunities at week open when prior-week momentum persists. Theme alignment is strong because day_of_week is a core calendar-effect factor explicitly listed in the hint vocabulary, and the strategy narrative directly invokes weekend-to-Monday transition dynamics. Structural variant risk is low: the factor set {close, day_of_week, return_168h, return_1h, return_24h, rsi_14, sma_20, sma_50} has not appeared in the prior list. While element #51 used {close, day_of_week, return_168h, return_1h, return_24h, rsi_14, sma_50}, the current set adds sma_20 (used in exit cross) and distinguishes itself by incorporating both moving averages in different roles. The use of 168h return for weekly momentum also differentiates this from most priors that favor 24h windows."
+}
+```

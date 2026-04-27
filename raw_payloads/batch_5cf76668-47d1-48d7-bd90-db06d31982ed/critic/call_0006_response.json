@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.8500,
+  "semantic_theme_alignment": 0.9500,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy presents coherent internal logic: MACD histogram crossing above zero signals momentum shift, confirmed by RSI above 45 (not oversold) and price above SMA_20 (uptrend confirmation). Exit triggers on MACD histogram reversal or RSI falling below 35, creating symmetric momentum fade detection. This is a well-structured momentum-following approach. Theme alignment is excellent; all factors (macd_hist, rsi_14, close vs sma_20) directly measure or confirm momentum dynamics, matching the theme's hint vocabulary closely. However, structural variant risk is elevated because the factor set {close, macd_hist, rsi_14, sma_20} substantially overlaps with prior #4 {close, ema_12, macd_hist, return_24h, volume_zscore_24h}, sharing three core elements (close, macd_hist, and a momentum oscillator). While sma_20 vs ema_12 and rsi_14 vs return_24h represent different technical choices, the fundamental structure—MACD histogram for signal generation with close price positioning and momentum confirmation—appears similar. The crosses_above/crosses_below operators on macd_hist are central to both, suggesting this may be a parameter variation rather than a genuinely distinct structural bet."
+}
+```

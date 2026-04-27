@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.6500,
+  "semantic_theme_alignment": 0.7500,
+  "structural_variant_risk": 0.3500,
+  "reasoning": "The strategy combines calendar timing (Monday entry) with EMA crossover momentum and RSI boundaries. Entry logic requires day_of_week==0, ema_12 crosses_above ema_26, and RSI between 45-60, creating a multi-filter approach. Exit paths handle both reversal (EMA crossback plus 1% daily loss) and profit-taking (4% weekly gain with overbought RSI). The narrative about institutional accumulation patterns on Mondays is speculative but internally coherent. Theme alignment is strong due to explicit day_of_week gating, though the bulk of signal generation relies on technical indicators rather than pure calendar effects. Structurally, the factor set {day_of_week, ema_12, ema_26, return_24h, return_168h, rsi_14} shares partial overlap with prior #10 (day_of_week, return_24h, rsi_14, close, return_1h, sma_20) and #24 (ema_26, return_168h, return_24h, rsi_14, close, macd_hist), but the EMA cross operator and weekly return horizon differentiate it meaningfully. The combination of calendar filter with dual EMA cross signals represents a structural variation rather than mere threshold tuning."
+}
+```

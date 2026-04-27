@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.8000,
+  "reasoning": "The strategy exhibits coherent internal logic: it combines calendar timing (Monday entry) with mean-reversion signals (low RSI, negative z-score, compressed volatility) and exits on either mean-reversion completion (RSI recovery plus positive returns) or calendar timeout (mid-week with z-score normalization). The narrative around weekend sentiment resets and Monday volatility patterns is economically plausible. Theme alignment is strong, with day_of_week serving as the primary gating condition, directly leveraging the calendar_effect theme vocabulary. However, structural variant risk is elevated: the factor set {day_of_week, realized_vol_24h, return_24h, rsi_14, zscore_48} closely resembles prior #37 {day_of_week, realized_vol_24h, return_24h, rsi_14} with only zscore_48 added, and prior #5 {day_of_week, rsi_14, zscore_48} as a subset. The differentiation relies primarily on the inclusion of realized_vol_24h and specific threshold values rather than introducing fundamentally distinct factor combinations or structural relationships, suggesting this is a threshold refinement of already-explored territory."
+}
+```

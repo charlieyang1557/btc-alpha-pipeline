@@ -1,0 +1,60 @@
+{
+  "critic_version": "d7_v1",
+  "critic_status": "ok",
+  "d7b_mode": "live",
+  "d7a_rule_scores": {
+    "theme_coherence": 0.4286,
+    "structural_novelty": 0.5,
+    "default_momentum_fallback": 0.5,
+    "complexity_appropriateness": 0.55
+  },
+  "d7a_supporting_measures": {
+    "factor_set_prior_occurrences": 1,
+    "n_factors": 7,
+    "n_conditions": 7,
+    "description_length": 225,
+    "max_hold_bars": 96,
+    "n_entry_groups": 1,
+    "n_exit_groups": 2
+  },
+  "d7a_rule_flags": [
+    "n_conditions_heavy"
+  ],
+  "d7b_llm_scores": {
+    "semantic_plausibility": 0.4,
+    "semantic_theme_alignment": 0.75,
+    "structural_variant_risk": 0.95
+  },
+  "d7b_reasoning": "The strategy exhibits a coherent mean reversion narrative: entering when price is below upper Bollinger (though the description mentions lower band, inconsistent with the code), with negative z-score, low RSI, and subdued volatility. However, the entry logic contains a flaw: checking close < bb_upper_24_2 is nearly always true and doesn't align with the stated oversold condition. The exit structure combines mean reversion completion (price crosses above SMA with RSI recovery) and a profit target, which is defensible. Theme alignment is strong, utilizing Bollinger bands, z-score, and SMA – all core mean reversion factors from the hint vocabulary. The structural variant risk is very high: the factor set {bb_upper_24_2, close, realized_vol_24h, return_24h, rsi_14, sma_24, zscore_48} appears as entry 17 in the prior list, making this an almost exact duplicate with only threshold and operator adjustments (RSI 35 vs other values, volatility threshold changes). This represents a shallow parametric variant rather than a genuinely distinct structural hypothesis.",
+  "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0162_response.json",
+  "d7b_cost_actual_usd": 0.019473,
+  "d7b_input_tokens": 4936,
+  "d7b_output_tokens": 311,
+  "d7b_retry_count": 0,
+  "d7b_scan_results": {
+    "forbidden_language_scan": {
+      "status": "pass",
+      "hits": [],
+      "terms_checked_count": 21
+    },
+    "refusal_scan": {
+      "status": "pass",
+      "hits": [],
+      "patterns_checked": [
+        "\\bi cannot\\b",
+        "\\bi can't\\b",
+        "\\bunable to\\b",
+        "\\brefuse to\\b",
+        "\\bdecline to\\b",
+        "\\bcannot evaluate\\b",
+        "\\bcan not evaluate\\b"
+      ]
+    }
+  },
+  "critic_timing_ms": {
+    "d7a_ms": 0.107,
+    "d7b_ms": 10386.319
+  },
+  "critic_error_signature": null,
+  "critic_error_full_path": null
+}

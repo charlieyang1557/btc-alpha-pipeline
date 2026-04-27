@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.9000,
+  "reasoning": "The strategy constructs a coherent reversal narrative: entering on price weakness (return_24h < -0.02) with elevated volume (volume_zscore_24h > 1.5) and oversold conditions (rsi_14 < 40, close < sma_20) suggests accumulation during declines. The exit logic is defensible, offering either profit-taking (return_24h > 0.025, rsi_14 > 60) or stop-loss when volume collapses alongside further price deterioration. The 120-bar hold constraint provides reasonable downside protection. Theme alignment is strong: volume_zscore_24h is the hint factor and appears in both entry and exit, directly implementing volume divergence detection. However, structural variant risk is very high. The factor set {close, return_1h, return_24h, rsi_14, sma_20, volume_zscore_24h} matches prior #55 exactly. While threshold values differ (-0.02 vs other return_24h thresholds, 1.5 vs other volume_zscore thresholds), the underlying structural composition is identical. This represents a parameter-tuning exercise on an already-explored factor combination rather than a novel structural hypothesis."
+}
+```

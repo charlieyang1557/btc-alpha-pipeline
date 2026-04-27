@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.2500,
+  "reasoning": "The strategy presents a coherent logic: entering when realized volatility exceeds a threshold (0.03), price crosses above SMA 20, and volume is elevated (z-score > 1.0), while exiting on volatility compression (< 0.015), downward price crosses, or a 3% gain. This combination of volatility regime shift plus directional confirmation plus volume validation forms a defensible narrative about entering turbulent upward breakouts. Theme alignment is strong given the direct use of realized_vol_24h (a hint factor) as the primary regime detector, combined with volume_zscore_24h to confirm participation during expansion. The strategy captures the volatility_regime concept explicitly. Structural variant risk is moderate-low: the factor set {close, realized_vol_24h, return_24h, sma_20, volume_zscore_24h} has not appeared verbatim in priors. While realized_vol_24h appears in many combinations with rsi_14, this strategy replaces RSI with pure SMA crosses and volume confirmation, representing a structurally different betting mechanism focused on breakout rather than mean-reversion or momentum oscillators."
+}
+```

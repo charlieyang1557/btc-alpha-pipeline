@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.3000,
+  "reasoning": "The strategy articulates a coherent trading narrative: enter when realized volatility compresses below 0.015 (low regime) combined with a price breakout above EMA-12 and elevated volume (z-score > 0.5), then exit when volatility expands above 0.035 or price crosses back below EMA-12, or upon a 5% profit. This logic is internally consistent and aligns well with the volatility compression-expansion cycle premise. The theme alignment is strong, directly using realized_vol_24h (a hint factor) as the regime classifier and incorporating volume confirmation to filter false signals. The factor set {close, ema_12, realized_vol_24h, return_24h, volume_zscore_24h} shares structural similarity with prior entry 4 {close, ema_12, macd_hist, return_24h, volume_zscore_24h}, differing only by substituting realized_vol_24h for macd_hist. However, this substitution represents a meaningful conceptual shift from momentum divergence to volatility regime detection, making it more than a shallow threshold adjustment. The structural overlap is moderate rather than high."
+}
+```

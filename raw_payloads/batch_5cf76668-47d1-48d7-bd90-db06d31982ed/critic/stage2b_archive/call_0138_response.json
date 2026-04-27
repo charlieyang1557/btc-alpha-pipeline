@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.1500,
+  "reasoning": "The strategy constructs a coherent narrative: it enters when realized_vol_24h exceeds a threshold, price crosses above sma_20, and volume_zscore_24h confirms elevated activity, capturing a volatility expansion with directional momentum. Exit logic splits into regime normalization (volatility drops and price crosses below sma_20) or a profit target (return_24h > 3%), which is defensible. The factor set {close, realized_vol_24h, return_24h, sma_20, volume_zscore_24h} aligns strongly with the volatility_regime theme, incorporating realized_vol_24h (a hint factor) as the primary signal. Structural comparison reveals novelty: while prior sets include realized_vol_24h combined with rsi_14 or macd_hist frequently, this hypothesis omits oscillators entirely and focuses on the volatility-momentum-volume triplet with crosses_above/crosses_below operators. The absence of rsi_14 (present in 90+ prior sets) and the specific pairing of realized_vol_24h with volume_zscore_24h and sma_20 crosses differentiates it structurally from all listed priors. The closest match (prior 74) includes rsi_14, making this a distinct structural bet rather than a threshold tweak."
+}
+```

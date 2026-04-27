@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.2500,
+  "reasoning": "The strategy articulates a coherent volatility compression-to-breakout narrative: it enters when realized_vol_24h contracts below 0.015, price crosses above sma_20, atr_14 is capped, and return_24h shows modest positive momentum. The dual exit paths (volatility expansion with negative return, or price reversal below sma_20 with weak RSI) logically terminate the position when the regime shifts or momentum fades. This aligns well with the volatility_regime theme, leveraging realized_vol_24h and atr_14 directly from the hint vocabulary to identify low-volatility environments primed for breakout. The factor set {atr_14, close, realized_vol_24h, return_24h, rsi_14, sma_20} has partial overlap with prior sets but introduces a distinct structural bet: prior #6 used {close, macd_hist, rsi_14, sma_20} (missing volatility factors), prior #8 combined {atr_14, bb_upper_24_2, close, realized_vol_24h, rsi_14, sma_24, volume_zscore_24h} (different moving average window, Bollinger bands, and volume filter), and prior #13 used {close, realized_vol_24h, return_1h, rsi_14, sma_20, sma_50, volume_zscore_24h} (dual SMAs, return_1h, volume). The current strategy combines ATR and realized volatility thresholds with a 20-day MA crossover, which is structurally novel in this batch despite shared individual factors."
+}
+```

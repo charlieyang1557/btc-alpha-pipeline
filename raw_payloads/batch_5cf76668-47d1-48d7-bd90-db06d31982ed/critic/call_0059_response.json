@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy exhibits coherent internal logic by combining volume surge detection (volume_zscore_24h > 1.5) with momentum confirmation (macd_hist > 0) and trend filtering (close > sma_50, rsi_14 > 48). The exit conditions logically mirror entry by triggering on volume collapse or momentum reversal, plus an overbought protection clause. The narrative around institutional accumulation during volume spikes has empirical support. Theme alignment is strong: volume_zscore_24h is the core theme factor and drives the primary entry condition. However, structural variant risk is high. The factor set {close, macd_hist, return_1h, rsi_14, sma_50, volume_zscore_24h} appears nearly identical to prior #9 {close, return_1h, return_24h, rsi_14, sma_50, volume_zscore_24h} and #19 {close, macd_hist, return_1h, rsi_14, sma_20, volume_zscore_24h}. The substitution of sma_50 for sma_20 or swapping return_24h for macd_hist constitutes threshold/operator tweaking rather than genuine structural innovation. This hypothesis recombines already-explored dimensions within the same five-to-six factor universe."
+}
+```

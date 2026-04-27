@@ -9,9 +9,14 @@ data/quality/*.json
 # Trade log CSVs (generated per run)
 data/results/
 
-# SQLite databases
+# Compiled-strategy manifests (regenerable from DSL + compiler git SHA;
+# scales to thousands per funnel run; ManifestDriftError detects drift
+# from on-disk-vs-regen, not from commit history)
+data/compiled_strategies/
+
+# SQLite databases (widened to cover WAL/SHM journals)
 backtest/experiments.db
-agents/spend_ledger.db
+agents/spend_ledger.db*
 
 # Raw API payloads (per-run artifacts, not source)
 raw_payloads/

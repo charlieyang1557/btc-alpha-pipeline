@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy constructs a coherent narrative: enter when volatility contracts below 2%, price breaks above SMA(50), MACD histogram is positive, and RSI exceeds 50, then exit either when volatility expands above 5% with overbought RSI or when momentum reverses. This represents a defensible volatility-breakout cycle. The theme alignment is strong, using realized_vol_24h (a hint factor) as the core regime filter and integrating momentum signals appropriately for capturing compression-to-expansion transitions. However, structural variant risk is elevated: the factor set {close, macd_hist, realized_vol_24h, rsi_14, sma_50} overlaps substantially with prior entry #3 {close, ema_12, ema_26, macd_hist, realized_vol_24h, return_24h, sma_50}. Both use realized_vol_24h, macd_hist, close, and a 50-period moving average with RSI filtering. The current strategy substitutes sma_50 for ema components and drops return_24h, but the structural logic (volatility filter + trend-following MA + MACD momentum + RSI confirmation) is highly similar, differing primarily in thresholds and operator choices rather than constituting a fundamentally different factor combination."
+}
+```

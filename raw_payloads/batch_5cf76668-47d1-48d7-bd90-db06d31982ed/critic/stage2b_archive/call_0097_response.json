@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.9500,
+  "reasoning": "The strategy exhibits strong internal coherence for mean reversion: entry requires simultaneous confirmation of price at upper Bollinger Band, elevated z-score (1.8), high RSI (68), and positive 24h return, creating a multi-dimensional overbought signal. Exit logic supports reversion via z-score normalization below 0.5 and price crossing below SMA, or via momentum breakdown (negative return + RSI drop). The 120-bar max hold prevents indefinite positions. Theme alignment is excellent—all five hint factors appear (bb_upper_24_2, close, sma_24 proxies sma_20/50, zscore_48), directly targeting statistical overextension. However, structural variant risk is very high: the factor set {bb_upper_24_2, close, return_24h, rsi_14, sma_24, zscore_48} appears as prior #29 in the batch. This hypothesis differs only in threshold values (RSI 68 vs likely different values, z-score 1.8 vs others) and exit operator choices (crosses_below vs potentially simple comparisons). The underlying economic bet—Bollinger-zscore-RSI confluence for mean reversion—is structurally identical to this prior factor combination."
+}
+```

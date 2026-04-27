@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.6500,
+  "semantic_theme_alignment": 0.7500,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy employs a coherent mean-reversion logic: entering long on Monday when RSI<35, price below SMA(20), and negative 24h return, then exiting when RSI>60 and price crosses above SMA(20), or on Friday. The dual exit paths (momentum recovery vs. end-of-week timing) provide structural consistency. However, the narrative about 'institutional repositioning' and 'market maker liquidity provision' is somewhat speculative for what is essentially a calendar-anchored oversold bounce play. Theme alignment is moderate-to-good: day_of_week is central to both entry and exit logic, fitting calendar_effect research, though the bulk of the signal derives from technical mean-reversion indicators. Structural variant risk is high: the factor set {close, day_of_week, return_24h, rsi_14, sma_20} appears verbatim as prior #32, and this strategy differs only in threshold values (RSI 35 vs other cuts, Friday exit vs other days). This is a clear threshold/operator tweak rather than a structurally novel combination."
+}
+```

@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy constructs a coherent momentum capture mechanism by requiring MACD histogram crossing zero (acceleration signal), RSI above 50 (strength confirmation), price above EMA-26 (trend filter), and elevated volume z-score. Exit logic provides two paths: momentum exhaustion (MACD flip + RSI drop) or profit-taking at 2.5% gain. This multi-layered confirmation structure is defensible. Theme alignment is strong—all entry factors (macd_hist, rsi_14, close vs ema_26, volume_zscore_24h) and exit signals directly measure momentum properties from the hint vocabulary. However, structural variant risk is elevated: the factor set {close, ema_26, macd_hist, rsi_14, volume_zscore_24h} closely resembles prior #42 {close, ema_26, macd_hist, return_24h, rsi_14} and #59 {close, ema_12, macd_hist, return_24h, rsi_14}, differing mainly by substituting ema_26 for ema_12 and volume_zscore_24h for return_24h. The crosses_above operator applied to macd_hist at zero and the specific RSI threshold are parameter tweaks rather than a fundamentally novel structural bet."
+}
+```

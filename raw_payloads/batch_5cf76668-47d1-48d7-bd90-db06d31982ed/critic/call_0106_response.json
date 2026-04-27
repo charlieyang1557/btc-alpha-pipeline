@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy constructs a coherent momentum logic: MACD histogram zero-crossing signals trend shift, RSI 45-60 filters for consolidation exit rather than overbought zones, and positive 1h return confirms nascent momentum. Exit conditions balance reversal detection (histogram crosses below zero, RSI drops under 42) with profit-taking on strong upside (4.5% gain with RSI above 72). The 96-bar hold limit provides risk management. Theme alignment is strong—all five factors (macd_hist, return_1h, return_24h, rsi_14) are from the momentum hint vocabulary, with MACD histogram zero-cross being a classic momentum signal. However, structural variant risk is high: the factor set {macd_hist, return_1h, return_24h, rsi_14} appears nearly identical to prior #11 and very close to #20 (which adds realized_vol_24h). The only distinction is operator/threshold choices (crosses_above vs simple comparisons, RSI band 45-60 vs other thresholds), making this a threshold-tuned variant rather than a structurally novel combination."
+}
+```

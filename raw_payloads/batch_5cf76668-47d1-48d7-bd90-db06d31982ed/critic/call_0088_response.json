@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy exhibits coherent internal logic: entry requires simultaneous volatility expansion (realized_vol_24h > 0.035), price momentum (crosses_above sma_20), volume confirmation (volume_zscore_24h > 1.0), and positive MACD histogram. Exit logic is sensible with two alternative paths - either volatility compression with overbought RSI, or price breakdown with negative return. The max_hold_bars limiter adds risk management. Theme alignment is strong, directly employing realized_vol_24h (a hint factor) as the primary regime signal and building the entire narrative around volatility expansion preceding directional moves. However, structural variant risk is elevated: the factor set {close, macd_hist, realized_vol_24h, rsi_14, return_24h, sma_20, volume_zscore_24h} closely resembles prior #13 {close, realized_vol_24h, return_1h, rsi_14, sma_20, sma_50, volume_zscore_24h} and #19 {close, macd_hist, return_1h, rsi_14, sma_20, volume_zscore_24h}, differing mainly in substituting return_24h for return_1h and using sma_20 instead of dual SMA or sma_50. The core volatility-momentum-volume structure appears multiple times in the prior list."
+}
+```

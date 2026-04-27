@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.7000,
+  "reasoning": "The strategy constructs a coherent narrative: enter long on Mondays when price has dipped (return_24h < -0.01) during low volatility regimes (realized_vol_24h < 0.02), with RSI confirmation of weakness (< 50). Exit logic includes both profit-taking (mid-week + positive return) and stop-loss (drawdown with oversold RSI). The max_hold_bars of 168 (one week) aligns with the stated mid-week reversal thesis. Theme alignment is strong as day_of_week is central to both entry and exit, directly exploiting the Monday effect calendar anomaly with institutional rebalancing narrative. However, structural variant risk is elevated: the factor set {day_of_week, realized_vol_24h, return_24h, rsi_14} closely resembles prior #32 {close, day_of_week, return_24h, rsi_14, sma_20} and #30 {realized_vol_24h, return_24h, rsi_14, volume_zscore_24h}, differing primarily by swapping trend/volume factors for realized_vol_24h. This represents a threshold/factor substitution rather than a fundamentally new structural hypothesis."
+}
+```

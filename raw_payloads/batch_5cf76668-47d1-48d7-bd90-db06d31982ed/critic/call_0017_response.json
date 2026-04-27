@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy constructs a coherent mean-reversion narrative: entry requires price below Bollinger Band upper bound (though description mentions lower band, creating minor mismatch), negative z-score indicating oversold conditions, low RSI confirming momentum exhaustion, and elevated volatility as a precondition. Exit logic offers two paths—either normalization back to neutral territory via z-score and RSI recovery, or a momentum breakout above SMA with positive returns. The 168-bar max hold provides downside discipline. Theme alignment is strong, utilizing canonical mean-reversion indicators (Bollinger Bands, z-score, RSI, moving averages) from the hint vocabulary. However, structural variant risk is elevated: this factor set {bb_upper_24_2, close, realized_vol_24h, rsi_14, return_24h, sma_24, zscore_48} substantially overlaps with prior entry #7 {bb_upper_24_2, close, rsi_14, sma_24, zscore_48} and #12 {bb_upper_24_2, close, realized_vol_24h, return_1h, rsi_14, zscore_48}. The current hypothesis adds return_24h and realized_vol_24h to the core BB/RSI/z-score/SMA scaffold already explored, differing primarily in threshold calibration and return horizon rather than structural composition."
+}
+```

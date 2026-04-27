@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.3500,
+  "semantic_theme_alignment": 0.6000,
+  "structural_variant_risk": 0.9500,
+  "reasoning": "The strategy enters on positive 24h return with low volume (z-score < -1) and RSI above 50, claiming this signals smart money accumulation. The logic is internally contradictory: the description frames this as a fade setup (vulnerable rally), yet takes a long position expecting continuation. Smart money accumulation typically involves buying pressure that would increase volume, not decrease it. The exit conditions mix volume spike with negative 1h return or a 3% profit target, which is more coherent but does not resolve the entry contradiction. Theme alignment is moderate because volume_zscore_24h is central to the strategy and matches the volume_divergence theme hint. However, the economic intuition of divergence as a contrarian or fade signal conflicts with going long into the weakness. Structural risk is very high: the factor set {return_1h, return_24h, rsi_14, volume_zscore_24h} appears verbatim as prior #11 and #55, and the subset {return_24h, rsi_14, volume_zscore_24h} appears as prior #26 and #33. This is essentially threshold tuning of already-explored factor combinations, not a structurally novel hypothesis."
+}
+```

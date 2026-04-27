@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.4500,
+  "semantic_theme_alignment": 0.7000,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy attempts mean reversion by entering when price is near lower Bollinger band (close <= bb_upper_24_2, zscore_48 < -1.2), RSI is oversold (< 35), and volatility is low (realized_vol_24h < 0.03). However, the entry logic contains a critical flaw: the condition 'close <= bb_upper_24_2' tests against the upper band rather than the lower band, contradicting the description's claim of touching the lower band. This undermines internal coherence. The exit via crosses_above sma_24 or 2% profit makes sense for mean reversion. Theme alignment is moderate-to-good because it uses Bollinger bands, z-scores, and moving averages from the hint vocabulary, though the upper-band error weakens alignment. Structurally, this factor set {bb_upper_24_2, close, realized_vol_24h, return_24h, rsi_14, sma_24, zscore_48} exactly matches prior entry #17, differing only in threshold values (RSI 35 vs likely other thresholds, volatility 0.03, etc.). This is a clear threshold variant of an already-seen combination."
+}
+```

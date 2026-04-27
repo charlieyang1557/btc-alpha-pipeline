@@ -1,0 +1,128 @@
+{
+  "request_timestamp_utc": "2026-04-19T14:27:09.699502Z",
+  "response_timestamp_utc": "2026-04-19T14:27:19.969994Z",
+  "wall_clock_seconds": 10.27,
+  "retry_count": 0,
+  "d7b_mode": "live",
+  "critic_result": {
+    "critic_version": "d7_v1",
+    "critic_status": "ok",
+    "d7b_mode": "live",
+    "d7a_rule_scores": {
+      "theme_coherence": 0.2,
+      "structural_novelty": 1.0,
+      "default_momentum_fallback": 0.8,
+      "complexity_appropriateness": 0.7
+    },
+    "d7a_supporting_measures": {
+      "factor_set_prior_occurrences": 0,
+      "n_factors": 5,
+      "n_conditions": 6,
+      "description_length": 225,
+      "max_hold_bars": 336,
+      "n_entry_groups": 1,
+      "n_exit_groups": 2
+    },
+    "d7a_rule_flags": [
+      "n_conditions_heavy"
+    ],
+    "d7b_llm_scores": {
+      "semantic_plausibility": 0.75,
+      "semantic_theme_alignment": 0.85,
+      "structural_variant_risk": 0.95
+    },
+    "d7b_reasoning": "The strategy exhibits coherent logic: entering on volatility regime expansion (realized_vol crossing above 0.025) combined with price momentum confirmation (close > sma_50 and positive macd_hist), then exiting when volatility contracts below 0.015 or price breaks sma_50, with a profit target at 8% weekly return. The narrative of capturing sustained trends following volatility regime shifts is economically sound for crypto markets. Theme alignment is strong, using realized_vol_24h (a hint factor) as the primary signal and explicitly targeting volatility regime transitions. However, structural variant risk is very high. The factor set {close, ema_12, ema_26, macd_hist, realized_vol_24h, return_24h, sma_50} appears in prior #3, and the current strategy uses {close, macd_hist, realized_vol_24h, return_168h, sma_50}, which differs only by substituting return_168h for (return_24h, ema_12, ema_26). This constitutes threshold-level variation on an existing structural template rather than a genuinely novel factor composition.",
+    "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0073_response.json",
+    "d7b_cost_actual_usd": 0.014331,
+    "d7b_input_tokens": 3192,
+    "d7b_output_tokens": 317,
+    "d7b_retry_count": 0,
+    "d7b_scan_results": {
+      "forbidden_language_scan": {
+        "status": "pass",
+        "hits": [],
+        "terms_checked_count": 21
+      },
+      "refusal_scan": {
+        "status": "pass",
+        "hits": [],
+        "patterns_checked": [
+          "\\bi cannot\\b",
+          "\\bi can't\\b",
+          "\\bunable to\\b",
+          "\\brefuse to\\b",
+          "\\bdecline to\\b",
+          "\\bcannot evaluate\\b",
+          "\\bcan not evaluate\\b"
+        ]
+      }
+    },
+    "critic_timing_ms": {
+      "d7a_ms": 0.15,
+      "d7b_ms": 10251.791
+    },
+    "critic_error_signature": null,
+    "critic_error_full_path": null
+  },
+  "ledger_row": {
+    "row_id": "ce56b686-ff9d-4b80-92fd-a4dd4907d5ea",
+    "batch_id": "5cf76668-47d1-48d7-bd90-db06d31982ed",
+    "api_call_kind": "d7b_critic_live",
+    "backend_kind": "d7b_critic",
+    "call_role": "critique",
+    "estimated_cost_usd": 0.05,
+    "actual_cost_usd": 0.014331,
+    "input_tokens": 3192,
+    "output_tokens": 317
+  },
+  "raw_payload_paths": {
+    "prompt": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0073_prompt.txt",
+    "response": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0073_response.json",
+    "traceback": null,
+    "critic_result": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0073_critic_result.json"
+  },
+  "cost": {
+    "estimated_usd": 0.05,
+    "actual_usd": 0.014331,
+    "ratio": 0.2866
+  },
+  "leakage_audit_result": {
+    "status": "pass",
+    "violations": [],
+    "protected_terms_checked_count": 28
+  },
+  "forbidden_language_scan_result": {
+    "status": "pass",
+    "hits": [],
+    "terms_checked_count": 21
+  },
+  "refusal_scan_result": {
+    "status": "pass",
+    "hits": [],
+    "patterns_checked": [
+      "\\bi cannot\\b",
+      "\\bi can't\\b",
+      "\\bunable to\\b",
+      "\\brefuse to\\b",
+      "\\bdecline to\\b",
+      "\\bcannot evaluate\\b",
+      "\\bcan not evaluate\\b"
+    ]
+  },
+  "firing_order": 7,
+  "candidate_position": 73,
+  "candidate_theme": "volatility_regime",
+  "candidate_hypothesis_hash": "ab3c1725e1cf4890",
+  "pre_registered_label": "divergence_expected",
+  "prior_factor_sets_count": 60,
+  "theme_hint_factor_count": 3,
+  "prompt_chars": 8429,
+  "prompt_sha256": "c08de31afaec8085832f5e1b2df2610fefd3974ed6452b5069377ae85aab8f14",
+  "call_index_in_sequence": 7,
+  "inter_call_sleep_elapsed_seconds": 5.005,
+  "is_stage2b_overlap": true,
+  "critic_status": "ok",
+  "critic_error_signature": null,
+  "actual_cost_usd": 0.014331,
+  "d7b_error_category": null
+}

@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.9500,
+  "reasoning": "The strategy constructs a coherent narrative around volatility compression breakouts: entry when realized_vol_24h drops below 1.2% while price stays above sma_50 and macd_hist crosses above zero with rsi_14 above 45, targeting low-volatility consolidation zones in uptrends that may precede expansion. Exit logic divides between stop-loss (volatility expansion plus drawdown) and profit-taking (168h gains with overbought RSI), forming a defensible structure. Theme alignment is strong, as realized_vol_24h is a core hint factor and the entire logic revolves around volatility regime transitions. However, structural variant risk is very high: the factor set {close, macd_hist, realized_vol_24h, return_168h, rsi_14, sma_50} overlaps substantially with prior #44 {close, realized_vol_24h, return_168h, return_24h, rsi_14, sma_50} differing only by swapping return_24h for macd_hist. This minor substitution within an otherwise identical trend-volatility-momentum framework constitutes a shallow operator-level variant rather than a structurally distinct hypothesis."
+}
+```

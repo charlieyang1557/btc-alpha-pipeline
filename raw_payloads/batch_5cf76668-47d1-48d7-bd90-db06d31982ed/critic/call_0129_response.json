@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.3500,
+  "reasoning": "The strategy constructs a coherent mean-reversion narrative: entering when volume spikes (crosses_above 1.0 z-score) while price remains depressed (below EMA-26) and oversold (RSI<40), aiming to capture institutional accumulation before retail price confirmation. Exit logic is bidirectional—closing on bullish confirmation (price crosses above EMA-26 AND RSI>55) or volume collapse (z-score<-0.5), which provides risk management. The theme alignment is strong, as volume_zscore_24h anchors both entry and exit, directly addressing volume divergence. The description explicitly invokes accumulation-price divergence mechanics central to the theme. Structurally, the factor set {close, ema_26, rsi_14, volume_zscore_24h} has not appeared verbatim in the prior list. However, several variants exist: {close, ema_26, macd_hist, return_24h, rsi_14} uses ema_26 and rsi_14 with close; {close, rsi_14, sma_50, volume_zscore_24h} combines volume_zscore_24h with RSI and moving average. The novel element is the specific use of ema_26 (rather than sma or dual EMA pairs) alongside volume_zscore_24h and RSI, which differentiates it from exact prior combinations, though the conceptual overlap with moving-average-filtered volume-RSI strategies is moderate."
+}
+```

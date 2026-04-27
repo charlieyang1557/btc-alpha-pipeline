@@ -1,0 +1,43 @@
+{
+  "aggregate_metrics": {
+    "mean_return_across_baselines": 0.006387165212491587,
+    "mean_sharpe_across_baselines": 0.13031810470149943,
+    "median_sharpe_across_baselines": 0.1175343362936067,
+    "n_baselines": 4
+  },
+  "baselines_run": [
+    "mean_reversion",
+    "momentum",
+    "sma_crossover",
+    "volatility_breakout"
+  ],
+  "batch_id": "phase1b_corrected_v1",
+  "corrected_wf_semantics_commit": "eb1c87f",
+  "current_git_sha": "a22051ef275eea030488c5bfc14adc02dab69c27",
+  "holdout_reserved": [
+    "2022-01-01",
+    "2022-12-31"
+  ],
+  "lineage_check": "passed",
+  "per_baseline_summary_paths": {
+    "mean_reversion": "mean_reversion/walk_forward_summary.json",
+    "momentum": "momentum/walk_forward_summary.json",
+    "sma_crossover": "sma_crossover/walk_forward_summary.json",
+    "volatility_breakout": "volatility_breakout/walk_forward_summary.json"
+  },
+  "run_finished_utc": "2026-04-27T01:26:04Z",
+  "run_started_utc": "2026-04-27T01:25:45Z",
+  "split_resolved_from": "config/environments.yaml",
+  "split_version": "v2",
+  "train_windows": [
+    [
+      "2020-01-01",
+      "2021-12-31"
+    ],
+    [
+      "2023-01-01",
+      "2023-12-31"
+    ]
+  ],
+  "wf_semantics": "corrected_test_boundary_v1"
+}

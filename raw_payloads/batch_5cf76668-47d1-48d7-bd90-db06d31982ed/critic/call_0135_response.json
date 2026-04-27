@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.6500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy combines Monday timing (day_of_week == 0) with mean reversion indicators (return_24h < -1%, rsi_14 < 35) to capture gap-down reversals. Entry logic is coherent: oversold conditions on Mondays after negative returns. Exit structure includes both profit target (return_1h > 1.5%, rsi_14 > 55) and a Tuesday cutoff (day_of_week == 2), which aligns with the 48-bar max hold. The economic narrative about institutional absence creating mispricings has theoretical support. Theme alignment is strong because day_of_week is central to the strategy concept, directly exploiting calendar effects. However, structural variant risk is high: the factor set {day_of_week, return_1h, return_24h, rsi_14} appears in prior #10, and the current set differs only by omitting close and sma_20 while using the same core calendar+momentum+RSI structure. This is essentially a threshold variation on an existing factor combination rather than a genuinely novel structural approach."
+}
+```

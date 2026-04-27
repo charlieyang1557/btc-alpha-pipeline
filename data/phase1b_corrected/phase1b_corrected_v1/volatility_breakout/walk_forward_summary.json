@@ -1,0 +1,34 @@
+{
+  "baseline": "volatility_breakout",
+  "corrected_wf_semantics_commit": "eb1c87f",
+  "current_git_sha": "a22051ef275eea030488c5bfc14adc02dab69c27",
+  "holdout_reserved": [
+    "2022-01-01",
+    "2022-12-31"
+  ],
+  "lineage_check": "passed",
+  "n_windows": 4,
+  "run_finished_utc": "2026-04-27T01:26:04Z",
+  "run_started_utc": "2026-04-27T01:26:00Z",
+  "split_resolved_from": "config/environments.yaml",
+  "split_version": "v2",
+  "summary_run_id": "fd2583b2-1456-472c-932d-29dce695d867",
+  "train_windows": [
+    [
+      "2020-01-01",
+      "2021-12-31"
+    ],
+    [
+      "2023-01-01",
+      "2023-12-31"
+    ]
+  ],
+  "wf_metrics": {
+    "max_drawdown": 0.22844468111816274,
+    "sharpe_ratio": 0.3497611718978676,
+    "total_return": 0.025925873959620233,
+    "total_trades": 144,
+    "win_rate": 0.3888888888888889
+  },
+  "wf_semantics": "corrected_test_boundary_v1"
+}

@@ -1,0 +1,61 @@
+{
+  "critic_version": "d7_v1",
+  "critic_status": "ok",
+  "d7b_mode": "live",
+  "d7a_rule_scores": {
+    "theme_coherence": 0.25,
+    "structural_novelty": 0.5,
+    "default_momentum_fallback": 0.35,
+    "complexity_appropriateness": 0.4
+  },
+  "d7a_supporting_measures": {
+    "factor_set_prior_occurrences": 1,
+    "n_factors": 4,
+    "n_conditions": 8,
+    "description_length": 177,
+    "max_hold_bars": 120,
+    "n_entry_groups": 1,
+    "n_exit_groups": 2
+  },
+  "d7a_rule_flags": [
+    "thin_theme_momentum_bleed",
+    "n_conditions_heavy"
+  ],
+  "d7b_llm_scores": {
+    "semantic_plausibility": 0.35,
+    "semantic_theme_alignment": 0.85,
+    "structural_variant_risk": 0.95
+  },
+  "d7b_reasoning": "The strategy claims to capture exhaustion reversals by entering long when price rises with falling volume z-score, yet simultaneously requires RSI above 55 and positive MACD histogram—momentum indicators that contradict the reversal thesis. This creates internal tension: the description argues for fade logic (distribution signals imminent reversion) while the entry requires confirmation of continued momentum. The exit conditions split into two branches: one for volume spike with negative return, another for momentum decay, which offers some coherence but does not resolve the entry contradiction. Theme alignment is strong as volume_zscore_24h is central to both entry and exit, directly matching the volume_divergence theme vocabulary. However, structural variant risk is very high: the factor set {macd_hist, return_24h, rsi_14, volume_zscore_24h} appears verbatim as prior #33 in the batch. This hypothesis differs only in threshold values (RSI 55 vs other cuts, volume z-score -0.5 vs other levels) and operator choices, making it a shallow parameter variant rather than a structurally novel exploration.",
+  "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0044_response.json",
+  "d7b_cost_actual_usd": 0.01215,
+  "d7b_input_tokens": 2550,
+  "d7b_output_tokens": 300,
+  "d7b_retry_count": 0,
+  "d7b_scan_results": {
+    "forbidden_language_scan": {
+      "status": "pass",
+      "hits": [],
+      "terms_checked_count": 21
+    },
+    "refusal_scan": {
+      "status": "pass",
+      "hits": [],
+      "patterns_checked": [
+        "\\bi cannot\\b",
+        "\\bi can't\\b",
+        "\\bunable to\\b",
+        "\\brefuse to\\b",
+        "\\bdecline to\\b",
+        "\\bcannot evaluate\\b",
+        "\\bcan not evaluate\\b"
+      ]
+    }
+  },
+  "critic_timing_ms": {
+    "d7a_ms": 0.112,
+    "d7b_ms": 7993.316
+  },
+  "critic_error_signature": null,
+  "critic_error_full_path": null
+}

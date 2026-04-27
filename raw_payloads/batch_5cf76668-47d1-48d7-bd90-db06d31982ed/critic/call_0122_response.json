@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.2500,
+  "semantic_theme_alignment": 0.7500,
+  "structural_variant_risk": 0.9500,
+  "reasoning": "The strategy logic contains a critical structural flaw: the description states entry when price crosses below the lower Bollinger band, but the DSL specifies crossing below bb_upper_24_2 (the upper band). This mismatch between intent and implementation undermines coherence, yielding low plausibility. The mean-reversion theme alignment is moderate to high—using RSI oversold (< 35), zscore (< -1.5), and Bollinger bands conceptually fits mean-reversion; exit at SMA reversion and RSI normalization (> 55) plus profit target also align well. However, the factor set {bb_upper_24_2, close, return_24h, rsi_14, sma_24, zscore_48} appears as entry #29 in the prior list. The current hypothesis uses identical factors with only threshold adjustments (RSI 35 vs likely other values, zscore -1.5 vs others). This represents a shallow parameter variant rather than a structurally novel approach, generating very high variant risk."
+}
+```

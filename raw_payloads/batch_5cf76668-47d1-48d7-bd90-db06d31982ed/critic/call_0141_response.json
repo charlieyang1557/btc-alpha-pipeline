@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy combines MACD histogram zero-crossing with oversold RSI to capture momentum reversals, which represents coherent internal logic. Entry requires simultaneous MACD histogram crossing above zero (momentum inflection), RSI below 40 (oversold condition), and limited recent drawdown (return_24h > -0.02), creating a defensible multi-condition filter for reversal opportunities. Exit logic uses either momentum exhaustion (MACD histogram crossing below zero with overbought RSI > 65) or profit target (return_168h > 5%). The theme alignment is strong: all factors (macd_hist, rsi_14, return_24h, return_168h) appear in the hint vocabulary and directly address momentum measurement and reversal detection. However, structural variant risk is high. The factor set {macd_hist, return_168h, return_24h, rsi_14} is nearly identical to prior entry #28 {macd_hist, return_24h, rsi_14}, differing only by inclusion of return_168h which is used solely in exit conditions. This represents a threshold/condition variant rather than a fundamentally new structural approach to momentum capture."
+}
+```

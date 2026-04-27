@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy exhibits coherent logic: entering when MACD histogram crosses above zero (momentum shift), price is above EMA(26) (trend filter), and RSI > 50 (momentum confirmation). Exits trigger on histogram reversal below zero with RSI < 45, or on 5% profit capture. The 96-bar max hold provides risk control. This logic is defensible for capturing early momentum acceleration. Theme alignment is strong, utilizing macd_hist, rsi_14, and return_24h from the hint vocabulary directly, with ema_26 serving as a standard trend filter consistent with momentum strategies. However, structural variant risk is high. The factor set {close, ema_26, macd_hist, return_24h, rsi_14} is nearly identical to prior entry #42 {close, ema_26, macd_hist, return_24h, rsi_14}, differing only in the specific operators (crosses_above vs simple comparisons) and thresholds applied. This represents a shallow variant of an already-explored factor combination rather than a structurally distinct approach."
+}
+```

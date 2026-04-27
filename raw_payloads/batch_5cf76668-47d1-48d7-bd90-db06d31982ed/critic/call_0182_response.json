@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.3500,
+  "semantic_theme_alignment": 0.7000,
+  "structural_variant_risk": 0.9500,
+  "reasoning": "The strategy exhibits several logical inconsistencies that undermine its plausibility. Entry requires close < bb_upper_24_2 (essentially always true since price rarely exceeds the upper band), combined with oversold RSI and elevated volatility. The description claims entry when price falls below the lower Bollinger band, but the DSL actually checks against the upper band—a critical mismatch. Exit logic mixes mean-reversion (crosses above SMA) with momentum (4% profit target), creating conflicting objectives. The theme alignment is moderate: bb_upper_24_2, close, sma_24, and zscore_48 are all theme-relevant factors supporting mean-reversion logic, though the execution is flawed. Structurally, this combines {bb_upper_24_2, close, realized_vol_24h, rsi_14, sma_24, zscore_48} with return_168h in exit. Prior entry #60 uses an identical factor set {bb_upper_24_2, close, realized_vol_24h, return_24h, rsi_14, zscore_48}, differing only by swapping sma_24 for return_24h and adding return_168h to exit. This constitutes a minor structural variation rather than a genuinely novel combination, yielding very high variant risk."
+}
+```

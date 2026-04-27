@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy constructs a coherent momentum reversal narrative: entering on MACD histogram zero-crossover (signaling MACD line crossing its signal line upward), confirmed by moderate RSI > 45, positive 24h return, and price above EMA 26. This multi-filter approach aims to capture early bullish momentum shifts while filtering false signals. Exit logic is dual-track: either histogram crosses back below zero with overbought RSI > 72, or sharp 1h drawdown < -1.5% with oversold RSI < 35, both defensible momentum-exit triggers. The 288-bar max hold provides reasonable position management. Theme alignment is strong: all factors (macd_hist, return_24h, return_1h, rsi_14) appear in the hint vocabulary and serve classical momentum detection roles. However, structural variant risk is high. The factor set {close, ema_26, macd_hist, return_1h, return_24h, rsi_14} directly overlaps with prior set 42 {close, ema_26, macd_hist, return_24h, rsi_14}, differing only by adding return_1h. This closely resembles prior set 24 and set 28 patterns. The crosses_above operator on macd_hist at zero is a common momentum signal, and the combination with RSI thresholds and return filters appears in multiple earlier hypotheses with only threshold or minor factor variation."
+}
+```

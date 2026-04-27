@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy exhibits coherent internal logic: entering when volume surges (z-score > 2) while price remains weak (below SMA(20), RSI < 50, minimal 24h return < 0.5%) aims to capture institutional accumulation before retail notices. Exit logic is sensible with both mean-reversion (price crosses above SMA(20) with RSI > 60) and stop-loss (volume collapse with sharp hourly drawdown) paths. Theme alignment is strong as volume_zscore_24h is central to the entry thesis and the description explicitly invokes volume divergence mechanics. However, structural variant risk is high: the factor set {close, return_1h, return_24h, rsi_14, sma_20, volume_zscore_24h} matches prior #55 exactly. While threshold values differ (e.g., volume z-score 2.0 vs typical ranges, RSI 50 vs others), the structural composition is identical, making this a parameter variation rather than a novel factor combination. The addition of crosses_above operator in exit does not alter the fundamental factor set footprint."
+}
+```

@@ -108,7 +108,7 @@ If any two documents in this project contradict each other, resolve by this hier
 3. **`config/schemas.yaml`** — column definitions and validation rules
 4. **`CLAUDE.md`** (this file) — hard constraints and prohibitions
 5. **`data_dictionary.md`** — human-readable schema reference
-6. **`PHASE2_BLUEPRINT_v2.md`** — Phase 2 implementation plan (current phase)
+6. **`PHASE2_BLUEPRINT.md`** (v2) — Phase 2 implementation plan (current phase)
 7. **`PHASE1_BLUEPRINT.md`** — Phase 1 reference (completed)
 8. **`PHASE0_BLUEPRINT.md`** — Phase 0 reference (completed)
 
@@ -154,7 +154,7 @@ These rules are defined in `config/execution.yaml` and enforced by `backtest/exe
 - The first eligible fill is the bar after that signal
 - Metrics (Sharpe, drawdown, etc.) are computed ONLY on the post-warmup period
 - If a strategy attempts to trade during warmup, the engine must block it
-- **Phase 2 DSL compiler**: `WARMUP_BARS` is auto-set to `registry.max_warmup(factors_used)` — see D2 in `PHASE2_BLUEPRINT_v2.md`
+- **Phase 2 DSL compiler**: `WARMUP_BARS` is auto-set to `registry.max_warmup(factors_used)` — see D2 in `PHASE2_BLUEPRINT.md`
 
 ## Timestamp & Timezone Rules
 
@@ -203,7 +203,7 @@ These rules are defined in `config/execution.yaml` and enforced by `backtest/exe
 - Strategies may ONLY be trained/optimized on data within the training window.
 - Validation data is for hyperparameter selection and early stopping only.
 - Test data is touched ONCE for final evaluation. If you peek and iterate, it becomes validation data.
-- **Phase 2 regime holdout (2022)**: an additional in-train stress test. Agents never see its results. Only hypotheses that pass `regime_holdout_passed` advance to validation. See D4 in `PHASE2_BLUEPRINT_v2.md` for the 4-condition passing criteria.
+- **Phase 2 regime holdout (2022)**: an additional in-train stress test. Agents never see its results. Only hypotheses that pass `regime_holdout_passed` advance to validation. See D4 in `PHASE2_BLUEPRINT.md` for the 4-condition passing criteria.
 
 ## Phase 2 DSL Rules
 
@@ -224,6 +224,7 @@ These rules are defined in `config/execution.yaml` and enforced by `backtest/exe
 - **Invariant:** `sum(terminal_lifecycle_counts) == hypotheses_attempted`. Checked at batch close ONLY, never mid-batch.
 - **`hypotheses_attempted` counting rule:** increments immediately after each Proposer call returns, regardless of validity, duplication, or Critic outcome. Unissued slots (budget exhausted before proposing) are tracked separately in `batch_summary.unissued_slots`.
 - **Theme rotation:** `theme = THEMES[(k - 1) % len(THEMES)]` where k is 1-indexed batch position and THEMES is the canonical 6-theme list defined in D6.
+- **Theme rotation operational boundary (Stage 2c/2d):** Current Stage 2c/2d operational rotation uses the first 5 canonical themes (`THEME_CYCLE_LEN = 5` in `agents/proposer/stage2c_batch.py` and `stage2d_batch.py`). `multi_factor_combination` remains part of the canonical theme list but is not included in the current operational rotation until separately validated. **The exclusion is operational practice, not canonical specification; canonical anchors (`THEMES` tuple in `agents/themes.py`, `expectations.md`, `blueprint/PHASE2_BLUEPRINT.md`) retain the 6-theme list.** Resolves Issue 6 of D8.4 methodology refinement (sub-arc sealed at commit `767d0e5`) as documentation-completeness + methodology-acceptance per Issue 6 candidate-resolution-layer enumeration. Option to flip to 6 themes preserved for future decision when there's a specific Phase 2C reason to want multi-factor combination strategies; flip would require small 6th-theme-only smoke batch to verify candidate quality first.
 - **Train-summary aggregation for disjoint train windows (v2):** `train_sharpe` = mean of per-window Sharpes; `train_return` = mean of per-window returns; `train_max_dd` = max of per-window drawdowns; `train_total_trades` = sum. NEVER stitch disjoint train-window equity curves into a continuous series.
 - **Leaderboard ranking:** after filtering to `lifecycle_state == "shortlisted"`, rank by `min(train_sharpe, holdout_sharpe)` descending. Ties broken by `train_return` descending.
 - **DSR N:** always `hypotheses_attempted` from the `batch_summary` row. NEVER use `hypotheses_approved` or survivor count.
@@ -423,8 +424,23 @@ The canonical dataset (`data/raw/btcusdt_1h.parquet`) has these stable, verified
 
 ## Phase Marker (update as work progresses)
 
-- **Current phase:** Phase 2A closed (signed off 2026-04-17); **Phase 2B D7 Stage 2a in progress** — live Sonnet D7b backend built, dry-run green, awaiting Charlie's `--confirm-live` call
-- **Completed:** Phase 0, Phase 1A, Phase 1B; Phase 2A (D1-D5 all signed off); Phase 2B D6 Stage 1 (stub plumbing, 675 tests); Phase 2B D7 Stage 1 (D7a rules + stub D7b, 885 tests); Phase 2B D7 Stage 2a infrastructure (D7b live backend, prompt, parser, replay, ledger split)
+**Discipline rule:** this section must be updated in the same arc that ships any phase/stage sign-off, major closeout, or live batch fire. Stale Phase Marker misleads future work.
+
+- **Current phase:** Phase 2C post-Phase-1 decision point — corrected-engine arc shipped 2026-04-26; three resumption options open per [`docs/closeout/PHASE2C_5_PHASE1_RESULTS.md`](docs/closeout/PHASE2C_5_PHASE1_RESULTS.md) §5: A) regime holdout AND-gate + DSR + lifecycle states + D9 finalization, B) paper-trading harness on top-5 robust winners, C) methodology iteration on momentum-theme prompts.
+- **Completed:**
+  - Phase 0, Phase 1A, Phase 1B (with corrected v2 WF baseline supplement at [`docs/closeout/PHASE1B_WF_CORRECTED_BASELINE_SUPPLEMENT.md`](docs/closeout/PHASE1B_WF_CORRECTED_BASELINE_SUPPLEMENT.md))
+  - Phase 2A (D1-D5 all signed off, [`docs/closeout/PHASE2A_SIGNOFF.md`](docs/closeout/PHASE2A_SIGNOFF.md))
+  - Phase 2B D6 Stage 1 (stub plumbing); D6 Stage 2 lessons learned ([`docs/closeout/PHASE2B_D6_STAGE2_LESSONS_LEARNED.md`](docs/closeout/PHASE2B_D6_STAGE2_LESSONS_LEARNED.md))
+  - Phase 2B D7 Stage 1 / 2a / 2b / 2c / 2d (D7 Stage 2d signed off 2026-04-23 at [`docs/closeout/PHASE2B_D7_STAGE2D_SIGNOFF.md`](docs/closeout/PHASE2B_D7_STAGE2D_SIGNOFF.md))
+  - Phase 2C Smoke α (Stage 2c dry-run, [`docs/closeout/PHASE2C_1_SMOKE_SIGNOFF.md`](docs/closeout/PHASE2C_1_SMOKE_SIGNOFF.md)) + β (live Sonnet, [`docs/closeout/PHASE2C_2_SMOKE_SIGNOFF.md`](docs/closeout/PHASE2C_2_SMOKE_SIGNOFF.md))
+  - Phase 2C Batch 1 fire ([`docs/closeout/PHASE2C_3_BATCH1.md`](docs/closeout/PHASE2C_3_BATCH1.md))
+  - Phase 2C Phase 1 walk-forward closeout ([`docs/closeout/PHASE2C_5_PHASE1_RESULTS.md`](docs/closeout/PHASE2C_5_PHASE1_RESULTS.md)) + corrected-engine erratum ([`docs/closeout/PHASE2C_5_PHASE1_RESULTS_ERRATUM.md`](docs/closeout/PHASE2C_5_PHASE1_RESULTS_ERRATUM.md))
+  - Corrected WF Engine Project Arc (engine fix at `eb1c87f`, lineage discipline at [`backtest/wf_lineage.py`](backtest/wf_lineage.py), tag `wf-corrected-v1`, sign-off at [`docs/closeout/CORRECTED_WF_ENGINE_SIGNOFF.md`](docs/closeout/CORRECTED_WF_ENGINE_SIGNOFF.md))
 - **Active blueprint:** `blueprint/PHASE2_BLUEPRINT.md` (v2)
-- **Current batch_id:** N/A (no live batch run yet)
-- **Current UTC-month spend:** $0.00 (dry-run stub only; no API calls until D6 Stage 2)
+- **Current batch_id:** `b6fcbf86-4d57-4d1f-ae41-1778296b1ae9` (Phase 2C Phase 1 walk-forward; corrected-engine re-run in `_corrected/` directory is canonical)
+- **Current UTC-month spend (April 2026):** ~$8.65 (D7 Stage 2d $5.89 + Phase 2C Batch-1 $2.30 + smoke and dry-run batches; per `agents/spend_ledger.db` `ledger` table, queried 2026-04-26)
+- **Hard rule for any future WF-consuming work:** must consume corrected artifacts only and call `backtest.wf_lineage.check_wf_semantics_or_raise()` before computing derived metrics. See [`docs/decisions/WF_TEST_BOUNDARY_SEMANTICS.md`](docs/decisions/WF_TEST_BOUNDARY_SEMANTICS.md) Section RS.
+
+## Project-discipline notes
+
+Standing project-discipline principles (apply across all work cycles, not bound to a phase) are codified at [`docs/discipline/METHODOLOGY_NOTES.md`](docs/discipline/METHODOLOGY_NOTES.md). Three principles currently in force: empirical verification for factual claims, meta-claim verification discipline, regime-aware calibration bands. Future cycles append new lessons as additional sections.

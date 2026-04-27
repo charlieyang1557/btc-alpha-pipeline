@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.3500,
+  "semantic_theme_alignment": 0.7500,
+  "structural_variant_risk": 0.9500,
+  "reasoning": "The strategy employs volume_zscore_24h (negative) alongside positive return_24h to identify weak rallies, which aligns well with the volume_divergence theme. However, the internal logic exhibits significant contradictions. Entry requires positive 24h return (>1.5%) yet RSI below 45 and price under SMA_50, describing a weak rally in a downtrend. The description claims to 'enter long' on oversold conditions, yet RSI<45 is not oversold territory. Exit logic combines momentum targets (RSI>62, return>2.5%) with a volume normalization condition that seems disconnected from the entry thesis. The factor set {close, return_1h, return_24h, rsi_14, sma_50, volume_zscore_24h} exactly matches prior hypothesis #9 in the batch list, indicating this is a pure threshold variant rather than a structurally novel approach. The only differentiation is in the specific numerical thresholds applied to an identical factor combination, representing high structural variant risk."
+}
+```

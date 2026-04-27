@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.8000,
+  "reasoning": "The strategy employs a coherent logic: entering when volume_zscore_24h crosses above 1.5 (elevated volume signal) combined with positive momentum (return_24h > 0.01, macd_hist > 0) while RSI remains below overbought territory (< 65). The exit logic provides multiple pathways: volume normalization (volume_zscore_24h < -0.5), overbought RSI (> 70), or a 5% profit target. This structure aligns well with the volume_divergence theme by explicitly using the hint factor volume_zscore_24h as the primary trigger and seeking to capture institutional accumulation patterns. The narrative of smart money positioning ahead of retail is economically plausible. However, the factor set {macd_hist, return_24h, rsi_14, volume_zscore_24h} is extremely close to prior entry #33 which uses the identical four factors. The current strategy differs only in threshold values (1.5 vs other volume triggers, RSI < 65 vs other thresholds) and the crosses_above operator for volume, making this a likely parameter variant rather than a structurally novel approach. This structural similarity raises variant risk substantially despite the sound economic reasoning."
+}
+```

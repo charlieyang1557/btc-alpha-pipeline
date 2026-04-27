@@ -1,0 +1,61 @@
+{
+  "critic_version": "d7_v1",
+  "critic_status": "ok",
+  "d7b_mode": "live",
+  "d7a_rule_scores": {
+    "theme_coherence": 0.1667,
+    "structural_novelty": 0.5,
+    "default_momentum_fallback": 0.35,
+    "complexity_appropriateness": 0.4
+  },
+  "d7a_supporting_measures": {
+    "factor_set_prior_occurrences": 1,
+    "n_factors": 6,
+    "n_conditions": 8,
+    "description_length": 239,
+    "max_hold_bars": 120,
+    "n_entry_groups": 1,
+    "n_exit_groups": 2
+  },
+  "d7a_rule_flags": [
+    "thin_theme_momentum_bleed",
+    "n_conditions_heavy"
+  ],
+  "d7b_llm_scores": {
+    "semantic_plausibility": 0.75,
+    "semantic_theme_alignment": 0.85,
+    "structural_variant_risk": 0.95
+  },
+  "d7b_reasoning": "The strategy demonstrates coherent internal logic: entry requires volume_zscore_24h > 2.0 (exceptional volume), price above sma_50 (uptrend), positive return_24h > 0.01, and rsi_14 > 52 (mild momentum confirmation). Exit logic uses dual paths—either volume collapse with negative short-term return, or profit-taking at 6% gain with overbought RSI. This breakout-confirmation narrative is economically sound. The theme alignment is strong: volume_zscore_24h is the core theme factor and functions as the primary signal gating entry, directly addressing volume divergence dynamics. However, structural variant risk is very high: the factor set {close, return_1h, return_24h, rsi_14, sma_50, volume_zscore_24h} matches prior entry #9 exactly. The only differences are threshold values (volume_zscore 2.0 vs likely other values, rsi_14 > 52 vs other thresholds). This represents a parametric variant rather than a structurally novel hypothesis, as the fundamental factor combination has already been explored in this batch.",
+  "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0109_response.json",
+  "d7b_cost_actual_usd": 0.016923,
+  "d7b_input_tokens": 4041,
+  "d7b_output_tokens": 320,
+  "d7b_retry_count": 0,
+  "d7b_scan_results": {
+    "forbidden_language_scan": {
+      "status": "pass",
+      "hits": [],
+      "terms_checked_count": 21
+    },
+    "refusal_scan": {
+      "status": "pass",
+      "hits": [],
+      "patterns_checked": [
+        "\\bi cannot\\b",
+        "\\bi can't\\b",
+        "\\bunable to\\b",
+        "\\brefuse to\\b",
+        "\\bdecline to\\b",
+        "\\bcannot evaluate\\b",
+        "\\bcan not evaluate\\b"
+      ]
+    }
+  },
+  "critic_timing_ms": {
+    "d7a_ms": 0.181,
+    "d7b_ms": 9589.865
+  },
+  "critic_error_signature": null,
+  "critic_error_full_path": null
+}

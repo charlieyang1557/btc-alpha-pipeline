@@ -1,0 +1,60 @@
+{
+  "critic_version": "d7_v1",
+  "critic_status": "ok",
+  "d7b_mode": "live",
+  "d7a_rule_scores": {
+    "theme_coherence": 0.6,
+    "structural_novelty": 0.5,
+    "default_momentum_fallback": 1.0,
+    "complexity_appropriateness": 0.7
+  },
+  "d7a_supporting_measures": {
+    "factor_set_prior_occurrences": 1,
+    "n_factors": 5,
+    "n_conditions": 6,
+    "description_length": 267,
+    "max_hold_bars": 96,
+    "n_entry_groups": 1,
+    "n_exit_groups": 2
+  },
+  "d7a_rule_flags": [
+    "n_conditions_heavy"
+  ],
+  "d7b_llm_scores": {
+    "semantic_plausibility": 0.75,
+    "semantic_theme_alignment": 0.9,
+    "structural_variant_risk": 0.85
+  },
+  "d7b_reasoning": "The strategy exhibits coherent logic: entering when MACD histogram crosses above zero (momentum shift), price is above EMA(26) (trend filter), and RSI > 50 (momentum confirmation). Exits trigger on histogram reversal below zero with RSI < 45, or on 5% profit capture. The 96-bar max hold provides risk control. This logic is defensible for capturing early momentum acceleration. Theme alignment is strong, utilizing macd_hist, rsi_14, and return_24h from the hint vocabulary directly, with ema_26 serving as a standard trend filter consistent with momentum strategies. However, structural variant risk is high. The factor set {close, ema_26, macd_hist, return_24h, rsi_14} is nearly identical to prior entry #42 {close, ema_26, macd_hist, return_24h, rsi_14}, differing only in the specific operators (crosses_above vs simple comparisons) and thresholds applied. This represents a shallow variant of an already-explored factor combination rather than a structurally distinct approach.",
+  "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0171_response.json",
+  "d7b_cost_actual_usd": 0.01986,
+  "d7b_input_tokens": 5100,
+  "d7b_output_tokens": 304,
+  "d7b_retry_count": 0,
+  "d7b_scan_results": {
+    "forbidden_language_scan": {
+      "status": "pass",
+      "hits": [],
+      "terms_checked_count": 21
+    },
+    "refusal_scan": {
+      "status": "pass",
+      "hits": [],
+      "patterns_checked": [
+        "\\bi cannot\\b",
+        "\\bi can't\\b",
+        "\\bunable to\\b",
+        "\\brefuse to\\b",
+        "\\bdecline to\\b",
+        "\\bcannot evaluate\\b",
+        "\\bcan not evaluate\\b"
+      ]
+    }
+  },
+  "critic_timing_ms": {
+    "d7a_ms": 0.194,
+    "d7b_ms": 9222.632
+  },
+  "critic_error_signature": null,
+  "critic_error_full_path": null
+}

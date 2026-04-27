@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7000,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.3000,
+  "reasoning": "The strategy logic constructs a coherent dip-buying narrative: enter on Monday when price dips below SMA-20 but remains above SMA-50 (intermediate uptrend intact), confirmed by elevated volume. Exit logic includes two paths—Friday profit-taking above SMA-20 or momentum-based RSI exit—which both make sense. The max_hold_bars of 120 provides a sensible backstop. Theme alignment is strong: day_of_week is the primary signal anchoring the calendar effect hypothesis, with the Monday entry directly exploiting presumed weekly seasonality. The economic story about retail Monday selling creating institutional accumulation windows is testable. Structurally, this factor set {close, day_of_week, return_24h, rsi_14, sma_20, sma_50, volume_zscore_24h} matches prior #14 exactly. However, the specific use of day_of_week as a dual entry/exit gate (Monday entry, Friday exit) rather than just a filter, combined with the dual-SMA sandwich condition, gives this hypothesis a distinct behavioral interpretation despite shared factors. The risk of being a threshold variant exists but is moderated by the novel dual-calendar-gate architecture."
+}
+```

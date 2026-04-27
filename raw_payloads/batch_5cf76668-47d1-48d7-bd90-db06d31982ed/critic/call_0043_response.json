@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.2500,
+  "reasoning": "The strategy builds a coherent narrative around volatility expansion: entering when realized_vol_24h crosses above 3% while price breaks above sma_20 with positive macd_hist and return_24h momentum. The exit logic is sensible, offering dual paths—either volatility collapses below 1.5% after a 3% gain (profit-taking during compression), or technical reversal via sma_20 crossbelow with negative macd_hist. This structure aligns well with the volatility_regime theme, directly using the hint factor realized_vol_24h as the core signal and framing the trade around regime shifts from compressed to expanded states. The factor set {close, macd_hist, realized_vol_24h, return_24h, sma_20} overlaps structurally with prior #3 (which uses ema_12, ema_26, sma_50 instead of sma_20) but the composition is distinct enough—no prior uses exactly this combination of sma_20 with macd_hist, realized_vol_24h, and return_24h without additional filters like rsi_14 or volume_zscore_24h. The threshold-based volatility entry (>3%) differs from the more complex multi-factor combinations in the batch, suggesting a genuinely different structural bet on pure volatility expansion rather than mean reversion or overbought/oversold conditions."
+}
+```

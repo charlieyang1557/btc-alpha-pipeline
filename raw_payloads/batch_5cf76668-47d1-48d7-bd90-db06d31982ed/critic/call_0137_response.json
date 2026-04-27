@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.3000,
+  "semantic_theme_alignment": 0.7000,
+  "structural_variant_risk": 0.9500,
+  "reasoning": "The strategy attempts a mean reversion setup using Bollinger bands, z-scores, and RSI oversold conditions. However, the entry logic contains an internal inconsistency: it requires close < bb_upper_24_2 (which is almost always true unless price is extraordinarily high) rather than close < bb_lower_24_2, which would actually signal touching the lower band as described. This mismatch between description and implementation undermines plausibility. The exit logic combining z-score mean reversion and RSI recovery with a profit-taking alternative is structurally coherent. Theme alignment is moderate to strong given the use of z-scores, Bollinger bands, and mean reversion framing with oversold entry and mean-crossing exit, all core to the mean_reversion theme hint factors. Structurally, the factor set {bb_upper_24_2, close, return_24h, rsi_14, zscore_48} is nearly identical to prior #34 and #29, and very similar to #2, #7, #12, #17, #21, #43, #53, #60, #64, and #90, differing only in threshold values and minor operator choices. This is a clear shallow variant of already-explored territory."
+}
+```

@@ -1,0 +1,128 @@
+{
+  "request_timestamp_utc": "2026-04-19T14:29:37.793243Z",
+  "response_timestamp_utc": "2026-04-19T14:29:48.552933Z",
+  "wall_clock_seconds": 10.76,
+  "retry_count": 0,
+  "d7b_mode": "live",
+  "critic_result": {
+    "critic_version": "d7_v1",
+    "critic_status": "ok",
+    "d7b_mode": "live",
+    "d7a_rule_scores": {
+      "theme_coherence": 0.1667,
+      "structural_novelty": 1.0,
+      "default_momentum_fallback": 0.8,
+      "complexity_appropriateness": 0.55
+    },
+    "d7a_supporting_measures": {
+      "factor_set_prior_occurrences": 0,
+      "n_factors": 6,
+      "n_conditions": 7,
+      "description_length": 260,
+      "max_hold_bars": 168,
+      "n_entry_groups": 1,
+      "n_exit_groups": 2
+    },
+    "d7a_rule_flags": [
+      "n_conditions_heavy"
+    ],
+    "d7b_llm_scores": {
+      "semantic_plausibility": 0.75,
+      "semantic_theme_alignment": 0.85,
+      "structural_variant_risk": 0.15
+    },
+    "d7b_reasoning": "The strategy demonstrates coherent internal logic by combining volatility regime detection (realized_vol_24h > 0.035) with price breakout (close crosses_above sma_20), volume confirmation (volume_zscore_24h > 1.0), and positive momentum (return_24h > 0.01). Entry conditions work synergistically: elevated volatility signals regime change while the breakout and volume confirm institutional participation. Exit logic is dual-path: either mean reversion (price falls below sma_20 and volatility contracts) or profit-taking (return_168h > 8%). Theme alignment is strong as the strategy explicitly trades volatility regime shifts using realized_vol_24h from the hint vocabulary, though it could integrate atr_14 or bb_upper_24_2 more directly. The factor set {close, realized_vol_24h, return_168h, return_24h, sma_20, volume_zscore_24h} is structurally distinct from all priors. While return_168h appears in some prior sets and several combine realized_vol_24h with return_24h and volume_zscore_24h, none use this specific combination with sma_20 and return_168h together, making this a genuinely different structural composition rather than a threshold tweak.",
+    "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0143_response.json",
+    "d7b_cost_actual_usd": 0.01908,
+    "d7b_input_tokens": 4605,
+    "d7b_output_tokens": 351,
+    "d7b_retry_count": 0,
+    "d7b_scan_results": {
+      "forbidden_language_scan": {
+        "status": "pass",
+        "hits": [],
+        "terms_checked_count": 21
+      },
+      "refusal_scan": {
+        "status": "pass",
+        "hits": [],
+        "patterns_checked": [
+          "\\bi cannot\\b",
+          "\\bi can't\\b",
+          "\\bunable to\\b",
+          "\\brefuse to\\b",
+          "\\bdecline to\\b",
+          "\\bcannot evaluate\\b",
+          "\\bcan not evaluate\\b"
+        ]
+      }
+    },
+    "critic_timing_ms": {
+      "d7a_ms": 0.202,
+      "d7b_ms": 10742.886
+    },
+    "critic_error_signature": null,
+    "critic_error_full_path": null
+  },
+  "ledger_row": {
+    "row_id": "d5ded73d-b00a-44bb-baf5-180e3f5b47dd",
+    "batch_id": "5cf76668-47d1-48d7-bd90-db06d31982ed",
+    "api_call_kind": "d7b_critic_live",
+    "backend_kind": "d7b_critic",
+    "call_role": "critique",
+    "estimated_cost_usd": 0.05,
+    "actual_cost_usd": 0.01908,
+    "input_tokens": 4605,
+    "output_tokens": 351
+  },
+  "raw_payload_paths": {
+    "prompt": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0143_prompt.txt",
+    "response": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0143_response.json",
+    "traceback": null,
+    "critic_result": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0143_critic_result.json"
+  },
+  "cost": {
+    "estimated_usd": 0.05,
+    "actual_usd": 0.01908,
+    "ratio": 0.3816
+  },
+  "leakage_audit_result": {
+    "status": "pass",
+    "violations": [],
+    "protected_terms_checked_count": 28
+  },
+  "forbidden_language_scan_result": {
+    "status": "pass",
+    "hits": [],
+    "terms_checked_count": 21
+  },
+  "refusal_scan_result": {
+    "status": "pass",
+    "hits": [],
+    "patterns_checked": [
+      "\\bi cannot\\b",
+      "\\bi can't\\b",
+      "\\bunable to\\b",
+      "\\brefuse to\\b",
+      "\\bdecline to\\b",
+      "\\bcannot evaluate\\b",
+      "\\bcan not evaluate\\b"
+    ]
+  },
+  "firing_order": 17,
+  "candidate_position": 143,
+  "candidate_theme": "volatility_regime",
+  "candidate_hypothesis_hash": "bb697a22f649d982",
+  "pre_registered_label": "neutral",
+  "prior_factor_sets_count": 103,
+  "theme_hint_factor_count": 3,
+  "prompt_chars": 11405,
+  "prompt_sha256": "29b7a718328576a152ff6a9bdb2126ecba6e46fa0d1bfa73ffb615c9d986693e",
+  "call_index_in_sequence": 17,
+  "inter_call_sleep_elapsed_seconds": 5.003,
+  "is_stage2b_overlap": false,
+  "critic_status": "ok",
+  "critic_error_signature": null,
+  "actual_cost_usd": 0.01908,
+  "d7b_error_category": null
+}

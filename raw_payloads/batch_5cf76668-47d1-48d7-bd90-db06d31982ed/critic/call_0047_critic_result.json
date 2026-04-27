@@ -1,0 +1,60 @@
+{
+  "critic_version": "d7_v1",
+  "critic_status": "ok",
+  "d7b_mode": "live",
+  "d7a_rule_scores": {
+    "theme_coherence": 0.6,
+    "structural_novelty": 0.5,
+    "default_momentum_fallback": 0.5,
+    "complexity_appropriateness": 0.55
+  },
+  "d7a_supporting_measures": {
+    "factor_set_prior_occurrences": 1,
+    "n_factors": 5,
+    "n_conditions": 7,
+    "description_length": 192,
+    "max_hold_bars": 168,
+    "n_entry_groups": 1,
+    "n_exit_groups": 2
+  },
+  "d7a_rule_flags": [
+    "n_conditions_heavy"
+  ],
+  "d7b_llm_scores": {
+    "semantic_plausibility": 0.75,
+    "semantic_theme_alignment": 0.9,
+    "structural_variant_risk": 0.85
+  },
+  "d7b_reasoning": "The strategy employs a coherent mean reversion logic: entry triggers when multiple oversold indicators align (price below Bollinger band, z-score < -1.5, RSI < 35, negative 24h return), and exits when reversion occurs (z-score crosses zero, RSI recovers) or a profit target is hit. The dual-exit structure with both mean-reversion confirmation and take-profit is sound. Theme alignment is strong, utilizing four of five hint factors (bb_upper_24_2, close, zscore_48, plus close-related derivations) with clear oversold/rebound economic intuition. However, structural variant risk is high: the factor set {bb_upper_24_2, close, return_24h, rsi_14, zscore_48} appears almost identical to prior #34, differing only in threshold values and the comparison operator for bb_upper_24_2 (here checking close < bb_upper rather than a more typical lower-band check). This represents primarily a parameter adjustment rather than a structurally novel combination, making it a likely shallow variant of existing work in this batch.",
+  "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0047_response.json",
+  "d7b_cost_actual_usd": 0.012327,
+  "d7b_input_tokens": 2559,
+  "d7b_output_tokens": 310,
+  "d7b_retry_count": 0,
+  "d7b_scan_results": {
+    "forbidden_language_scan": {
+      "status": "pass",
+      "hits": [],
+      "terms_checked_count": 21
+    },
+    "refusal_scan": {
+      "status": "pass",
+      "hits": [],
+      "patterns_checked": [
+        "\\bi cannot\\b",
+        "\\bi can't\\b",
+        "\\bunable to\\b",
+        "\\brefuse to\\b",
+        "\\bdecline to\\b",
+        "\\bcannot evaluate\\b",
+        "\\bcan not evaluate\\b"
+      ]
+    }
+  },
+  "critic_timing_ms": {
+    "d7a_ms": 0.115,
+    "d7b_ms": 8680.994
+  },
+  "critic_error_signature": null,
+  "critic_error_full_path": null
+}

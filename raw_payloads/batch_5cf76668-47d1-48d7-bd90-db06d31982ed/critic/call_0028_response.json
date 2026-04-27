@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.3000,
+  "reasoning": "The strategy presents a coherent mean-reversion logic: entering when realized volatility spikes above 4% while price stays above SMA-50 support, with low z-score and subdued RSI confirming no extreme moves. Exit paths balance regime stabilization (vol drops below 2.5% with positive returns) against stop-loss (price breaks support with weak RSI). This narrative aligns well with volatility regime theme, directly using realized_vol_24h as the primary signal and targeting regime shifts from high to low volatility states. The factor set {close, realized_vol_24h, return_24h, rsi_14, sma_50, zscore_48} bears structural similarity to prior #13 {close, realized_vol_24h, return_1h, rsi_14, sma_20, sma_50, volume_zscore_24h} and #18 {close, ema_12, ema_26, realized_vol_24h, return_1h, rsi_14, sma_50}, sharing the core volatility-price-RSI-MA structure. However, the substitution of zscore_48 for volume_zscore and the specific focus on return_24h rather than return_1h represents a meaningful parametric choice rather than a pure threshold tweak. The 4% volatility entry criterion and dual exit paths offer distinct structural elements relative to these priors."
+}
+```

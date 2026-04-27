@@ -1,0 +1,60 @@
+{
+  "critic_version": "d7_v1",
+  "critic_status": "ok",
+  "d7b_mode": "live",
+  "d7a_rule_scores": {
+    "theme_coherence": 0.4286,
+    "structural_novelty": 1.0,
+    "default_momentum_fallback": 0.8,
+    "complexity_appropriateness": 0.55
+  },
+  "d7a_supporting_measures": {
+    "factor_set_prior_occurrences": 0,
+    "n_factors": 7,
+    "n_conditions": 7,
+    "description_length": 168,
+    "max_hold_bars": 120,
+    "n_entry_groups": 1,
+    "n_exit_groups": 2
+  },
+  "d7a_rule_flags": [
+    "n_conditions_heavy"
+  ],
+  "d7b_llm_scores": {
+    "semantic_plausibility": 0.65,
+    "semantic_theme_alignment": 0.85,
+    "structural_variant_risk": 0.7
+  },
+  "d7b_reasoning": "The strategy presents a coherent volatility regime thesis: entering when realized_vol_24h exceeds atr_14 signals a volatility spike, combined with a Bollinger band breakout and elevated volume. The exit logic is sensible, closing when volatility normalizes or RSI becomes overbought. However, the plausibility score reflects concern that realized_vol_24h > atr_14 may not reliably identify regime shifts since both measure volatility over similar horizons. Theme alignment is strong as all three hint factors (atr_14, bb_upper_24_2, realized_vol_24h) appear explicitly, directly addressing volatility regime detection. The structural variant risk is elevated because this factor set {atr_14, bb_upper_24_2, close, realized_vol_24h, rsi_14, sma_24, volume_zscore_24h} overlaps substantially with prior entry 7 {bb_upper_24_2, close, rsi_14, sma_24, zscore_48}, differing primarily by substituting zscore_48 with volume_zscore_24h and adding volatility comparisons. The core structure—Bollinger breakout with RSI confirmation and z-score volume filter—remains similar, suggesting this may be a parametric variation rather than a fundamentally distinct approach.",
+  "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0008_response.json",
+  "d7b_cost_actual_usd": 0.010053,
+  "d7b_input_tokens": 1561,
+  "d7b_output_tokens": 358,
+  "d7b_retry_count": 0,
+  "d7b_scan_results": {
+    "forbidden_language_scan": {
+      "status": "pass",
+      "hits": [],
+      "terms_checked_count": 21
+    },
+    "refusal_scan": {
+      "status": "pass",
+      "hits": [],
+      "patterns_checked": [
+        "\\bi cannot\\b",
+        "\\bi can't\\b",
+        "\\bunable to\\b",
+        "\\brefuse to\\b",
+        "\\bdecline to\\b",
+        "\\bcannot evaluate\\b",
+        "\\bcan not evaluate\\b"
+      ]
+    }
+  },
+  "critic_timing_ms": {
+    "d7a_ms": 0.102,
+    "d7b_ms": 8764.436
+  },
+  "critic_error_signature": null,
+  "critic_error_full_path": null
+}

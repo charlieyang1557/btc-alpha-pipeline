@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy presents coherent mean-reversion logic: entering when price is below a Bollinger band threshold (though the condition uses bb_upper rather than bb_lower as described), RSI shows oversold conditions, zscore is deeply negative, and volatility is elevated. Exit conditions logically target normalization through RSI recovery and zscore return to equilibrium, or alternatively via profit-taking with price crossing above the moving average. The internal consistency supports a defensible trading narrative around oversold extremes reverting. Theme alignment is strong, employing canonical mean-reversion factors (Bollinger bands, zscore, RSI, moving averages) directly from the hint vocabulary. However, structural variant risk is elevated: the factor set {bb_upper_24_2, close, realized_vol_24h, return_1h, rsi_14, zscore_48} exactly matches prior entry #12, and closely overlaps with #17 which adds return_24h and sma_24. The differences here are operator thresholds (RSI<35 vs other cutoffs, zscore<-1.5 vs other levels) and exit logic variations, rather than fundamentally distinct factor combinations. This constitutes a shallow variant of previously explored structural territory."
+}
+```

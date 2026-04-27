@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.6500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy employs a mean-reversion logic by entering when price is near lower Bollinger band (via close <= bb_upper_24_2, though this condition is inverted from the description), combined with oversold RSI < 35, negative z-score < -1.5, and low realized volatility < 0.03. Exit logic triggers on RSI recovery above 55 or profit-taking at 2.5% return with SMA cross. However, the entry condition 'close <= bb_upper_24_2' appears contradictory to the stated goal of detecting lower band touches, weakening internal coherence. Theme alignment is strong given the use of z-score, Bollinger bands, RSI oversold levels, and SMA—all canonical mean-reversion signals from the hint vocabulary. Structurally, this factor set {bb_upper_24_2, close, realized_vol_24h, rsi_14, sma_24, zscore_48} is nearly identical to prior entries #17 and #21, differing only in the inclusion or exclusion of return_24h or return_1h. The core technical combination of BB, z-score, RSI, realized vol, and SMA appears repeatedly, making this a threshold/operator variant rather than a structurally novel approach."
+}
+```

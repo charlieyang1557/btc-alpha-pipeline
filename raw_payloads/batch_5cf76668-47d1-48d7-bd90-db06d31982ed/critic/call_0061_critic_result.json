@@ -1,0 +1,60 @@
+{
+  "critic_version": "d7_v1",
+  "critic_status": "ok",
+  "d7b_mode": "live",
+  "d7a_rule_scores": {
+    "theme_coherence": 0.6667,
+    "structural_novelty": 1.0,
+    "default_momentum_fallback": 1.0,
+    "complexity_appropriateness": 0.4
+  },
+  "d7a_supporting_measures": {
+    "factor_set_prior_occurrences": 0,
+    "n_factors": 6,
+    "n_conditions": 8,
+    "description_length": 278,
+    "max_hold_bars": 168,
+    "n_entry_groups": 1,
+    "n_exit_groups": 2
+  },
+  "d7a_rule_flags": [
+    "n_conditions_heavy"
+  ],
+  "d7b_llm_scores": {
+    "semantic_plausibility": 0.75,
+    "semantic_theme_alignment": 0.9,
+    "structural_variant_risk": 0.85
+  },
+  "d7b_reasoning": "The strategy constructs a momentum entry based on RSI crossing 55, positive 24h return exceeding 1%, positive MACD histogram, and close above SMA 50. This logic is internally coherent: the RSI cross signals neutral-zone breakout, return_24h confirms recent momentum, MACD histogram validates trend strength, and the SMA condition ensures directional bias. Exit logic via overbought RSI (>80) with negative 1h return or MACD reversal with RSI <45 provides dual momentum decay detection. The description narrative connects these elements into a plausible story about momentum acceleration. Theme alignment is strong: all entry factors (rsi_14, return_24h, macd_hist) appear in the hint vocabulary, and the overall logic captures momentum surge. However, structural variant risk is high. The factor set {close, macd_hist, return_1h, return_24h, rsi_14, sma_50} closely matches prior entry #16 {close, macd_hist, return_1h, rsi_14, sma_20, sma_50} with only minor substitution of SMA periods, and also resembles #50 {close, macd_hist, return_1h, rsi_14, sma_50, volume_zscore_24h}. The core structure (RSI, MACD, short/long returns, SMA trend filter) appears repeatedly in the prior list with threshold variations.",
+  "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0061_response.json",
+  "d7b_cost_actual_usd": 0.014778,
+  "d7b_input_tokens": 2981,
+  "d7b_output_tokens": 389,
+  "d7b_retry_count": 0,
+  "d7b_scan_results": {
+    "forbidden_language_scan": {
+      "status": "pass",
+      "hits": [],
+      "terms_checked_count": 21
+    },
+    "refusal_scan": {
+      "status": "pass",
+      "hits": [],
+      "patterns_checked": [
+        "\\bi cannot\\b",
+        "\\bi can't\\b",
+        "\\bunable to\\b",
+        "\\brefuse to\\b",
+        "\\bdecline to\\b",
+        "\\bcannot evaluate\\b",
+        "\\bcan not evaluate\\b"
+      ]
+    }
+  },
+  "critic_timing_ms": {
+    "d7a_ms": 0.099,
+    "d7b_ms": 10962.797
+  },
+  "critic_error_signature": null,
+  "critic_error_full_path": null
+}

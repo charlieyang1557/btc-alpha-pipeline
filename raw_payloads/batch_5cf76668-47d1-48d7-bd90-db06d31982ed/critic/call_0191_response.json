@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy constructs a coherent momentum confluence framework by requiring simultaneous alignment of MACD histogram positivity, RSI above 55, price above EMA26, and elevated volume. Entry logic reflects institutional trend-following behavior where multiple technical signals converge. Exit uses MACD histogram crossing below zero or RSI dropping below 45, creating symmetric reversal detection, plus a 2% stop-loss for risk control. The 168-bar max hold prevents indefinite positions. Theme alignment is strong: all entry factors (macd_hist, rsi_14, ema_26 comparison, volume_zscore_24h) directly measure momentum characteristics, and the description explicitly invokes trend continuation and directional moves. However, structural variant risk is high. The factor set {close, ema_26, macd_hist, rsi_14, volume_zscore_24h} closely mirrors prior entry #42 {close, ema_26, macd_hist, return_24h, rsi_14} and #98 {close, ema_26, rsi_14, volume_zscore_24h}, differing mainly by swapping return_24h for volume_zscore_24h or adding volume to the ema_26/macd_hist/rsi_14 core. The threshold changes (RSI 55 vs 50, volume_zscore 0.8) appear as parameter tweaks rather than structural innovation."
+}
+```

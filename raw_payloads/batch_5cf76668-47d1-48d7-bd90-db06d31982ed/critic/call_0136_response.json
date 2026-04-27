@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy uses MACD histogram zero-line crossover (positive slope signal) combined with a neutral RSI band (45-55) to capture early momentum shifts. The logic is coherent: waiting for histogram to turn positive while RSI remains neutral avoids chasing overbought conditions. Exit triggers are sensible: reversing when histogram crosses back below zero or taking profit at 2.5% gain. The 168-bar max hold provides risk control. Theme alignment is strong because MACD histogram and RSI are both core momentum indicators listed in the hint vocabulary, and the entry narrative directly addresses momentum emergence. However, structural variant risk is high. The factor set {macd_hist, return_24h, rsi_14} appears as entry #28 in the prior list. While this strategy uses crosses_above/crosses_below operators and specific RSI thresholds (45-55) versus potentially different operators in the prior, the underlying factor combination is identical. The strategy differentiates mainly through operator choice and threshold calibration rather than structural factor diversity, making it a likely shallow variant of previously explored territory."
+}
+```

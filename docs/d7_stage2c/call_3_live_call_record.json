@@ -1,0 +1,128 @@
+{
+  "request_timestamp_utc": "2026-04-19T14:26:13.197550Z",
+  "response_timestamp_utc": "2026-04-19T14:26:22.824884Z",
+  "wall_clock_seconds": 9.627,
+  "retry_count": 0,
+  "d7b_mode": "live",
+  "critic_result": {
+    "critic_version": "d7_v1",
+    "critic_status": "ok",
+    "d7b_mode": "live",
+    "d7a_rule_scores": {
+      "theme_coherence": 0.4286,
+      "structural_novelty": 0.5,
+      "default_momentum_fallback": 0.5,
+      "complexity_appropriateness": 0.4
+    },
+    "d7a_supporting_measures": {
+      "factor_set_prior_occurrences": 1,
+      "n_factors": 7,
+      "n_conditions": 8,
+      "description_length": 221,
+      "max_hold_bars": 168,
+      "n_entry_groups": 1,
+      "n_exit_groups": 2
+    },
+    "d7a_rule_flags": [
+      "n_conditions_heavy"
+    ],
+    "d7b_llm_scores": {
+      "semantic_plausibility": 0.75,
+      "semantic_theme_alignment": 0.9,
+      "structural_variant_risk": 0.85
+    },
+    "d7b_reasoning": "The strategy exhibits coherent mean-reversion logic: entry triggers on oversold RSI (<35), negative z-score (<-1.5), and low realized volatility (<0.03), while exits rely on RSI recovery (>55) and z-score normalization or profit-taking with price crossing above SMA. The description references lower Bollinger bands, yet the entry condition tests close <= bb_upper_24_2, which is structurally backward—the upper band check would capture most market states rather than lower-band touches. Despite this discrepancy, the overall signal combination (oversold RSI + negative z-score + volatility compression) aligns strongly with mean-reversion intuition and uses theme hint factors. However, structural variant risk is high: the factor set {bb_upper_24_2, close, realized_vol_24h, rsi_14, sma_24, zscore_48} exactly matches prior #21, differing only in threshold values (RSI 35 vs potentially different cutoffs, z-score -1.5 vs other values). This represents a shallow parameter tweak rather than a structurally novel factor combination.",
+    "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0027_response.json",
+    "d7b_cost_actual_usd": 0.01128,
+    "d7b_input_tokens": 2180,
+    "d7b_output_tokens": 316,
+    "d7b_retry_count": 0,
+    "d7b_scan_results": {
+      "forbidden_language_scan": {
+        "status": "pass",
+        "hits": [],
+        "terms_checked_count": 21
+      },
+      "refusal_scan": {
+        "status": "pass",
+        "hits": [],
+        "patterns_checked": [
+          "\\bi cannot\\b",
+          "\\bi can't\\b",
+          "\\bunable to\\b",
+          "\\brefuse to\\b",
+          "\\bdecline to\\b",
+          "\\bcannot evaluate\\b",
+          "\\bcan not evaluate\\b"
+        ]
+      }
+    },
+    "critic_timing_ms": {
+      "d7a_ms": 0.109,
+      "d7b_ms": 9611.302
+    },
+    "critic_error_signature": null,
+    "critic_error_full_path": null
+  },
+  "ledger_row": {
+    "row_id": "37d90694-735c-44c5-ba23-b1c785c50b5f",
+    "batch_id": "5cf76668-47d1-48d7-bd90-db06d31982ed",
+    "api_call_kind": "d7b_critic_live",
+    "backend_kind": "d7b_critic",
+    "call_role": "critique",
+    "estimated_cost_usd": 0.05,
+    "actual_cost_usd": 0.01128,
+    "input_tokens": 2180,
+    "output_tokens": 316
+  },
+  "raw_payload_paths": {
+    "prompt": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0027_prompt.txt",
+    "response": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0027_response.json",
+    "traceback": null,
+    "critic_result": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0027_critic_result.json"
+  },
+  "cost": {
+    "estimated_usd": 0.05,
+    "actual_usd": 0.01128,
+    "ratio": 0.2256
+  },
+  "leakage_audit_result": {
+    "status": "pass",
+    "violations": [],
+    "protected_terms_checked_count": 28
+  },
+  "forbidden_language_scan_result": {
+    "status": "pass",
+    "hits": [],
+    "terms_checked_count": 21
+  },
+  "refusal_scan_result": {
+    "status": "pass",
+    "hits": [],
+    "patterns_checked": [
+      "\\bi cannot\\b",
+      "\\bi can't\\b",
+      "\\bunable to\\b",
+      "\\brefuse to\\b",
+      "\\bdecline to\\b",
+      "\\bcannot evaluate\\b",
+      "\\bcan not evaluate\\b"
+    ]
+  },
+  "firing_order": 3,
+  "candidate_position": 27,
+  "candidate_theme": "mean_reversion",
+  "candidate_hypothesis_hash": "57f884d5e47b14e6",
+  "pre_registered_label": "agreement_expected",
+  "prior_factor_sets_count": 24,
+  "theme_hint_factor_count": 5,
+  "prompt_chars": 6405,
+  "prompt_sha256": "ccf1698785e67a6ffd43660217816f98c3923552111aace93fb6ac6764ed4732",
+  "call_index_in_sequence": 3,
+  "inter_call_sleep_elapsed_seconds": 5.005,
+  "is_stage2b_overlap": false,
+  "critic_status": "ok",
+  "critic_error_signature": null,
+  "actual_cost_usd": 0.01128,
+  "d7b_error_category": null
+}

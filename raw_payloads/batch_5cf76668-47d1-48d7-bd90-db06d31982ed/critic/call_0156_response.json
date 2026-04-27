@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy demonstrates coherent momentum logic: MACD histogram crossing above zero signals bullish momentum shift, RSI above 55 confirms strength without overbought conditions, and price above EMA(26) validates trend alignment. The exit logic is sound with both reversal signals (MACD crosses below zero, RSI drops under 45) and a profit-taking threshold at 3%. Theme alignment is strong as all entry factors (macd_hist, rsi_14, close relative to ema_26) directly measure momentum characteristics from the hint vocabulary. The 24-hour return exit also matches theme factors. However, structural variant risk is elevated because the factor set {close, ema_26, macd_hist, rsi_14} appears very similar to prior entry #42 {close, ema_26, macd_hist, return_24h, rsi_14} and entry #63 {close, macd_hist, return_24h, rsi_14, sma_20}. While this strategy uses ema_26 comparatively rather than as a standalone factor, and lacks return_24h in entry conditions, the core combination of close, ema_26, macd_hist, and rsi_14 is structurally close to multiple predecessors. The distinctive MACD histogram zero-cross operator and specific threshold choices (RSI 55/45) provide some differentiation but not enough to constitute a fundamentally different factor structure."
+}
+```

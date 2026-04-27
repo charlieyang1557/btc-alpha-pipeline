@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.6500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy combines Monday entry timing with RSI neutrality (45-60) and trend confirmation (close above SMA 50), creating a coherent narrative around calendar-driven institutional flow resumption. Exit logic uses dual conditions: Friday with overbought RSI or rapid trend breakdown (crosses below SMA 20 with -1.5% hourly loss), providing both time-based and risk-managed exits. Plausibility is moderate because the Monday effect rationale, while historically documented, has weakened in modern markets, and the 45-60 RSI band plus trend filter may be overly restrictive. Theme alignment is strong since day_of_week is central to entry logic and the narrative explicitly invokes calendar-based institutional behavior. However, structural variant risk is high: the factor set {day_of_week, close, rsi_14, sma_20, sma_50, return_1h} substantially overlaps with prior submission 10 which used {close, day_of_week, return_1h, return_24h, rsi_14, sma_20}. Both strategies gate on Monday, apply RSI bounds, check close relative to moving averages, and use return_1h in exits. The primary difference is SMA parameter choice (20 vs 50) and RSI threshold adjustments rather than a fundamentally different factor composition."
+}
+```

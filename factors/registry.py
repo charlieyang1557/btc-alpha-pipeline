@@ -10,7 +10,7 @@ Owns:
   registry's canonical metadata. The compute function's source (via
   ``inspect.getsource``) is part of the hash; docstrings are excluded.
 
-Hard rules enforced here (see PHASE2_BLUEPRINT_v2.md D1):
+Hard rules enforced here (see PHASE2_BLUEPRINT.md D1):
 - Registered compute functions MUST be top-level named callables. Lambdas,
   nested functions, and dynamically-generated callables are rejected at
   registration time because ``inspect.getsource`` is not stable on them.

@@ -1,0 +1,60 @@
+{
+  "critic_version": "d7_v1",
+  "critic_status": "ok",
+  "d7b_mode": "live",
+  "d7a_rule_scores": {
+    "theme_coherence": 0.5,
+    "structural_novelty": 0.5,
+    "default_momentum_fallback": 0.5,
+    "complexity_appropriateness": 0.7
+  },
+  "d7a_supporting_measures": {
+    "factor_set_prior_occurrences": 1,
+    "n_factors": 6,
+    "n_conditions": 6,
+    "description_length": 229,
+    "max_hold_bars": 144,
+    "n_entry_groups": 1,
+    "n_exit_groups": 2
+  },
+  "d7a_rule_flags": [
+    "n_conditions_heavy"
+  ],
+  "d7b_llm_scores": {
+    "semantic_plausibility": 0.75,
+    "semantic_theme_alignment": 0.9,
+    "structural_variant_risk": 0.95
+  },
+  "d7b_reasoning": "The strategy exhibits coherent mean-reversion logic: it enters on price below Bollinger lower band (implied by bb_upper_24_2 condition), negative z-score indicating statistical undervaluation, and oversold RSI below 30. The exit logic—price crossing above the 24-bar mean with RSI recovering to neutral territory, or a 4% profit target—supports a defensible snapback thesis. Semantically, the factor selection strongly aligns with mean-reversion themes using Bollinger bands, z-score, and moving average crossover mechanics from the hint vocabulary. However, structural variant risk is extremely high: the factor set {bb_upper_24_2, close, return_24h, rsi_14, sma_24, zscore_48} appears at position 29 in the prior list, and the set {bb_upper_24_2, close, rsi_14, sma_24, zscore_48} appears at position 7. The current strategy uses exactly the same six factors as position 29, differing only in threshold values (RSI 30 vs potentially other cutoffs, z-score -1.5 vs other thresholds) and operator choices. This represents a shallow parameter variant rather than a structurally distinct hypothesis.",
+  "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0127_response.json",
+  "d7b_cost_actual_usd": 0.018174000000000003,
+  "d7b_input_tokens": 4343,
+  "d7b_output_tokens": 343,
+  "d7b_retry_count": 0,
+  "d7b_scan_results": {
+    "forbidden_language_scan": {
+      "status": "pass",
+      "hits": [],
+      "terms_checked_count": 21
+    },
+    "refusal_scan": {
+      "status": "pass",
+      "hits": [],
+      "patterns_checked": [
+        "\\bi cannot\\b",
+        "\\bi can't\\b",
+        "\\bunable to\\b",
+        "\\brefuse to\\b",
+        "\\bdecline to\\b",
+        "\\bcannot evaluate\\b",
+        "\\bcan not evaluate\\b"
+      ]
+    }
+  },
+  "critic_timing_ms": {
+    "d7a_ms": 0.123,
+    "d7b_ms": 10751.11
+  },
+  "critic_error_signature": null,
+  "critic_error_full_path": null
+}

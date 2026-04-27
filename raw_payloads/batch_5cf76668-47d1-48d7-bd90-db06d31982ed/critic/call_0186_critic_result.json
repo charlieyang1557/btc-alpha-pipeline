@@ -1,0 +1,60 @@
+{
+  "critic_version": "d7_v1",
+  "critic_status": "ok",
+  "d7b_mode": "live",
+  "d7a_rule_scores": {
+    "theme_coherence": 0.6,
+    "structural_novelty": 0.5,
+    "default_momentum_fallback": 1.0,
+    "complexity_appropriateness": 0.55
+  },
+  "d7a_supporting_measures": {
+    "factor_set_prior_occurrences": 1,
+    "n_factors": 5,
+    "n_conditions": 7,
+    "description_length": 213,
+    "max_hold_bars": 168,
+    "n_entry_groups": 1,
+    "n_exit_groups": 2
+  },
+  "d7a_rule_flags": [
+    "n_conditions_heavy"
+  ],
+  "d7b_llm_scores": {
+    "semantic_plausibility": 0.75,
+    "semantic_theme_alignment": 0.9,
+    "structural_variant_risk": 0.95
+  },
+  "d7b_reasoning": "The strategy combines return_24h > 3%, macd_hist > 0, rsi_14 > 60, and close > ema_26 for entry, with dual exit conditions on macd_hist crossing below zero with rsi_14 < 50, or return_24h < -2%. This logic is internally coherent: it captures momentum acceleration through positive price action, expanding MACD histogram, overbought RSI, and price above trend, then exits when momentum stalls or reversal occurs. The narrative of continuation-then-exhaustion is defensible. Theme alignment is strong: all entry factors (return_24h, macd_hist, rsi_14) appear in the hint list, and the strategy directly targets momentum continuation through multiple confirming signals. However, structural variant risk is very high. The factor set {close, ema_26, macd_hist, return_24h, rsi_14} has already appeared as prior #42, and the exact triplet {macd_hist, return_24h, rsi_14} appears as prior #28. The addition of close and ema_26 comparison is a minor threshold-based variation on an already-explored combination, representing a shallow permutation rather than a genuinely novel structural hypothesis.",
+  "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0186_response.json",
+  "d7b_cost_actual_usd": 0.021489,
+  "d7b_input_tokens": 5458,
+  "d7b_output_tokens": 341,
+  "d7b_retry_count": 0,
+  "d7b_scan_results": {
+    "forbidden_language_scan": {
+      "status": "pass",
+      "hits": [],
+      "terms_checked_count": 21
+    },
+    "refusal_scan": {
+      "status": "pass",
+      "hits": [],
+      "patterns_checked": [
+        "\\bi cannot\\b",
+        "\\bi can't\\b",
+        "\\bunable to\\b",
+        "\\brefuse to\\b",
+        "\\bdecline to\\b",
+        "\\bcannot evaluate\\b",
+        "\\bcan not evaluate\\b"
+      ]
+    }
+  },
+  "critic_timing_ms": {
+    "d7a_ms": 0.164,
+    "d7b_ms": 10218.035
+  },
+  "critic_error_signature": null,
+  "critic_error_full_path": null
+}

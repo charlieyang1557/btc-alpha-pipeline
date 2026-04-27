@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.8000,
+  "reasoning": "The strategy exhibits coherent logic by combining volatility expansion (realized_vol_24h > 0.025) with price momentum (close crosses_above ema_12), volume confirmation (volume_zscore_24h > 1.0), and MACD histogram positivity. The exit conditions logically terminate positions when volatility contracts below 0.015 or MACD histogram turns negative, with a stop-loss at -2.5%. This structure creates a defensible narrative around capturing momentum breakouts during volatility regime transitions. Theme alignment is strong: realized_vol_24h directly matches the volatility_regime theme's hint factors, and the strategy explicitly targets volatility expansion as a core signal. However, structural variant risk is elevated. The factor set {close, ema_12, macd_hist, realized_vol_24h, return_24h, volume_zscore_24h} appears nearly identical to prior #4: {close, ema_12, macd_hist, return_24h, volume_zscore_24h}, differing only by the inclusion of realized_vol_24h. While this addition is thematically important, the overall combinatorial structure closely resembles an existing hypothesis with one factor augmentation rather than representing a fundamentally different structural bet on market behavior."
+}
+```

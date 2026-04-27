@@ -1,0 +1,61 @@
+{
+  "critic_version": "d7_v1",
+  "critic_status": "ok",
+  "d7b_mode": "live",
+  "d7a_rule_scores": {
+    "theme_coherence": 0.3333,
+    "structural_novelty": 1.0,
+    "default_momentum_fallback": 0.5,
+    "complexity_appropriateness": 0.4
+  },
+  "d7a_supporting_measures": {
+    "factor_set_prior_occurrences": 0,
+    "n_factors": 6,
+    "n_conditions": 8,
+    "description_length": 241,
+    "max_hold_bars": 336,
+    "n_entry_groups": 1,
+    "n_exit_groups": 2
+  },
+  "d7a_rule_flags": [
+    "thin_theme_momentum_bleed",
+    "n_conditions_heavy"
+  ],
+  "d7b_llm_scores": {
+    "semantic_plausibility": 0.75,
+    "semantic_theme_alignment": 0.85,
+    "structural_variant_risk": 0.25
+  },
+  "d7b_reasoning": "The strategy articulates a coherent volatility compression-to-breakout narrative: it enters when realized_vol_24h contracts below 0.015, price crosses above sma_20, atr_14 is capped, and return_24h shows modest positive momentum. The dual exit paths (volatility expansion with negative return, or price reversal below sma_20 with weak RSI) logically terminate the position when the regime shifts or momentum fades. This aligns well with the volatility_regime theme, leveraging realized_vol_24h and atr_14 directly from the hint vocabulary to identify low-volatility environments primed for breakout. The factor set {atr_14, close, realized_vol_24h, return_24h, rsi_14, sma_20} has partial overlap with prior sets but introduces a distinct structural bet: prior #6 used {close, macd_hist, rsi_14, sma_20} (missing volatility factors), prior #8 combined {atr_14, bb_upper_24_2, close, realized_vol_24h, rsi_14, sma_24, volume_zscore_24h} (different moving average window, Bollinger bands, and volume filter), and prior #13 used {close, realized_vol_24h, return_1h, rsi_14, sma_20, sma_50, volume_zscore_24h} (dual SMAs, return_1h, volume). The current strategy combines ATR and realized volatility thresholds with a 20-day MA crossover, which is structurally novel in this batch despite shared individual factors.",
+  "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0038_response.json",
+  "d7b_cost_actual_usd": 0.013908,
+  "d7b_input_tokens": 2456,
+  "d7b_output_tokens": 436,
+  "d7b_retry_count": 0,
+  "d7b_scan_results": {
+    "forbidden_language_scan": {
+      "status": "pass",
+      "hits": [],
+      "terms_checked_count": 21
+    },
+    "refusal_scan": {
+      "status": "pass",
+      "hits": [],
+      "patterns_checked": [
+        "\\bi cannot\\b",
+        "\\bi can't\\b",
+        "\\bunable to\\b",
+        "\\brefuse to\\b",
+        "\\bdecline to\\b",
+        "\\bcannot evaluate\\b",
+        "\\bcan not evaluate\\b"
+      ]
+    }
+  },
+  "critic_timing_ms": {
+    "d7a_ms": 0.14,
+    "d7b_ms": 11402.182
+  },
+  "critic_error_signature": null,
+  "critic_error_full_path": null
+}

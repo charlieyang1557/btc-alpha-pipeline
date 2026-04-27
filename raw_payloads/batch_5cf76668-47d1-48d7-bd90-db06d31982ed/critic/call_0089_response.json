@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.9500,
+  "reasoning": "The strategy articulates a coherent contrarian thesis: enter long when price momentum is positive (return_24h > 2.5%) but volume conviction is weak (volume_zscore_24h < -0.5), betting on exhaustion reversal. Additional filters (rsi_14 > 58, close > sma_20) confirm overbought territory during the rally. Exit logic includes both a volume surge scenario (volume_zscore_24h > 1.2, return_1h > 0.8%) and a deterioration case (return_24h < -2%, rsi_14 < 45), covering both profit-taking and stop-loss. This divergence narrative is economically sound and aligns tightly with the volume_divergence theme, using the hint factor volume_zscore_24h as the core signal. However, structural variant risk is extremely high: the factor set {close, return_1h, return_24h, rsi_14, sma_20, volume_zscore_24h} is nearly identical to prior set 55 {close, return_1h, return_24h, rsi_14, sma_20, volume_zscore_24h}, differing only by the absence of sma_50. This represents a trivial modification of an already-explored combination, merely adjusting thresholds and operators on the same underlying factor structure."
+}
+```

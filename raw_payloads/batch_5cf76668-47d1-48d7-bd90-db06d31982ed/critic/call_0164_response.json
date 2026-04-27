@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy exhibits coherent logic: it identifies price breakouts above SMA(20) confirmed by elevated volume (z-score > 1.5) while RSI < 65 prevents chasing overbought conditions, and EMA(12) > EMA(26) adds trend confirmation. Exit logic balances momentum exhaustion (RSI > 70) with volume weakness (z-score < -0.5) or profit-taking at 3.5% return. This multivariate entry structure is defensible for capturing institutional accumulation as described. Theme alignment is strong—volume_zscore_24h is central to both entry and exit, directly implementing the volume_divergence concept by requiring anomalous volume to validate price moves. However, structural variant risk is elevated: the factor set {close, ema_12, ema_26, return_24h, rsi_14, sma_20, volume_zscore_24h} closely resembles prior entries. Specifically, entry #55 uses {close, return_1h, return_24h, rsi_14, sma_20, volume_zscore_24h} and entry #94 uses {close, return_24h, rsi_14, sma_20, volume_zscore_24h}, differing only by swapping return_1h/return_24h for ema_12/ema_26. The core signal—SMA cross with volume and RSI filters—appears in multiple prior hypotheses, suggesting this is primarily a threshold/operator variation rather than a structurally novel approach."
+}
+```

@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy exhibits coherent internal logic: entry requires high realized volatility (>0.025) with elevated volume (z-score>1.2), price crossing above SMA20, and positive MACD histogram, forming a plausible narrative of volatility expansion accompanied by momentum and breakout confirmation. Exit on volatility compression (<0.015) or RSI overbought (>70) or take-profit (4% return) is sensible. The theme alignment is strong—realized_vol_24h is a core theme hint factor, and the entire premise revolves around volatility regime shifts from compression to expansion. However, structural variant risk is elevated. The factor set {close, macd_hist, realized_vol_24h, rsi_14, sma_20, volume_zscore_24h} appears nearly identical to prior #13 {close, realized_vol_24h, return_1h, rsi_14, sma_20, sma_50, volume_zscore_24h} and #74 {close, realized_vol_24h, return_24h, rsi_14, sma_20, volume_zscore_24h}, differing primarily in the substitution of macd_hist for return signals and slight SMA choices. The core conceptual structure—volatility plus momentum plus moving average crossover plus RSI—recurs frequently in the batch, suggesting this is a threshold/operator tweak rather than a fundamentally novel factor combination."
+}
+```

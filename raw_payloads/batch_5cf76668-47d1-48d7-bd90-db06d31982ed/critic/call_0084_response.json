@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.9500,
+  "reasoning": "The strategy implements a mean-reversion logic targeting oversold conditions with diminishing volume. Entry requires negative 24h return, low volume zscore, oversold RSI, and price below SMA50, forming a coherent exhaustion signal. Exit logic covers both profit-taking (positive return with RSI recovery) and stop-loss scenarios (volume spike with negative hourly return), which is internally consistent. The volume_zscore_24h factor aligns strongly with the volume_divergence theme, and the description explicitly articulates the divergence hypothesis: declining volume during price weakness suggests exhaustion. However, structural variant risk is extremely high. The factor set {close, return_1h, return_24h, rsi_14, sma_50, volume_zscore_24h} exactly matches entry #9 in the prior list. The current strategy differs only in threshold values (e.g., rsi_14 < 38.0 vs potentially different cutoffs) and exit condition structuring, making it a clear threshold-and-operator variant rather than a structurally novel approach. The economic story is sound but the factor combination has already been explored in this batch."
+}
+```

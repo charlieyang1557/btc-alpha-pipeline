@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy employs coherent mean-reversion logic: entering long when RSI drops below 35 (oversold), MACD histogram crosses below zero (momentum weakening), price stays above SMA(50) (preserving uptrend context), and 24h return is negative (confirming recent decline). Exit logic is sensible, targeting RSI recovery above 55 or a 3% gain. This constructs a plausible counter-trend entry within trend-following constraints. Theme alignment is strong—all factors (rsi_14, macd_hist, return_24h) appear in the hint vocabulary, and the momentum exhaustion premise fits the momentum theme well. However, structural variant risk is high: the factor set {close, macd_hist, return_24h, rsi_14, sma_50} is essentially identical to prior entry #73 {close, macd_hist, return_24h, rsi_14, sma_50}, differing only in threshold values (RSI 35 vs other levels, MACD crossing zero, etc.). This represents a shallow parametric variant rather than a structurally novel factor combination."
+}
+```

@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy uses MACD histogram zero crossovers combined with RSI>50, price>EMA26, and positive volume z-score to capture momentum acceleration—a coherent logic where the histogram crossing confirms trend shift, RSI confirms bullish bias, price trend filter reduces whipsaws, and volume confirmation supports genuine momentum. Exit on histogram reversal or RSI<45 provides symmetric logic, while a 10% profit target (return_168h>0.1) acts as a take-profit mechanism. The max_hold_bars of 336 (14 days) is reasonable for swing momentum. Theme alignment is strong: macd_hist, rsi_14, and return_168h are all hint factors, and the narrative explicitly addresses momentum thrust and trend acceleration. However, the factor set {close, ema_26, macd_hist, return_168h, rsi_14, volume_zscore_24h} closely resembles prior #24 {close, ema_26, macd_hist, return_168h, return_24h, rsi_14}, differing only by swapping return_24h for volume_zscore_24h. This structural similarity indicates a variant rather than a fundamentally distinct approach, yielding high variant risk."
+}
+```

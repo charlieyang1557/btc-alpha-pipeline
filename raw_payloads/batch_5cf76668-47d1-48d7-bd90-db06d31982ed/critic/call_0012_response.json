@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy constructs a coherent mean-reversion narrative: entry when price is below upper Bollinger band, z-score deeply negative, RSI oversold, and volatility controlled; exit when z-score crosses zero and RSI normalizes, or when drawdown deepens with extreme RSI. The logic is defensible though the bb_upper condition seems redundant (price would rarely be above upper band when z-score is -1.5). Theme alignment is strong: uses bb_upper_24_2, zscore_48, and close from hint vocabulary, targets mean reversion explicitly. The structural variant risk is elevated because the factor set {bb_upper_24_2, close, realized_vol_24h, rsi_14, return_1h, zscore_48} overlaps heavily with prior entry 7 {bb_upper_24_2, close, rsi_14, sma_24, zscore_48} and entry 8 {atr_14, bb_upper_24_2, close, realized_vol_24h, rsi_14, sma_24, volume_zscore_24h}. While realized_vol_24h and return_1h differ from sma_24/volume_zscore_24h in prior sets, the core structure (Bollinger, close, RSI, z-score) is substantively similar, suggesting threshold tuning rather than a distinct structural hypothesis."
+}
+```

@@ -1,0 +1,326 @@
+{
+  "stage_label": "d7_stage2c",
+  "record_version": "1.0",
+  "batch_uuid": "5cf76668-47d1-48d7-bd90-db06d31982ed",
+  "fire_script_command": "python scripts/run_d7_stage2c_batch.py --confirm-live",
+  "fire_timestamp_utc_start": "2026-04-19T14:05:46.158427Z",
+  "fire_timestamp_utc_end": "2026-04-19T14:05:51.681293Z",
+  "d7b_prompt_template_sha256": "f2d6e9d5856be025a2109a1440f8980a3d786bc5cdd284f4d414d06a4680eda7",
+  "selection_json_sha256": "17254003cf93a958cebc0ad26671da59aa166ff8de8063f8eabb503517aad49d",
+  "expectations_file_sha256": "14aaefafa958eee29f771d3c0b49db317ce8dac0d7802fb447113924ea19d484",
+  "selection_commit_timestamp_utc": "2026-04-18T15:20:46Z",
+  "expectations_commit_timestamp_utc": "2026-04-19T14:05:22Z",
+  "selection_tier": 0,
+  "selection_warnings_count": 0,
+  "sequence_aborted": true,
+  "abort_reason": "api_level_consecutive",
+  "abort_at_call_index": 2,
+  "completed_call_count": 2,
+  "total_wall_clock_seconds": 5.523,
+  "inter_call_sleep_seconds": 5,
+  "total_actual_cost_usd": 0.0,
+  "total_estimated_cost_usd": 0.1,
+  "total_input_tokens": 0,
+  "total_output_tokens": 0,
+  "reasoning_lengths_in_call_order": [
+    0,
+    0
+  ],
+  "actual_costs_in_call_order": [
+    0.0,
+    0.0
+  ],
+  "estimated_costs_in_call_order": [
+    0.05,
+    0.05
+  ],
+  "input_tokens_in_call_order": [
+    null,
+    null
+  ],
+  "output_tokens_in_call_order": [
+    null,
+    null
+  ],
+  "wall_clock_seconds_in_call_order": [
+    0.475,
+    0.034
+  ],
+  "critic_statuses_in_call_order": [
+    "d7b_error",
+    "d7b_error"
+  ],
+  "d7b_error_categories_in_call_order": [
+    "api_level",
+    "api_level"
+  ],
+  "is_stage2b_overlap_in_call_order": [
+    true,
+    false
+  ],
+  "d7a_scores_by_call": {
+    "1": {
+      "theme_coherence": 0.4286,
+      "structural_novelty": 1.0,
+      "default_momentum_fallback": 0.5,
+      "complexity_appropriateness": 0.4
+    },
+    "2": {
+      "theme_coherence": 0.4286,
+      "structural_novelty": 1.0,
+      "default_momentum_fallback": 0.5,
+      "complexity_appropriateness": 0.4
+    }
+  },
+  "d7b_scores_by_call": {
+    "1": null,
+    "2": null
+  },
+  "agreement_divergence_reconciliation_by_call": {
+    "1": {
+      "pre_registered_label": "divergence_expected",
+      "d7b_structural_variant_risk": null,
+      "observed_consistent_with_label": null,
+      "rationale": "d7b_error; no structural_variant_risk score produced; cannot reconcile"
+    },
+    "2": {
+      "pre_registered_label": "neutral",
+      "d7b_structural_variant_risk": null,
+      "observed_consistent_with_label": null,
+      "rationale": "d7b_error; no structural_variant_risk score produced; cannot reconcile"
+    }
+  },
+  "theme_counts_in_sequence": {
+    "mean_reversion": 15,
+    "volatility_regime": 4,
+    "volume_divergence": 1
+  },
+  "label_counts_in_sequence": {
+    "agreement_expected": 8,
+    "divergence_expected": 3,
+    "neutral": 9
+  },
+  "stage2b_overlap_count": 5,
+  "stage2b_overlap_positions": [
+    17,
+    73,
+    74,
+    97,
+    138
+  ],
+  "stage2b_overlap_completed_count": 1,
+  "svr_by_label": {
+    "agreement_expected": {
+      "completed_count": 0,
+      "positions": [],
+      "svr_values": []
+    },
+    "divergence_expected": {
+      "completed_count": 0,
+      "positions": [],
+      "svr_values": []
+    },
+    "neutral": {
+      "completed_count": 0,
+      "positions": [],
+      "svr_values": []
+    }
+  },
+  "per_call_records": [
+    {
+      "request_timestamp_utc": "2026-04-19T14:05:46.161150Z",
+      "response_timestamp_utc": "2026-04-19T14:05:46.636541Z",
+      "wall_clock_seconds": 0.475,
+      "retry_count": 0,
+      "d7b_mode": "live",
+      "critic_result": {
+        "critic_version": "d7_v1",
+        "critic_status": "d7b_error",
+        "d7b_mode": "live",
+        "d7a_rule_scores": {
+          "theme_coherence": 0.4286,
+          "structural_novelty": 1.0,
+          "default_momentum_fallback": 0.5,
+          "complexity_appropriateness": 0.4
+        },
+        "d7a_supporting_measures": {
+          "factor_set_prior_occurrences": 0,
+          "n_factors": 7,
+          "n_conditions": 8,
+          "description_length": 175,
+          "max_hold_bars": 168,
+          "n_entry_groups": 1,
+          "n_exit_groups": 2
+        },
+        "d7a_rule_flags": [
+          "n_conditions_heavy"
+        ],
+        "d7b_llm_scores": null,
+        "d7b_reasoning": null,
+        "d7b_raw_response_path": null,
+        "d7b_cost_actual_usd": null,
+        "d7b_input_tokens": null,
+        "d7b_output_tokens": null,
+        "d7b_retry_count": 0,
+        "d7b_scan_results": null,
+        "critic_timing_ms": {
+          "d7a_ms": 0.064,
+          "d7b_ms": 52.481
+        },
+        "critic_error_signature": "TypeError: \"Could not resolve authentication method. Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key` or `Authorization` headers to be explic",
+        "critic_error_full_path": null
+      },
+      "ledger_row": {
+        "row_id": "d45ab05f-f48e-48d8-8117-dce39c2ae77c",
+        "batch_id": "5cf76668-47d1-48d7-bd90-db06d31982ed",
+        "api_call_kind": "d7b_critic_live",
+        "backend_kind": "d7b_critic",
+        "call_role": "critique",
+        "estimated_cost_usd": 0.05,
+        "actual_cost_usd": 0.0,
+        "input_tokens": null,
+        "output_tokens": null
+      },
+      "raw_payload_paths": {
+        "prompt": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0017_prompt.txt",
+        "response": null,
+        "traceback": null,
+        "critic_result": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0017_critic_result.json"
+      },
+      "cost": {
+        "estimated_usd": 0.05,
+        "actual_usd": 0.0,
+        "ratio": null
+      },
+      "leakage_audit_result": {
+        "status": "pass",
+        "violations": [],
+        "protected_terms_checked_count": 28
+      },
+      "forbidden_language_scan_result": {
+        "status": "not_reached",
+        "hits": null,
+        "reason": "parse failed before scan completion"
+      },
+      "refusal_scan_result": {
+        "status": "not_reached",
+        "hits": null,
+        "reason": "parse failed before scan completion"
+      },
+      "firing_order": 1,
+      "candidate_position": 17,
+      "candidate_theme": "mean_reversion",
+      "candidate_hypothesis_hash": "17396a8e291dae75",
+      "pre_registered_label": "divergence_expected",
+      "prior_factor_sets_count": 16,
+      "theme_hint_factor_count": 5,
+      "prompt_chars": 5810,
+      "prompt_sha256": "daa986f7e28454f88dae2a793fe74ee7338504e23372684d2991e437a5c1dc24",
+      "call_index_in_sequence": 1,
+      "inter_call_sleep_elapsed_seconds": 0.0,
+      "is_stage2b_overlap": true,
+      "critic_status": "d7b_error",
+      "critic_error_signature": "TypeError: \"Could not resolve authentication method. Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key` or `Authorization` headers to be explic",
+      "actual_cost_usd": 0.0,
+      "d7b_error_category": "api_level"
+    },
+    {
+      "request_timestamp_utc": "2026-04-19T14:05:51.644166Z",
+      "response_timestamp_utc": "2026-04-19T14:05:51.678610Z",
+      "wall_clock_seconds": 0.034,
+      "retry_count": 0,
+      "d7b_mode": "live",
+      "critic_result": {
+        "critic_version": "d7_v1",
+        "critic_status": "d7b_error",
+        "d7b_mode": "live",
+        "d7a_rule_scores": {
+          "theme_coherence": 0.4286,
+          "structural_novelty": 1.0,
+          "default_momentum_fallback": 0.5,
+          "complexity_appropriateness": 0.4
+        },
+        "d7a_supporting_measures": {
+          "factor_set_prior_occurrences": 0,
+          "n_factors": 7,
+          "n_conditions": 8,
+          "description_length": 166,
+          "max_hold_bars": 72,
+          "n_entry_groups": 1,
+          "n_exit_groups": 2
+        },
+        "d7a_rule_flags": [
+          "n_conditions_heavy"
+        ],
+        "d7b_llm_scores": null,
+        "d7b_reasoning": null,
+        "d7b_raw_response_path": null,
+        "d7b_cost_actual_usd": null,
+        "d7b_input_tokens": null,
+        "d7b_output_tokens": null,
+        "d7b_retry_count": 0,
+        "d7b_scan_results": null,
+        "critic_timing_ms": {
+          "d7a_ms": 0.178,
+          "d7b_ms": 14.553
+        },
+        "critic_error_signature": "TypeError: \"Could not resolve authentication method. Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key` or `Authorization` headers to be explic",
+        "critic_error_full_path": null
+      },
+      "ledger_row": {
+        "row_id": "99f07bab-dec8-48b3-be92-fcf182e3c937",
+        "batch_id": "5cf76668-47d1-48d7-bd90-db06d31982ed",
+        "api_call_kind": "d7b_critic_live",
+        "backend_kind": "d7b_critic",
+        "call_role": "critique",
+        "estimated_cost_usd": 0.05,
+        "actual_cost_usd": 0.0,
+        "input_tokens": null,
+        "output_tokens": null
+      },
+      "raw_payload_paths": {
+        "prompt": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0022_prompt.txt",
+        "response": null,
+        "traceback": null,
+        "critic_result": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0022_critic_result.json"
+      },
+      "cost": {
+        "estimated_usd": 0.05,
+        "actual_usd": 0.0,
+        "ratio": null
+      },
+      "leakage_audit_result": {
+        "status": "pass",
+        "violations": [],
+        "protected_terms_checked_count": 28
+      },
+      "forbidden_language_scan_result": {
+        "status": "not_reached",
+        "hits": null,
+        "reason": "parse failed before scan completion"
+      },
+      "refusal_scan_result": {
+        "status": "not_reached",
+        "hits": null,
+        "reason": "parse failed before scan completion"
+      },
+      "firing_order": 2,
+      "candidate_position": 22,
+      "candidate_theme": "mean_reversion",
+      "candidate_hypothesis_hash": "dd38cf9547fa9306",
+      "pre_registered_label": "neutral",
+      "prior_factor_sets_count": 20,
+      "theme_hint_factor_count": 5,
+      "prompt_chars": 6080,
+      "prompt_sha256": "d35bf94c6ea9fc60abca730647802d4871ee44540f2ed830b8f1a07e3aae22fa",
+      "call_index_in_sequence": 2,
+      "inter_call_sleep_elapsed_seconds": 5.005,
+      "is_stage2b_overlap": false,
+      "critic_status": "d7b_error",
+      "critic_error_signature": "TypeError: \"Could not resolve authentication method. Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key` or `Authorization` headers to be explic",
+      "actual_cost_usd": 0.0,
+      "d7b_error_category": "api_level"
+    }
+  ],
+  "write_completed_at": "2026-04-19T14:05:51.681449Z"
+}

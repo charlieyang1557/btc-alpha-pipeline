@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy implements a coherent volatility regime transition logic: entering when realized volatility falls below 0.015 while ATR crosses above its SMA, suggesting compression followed by expansion. The positive return_24h and RSI>48 filters add momentum confirmation. Exit conditions are logical, triggering either on realized_vol expansion above 0.035 with strong returns (capturing the move) or on ATR weakening below its SMA with RSI deterioration. The narrative of institutional positioning shift is speculative but the technical structure is defensible. Theme alignment is strong, utilizing two of three hint factors (atr_14, realized_vol_24h) and explicitly targeting volatility regime transitions. However, structural variant risk is elevated: the factor set {atr_14, realized_vol_24h, return_24h, rsi_14, sma_20} closely resembles prior entry #35 {atr_14, close, realized_vol_24h, return_24h, rsi_14, sma_20}, differing only in using sma_20 as a dynamic reference rather than close as a direct factor. The core combination of volatility measures with momentum and trend filters mirrors established patterns in the batch."
+}
+```

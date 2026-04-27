@@ -1,0 +1,61 @@
+{
+  "critic_version": "d7_v1",
+  "critic_status": "ok",
+  "d7b_mode": "live",
+  "d7a_rule_scores": {
+    "theme_coherence": 0.1667,
+    "structural_novelty": 1.0,
+    "default_momentum_fallback": 0.35,
+    "complexity_appropriateness": 0.4
+  },
+  "d7a_supporting_measures": {
+    "factor_set_prior_occurrences": 0,
+    "n_factors": 6,
+    "n_conditions": 8,
+    "description_length": 259,
+    "max_hold_bars": 168,
+    "n_entry_groups": 1,
+    "n_exit_groups": 2
+  },
+  "d7a_rule_flags": [
+    "thin_theme_momentum_bleed",
+    "n_conditions_heavy"
+  ],
+  "d7b_llm_scores": {
+    "semantic_plausibility": 0.7,
+    "semantic_theme_alignment": 0.85,
+    "structural_variant_risk": 0.75
+  },
+  "d7b_reasoning": "The strategy constructs a coherent logic: enter on early weekdays (Mon-Wed) when momentum indicators align (EMA cross, positive return, RSI>48), exit on late-week overbought (Friday+, RSI>70) or when trend reverses (EMA cross-down with negative hourly return). The 168-bar max hold reinforces the weekly calendar cycle. Theme alignment is strong—day_of_week gates both entry and exit, directly targeting institutional weekday flow patterns mentioned in the description. However, structural_variant_risk is elevated: the factor set {close, day_of_week, ema_26, return_1h, return_24h, rsi_14} overlaps heavily with prior #10 {close, day_of_week, return_1h, return_24h, rsi_14, sma_20} and #15 {close, day_of_week, return_1h, rsi_14, sma_20, sma_50}. The substitution of ema_26 for sma_20/sma_50 and the addition of crosses_above/crosses_below operators represent threshold and moving-average variant tweaks rather than a genuinely distinct structural hypothesis. The core combination of calendar gating with return and RSI momentum filters has been explored multiple times in the prior batch.",
+  "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0055_response.json",
+  "d7b_cost_actual_usd": 0.013776,
+  "d7b_input_tokens": 2787,
+  "d7b_output_tokens": 361,
+  "d7b_retry_count": 0,
+  "d7b_scan_results": {
+    "forbidden_language_scan": {
+      "status": "pass",
+      "hits": [],
+      "terms_checked_count": 21
+    },
+    "refusal_scan": {
+      "status": "pass",
+      "hits": [],
+      "patterns_checked": [
+        "\\bi cannot\\b",
+        "\\bi can't\\b",
+        "\\bunable to\\b",
+        "\\brefuse to\\b",
+        "\\bdecline to\\b",
+        "\\bcannot evaluate\\b",
+        "\\bcan not evaluate\\b"
+      ]
+    }
+  },
+  "critic_timing_ms": {
+    "d7a_ms": 0.173,
+    "d7b_ms": 8549.899
+  },
+  "critic_error_signature": null,
+  "critic_error_full_path": null
+}

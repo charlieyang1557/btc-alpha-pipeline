@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy embodies a coherent contrarian logic: entering when price declines (-1.5% over 24h) coincide with abnormally low volume (z-score < -1), RSI below 45, and negative price z-score, suggesting weak conviction selling. Exit conditions capture either successful mean reversion (positive return with RSI recovery) or deteriorating conditions (volume spike with fresh losses). The narrative of volume divergence signaling exhaustion is economically sensible for fade strategies. Theme alignment is strong because volume_zscore_24h is central to both entry and exit logic, directly addressing volume divergence. However, structural variant risk is elevated: the factor set {return_1h, return_24h, rsi_14, volume_zscore_24h, zscore_48} closely resembles prior #9 {close, return_1h, return_24h, rsi_14, sma_50, volume_zscore_24h} and #11 {macd_hist, return_1h, return_24h, rsi_14, volume_zscore_24h}. The substitution of zscore_48 for close/sma_50/macd_hist represents threshold recalibration rather than a fundamentally different structural bet on market dynamics."
+}
+```

@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.6500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.9000,
+  "reasoning": "The strategy logic combines declining volume (volume_zscore_24h < -0.5) with negative returns and oversold RSI to identify exhaustion reversals, which forms a coherent narrative. However, requiring close > sma_50 contradicts the bearish setup, creating tension in the entry logic. Exit conditions blend momentum recovery (RSI > 60, volume_zscore_24h > 0.5) with absolute return targets, offering multiple paths out. The theme alignment is strong: volume divergence is the core signal, with low volume during price decline signaling diminished selling pressure. Structurally, the factor set {close, return_24h, rsi_14, sma_50, volume_zscore_24h} appears verbatim in prior #36, making this a clear threshold variant. The entry thresholds differ (return < -0.01 vs other values, RSI 40 vs other levels, added sma_50 filter), but the structural composition is identical, elevating variant risk substantially. The strategy represents minor calibration rather than a fundamentally new structural bet within the batch."
+}
+```

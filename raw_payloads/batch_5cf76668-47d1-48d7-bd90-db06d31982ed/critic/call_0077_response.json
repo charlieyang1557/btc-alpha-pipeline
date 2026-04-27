@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.3000,
+  "semantic_theme_alignment": 0.4000,
+  "structural_variant_risk": 0.9000,
+  "reasoning": "The strategy exhibits a logical inconsistency in its entry condition: it requires close to cross below bb_upper_24_2 (the upper band), not the lower band as the description claims. Crossing below the upper band signals weakening upward momentum but not oversold conditions. The combination of realized_vol_24h < 0.025 and rsi_14 < 40 adds filters but the primary Bollinger band signal contradicts the stated mean reversion logic. Exit conditions combine mean reversion targets (crossing above sma_24, rsi_14 > 55) with a profit target (return_24h > 0.04), which is internally coherent. Theme alignment is moderate: the strategy uses Bollinger bands and RSI which are standard mean reversion tools, but the entry trigger targets the wrong band extreme. Structurally, the factor set {bb_upper_24_2, close, realized_vol_24h, return_24h, rsi_14, sma_24} is nearly identical to prior #17 which uses the exact same six factors, differing only in threshold values and operator choices (crosses_below vs other comparisons). This represents a shallow threshold variant rather than a novel structural approach."
+}
+```

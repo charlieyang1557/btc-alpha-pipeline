@@ -440,7 +440,7 @@ class TestFactorVsScalar:
         stays above for 50 more bars must fire crosses_above exactly once.
 
         This is the test that catches the "naive single-bar comparison"
-        bug described in PHASE2_BLUEPRINT_v2.md D2.
+        bug described in PHASE2_BLUEPRINT.md D2.
         """
         level = 50.0
         # Values: 30 bars at 10, one cross, then 50 bars at 60.

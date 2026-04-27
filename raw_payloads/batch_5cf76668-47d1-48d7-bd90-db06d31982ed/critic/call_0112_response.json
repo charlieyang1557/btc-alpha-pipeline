@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.3500,
+  "semantic_theme_alignment": 0.7500,
+  "structural_variant_risk": 0.9000,
+  "reasoning": "The strategy targets mean reversion via Bollinger band overshoots, z-score extremes, and oversold RSI conditions combined with declining volatility. Entry logic contains an internal contradiction: requiring close < bb_upper_24_2 is trivially true in almost all cases (only excluding extreme upward spikes), making this condition meaningless for detecting lower band violations. The description claims entry when price crosses below lower band, but the DSL does not check bb_lower; instead it uses z-score < -1.8 as a proxy. The realized_vol_24h < 0.015 filter adds a volatility regime constraint that could enhance timing. Exit paths blend mean reversion completion (zscore > 0, RSI > 55) with profit-taking (return_24h > 3.5% plus SMA crossover), forming reasonable dual logic. Thematically, the strategy aligns well with mean reversion intuition: entering oversold extremes and exiting upon normalization. Structurally, the factor set {bb_upper_24_2, close, realized_vol_24h, return_24h, rsi_14, sma_24, zscore_48} appears in prior #17 and #21 exactly, differing only in threshold values (e.g., zscore -1.8 vs other cutoffs, RSI 35 vs other levels). This constitutes a clear parameter variant rather than novel structural hypothesis."
+}
+```

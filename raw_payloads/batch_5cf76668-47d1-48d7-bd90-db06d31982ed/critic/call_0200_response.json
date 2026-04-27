@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.6500,
+  "semantic_theme_alignment": 0.7500,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy combines weekend timing (day_of_week >= 5) with volatility and mean-reversion signals. Entry logic chains four conditions: weekend detection, elevated realized volatility (>3.5%), oversold RSI (<35), and negative 24h return (<-1.5%). Exit offers two paths: Monday midday timing or a profit-taking/RSI recovery condition. The economic story—that weekend volatility spikes fade upon Monday reopening—has theoretical merit but assumes crypto markets exhibit weekend effects despite 24/7 trading, which is debatable. The dual exit structure is coherent, balancing time-based and signal-based closes. Theme alignment is reasonable given explicit use of day_of_week and hour_of_day, though the core alpha driver appears to be volatility mean reversion rather than pure calendar effects. Structurally, the factor set {day_of_week, hour_of_day, realized_vol_24h, return_1h, return_24h, rsi_14} appears in prior #78, making this a threshold and operator variant rather than a genuinely novel factor combination. The high structural overlap with an existing hypothesis elevates variant risk substantially."
+}
+```

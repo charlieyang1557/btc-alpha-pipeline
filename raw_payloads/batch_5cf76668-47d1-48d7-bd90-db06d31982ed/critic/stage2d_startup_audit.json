@@ -1,0 +1,73 @@
+{
+  "stage_label": "d7_stage2d",
+  "batch_uuid": "5cf76668-47d1-48d7-bd90-db06d31982ed",
+  "mode": "live",
+  "startup_gates_passed": true,
+  "startup_completed_at_utc": "2026-04-23T22:33:49.509341Z",
+  "git_head": "bcd22888b8a6d49f17af5f2d7eb05334a052e1a5",
+  "python_version": "3.11.8",
+  "os_platform": "macOS-26.1-arm64-arm-64bit",
+  "startup_audit": [
+    {
+      "gate": "self_check_subprocess",
+      "status": "pass",
+      "exit_code": 0,
+      "stdout_tail": "stage2d_self_check (Task 3b.3 complete: 28/28 gates active) | target=docs/d7_stage2d/stage2d_expectations.md\n──────────────────────────────────────────────────────────────────────────────\nPASS L12-01   file exists, UTF-8 valid (stage2d_expectations.md, 49585 bytes)\nPASS L12-02   all 10 required canonical headers present; 2 permitted additional (['§6.5 — Theme-Stratified Sub-Claims', '§6.6 — Plausibility / Alignment Observation Axes']); 0 unexpected extras\nPASS L12-03   SHA256 found near label_universe_analysis.json reference (filename line 34, SHA line 35, ±1 line(s) away): ecd52a9e7656...\nPASS L12-04   replay_candidates.json: 200 entries, 199 replay-eligible, pos 116 is_skipped_source=True\nPASS L12-05   deep_dive_candidates.json: 20 entries, no pos 116, no Stage 2c-20 overlap\nPASS L12-06   test_retest_baselines.json: 20 entries, positions ⊆ STAGE2C_POSITIONS, all 5 score fields populated\nPASS L12-07   §E3 Tier 1 grid: 5 rows, positions [17, 73, 74, 97, 138]\nPASS L12-08   §E3 Tier 2 grid: 15 rows, matches test_retest_baselines tier-2 set\nPASS L12-09   §E4 deep-dive: 20 positions, all in deep_dive_candidates.json\nPASS L12-10   9 of 9 fresh eligible-pool positions present in §E4 deep-dive (≥3 required); positions=[122, 127, 128, 129, 132, 172, 178, 182, 187]\nPASS L12-11   §6.2.1 TBD-A1 (≥52) and §6.2.2 TBD-A2 (≥4) numerically resolved\nPASS L12-12   §6.3 TBD-DIST resolved: (a) ≥90 at SVR≥0.80, (b) ≥30 at SVR≤0.30\nPASS L12-13   §6.4 cites fresh-7 set, threshold ≥2, SVR<0.5 framing\nPASS L12-14   no sub-group hypothesis language in §E4 (scanned 5 fields × 20 blocks)\nPASS L12-15   all aggregate-claim threshold expressions single-line in §6.1-§6.4 + §E3\nPASS L12-16   §Position 116 Treatment references call_116_live_call_record.json\nPASS L12-17   Universe A (n=29) / Universe B (n=199) cite label_universe_analysis.json; no count drift\nPASS FMT-01   §E4 per-candidate block count = 20\nPASS FMT-02   20/20 blocks contain numbered+ordered 6-label skeleton\nPASS FMT-02b  UA metadata: 9 present (fresh-9), 11 absent (non-fresh-9)\nPASS FMT-03   SVR bucket labels match rubric in §E3 grids + §E4 field 4\nPASS FMT-04   §E3 OR-buckets confined to positions [72, 74, 83, 138] and sealed pairs; §E4 single-bucket throughout\nPASS FMT-05   §E3 defects subsection present with Issue B, Issue D, Path A, audit trail\nPASS FMT-06   '## Remaining Candidates (Schema-Level Only)' header present verbatim\nPASS FMT-07   '## Position 116 Treatment — brief reference to Lock 1.5' header present verbatim\nPASS FMT-08   all 11 Lock 1.5 schema field-name strings present\nPASS FMT-09   '**three distinct counters**' bolding present in §Position 116 Treatment\nPASS FMT-11   3/3 cross-consistency sets match (FRESH_9, TIER_1, STAGE2C)\n──────────────────────────────────────────────────────────────────────────────\nSUMMARY (28 counted gates): 28 PASS, 0 WARN, 0 FAIL, 0 SKIP | 0 harness WARN | runtime=0.01s\nEXIT 0\n"
+    },
+    {
+      "gate": "replay_candidates_exists_and_parses",
+      "status": "pass"
+    },
+    {
+      "gate": "replay_candidates_sha_anchor",
+      "status": "pass",
+      "anchor_commit": "2771bef",
+      "sha256": "05706642cbeb5014d5072c172b343b01ee56d0eb8ee45afb2f3ce6e56665907e"
+    },
+    {
+      "gate": "replay_candidates_invariants",
+      "status": "pass",
+      "source_n": 200,
+      "live_n": 199
+    },
+    {
+      "gate": "expectations_exists",
+      "status": "pass",
+      "sha256": "98b87a702cc80df2d993d51857d4142f93f2ab8be66438bd2937c5dd374010a5"
+    },
+    {
+      "gate": "expectations_committed",
+      "status": "pass",
+      "selection_commit_ts": 1776618155,
+      "expectations_commit_ts": 1776736033,
+      "selection_commit_timestamp_utc": "2026-04-19T17:02:35Z",
+      "expectations_commit_timestamp_utc": "2026-04-21T01:47:13Z"
+    },
+    {
+      "gate": "prompt_template_sha",
+      "status": "pass",
+      "sha256": "f2d6e9d5856be025a2109a1440f8980a3d786bc5cdd284f4d414d06a4680eda7"
+    },
+    {
+      "gate": "read_only_inputs",
+      "status": "pass",
+      "test_retest_baselines_sha256": "5840b90a57206b01e8109ea73b549cf50089964f5cb1f9f7e83b963569adac2f",
+      "deep_dive_candidates_sha256": "6cdcd1d22d785d6d58317f61cd62fe8b3340bd22f1ec7c7dcb90e5d2b2da7ce7",
+      "label_universe_analysis_sha256": "ecd52a9e7656d31d13a8e62ec11a7345f8966343172fbfc3f95add2762b3e4a0"
+    },
+    {
+      "gate": "aggregate_record_absent",
+      "status": "pass"
+    },
+    {
+      "gate": "partial_prior_run",
+      "status": "pass",
+      "note": "placeholder_check_refine_at_main_loop_authoring"
+    },
+    {
+      "gate": "stage2c_archival",
+      "status": "pass",
+      "archive_file_count": 60
+    }
+  ]
+}

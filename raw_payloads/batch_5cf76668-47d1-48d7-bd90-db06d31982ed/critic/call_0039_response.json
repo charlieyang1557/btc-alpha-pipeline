@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.4500,
+  "semantic_theme_alignment": 0.7000,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy employs a price breakout above SMA-50 combined with below-normal volume (volume_zscore_24h < -0.5) as its core entry logic. The narrative claims low-volume breakouts indicate institutional accumulation, though this interpretation is debatable since institutional buying typically creates volume. Entry also requires positive return_24h and RSI above 45, adding momentum and strength filters. Exit logic includes both price crossing below SMA-50 and a spike in volume with negative returns, which shows internal consistency. However, the economic story is questionable: breakouts on declining volume are often fragile and associated with retail positioning rather than institutional activity. Theme alignment is moderate since volume_zscore_24h is central to the entry condition. Structural risk is elevated because the factor set {close, return_24h, rsi_14, sma_50, volume_zscore_24h} appears nearly identical to prior entry #9 and very similar to #14, differing only in threshold values rather than underlying structural composition."
+}
+```

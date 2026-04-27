@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.9500,
+  "reasoning": "The strategy implements a coherent mean reversion logic: enter when price is below Bollinger bands (though the condition checks bb_upper_24_2 instead of bb_lower), RSI shows oversold (<35), z-score confirms extreme deviation (<-1.5), and recent returns are negative. Exit occurs either when price reverts above SMA_24 with RSI recovery, or via quick profit-taking (2.5% gain). This logical flow is internally consistent and economically defensible for mean reversion trading. Theme alignment is strong - the strategy employs canonical mean reversion indicators (Bollinger bands, z-score, moving averages) and captures the economic intuition of buying extreme deviations expecting reversion to mean. However, structural variant risk is extremely high: the factor set {bb_upper_24_2, close, return_1h, return_24h, rsi_14, sma_24, zscore_48} appears nearly identical to prior entry #2 {bb_upper_24_2, close, return_24h, sma_24, zscore_48} and multiple other Bollinger-RSI-zscore combinations in positions #7, #17, #21, #29, #34, and #43. The addition of return_1h in exit conditions represents only a marginal structural variation rather than a genuinely distinct hypothesis."
+}
+```

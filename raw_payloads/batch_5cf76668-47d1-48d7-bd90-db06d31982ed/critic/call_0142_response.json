@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.4500,
+  "semantic_theme_alignment": 0.7000,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy claims to capture mean reversion via Bollinger bands and oversold RSI, but the entry condition compares close to bb_upper_24_2 (upper band), not the lower band as described. This inconsistency undermines internal logic. The exit logic combining zscore normalization, RSI recovery, and a profit target is coherent for mean reversion. Theme alignment is moderate: zscore_48, rsi_14, and realized_vol_24h all support mean reversion intuition, and bb_upper_24_2 is a theme hint factor, though misapplied. Structural variant risk is high: the factor set {bb_upper_24_2, close, realized_vol_24h, return_24h, rsi_14, zscore_48} exactly matches prior entry #60, differing only in threshold values (RSI 35 vs others, zscore -1.5 vs others). This represents a shallow parameter tweak rather than a structurally novel hypothesis."
+}
+```

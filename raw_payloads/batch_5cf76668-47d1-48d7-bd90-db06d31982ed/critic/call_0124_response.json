@@ -1,0 +1,9 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.3000,
+  "reasoning": "The strategy exhibits coherent logic: entering when volume_zscore_24h exceeds 2.0 during oversold conditions (rsi_14 < 35) with price below sma_20, then exiting on either RSI recovery above 55, price crossing above sma_20, or a 3.5% gain. This captures a plausible accumulation divergence narrative where unusually high volumes during technical weakness signal potential reversal. The theme alignment is strong, as the core thesis centers on volume_zscore_24h diverging from price weakness—exactly matching the volume_divergence theme's intent. The factor set {close, return_24h, rsi_14, sma_20, volume_zscore_24h} shows moderate structural overlap with prior #36 {close, return_24h, rsi_14, sma_50, volume_zscore_24h} and #55 {close, return_1h, return_24h, rsi_14, sma_20, volume_zscore_24h}. However, this strategy uniquely combines sma_20 (not sma_50) with the specific oversold threshold of 35 and volume threshold of 2.0, creating a distinct structural configuration focused on shorter-term mean reversion rather than blending multiple return horizons. The exit logic with dual crosses_above operators adds structural differentiation.",
+  "structural_variant_risk": 0.3000
+}
+```

@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.9500,
+  "reasoning": "The strategy exhibits coherent internal logic: MACD histogram crossing above zero signals momentum shift, RSI above 50 confirms directional bias, and volume z-score above 0.5 validates participation. Exit logic is sensible with histogram reversal or RSI weakening below 45, plus profit-taking at 4%. The narrative of capturing momentum acceleration with institutional validation is defensible. Theme alignment is strong—all factors (macd_hist, rsi_14, volume_zscore_24h, return_24h) directly relate to momentum measurement and are present in the theme hint vocabulary. However, structural variant risk is very high: the factor set {macd_hist, rsi_14, volume_zscore_24h} exactly matches prior #33 in the batch list, with return_24h also appearing in exit conditions (similar to many priors). The only structural difference from #33 is the addition of return_24h in exit, making this a threshold-level variation rather than a genuinely distinct structural bet. This represents minimal factor-set innovation despite coherent trading logic."
+}
+```

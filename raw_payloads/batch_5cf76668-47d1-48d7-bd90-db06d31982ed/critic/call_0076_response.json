@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.9500,
+  "reasoning": "The strategy combines MACD histogram zero-crossing (momentum expansion) with RSI<50 (not yet overbought) and price above SMA(20) (uptrend confirmation) for entry, creating a coherent narrative of capturing momentum reversals before they become overheated. The exit logic uses MACD histogram crossing below zero OR RSI>70 (overbought) OR a 5% 24-hour return target, providing multiple rational exit paths. However, the logic contains a subtle tension: requiring RSI<50 while demanding price above SMA(20) and positive MACD histogram may limit opportunities, as these conditions often occur at different regime phases. The factors align well with the momentum theme, using macd_hist, rsi_14, and return_24h from the hint list. The structural variant risk is very high because the exact factor set {close, macd_hist, rsi_14, sma_20} appears as the 6th prior entry in the batch. This strategy differs only in threshold values (RSI<50 vs other cuts, specific MACD zero-crossing semantics) and the addition of return_24h in exit conditions, making it a clear threshold/operator variant rather than a structurally novel approach."
+}
+```

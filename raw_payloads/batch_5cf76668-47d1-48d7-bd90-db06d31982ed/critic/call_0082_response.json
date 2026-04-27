@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.2500,
+  "semantic_theme_alignment": 0.4000,
+  "structural_variant_risk": 0.9500,
+  "reasoning": "The strategy exhibits a fundamental contradiction: it enters long when price touches the Bollinger upper band (typically indicating overbought conditions) while simultaneously requiring RSI below 40 (oversold), negative 24h returns, and high positive z-score above 1.2 (indicating the price is elevated relative to recent distribution). This combination is internally inconsistent—a price simultaneously at the upper Bollinger band and showing oversold RSI with negative recent returns is a rare, unstable configuration that undermines plausibility. The theme alignment is partial: while mean reversion is invoked and Bollinger bands plus z-score are theme-appropriate factors, the entry logic contradicts standard mean-reversion intuition (buying overbought extremes). The factor set {bb_upper_24_2, close, return_24h, rsi_14, sma_24, zscore_48} exactly matches prior hypothesis #29 in the batch list, differing only in threshold values (RSI 40 vs other cutoffs, z-score 1.2 vs alternatives). This represents a clear structural duplicate with minor parameter tweaks rather than a novel factor combination."
+}
+```

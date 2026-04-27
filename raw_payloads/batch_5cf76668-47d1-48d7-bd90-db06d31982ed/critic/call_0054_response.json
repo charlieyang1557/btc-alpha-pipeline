@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.3500,
+  "semantic_theme_alignment": 0.6500,
+  "structural_variant_risk": 0.8000,
+  "reasoning": "The strategy posits that low volume (z-score < -0.5) combined with upward price momentum signals institutional accumulation before a breakout. However, the internal logic contains a tension: the entry requires subdued volume while the exit triggers on volume surge (z-score > 1.5), yet the narrative claims light volume precedes acceleration. The alternative exit on price crossing below EMA-12 with negative 1h return provides downside protection but introduces asymmetry in the volume thesis. Theme alignment is moderate-to-good: volume_zscore_24h is the core hint factor and drives both entry and exit logic, capturing divergence between volume regime and price action. Structural risk is high because the factor set {close, ema_12, return_1h, return_24h, rsi_14, volume_zscore_24h} closely overlaps with prior #9 {close, return_1h, return_24h, rsi_14, sma_50, volume_zscore_24h} and #19 {close, macd_hist, return_1h, rsi_14, sma_20, volume_zscore_24h}. The substitution of ema_12 for sma_50/sma_20 and omission of macd_hist or sma represent threshold/operator adjustments rather than a fundamentally new structural hypothesis."
+}
+```

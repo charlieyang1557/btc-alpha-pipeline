@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7000,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.9500,
+  "reasoning": "The strategy exhibits coherent internal logic: entering when realized volatility spikes above a threshold while price momentum (SMA breakout and MACD histogram) confirms upward movement, then exiting when volatility subsides or price reverses. The dual exit path (vol compression OR profit target) adds defensible flexibility. Theme alignment is strong; realized_vol_24h is a core theme hint factor, and the narrative of capturing regime shifts in crypto volatility is economically sound. However, structural variant risk is very high. The factor set {close, ema_12, ema_26, macd_hist, realized_vol_24h, return_24h, sma_50} appears in the third prior entry and is nearly identical. This hypothesis uses {close, macd_hist, realized_vol_24h, return_168h, sma_50}, differing only by substituting return_168h for {ema_12, ema_26, return_24h}. The core structure—realized vol with MACD and SMA trend filters—remains unchanged, representing primarily a threshold and timeframe tweak rather than a fundamentally distinct structural approach."
+}
+```

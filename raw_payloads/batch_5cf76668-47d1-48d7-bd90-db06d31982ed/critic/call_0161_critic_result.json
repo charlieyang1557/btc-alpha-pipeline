@@ -1,0 +1,60 @@
+{
+  "critic_version": "d7_v1",
+  "critic_status": "ok",
+  "d7b_mode": "live",
+  "d7a_rule_scores": {
+    "theme_coherence": 0.5,
+    "structural_novelty": 1.0,
+    "default_momentum_fallback": 1.0,
+    "complexity_appropriateness": 0.55
+  },
+  "d7a_supporting_measures": {
+    "factor_set_prior_occurrences": 0,
+    "n_factors": 6,
+    "n_conditions": 7,
+    "description_length": 231,
+    "max_hold_bars": 144,
+    "n_entry_groups": 1,
+    "n_exit_groups": 2
+  },
+  "d7a_rule_flags": [
+    "n_conditions_heavy"
+  ],
+  "d7b_llm_scores": {
+    "semantic_plausibility": 0.75,
+    "semantic_theme_alignment": 0.9,
+    "structural_variant_risk": 0.75
+  },
+  "d7b_reasoning": "The strategy combines classic momentum indicators (EMA crossover, MACD histogram, RSI) into a coherent entry logic requiring simultaneous confirmation across trend, momentum oscillator, and relative strength dimensions. The crosses_above operator on close versus ema_12, coupled with ema_12 > ema_26, establishes directional trend alignment. MACD histogram positivity and RSI > 55 add momentum confirmation. Exit logic offers dual paths: momentum reversal (MACD < 0 and RSI < 45) or profit target (4% return_24h). This structure is defensible for capturing momentum continuation phases. Theme alignment is strong, using four of five hint factors (macd_hist, return_24h, rsi_14, plus derived return_24h in exit). However, the factor set {close, ema_12, ema_26, macd_hist, return_24h, rsi_14} appears very similar to prior entry #42 {close, ema_26, macd_hist, return_24h, rsi_14} and #59 {close, ema_12, macd_hist, return_24h, rsi_14}, differing mainly by including both EMAs simultaneously. The structural pattern of combining MACD, RSI, EMAs, close, and return_24h has been explored extensively in the batch, making this a threshold/condition refinement rather than a novel structural bet.",
+  "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0161_response.json",
+  "d7b_cost_actual_usd": 0.020439,
+  "d7b_input_tokens": 4898,
+  "d7b_output_tokens": 383,
+  "d7b_retry_count": 0,
+  "d7b_scan_results": {
+    "forbidden_language_scan": {
+      "status": "pass",
+      "hits": [],
+      "terms_checked_count": 21
+    },
+    "refusal_scan": {
+      "status": "pass",
+      "hits": [],
+      "patterns_checked": [
+        "\\bi cannot\\b",
+        "\\bi can't\\b",
+        "\\bunable to\\b",
+        "\\brefuse to\\b",
+        "\\bdecline to\\b",
+        "\\bcannot evaluate\\b",
+        "\\bcan not evaluate\\b"
+      ]
+    }
+  },
+  "critic_timing_ms": {
+    "d7a_ms": 0.165,
+    "d7b_ms": 11120.227
+  },
+  "critic_error_signature": null,
+  "critic_error_full_path": null
+}

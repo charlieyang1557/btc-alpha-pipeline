@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy employs a coherent mean-reversion narrative: entering long on Sunday (day_of_week==6) when realized_vol_24h exceeds 3.5%, price sits below sma_20, and rsi_14 is below 40, expecting normalization during weekday sessions. Exit logic is reasonable with two paths: Monday exit if return_24h>1.5%, or volatility normalization when close crosses above sma_20 and realized_vol_24h drops below 2.5%. The 72-bar max hold provides prudent risk control. This aligns well with calendar_effect themes by anchoring trade timing to weekend/weekday regime shifts and exploiting systematic weekend illiquidity patterns. However, the factor set {close, day_of_week, realized_vol_24h, return_24h, rsi_14, sma_20} appears in the prior list (entry 41 and 49 with minor variations, entry 85 exactly), indicating this is largely a threshold adjustment of an existing structural approach rather than a novel factor combination. The specific thresholds (3.5% vol, RSI<40, 1.5% return) differ but the underlying structural bet remains substantially similar."
+}
+```

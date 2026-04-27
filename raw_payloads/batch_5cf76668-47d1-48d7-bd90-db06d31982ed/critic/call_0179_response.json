@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.3500,
+  "semantic_theme_alignment": 0.7500,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy articulates a volume divergence thesis: price strength (return_24h > 3%) with below-average volume (volume_zscore_24h < -0.5) allegedly signals institutional accumulation. However, the economic logic is questionable—rising prices on declining volume typically suggests weakening conviction, not hidden accumulation. The exit logic mixing volume surge with RSI overbought or fixed return targets creates internal tension. Theme alignment is strong given explicit use of volume_zscore_24h and focus on volume-price dynamics. Structurally, this factor set {close, ema_26, return_24h, return_168h, rsi_14, volume_zscore_24h} closely resembles multiple prior entries. Specifically, entry 26 uses {return_24h, rsi_14, volume_zscore_24h}, entry 36 uses {close, return_24h, rsi_14, sma_50, volume_zscore_24h}, and entry 70 uses {close, return_24h, rsi_14, sma_20, volume_zscore_24h}. The addition of ema_26 and return_168h represents minor incremental variation rather than a novel structural hypothesis, placing this at high risk of being a threshold tweak of established combinations."
+}
+```

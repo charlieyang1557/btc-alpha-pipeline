@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy exhibits coherent internal logic by combining MACD histogram crosses with RSI thresholds and positive recent returns to capture momentum convergence. Entry requires three confirming signals (MACD crossing zero, RSI above 55, and positive 24h return), while exit offers two alternative paths: either momentum reversal (MACD crosses below zero with RSI dropping) or profit-taking at strong overbought levels. This multi-condition structure creates defensible trade logic. Theme alignment is strong, utilizing macd_hist, rsi_14, and return_24h—all core momentum hint factors—to detect trend acceleration. The description accurately reflects the factor choices. However, structural variant risk is high: the factor set {macd_hist, return_24h, rsi_14} precisely matches entry #28 in the prior list. While threshold values differ (RSI 55 vs potentially other cutoffs, plus the crosses_above operator), the fundamental factor combination is identical, making this a threshold/operator variation rather than a structurally novel approach."
+}
+```

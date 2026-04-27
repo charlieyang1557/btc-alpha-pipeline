@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.9500,
+  "reasoning": "The strategy demonstrates coherent internal logic: entry requires volume_zscore_24h > 2.0 (exceptional volume), price above sma_50 (uptrend), positive return_24h > 0.01, and rsi_14 > 52 (mild momentum confirmation). Exit logic uses dual paths—either volume collapse with negative short-term return, or profit-taking at 6% gain with overbought RSI. This breakout-confirmation narrative is economically sound. The theme alignment is strong: volume_zscore_24h is the core theme factor and functions as the primary signal gating entry, directly addressing volume divergence dynamics. However, structural variant risk is very high: the factor set {close, return_1h, return_24h, rsi_14, sma_50, volume_zscore_24h} matches prior entry #9 exactly. The only differences are threshold values (volume_zscore 2.0 vs likely other values, rsi_14 > 52 vs other thresholds). This represents a parametric variant rather than a structurally novel hypothesis, as the fundamental factor combination has already been explored in this batch."
+}
+```

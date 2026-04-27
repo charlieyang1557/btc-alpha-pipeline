@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy implements a mean-reversion logic with entry on oversold conditions (RSI < 35, zscore < -1.5, close < bb_upper) during elevated volatility (realized_vol_24h > 0.015), exiting when RSI rebounds above 65 or zscore normalizes above 0.5, or on a 2.5% gain. This structure is coherent: it identifies statistical extremes and waits for reversion. However, the entry uses bb_upper rather than bb_lower as described, creating a logical inconsistency since price below the upper band is normal, not extreme. The theme alignment is strong, utilizing Bollinger bands, z-scores, and RSI—all core mean-reversion constructs from the hint vocabulary. The exit on zscore normalization and RSI recovery reinforces the reversion thesis. Structural variant risk is high: the factor set {bb_upper_24_2, close, realized_vol_24h, return_24h, rsi_14, zscore_48} is nearly identical to prior entry #60, differing only in that return_24h appears in exit rather than entry. This represents threshold retuning of an existing structural bet rather than a genuinely novel factor combination."
+}
+```

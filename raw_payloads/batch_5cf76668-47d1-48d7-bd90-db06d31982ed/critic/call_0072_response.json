@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy logic is internally coherent: it enters when price touches a Bollinger band threshold with RSI under 30, volatility spike above 0.03, and z-score under -1.5, all indicating extreme oversold conditions. Exit logic pairs RSI mean reversion crossing 50 with z-score normalization, plus a 4% profit target, which is sensible for capturing rebounds. The mean reversion theme alignment is strong, combining Bollinger bands, z-score, and RSI—all canonical mean reversion indicators. The volatility spike filter adds a volatility expansion lens consistent with crypto market dynamics. However, structural variant risk is elevated: the factor set {bb_upper_24_2, close, realized_vol_24h, return_24h, rsi_14, zscore_48} appears as prior #17, differing only by the presence of sma_24 there and its absence here. The current strategy uses identical core factors (bb_upper_24_2, close, realized_vol_24h, rsi_14, zscore_48) with return_24h in exit, making this a threshold-adjusted variant rather than a structurally novel approach. The bb_upper comparison in entry uses < instead of the typical lower band reference, which is unusual but interpretable as a constraint rather than the primary signal."
+}
+```

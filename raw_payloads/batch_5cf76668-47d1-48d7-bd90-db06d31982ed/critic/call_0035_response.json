@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.6500,
+  "semantic_theme_alignment": 0.7500,
+  "structural_variant_risk": 0.2500,
+  "reasoning": "The strategy constructs a coherent narrative: enter long Monday-Wednesday when 24h momentum is positive, price exceeds sma_20, and rsi_14 indicates strength, then exit either late week (Thursday+) with negative returns or on stop-loss conditions. The entry logic combining calendar timing with momentum and trend confirmation is internally consistent. The exit uses disjunctive conditions (late-week weakness OR downside breach), which is structurally sound. Theme alignment is strong because day_of_week is the primary structural filter, directly implementing a calendar effect hypothesis around early-week institutional flows. The factor set {close, day_of_week, return_24h, rsi_14, sma_20} appears in prior #10, making this a close structural relative. However, the exit logic differs meaningfully: this strategy uses day_of_week in the exit condition itself (>=4) combined with negative returns, whereas prior #10 likely used different exit mechanics. The calendar-driven exit timing adds structural distinction beyond a simple threshold tweak, though the core entry factors overlap substantially with an existing hypothesis."
+}
+```

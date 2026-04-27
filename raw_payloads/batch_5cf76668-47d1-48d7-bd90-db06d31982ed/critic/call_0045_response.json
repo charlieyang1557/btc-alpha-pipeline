@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.6500,
+  "semantic_theme_alignment": 0.7500,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy exhibits moderate internal coherence. Entry logic combines day_of_week calendar signal with momentum (return_24h > 1%, rsi_14 > 50, macd_hist > 0), creating a multi-layer filter that requires Monday plus upward momentum. Exit paths include both profit-taking (2.5% gain with RSI > 65) and calendar-based closure (Friday with negative return), which aligns with the weekday effect narrative. However, the description claims Monday reversals yet the entry requires continuation (positive return), creating conceptual tension. Theme alignment is strong: day_of_week is a core calendar factor, and the Monday-specific entry with Friday exit explicitly targets weekday patterns. The 120-bar max hold supports intra-week positioning. Structural variant risk is elevated because the factor set {day_of_week, macd_hist, return_24h, rsi_14} closely resembles prior #28 {macd_hist, return_24h, rsi_14} and #32 {close, day_of_week, return_24h, rsi_14, sma_20}, differing primarily by substituting sma_20 with macd_hist or adding/removing close. This represents threshold and minor factor permutation rather than a fundamentally novel structural approach."
+}
+```

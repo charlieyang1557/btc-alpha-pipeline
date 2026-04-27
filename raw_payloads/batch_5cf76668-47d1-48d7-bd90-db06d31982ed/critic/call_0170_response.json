@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.3000,
+  "reasoning": "The strategy presents a coherent Monday mean-reversion thesis: enter long when Monday shows weekly decline (return_168h < -3%), price below SMA(50), and RSI oversold (< 38). Exit logic combines technical recovery (price crosses above SMA(50) with RSI > 55) or quick profit-taking (return_24h > 4%). The max_hold_bars of 120 provides downside protection. The calendar effect alignment is strong, explicitly using day_of_week == 0 (Monday) as the primary timing mechanism, consistent with institutional flow narratives around week-start behavior. The factor set {close, day_of_week, return_168h, rsi_14, sma_50} shares structural similarity with prior hypothesis #51 which used {close, day_of_week, return_168h, return_1h, return_24h, rsi_14, sma_50}. Both leverage day_of_week with return_168h, rsi_14, close, and sma_50. The current strategy omits return_1h and return_24h from entry conditions but the core calendar + weekly decline + RSI + SMA structure is largely overlapping. This represents moderate variant risk rather than complete novelty, though the specific threshold choices and exit mechanics differ meaningfully."
+}
+```

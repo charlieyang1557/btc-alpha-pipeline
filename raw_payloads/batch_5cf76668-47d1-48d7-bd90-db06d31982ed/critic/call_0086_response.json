@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.8000,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy exhibits strong internal coherence: MACD histogram crossing above zero signals momentum shift, volume_zscore_24h > 0.8 confirms participation, RSI > 48 prevents premature entry in weak conditions, and close > sma_20 ensures uptrend context. Exit logic is sensible with momentum reversal (MACD crosses below zero OR RSI overbought > 70) and a stop-loss at -3.5%. The narrative of capturing early momentum acceleration with volume confirmation is economically defensible. Theme alignment is excellent: MACD histogram and RSI are explicitly listed hint factors, and the strategy captures momentum directional conviction through multi-indicator convergence. However, structural variant risk is high. The factor set {close, macd_hist, rsi_14, sma_20, volume_zscore_24h} closely matches prior entry #19 {close, macd_hist, return_1h, rsi_14, sma_20, volume_zscore_24h}, differing only in the substitution of return_1h with volume_zscore_24h in the prior. Both strategies share the same core momentum infrastructure (MACD, RSI, SMA trend filter, volume) with only minor factor swaps. This represents a shallow variant rather than a structurally distinct approach."
+}
+```

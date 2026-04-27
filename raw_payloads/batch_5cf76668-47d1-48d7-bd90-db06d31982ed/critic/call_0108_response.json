@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7000,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy proposes a coherent narrative: entering when realized volatility crosses above a threshold while momentum indicators (MACD histogram positive, EMA-12 above EMA-26, positive 1h return) confirm directional bias. The exit logic includes both mean-reversion (volatility dropping, MACD turning negative) and profit-taking scenarios (5% gain with RSI above 75). This forms a defensible trading story around volatility regime transitions. Theme alignment is strong: the strategy centers on realized_vol_24h crossover events, directly invoking the volatility_regime concept and using a theme-hint factor. The economic intuition that volatility expansion precedes trending moves is reasonable. However, structural variant risk is elevated because the factor set {ema_12, ema_26, macd_hist, realized_vol_24h, return_1h, return_24h, rsi_14} closely resembles prior #3 {close, ema_12, ema_26, macd_hist, realized_vol_24h, return_24h, sma_50} and #18 {close, ema_12, ema_26, realized_vol_24h, return_1h, rsi_14, sma_50}. The differences are primarily the removal of close/sma_50 and threshold/operator adjustments rather than a fundamentally new structural bet. Multiple other priors also combine realized_vol_24h with MACD and momentum factors in similar configurations."
+}
+```
