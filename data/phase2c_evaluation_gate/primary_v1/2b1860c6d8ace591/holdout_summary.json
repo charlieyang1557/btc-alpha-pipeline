@@ -1,0 +1,36 @@
+{
+  "current_git_sha": "ca096ef4f980b78ede35f245514893437a894fbf",
+  "engine_commit": "eb1c87f",
+  "engine_corrected_lineage": "wf-corrected-v1",
+  "error_message": null,
+  "evaluation_semantics": "single_run_holdout_v1",
+  "gate_pass_per_criterion": {
+    "drawdown_passed": false,
+    "return_passed": false,
+    "sharpe_passed": false,
+    "trades_passed": true
+  },
+  "holdout_metrics": {
+    "max_drawdown": 0.4365767103156684,
+    "sharpe_ratio": -0.9909114270399947,
+    "total_return": -0.35111572235497435,
+    "total_trades": 96
+  },
+  "holdout_passed": false,
+  "hypothesis_hash": "2b1860c6d8ace591",
+  "lifecycle_state": "holdout_failed",
+  "lineage_check": "passed",
+  "name": "bollinger_overshoot_mean_revert_122",
+  "passing_criteria": {
+    "max_drawdown": 0.25,
+    "min_sharpe": -0.5,
+    "min_total_return": -0.15,
+    "min_total_trades": 5
+  },
+  "position": 122,
+  "run_id": "primary_v1",
+  "source_batch_id": "b6fcbf86-4d57-4d1f-ae41-1778296b1ae9",
+  "theme": "mean_reversion",
+  "wall_clock_seconds": 1.1916,
+  "wf_test_period_sharpe": 0.611622
+}
