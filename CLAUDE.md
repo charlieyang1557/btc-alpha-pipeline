@@ -424,8 +424,23 @@ The canonical dataset (`data/raw/btcusdt_1h.parquet`) has these stable, verified
 
 ## Phase Marker (update as work progresses)
 
-- **Current phase:** Phase 2A closed (signed off 2026-04-17); **Phase 2B D7 Stage 2a in progress** — live Sonnet D7b backend built, dry-run green, awaiting Charlie's `--confirm-live` call
-- **Completed:** Phase 0, Phase 1A, Phase 1B; Phase 2A (D1-D5 all signed off); Phase 2B D6 Stage 1 (stub plumbing, 675 tests); Phase 2B D7 Stage 1 (D7a rules + stub D7b, 885 tests); Phase 2B D7 Stage 2a infrastructure (D7b live backend, prompt, parser, replay, ledger split)
+**Discipline rule:** this section must be updated in the same arc that ships any phase/stage sign-off, major closeout, or live batch fire. Stale Phase Marker misleads future work.
+
+- **Current phase:** Phase 2C post-Phase-1 decision point — corrected-engine arc shipped 2026-04-26; three resumption options open per [`docs/closeout/PHASE2C_5_PHASE1_RESULTS.md`](docs/closeout/PHASE2C_5_PHASE1_RESULTS.md) §5: A) regime holdout AND-gate + DSR + lifecycle states + D9 finalization, B) paper-trading harness on top-5 robust winners, C) methodology iteration on momentum-theme prompts.
+- **Completed:**
+  - Phase 0, Phase 1A, Phase 1B (with corrected v2 WF baseline supplement at [`docs/closeout/PHASE1B_WF_CORRECTED_BASELINE_SUPPLEMENT.md`](docs/closeout/PHASE1B_WF_CORRECTED_BASELINE_SUPPLEMENT.md))
+  - Phase 2A (D1-D5 all signed off, [`docs/closeout/PHASE2A_SIGNOFF.md`](docs/closeout/PHASE2A_SIGNOFF.md))
+  - Phase 2B D6 Stage 1 (stub plumbing); D6 Stage 2 lessons learned ([`docs/closeout/PHASE2B_D6_STAGE2_LESSONS_LEARNED.md`](docs/closeout/PHASE2B_D6_STAGE2_LESSONS_LEARNED.md))
+  - Phase 2B D7 Stage 1 / 2a / 2b / 2c / 2d (D7 Stage 2d signed off 2026-04-23 at [`docs/closeout/PHASE2B_D7_STAGE2D_SIGNOFF.md`](docs/closeout/PHASE2B_D7_STAGE2D_SIGNOFF.md))
+  - Phase 2C Smoke α (Stage 2c dry-run, [`docs/closeout/PHASE2C_1_SMOKE_SIGNOFF.md`](docs/closeout/PHASE2C_1_SMOKE_SIGNOFF.md)) + β (live Sonnet, [`docs/closeout/PHASE2C_2_SMOKE_SIGNOFF.md`](docs/closeout/PHASE2C_2_SMOKE_SIGNOFF.md))
+  - Phase 2C Batch 1 fire ([`docs/closeout/PHASE2C_3_BATCH1.md`](docs/closeout/PHASE2C_3_BATCH1.md))
+  - Phase 2C Phase 1 walk-forward closeout ([`docs/closeout/PHASE2C_5_PHASE1_RESULTS.md`](docs/closeout/PHASE2C_5_PHASE1_RESULTS.md)) + corrected-engine erratum ([`docs/closeout/PHASE2C_5_PHASE1_RESULTS_ERRATUM.md`](docs/closeout/PHASE2C_5_PHASE1_RESULTS_ERRATUM.md))
+  - Corrected WF Engine Project Arc (engine fix at `eb1c87f`, lineage discipline at [`backtest/wf_lineage.py`](backtest/wf_lineage.py), tag `wf-corrected-v1`, sign-off at [`docs/closeout/CORRECTED_WF_ENGINE_SIGNOFF.md`](docs/closeout/CORRECTED_WF_ENGINE_SIGNOFF.md))
 - **Active blueprint:** `blueprint/PHASE2_BLUEPRINT.md` (v2)
-- **Current batch_id:** N/A (no live batch run yet)
-- **Current UTC-month spend:** $0.00 (dry-run stub only; no API calls until D6 Stage 2)
+- **Current batch_id:** `b6fcbf86-4d57-4d1f-ae41-1778296b1ae9` (Phase 2C Phase 1 walk-forward; corrected-engine re-run in `_corrected/` directory is canonical)
+- **Current UTC-month spend (April 2026):** ~$8.65 (D7 Stage 2d $5.89 + Phase 2C Batch-1 $2.30 + smoke and dry-run batches; per `agents/spend_ledger.db` `ledger` table, queried 2026-04-26)
+- **Hard rule for any future WF-consuming work:** must consume corrected artifacts only and call `backtest.wf_lineage.check_wf_semantics_or_raise()` before computing derived metrics. See [`docs/decisions/WF_TEST_BOUNDARY_SEMANTICS.md`](docs/decisions/WF_TEST_BOUNDARY_SEMANTICS.md) Section RS.
+
+## Project-discipline notes
+
+Standing project-discipline principles (apply across all work cycles, not bound to a phase) are codified at [`docs/discipline/METHODOLOGY_NOTES.md`](docs/discipline/METHODOLOGY_NOTES.md). Three principles currently in force: empirical verification for factual claims, meta-claim verification discipline, regime-aware calibration bands. Future cycles append new lessons as additional sections.
