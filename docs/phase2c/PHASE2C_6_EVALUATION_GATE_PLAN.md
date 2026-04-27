@@ -130,9 +130,10 @@ This preserves the precision of the WF tag (it attests specifically to corrected
 
 | State | Entry condition | Exit condition |
 |---|---|---|
-| `pending_holdout` | Candidate is in the audit universe (198 corrected candidates); has not yet been evaluated on 2022 holdout | Holdout evaluation completes (transitions to `holdout_passed` or `holdout_failed`) |
+| `pending_holdout` | Candidate is in the audit universe (198 corrected candidates); has not yet been evaluated on 2022 holdout | Holdout evaluation completes (transitions to `holdout_passed`, `holdout_failed`, or `holdout_error`) |
 | `holdout_passed` | Holdout evaluation completes AND all four AND-gate conditions hold | Terminal for this deliverable; eligible for PHASE2C_7+ DSR scope |
 | `holdout_failed` | Holdout evaluation completes AND any of the four AND-gate conditions fails | Terminal for this deliverable; not eligible for PHASE2C_7+ scope |
+| `holdout_error` | Holdout evaluation raised an exception (compilation failure, runtime error, infrastructure issue) before producing metrics | Terminal for this deliverable; not eligible for PHASE2C_7+ scope. Exception details captured in per-candidate artifact's `error_message` field for forensic analysis. Distinct from `holdout_failed`: `holdout_failed` means the gate ran and the candidate didn't survive; `holdout_error` means the gate didn't run at all due to an upstream issue. |
 
 ### States already established (referenced, not introduced)
 
@@ -163,27 +164,34 @@ PHASE2C_8+ will scope the full lifecycle state machine: states for DSR significa
 
 ### Outputs (created by this deliverable)
 
-Output directory: `data/phase2c_evaluation_gate/<batch_id>/` where `<batch_id>` is a new UUID generated at run time.
+Output directory: `data/phase2c_evaluation_gate/<run-id>/` where `<run-id>` is supplied via the `--run-id` CLI flag (smoke runs use string identifiers like `smoke_v1`; full primary/audit runs use auto-generated UUID4 via `str(uuid.uuid4())` matching the Phase 2C batch UUID convention).
 
 Per-candidate artifacts:
-- `data/phase2c_evaluation_gate/<batch_id>/<hypothesis_hash>/holdout_summary.json` — single-run summary with full lineage metadata (per §3 schema), the four gate metrics, pass/fail per criterion, AND-gate verdict
-- `data/phase2c_evaluation_gate/<batch_id>/<hypothesis_hash>/holdout_trades.csv` — **OPTIONAL.** Per-trade audit detail. Only emitted if the underlying engine exposes a stable trade-log path for this run; this is verified during script implementation. The canonical deliverable does NOT depend on this file existing — it is a forensic-detail artifact. Consumers must not assume its presence.
+- `data/phase2c_evaluation_gate/<run-id>/<hypothesis_hash>/holdout_summary.json` — single-run summary with full lineage metadata (per §3 schema), the four gate metrics, pass/fail per criterion, AND-gate verdict
+- `data/phase2c_evaluation_gate/<run-id>/<hypothesis_hash>/holdout_trades.csv` — **OPTIONAL.** Per-trade audit detail. Only emitted if the underlying engine exposes a stable trade-log path for this run; this is verified during script implementation. The canonical deliverable does NOT depend on this file existing — it is a forensic-detail artifact. Consumers must not assume its presence.
 
 Aggregate artifacts:
-- `data/phase2c_evaluation_gate/<batch_id>/holdout_results.csv` — one row per candidate with hypothesis_hash, prior state, holdout state, four metric values, four pass/fail flags, AND-gate verdict
-- `data/phase2c_evaluation_gate/<batch_id>/holdout_summary.json` — batch-level aggregate (count of holdout_passed in primary universe, count in audit universe, by-theme breakdown, full lineage metadata)
+- `data/phase2c_evaluation_gate/<run-id>/holdout_results.csv` — one row per candidate with hypothesis_hash, prior state, holdout state, four metric values, four pass/fail flags, AND-gate verdict
+- `data/phase2c_evaluation_gate/<run-id>/holdout_summary.json` — batch-level aggregate (count of holdout_passed in primary universe, count in audit universe, by-theme breakdown, full lineage metadata)
 - `docs/closeout/PHASE2C_6_EVALUATION_GATE_RESULTS.md` — closeout document with primary findings (count of survivors among 44 winners), audit findings (count among 198 candidates), per-theme breakdown, and forward-pointer to PHASE2C_7 scoping
 
 ### Producer script
 
 New script: `scripts/run_phase2c_evaluation_gate.py`. Anchored on the lineage guard. CLI flags:
 
-- `--universe primary|audit` — `primary` evaluates only the 44 corrected winners; `audit` evaluates all 198 corrected candidates (which includes the 44, so primary-vs-non-primary breakdown is computable from a single audit run)
-- `--candidate <hash>` — evaluate one specific candidate by hypothesis_hash; for debugging or forensic analysis only, not the primary execution path
+- `--source-batch-id <phase2c_batch_uuid>` — the canonical Phase 2C proposer batch whose corrected winners/candidates are being evaluated. Default: `b6fcbf86-4d57-4d1f-ae41-1778296b1ae9` (the only Phase 2C batch with corrected artifacts as of PHASE2C_6 scoping). Disambiguates from `--run-id` below.
+- `--universe primary|audit` — `primary` evaluates only the 44 corrected winners from the source batch; `audit` evaluates all 198 corrected candidates (which includes the 44, so primary-vs-non-primary breakdown is computable from a single audit run)
+- `--candidate-hashes <comma-separated-hashes>` — evaluate specific candidates by hypothesis_hash prefix (8-char prefixes accepted, must resolve to unique candidate); for smoke runs, debugging, or forensic analysis. Mutually exclusive with `--universe`.
+- `--run-id <evaluation_run_id>` — identifier for this evaluation-gate output run, distinct from `--source-batch-id`. Examples: `smoke_v1`, full UUID for primary/audit runs (auto-generated via `uuid.uuid4()` if not provided). Output lands at `<output-root>/<run-id>/`. Naming `--run-id` rather than `--batch-id` prevents conflation with the Phase 2C proposer batch UUID.
+- `--output-root <path>` — output root directory (default: `data/phase2c_evaluation_gate/`)
 - `--dry-run` — verify lineage guard, candidate-loading, and metadata stamping without running backtests
-- `--force` — overwrite existing artifacts in the output directory (default: refuse to overwrite, per Phase 2C runner convention)
+- `--force` — overwrite an existing non-empty `<output-root>/<run-id>/` directory (default: refuse to overwrite, per `run_phase1b_corrected.py` convention; the refusal is per-batch-directory, not per-candidate)
 
-The flags are mutually exclusive at the universe level: exactly one of `--universe` or `--candidate` is required per invocation. Generalizes the script template established by `scripts/run_phase1b_corrected.py` to the holdout-evaluation case, with the addition of single-run-mode evaluation and the `evaluation_semantics` metadata tag.
+The script generalizes the template established by `scripts/run_phase1b_corrected.py` to the holdout-evaluation case, with the addition of single-run-mode evaluation and the `evaluation_semantics` metadata tag.
+
+**Smoke run convention:** smoke runs use `--run-id smoke_v1` (or `smoke_v2`, etc., for subsequent smoke runs) to keep smoke artifacts preserved separately from full primary/audit universe artifacts. Full-universe runs use auto-generated UUIDs to match the project's per-batch-UUID convention.
+
+**Failure handling:** per-candidate exceptions are caught at the candidate-evaluation boundary; the script records `runtime_status='error'` plus `error_message` in the per-candidate artifact and the lifecycle state `holdout_error` (per §4), then continues with the next candidate. Matches the resilient pattern in `scripts/run_phase2c_batch_walkforward.py` (line 384 comment: "record runtime_status='error', continue with next candidate").
 
 ---
 
