@@ -317,3 +317,183 @@ def test_check_evaluation_semantics_artifact_path_in_message():
         )
     msg = str(exc_info.value)
     assert "/data/holdout/foo.json" in msg
+
+
+# --- PHASE2C_7.1 §7 schema discriminator tests ---
+# (3-branch discriminator: absent → legacy / phase2c_7_1 → new / unrecognized → ValueError)
+
+from backtest.wf_lineage import (
+    ARTIFACT_SCHEMA_VERSION_PHASE2C_7_1,
+    REGIME_KEY_LABEL_MAPPING,
+)
+
+
+def _valid_phase2c_7_1_summary(
+    regime_key: str = "v2.validation",
+    regime_label: str = "validation_2024",
+) -> dict:
+    """Helper: construct a valid PHASE2C_7.1-schema summary for tests."""
+    return {
+        "evaluation_semantics": EVALUATION_SEMANTICS_TAG,
+        "engine_commit": CORRECTED_WF_ENGINE_COMMIT,
+        "engine_corrected_lineage": ENGINE_CORRECTED_LINEAGE_TAG,
+        "lineage_check": "passed",
+        "current_git_sha": "abcd1234567890",
+        "artifact_schema_version": ARTIFACT_SCHEMA_VERSION_PHASE2C_7_1,
+        "regime_key": regime_key,
+        "regime_label": regime_label,
+    }
+
+
+def test_regime_mapping_contains_documented_entries():
+    """The exposed mapping must contain both PHASE2C_6 and PHASE2C_7.1 regimes.
+
+    Producer code reads from REGIME_KEY_LABEL_MAPPING to derive labels;
+    downstream analysis code reads it for cross-arc regime identity.
+    Single source of truth per §7 documented mapping table.
+    """
+    assert REGIME_KEY_LABEL_MAPPING["v2.regime_holdout"] == "bear_2022"
+    assert REGIME_KEY_LABEL_MAPPING["v2.validation"] == "validation_2024"
+
+
+def test_legacy_path_unchanged_when_schema_version_absent():
+    """Legacy PHASE2C_6 artifacts (no artifact_schema_version) pass via legacy path.
+
+    Equivalent to test_check_evaluation_semantics_passes_on_correct_summary
+    but explicitly named to document the legacy branch behavior post-§7
+    discriminator. Backward-compatibility contract: PHASE2C_6 artifacts
+    on disk must continue to validate without modification.
+    """
+    summary = _valid_eval_summary()  # no artifact_schema_version
+    assert "artifact_schema_version" not in summary
+    check_evaluation_semantics_or_raise(summary)  # must not raise
+
+
+def test_new_path_passes_with_validation_2024_schema():
+    """New PHASE2C_7.1 artifact (v2.validation/validation_2024) passes silently."""
+    summary = _valid_phase2c_7_1_summary()
+    check_evaluation_semantics_or_raise(summary)  # must not raise
+
+
+def test_new_path_passes_with_regime_holdout_schema():
+    """New PHASE2C_7.1 artifact stamped against 2022 regime also passes.
+
+    The schema version is producer-code identity; the regime fields are
+    regime identity (per §7). A producer running PHASE2C_7.1 code against
+    the 2022 regime correctly stamps schema_version=phase2c_7_1 +
+    regime_key=v2.regime_holdout + regime_label=bear_2022.
+    """
+    summary = _valid_phase2c_7_1_summary(
+        regime_key="v2.regime_holdout",
+        regime_label="bear_2022",
+    )
+    check_evaluation_semantics_or_raise(summary)  # must not raise
+
+
+def test_new_path_raises_on_missing_regime_key():
+    """New schema artifact missing regime_key raises ValueError."""
+    summary = _valid_phase2c_7_1_summary()
+    del summary["regime_key"]
+    with pytest.raises(ValueError) as exc_info:
+        check_evaluation_semantics_or_raise(
+            summary, artifact_path="/tmp/h.json"
+        )
+    msg = str(exc_info.value)
+    assert "regime_key" in msg
+    assert "missing" in msg
+    assert "Section RS" in msg
+    assert "/tmp/h.json" in msg
+
+
+def test_new_path_raises_on_missing_regime_label():
+    """New schema artifact missing regime_label raises ValueError."""
+    summary = _valid_phase2c_7_1_summary()
+    del summary["regime_label"]
+    with pytest.raises(ValueError) as exc_info:
+        check_evaluation_semantics_or_raise(summary)
+    msg = str(exc_info.value)
+    assert "regime_label" in msg
+    assert "missing" in msg
+    assert "Section RS" in msg
+
+
+def test_new_path_raises_on_unknown_regime_key():
+    """regime_key not in documented mapping raises ValueError."""
+    summary = _valid_phase2c_7_1_summary(
+        regime_key="v2.unknown_regime",
+        regime_label="some_label",
+    )
+    with pytest.raises(ValueError) as exc_info:
+        check_evaluation_semantics_or_raise(summary)
+    msg = str(exc_info.value)
+    assert "regime_key" in msg
+    assert "v2.unknown_regime" in msg
+    assert "Section RS" in msg
+
+
+def test_new_path_raises_on_regime_label_mismatch():
+    """regime_label inconsistent with documented mapping raises ValueError.
+
+    The producer is supposed to derive regime_label from
+    REGIME_KEY_LABEL_MAPPING; if the on-disk artifact's regime_label does
+    not match the mapping's expected label for the given regime_key,
+    something has tampered with the artifact (or the mapping has changed
+    after the artifact was produced — both are consumer-facing failures).
+    """
+    summary = _valid_phase2c_7_1_summary(
+        regime_key="v2.validation",
+        regime_label="bear_2022",  # wrong label for this key
+    )
+    with pytest.raises(ValueError) as exc_info:
+        check_evaluation_semantics_or_raise(summary)
+    msg = str(exc_info.value)
+    assert "regime_label" in msg
+    assert "bear_2022" in msg
+    assert "validation_2024" in msg
+    assert "Section RS" in msg
+
+
+def test_unrecognized_schema_version_raises():
+    """Unrecognized artifact_schema_version raises ValueError.
+
+    Future arcs that introduce new schemas extend the discriminator
+    branching at that time. Until then, any non-phase2c_7_1 schema
+    string is a defensive reject (don't silently fall through to legacy
+    or new paths).
+    """
+    summary = _valid_phase2c_7_1_summary()
+    summary["artifact_schema_version"] = "phase2c_8"
+    with pytest.raises(ValueError) as exc_info:
+        check_evaluation_semantics_or_raise(summary)
+    msg = str(exc_info.value)
+    assert "artifact_schema_version" in msg
+    assert "phase2c_8" in msg
+    assert "Section RS" in msg
+
+
+def test_new_path_still_validates_legacy_fields():
+    """New schema path preserves legacy 5-field validation (engine_commit etc.).
+
+    Critical contract: introducing the schema discriminator must not
+    relax the existing 5-field validation. A new-schema artifact with a
+    bad engine_commit must still raise.
+    """
+    summary = _valid_phase2c_7_1_summary()
+    summary["engine_commit"] = "0531741"  # pre-correction
+    with pytest.raises(ValueError) as exc_info:
+        check_evaluation_semantics_or_raise(summary)
+    msg = str(exc_info.value)
+    assert "engine_commit" in msg
+    assert "0531741" in msg
+
+
+def test_new_path_validates_lineage_check_passed():
+    """New schema path still enforces lineage_check == 'passed'."""
+    summary = _valid_phase2c_7_1_summary()
+    summary["lineage_check"] = "failed"
+    with pytest.raises(ValueError) as exc_info:
+        check_evaluation_semantics_or_raise(summary)
+    msg = str(exc_info.value)
+    assert "lineage_check" in msg
+    assert "failed" in msg
+    assert "passed" in msg
