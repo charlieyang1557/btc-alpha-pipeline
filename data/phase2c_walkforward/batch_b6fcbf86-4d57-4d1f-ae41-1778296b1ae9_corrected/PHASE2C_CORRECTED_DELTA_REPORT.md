@@ -53,8 +53,8 @@ Candidate identity is fully preserved end-to-end.
 | n | 198 | 198 | 0 |
 | mean | +0.0035 | -0.0400 | -0.0435 |
 | median | 0.0000 | 0.0000 | 0.0000 |
-| Q1 | -0.4736 | -0.5169 | -0.0433 |
-| Q3 | +0.4565 | +0.4330 | -0.0235 |
+| Q1 | -0.4691 | -0.5136 | -0.0444 |
+| Q3 | +0.4504 | +0.4268 | -0.0236 |
 | min | -2.1912 | -2.1931 | -0.0019 |
 | max | +2.7891 | +2.7891 | 0.0000 |
 | count > +0.5 | 48 | 44 | -4 |
@@ -99,7 +99,7 @@ Candidate identity is fully preserved end-to-end.
 |---|---:|
 | Δ mean | -0.0435 |
 | Δ median | 0.0000 |
-| Δ Q1 | -0.0134 |
+| Δ Q1 | -0.0115 |
 | Δ Q3 | 0.0000 |
 | Δ min (largest drop) | -1.1461 (`ca5b4c3a`) |
 | Δ max (largest rise) | +0.1014 |
@@ -185,6 +185,23 @@ Rank ordering preserved 1-for-1 (mean_reversion → volume_divergence → volati
 
 ## §I. Reproducibility
 
-The numbers in this report were computed by `/tmp/phase2c_delta_compute.py` against the pre-correction CSV (in quarantine) and the corrected CSV (in this directory). The script reads both CSVs, JOINs on `hypothesis_hash`, and computes the deltas. The script itself is not committed (one-shot computation), but the input artifacts are committed and the JOIN logic is straightforward (any consumer can reproduce these numbers from the two CSVs).
+All distribution and quartile values in this report (and in the companion erratum's §3 table) are computed via `pandas.DataFrame.quantile()` with the default `linear` interpolation method against the pre-correction CSV (in quarantine) and the corrected CSV (in this directory), JOINed on `hypothesis_hash`. The numbers in this report were originally computed by an uncommitted one-shot script; any consumer can reproduce them via:
 
-For deeper audit (e.g., per-candidate trade list comparison, per-window comparison), the corrected batch's per-candidate trade artifacts and the per-window walk_forward results are preserved alongside the CSV; consult the corrected batch directory.
+```python
+import pandas as pd
+pre  = pd.read_csv('data/quarantine/pre_correction_wf/batch_b6fcbf86-..._STALE_PRE_CORRECTION/walk_forward_results.csv')
+corr = pd.read_csv('data/phase2c_walkforward/batch_b6fcbf86-..._corrected/walk_forward_results.csv')
+m = pre.merge(corr[['hypothesis_hash','wf_test_period_sharpe']], on='hypothesis_hash')
+m['delta'] = m['wf_test_period_sharpe'] - m['wf_sharpe']
+# Distribution quartiles: pre.wf_sharpe.quantile([.25,.75]) and corr.wf_test_period_sharpe.quantile([.25,.75])
+# Delta quartiles: m.delta.quantile([.25,.75])
+```
+
+The corrected `walk_forward_summary.json` independently records the corrected distribution's `p25` and `p75` fields under the `wf_test_period_sharpe_distribution` block (e.g., `wf_test_period_sharpe_distribution.p25 = -0.5135617419270013`, `.p75 = +0.42683604314421025`); these match the quantile-derived values in §C above to the precision shown.
+
+**Audit artifacts available in the corrected batch directory:**
+- `walk_forward_results.csv` — one row per candidate with aggregate walk-forward metrics (`wf_test_period_sharpe`, `wf_test_period_return`, `wf_test_period_max_drawdown`, `wf_test_period_total_trades`, `wf_test_period_win_rate`, `wf_test_period_window_count`)
+- `walk_forward_summary.json` — batch-level aggregate summary with full lineage metadata block
+- `PHASE2C_CORRECTED_DELTA_REPORT.md` — this report
+
+The Phase 2C batch runner does not emit per-candidate trade artifacts or per-window walk_forward CSVs at the batch tier; for deeper per-candidate or per-window forensic analysis, a separate single-candidate single-run invocation against the corrected engine would be required (out of scope for this corrected re-run; the aggregate metrics are sufficient for the corrected acceptance verdict and consumer-side downstream techniques).

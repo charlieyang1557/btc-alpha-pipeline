@@ -52,15 +52,15 @@ Across the 198 corrected candidates, the walk-forward Sharpe distribution shifts
 | n | 198 | 198 | 0 |
 | mean | +0.0035 | -0.0400 | -0.0435 |
 | median | 0.0000 | 0.0000 | 0.0000 |
-| Q1 | -0.4736 | -0.5169 | -0.0433 |
-| Q3 | +0.4565 | +0.4330 | -0.0235 |
+| Q1 | -0.4691 | -0.5136 | -0.0444 |
+| Q3 | +0.4504 | +0.4268 | -0.0236 |
 | min | -2.1912 | -2.1931 | -0.0019 |
 | max | +2.7891 | +2.7891 | 0.0000 |
 | count > 0.5 | 48 | 44 | -4 |
 | count > 0.0 | 85 | 82 | -3 |
 | count > -0.3 | 139 | 135 | -4 |
 
-The aggregate shifts are small in absolute terms — mean -0.044, IQR endpoints shifted by -0.04 at Q1 and -0.02 at Q3, median unchanged. This batch's aggregate shift being modest does not imply the bug's general severity is modest; the bug's mechanism (carrying train-period equity into reported test-period metrics) still required correction, and future batches or future engine corrections may produce larger shifts. The "modest" descriptor here is a fact about *this* batch's pre-vs-corrected delta, not a claim about engine-correction impact in general.
+The aggregate shifts are small in absolute terms — mean -0.044, Q1 shifted by -0.04 and Q3 by -0.02, median unchanged. This batch's aggregate shift being modest does not imply the bug's general severity is modest; the bug's mechanism (carrying train-period equity into reported test-period metrics) still required correction, and future batches or future engine corrections may produce larger shifts. The "modest" descriptor here is a fact about *this* batch's pre-vs-corrected delta, not a claim about engine-correction impact in general.
 
 At the candidate level, most rows were stable: 115/198 candidates had numerically unchanged Sharpe after correction, meaning the corrected test-period boundary did not change their aggregate reported Sharpe despite the full re-run; 58 dropped under correction; 25 rose; and only one candidate moved by more than 1.0 Sharpe (the maximum drop was -1.146; the maximum rise was +0.101). The directional asymmetry — more candidates dropped than rose, and the largest drops are larger than the largest rises — is consistent with the bug's mechanism: pre-test equity was entering the denominator and the reported test-period path, so correction can lower or raise reported Sharpe depending on the sign and timing of pre-test contamination. We infer the mechanism from the directional pattern rather than directly demonstrate it. Full per-candidate deltas are preserved in the corrected delta report rather than duplicated here.
 
