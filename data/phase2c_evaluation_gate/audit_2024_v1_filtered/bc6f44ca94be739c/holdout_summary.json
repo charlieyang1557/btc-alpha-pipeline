@@ -1,0 +1,39 @@
+{
+  "artifact_schema_version": "phase2c_7_1",
+  "current_git_sha": "bdcf62d88b215ef7675cc21a6b4c780bb8ce8cd9",
+  "engine_commit": "eb1c87f",
+  "engine_corrected_lineage": "wf-corrected-v1",
+  "error_message": null,
+  "evaluation_semantics": "single_run_holdout_v1",
+  "gate_pass_per_criterion": {
+    "drawdown_passed": true,
+    "return_passed": true,
+    "sharpe_passed": true,
+    "trades_passed": true
+  },
+  "holdout_metrics": {
+    "max_drawdown": 0.19905786407745887,
+    "sharpe_ratio": 1.3148217585588182,
+    "total_return": 0.27682222275338053,
+    "total_trades": 57
+  },
+  "holdout_passed": true,
+  "hypothesis_hash": "bc6f44ca94be739c",
+  "lifecycle_state": "holdout_passed",
+  "lineage_check": "passed",
+  "name": "momentum_persistence_multi_tf_151",
+  "passing_criteria": {
+    "max_drawdown": 0.25,
+    "min_sharpe": -0.5,
+    "min_total_return": -0.15,
+    "min_total_trades": 5
+  },
+  "position": 151,
+  "regime_key": "v2.validation",
+  "regime_label": "validation_2024",
+  "run_id": "audit_2024_v1",
+  "source_batch_id": "b6fcbf86-4d57-4d1f-ae41-1778296b1ae9",
+  "theme": "momentum",
+  "wall_clock_seconds": 1.1478,
+  "wf_test_period_sharpe": 0.164389
+}

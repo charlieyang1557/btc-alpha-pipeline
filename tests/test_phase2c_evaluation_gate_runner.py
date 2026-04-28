@@ -30,9 +30,12 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from backtest.engine import RegimeHoldoutResult  # noqa: E402
 from backtest.wf_lineage import (  # noqa: E402
+    ARTIFACT_SCHEMA_VERSION_PHASE2C_7_1,
     CORRECTED_WF_ENGINE_COMMIT,
     ENGINE_CORRECTED_LINEAGE_TAG,
     EVALUATION_SEMANTICS_TAG,
+    REGIME_KEY_LABEL_MAPPING,
+    check_evaluation_semantics_or_raise,
 )
 
 runner = importlib.import_module("scripts.run_phase2c_evaluation_gate")
@@ -331,3 +334,318 @@ def test_force_overwrite_refusal(tmp_path, monkeypatch):
     ):
         rc = runner.main()
     assert rc == 0, "Expected --force to allow overwrite of non-empty dir"
+
+
+# ===========================================================================
+# PHASE2C_7.1 §6 / §7 — --regime-key flag + 3 lineage fields (sub-step 1.3)
+# ===========================================================================
+
+
+class TestRegimeKeyCliFlag:
+    """``--regime-key`` argparse plumbing."""
+
+    def test_regime_key_default_is_regime_holdout(self):
+        """Q2 backward-compat: omitted --regime-key → v2.regime_holdout."""
+        args = runner._build_argparser().parse_args([
+            "--candidate-hashes", "0bf34de1",
+            "--run-id", "x",
+        ])
+        assert args.regime_key == "v2.regime_holdout"
+
+    def test_regime_key_flag_accepts_validation(self):
+        """--regime-key v2.validation parsed correctly."""
+        args = runner._build_argparser().parse_args([
+            "--candidate-hashes", "0bf34de1",
+            "--run-id", "x",
+            "--regime-key", "v2.validation",
+        ])
+        assert args.regime_key == "v2.validation"
+
+    def test_regime_key_unknown_value_rejected_at_main(
+        self, tmp_path, monkeypatch
+    ):
+        """Unknown --regime-key value (not in REGIME_KEY_LABEL_MAPPING) rejected.
+
+        Failing early (before any backtest spend) is the operational
+        anchor — without this, a typo in the flag would only surface at
+        consumer-guard time after the run produces unvalidated artifacts.
+        """
+        monkeypatch.setattr(
+            sys, "argv",
+            ["run_phase2c_evaluation_gate.py",
+             "--candidate-hashes", "0bf34de1",
+             "--run-id", "test_unknown_rk",
+             "--output-root", str(tmp_path),
+             "--regime-key", "v2.does_not_exist",
+             "--dry-run"],
+        )
+        with patch.object(
+            runner, "enforce_corrected_engine_lineage",
+            return_value="stub_sha"
+        ), patch.object(
+            runner, "_load_corrected_candidates",
+            return_value=_stub_corrected_candidates(),
+        ):
+            rc = runner.main()
+        assert rc != 0, (
+            "Expected non-zero exit code on unknown --regime-key value "
+            "(must be in REGIME_KEY_LABEL_MAPPING)"
+        )
+
+
+class TestLineageMetadataThreeNewFields:
+    """``_lineage_metadata`` stamps Q3(a) three new fields on EVERY artifact.
+
+    Per Q3(a): the new producer code stamps artifact_schema_version,
+    regime_key, regime_label on every forward artifact regardless of
+    regime. PHASE2C_6 on-disk artifacts (which predate the schema)
+    remain untouched and are covered by the legacy-path regression
+    test below.
+    """
+
+    def test_default_regime_key_stamps_phase2c_7_1_schema(self):
+        """Default regime_key (v2.regime_holdout) → phase2c_7_1 schema with bear_2022 label."""
+        meta = runner._lineage_metadata(
+            head_sha="abcd1234567890",
+            regime_key="v2.regime_holdout",
+        )
+        assert meta["artifact_schema_version"] == (
+            ARTIFACT_SCHEMA_VERSION_PHASE2C_7_1
+        )
+        assert meta["regime_key"] == "v2.regime_holdout"
+        assert meta["regime_label"] == "bear_2022"
+        # Five legacy fields remain stamped.
+        assert meta["evaluation_semantics"] == EVALUATION_SEMANTICS_TAG
+        assert meta["engine_commit"] == CORRECTED_WF_ENGINE_COMMIT
+        assert meta["engine_corrected_lineage"] == (
+            ENGINE_CORRECTED_LINEAGE_TAG
+        )
+        assert meta["lineage_check"] == "passed"
+        assert meta["current_git_sha"] == "abcd1234567890"
+
+    def test_validation_regime_key_stamps_phase2c_7_1_schema(self):
+        """v2.validation regime_key → phase2c_7_1 schema with validation_2024 label."""
+        meta = runner._lineage_metadata(
+            head_sha="abcd1234567890",
+            regime_key="v2.validation",
+        )
+        assert meta["artifact_schema_version"] == (
+            ARTIFACT_SCHEMA_VERSION_PHASE2C_7_1
+        )
+        assert meta["regime_key"] == "v2.validation"
+        assert meta["regime_label"] == "validation_2024"
+
+    def test_unknown_regime_key_raises_at_lineage_metadata(self):
+        """Defensive: producer-side helper refuses unknown regime_key."""
+        with pytest.raises(ValueError) as exc_info:
+            runner._lineage_metadata(
+                head_sha="abcd1234567890",
+                regime_key="v2.unknown",
+            )
+        assert "regime_key" in str(exc_info.value)
+        assert "v2.unknown" in str(exc_info.value)
+
+
+class TestPerCandidateArtifactStampsThreeFields:
+    """Per-candidate artifacts stamp the three new fields and validate via new schema path.
+
+    Q3(a) contract: every per-candidate artifact produced by the new
+    producer carries artifact_schema_version + regime_key + regime_label
+    regardless of which regime is being evaluated.
+    """
+
+    def test_default_regime_key_per_candidate_stamps_and_validates(
+        self, tmp_path
+    ):
+        candidate = _stub_corrected_candidates()[0]
+        holdout_result = _stub_regime_holdout_result(passed=True)
+        output_dir = tmp_path / "test_run"
+        output_dir.mkdir()
+
+        with patch.object(
+            runner, "_load_dsl_from_response",
+            return_value="stub_dsl",
+        ), patch.object(
+            runner, "run_regime_holdout",
+            return_value=holdout_result,
+        ) as mock_holdout:
+            summary = runner._evaluate_one_candidate(
+                candidate=candidate,
+                head_sha="abcd1234567890",
+                source_batch_id="stub-source",
+                run_id="test_v1",
+                output_dir=output_dir,
+                regime_key="v2.regime_holdout",
+            )
+
+        # Three new fields present on the in-memory summary.
+        assert summary["artifact_schema_version"] == (
+            ARTIFACT_SCHEMA_VERSION_PHASE2C_7_1
+        )
+        assert summary["regime_key"] == "v2.regime_holdout"
+        assert summary["regime_label"] == "bear_2022"
+
+        # Plumbing assertion: producer passes regime_key to the engine.
+        # The engine's run_regime_holdout signature change is sub-step
+        # 1.2's deliverable; this test verifies sub-step 1.3 actually
+        # uses the parameter rather than relying on the engine's default.
+        mock_holdout.assert_called_once()
+        call_kwargs = mock_holdout.call_args.kwargs
+        assert call_kwargs["regime_key"] == "v2.regime_holdout"
+
+        # On-disk artifact validates via the NEW schema path (not the
+        # legacy absent-field path), proving Q3(a) is implemented.
+        summary_path = (
+            output_dir
+            / candidate["hypothesis_hash"]
+            / "holdout_summary.json"
+        )
+        reloaded = json.loads(summary_path.read_text())
+        assert "artifact_schema_version" in reloaded, (
+            "Q3(a) contract broken: default-regime invocation produced "
+            "a legacy-schema artifact (no artifact_schema_version field)."
+        )
+        check_evaluation_semantics_or_raise(
+            reloaded, artifact_path=str(summary_path)
+        )
+
+    def test_validation_regime_key_per_candidate_stamps_and_validates(
+        self, tmp_path
+    ):
+        candidate = _stub_corrected_candidates()[0]
+        holdout_result = _stub_regime_holdout_result(passed=True)
+        output_dir = tmp_path / "test_run"
+        output_dir.mkdir()
+
+        with patch.object(
+            runner, "_load_dsl_from_response",
+            return_value="stub_dsl",
+        ), patch.object(
+            runner, "run_regime_holdout",
+            return_value=holdout_result,
+        ) as mock_holdout:
+            summary = runner._evaluate_one_candidate(
+                candidate=candidate,
+                head_sha="abcd1234567890",
+                source_batch_id="stub-source",
+                run_id="test_v1",
+                output_dir=output_dir,
+                regime_key="v2.validation",
+            )
+
+        assert summary["artifact_schema_version"] == (
+            ARTIFACT_SCHEMA_VERSION_PHASE2C_7_1
+        )
+        assert summary["regime_key"] == "v2.validation"
+        assert summary["regime_label"] == "validation_2024"
+
+        # Engine called with v2.validation, not the default.
+        call_kwargs = mock_holdout.call_args.kwargs
+        assert call_kwargs["regime_key"] == "v2.validation"
+
+        summary_path = (
+            output_dir
+            / candidate["hypothesis_hash"]
+            / "holdout_summary.json"
+        )
+        reloaded = json.loads(summary_path.read_text())
+        check_evaluation_semantics_or_raise(
+            reloaded, artifact_path=str(summary_path)
+        )
+
+
+class TestAggregateArtifactStampsThreeFields:
+    """Aggregate summary stamps the three new fields and validates via new schema path."""
+
+    def test_aggregate_artifact_validates_via_new_schema_path(
+        self, tmp_path
+    ):
+        summaries = [
+            {
+                "hypothesis_hash": "0bf34de1eeb57782",
+                "position": 1, "theme": "volume_divergence",
+                "name": "x", "wf_test_period_sharpe": 2.789,
+                "lifecycle_state": "holdout_passed",
+                "holdout_passed": True,
+                "holdout_metrics": {
+                    "sharpe_ratio": 0.5, "max_drawdown": 0.1,
+                    "total_return": 0.05, "total_trades": 50,
+                },
+                "wall_clock_seconds": 1.5,
+                "error_message": None,
+            },
+        ]
+        aggregate = runner._aggregate_summary_dict(
+            summaries=summaries,
+            head_sha="abcd1234",
+            source_batch_id="stub-source",
+            run_id="test_v1",
+            universe="audit",
+            explicit_hashes=None,
+            run_started_utc="2026-04-26T00:00:00Z",
+            run_finished_utc="2026-04-26T00:00:30Z",
+            regime_key="v2.validation",
+        )
+        assert aggregate["artifact_schema_version"] == (
+            ARTIFACT_SCHEMA_VERSION_PHASE2C_7_1
+        )
+        assert aggregate["regime_key"] == "v2.validation"
+        assert aggregate["regime_label"] == "validation_2024"
+
+        out_path = tmp_path / "holdout_summary.json"
+        runner._write_aggregate_summary(aggregate, out_path)
+        reloaded = json.loads(out_path.read_text())
+        # Validates via the NEW schema path (regime_label cross-checked).
+        check_evaluation_semantics_or_raise(
+            reloaded, artifact_path=str(out_path)
+        )
+
+
+class TestPhase2C6BackwardCompat:
+    """PHASE2C_6 audit_v1 on-disk artifacts validate via legacy absent-field path.
+
+    Regression test using a real canonical PHASE2C_6 artifact as fixture.
+    Per Q3(a) interpretation: existing on-disk artifacts predate the
+    artifact_schema_version field and continue to validate via the
+    sub-step 1.1 discriminator's absent-field branch. This test catches
+    any future change that retroactively requires the field on legacy
+    artifacts (which would invalidate ~352 PHASE2C_6 artifacts on disk).
+    """
+
+    def test_audit_v1_per_candidate_artifact_validates_via_legacy_path(self):
+        """Real on-disk PHASE2C_6 audit_v1 artifact validates without the new field."""
+        canonical_path = (
+            PROJECT_ROOT
+            / "data" / "phase2c_evaluation_gate" / "audit_v1"
+            / "01f077141926ca19" / "holdout_summary.json"
+        )
+        if not canonical_path.exists():
+            pytest.skip(
+                f"PHASE2C_6 audit_v1 fixture not found at {canonical_path} "
+                "(may be missing in fresh checkouts; not a sub-step 1.3 "
+                "implementation defect)"
+            )
+        summary = json.loads(canonical_path.read_text())
+        # Confirm fixture is what we think it is.
+        assert "artifact_schema_version" not in summary, (
+            "PHASE2C_6 fixture unexpectedly carries artifact_schema_version; "
+            "if a backfill happened this test must be updated to a "
+            "different fixture."
+        )
+        # Must validate via absent-field branch.
+        check_evaluation_semantics_or_raise(
+            summary, artifact_path=str(canonical_path)
+        )
+
+
+def test_regime_key_label_mapping_round_trip():
+    """Sanity: every key in REGIME_KEY_LABEL_MAPPING resolves to a non-empty label.
+
+    Catches future entries that forget to provide a label or use an
+    empty string (which would silently fall through to ``regime_label``
+    None on artifacts).
+    """
+    assert REGIME_KEY_LABEL_MAPPING, "Mapping is empty"
+    for key, label in REGIME_KEY_LABEL_MAPPING.items():
+        assert "." in key, f"regime_key {key!r} must be dotted"
+        assert label, f"regime_label for {key!r} must be non-empty"

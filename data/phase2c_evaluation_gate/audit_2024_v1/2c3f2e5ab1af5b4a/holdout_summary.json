@@ -1,0 +1,39 @@
+{
+  "artifact_schema_version": "phase2c_7_1",
+  "current_git_sha": "bdcf62d88b215ef7675cc21a6b4c780bb8ce8cd9",
+  "engine_commit": "eb1c87f",
+  "engine_corrected_lineage": "wf-corrected-v1",
+  "error_message": null,
+  "evaluation_semantics": "single_run_holdout_v1",
+  "gate_pass_per_criterion": {
+    "drawdown_passed": false,
+    "return_passed": false,
+    "sharpe_passed": false,
+    "trades_passed": true
+  },
+  "holdout_metrics": {
+    "max_drawdown": 0.41126238200111437,
+    "sharpe_ratio": -2.013046320595624,
+    "total_return": -0.3732961964290332,
+    "total_trades": 130
+  },
+  "holdout_passed": false,
+  "hypothesis_hash": "2c3f2e5ab1af5b4a",
+  "lifecycle_state": "holdout_failed",
+  "lineage_check": "passed",
+  "name": "volume_divergence_breakout",
+  "passing_criteria": {
+    "max_drawdown": 0.25,
+    "min_sharpe": -0.5,
+    "min_total_return": -0.15,
+    "min_total_trades": 5
+  },
+  "position": 49,
+  "regime_key": "v2.validation",
+  "regime_label": "validation_2024",
+  "run_id": "audit_2024_v1",
+  "source_batch_id": "b6fcbf86-4d57-4d1f-ae41-1778296b1ae9",
+  "theme": "volume_divergence",
+  "wall_clock_seconds": 1.1886,
+  "wf_test_period_sharpe": -0.189839
+}

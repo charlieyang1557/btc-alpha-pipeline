@@ -1,20 +1,49 @@
 """Phase 2C evaluation gate — regime holdout AND-gate against corrected candidates.
 
-Runs the 2022 regime holdout AND-gate (per config/environments.yaml +
+Runs the regime holdout AND-gate (per config/environments.yaml +
 backtest.engine._evaluate_regime_holdout_pass) against Phase 2C
-corrected candidates. Per docs/phase2c/PHASE2C_6_EVALUATION_GATE_PLAN.md.
+corrected candidates. Per docs/phase2c/PHASE2C_6_EVALUATION_GATE_PLAN.md
+(2022 single-regime arc) and docs/phase2c/PHASE2C_7_1_PLAN.md
+(multi-regime extension introducing --regime-key).
 
 Three reusable engine entry points called by this script:
     - backtest.engine.run_regime_holdout: top-level wrapper
     - backtest.engine._evaluate_regime_holdout_pass: 4-condition AND gate
-    - backtest.engine._load_regime_holdout_config: env config loader
+    - backtest.engine._load_regime_block_config: parameterized env config
+      loader (renamed from _load_regime_holdout_config in PHASE2C_7.1
+      sub-step 1.2 to support multi-regime evaluation; the
+      regime_holdout block remains the default for backward-compat)
+
+Cross-block passing_criteria coupling (PHASE2C_7.1 §3 / Q1).
+The `validation` block in environments.yaml has no passing_criteria
+field; when --regime-key v2.validation is used, the engine inherits the
+4-criterion gate from the canonical regime_holdout block and emits an
+INFO log line documenting the inheritance. Producer-side docstring
+audience: a future maintainer wondering "what gate thresholds did the
+2024 evaluation use?" reads the answer here — the inherited criteria
+are the regime_holdout block's verbatim, by design, so all
+single-regime holdout evaluations across arcs share one source of
+truth for "what does it mean to pass". See backtest/engine.py
+_resolve_passing_criteria_with_inheritance() for the resolver.
 
 Two attestation domains kept separate per backtest/wf_lineage.py:
     - WF artifacts: walk_forward_results / walk_forward_summary use
       wf_semantics='corrected_test_boundary_v1' (NOT used here)
     - Single-run holdout artifacts: this script's outputs use
-      evaluation_semantics='single_run_holdout_v1' + the 4 lineage fields
-      validated by check_evaluation_semantics_or_raise()
+      evaluation_semantics='single_run_holdout_v1' + the 5 legacy
+      lineage fields validated by check_evaluation_semantics_or_raise().
+
+PHASE2C_7.1 §7 schema discriminator (Q3(a)).
+Every artifact produced by this script under PHASE2C_7.1+ code carries
+three additional lineage fields regardless of regime:
+    - artifact_schema_version: producer-code identity ("phase2c_7_1")
+    - regime_key:              regime identity (--regime-key value)
+    - regime_label:            regime label (mapping-derived)
+Mental model: schema_version = producer code identity; regime fields =
+which regime the artifact attests against. Independent axes — a 2022
+re-run produced today carries phase2c_7_1 + v2.regime_holdout +
+bear_2022. PHASE2C_6-on-disk artifacts predate this schema and remain
+untouched (the consumer guard's absent-field branch handles them).
 
 CLI surface:
     --source-batch-id <phase2c_batch_uuid>  Upstream Phase 2C proposer batch
@@ -27,6 +56,12 @@ CLI surface:
                                             --universe.
     --run-id <id>                           Identifier for THIS evaluation run
                                             (smoke_v1, or auto-UUID4).
+    --regime-key <key>                      Regime to evaluate against. Default:
+                                            v2.regime_holdout (PHASE2C_6
+                                            backward-compat). Use v2.validation
+                                            for the PHASE2C_7.1 2024 arc.
+                                            Must be a key in
+                                            REGIME_KEY_LABEL_MAPPING.
     --output-root <path>                    Default: data/phase2c_evaluation_gate/
     --dry-run                               Verify config + candidate selection
                                             without running backtests.
@@ -56,9 +91,11 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from backtest.engine import run_regime_holdout, RegimeHoldoutResult  # noqa: E402
 from backtest.wf_lineage import (  # noqa: E402
+    ARTIFACT_SCHEMA_VERSION_PHASE2C_7_1,
     CORRECTED_WF_ENGINE_COMMIT,
     ENGINE_CORRECTED_LINEAGE_TAG,
     EVALUATION_SEMANTICS_TAG,
+    REGIME_KEY_LABEL_MAPPING,
     check_evaluation_semantics_or_raise,
     enforce_corrected_engine_lineage,
 )
@@ -194,14 +231,48 @@ def _load_dsl_from_response(
 # ---------------------------------------------------------------------------
 
 
-def _lineage_metadata(head_sha: str) -> dict[str, str]:
-    """Construct the 5-field lineage metadata block for single-run holdout artifacts."""
+def _lineage_metadata(head_sha: str, regime_key: str) -> dict[str, str]:
+    """Construct the lineage metadata block stamped on every artifact.
+
+    Returns 5 legacy fields (PHASE2C_6 single-run holdout schema) PLUS
+    3 PHASE2C_7.1 §7 fields. Q3(a): every forward artifact stamps all
+    8 fields regardless of regime. Mental model: schema_version is
+    producer-code identity (which producer wrote this artifact),
+    regime_key/regime_label are regime identity (which regime is being
+    attested). Independent axes — a v2.regime_holdout artifact produced
+    today still carries artifact_schema_version="phase2c_7_1" because
+    today's producer code knows the schema, even when the attested
+    regime is the original 2022 bear regime.
+
+    Args:
+        head_sha: Resolved git HEAD SHA (from enforce_corrected_engine_lineage).
+        regime_key: Dotted regime identifier; must be a key in
+            REGIME_KEY_LABEL_MAPPING. The corresponding regime_label
+            is mapping-derived.
+
+    Raises:
+        ValueError: If regime_key is not in REGIME_KEY_LABEL_MAPPING.
+            Failing here (vs. discovering at consumer-guard time) keeps
+            unknown regime_keys from producing unvalidated artifacts.
+    """
+    regime_label = REGIME_KEY_LABEL_MAPPING.get(regime_key)
+    if regime_label is None:
+        raise ValueError(
+            f"regime_key={regime_key!r} is not in REGIME_KEY_LABEL_MAPPING "
+            f"(known: {sorted(REGIME_KEY_LABEL_MAPPING)}). Cannot derive "
+            f"regime_label. Update backtest/wf_lineage.py:REGIME_KEY_LABEL_MAPPING "
+            f"if a new regime is being introduced."
+        )
     return {
         "evaluation_semantics": EVALUATION_SEMANTICS_TAG,
         "engine_commit": CORRECTED_WF_ENGINE_COMMIT,
         "engine_corrected_lineage": ENGINE_CORRECTED_LINEAGE_TAG,
         "current_git_sha": head_sha,
         "lineage_check": "passed",
+        # PHASE2C_7.1 §7 — Q3(a): stamped on every artifact regardless of regime.
+        "artifact_schema_version": ARTIFACT_SCHEMA_VERSION_PHASE2C_7_1,
+        "regime_key": regime_key,
+        "regime_label": regime_label,
     }
 
 
@@ -215,6 +286,7 @@ def _per_candidate_summary(
     head_sha: str,
     source_batch_id: str,
     run_id: str,
+    regime_key: str,
     holdout_result: RegimeHoldoutResult | None,
     lifecycle_state: str,
     error_message: str | None,
@@ -272,7 +344,7 @@ def _per_candidate_summary(
         summary["passing_criteria"] = None
         summary["gate_pass_per_criterion"] = None
         summary["holdout_passed"] = None
-    summary.update(_lineage_metadata(head_sha))
+    summary.update(_lineage_metadata(head_sha, regime_key))
     return summary
 
 
@@ -282,6 +354,7 @@ def _evaluate_one_candidate(
     source_batch_id: str,
     run_id: str,
     output_dir: Path,
+    regime_key: str = "v2.regime_holdout",
 ) -> dict[str, Any]:
     """Evaluate a single candidate through the regime holdout AND-gate.
 
@@ -298,6 +371,7 @@ def _evaluate_one_candidate(
             dsl=dsl,
             batch_id=source_batch_id,
             parent_run_id=f"phase2c_eval_gate_{run_id}",
+            regime_key=regime_key,
         )
         lifecycle_state = (
             "holdout_passed" if holdout_result.regime_holdout_passed
@@ -322,6 +396,7 @@ def _evaluate_one_candidate(
         head_sha=head_sha,
         source_batch_id=source_batch_id,
         run_id=run_id,
+        regime_key=regime_key,
         holdout_result=holdout_result,
         lifecycle_state=lifecycle_state,
         error_message=error_message,
@@ -427,6 +502,7 @@ def _aggregate_summary_dict(
     explicit_hashes: list[str] | None,
     run_started_utc: str,
     run_finished_utc: str,
+    regime_key: str = "v2.regime_holdout",
 ) -> dict[str, Any]:
     counts = {
         "total": len(summaries),
@@ -479,7 +555,7 @@ def _aggregate_summary_dict(
         "audit_only_total": len(audit_only_summaries),
         "by_theme": by_theme,
     }
-    aggregate.update(_lineage_metadata(head_sha))
+    aggregate.update(_lineage_metadata(head_sha, regime_key))
     return aggregate
 
 
@@ -549,6 +625,25 @@ def _build_argparser() -> argparse.ArgumentParser:
             "Identifier for THIS evaluation-gate output run. Examples: "
             "'smoke_v1' for smoke runs, auto-generated UUID4 for full "
             "runs. Distinct from --source-batch-id."
+        ),
+    )
+    parser.add_argument(
+        "--regime-key",
+        type=str,
+        # FUTURE-DEPRECATION: the "v2.regime_holdout" default preserves
+        # PHASE2C_6 reproducibility (2022 single-regime evaluation).
+        # Once multi-regime callers are the production norm, this default
+        # is a candidate for removal so callers must be explicit about
+        # regime identity. Remove only when no implicit-default callers
+        # remain. (Engine-side mirror at backtest/engine.py
+        # run_regime_holdout signature.)
+        default="v2.regime_holdout",
+        help=(
+            "Regime to evaluate against (PHASE2C_7.1 §6). Default: "
+            "v2.regime_holdout (2022 bear regime, PHASE2C_6 backward-compat). "
+            "Use v2.validation for the PHASE2C_7.1 2024 arc. Must be a "
+            "key in REGIME_KEY_LABEL_MAPPING; unknown values are "
+            "rejected at startup before any backtest spend."
         ),
     )
     parser.add_argument(
@@ -626,6 +721,19 @@ def main() -> int:
         )
         return 2
 
+    # Reject unknown --regime-key BEFORE the lineage guard so a typo
+    # doesn't trigger the heavier git checks before failing.
+    if args.regime_key not in REGIME_KEY_LABEL_MAPPING:
+        print(
+            f"ERROR: --regime-key={args.regime_key!r} is not in "
+            f"REGIME_KEY_LABEL_MAPPING. Known regimes: "
+            f"{sorted(REGIME_KEY_LABEL_MAPPING)}. Update "
+            f"backtest/wf_lineage.py:REGIME_KEY_LABEL_MAPPING if "
+            f"introducing a new regime.",
+            file=sys.stderr,
+        )
+        return 2
+
     head_sha = enforce_corrected_engine_lineage()
 
     all_candidates = _load_corrected_candidates(args.source_batch_id)
@@ -645,6 +753,10 @@ def main() -> int:
     print(f"[Phase 2C eval gate] explicit_hashes: {explicit_hashes}")
     print(f"[Phase 2C eval gate] candidates_to_run: {len(selected)}")
     print(f"[Phase 2C eval gate] output_dir: {run_dir}")
+    print(
+        f"[Phase 2C eval gate] regime_key: {args.regime_key} "
+        f"(label={REGIME_KEY_LABEL_MAPPING[args.regime_key]})"
+    )
     print(f"[Phase 2C eval gate] dry_run: {args.dry_run}")
     print(f"[Phase 2C eval gate] force: {args.force}")
 
@@ -680,6 +792,7 @@ def main() -> int:
             source_batch_id=args.source_batch_id,
             run_id=run_id,
             output_dir=run_dir,
+            regime_key=args.regime_key,
         )
         summaries.append(s)
 
@@ -698,6 +811,7 @@ def main() -> int:
         explicit_hashes=explicit_hashes,
         run_started_utc=run_started_utc,
         run_finished_utc=run_finished_utc,
+        regime_key=args.regime_key,
     )
     _write_aggregate_summary(aggregate, run_dir / "holdout_summary.json")
 
