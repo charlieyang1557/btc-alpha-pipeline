@@ -1,0 +1,36 @@
+{
+  "current_git_sha": "d6f481a3692d48d95b6cb39af686fa6dfc34f964",
+  "engine_commit": "eb1c87f",
+  "engine_corrected_lineage": "wf-corrected-v1",
+  "error_message": null,
+  "evaluation_semantics": "single_run_holdout_v1",
+  "gate_pass_per_criterion": {
+    "drawdown_passed": false,
+    "return_passed": false,
+    "sharpe_passed": true,
+    "trades_passed": true
+  },
+  "holdout_metrics": {
+    "max_drawdown": 0.3775771321518967,
+    "sharpe_ratio": -0.28383942159921444,
+    "total_return": -0.24716437363198906,
+    "total_trades": 20
+  },
+  "holdout_passed": false,
+  "hypothesis_hash": "bd8df6138292f7e3",
+  "lifecycle_state": "holdout_failed",
+  "lineage_check": "passed",
+  "name": "low_vol_breakout_regime",
+  "passing_criteria": {
+    "max_drawdown": 0.25,
+    "min_sharpe": -0.5,
+    "min_total_return": -0.15,
+    "min_total_trades": 5
+  },
+  "position": 3,
+  "run_id": "audit_v1",
+  "source_batch_id": "b6fcbf86-4d57-4d1f-ae41-1778296b1ae9",
+  "theme": "volatility_regime",
+  "wall_clock_seconds": 1.178,
+  "wf_test_period_sharpe": 0.620497
+}
