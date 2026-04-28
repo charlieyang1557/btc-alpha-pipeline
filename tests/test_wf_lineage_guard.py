@@ -346,14 +346,26 @@ def _valid_phase2c_7_1_summary(
 
 
 def test_regime_mapping_contains_documented_entries():
-    """The exposed mapping must contain both PHASE2C_6 and PHASE2C_7.1 regimes.
+    """The exposed mapping must contain inherited and PHASE2C_8.1-novel regimes.
 
     Producer code reads from REGIME_KEY_LABEL_MAPPING to derive labels;
     downstream analysis code reads it for cross-arc regime identity.
-    Single source of truth per §7 documented mapping table.
+    Single source of truth per §7 documented mapping table; extended
+    by PHASE2C_8.1 §3.4 with two novel regimes (eval_2020_v1 +
+    eval_2021_v1).
     """
+    # Inherited regimes (PHASE2C_6 + PHASE2C_7.1)
     assert REGIME_KEY_LABEL_MAPPING["v2.regime_holdout"] == "bear_2022"
     assert REGIME_KEY_LABEL_MAPPING["v2.validation"] == "validation_2024"
+    # Novel regimes (PHASE2C_8.1)
+    assert (
+        REGIME_KEY_LABEL_MAPPING["evaluation_regimes.eval_2020_v1"]
+        == "eval_2020_v1"
+    )
+    assert (
+        REGIME_KEY_LABEL_MAPPING["evaluation_regimes.eval_2021_v1"]
+        == "eval_2021_v1"
+    )
 
 
 def test_legacy_path_unchanged_when_schema_version_absent():
@@ -457,17 +469,17 @@ def test_unrecognized_schema_version_raises():
     """Unrecognized artifact_schema_version raises ValueError.
 
     Future arcs that introduce new schemas extend the discriminator
-    branching at that time. Until then, any non-phase2c_7_1 schema
-    string is a defensive reject (don't silently fall through to legacy
-    or new paths).
+    branching at that time. Until then, any value not in
+    ACCEPTED_ARTIFACT_SCHEMA_VERSIONS is a defensive reject (don't
+    silently fall through to legacy or new paths).
     """
     summary = _valid_phase2c_7_1_summary()
-    summary["artifact_schema_version"] = "phase2c_8"
+    summary["artifact_schema_version"] = "phase2c_99"
     with pytest.raises(ValueError) as exc_info:
         check_evaluation_semantics_or_raise(summary)
     msg = str(exc_info.value)
     assert "artifact_schema_version" in msg
-    assert "phase2c_8" in msg
+    assert "phase2c_99" in msg
     assert "Section RS" in msg
 
 
@@ -490,6 +502,166 @@ def test_new_path_still_validates_legacy_fields():
 def test_new_path_validates_lineage_check_passed():
     """New schema path still enforces lineage_check == 'passed'."""
     summary = _valid_phase2c_7_1_summary()
+    summary["lineage_check"] = "failed"
+    with pytest.raises(ValueError) as exc_info:
+        check_evaluation_semantics_or_raise(summary)
+    msg = str(exc_info.value)
+    assert "lineage_check" in msg
+    assert "failed" in msg
+    assert "passed" in msg
+
+
+# --- PHASE2C_8.1 §7 schema discriminator extension tests ---
+# (4-branch discriminator: absent → legacy / phase2c_7_1 → inherited /
+#  phase2c_8_1 → novel / unrecognized → ValueError)
+
+from backtest.wf_lineage import (
+    ARTIFACT_SCHEMA_VERSION_PHASE2C_8_1,
+    ACCEPTED_ARTIFACT_SCHEMA_VERSIONS,
+)
+
+
+def _valid_phase2c_8_1_summary(
+    regime_key: str = "evaluation_regimes.eval_2020_v1",
+    regime_label: str = "eval_2020_v1",
+) -> dict:
+    """Helper: construct a valid PHASE2C_8.1-schema summary for tests."""
+    return {
+        "evaluation_semantics": EVALUATION_SEMANTICS_TAG,
+        "engine_commit": CORRECTED_WF_ENGINE_COMMIT,
+        "engine_corrected_lineage": ENGINE_CORRECTED_LINEAGE_TAG,
+        "lineage_check": "passed",
+        "current_git_sha": "abcd1234567890",
+        "artifact_schema_version": ARTIFACT_SCHEMA_VERSION_PHASE2C_8_1,
+        "regime_key": regime_key,
+        "regime_label": regime_label,
+    }
+
+
+def test_accepted_schema_versions_tuple_contains_both_arcs():
+    """ACCEPTED_ARTIFACT_SCHEMA_VERSIONS exposes both inherited + novel.
+
+    Cross-arc reconciliation rule per spec §6.5: phase2c_7_1 (inherited
+    PHASE2C_7.1 artifacts) + phase2c_8_1 (novel PHASE2C_8.1 artifacts)
+    are both accepted by the consumer guard. The tuple is the single
+    source of truth for accepted schema versions.
+    """
+    assert ARTIFACT_SCHEMA_VERSION_PHASE2C_7_1 in ACCEPTED_ARTIFACT_SCHEMA_VERSIONS
+    assert ARTIFACT_SCHEMA_VERSION_PHASE2C_8_1 in ACCEPTED_ARTIFACT_SCHEMA_VERSIONS
+    assert ARTIFACT_SCHEMA_VERSION_PHASE2C_8_1 == "phase2c_8_1"
+
+
+def test_phase2c_8_1_path_passes_with_eval_2020_v1():
+    """PHASE2C_8.1 artifact stamped against eval_2020_v1 regime passes."""
+    summary = _valid_phase2c_8_1_summary(
+        regime_key="evaluation_regimes.eval_2020_v1",
+        regime_label="eval_2020_v1",
+    )
+    check_evaluation_semantics_or_raise(summary)  # must not raise
+
+
+def test_phase2c_8_1_path_passes_with_eval_2021_v1():
+    """PHASE2C_8.1 artifact stamped against eval_2021_v1 regime passes."""
+    summary = _valid_phase2c_8_1_summary(
+        regime_key="evaluation_regimes.eval_2021_v1",
+        regime_label="eval_2021_v1",
+    )
+    check_evaluation_semantics_or_raise(summary)  # must not raise
+
+
+def test_mixed_discriminator_phase2c_8_1_with_inherited_regime_key():
+    """phase2c_8_1 schema with inherited regime_key validates.
+
+    Cross-axis independence per wf_lineage.py module-level comment:
+    schema_version = producer code identity; regime_key/regime_label =
+    regime identity; the two axes are independent. A re-evaluation of
+    PHASE2C_7.1's bear_2022 regime under PHASE2C_8.1 producer code
+    would carry phase2c_8_1 + v2.regime_holdout + bear_2022.
+    """
+    summary = _valid_phase2c_8_1_summary(
+        regime_key="v2.regime_holdout",
+        regime_label="bear_2022",
+    )
+    check_evaluation_semantics_or_raise(summary)  # must not raise
+
+
+def test_mixed_discriminator_phase2c_7_1_with_novel_regime_key():
+    """phase2c_7_1 schema with novel regime_key validates.
+
+    Cross-axis independence: a hypothetical PHASE2C_7.1 producer
+    invocation against eval_2020_v1 would carry phase2c_7_1 +
+    evaluation_regimes.eval_2020_v1 + eval_2020_v1 and the consumer
+    guard accepts the combination. (PHASE2C_7.1 producer is not
+    actually re-invoked in PHASE2C_8.1; the test confirms the guard's
+    cross-axis independence.)
+    """
+    summary = _valid_phase2c_7_1_summary(
+        regime_key="evaluation_regimes.eval_2020_v1",
+        regime_label="eval_2020_v1",
+    )
+    check_evaluation_semantics_or_raise(summary)  # must not raise
+
+
+def test_phase2c_8_1_raises_on_missing_regime_key():
+    """PHASE2C_8.1-schema artifact missing regime_key raises ValueError."""
+    summary = _valid_phase2c_8_1_summary()
+    del summary["regime_key"]
+    with pytest.raises(ValueError) as exc_info:
+        check_evaluation_semantics_or_raise(summary)
+    msg = str(exc_info.value)
+    assert "regime_key" in msg
+    assert "missing" in msg
+    assert "Section RS" in msg
+
+
+def test_phase2c_8_1_raises_on_unknown_regime_key():
+    """PHASE2C_8.1-schema artifact with unmapped regime_key raises."""
+    summary = _valid_phase2c_8_1_summary(
+        regime_key="evaluation_regimes.eval_2099_v1",
+        regime_label="eval_2099_v1",
+    )
+    with pytest.raises(ValueError) as exc_info:
+        check_evaluation_semantics_or_raise(summary)
+    msg = str(exc_info.value)
+    assert "regime_key" in msg
+    assert "evaluation_regimes.eval_2099_v1" in msg
+    assert "Section RS" in msg
+
+
+def test_phase2c_8_1_raises_on_regime_label_mismatch():
+    """PHASE2C_8.1-schema artifact with wrong regime_label raises."""
+    summary = _valid_phase2c_8_1_summary(
+        regime_key="evaluation_regimes.eval_2020_v1",
+        regime_label="eval_2021_v1",  # wrong label for this key
+    )
+    with pytest.raises(ValueError) as exc_info:
+        check_evaluation_semantics_or_raise(summary)
+    msg = str(exc_info.value)
+    assert "regime_label" in msg
+    assert "eval_2020_v1" in msg
+    assert "eval_2021_v1" in msg
+    assert "Section RS" in msg
+
+
+def test_phase2c_8_1_path_still_validates_legacy_fields():
+    """PHASE2C_8.1 schema path preserves legacy 5-field validation.
+
+    Critical contract: extending the discriminator to accept phase2c_8_1
+    must not relax the existing 5-field validation. A phase2c_8_1
+    artifact with a bad engine_commit must still raise.
+    """
+    summary = _valid_phase2c_8_1_summary()
+    summary["engine_commit"] = "0531741"  # pre-correction
+    with pytest.raises(ValueError) as exc_info:
+        check_evaluation_semantics_or_raise(summary)
+    msg = str(exc_info.value)
+    assert "engine_commit" in msg
+    assert "0531741" in msg
+
+
+def test_phase2c_8_1_path_validates_lineage_check_passed():
+    """PHASE2C_8.1 schema path still enforces lineage_check == 'passed'."""
+    summary = _valid_phase2c_8_1_summary()
     summary["lineage_check"] = "failed"
     with pytest.raises(ValueError) as exc_info:
         check_evaluation_semantics_or_raise(summary)
