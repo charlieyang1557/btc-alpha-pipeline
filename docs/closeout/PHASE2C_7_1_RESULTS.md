@@ -429,10 +429,10 @@ intersection direction." Both readings are sustained by the same
 premature.
 
 **Bounded conclusion (asymmetric confidence).** Within this batch
-of 198 candidates, evaluated against two regimes (2022 bear, 2024
-post-halving / ETF-approval), the corrected WF gate's selection
-power is regime-dependent and not robustly preserved across the
-two tested regimes. The within-2024 direction inverts relative to
+of 198 candidates, evaluated against two regimes (`v2.regime_holdout`
+= bear_2022; `v2.validation` = validation_2024), the corrected WF
+gate's selection power is regime-dependent and not robustly preserved
+across the two tested regimes. The within-2024 direction inverts relative to
 PHASE2C_6's 2022 anti-selection; the cross-regime intersection
 direction mirrors 2022 anti-selection. Magnitude claims are
 bounded by partition sizes (primary n=44, audit-only n=154) and
@@ -867,7 +867,7 @@ recommendation. The repetition is intentional discipline anchor,
 not boilerplate redundancy.
 
 §9 reads forward implications of the §5 cuts and §7 cohort
-enumerations for mechanism questions and PHASE2C_8+ scoping. §10
+enumerations for mechanism questions and follow-up scoping. §10
 forward-points to follow-up arc designs that would address the
 mechanism questions §6 category 3 names as undetermined within
 this batch.
@@ -948,7 +948,8 @@ All 3 passed 2024 (3/3 = 100%); 18 of 36 audit_only candidates
 passed 2024 (50.0%). The within-theme +50pp gap matches §5
 population-level direction but the primary n=3 makes the magnitude
 sensitivity high — a single primary candidate flipping outcome
-would shift the gap to 67% / 33%. PHASE2C_6.6 §8 had momentum's
+would shift the partition comparison to 66.7% / 50.0% (primary
+2/3 vs audit_only 18/36 unchanged). PHASE2C_6.6 §8 had momentum's
 2022 within-theme inversion (0/3 primary, 3/36 audit-only). The
 2024 inversion direction (primary > audit) flips relative to 2022
 at the within-theme level; the magnitude is sensitive to the n=3
@@ -1191,9 +1192,9 @@ This mirrors PHASE2C_6.6 §9's framing for the 12 audit-only
 survivors: diagnostic material requires explicit pre-registered
 investigation, not post-hoc promotion based on cross-regime
 survival within a single batch. Cohort (a) candidates have not
-been evaluated against validation, test, or forward live data;
-no deployment claim, paper-trading claim, or "this strategy
-works" claim is made or implied.
+been evaluated against test or forward live data; no deployment
+claim, paper-trading claim, or "this strategy works" claim is
+made or implied.
 
 **Q-B4: DSR infrastructure investment given continued n=1
 primary cross-regime.** PHASE2C_6.6 §9 raised the DSR (Deflated
