@@ -67,6 +67,54 @@ splits:
     notes: "True out-of-sample. Never used for any form of optimization."
 
 # ============================================================
+# EVALUATION REGIMES (v2 — PHASE2C_8.1 §3.4 multi-regime extension)
+# ============================================================
+# Additive namespace for PHASE2C_8.1's novel evaluation regimes
+# (eval_2020_v1 + eval_2021_v1). These blocks are evaluation-only —
+# they do NOT modify any block in `splits:` and do NOT alter the
+# IMMUTABLE date-split contract for train / regime_holdout / validation
+# / test. Each block holds a calendar window that the PHASE2C_8.1
+# producer evaluates the existing 198-candidate population against.
+#
+# passing_criteria is intentionally absent from each block — the
+# 4-criterion AND gate is inherited from `splits.regime_holdout` per
+# PHASE2C_7.1 §3 / Q1 cross-block coupling (see
+# backtest/engine.py:_resolve_passing_criteria_with_inheritance).
+# Inheritance preserves PHASE2C_8.1 D2 carry-forward (uniform thresholds
+# across all 4 regimes; preserves cross-regime comparability).
+#
+# regime_key shape: `evaluation_regimes.<block_name>` (matches the
+# top-level namespace). REGIME_KEY_LABEL_MAPPING in
+# backtest/wf_lineage.py is the SSOT mapping each regime_key to its
+# regime_label; novel regimes carry phase2c_8_1 schema discriminator
+# per REGIME_KEY_TO_SCHEMA_VERSION_MAPPING.
+
+evaluation_regimes:
+  # 2020 calendar-year window — pandemic-driven bimodal volatility
+  # regime per PHASE2C_8.1 §3.3.2 (Q1 2020 COVID-19 crash + Q4 2020
+  # post-crash recovery rally). Train-overlap caveat: 2020 is part of
+  # v2.splits.train_windows; evaluation is in-sample wrt PHASE2C_5
+  # candidate-screening per §7.4 / §10.6 Concern A.
+  eval_2020_v1:
+    start: "2020-01-01"
+    end: "2020-12-31"
+    label: "eval_2020_v1"
+    macro_characterization: "pandemic_bimodal"
+    arc_of_origin: "PHASE2C_8.1"
+
+  # 2021 calendar-year window — cycle-peak parabolic-bull regime per
+  # PHASE2C_8.1 §3.3.2 (Q4 2021 ATH; mid-year May 2021 selloff;
+  # high-volatility bull regime with sustained directional bias).
+  # Train-overlap caveat: 2021 is part of v2.splits.train_windows;
+  # in-sample wrt PHASE2C_5 candidate-screening per §7.4 / §10.6.
+  eval_2021_v1:
+    start: "2021-01-01"
+    end: "2021-12-31"
+    label: "eval_2021_v1"
+    macro_characterization: "parabolic_bull"
+    arc_of_origin: "PHASE2C_8.1"
+
+# ============================================================
 # WALK-FORWARD CONFIGURATION (Phase 1+)
 # ============================================================
 # Rolling sub-window parameters applied independently within each

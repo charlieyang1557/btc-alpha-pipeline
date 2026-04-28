@@ -1,0 +1,6 @@
+hypothesis_hash,position,theme,name,wf_test_period_sharpe,lifecycle_state,holdout_passed,holdout_sharpe,holdout_max_drawdown,holdout_total_return,holdout_total_trades,wall_clock_seconds,error_message
+01f077141926ca19,96,momentum,rsi_momentum_continuation,-0.094125,holdout_failed,0,-0.044346,0.411430,-0.156186,34,1.2073,
+031723666371b1aa,191,momentum,momentum_acceleration_191,-0.695850,holdout_failed,0,-1.121106,0.302618,-0.265927,59,1.1607,
+03421cb3529a6029,170,calendar_effect,monday_mean_reversion_170,0.194439,holdout_passed,1,0.213717,0.177093,0.013778,28,1.1396,
+0381f071b457bc86,106,momentum,macd_momentum_acceleration,-1.813317,holdout_failed,0,-1.745736,0.583940,-0.501458,91,1.1793,
+06c3b4a2f7ff8338,37,mean_reversion,oversold_bb_mean_reversion,1.143855,holdout_failed,0,1.617231,0.094292,0.362582,4,1.1518,

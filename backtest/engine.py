@@ -1255,27 +1255,37 @@ def _load_regime_block_config(
     """Read a named regime block from environments.yaml.
 
     Generalizes the prior ``_load_regime_holdout_config`` to support
-    multiple regime blocks (PHASE2C_7.1 §3 — 2024 validation block as
-    a sibling to the 2022 regime_holdout block).
+    multiple regime blocks across two namespaces:
 
-    The ``regime_key`` is parsed as ``"<schema_version>.<block_name>"``;
-    ``schema_version`` is validated against ``env_config["version"]`` and
-    ``block_name`` is the key under ``env_config["splits"]``.
+    * ``v2.<block_name>`` — versioned splits namespace (PHASE2C_7.1 §3).
+      The ``v2`` prefix must match ``env_config["version"]``; ``block_name``
+      is the key under ``env_config["splits"]``. Examples:
+      ``"v2.regime_holdout"``, ``"v2.validation"``.
+    * ``evaluation_regimes.<block_name>`` — additive structural
+      namespace (PHASE2C_8.1 §3.4). Top-level YAML key
+      ``evaluation_regimes`` houses PHASE2C_8.1's novel evaluation
+      regimes (eval_2020_v1, eval_2021_v1). Lookups in this namespace
+      bypass version validation because the namespace is structural,
+      not versioned. Future arcs that bump env_config version still
+      resolve ``evaluation_regimes.<name>`` via the structural
+      top-level key.
 
     Args:
         env_config: Pre-loaded env config dict (testing). When None,
             reads ``config/environments.yaml`` from disk.
         regime_key: Dotted regime identifier, e.g.
-            ``"v2.regime_holdout"`` or ``"v2.validation"``. Default
-            preserves the PHASE2C_6 production path for backward-compat.
+            ``"v2.regime_holdout"``, ``"v2.validation"``, or
+            ``"evaluation_regimes.eval_2020_v1"``. Default preserves
+            the PHASE2C_6 production path for backward-compat.
 
     Returns:
-        The named splits block.
+        The named regime block.
 
     Raises:
-        ValueError: If ``regime_key`` is malformed, the schema version
-            mismatches ``env_config["version"]``, or the named block is
-            absent from ``env_config["splits"]``.
+        ValueError: If ``regime_key`` is malformed, an unknown namespace
+            prefix is used, the v2-namespace version mismatches
+            ``env_config["version"]``, or the named block is absent
+            from its target namespace section.
     """
     if env_config is None:
         import yaml
@@ -1285,15 +1295,28 @@ def _load_regime_block_config(
 
     if "." not in regime_key:
         raise ValueError(
-            f"regime_key must be of the form '<version>.<block_name>'; "
+            f"regime_key must be of the form '<namespace>.<block_name>'; "
             f"got {regime_key!r}"
         )
-    schema_version, block_name = regime_key.split(".", 1)
+    namespace, block_name = regime_key.split(".", 1)
+
+    if namespace == "evaluation_regimes":
+        # PHASE2C_8.1 §3.4 — structural namespace; no version validation.
+        block = env_config.get("evaluation_regimes", {}).get(block_name)
+        if not block:
+            raise ValueError(
+                f"environments.yaml is missing "
+                f"evaluation_regimes.{block_name} "
+                f"(regime_key={regime_key!r})"
+            )
+        return block
+
+    # Versioned splits namespace (PHASE2C_7.1 §3 — v2.<block>).
     actual_version = env_config.get("version")
-    if actual_version != schema_version:
+    if actual_version != namespace:
         raise ValueError(
             f"regime_key={regime_key!r} requires environments.yaml "
-            f"version {schema_version!r}; found {actual_version!r}"
+            f"version {namespace!r}; found {actual_version!r}"
         )
     block = env_config.get("splits", {}).get(block_name)
     if not block:

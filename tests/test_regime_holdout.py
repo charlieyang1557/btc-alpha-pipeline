@@ -987,6 +987,34 @@ def _make_v2_env_config_with_validation() -> dict:
     return env
 
 
+def _make_v2_env_config_with_evaluation_regimes() -> dict:
+    """v2 env config with regime_holdout + evaluation_regimes namespace.
+
+    PHASE2C_8.1 §3.4 multi-regime extension. The evaluation_regimes
+    namespace is additive (not under splits:) and intentionally has
+    no passing_criteria per block — the 4-criterion AND gate is
+    inherited from splits.regime_holdout per cross-block coupling.
+    """
+    env = _make_v2_env_config()
+    env["evaluation_regimes"] = {
+        "eval_2020_v1": {
+            "start": "2020-01-01",
+            "end": "2020-12-31",
+            "label": "eval_2020_v1",
+            "macro_characterization": "pandemic_bimodal",
+            "arc_of_origin": "PHASE2C_8.1",
+        },
+        "eval_2021_v1": {
+            "start": "2021-01-01",
+            "end": "2021-12-31",
+            "label": "eval_2021_v1",
+            "macro_characterization": "parabolic_bull",
+            "arc_of_origin": "PHASE2C_8.1",
+        },
+    }
+    return env
+
+
 class TestLoadRegimeBlockConfig:
     """``_load_regime_block_config`` parameterized block lookup."""
 
@@ -1051,6 +1079,119 @@ class TestLoadRegimeBlockConfig:
         with pytest.raises(ValueError) as exc_info:
             _load_regime_block_config(env, regime_key="v2.does_not_exist")
         assert "does_not_exist" in str(exc_info.value)
+
+    # PHASE2C_8.1 §3.4 — evaluation_regimes namespace
+
+    def test_eval_2020_v1_loads_evaluation_regimes_block(self):
+        """evaluation_regimes.eval_2020_v1 routes to evaluation_regimes.eval_2020_v1."""
+        from backtest.engine import _load_regime_block_config
+
+        env = _make_v2_env_config_with_evaluation_regimes()
+        block = _load_regime_block_config(
+            env, regime_key="evaluation_regimes.eval_2020_v1"
+        )
+        assert block["start"] == "2020-01-01"
+        assert block["end"] == "2020-12-31"
+        assert block["label"] == "eval_2020_v1"
+        assert block["macro_characterization"] == "pandemic_bimodal"
+        assert block["arc_of_origin"] == "PHASE2C_8.1"
+        # Per spec §3.4: evaluation_regimes blocks intentionally lack
+        # passing_criteria (inherits from regime_holdout per
+        # _resolve_passing_criteria_with_inheritance).
+        assert "passing_criteria" not in block
+
+    def test_eval_2021_v1_loads_evaluation_regimes_block(self):
+        """evaluation_regimes.eval_2021_v1 routes to evaluation_regimes.eval_2021_v1."""
+        from backtest.engine import _load_regime_block_config
+
+        env = _make_v2_env_config_with_evaluation_regimes()
+        block = _load_regime_block_config(
+            env, regime_key="evaluation_regimes.eval_2021_v1"
+        )
+        assert block["start"] == "2021-01-01"
+        assert block["end"] == "2021-12-31"
+        assert block["label"] == "eval_2021_v1"
+        assert block["macro_characterization"] == "parabolic_bull"
+
+    def test_evaluation_regimes_unknown_block_raises(self):
+        """evaluation_regimes.<unknown> raises with clear message."""
+        from backtest.engine import _load_regime_block_config
+
+        env = _make_v2_env_config_with_evaluation_regimes()
+        with pytest.raises(ValueError) as exc_info:
+            _load_regime_block_config(
+                env, regime_key="evaluation_regimes.eval_2099_v1"
+            )
+        assert "eval_2099_v1" in str(exc_info.value)
+
+    def test_evaluation_regimes_namespace_does_not_require_version_match(self):
+        """evaluation_regimes namespace bypasses v2 version check.
+
+        The namespace is structural (top-level YAML key), not versioned;
+        version validation only applies when the regime_key prefix is
+        the env_config's version (e.g., 'v2.'). Future arcs that bump
+        env_config version still resolve evaluation_regimes.<name> via
+        the structural top-level key.
+        """
+        from backtest.engine import _load_regime_block_config
+
+        env = _make_v2_env_config_with_evaluation_regimes()
+        # Even though env['version']=='v2', evaluation_regimes lookups
+        # work without a 'v2.' prefix.
+        block = _load_regime_block_config(
+            env, regime_key="evaluation_regimes.eval_2020_v1"
+        )
+        assert block["start"] == "2020-01-01"
+
+    def test_eval_2020_v1_inherits_passing_criteria_from_regime_holdout(self):
+        """evaluation_regimes.eval_2020_v1 inherits passing_criteria from regime_holdout.
+
+        Per spec §4 D2 carry-forward: 4-criterion AND-gate thresholds
+        are uniform across all 4 regimes. Inheritance preserves cross-
+        regime comparability + avoids field duplication in environments.yaml.
+        """
+        from backtest.engine import _resolve_passing_criteria_with_inheritance
+
+        env = _make_v2_env_config_with_evaluation_regimes()
+        criteria, source = _resolve_passing_criteria_with_inheritance(
+            env, regime_key="evaluation_regimes.eval_2020_v1"
+        )
+        assert criteria == env["splits"]["regime_holdout"]["passing_criteria"]
+        assert source == "regime_holdout"
+
+    def test_eval_2021_v1_inherits_passing_criteria_from_regime_holdout(self):
+        """evaluation_regimes.eval_2021_v1 inherits passing_criteria from regime_holdout."""
+        from backtest.engine import _resolve_passing_criteria_with_inheritance
+
+        env = _make_v2_env_config_with_evaluation_regimes()
+        criteria, source = _resolve_passing_criteria_with_inheritance(
+            env, regime_key="evaluation_regimes.eval_2021_v1"
+        )
+        assert criteria == env["splits"]["regime_holdout"]["passing_criteria"]
+        assert source == "regime_holdout"
+
+    def test_environments_yaml_on_disk_has_evaluation_regimes(self):
+        """Disk-loaded config/environments.yaml carries the new blocks.
+
+        Anchors the spec §3.4 commitment that the eval_2020_v1 +
+        eval_2021_v1 blocks live in the canonical config file (not in
+        an external file).
+        """
+        import yaml
+        from pathlib import Path
+
+        env_path = Path(__file__).resolve().parents[1] / "config" / "environments.yaml"
+        with open(env_path) as f:
+            env = yaml.safe_load(f)
+        assert "evaluation_regimes" in env
+        assert "eval_2020_v1" in env["evaluation_regimes"]
+        assert "eval_2021_v1" in env["evaluation_regimes"]
+        assert env["evaluation_regimes"]["eval_2020_v1"]["start"] == "2020-01-01"
+        assert env["evaluation_regimes"]["eval_2021_v1"]["start"] == "2021-01-01"
+        # Existing splits namespace preserved (additive change).
+        assert "splits" in env
+        assert "regime_holdout" in env["splits"]
+        assert "validation" in env["splits"]
 
 
 class TestResolvePassingCriteriaInheritance:
