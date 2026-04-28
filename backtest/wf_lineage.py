@@ -105,6 +105,55 @@ REGIME_KEY_LABEL_MAPPING: dict[str, str] = {
     "evaluation_regimes.eval_2021_v1": "eval_2021_v1",
 }
 
+# regime_key -> producer-stamped schema_version mapping (PHASE2C_8.1
+# §7). The producer code uses this mapping to select the correct
+# discriminator per regime: inherited regimes (PHASE2C_7.1) stamp
+# phase2c_7_1; novel regimes (PHASE2C_8.1) stamp phase2c_8_1. Mixed-
+# discriminator metadata reconciliation per spec §6.5 — the consumer
+# guard accepts both via ACCEPTED_ARTIFACT_SCHEMA_VERSIONS; producer
+# code stamps the per-regime discriminator at lineage-metadata time.
+#
+# Cross-mapping invariant: every regime_key in REGIME_KEY_LABEL_MAPPING
+# must also be in REGIME_KEY_TO_SCHEMA_VERSION_MAPPING. Future arcs
+# adding new regimes update both mappings together.
+REGIME_KEY_TO_SCHEMA_VERSION_MAPPING: dict[str, str] = {
+    "v2.regime_holdout": ARTIFACT_SCHEMA_VERSION_PHASE2C_7_1,
+    "v2.validation": ARTIFACT_SCHEMA_VERSION_PHASE2C_7_1,
+    "evaluation_regimes.eval_2020_v1": ARTIFACT_SCHEMA_VERSION_PHASE2C_8_1,
+    "evaluation_regimes.eval_2021_v1": ARTIFACT_SCHEMA_VERSION_PHASE2C_8_1,
+}
+
+
+def regime_key_to_schema_version(regime_key: str) -> str:
+    """Return the producer-stamped schema_version for a given regime_key.
+
+    Producer-side helper used by the evaluation-gate script's
+    _lineage_metadata to select the correct discriminator per regime.
+
+    Args:
+        regime_key: A regime_key in REGIME_KEY_TO_SCHEMA_VERSION_MAPPING.
+
+    Returns:
+        The schema_version string to stamp on artifacts attesting
+        against this regime_key.
+
+    Raises:
+        ValueError: If regime_key is not in the mapping. Failing here
+            (vs. discovering at consumer-guard time) keeps unknown
+            regime_keys from producing unvalidated artifacts.
+    """
+    schema_version = REGIME_KEY_TO_SCHEMA_VERSION_MAPPING.get(regime_key)
+    if schema_version is None:
+        raise ValueError(
+            f"regime_key={regime_key!r} is not in "
+            f"REGIME_KEY_TO_SCHEMA_VERSION_MAPPING (known: "
+            f"{sorted(REGIME_KEY_TO_SCHEMA_VERSION_MAPPING)}). Cannot "
+            f"derive schema_version. Update "
+            f"backtest/wf_lineage.py:REGIME_KEY_TO_SCHEMA_VERSION_MAPPING "
+            f"if a new regime is being introduced."
+        )
+    return schema_version
+
 # Anchor git subprocess calls to the repo root containing this file, NOT
 # to the caller's CWD. Without this anchor the producer guard false-rejects
 # legitimate corrected runs invoked from /tmp, notebooks, CI wrappers, or

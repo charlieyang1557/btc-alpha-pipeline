@@ -669,3 +669,88 @@ def test_phase2c_8_1_path_validates_lineage_check_passed():
     assert "lineage_check" in msg
     assert "failed" in msg
     assert "passed" in msg
+
+
+# --- PHASE2C_8.1 §7 regime_key → schema_version mapping tests ---
+# (Producer-side helper used by _lineage_metadata to select the
+# correct discriminator per regime; inherited regimes stamp
+# phase2c_7_1; novel regimes stamp phase2c_8_1.)
+
+from backtest.wf_lineage import (
+    REGIME_KEY_TO_SCHEMA_VERSION_MAPPING,
+    regime_key_to_schema_version,
+)
+
+
+def test_regime_key_to_schema_version_mapping_contains_inherited():
+    """Inherited regime_keys map to PHASE2C_7.1 schema discriminator."""
+    assert (
+        REGIME_KEY_TO_SCHEMA_VERSION_MAPPING["v2.regime_holdout"]
+        == ARTIFACT_SCHEMA_VERSION_PHASE2C_7_1
+    )
+    assert (
+        REGIME_KEY_TO_SCHEMA_VERSION_MAPPING["v2.validation"]
+        == ARTIFACT_SCHEMA_VERSION_PHASE2C_7_1
+    )
+
+
+def test_regime_key_to_schema_version_mapping_contains_novel():
+    """Novel regime_keys map to PHASE2C_8.1 schema discriminator."""
+    assert (
+        REGIME_KEY_TO_SCHEMA_VERSION_MAPPING[
+            "evaluation_regimes.eval_2020_v1"
+        ]
+        == ARTIFACT_SCHEMA_VERSION_PHASE2C_8_1
+    )
+    assert (
+        REGIME_KEY_TO_SCHEMA_VERSION_MAPPING[
+            "evaluation_regimes.eval_2021_v1"
+        ]
+        == ARTIFACT_SCHEMA_VERSION_PHASE2C_8_1
+    )
+
+
+def test_regime_key_to_schema_version_helper_inherited():
+    """Helper returns phase2c_7_1 for inherited regime_keys."""
+    assert (
+        regime_key_to_schema_version("v2.regime_holdout")
+        == ARTIFACT_SCHEMA_VERSION_PHASE2C_7_1
+    )
+    assert (
+        regime_key_to_schema_version("v2.validation")
+        == ARTIFACT_SCHEMA_VERSION_PHASE2C_7_1
+    )
+
+
+def test_regime_key_to_schema_version_helper_novel():
+    """Helper returns phase2c_8_1 for novel regime_keys."""
+    assert (
+        regime_key_to_schema_version("evaluation_regimes.eval_2020_v1")
+        == ARTIFACT_SCHEMA_VERSION_PHASE2C_8_1
+    )
+    assert (
+        regime_key_to_schema_version("evaluation_regimes.eval_2021_v1")
+        == ARTIFACT_SCHEMA_VERSION_PHASE2C_8_1
+    )
+
+
+def test_regime_key_to_schema_version_helper_unknown_raises():
+    """Helper raises ValueError on unmapped regime_key."""
+    with pytest.raises(ValueError) as exc_info:
+        regime_key_to_schema_version("v2.does_not_exist")
+    msg = str(exc_info.value)
+    assert "regime_key" in msg
+    assert "v2.does_not_exist" in msg
+
+
+def test_regime_key_mapping_keys_match_label_mapping_keys():
+    """Both mappings expose the same set of regime_keys (consistency check).
+
+    Cross-mapping invariant: every regime_key in REGIME_KEY_LABEL_MAPPING
+    must also be in REGIME_KEY_TO_SCHEMA_VERSION_MAPPING. Future arcs
+    adding new regimes update both mappings together to preserve the
+    invariant.
+    """
+    assert set(REGIME_KEY_LABEL_MAPPING) == set(
+        REGIME_KEY_TO_SCHEMA_VERSION_MAPPING
+    )

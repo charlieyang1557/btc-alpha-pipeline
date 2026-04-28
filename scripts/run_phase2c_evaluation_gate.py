@@ -92,6 +92,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from backtest.engine import run_regime_holdout, RegimeHoldoutResult  # noqa: E402
 from backtest.wf_lineage import (  # noqa: E402
     ARTIFACT_SCHEMA_VERSION_PHASE2C_7_1,
+    regime_key_to_schema_version,
     CORRECTED_WF_ENGINE_COMMIT,
     ENGINE_CORRECTED_LINEAGE_TAG,
     EVALUATION_SEMANTICS_TAG,
@@ -263,6 +264,14 @@ def _lineage_metadata(head_sha: str, regime_key: str) -> dict[str, str]:
             f"regime_label. Update backtest/wf_lineage.py:REGIME_KEY_LABEL_MAPPING "
             f"if a new regime is being introduced."
         )
+    # PHASE2C_8.1 §7 — per-regime schema discriminator selection. Inherited
+    # regimes (v2.regime_holdout, v2.validation) stamp phase2c_7_1; novel
+    # regimes (evaluation_regimes.eval_2020_v1, evaluation_regimes.eval_2021_v1)
+    # stamp phase2c_8_1. Mixed-discriminator metadata reconciliation per
+    # spec §6.5 — the consumer guard accepts both versions via
+    # ACCEPTED_ARTIFACT_SCHEMA_VERSIONS; the per-regime stamp records
+    # arc-of-origin without coupling comparison logic to discriminator value.
+    schema_version = regime_key_to_schema_version(regime_key)
     return {
         "evaluation_semantics": EVALUATION_SEMANTICS_TAG,
         "engine_commit": CORRECTED_WF_ENGINE_COMMIT,
@@ -270,7 +279,8 @@ def _lineage_metadata(head_sha: str, regime_key: str) -> dict[str, str]:
         "current_git_sha": head_sha,
         "lineage_check": "passed",
         # PHASE2C_7.1 §7 — Q3(a): stamped on every artifact regardless of regime.
-        "artifact_schema_version": ARTIFACT_SCHEMA_VERSION_PHASE2C_7_1,
+        # PHASE2C_8.1 §7 — schema discriminator now per-regime (mapping-derived).
+        "artifact_schema_version": schema_version,
         "regime_key": regime_key,
         "regime_label": regime_label,
     }
@@ -628,8 +638,10 @@ def _build_argparser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--regime",
         "--regime-key",
         type=str,
+        dest="regime_key",
         # FUTURE-DEPRECATION: the "v2.regime_holdout" default preserves
         # PHASE2C_6 reproducibility (2022 single-regime evaluation).
         # Once multi-regime callers are the production norm, this default
@@ -639,11 +651,15 @@ def _build_argparser() -> argparse.ArgumentParser:
         # run_regime_holdout signature.)
         default="v2.regime_holdout",
         help=(
-            "Regime to evaluate against (PHASE2C_7.1 §6). Default: "
-            "v2.regime_holdout (2022 bear regime, PHASE2C_6 backward-compat). "
-            "Use v2.validation for the PHASE2C_7.1 2024 arc. Must be a "
-            "key in REGIME_KEY_LABEL_MAPPING; unknown values are "
-            "rejected at startup before any backtest spend."
+            "Regime to evaluate against (PHASE2C_7.1 §6; PHASE2C_8.1 §6 "
+            "extended). Default: v2.regime_holdout (2022 bear regime, "
+            "PHASE2C_6 backward-compat). Use v2.validation for the "
+            "PHASE2C_7.1 2024 arc; evaluation_regimes.eval_2020_v1 or "
+            "evaluation_regimes.eval_2021_v1 for the PHASE2C_8.1 novel "
+            "regimes. --regime is the canonical PHASE2C_8.1 flag name; "
+            "--regime-key is preserved as an alias for backward-compat. "
+            "Must be a key in REGIME_KEY_LABEL_MAPPING; unknown values "
+            "are rejected at startup before any backtest spend."
         ),
     )
     parser.add_argument(

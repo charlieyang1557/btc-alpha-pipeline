@@ -31,6 +31,7 @@ if str(PROJECT_ROOT) not in sys.path:
 from backtest.engine import RegimeHoldoutResult  # noqa: E402
 from backtest.wf_lineage import (  # noqa: E402
     ARTIFACT_SCHEMA_VERSION_PHASE2C_7_1,
+    ARTIFACT_SCHEMA_VERSION_PHASE2C_8_1,
     CORRECTED_WF_ENGINE_COMMIT,
     ENGINE_CORRECTED_LINEAGE_TAG,
     EVALUATION_SEMANTICS_TAG,
@@ -392,6 +393,44 @@ class TestRegimeKeyCliFlag:
             "(must be in REGIME_KEY_LABEL_MAPPING)"
         )
 
+    # PHASE2C_8.1 §6 — --regime alias + novel regime_keys
+
+    def test_regime_alias_flag_synonym_with_regime_key(self):
+        """--regime is a synonym of --regime-key (PHASE2C_8.1 §6 alias)."""
+        args = runner._build_argparser().parse_args([
+            "--candidate-hashes", "0bf34de1",
+            "--run-id", "x",
+            "--regime", "v2.validation",
+        ])
+        assert args.regime_key == "v2.validation"
+
+    def test_regime_alias_accepts_eval_2020_v1(self):
+        """--regime evaluation_regimes.eval_2020_v1 parsed correctly."""
+        args = runner._build_argparser().parse_args([
+            "--candidate-hashes", "0bf34de1",
+            "--run-id", "x",
+            "--regime", "evaluation_regimes.eval_2020_v1",
+        ])
+        assert args.regime_key == "evaluation_regimes.eval_2020_v1"
+
+    def test_regime_alias_accepts_eval_2021_v1(self):
+        """--regime evaluation_regimes.eval_2021_v1 parsed correctly."""
+        args = runner._build_argparser().parse_args([
+            "--candidate-hashes", "0bf34de1",
+            "--run-id", "x",
+            "--regime", "evaluation_regimes.eval_2021_v1",
+        ])
+        assert args.regime_key == "evaluation_regimes.eval_2021_v1"
+
+    def test_regime_key_flag_still_accepts_eval_2020_v1(self):
+        """Backward-compat: --regime-key still works for novel regimes too."""
+        args = runner._build_argparser().parse_args([
+            "--candidate-hashes", "0bf34de1",
+            "--run-id", "x",
+            "--regime-key", "evaluation_regimes.eval_2020_v1",
+        ])
+        assert args.regime_key == "evaluation_regimes.eval_2020_v1"
+
 
 class TestLineageMetadataThreeNewFields:
     """``_lineage_metadata`` stamps Q3(a) three new fields on EVERY artifact.
@@ -444,6 +483,65 @@ class TestLineageMetadataThreeNewFields:
             )
         assert "regime_key" in str(exc_info.value)
         assert "v2.unknown" in str(exc_info.value)
+
+    # PHASE2C_8.1 §7 — per-regime discriminator selection
+
+    def test_eval_2020_v1_regime_key_stamps_phase2c_8_1_schema(self):
+        """Novel regime_key (eval_2020_v1) → phase2c_8_1 schema with eval_2020_v1 label."""
+        meta = runner._lineage_metadata(
+            head_sha="abcd1234567890",
+            regime_key="evaluation_regimes.eval_2020_v1",
+        )
+        assert meta["artifact_schema_version"] == (
+            ARTIFACT_SCHEMA_VERSION_PHASE2C_8_1
+        )
+        assert meta["regime_key"] == "evaluation_regimes.eval_2020_v1"
+        assert meta["regime_label"] == "eval_2020_v1"
+        # Five legacy fields remain stamped on novel-regime artifacts.
+        assert meta["evaluation_semantics"] == EVALUATION_SEMANTICS_TAG
+        assert meta["engine_commit"] == CORRECTED_WF_ENGINE_COMMIT
+        assert meta["engine_corrected_lineage"] == (
+            ENGINE_CORRECTED_LINEAGE_TAG
+        )
+        assert meta["lineage_check"] == "passed"
+        assert meta["current_git_sha"] == "abcd1234567890"
+
+    def test_eval_2021_v1_regime_key_stamps_phase2c_8_1_schema(self):
+        """Novel regime_key (eval_2021_v1) → phase2c_8_1 schema with eval_2021_v1 label."""
+        meta = runner._lineage_metadata(
+            head_sha="abcd1234567890",
+            regime_key="evaluation_regimes.eval_2021_v1",
+        )
+        assert meta["artifact_schema_version"] == (
+            ARTIFACT_SCHEMA_VERSION_PHASE2C_8_1
+        )
+        assert meta["regime_key"] == "evaluation_regimes.eval_2021_v1"
+        assert meta["regime_label"] == "eval_2021_v1"
+
+    def test_inherited_and_novel_discriminator_selection_independent(self):
+        """Mixed-discriminator metadata reconciliation per spec §6.5.
+
+        Inherited regimes stamp phase2c_7_1; novel regimes stamp
+        phase2c_8_1; the two paths coexist in the same producer
+        invocation surface. Verifies that the discriminator selection
+        is per-regime, not global.
+        """
+        inherited = runner._lineage_metadata(
+            head_sha="abcd1234567890",
+            regime_key="v2.regime_holdout",
+        )
+        novel = runner._lineage_metadata(
+            head_sha="abcd1234567890",
+            regime_key="evaluation_regimes.eval_2020_v1",
+        )
+        assert inherited["artifact_schema_version"] == (
+            ARTIFACT_SCHEMA_VERSION_PHASE2C_7_1
+        )
+        assert novel["artifact_schema_version"] == (
+            ARTIFACT_SCHEMA_VERSION_PHASE2C_8_1
+        )
+        assert inherited["lineage_check"] == "passed"
+        assert novel["lineage_check"] == "passed"
 
 
 class TestPerCandidateArtifactStampsThreeFields:
