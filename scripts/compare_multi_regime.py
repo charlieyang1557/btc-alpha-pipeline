@@ -126,17 +126,53 @@ class RegimeInput:
 # ---------------------------------------------------------------------------
 
 
-def _load_run_artifacts(run_dir: Path) -> dict[str, dict[str, Any]]:
+def _expected_count_from_results_csv(run_dir: Path) -> int | None:
+    """Derive the producer's canonical universe size for a regime+tier dir.
+
+    Reads `<run_dir>/holdout_results.csv` and returns the row count
+    excluding the header. This is the authoritative cardinality for
+    cross-checking the per-candidate JSON dir count.
+
+    Returns None if the CSV is absent — caller may then fall back to
+    permissive loading (no cardinality assertion). PHASE2C_6/7.1/8.1
+    producer artifact dirs always emit holdout_results.csv; absence
+    typically signals an unconventional/synthetic input.
+    """
+    csv_path = run_dir / "holdout_results.csv"
+    if not csv_path.exists():
+        return None
+    with open(csv_path, "r", encoding="utf-8", newline="") as f:
+        reader = csv.reader(f)
+        try:
+            next(reader)  # header
+        except StopIteration:
+            return 0
+        return sum(1 for _ in reader)
+
+
+def _load_run_artifacts(
+    run_dir: Path,
+    *,
+    expected_count: int | None = None,
+) -> dict[str, dict[str, Any]]:
     """Read every per-candidate holdout_summary.json under run_dir.
 
     Returns dict keyed by hypothesis_hash. Mixed-schema input handled
     transparently — script does not parse schema_discriminator.
 
-    Skips subdirectories whose name starts with underscore (e.g.,
-    `_smoke/`, `_filtered/`) — these are non-candidate convention dirs
-    that carry aggregate or derived artifacts, not per-candidate
-    summaries. Also defensively skips per-candidate JSONs that lack
-    a top-level hypothesis_hash field.
+    Convention skip: subdirectories whose name starts with underscore
+    (e.g., `_smoke/`, `_filtered/`) are non-candidate convention dirs
+    that carry aggregate or derived artifacts; they are skipped.
+
+    For all non-convention candidate dirs, the loader is strict:
+        - missing holdout_summary.json → raise FileNotFoundError
+        - holdout_summary.json without hypothesis_hash → raise ValueError
+        - duplicate hypothesis_hash across dirs → raise ValueError
+
+    If expected_count is provided, the loaded universe size must match
+    or ValueError is raised. Pass expected_count to assert per-regime
+    cardinality against an authoritative source (e.g., row count of
+    holdout_results.csv).
     """
     out: dict[str, dict[str, Any]] = {}
     for cand_dir in sorted(run_dir.iterdir()):
@@ -146,18 +182,33 @@ def _load_run_artifacts(run_dir: Path) -> dict[str, dict[str, Any]]:
             continue  # Skip _smoke/, _filtered/, and similar convention dirs.
         path = cand_dir / "holdout_summary.json"
         if not path.exists():
-            continue
+            raise FileNotFoundError(
+                f"Expected holdout_summary.json under candidate dir "
+                f"{cand_dir} (relative to {run_dir}). Non-convention "
+                f"directories must contain a per-candidate summary; "
+                f"underscore-prefixed dirs are convention-skipped."
+            )
         summary = json.loads(path.read_text())
         if "hypothesis_hash" not in summary:
-            # Defensive: skip aggregate-style summaries that lack the
-            # per-candidate identifier field.
-            continue
+            raise ValueError(
+                f"holdout_summary.json at {path} is missing required "
+                f"top-level field 'hypothesis_hash'. This loader treats "
+                f"non-convention candidate dirs as strict per-candidate "
+                f"artifacts; aggregate-style summaries belong under "
+                f"underscore-prefixed convention dirs (e.g., '_smoke')."
+            )
         h = summary["hypothesis_hash"]
         if h in out:
             raise ValueError(
                 f"Duplicate hypothesis_hash {h!r} found under {run_dir}"
             )
         out[h] = summary
+    if expected_count is not None and len(out) != expected_count:
+        raise ValueError(
+            f"Loaded {len(out)} per-candidate summaries from {run_dir}; "
+            f"expected {expected_count}. Cardinality mismatch indicates "
+            f"a producer regression or partial artifact set."
+        )
     return out
 
 
@@ -396,7 +447,12 @@ def apply_multi_regime_comparison(
             shutil.rmtree(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Load all artifacts (unfiltered + filtered per regime)
+    # Load all artifacts (unfiltered + filtered per regime).
+    # For each tier, derive an authoritative expected_count from
+    # holdout_results.csv row count (the producer's canonical universe
+    # declaration); pass it to _load_run_artifacts so cardinality
+    # mismatches between per-candidate JSON dirs and the producer's CSV
+    # surface as a hard error rather than silently propagating.
     unfiltered_arts: dict[str, dict[str, dict[str, Any]]] = {}
     filtered_arts: dict[str, dict[str, dict[str, Any]]] = {}
     regime_keys: list[str] = []
@@ -406,8 +462,14 @@ def apply_multi_regime_comparison(
         meta = _resolve_regime_metadata(ri.regime_key)
         label = meta["label"]
         regime_keys.append(ri.regime_key)
-        unfiltered_arts[label] = _load_run_artifacts(ri.unfiltered_dir)
-        filtered_arts[label] = _load_run_artifacts(ri.filtered_dir)
+        unf_expected = _expected_count_from_results_csv(ri.unfiltered_dir)
+        filt_expected = _expected_count_from_results_csv(ri.filtered_dir)
+        unfiltered_arts[label] = _load_run_artifacts(
+            ri.unfiltered_dir, expected_count=unf_expected
+        )
+        filtered_arts[label] = _load_run_artifacts(
+            ri.filtered_dir, expected_count=filt_expected
+        )
         # Disk-state schema reflection: sample one per-candidate summary
         # to determine the actual schema_discriminator on disk. Legacy
         # PHASE2C_6 artifacts (audit_v1) carry no field; producer-mapping

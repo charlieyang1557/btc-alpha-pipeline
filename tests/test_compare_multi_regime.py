@@ -396,7 +396,16 @@ class TestIntegrationN4OnDisk:
         return paths
 
     def test_4_regime_e2e_produces_198_rows(self, tmp_path, regime_paths):
-        """End-to-end at n=4 produces a 198-row comparison matrix."""
+        """End-to-end at n=4 against canonical artifacts.
+
+        Pinned canonical numbers reflect the artifact snapshot at
+        commit `da1859d` (PHASE2C_8.1 Step 4 commit). Any regeneration
+        of the underlying audit_v1 / audit_2024_v1 / eval_2020_v1 /
+        eval_2021_v1 artifact sets requires re-pinning here with an
+        explicit commit-message acknowledgment of the canonical-number
+        change. This is the deliberate coupling: pinned numbers surface
+        canonical-finding drift; non-pinned would silently absorb it.
+        """
         output_dir = tmp_path / "comparison_test"
         regime_inputs = [
             cmp_mod.RegimeInput(
@@ -425,12 +434,6 @@ class TestIntegrationN4OnDisk:
         summary = json.loads(json_path.read_text())
         assert summary["totals"]["n_candidates"] == 198
         assert summary["totals"]["n_regimes"] == 4
-        assert "cohort_a_unfiltered" in summary
-        assert "cohort_a_filtered" in summary
-        assert "cohort_c_unfiltered" in summary
-        assert "pass_count_distribution" in summary
-        assert "in_sample_caveat_stratification" in summary
-        assert "regime_metadata" in summary
         assert len(summary["regime_metadata"]) == 4
 
         # Per-regime metadata stamped correctly
@@ -442,16 +445,335 @@ class TestIntegrationN4OnDisk:
         # Mixed-schema reconciliation: schema_version field per regime
         schemas = {m["schema_version"] for m in summary["regime_metadata"]}
         # legacy bear_2022 = absent (None); others = phase2c_7_1 or phase2c_8_1
-        assert None in schemas or "(absent)" in schemas
+        assert None in schemas
         assert ARTIFACT_SCHEMA_VERSION_PHASE2C_7_1 in schemas
         assert ARTIFACT_SCHEMA_VERSION_PHASE2C_8_1 in schemas
 
-        # Cohort cardinalities are plausibly bounded:
-        # - cohort_a_unfiltered: candidates passing all 4 regimes
-        # - cohort_a_filtered: candidates passing all 4 regimes at filter tier
-        assert isinstance(summary["cohort_a_unfiltered"], list)
-        assert isinstance(summary["cohort_a_filtered"], list)
-        # Filtered cohort is necessarily a subset of unfiltered cohort
+        # --- CANONICAL-NUMBER PINS (Q-S4-8) ---
+        # Cohort (a) cross-regime survivors at n=4
+        assert summary["cohort_a_cardinality_unfiltered"] == 1
+        assert summary["cohort_a_cardinality_filtered"] == 0
+        assert summary["cohort_a_unfiltered"] == ["0845d1d7898412f2"]
+        assert summary["cohort_a_filtered"] == []
+
+        # Cohort (c) failures
+        assert summary["cohort_c_cardinality_unfiltered"] == 76
+
+        # Pass-count distribution (JSON keys are strings)
+        assert summary["pass_count_distribution"]["unfiltered"] == {
+            "0": 76, "1": 55, "2": 45, "3": 21, "4": 1
+        }
+        assert summary["pass_count_distribution"]["filtered"] == {
+            "0": 87, "1": 58, "2": 38, "3": 15, "4": 0
+        }
+
+        # In-sample caveat stratification: 21 vs 8 asymmetry (load-bearing)
+        strat = summary["in_sample_caveat_stratification"]
+        assert strat["fully_out_of_sample_regimes"] == [
+            "bear_2022", "validation_2024"
+        ]
+        assert strat["train_overlap_regimes"] == [
+            "eval_2020_v1", "eval_2021_v1"
+        ]
+        assert strat["n_passing_all_fully_out_of_sample"] == 8
+        assert strat["n_passing_all_train_overlap"] == 21
+
+        # Filtered cohort necessarily subset of unfiltered
         assert set(summary["cohort_a_filtered"]).issubset(
             set(summary["cohort_a_unfiltered"])
         )
+
+
+# ---------------------------------------------------------------------------
+# Synthetic failure-path tests (Q-S4-8 strictness validation)
+# ---------------------------------------------------------------------------
+
+
+def _write_candidate_summary(
+    cand_dir: Path,
+    *,
+    summary: dict,
+) -> None:
+    """Helper: write a per-candidate holdout_summary.json under cand_dir."""
+    cand_dir.mkdir(parents=True, exist_ok=True)
+    (cand_dir / "holdout_summary.json").write_text(json.dumps(summary))
+
+
+def _write_results_csv(run_dir: Path, hashes: list[str]) -> None:
+    """Helper: write a minimal holdout_results.csv asserting universe size."""
+    run_dir.mkdir(parents=True, exist_ok=True)
+    lines = ["hypothesis_hash,holdout_passed"]
+    for h in hashes:
+        lines.append(f"{h},0")
+    (run_dir / "holdout_results.csv").write_text("\n".join(lines) + "\n")
+
+
+class TestLoaderStrictness:
+    """`_load_run_artifacts` strictness on malformed / missing inputs."""
+
+    def test_skips_underscore_prefixed_dirs(self, tmp_path):
+        """Convention `_smoke/`, `_filtered/` dirs are skipped silently."""
+        run_dir = tmp_path / "regime"
+        run_dir.mkdir()
+        # Convention dir without per-candidate JSON: must be skipped.
+        (run_dir / "_smoke").mkdir()
+        # Real candidate dir.
+        _write_candidate_summary(
+            run_dir / "abc123",
+            summary=_stub_per_candidate_summary("abc123", holdout_passed=True),
+        )
+        loaded = cmp_mod._load_run_artifacts(run_dir)
+        assert set(loaded) == {"abc123"}
+
+    def test_raises_on_missing_holdout_summary_json(self, tmp_path):
+        """Non-convention candidate dir without summary file → raise."""
+        run_dir = tmp_path / "regime"
+        run_dir.mkdir()
+        (run_dir / "abc123").mkdir()  # No holdout_summary.json inside.
+        with pytest.raises(FileNotFoundError) as exc_info:
+            cmp_mod._load_run_artifacts(run_dir)
+        assert "holdout_summary.json" in str(exc_info.value)
+
+    def test_raises_on_missing_hypothesis_hash_field(self, tmp_path):
+        """Per-candidate JSON missing hypothesis_hash field → ValueError."""
+        run_dir = tmp_path / "regime"
+        run_dir.mkdir()
+        bad = {"theme": "calendar_effect", "holdout_passed": True}
+        _write_candidate_summary(run_dir / "abc123", summary=bad)
+        with pytest.raises(ValueError) as exc_info:
+            cmp_mod._load_run_artifacts(run_dir)
+        assert "hypothesis_hash" in str(exc_info.value)
+
+    def test_raises_on_duplicate_hypothesis_hash(self, tmp_path):
+        """Two dirs with the same hypothesis_hash → raise."""
+        run_dir = tmp_path / "regime"
+        run_dir.mkdir()
+        _write_candidate_summary(
+            run_dir / "dir_one",
+            summary=_stub_per_candidate_summary("collision", holdout_passed=True),
+        )
+        _write_candidate_summary(
+            run_dir / "dir_two",
+            summary=_stub_per_candidate_summary("collision", holdout_passed=False),
+        )
+        with pytest.raises(ValueError) as exc_info:
+            cmp_mod._load_run_artifacts(run_dir)
+        assert "Duplicate" in str(exc_info.value)
+
+    def test_raises_on_expected_count_mismatch(self, tmp_path):
+        """Loaded count != expected_count → ValueError surfaced."""
+        run_dir = tmp_path / "regime"
+        run_dir.mkdir()
+        _write_candidate_summary(
+            run_dir / "abc123",
+            summary=_stub_per_candidate_summary("abc123", holdout_passed=True),
+        )
+        # Only 1 candidate dir; declare expected_count=2 to force mismatch.
+        with pytest.raises(ValueError) as exc_info:
+            cmp_mod._load_run_artifacts(run_dir, expected_count=2)
+        assert "Cardinality mismatch" in str(exc_info.value) or \
+               "expected 2" in str(exc_info.value)
+
+    def test_expected_count_match_succeeds(self, tmp_path):
+        """Loaded count == expected_count → no raise."""
+        run_dir = tmp_path / "regime"
+        run_dir.mkdir()
+        _write_candidate_summary(
+            run_dir / "abc",
+            summary=_stub_per_candidate_summary("abc", holdout_passed=True),
+        )
+        _write_candidate_summary(
+            run_dir / "def",
+            summary=_stub_per_candidate_summary("def", holdout_passed=False),
+        )
+        loaded = cmp_mod._load_run_artifacts(run_dir, expected_count=2)
+        assert set(loaded) == {"abc", "def"}
+
+
+class TestExpectedCountFromResultsCsv:
+    """`_expected_count_from_results_csv` derives universe size from CSV."""
+
+    def test_returns_row_count_excluding_header(self, tmp_path):
+        run_dir = tmp_path / "regime"
+        _write_results_csv(run_dir, hashes=["h1", "h2", "h3"])
+        assert cmp_mod._expected_count_from_results_csv(run_dir) == 3
+
+    def test_returns_none_when_csv_absent(self, tmp_path):
+        run_dir = tmp_path / "regime"
+        run_dir.mkdir()
+        assert cmp_mod._expected_count_from_results_csv(run_dir) is None
+
+    def test_returns_zero_for_empty_csv(self, tmp_path):
+        run_dir = tmp_path / "regime"
+        run_dir.mkdir()
+        (run_dir / "holdout_results.csv").write_text("")
+        assert cmp_mod._expected_count_from_results_csv(run_dir) == 0
+
+
+class TestApplyMultiRegimeFailurePaths:
+    """`apply_multi_regime_comparison` raises on structural inconsistencies."""
+
+    def _build_minimal_regime(
+        self,
+        root: Path,
+        *,
+        regime_dir_name: str,
+        hashes: list[str],
+        all_pass: bool = True,
+    ) -> Path:
+        """Helper: build a regime+tier dir with N candidate dirs + CSV."""
+        run_dir = root / regime_dir_name
+        for h in hashes:
+            _write_candidate_summary(
+                run_dir / h,
+                summary=_stub_per_candidate_summary(
+                    h, holdout_passed=all_pass, total_trades=50
+                ),
+            )
+        _write_results_csv(run_dir, hashes=hashes)
+        return run_dir
+
+    def test_raises_on_universe_mismatch_between_regimes(self, tmp_path):
+        """Two regimes with non-overlapping hash sets → universe symmetry raises."""
+        unf_a = self._build_minimal_regime(
+            tmp_path, regime_dir_name="bear_unf", hashes=["h1", "h2"]
+        )
+        filt_a = self._build_minimal_regime(
+            tmp_path, regime_dir_name="bear_filt", hashes=["h1"]
+        )
+        unf_b = self._build_minimal_regime(
+            tmp_path, regime_dir_name="val_unf", hashes=["h3", "h4"]
+        )
+        filt_b = self._build_minimal_regime(
+            tmp_path, regime_dir_name="val_filt", hashes=["h3"]
+        )
+        regime_inputs = [
+            cmp_mod.RegimeInput(
+                regime_key="v2.regime_holdout",
+                unfiltered_dir=unf_a,
+                filtered_dir=filt_a,
+            ),
+            cmp_mod.RegimeInput(
+                regime_key="v2.validation",
+                unfiltered_dir=unf_b,
+                filtered_dir=filt_b,
+            ),
+        ]
+        with pytest.raises(ValueError) as exc_info:
+            cmp_mod.apply_multi_regime_comparison(
+                regime_inputs=regime_inputs,
+                output_dir=tmp_path / "out",
+            )
+        assert "Universe mismatch" in str(exc_info.value)
+
+    def test_raises_on_filtered_subset_violation(self, tmp_path):
+        """Filtered regime with hashes absent from unfiltered → raise."""
+        unf_a = self._build_minimal_regime(
+            tmp_path, regime_dir_name="bear_unf", hashes=["h1", "h2"]
+        )
+        # Filtered tier contains a hash NOT in unfiltered (h3) → violation.
+        filt_a = self._build_minimal_regime(
+            tmp_path, regime_dir_name="bear_filt", hashes=["h1", "h3"]
+        )
+        unf_b = self._build_minimal_regime(
+            tmp_path, regime_dir_name="val_unf", hashes=["h1", "h2"]
+        )
+        filt_b = self._build_minimal_regime(
+            tmp_path, regime_dir_name="val_filt", hashes=["h1"]
+        )
+        regime_inputs = [
+            cmp_mod.RegimeInput(
+                regime_key="v2.regime_holdout",
+                unfiltered_dir=unf_a,
+                filtered_dir=filt_a,
+            ),
+            cmp_mod.RegimeInput(
+                regime_key="v2.validation",
+                unfiltered_dir=unf_b,
+                filtered_dir=filt_b,
+            ),
+        ]
+        with pytest.raises(ValueError) as exc_info:
+            cmp_mod.apply_multi_regime_comparison(
+                regime_inputs=regime_inputs,
+                output_dir=tmp_path / "out",
+            )
+        msg = str(exc_info.value)
+        assert "filtered" in msg.lower() or "absent" in msg.lower()
+
+    def test_raises_on_per_regime_cardinality_mismatch(self, tmp_path):
+        """CSV declares N rows but candidate dir count is N-1 → raise."""
+        run_dir = tmp_path / "bear_unf"
+        # Only 1 per-candidate dir.
+        _write_candidate_summary(
+            run_dir / "h1",
+            summary=_stub_per_candidate_summary("h1", holdout_passed=True),
+        )
+        # CSV declares 2 hashes (cardinality mismatch).
+        _write_results_csv(run_dir, hashes=["h1", "h2"])
+
+        unf_b = self._build_minimal_regime(
+            tmp_path, regime_dir_name="val_unf", hashes=["h1", "h2"]
+        )
+        filt_a = self._build_minimal_regime(
+            tmp_path, regime_dir_name="bear_filt", hashes=["h1"]
+        )
+        filt_b = self._build_minimal_regime(
+            tmp_path, regime_dir_name="val_filt", hashes=["h1"]
+        )
+        regime_inputs = [
+            cmp_mod.RegimeInput(
+                regime_key="v2.regime_holdout",
+                unfiltered_dir=run_dir,
+                filtered_dir=filt_a,
+            ),
+            cmp_mod.RegimeInput(
+                regime_key="v2.validation",
+                unfiltered_dir=unf_b,
+                filtered_dir=filt_b,
+            ),
+        ]
+        with pytest.raises(ValueError) as exc_info:
+            cmp_mod.apply_multi_regime_comparison(
+                regime_inputs=regime_inputs,
+                output_dir=tmp_path / "out",
+            )
+        msg = str(exc_info.value)
+        assert "Cardinality" in msg or "expected" in msg
+
+    def test_raises_on_malformed_candidate_json(self, tmp_path):
+        """Candidate JSON missing hypothesis_hash → loader raises."""
+        run_dir = tmp_path / "bear_unf"
+        run_dir.mkdir()
+        # Malformed candidate: no hypothesis_hash field.
+        (run_dir / "bad").mkdir()
+        (run_dir / "bad" / "holdout_summary.json").write_text(
+            json.dumps({"theme": "calendar_effect"})
+        )
+        _write_results_csv(run_dir, hashes=["bad_hash"])
+
+        unf_b = self._build_minimal_regime(
+            tmp_path, regime_dir_name="val_unf", hashes=["bad_hash"]
+        )
+        filt_a = run_dir  # reuse to satisfy CLI symmetry; will fail before
+        filt_b = self._build_minimal_regime(
+            tmp_path, regime_dir_name="val_filt", hashes=["bad_hash"]
+        )
+        regime_inputs = [
+            cmp_mod.RegimeInput(
+                regime_key="v2.regime_holdout",
+                unfiltered_dir=run_dir,
+                filtered_dir=filt_a,
+            ),
+            cmp_mod.RegimeInput(
+                regime_key="v2.validation",
+                unfiltered_dir=unf_b,
+                filtered_dir=filt_b,
+            ),
+        ]
+        with pytest.raises(ValueError) as exc_info:
+            cmp_mod.apply_multi_regime_comparison(
+                regime_inputs=regime_inputs,
+                output_dir=tmp_path / "out",
+            )
+        assert "hypothesis_hash" in str(exc_info.value)
