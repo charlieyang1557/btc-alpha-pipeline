@@ -1,0 +1,39 @@
+{
+  "artifact_schema_version": "phase2c_8_1",
+  "current_git_sha": "06fae09d049b51d5873cb5aad137c05ecd0271bb",
+  "engine_commit": "eb1c87f",
+  "engine_corrected_lineage": "wf-corrected-v1",
+  "error_message": null,
+  "evaluation_semantics": "single_run_holdout_v1",
+  "gate_pass_per_criterion": {
+    "drawdown_passed": false,
+    "return_passed": false,
+    "sharpe_passed": false,
+    "trades_passed": true
+  },
+  "holdout_metrics": {
+    "max_drawdown": 0.45114840128133554,
+    "sharpe_ratio": -1.1224439842471,
+    "total_return": -0.43205499129599634,
+    "total_trades": 90
+  },
+  "holdout_passed": false,
+  "hypothesis_hash": "3d3bf1db8eb8c79d",
+  "lifecycle_state": "holdout_failed",
+  "lineage_check": "passed",
+  "name": "macd_hist_momentum_reversal_120",
+  "passing_criteria": {
+    "max_drawdown": 0.25,
+    "min_sharpe": -0.5,
+    "min_total_return": -0.15,
+    "min_total_trades": 5
+  },
+  "position": 121,
+  "regime_key": "evaluation_regimes.eval_2021_v1",
+  "regime_label": "eval_2021_v1",
+  "run_id": "eval_2021_v1",
+  "source_batch_id": "b6fcbf86-4d57-4d1f-ae41-1778296b1ae9",
+  "theme": "momentum",
+  "wall_clock_seconds": 1.1794,
+  "wf_test_period_sharpe": -1.246726
+}
