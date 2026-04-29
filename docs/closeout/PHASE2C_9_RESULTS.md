@@ -2042,11 +2042,1154 @@ scoping cycle.
 
 ## 7. Mechanism-vs-observation comparison (Step 5 deliverable)
 
-*(deferred — Step 5 deliverable per
-[`PHASE2C_9_PLAN.md`](../phase2c/PHASE2C_9_PLAN.md) §5.5. Cross-
-references §3 mechanism descriptions with §4 / §5 / §6 observation
-evidence; produces structured evidence map for each Case A.1-A.4 /
-B.1-B.3 / C.1-C.3 sub-register.)*
+This section produces structured evidence maps for the three
+pre-registered case definitions (Case A.1-A.4 / Case B.1-B.3 /
+Case C.1-C.3 per [`PHASE2C_9_PLAN.md`](../phase2c/PHASE2C_9_PLAN.md)
+§4) by cross-referencing §3 mechanism descriptions with §4 / §5 /
+§6 observation evidence. Per spec §5.5 deliverable definition:
+**output register** is per-case qualifying-evidence summary +
+per-case disqualifying-counter-evidence summary. NOT case
+determination (Step 6 §8 territory per spec §5.6 + §4.4
+one-and-only-one rule); NOT new mechanism description (Step 1 §3
+territory; §7 maps existing mechanism to evidence only); NOT
+PHASE2C_10 / successor-arc pre-naming (per spec §7.2 forbidden-
+language register).
+
+The evidence base for §7 cross-reference comprises the cumulative
+**11 observations** surfaced across Steps 1-4 §7-carry-forward
+registers (3 from Step 1 §3 mechanism reconstruction; 3 from Step
+2 §4.3 artifact-distribution audit; 2 from Step 3 §5.3 cross-tab;
+3 from Step 4 §6.4 lone-survivor walkthrough), plus the §3-§6
+cited mechanism descriptions and observation cardinalities at
+file:line citation register. §7.0 / §7.1 / §7.2 below construct the
+per-case evidence maps by mapping each observation to its
+applicable Case sub-register(s) and summarizing
+qualifying-vs-disqualifying-counter-evidence at the register
+required by spec §4.
+
+**Selection criterion pre-registration** (per session-entry
+handoff): all 11 carry-forward observations enter §7 evidence
+maps. The 11 are not uniform in evidentiary class — some are
+population-level (cross-tab asymmetries, train-overlap divergence,
+factor-set repetition rate); some are candidate-level (single-
+trade-margin filter exclusion, permissive AND-gate at -10.2%
+return, theme_coherence = 1/6); some are mechanism-level (modulus
+mismatch between `_theme_for_slot` and `_theme_for_position`,
+Critic-annotates-only / lifecycle-state assignment at orchestrator
+ingest layer, THEME_HINTS Stage 2c-vs-Critic dual surface,
+rejected_complexity at description-length boundary,
+rsi_14_dominance first-50-block anomaly at 92%). Different
+observation classes map to different sub-registers with different
+evidentiary weights; the per-case maps below cite each observation
+at the sub-register where it most plausibly bears, with
+cross-references where the same observation bears on multiple
+sub-registers.
+
+**Ingest-layer mechanism scoping** (per session-entry handoff
+carry-forward): Steps 1-4 mechanism reconstruction (§3) covers
+Proposer prompt + Critic gate + theme rotation at code register;
+ingest-layer mechanism (`agents/orchestrator/ingest.py`, which
+performs the actual lifecycle-state assignment per §3.2.6
+"Critic annotates only — lifecycle-state assignment is the
+orchestrator ingest layer's responsibility") is NOT in Step 1
+§3 reconstruction scope. §7 maps existing mechanism evidence; it
+does NOT construct new mechanism descriptions for the ingest
+layer. Where Observations 2 (Critic annotates only), 4
+(rejected_complexity at boundary), 5 (rsi_14_dominance — touches
+ingest-layer's anomaly flag), and 6 (factor-set repetition —
+could plausibly be a Critic vs ingest-layer distinction) bear on
+sub-registers requiring full ingest-layer mechanism for
+interpretation, §7 surfaces the sub-register applicability with
+explicit interpretive-register caveat. Full ingest-layer
+mechanism reconstruction is out-of-scope per spec §3.1 in-scope
+enumeration (Proposer + Critic + theme rotation only) + spec
+§3.2.4 NO mining-process redesign; tracked-fix register entry at
+§8 (Step 6 territory) surfaces the scoping limitation.
+
+**Evidence-mapping discipline** (per spec §6.1): every claim in
+§7 cites a specific source — file:line citation for code claims;
+PHASE2C_8.1 closeout section anchor for canonical-number claims;
+§3-§6 cross-reference for mechanism / observation claims; explicit
+"this is interpretation, not observation" framing where evidence
+mapping reaches the qualifying-vs-disqualifying-counter-evidence
+adjudication boundary.
+
+**Forbidden-language audit** (per spec §6.4 + §7.2): §7 contains
+no PHASE2C_10 / successor-arc pre-naming; no "this confirms",
+"this requires", or "this means we proceed to" forward-pointer
+language; no Case A/B/C single-case adjudication (§7.X
+qualifying-vs-disqualifying summaries are per-sub-register
+evidence summaries, not case determinations). The §6.4 closeout-
+document language audit at Step 6 verifies these constraints at
+final-commit register.
+
+**Cumulative-11 selection-criterion documentation** (per
+session-entry handoff carry-forward + Step 4 advisor pass register-
+precision concern): all 11 carry-forward observations enter §7
+evidence maps. Spec §4.1 / §4.2 / §4.3 do NOT define exclusion
+criteria for "out-of-scope-context observations"; the §7 inclusion
+discipline is therefore "every Step 1-4 carry-forward observation
+maps to at least one Case sub-register at the qualifying-evidence
+or disqualifying-counter-evidence register." The 11 are not
+uniform in evidentiary class (population-level / candidate-level /
+mechanism-level); the per-Case sub-register maps below cite each
+observation at the sub-register where it most plausibly bears,
+with cross-references where the same observation bears on multiple
+sub-registers. Selection criterion is "all-11-enter" by spec-silence
++ "all-observations-must-map" inclusion discipline. §8 (Step 6
+territory) inherits this scoping decision documented here at §7.0
+introduction.
+
+#### 7.0.0 Carry-forward observation inventory
+
+Compact reference for §7-internal cross-references. Per Claude
+advisor's "cumulative-11 selection-criterion documentation"
+concern + ChatGPT first-pass strong-minor "§7.0 inventory table"
+patch suggestion. The Obs ID column uses §7-internal indexing 1-11
+in Step-1 → Step-4 sequence; "Source step" + "Evidence anchor"
+columns trace each to its underlying step working-draft register;
+"Case sub-register(s) touched" column lists where the observation
+maps as qualifying-evidence (Q) or disqualifying-counter-evidence
+(D) at §7.0 / §7.1 / §7.2 below.
+
+| Obs ID | Source step | Evidence anchor | Case sub-register(s) touched |
+|---|---|---|---|
+| 1 | Step 1 §3.3.2 | `_theme_for_slot` len(THEMES)=6 vs `_theme_for_position` THEME_CYCLE_LEN=5 modulus mismatch | A.3 (Q-weak) |
+| 2 | Step 1 §3.2.6 | Critic annotates only / lifecycle-state assignment at orchestrator ingest layer | A.2 (D-strong); A.4 (D) |
+| 3 | Step 1 §3.1.4 + §3.2.2 + §3.2.3 | THEME_HINTS dual surface (proposer-side vs Critic-side `batch_context.theme_hints`) | A.1 (Q-weak); A.2 (interpretive caveat) |
+| 4 | Step 2 §4.3 | rejected_complexity at description-length boundary (2/200) | A.1 (Q-weak) |
+| 5 | Step 2 §4.3 | rsi_14_dominance first-50-block anomaly at 92% (46/50) | A.1 (Q-weak) |
+| 6 | Step 2 §4.3 | Factor-set repetition rate ~28.79% (57/198) | A.2 (Q-weak) |
+| 7 | Step 3 §5.1 + §5.3 | Train-overlap regime divergence at per-theme level (eval_2020_v1 ≈ 2× eval_2021_v1) | A.3 (Q-weak); B.2 (Q) |
+| 8 | Step 3 §5.1 + §5.3 | Per-regime pass-rate range asymmetry across themes (bear_2022 range 6 vs validation_2024 range 21 etc.) | A.3 (Q-weak); B.2 (Q) |
+| 9 | Step 4 §6.4 | Single-trade-margin filter exclusion in bear_2022 (19 trades vs ≥20 threshold) | A.4 (Q); B.3 (D) |
+| 10 | Step 4 §6.4 | Permissive AND-gate accepts -10.2% return in eval_2021_v1 for lone-survivor | A.4 (Q); A.2 (interpretive caveat) |
+| 11 | Step 4 §6.4 | Theme alignment at D7a whole-DSL register / theme_coherence = 1/6 ≈ 0.1667 | A.4 (Q); A.1 (Q-weak); A.2 (D); B.2 (D); B.3 (D) |
+
+Q = qualifying evidence; D = disqualifying counter-evidence;
+parenthetical strength label per §7.0 / §7.1 / §7.2 prose detail.
+Observations marked at multiple sub-registers are cited in each
+case-sub-register prose with cross-references.
+
+### 7.0 Case A evidence map
+
+Case A definition (per spec §4.1): retrospective surfaces at
+least one identifiable structural defect in mining-process inputs
+that, if addressed, would plausibly improve candidate-population
+quality at register relevant to deployment-quality strategy
+generation. Sub-registers A.1 / A.2 / A.3 / A.4. The four
+sub-registers map to: A.1 Proposer prompt defect; A.2 Critic gate
+defect; A.3 theme rotation defect; A.4 mining-time vs
+evaluation-time gate misalignment.
+
+#### 7.0.1 Sub-register A.1 — Proposer prompt defect
+
+Spec §4.1 A.1 qualifying-evidence categories: prompt language
+steers toward overfitting-prone DSL patterns; theme-injection
+asymmetry across themes; few-shot example selection bias;
+DSL-schema-vs-evaluation-gate misalignment.
+
+**Qualifying evidence (cited from §3-§6 register)**:
+
+- **Observation 5 (Step 2 §4.3) — `rsi_14_dominance` first-50-block
+  anomaly at 92%** (46/50 valid calls): per §3.1.3 prompt-builder
+  mechanism at
+  [`agents/proposer/prompt_builder.py`](../../agents/proposer/prompt_builder.py)
+  the prompt does NOT explicitly encode `rsi_14` in any block; the
+  92% first-50 dominance is therefore an **emergent Proposer-side
+  pattern**, not a prompt-encoded directive. Cross-reference: §3.2.2
+  D7a `factor_diversity` rule scoring at
+  [`agents/critic/d7a_rules.py`](../../agents/critic/d7a_rules.py)
+  computes per-batch factor-set diversity; the rsi_14 dominance
+  surfaces at the batch-level factor-set distribution. **Evidentiary
+  weight at A.1**: weak qualifying evidence — the dominance is
+  emergent (not prompt-encoded) but the prompt-side factor surface
+  per §3.1.3 may still systematically steer LLM toward `rsi_14` via
+  factor-set documentation register. Whether the steering is
+  prompt-language defect (A.1) or LLM-side property independent of
+  prompt design (which would not be Case A territory) is interpretive
+  ambiguity.
+- **Observation 3 (Step 1 §3) — THEME_HINTS dual surface (Stage
+  2c/2d proposer-side vs Critic-side `batch_context.theme_hints`)**:
+  per §3.1.4 Stage 2c/2d batch orchestration at
+  [`agents/proposer/stage2d_batch.py:117-129`](../../agents/proposer/stage2d_batch.py#L117-L129),
+  the THEME_HINTS dictionary surfaces at the proposer-side at
+  prompt-construction time (Stage 2c/2d batches consume THEME_HINTS
+  to construct theme-injected prompts). Per §3.2.3 D7a feature
+  extraction at
+  [`agents/critic/d7a_feature_extraction.py:86-100`](../../agents/critic/d7a_feature_extraction.py#L86-L100)
+  + §3.2.2 D7a `theme_coherence` rule consuming `BatchContext.theme_hints`,
+  the same conceptual hint surface (theme → expected factor set)
+  is consumed at the Critic-side at evaluation time. The two
+  surfaces are architecturally separate but conceptually parallel:
+  proposer-side uses THEME_HINTS to steer LLM generation toward
+  theme-aligned factors; Critic-side uses `batch_context.theme_hints`
+  to score theme alignment of generated DSL. **Evidentiary weight
+  at A.1**: the dual-surface architecture is the structural
+  substrate underlying Observation 11's register-asymmetric outcome
+  (proposer surfaces 1 hint factor at thin-theme register; Critic
+  evaluates across whole-DSL register). Whether the dual-surface
+  architecture is prompt-side defect (A.1: prompt-side hint surface
+  too thin for thin-themes), Critic-side defect (A.2: Critic-side
+  scoring formula too whole-DSL for thin-theme alignment), or
+  design-as-intended at CONTRACT BOUNDARY register requires
+  ingest-layer mechanism reconstruction outside light-touch scope.
+  **Interpretive ambiguity**: the dual-surface architecture is
+  structural to design, not unambiguously defect at A.1 register.
+- **Observation 11 (Step 4 §6.4) — theme alignment at D7a register
+  for lone-survivor**: `theme_coherence = len(overlap) / len(factors)
+  = 1/6 ≈ 0.1667` per §3.2.2 D7a rule at
+  [`agents/critic/d7a_rules.py:24-36`](../../agents/critic/d7a_rules.py#L24-L36).
+  THEME_HINTS at
+  [`agents/proposer/stage2d_batch.py:117-129`](../../agents/proposer/stage2d_batch.py#L117-L129)
+  defines `volume_divergence` as a THIN_THEME with single hint factor
+  `{volume_zscore_24h}`. Per-§3.2.3 `extract_factors()` at
+  [`agents/critic/d7a_feature_extraction.py:86-100`](../../agents/critic/d7a_feature_extraction.py#L86-L100)
+  scans both entry AND exit groups + includes string-typed RHS
+  `cond.value`. The thin-theme-register × whole-DSL-register
+  interaction produces structurally low theme_coherence scores
+  (1/6 = 0.1667) for thin-theme candidates regardless of candidate
+  quality. Per Observation 3 above: the underlying dual-surface
+  architecture (proposer-side THEME_HINTS at thin-theme register;
+  Critic-side scoring at whole-DSL register) is the structural
+  substrate of this asymmetric outcome. **Evidentiary weight at A.1**: prompt-side theme
+  injection (THEME_HINTS) interacts with Critic-side
+  theme_coherence formula in a register-asymmetric way (prompt
+  surfaces 1 hint factor at thin-theme register; D7a evaluates
+  across whole-DSL register including string-typed RHS). The
+  asymmetry is structural to the THIN_THEMES design at
+  `stage2d_batch.py`. **Interpretive caveat**: whether this
+  asymmetry is prompt-side defect (A.1) or Critic-gate-side defect
+  (A.2) depends on which side of the prompt-Critic interaction
+  is treated as load-bearing; D7a `theme_coherence` is documented
+  as observation-tag not gate signal at
+  [`agents/critic/d7a_rules.py:155-156`](../../agents/critic/d7a_rules.py#L155-L156)
+  per §3.2.2, which weakens A.1 qualifying weight.
+- **Observation 4 (Step 2 §4.3) — rejected_complexity at description-
+  length boundary** (2/200 attempts; both in `momentum` and
+  `mean_reversion` themes per §4.0): per §3.1.1 Proposer interface
+  at
+  [`agents/proposer/interface.py`](../../agents/proposer/interface.py),
+  the DSL pydantic schema enforces `description ≤ 300 chars`; the 2
+  rejections occur at the schema-validation boundary, not at the
+  Proposer prompt design layer. The cohort is too small (2/200) to
+  demonstrate systematic prompt-language steering toward over-length
+  descriptions. **Evidentiary weight at A.1**: weak — the cohort
+  is small and the rejection is at schema validation, not at
+  prompt-design register.
+
+**Disqualifying counter-evidence**:
+
+- §3.1.3 prompt builder at
+  [`agents/proposer/prompt_builder.py`](../../agents/proposer/prompt_builder.py)
+  documents leakage-audit guarantees (the prompt does NOT include
+  validation-2024 / test-2025 / regime-holdout-2022 metrics or
+  data); per CLAUDE.md hard rule, leakage audit is enforced at
+  prompt-builder register. No prompt-side leakage defect surfaces
+  at §3 mechanism reconstruction.
+- §3.1.4 Stage 2d batch orchestration at
+  [`agents/proposer/stage2d_batch.py`](../../agents/proposer/stage2d_batch.py)
+  + Stage 2c shared-mechanism per §3.4 stage-attribution correction:
+  theme injection follows uniform pattern across themes
+  (THEME_HINTS dictionary indexed by theme key; rotation per
+  `_theme_for_position` formula). No theme-asymmetric prompt-content
+  pattern surfaces at §3 mechanism reconstruction.
+- §3.1 Proposer prompt mechanism documents no few-shot example
+  pattern at the Stage 2c/2d batches (the `approved_examples`
+  window is critic-annotated only per §3.2.6 Critic acceptance
+  semantics; not used as few-shot example selection at
+  prompt-builder register per §3.1.3).
+- DSL schema constraints at §3.1.1 (entry/exit groups ≤ 3,
+  conditions per group ≤ 4, max_hold_bars ≤ 720) align with the
+  CLAUDE.md "DSL complexity budget" hard constraint; no DSL-schema-
+  vs-evaluation-gate misalignment surfaces at §3.
+
+**Sub-register A.1 summary**: weak qualifying evidence (Observations
+5 + 11 + 4) interacts with disqualifying counter-evidence at register
+strength comparable to qualifying. The A.1 evidence base does NOT
+unambiguously satisfy the spec §4.1 A.1 qualification criterion
+("identifiable" + "concretely demonstrable" + "plausibly addressable").
+Specific evidentiary asymmetry: Observations 5 + 11 surface emergent
+patterns whose mechanism (prompt-side defect vs LLM-property-
+independent-of-prompt vs prompt-Critic-interaction-defect) is
+interpretively ambiguous at light-touch register.
+
+#### 7.0.2 Sub-register A.2 — Critic gate defect
+
+Spec §4.1 A.2 qualifying-evidence categories: D7a rule formula
+threshold-edge artifacts; D7a → D7b routing systematic exclusion;
+D7b verdict-vs-evaluation-outcome correlation defect; forbidden-
+language scan over-trigger.
+
+**Qualifying evidence**:
+
+- **Observation 6 (Step 2 §4.3) — factor-set repetition rate of
+  ~28.79%** (57 of 198 valid candidates with shared factor sets):
+  per §3.2.2 D7a `structural_novelty` rule at
+  [`agents/critic/d7a_rules.py:44-55`](../../agents/critic/d7a_rules.py#L44-L55)
+  computes per-candidate novelty against a corpus baseline. The
+  28.79% aggregate batch-level repetition rate provides per-batch
+  context. **Evidentiary weight at A.2**: weak — the rate is a
+  batch-level statistic; whether the rate exceeds noise-floor
+  expectation under uniform factor-set sampling, and whether the
+  D7a `structural_novelty` rule's per-candidate threshold produces
+  edge artifacts at the rate threshold, requires structured
+  re-examination at depth greater than light-touch register. Per
+  spec §3.2.5 NO statistical-significance machinery, this
+  evidentiary direction is bounded.
+- **Observation 8 (Step 4 §6.4) — permissive AND-gate accepts
+  -10.2% return in eval_2021_v1 for lone-survivor**: per §6.3
+  evaluation-side trace, gate criteria are Sharpe ≥ -0.5
+  (actual: -0.358) AND total_return ≥ -0.15 (actual: -0.102) AND
+  max_dd ≤ 0.25 (actual: 0.231) AND trades ≥ 5 (actual: 29) per
+  `passing_criteria` field at `holdout_summary.json` artifact. All
+  4 criteria pass simultaneously — the gate **is permissive**
+  in the sense that negative-Sharpe + negative-double-digit-return
+  candidates can satisfy the gate. **Evidentiary weight at A.2**:
+  this is evaluation-time-gate calibration, not Critic-gate (D7a /
+  D7b) calibration; the permissive AND-gate at evaluation-time is
+  at PHASE2C_6 / PHASE2C_7.1 / PHASE2C_8.1 register, not at Phase
+  2B Critic gate register. **The qualifying-evidence path at A.2
+  is therefore NOT primary** — Observation 8 maps more directly
+  to A.4 (mining-time vs evaluation-time gate misalignment) than
+  to A.2 (Critic gate defect at mining-time register). Per spec
+  §3.2.6 NO calibration-variation grid, evaluation-time gate
+  threshold variation is out-of-scope.
+- **Observation 11 (Step 4 §6.4) — theme_coherence = 1/6 ≈ 0.1667
+  for lone-survivor**: as analyzed at A.1 above — the THIN_THEMES
+  × whole-DSL-register interaction produces structurally low
+  theme_coherence scores. **Evidentiary weight at A.2**: D7a
+  `theme_coherence` is documented as observation-tag NOT gate
+  signal per §3.2.2 + CLAUDE.md hard rule "Critic annotates only";
+  the score is reported but does not influence approval. This
+  weakens A.2 qualifying weight at the Critic-gate-as-defect
+  register, since D7a is annotation-only.
+
+**Disqualifying counter-evidence**:
+
+- §3.2 Critic gate logic + §3.2.6 Critic acceptance semantics + §3.2.5
+  CLAUDE.md hard constraint "NEVER let the critic influence
+  approved_examples window — critic annotates only, never filters":
+  the Critic at PHASE2C generation cycle **does not gate** at
+  approval-or-rejection register. All 198 valid candidates passed
+  through to lifecycle state `pending_backtest`; lifecycle-state
+  assignment is the **orchestrator ingest-layer**'s responsibility,
+  not Critic's, per §3.2.6. Whether the ingest layer's gate
+  semantics constitute a defect is an **ingest-layer mechanism
+  question** outside Step 1 §3 reconstruction scope (per
+  session-entry handoff scoping); ingest-layer mechanism is
+  NOT in §3 reconstruction.
+- §4.0 lifecycle-state distribution: 198 `pending_backtest` + 2
+  `rejected_complexity` + 0 across all other terminal states
+  (`critic_rejected`, `proposer_invalid_dsl`, `duplicate`,
+  `train_failed`, `holdout_failed`, `dsr_failed`, `shortlisted`,
+  `budget_exhausted`, `backend_empty_output`). The 0 count for
+  `critic_rejected` lifecycle state confirms per §3.2.6 that the
+  Critic does not gate; there is no D7a → D7b → reject pathway
+  active at PHASE2C_5 generation cycle.
+- §3.2.4 D7b reliability fuse: `CRITIC_RELIABILITY_FUSE_ENFORCED =
+  False` per CLAUDE.md hard rule (locked at Stage 2 contract
+  boundary); D7b backend errors are captured in `critic_status`
+  field for forensic register, not used to reject candidates. No
+  D7b-side gate defect can have produced candidate exclusion at
+  PHASE2C_5 generation cycle.
+
+**Sub-register A.2 summary**: qualifying evidence is **weak** —
+Observations 6 / 8 / 11 surface batch-level / candidate-level
+patterns that touch on Critic register but are **not gate-mechanism
+defects at PHASE2C_5 generation cycle**, since the Critic does not
+gate (annotation-only per CLAUDE.md hard rule + §3.2.6). The
+mining-time gate that **does** assign lifecycle states is the
+orchestrator ingest layer (out of Step 1 §3 reconstruction scope).
+Disqualifying counter-evidence at A.2 register is strong: 0
+`critic_rejected` candidates at §4.0 confirms Critic non-gating;
+the gate-as-defect interpretation requires ingest-layer mechanism
+reconstruction outside light-touch register.
+
+**Interpretive caveat**: A.2 sub-register's "Critic gate defect"
+language assumes a Critic-as-gate model. The empirical mining-
+process at PHASE2C_5 has Critic-as-annotator (per §3.2.6 + CLAUDE.md
+hard rule); the actual gate is the ingest layer, which is
+out-of-§3-scope. A.2 qualifying-evidence weighting at light-touch
+register is therefore interpretively bounded.
+
+#### 7.0.3 Sub-register A.3 — Theme rotation defect
+
+Spec §4.1 A.3 qualifying-evidence categories: operational-rotation
+exclusion (5-of-6 themes) bias; theme-assignment formula
+order-of-cycle dependencies; theme-rotation × budget-exhaustion
+adversarial interaction.
+
+**Qualifying evidence**:
+
+- **Observation 1 (Step 1 §3) — modulus mismatch between
+  `_theme_for_slot` and `_theme_for_position`**: per §3.3.2
+  operational rotation mechanism — `_theme_for_position` at Stage
+  2c/2d batches uses `THEMES[(k - 1) % THEME_CYCLE_LEN]` with
+  `THEME_CYCLE_LEN = 5` (operational rotation excludes
+  `multi_factor_combination`); `_theme_for_slot` at agents/themes.py
+  uses `THEMES[(k - 1) % len(THEMES)]` with `len(THEMES) = 6`
+  (canonical rotation includes `multi_factor_combination`). The two
+  modulus formulas can produce divergent theme assignments for the
+  same slot index k. **Evidentiary weight at A.3**: per §3.3.2
+  CONTRACT BOUNDARY documentation, the operational rotation
+  exclusion is **deliberate**, not accidental — the
+  `multi_factor_combination` theme is documented at
+  [`agents/themes.py`](../../agents/themes.py) as canonical-but-not-
+  operational pending separate validation. The dual-formula
+  surface is therefore design-as-intended, not defect; whether the
+  6-vs-5 modulus interaction at edge cases (e.g., concurrent
+  invocation of both formulas) produces wrong-theme assignment is
+  a separate question requiring code-level inspection beyond §3
+  light-touch reconstruction. **Interpretive ambiguity**: if both
+  formulas are consumed by different code paths, the dual-surface
+  is design-as-intended; if only one path is canonical and the other
+  is dead code, the dual surface is a maintenance hazard. §3 §3.3.2
+  reconstruction does not resolve which.
+- **Observation 7 (Step 3 §5.3) — train-overlap regime divergence
+  at per-theme level**: eval_2020_v1 column total (74) ≈ 2× eval_2021_v1
+  column total (38); per-theme distribution diverges substantially
+  across train-overlap regimes (e.g., calendar_effect 26/10 — train
+  2020 vs 2021; volume_divergence 23/12; mean_reversion 3/8 — note
+  the 2021 > 2020 reversal direction relative to other themes). The
+  theme-distributional divergence across train-overlap regimes is
+  cross-tab fact at §5.1 Observation 8. **Evidentiary weight at
+  A.3**: this is a per-regime evaluation-outcome divergence, NOT a
+  generation-side theme rotation pattern. The 40/40/40/39/39
+  generation-side theme distribution per §4.0 is approximately
+  uniform; the per-regime evaluation pass-count divergence is
+  consistent with per-theme × per-regime statistical pattern
+  variance, not with theme-rotation-mechanism defect at generation
+  side. **Mapping at A.3 is therefore weak** — the divergence bears
+  more directly on Case B.2 (population properties consistent with
+  noise floor) than on A.3.
+- **Observation 8 (Step 3 §5.3) — per-regime pass-rate range
+  asymmetry across themes**: bear_2022 spans 0-6 (range 6);
+  validation_2024 spans 4-25 (range 21); eval_2020_v1 spans 3-26
+  (range 23); eval_2021_v1 spans 2-12 (range 10). **Evidentiary
+  weight at A.3**: as Observation 7 — this is per-regime
+  evaluation-outcome variance, not generation-side theme-rotation
+  defect. Maps more directly to Case B.2 than to A.3.
+
+**Disqualifying counter-evidence**:
+
+- §4.0 generation-side theme distribution: 40/40/40/39/39 across
+  the 5 operational themes per `stage2d_summary.json:lifecycle_counts`
+  (§3.3.3 + §4.0 cross-reference). The 40-per-theme uniform
+  distribution is consistent with `THEMES[(k - 1) % 5]` cyclic
+  rotation outcome at 200 attempts (200 / 5 = 40 attempts per theme;
+  40 × 5 = 200; 198 valid candidates after 2 schema rejections at
+  description-length boundary distribute as 40/40/40/39/39). No
+  theme-distributional asymmetry surfaces at generation-side
+  register.
+- §3.3 theme rotation mechanism documents no order-of-cycle
+  dependency: rotation is strictly `THEMES[(k - 1) % 5]` indexed
+  by attempt position k; no early-cycle vs late-cycle attempt
+  budget asymmetry surfaces at §3.3 mechanism reconstruction.
+- §4.0 budget-exhaustion register: `unissued_slots = 0` and
+  `total_actual_cost_usd = $2.30` < `batch_cap_usd = $20.0` per
+  `stage2d_summary.json` config + spend register. No budget
+  exhaustion occurred at PHASE2C_5 generation cycle; no
+  theme-rotation × budget-exhaustion adversarial interaction can
+  have produced theme-asymmetric exclusions.
+- §3.3.2 CONTRACT BOUNDARY at
+  [`agents/themes.py`](../../agents/themes.py):17–21 + CLAUDE.md
+  "Theme rotation operational boundary": the 5-theme operational
+  rotation excluding `multi_factor_combination` is documented at
+  CONTRACT BOUNDARY register; the exclusion is operational practice,
+  not canonical specification. Per spec §3.2.4 NO mining-process
+  redesign, the operational-vs-canonical theme list register is
+  not retrospective scope; it is fixed empirical fact at light-touch
+  register.
+
+**Sub-register A.3 summary**: qualifying evidence is **weak** —
+Observation 1 (modulus mismatch) is design-as-intended at CONTRACT
+BOUNDARY register; Observations 7 + 8 (theme-level pass-count
+divergence across regimes) are per-regime evaluation-outcome
+patterns mapping more directly to Case B.2 than to A.3.
+Disqualifying counter-evidence at A.3 register is strong:
+generation-side theme distribution is approximately uniform per
+mechanism specification; no order-of-cycle dependency or
+budget-exhaustion adversarial interaction surfaces at §3 + §4.
+
+#### 7.0.4 Sub-register A.4 — Mining-time vs evaluation-time gate misalignment
+
+Spec §4.1 A.4 qualifying-evidence categories: mining-time gate
+(Critic + lifecycle-state filter) systematically passes candidates
+that mining-time evaluation (train + holdout) approves but those
+candidates fail evaluation-time gate (PHASE2C_6 4-criterion AND-gate);
+lone-survivor's hybrid quality profile reflects mining-time /
+evaluation-time gate misalignment.
+
+**Qualifying evidence**:
+
+- **Observation 9 (Step 4 §6.4) — single-trade-margin filter
+  exclusion in bear_2022**: per §6.3 evaluation-side trace,
+  `audit_v1_filtered/0845d1d7898412f2/` directory does NOT exist
+  on disk (mechanically verified by `ls`); the lone-survivor is
+  excluded from the bear_2022 filtered cohort at the trade-count
+  filter (19 trades vs ≥20 threshold = 1-trade margin). The trade-
+  count filter is at evaluation-time register (PHASE2C_7.1 §5
+  threshold), separate from mining-time AND-gate. **Evidentiary
+  weight at A.4**: this **is** a mining-time vs evaluation-time
+  gate misalignment instance — the candidate passed mining-time
+  walk-forward + holdout (lifecycle-state `holdout_passed` per
+  §6.2 trace) AND passed the 4-criterion AND-gate at evaluation
+  time in bear_2022 (Sharpe 0.508, return +6.80%, max_dd 0.095, 19
+  trades — all 4 AND-gate criteria pass per §6.3 table) but was
+  EXCLUDED from the filtered cohort by trade-count threshold. The
+  AND-gate (mining-time canonical) and the trade-count filter
+  (PHASE2C_7.1 evaluation-time) are at different gate registers;
+  the candidate's exclusion-by-1-trade-margin demonstrates the
+  inter-gate boundary. **Interpretive bound**: whether this
+  demonstrates **defect** at mining-process design (mining gate
+  doesn't anticipate evaluation-time filter) or **deliberate
+  separation** (evaluation-time filter is intentionally stricter
+  than mining-time gate) is not resolvable at light-touch register.
+- **Observation 10 (Step 4 §6.4) — permissive AND-gate accepts
+  -10.2% return in eval_2021_v1 for lone-survivor**: per §6.3
+  evaluation-side trace, all 4 AND-gate criteria pass simultaneously
+  (Sharpe -0.358 ≥ -0.5; return -0.102 ≥ -0.15; max_dd 0.231 ≤ 0.25;
+  trades 29 ≥ 5). **Evidentiary weight at A.4**: this **is** a
+  mining-time vs evaluation-time gate calibration question at
+  AND-gate register — the AND-gate accepts negative-Sharpe +
+  negative-double-digit-return candidates, which may be
+  inconsistent with deployment-quality strategy generation register.
+  Whether this is mining-time gate (Critic + lifecycle) calibration
+  defect, evaluation-time gate calibration defect, or absence-of-
+  defect at noise-floor variance is interpretively bounded at
+  light-touch register. Per spec §3.2.6 NO calibration-variation
+  grid, evaluation-time gate threshold variation is out-of-scope.
+- **Observation 11 (Step 4 §6.4) — lone-survivor's hybrid quality
+  profile**: audit-only partition origin (`wf_test_period_sharpe =
+  -0.072 < 0.5` primary threshold per §6.3) + filter exclusion in
+  bear_2022 by 1-trade margin (Observation 9) + permissive AND-gate
+  accepting -10.2% return in eval_2021_v1 (Observation 10) + theme
+  alignment at thin-theme register (theme_coherence = 1/6 ≈ 0.1667
+  per §6.4). The hybrid quality profile **does** match spec §4.1
+  A.4 qualifying-evidence text: "lone-survivor's hybrid quality
+  profile (audit-only origin + filter exclusion by single-trade
+  margin + permissive AND-gate accepting -10.2% return) reflects
+  mining-time / evaluation-time gate misalignment more than
+  candidate-population coherence." **Evidentiary weight at A.4**:
+  the hybrid quality profile is **directly aligned** with the spec
+  §4.1 A.4 qualifying-evidence text; this is the strongest
+  qualifying evidence at A.4 register.
+
+**Disqualifying counter-evidence**:
+
+- The 4-criterion AND-gate at PHASE2C_6 / PHASE2C_7.1 / PHASE2C_8.1
+  evaluation register is the **canonical** gate per
+  `config/environments.yaml:splits.regime_holdout.passing_criteria`
+  (CLAUDE.md hard constraint: "NEVER mark
+  `regime_holdout_passed = True` unless ALL four criteria are met"
+  with thresholds Sharpe ≥ -0.5, return ≥ -0.15, max_dd ≤ 0.25,
+  trades ≥ 5). The thresholds are **deliberately permissive** at
+  generation-cycle register to admit candidates for downstream
+  evaluation; whether downstream evaluation-time tightening
+  (e.g., trade-count filter ≥ 20 at PHASE2C_7.1) reflects
+  mining-time-vs-evaluation-time gate misalignment **defect** or
+  **intentional staged tightening** is interpretively ambiguous.
+- One-of-198 lone-survivor cardinality is consistent with both
+  Case A.4 interpretation (hybrid quality reflects gate
+  misalignment) AND Case B.3 interpretation (hybrid quality is
+  one-of-N tail event under noise-floor distribution); the
+  evidence is consistent with either interpretation at light-touch
+  register, which is itself a Case C.1 / C.3 ambiguity sub-register
+  pattern.
+- Per §3.2.6 + §3.4 ingest-layer-mechanism out-of-scope:
+  mining-time gate semantics (the orchestrator ingest layer's
+  lifecycle-state assignment) are NOT in §3 reconstruction scope;
+  whether the ingest-layer gate has an internal calibration that
+  could be aligned with evaluation-time gate is unresolvable at
+  light-touch register.
+
+**Sub-register A.4 summary**: qualifying evidence at A.4 is
+**direct** — Observations 9 + 10 + 11 align with spec §4.1 A.4
+qualifying-evidence text (hybrid quality profile of lone-survivor;
+single-trade-margin exclusion; permissive AND-gate at -10.2%
+return). Disqualifying counter-evidence at A.4 is **also direct**:
+the 4-criterion AND-gate is canonical at deliberately-permissive
+register at generation-cycle; ingest-layer mechanism is
+out-of-light-touch-scope; one-of-198 cardinality is consistent
+with both Case A.4 and Case B.3 interpretations.
+**Interpretive ambiguity at A.4 sub-register register**: whether
+the gate-misalignment is **defect** or **deliberate staged
+tightening** is not resolvable at light-touch register.
+
+#### 7.0.5 Case A evidence-base summary
+
+Per spec §4.1 Case A determination criterion: "at least ONE of
+A.1 / A.2 / A.3 / A.4 satisfied with concrete evidence ... that
+meets the qualifying criteria; AND no disqualifying counter-evidence
+surfaces stronger than the qualifying evidence; AND the identified
+defect is plausibly addressable."
+
+Cross-sub-register summary (this is evidence-map summary, NOT case
+determination):
+
+| sub-register | qualifying evidence weight | disqualifying counter-evidence weight | net qualification at light-touch register |
+|---|---|---|---|
+| A.1 | weak | comparable to weak qualifying | NOT cleanly satisfied |
+| A.2 | weak (Observations 6 / 8 / 11 map weakly) | strong (Critic annotates only; 0 critic_rejected; ingest-layer-as-actual-gate out-of-scope) | NOT cleanly satisfied |
+| A.3 | weak (modulus mismatch is design-as-intended; per-regime divergence maps more to B.2) | strong (uniform generation-side distribution; no budget exhaustion; CONTRACT BOUNDARY documents exclusion) | NOT cleanly satisfied |
+| A.4 | direct (Observations 9 + 10 + 11 align with spec §4.1 A.4 text) | direct (canonical AND-gate is deliberately permissive; ingest-layer out-of-scope; one-of-198 consistent with B.3) | INTERPRETIVELY AMBIGUOUS at light-touch |
+
+Net Case A evidence-base register at light-touch retrospective:
+A.4 sub-register has direct qualifying evidence and direct
+disqualifying counter-evidence; the qualifying-vs-disqualifying
+balance at A.4 sits at the spec §4.3 C.1 boundary register
+("partial qualifying evidence for Case A ... without clean Case A.x
+qualification"). A.1, A.2, A.3 sub-registers have qualifying
+evidence weaker than their disqualifying counter-evidence.
+Case determination at §8 (Step 6 territory) applies the §4.4
+one-and-only-one rule to this evidence base; §7 does not pre-empt
+that determination.
+
+### 7.1 Case B evidence map
+
+Case B definition (per spec §4.2): retrospective surfaces no
+identifiable structural defect in mining-process inputs; observed
+candidate-population properties are consistent with the candidate
+population being structurally weak independent of mining-process
+inputs. Sub-registers B.1 / B.2 / B.3.
+
+#### 7.1.1 Sub-register B.1 — Mining-process inputs review surfaces no Case A defect
+
+Spec §4.2 B.1: all four Case A categories' qualifying evidence
+absent OR present-but-weaker-than-disqualifying-counter-evidence.
+
+**B.1 evidence-base summary** (cross-reference §7.0.5):
+
+- A.1 qualifying evidence weak; disqualifying counter-evidence
+  comparable → NOT cleanly satisfied as Case A.1 defect.
+- A.2 qualifying evidence weak; disqualifying counter-evidence
+  strong → A.2 NOT cleanly satisfied as Case A.2 defect.
+- A.3 qualifying evidence weak; disqualifying counter-evidence
+  strong → A.3 NOT cleanly satisfied as Case A.3 defect.
+- A.4 qualifying evidence direct (Observations 9 + 10 + 11);
+  disqualifying counter-evidence also direct → A.4 NOT cleanly
+  satisfied as Case A.4 defect, but qualifying evidence is **not
+  weaker than** disqualifying counter-evidence (qualifying-vs-
+  disqualifying balance is interpretively ambiguous at light-touch
+  register).
+
+**Sub-register B.1 partial-satisfaction register**: A.1 / A.2 / A.3
+satisfy B.1 ("present-but-weaker-than-disqualifying-counter-
+evidence"); A.4 does NOT cleanly satisfy B.1 (qualifying evidence
+is **not weaker than** disqualifying at light-touch register;
+balance is ambiguous). B.1 is therefore **partially satisfied** —
+3 of 4 sub-registers satisfy; A.4 register sits at the
+qualifying-vs-disqualifying boundary.
+
+#### 7.1.2 Sub-register B.2 — Population properties consistent with noise floor
+
+Spec §4.2 B.2 qualifying-evidence categories: cohort_a_filtered=0
+outcome plausibly one-of-198 sample-size artifact; theme-level
+pass-count distribution shows no systematic theme-property
+correlation; pass-count distribution histogram consistent with
+near-uniform random-pass distribution.
+
+**Qualifying evidence**:
+
+- **PHASE2C_8.1 closeout §3.1 — `cohort_a_filtered` = 0 outcome**
+  (per spec §2.4 canonical anchor): zero candidates pass the
+  4-regime filtered-cohort intersection at PHASE2C_8.1 evaluation.
+  **Evidentiary weight at B.2**: this is the spec §4.2 B.2 first
+  qualifying-evidence example directly; the 0-of-198 outcome
+  matches a plausible noise-floor expectation under multi-regime
+  AND-intersection at the marginal-pass-rate register documented
+  by §5 cross-tab (per-regime pass rates 6.6% / 43.9% / 37.4% /
+  19.2% for bear_2022 / validation_2024 / eval_2020_v1 /
+  eval_2021_v1). Per spec §3.2.5 NO statistical-significance
+  machinery, the noise-floor consistency is at descriptive register
+  only; rigorous quantification (e.g., expected intersection
+  cardinality under independence assumption) is out-of-scope.
+- **Observation 7 (Step 3 §5.3) + Observation 8 (Step 3 §5.3) —
+  cross-tab patterns are theme-distributional but not systematically
+  theme-property-correlated**: per §5.1 cross-tab Observations 1-9,
+  per-theme pass-count asymmetries exist at cardinality register but
+  no single theme uniformly outperforms or underperforms across all
+  4 regimes. `volatility_regime` is lowest in 3 of 4 regimes (range
+  ranking) but `volume_divergence` is highest in 1 regime
+  (validation_2024 at 25/40); `calendar_effect` is highest in 1
+  regime (eval_2020_v1 at 26/40); `mean_reversion` is highest in 1
+  regime (validation_2024 at 13/39 absolute, but 8/39 in
+  eval_2021_v1 reverses). The lack of monotonic theme-quality
+  ranking across regimes is consistent with random-pass distribution
+  more than with systematic theme-property correlation.
+  **Evidentiary weight at B.2**: moderate; the patterns are
+  consistent with noise-floor-variance interpretation at descriptive
+  register, but rigorous noise-floor null-distribution comparison
+  is out-of-scope per §3.2.5.
+- **PHASE2C_8.1 closeout §4.1 — pass-count distribution histogram**
+  (per spec §4.2 B.2 third qualifying-evidence example): per
+  PHASE2C_8.1 §4.1 the per-candidate pass-count distribution across
+  4 regimes is consistent with a near-uniform random-pass
+  distribution rather than a structural bimodal pattern (no clear
+  separation between "deployment-quality" candidates passing all
+  4 regimes and "noise-floor" candidates passing 0-1 regimes; the
+  21-vs-8 train-overlap-vs-fully-OOS asymmetry per PHASE2C_8.1 §5.2
+  is descriptive, not structural).
+  **Evidentiary weight at B.2**: moderate; consistent with
+  noise-floor distribution at descriptive register.
+
+**Disqualifying counter-evidence**:
+
+- Observations 9 + 10 + 11 (Step 4 §6.4 lone-survivor walkthrough):
+  the lone-survivor's hybrid quality profile (audit-only origin +
+  single-trade-margin filter exclusion + permissive AND-gate at
+  -10.2% return + theme_coherence at 1/6 thin-theme register) is
+  **specific** to mining-process input design (THIN_THEMES at
+  THEME_HINTS register; trade-count filter threshold at
+  PHASE2C_7.1 register). Whether this specificity is interpretable
+  as Case A.4 mining-time-vs-evaluation-time gate misalignment
+  (§7.0.4 above) or as Case B.3 tail-event consistent with
+  noise-floor distribution at hybrid-quality register is
+  interpretively ambiguous; cited as disqualifying counter-evidence
+  at B.2 register since the lone-survivor characterization shows
+  mining-process-specific pattern not consistent with pure
+  noise-floor interpretation.
+- Per spec §3.2.5 NO statistical-significance machinery: rigorous
+  noise-floor null-distribution comparison (DSR / PBO / CPCV) is
+  Q-9.A territory, out-of-scope. The "consistent with noise floor"
+  claim at B.2 register is therefore at descriptive-register only,
+  not at significance-test register; this **is** a light-touch
+  retrospective limit on B.2 qualifying weight.
+
+**Sub-register B.2 summary**: qualifying evidence is **moderate**
+at descriptive register — `cohort_a_filtered = 0` directly satisfies
+spec §4.2 B.2 first qualifying-evidence text; cross-tab patterns +
+pass-count distribution are consistent with near-uniform random-pass
+distribution at descriptive register. Disqualifying counter-evidence
+is moderate: lone-survivor hybrid quality profile shows
+mining-process-specific pattern not consistent with pure noise-floor
+interpretation; rigorous noise-floor null-distribution comparison is
+out-of-scope. **Interpretive caveat**: B.2 qualifying weight is
+bounded at descriptive register at light-touch retrospective; full
+B.2 qualification at significance-test register requires Q-9.A
+machinery.
+
+#### 7.1.3 Sub-register B.3 — Lone-survivor characterization is tail-event consistent
+
+Spec §4.2 B.3 qualifying-evidence categories: lone-survivor's hybrid
+quality is plausibly one-of-N tail event under noise-floor
+distribution; volume-divergence theme behavior consistent with
+random theme-allocation rather than systematic theme-quality
+asymmetry.
+
+**Qualifying evidence**:
+
+- **One-of-198 cardinality of lone-survivor** (per spec §2.4
+  canonical anchor `cohort_a_unfiltered` cardinality = 1): the
+  one-of-N cardinality is consistent with tail-event interpretation
+  under noise-floor distribution at marginal-pass-rate register.
+  Per the per-regime marginal pass rates (6.6% / 43.9% / 37.4% /
+  19.2%), the multiplicative independence-assumption expected
+  cardinality of all-4-regime AND-pass under marginal rates is
+  approximately `0.066 × 0.439 × 0.374 × 0.192 × 198 ≈ 0.4`
+  candidates (descriptive register only; rigorous independence-
+  assumption testing is out-of-scope per §3.2.5). The empirical 1
+  vs descriptive-register expected ~0.4 is consistent with
+  one-of-N tail event at descriptive register.
+  **Evidentiary weight at B.3**: moderate; consistent with
+  tail-event interpretation at descriptive register but rigorous
+  null-distribution comparison out-of-scope.
+- **Observation 4 (Step 3 §5.1) — `volume_divergence` theme
+  cross-regime distribution**: pass counts of 4 / 25 / 23 / 12 in
+  bear_2022 / validation_2024 / eval_2020_v1 / eval_2021_v1
+  respectively. The distribution is asymmetric but not monotonic
+  in any regime ranking; volume_divergence is highest-pass in
+  validation_2024 (25/40 = 62.5%) but third-highest in eval_2020_v1
+  (23/40) and second-lowest in bear_2022 (4/40). The asymmetry
+  pattern is consistent with random theme-allocation × per-regime
+  variance, not with systematic volume_divergence-as-tail-quality
+  asymmetry.
+  **Evidentiary weight at B.3**: moderate; consistent with random
+  theme-allocation interpretation at descriptive register.
+
+**Disqualifying counter-evidence**:
+
+- Lone-survivor hybrid quality profile **specificity** (per §7.0.4
+  A.4 above): audit-only origin + single-trade-margin filter
+  exclusion in bear_2022 + permissive AND-gate at -10.2% return in
+  eval_2021_v1 + theme_coherence = 1/6 at thin-theme register. The
+  specificity is **not random** — each component traces to a
+  specific mining-process input (audit partition origin from
+  PHASE2C_6 wf_test_period_sharpe threshold; trade-count filter
+  threshold at PHASE2C_7.1; AND-gate criteria at canonical evaluation
+  register; THIN_THEMES at THEME_HINTS). Whether the specificity is
+  consistent with tail-event interpretation (B.3 qualifying) or
+  with mining-time-vs-evaluation-time gate misalignment (A.4
+  qualifying) is interpretively ambiguous.
+- Per §3.2.5 NO statistical-significance machinery: the
+  "tail-event consistent" claim at B.3 register is at descriptive-
+  register only, not at significance-test register.
+- Sample-size limitation: N=1 lone-survivor sample is too small to
+  rigorously discriminate tail-event vs systematic-pattern at
+  light-touch register.
+
+**Sub-register B.3 summary**: qualifying evidence is **moderate**
+at descriptive register — one-of-198 cardinality consistent with
+tail-event interpretation; volume_divergence theme distribution
+consistent with random allocation. Disqualifying counter-evidence
+is moderate: lone-survivor hybrid quality specificity traces to
+specific mining-process inputs, which is not random pattern;
+rigorous tail-event-vs-systematic discrimination out-of-scope.
+
+#### 7.1.4 Case B evidence-base summary
+
+Per spec §4.2 Case B determination criterion: ALL of B.1, B.2, B.3
+satisfied with concrete evidence; AND no disqualifying counter-
+evidence surfaces.
+
+Cross-sub-register summary (this is evidence-map summary, NOT case
+determination):
+
+| sub-register | qualifying evidence weight | disqualifying counter-evidence weight | net qualification at light-touch register |
+|---|---|---|---|
+| B.1 | partial (3 of 4 Case A sub-registers satisfy weaker-than-disqualifying; A.4 sits at boundary) | strong at A.4 register | PARTIALLY satisfied (3 of 4 sub-registers) |
+| B.2 | moderate at descriptive register | moderate (lone-survivor specificity; rigorous null-test out-of-scope) | NOT cleanly satisfied at significance-test register; partially at descriptive |
+| B.3 | moderate at descriptive register | moderate (lone-survivor specificity; rigorous tail-event-vs-systematic out-of-scope) | NOT cleanly satisfied at significance-test register; partially at descriptive |
+
+Net Case B evidence-base register at light-touch retrospective:
+no sub-register cleanly satisfies the spec §4.2 "ALL of B.1, B.2,
+B.3 satisfied with concrete evidence; AND no disqualifying counter-
+evidence surfaces" criterion. B.1 partial qualification (A.4
+qualifying-vs-disqualifying balance ambiguous); B.2 + B.3 partial
+qualification at descriptive register (full qualification requires
+Q-9.A statistical-significance machinery out-of-scope).
+
+### 7.2 Case C evidence map
+
+Case C definition (per spec §4.3): retrospective surfaces evidence
+consistent with neither Case A nor Case B fully. Sub-registers
+C.1 / C.2 / C.3.
+
+#### 7.2.1 Sub-register C.1 — Partial qualifying evidence for Case A
+
+Spec §4.3 C.1: one or more Case A categories show "weak qualifying
+evidence" (suggestive but not concretely demonstrable defect) without
+clean Case A.x qualification.
+
+**Qualifying evidence at C.1 register**:
+
+- §7.0 Case A evidence-base summary documents weak qualifying
+  evidence at A.1 (Observations 5 + 11 + 4); weak at A.2
+  (Observations 6 / 8 / 11 — but mapping to Critic-as-gate model
+  problematic since Critic is annotation-only per §3.2.6); weak
+  at A.3 (Observation 1 design-as-intended; Observations 7 + 8
+  map more to B.2); direct-but-balanced at A.4 (Observations 9 +
+  10 + 11 align with spec §4.1 A.4 qualifying-evidence text;
+  disqualifying counter-evidence also direct).
+- §7.0.5 net Case A evidence-base register at light-touch:
+  qualifying-vs-disqualifying balance at A.4 is interpretively
+  ambiguous at light-touch register. The A.4 sub-register evidence
+  pattern matches spec §4.3 C.1 "partial qualifying evidence for
+  Case A" register text descriptively — at A.4 sub-register the
+  qualifying-vs-disqualifying balance sits at the spec §4.3 C.1
+  boundary (qualification ambiguous, not absent).
+
+**Boundary disqualifying counter-evidence at C.1 register**:
+
+- A.4 qualifying-vs-disqualifying balance is unresolved at
+  light-touch register; structured re-examination depth would be
+  required to discriminate between clean A.x qualification and
+  partial-qualification interpretations. Whether such depth would
+  resolve toward A.4 qualifying or disqualifying is out-of-light-
+  touch-scope.
+- The C.1 register is therefore conditional on light-touch-register
+  limitation; whether A.4 satisfies clean Case A.x qualification at
+  deeper register is the §8 (Step 6 territory) question.
+
+**Sub-register C.1 evidence-base summary**: qualifying evidence is
+**direct** at descriptive register — §7.0 A.4 sub-register
+evidence-base shows the spec §4.3 C.1 evidence-pattern register
+("partial qualifying evidence for Case A ... without clean Case
+A.x qualification") at the qualifying-vs-disqualifying boundary.
+Boundary disqualifying counter-evidence is conditional on
+structured re-examination depth resolution, which is
+out-of-light-touch-scope. §8 (Step 6 territory) applies the §4.4
+one-and-only-one rule to this evidence base.
+
+#### 7.2.2 Sub-register C.2 — Mixed qualifying / counter-qualifying evidence for Case B
+
+Spec §4.3 C.2: evidence consistent with Case B at population-
+property register but inconsistent at lone-survivor or theme-level
+register (or vice versa).
+
+**Qualifying evidence at C.2 register**:
+
+- §7.1 Case B evidence-base summary documents:
+  - B.1 partial (3 of 4 Case A sub-registers satisfy
+    weaker-than-disqualifying; A.4 sits at boundary)
+  - B.2 partial at descriptive register (cohort_a_filtered = 0
+    consistent with noise floor at descriptive; rigorous null-test
+    out-of-scope; lone-survivor specificity disqualifying-counter
+    at B.2)
+  - B.3 partial at descriptive register (one-of-198 + theme
+    distribution consistent with random allocation; lone-survivor
+    specificity disqualifying-counter at B.3)
+- The pattern is exactly the spec §4.3 C.2 "mixed qualifying /
+  counter-qualifying evidence for Case B" register: B.2 qualifying
+  at population-property cardinality register (cohort_a_filtered =
+  0; per-regime pass rates 6.6%-43.9%) but disqualifying-counter at
+  lone-survivor specificity register (Observations 9 + 10 + 11
+  trace to specific mining-process inputs).
+
+**Boundary disqualifying counter-evidence at C.2 register**:
+
+- The lone-survivor specificity register's interpretive direction
+  (tail-event-consistent at B.3 register vs mining-time-vs-
+  evaluation-time gate misalignment at A.4 register) is unresolved
+  at light-touch register; structured re-examination depth would be
+  required to discriminate.
+- The C.2 register is therefore conditional on light-touch-register
+  limitation at the lone-survivor specificity register
+  qualifying-vs-disqualifying boundary; §8 (Step 6 territory)
+  question.
+
+**Sub-register C.2 evidence-base summary**: qualifying evidence is
+**direct** at descriptive register — §7.1 Case B evidence-base
+shows the spec §4.3 C.2 evidence-pattern register ("mixed
+qualifying / counter-qualifying evidence for Case B"). Boundary
+disqualifying counter-evidence is conditional on structured
+re-examination depth resolution, out-of-light-touch-scope. §8
+(Step 6 territory) applies the §4.4 one-and-only-one rule to this
+evidence base.
+
+#### 7.2.3 Sub-register C.3 — Light-touch register insufficient for discrimination
+
+Spec §4.3 C.3: light-touch retrospective produces evidence that
+suggests Case A or Case B but at strength below the qualification
+threshold; the honest read is "structured re-examination would be
+needed to discriminate."
+
+**Qualifying evidence at C.3 register**:
+
+- §7.0 + §7.1 evidence-base summaries document multiple
+  light-touch-register limitations:
+  - A.1 prompt-side defect vs LLM-property-independent-of-prompt
+    interpretation (Observations 5 + 11) requires structured
+    re-examination at depth greater than light-touch
+  - A.2 Critic-gate-as-defect interpretation requires ingest-layer
+    mechanism reconstruction outside Step 1 §3 scope (per
+    §7.0.2 A.2 interpretive caveat)
+  - A.4 mining-time-vs-evaluation-time gate misalignment
+    interpretation (Observations 9 + 10 + 11) hinges on
+    "deliberate-staged-tightening vs defect" adjudication at
+    structured re-examination depth
+  - B.2 + B.3 noise-floor consistency claims at descriptive
+    register only; rigorous null-distribution comparison is Q-9.A
+    territory out-of-scope per §3.2.5
+  - One-of-198 sample size insufficient for rigorous tail-event
+    -vs-systematic-pattern discrimination at light-touch register
+- The cross-cutting pattern is exactly the spec §4.3 C.3 register:
+  evidence at descriptive register suggests Case A or Case B but
+  rigorous discrimination requires structured re-examination at
+  depth greater than light-touch + statistical-significance
+  machinery + ingest-layer mechanism reconstruction.
+
+**Boundary disqualifying counter-evidence at C.3 register**:
+
+- The §7 evidence base is not unambiguous at light-touch register
+  (per §7.0 + §7.1 + §7.2.1 + §7.2.2 above); the qualification
+  ambiguity is the C.3-applicability trigger pattern, not the
+  absence of evidence. Whether structured re-examination depth
+  would resolve this ambiguity is out-of-light-touch-scope; §8
+  (Step 6 territory) question.
+
+**Sub-register C.3 evidence-base summary**: qualifying evidence is
+**direct** at descriptive register — §7.0 + §7.1 evidence-base
+summaries explicitly document light-touch-register limitations at
+multiple sub-registers; the cross-cutting pattern of "evidence at
+descriptive register; rigorous discrimination out-of-scope" matches
+spec §4.3 C.3 evidence-pattern register descriptively. §8 (Step 6
+territory) applies the §4.4 one-and-only-one rule to this evidence
+base.
+
+#### 7.2.4 Case C cross-sub-register evidence-base summary
+
+Cross-sub-register summary (this is evidence-map summary, NOT case
+determination per spec §5.5 + §4.4 + §5.6 — §8 territory):
+
+| sub-register | qualifying evidence at descriptive register | applicable to §7 evidence base? |
+|---|---|---|
+| C.1 | direct (A.4 qualifying-vs-disqualifying balance ambiguous) | YES — §7.0 A.4 register |
+| C.2 | direct (B.2 + B.3 mixed qualifying / counter-qualifying for lone-survivor specificity register) | YES — §7.1 B.2 + B.3 register |
+| C.3 | direct (multiple light-touch-register limitations across §7.0 + §7.1) | YES — cross-cutting |
+
+§8 (Step 6 territory) applies the spec §4.3 Case C determination
+criterion ("any ONE of C.1 / C.2 / C.3 applicable" + sub-register
+documentation requirement) and the spec §4.4 one-and-only-one rule
+to this evidence base; §7 does not pre-empt that determination.
+
+### 7.3 Cross-case evidence-base summary
+
+This sub-section consolidates §7.0 + §7.1 + §7.2 evidence-base
+summaries at a register suitable for §8 (Step 6 territory) case
+determination. **NOT case determination at §7** (per spec §4.4
++ §5.6 Step 6 territory); §7.3 is evidence-map consolidation only.
+
+| case | evidence-base register at light-touch |
+|---|---|
+| Case A | A.1 / A.2 / A.3 sub-registers: qualifying evidence weaker than disqualifying counter-evidence (NOT cleanly satisfied as Case A.x defect at any sub-register). A.4 sub-register: qualifying evidence direct; disqualifying counter-evidence direct; balance interpretively ambiguous at light-touch register. |
+| Case B | B.1: 3 of 4 Case A sub-registers satisfy "weaker-than-disqualifying"; A.4 sits at qualifying-vs-disqualifying boundary. B.2 + B.3: partial qualifying at descriptive register; rigorous null-test out-of-scope per §3.2.5. |
+| Case C | C.1 / C.2 / C.3 sub-registers: each shows direct qualifying evidence at descriptive register matching the corresponding spec §4.3 evidence-pattern text. |
+
+§8 (Step 6 territory) must adjudicate this evidence base under spec
+§4.4 one-and-only-one rule. §7 surfaces evidence tensions only —
+specifically:
+
+1. **A.4 sub-register tension**: direct qualifying evidence
+   (Observations 9 + 10 + 11 align with spec §4.1 A.4 text) AND
+   direct disqualifying counter-evidence (canonical AND-gate is
+   deliberately permissive; ingest-layer out-of-scope; one-of-198
+   consistent with B.3); §8 must adjudicate whether the qualifying-
+   vs-disqualifying balance maps to Case A.4 (clean qualification),
+   to Case B (qualifying weaker than disqualifying), or to Case
+   C.1 (qualifying-vs-disqualifying balance ambiguous register).
+2. **Lone-survivor specificity tension**: lone-survivor's hybrid
+   quality profile (audit-only origin + single-trade-margin
+   exclusion + permissive AND-gate at -10.2% return + theme
+   alignment at thin-theme register) traces to specific
+   mining-process inputs rather than purely random pattern; §8
+   must adjudicate whether this specificity register maps to
+   tail-event-consistent (B.3 register) or to mining-time-vs-
+   evaluation-time gate misalignment (A.4 register) or to mixed-
+   register ambiguity (C.2 register).
+3. **Cross-cutting light-touch-register limitation tension**: B.2
+   + B.3 noise-floor consistency at descriptive register only
+   (Q-9.A territory out-of-scope); A.2 Critic-as-gate
+   interpretation hampered by ingest-layer out-of-scope; A.4
+   deliberate-staged-tightening-vs-defect adjudication unresolved
+   at light-touch; §8 must adjudicate whether the evidence
+   base is sufficient for clean Case A or Case B determination
+   at light-touch register or whether C.3 register applies.
+
+§7 does NOT enumerate forward-pointer options at §7.3; per spec
+§4.4 Case A / Case B / Case C rows, the forward-pointer register
+is §8 closeout-§1-verdict territory at Step 6. §7.3 surfaces
+evidence tensions only; §8 maps the determination + applicable
+forward-pointer per spec §4.4 register.
+
+### 7.4 Step 5 deliverable summary + gating-criterion check
+
+Per spec §5.5 gating criterion: **"§7 working draft has structured
+evidence maps for all three cases"**.
+
+Status:
+
+- **§7.0 Case A evidence map** (A.1 / A.2 / A.3 / A.4): documented
+  across 4 sub-sections + §7.0.5 cross-sub-register summary; per-
+  sub-register qualifying-evidence summary + disqualifying-counter-
+  evidence summary at register required by spec §4.1 ✓
+- **§7.1 Case B evidence map** (B.1 / B.2 / B.3): documented across
+  3 sub-sections + §7.1.4 cross-sub-register summary; per-sub-
+  register qualifying-evidence summary + disqualifying-counter-
+  evidence summary at register required by spec §4.2 ✓
+- **§7.2 Case C evidence map** (C.1 / C.2 / C.3): documented across
+  3 sub-sections + §7.2.4 cross-sub-register summary; per-sub-
+  register qualifying-evidence summary at register required by
+  spec §4.3 ✓
+- **§7.3 cross-case evidence-base summary**: cross-case
+  consolidation table at register suitable for §8 (Step 6) case
+  determination; forward-pointer register documented at allowed-
+  register only per spec §4.4 + §7.1 cycle-boundary preservation ✓
+
+Step 5 gating criterion satisfied. Step 6 (case determination +
+closeout assembly per spec §5.6) authorized to proceed in
+subsequent session per discrete-session-boundary register.
+
+Per spec §6 verification framework + §7 cycle-boundary preservation:
+
+- **§6.1 Evidence-mapping discipline**: every §7 claim cites a
+  specific source — file:line citation for code claims; PHASE2C_8.1
+  closeout section anchor for canonical-number claims; §3-§6
+  cross-reference for mechanism / observation claims; explicit
+  "this is interpretation, not observation" framing where evidence
+  mapping reaches qualifying-vs-disqualifying-counter-evidence
+  adjudication boundary ✓
+- **§6.4 Cycle-boundary-preservation language audit**: §7 contains
+  no PHASE2C_10 / successor-arc pre-naming; no "this confirms",
+  "this requires", "this means we proceed to" forward-pointer
+  language; no Case A/B/C single-case adjudication (§7.X
+  qualifying-vs-disqualifying summaries are per-sub-register
+  evidence summaries, not case determinations); §7.3 forward-
+  pointer register restricted to allowed-register per spec §4.4 +
+  §7.1 ✓
+- **§6.3 Canonical-number cross-checks**: §7 references PHASE2C_8.1
+  canonical anchors (cohort_a_filtered = 0; per-regime pass rates;
+  one-of-198 cardinality) at PHASE2C_8.1 closeout anchor register;
+  §7 references §3-§6 internal canonical numbers (40/40/40/39/39
+  generation distribution; 198 valid candidate count;
+  theme_coherence formula at D7a register; lone-survivor metrics
+  per §6.3) at internal-anchor register ✓
+
+Scope-completeness audit per Claude advisor's prior carry-forward
+(necessary-and-sufficient register; no §8 deliverable leakage):
+
+- **§7 does NOT include single-case Case determination** (Step 6
+  §8 territory per spec §5.6 + §4.4 one-and-only-one rule). §7.3
+  cross-case summary is evidence-base consolidation at register
+  suitable for §8 application of one-and-only-one rule, NOT
+  application of one-and-only-one rule itself. ✓
+- **§7 does NOT include new mechanism descriptions** (Step 1 §3
+  territory). All §7 mechanism references trace to §3 reconstruction
+  + file:line citations to existing code; no new mechanism
+  reconstruction surfaces at §7. ✓
+- **§7 does NOT include 198-candidate full re-analysis** (per spec
+  §3.2.3); evidence base draws on §3-§6 working-draft register
+  (mechanism + artifact-distribution + cross-tab + lone-survivor
+  trace) only. ✓
+- **§7 does NOT include statistical-significance machinery** (Q-9.A
+  territory; out-of-scope per spec §3.2.5). Noise-floor-consistency
+  claims are at descriptive-register only; rigorous null-distribution
+  comparison surfaces as spec §3.2.5 out-of-scope flag at multiple
+  sub-registers (B.2, B.3, C.3). ✓
+- **§7 does NOT include calibration-variation grid** (Q-9.C territory;
+  out-of-scope per spec §3.2.6). AND-gate calibration question
+  surfaces at A.4 + B.3 sub-registers as light-touch-register
+  limitation, not as variation grid. ✓
+- **§7 does NOT include ingest-layer mechanism reconstruction**
+  (per session-entry handoff scoping + spec §3 in-scope enumeration
+  for Proposer + Critic + theme rotation only). Ingest-layer
+  mechanism surfaces as out-of-scope flag at A.2 + A.4 + tracked-
+  fix register at §8 (Step 6 territory). ✓
+
+**Two register-precision observations surfaced for §8 (Step 6)
+case-determination structuring** (NOT case determination; §8
+territory):
+
+1. **A.4 qualifying-vs-disqualifying balance is the primary §8
+   adjudication boundary surfaced at §7**: A.4 qualifying evidence
+   at descriptive register (Observations 9 + 10 + 11 align with
+   spec §4.1 A.4 qualifying-evidence text) and A.4 disqualifying
+   counter-evidence at descriptive register (canonical AND-gate
+   is deliberately permissive; ingest-layer out-of-scope;
+   one-of-198 consistent with B.3) are both direct at light-touch
+   register. The §7 evidence base does not pre-empt §8 adjudication
+   on whether the qualifying-vs-disqualifying balance maps to clean
+   Case A.x qualification, to qualifying-weaker-than-disqualifying
+   (Case B-direction at A.4), or to qualifying-vs-disqualifying
+   balance ambiguity (Case C.1 register).
+2. **Ingest-layer mechanism out-of-scope is the cross-cutting
+   light-touch-register limitation surfaced at §7**: A.2
+   (Critic-as-gate interpretation hampered by Critic-annotates-only
+   per §3.2.6) and A.4 (deliberate-staged-tightening-vs-defect
+   adjudication) both reference ingest-layer mechanism
+   reconstruction outside Step 1 §3 scope. The cross-cutting
+   pattern surfaces at C.3 sub-register's spec-§4.3-C.3 evidence-
+   pattern register. §8 (Step 6 territory) tracked-fix register
+   entry candidate: ingest-layer mechanism reconstruction as
+   structured re-examination scope, with explicit "this is
+   tracked-fix register, not pre-named successor-arc" framing per
+   spec §7.2 anti-pre-naming discipline.
+
+These observations are at register-precision register for §8
+case-determination structuring per spec §5.6 sequential gating;
+case determination per §4.4 one-and-only-one rule is §8 (Step 6
+territory) deliverable.
 
 
 ## 8. Case determination (Step 6 deliverable)
