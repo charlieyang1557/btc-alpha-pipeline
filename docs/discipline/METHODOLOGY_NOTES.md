@@ -389,50 +389,78 @@ The complementary failure mode is over-asymmetry — adding so many caveats to s
 
 ## §8 How to apply these principles
 
-The eleven specific principles plus §1's two-axis strengthening are
-mutually reinforcing. §1 (empirical verification, with WHEN/HOW
-axes — recompute-before-prose at framing-summary stage and V7
-grep-able citation operational specificity) prevents specific
-factual defects in artifacts. §2 (meta-claim verification) prevents
-the same defect class one layer up, in claims about the verification
-itself. §3 (regime-aware calibration) is a specific application of
-§1 to calibration decisions. §4 (scale-step discipline) prevents
-over-claiming from intermediate evidence. §5 (precondition
-verification for structural principles) is a sub-pattern of §2
-specific to structural and organizational recommendations. §6
-(commit messages not canonical) prevents over-applying acknowledgment
-discipline. §7 (asymmetric confidence on multi-sample claims)
-prevents smoothing-induced over- or under-claiming. §9 (Path-2
-outline-first drafting) prevents evidence-section drift relative to
-load-bearing-section framing in multi-direction closeouts. §10
-(anti-pre-naming as standing discipline) prevents implicit
-commitments to scoping decisions not yet made. §11 (closeout-
-assembly checklist as running drafting-cycle pattern) preserves
-drafting-cycle forward momentum without re-opening sealed sections
-for non-blocking fixes. §12 (internal verification and adversarial
+The fourteen specific principles plus §1's two-axis strengthening
+plus §11's two-item operational refinement are mutually reinforcing.
+§1 (empirical verification, with WHEN/HOW axes — recompute-before-prose
+at framing-summary stage and V7 grep-able citation operational
+specificity) prevents specific factual defects in artifacts. §2
+(meta-claim verification) prevents the same defect class one layer
+up, in claims about the verification itself. §3 (regime-aware
+calibration) is a specific application of §1 to calibration decisions.
+§4 (scale-step discipline) prevents over-claiming from intermediate
+evidence. §5 (precondition verification for structural principles) is
+a sub-pattern of §2 specific to structural and organizational
+recommendations. §6 (commit messages not canonical) prevents
+over-applying acknowledgment discipline. §7 (asymmetric confidence
+on multi-sample claims) prevents smoothing-induced over- or under-
+claiming. §9 (Path-2 outline-first drafting) prevents evidence-section
+drift relative to load-bearing-section framing in multi-direction
+closeouts. §10 (anti-pre-naming as standing discipline) prevents
+implicit commitments to scoping decisions not yet made. §11
+(closeout-assembly checklist as running drafting-cycle pattern, with
+PHASE2C_8.1 operational refinements adding per-section cross-reference
+grep and register-cardinality verification) preserves drafting-cycle
+forward momentum without re-opening sealed sections for non-blocking
+fixes and catches cross-section + register-cardinality drift at
+full-assembly stage. §12 (internal verification and adversarial
 review as complementary defect-class coverage) covers the
 structurally distinct defect surface that internal verification
-cannot reach by construction.
+cannot reach by construction. §13 (parallel-implementation
+verification for canonical findings) preserves epistemic distance
+between production code path and verification code path through
+permanent in-repo independent-implementation gates. §14 (bidirectional
+dual-reviewer register-precision) operates as the structural quality
+check at high-load drafting cycles where both reviewer overlays
+must fire because each covers a defect axis the other does not.
+§15 (anchor-list empirical-verification discipline) catches
+advisor-supplied anchor inaccuracy at the receiving cycle's pre-
+drafting stage, before incorrect anchors harden into prose.
 
-§12 is structurally distinct from §1-§11. §1-§11 codify specific-
-defect-prevention disciplines — each principle prevents a specific
-class of defect at a specific operational moment (drafting / framing /
-section-seal / assembly). §12 is a **meta-discipline** that combines
-two protocols (V1-V7 internal verification + adversarial review)
-into complementary coverage of the full defect surface. The
-distinction matters operationally: §12 doesn't replace V1-V7 or
-substitute for any §1-§11 principle; it composes with them. A
-high-load closeout commit applies §1-§11 individually + §12 as the
+§12 is structurally distinct from §1-§11 + §13-§15. §1-§11 + §13-§15
+codify specific-defect-prevention disciplines — each principle
+prevents a specific class of defect at a specific operational moment
+(pre-drafting / drafting / framing / section-seal / assembly /
+post-assembly). §12 is a **meta-discipline** that combines two
+protocols (V1-V7 internal verification + adversarial review) into
+complementary coverage of the full defect surface. The distinction
+matters operationally: §12 doesn't replace V1-V7 or substitute for
+any §1-§11 + §13-§15 principle; it composes with them. A high-load
+closeout commit applies §1-§11 + §13-§15 individually + §12 as the
 meta-protocol that ensures aggregate coverage.
+
+§14 carries a sub-meta-discipline character that distinguishes it
+within the §1-§11 + §13-§15 group. Where §1-§11 + §13 + §15 each
+address a specific defect class at a specific operational moment, §14
+addresses the protocol structure of register-precision verification
+itself — bidirectional dual-reviewer firing as opposed to directive
+arbitration. The distinction is structurally similar to §12's meta-
+discipline character but operates at the register-precision verification
+layer rather than the V1-V7-plus-adversarial composition layer. §14
+composes with §12: §12's three-protocol composition (V1-V7 + dual-
+reviewer + adversarial review) inherits §14's bidirectional firing
+discipline at the dual-reviewer layer.
 
 In practice:
 
 - **Before writing dispatch text:** apply §3 to any expected-
   behavior bands; apply §1 to any specific facts (counts,
   identities, paths) cited as input.
-- **Before drafting closeout sections:** apply §9 — does the load-
-  bearing interpretive section have multi-direction findings? If
-  yes, draft it first as a standalone cycle.
+- **Before drafting closeout sections (pre-drafting stage):** apply
+  §15 — verify advisor-supplied numerical or structural anchors
+  empirically against canonical artifacts at receiving cycle, before
+  drafting initiates. Apply §9 — does the load-bearing interpretive
+  section have multi-direction findings? If yes, draft it first as
+  a standalone cycle.
 - **In §9-style follow-up-question sections:** apply §10 — body
   prose uses generic "follow-up scoping" phrasing, not specific
   arc names; illustrative examples avoid pre-characterization.
@@ -452,17 +480,28 @@ In practice:
   small cross-reference fixes. Distinguish tracked fixes (mechanical,
   batched at assembly) from blocking defects (re-open framing,
   return to drafting cycle).
-- **During dual-reviewer adjudication:** apply §2 to confident
-  meta-claims about process state ("verified," "pinned," "low-
-  value"); apply §5 to structural and organizational
+- **During dual-reviewer adjudication (register-precision register):**
+  apply §14 — both reviewers' register-precision overlays must fire
+  before section-seal; single-reviewer clean is partial signal, not
+  complete. Treat each overlay's catch as canonical in its defect
+  class; do not aggregate or merge.
+- **During dual-reviewer adjudication (non-register decisions):**
+  apply §2 to confident meta-claims about process state ("verified,"
+  "pinned," "low-value"); apply §5 to structural and organizational
   recommendations from any source (including from oneself).
 - **When discrepancies surface between development artifacts and
   authoritative artifacts:** apply §6 — is the development artifact
   a published result layer, or supporting history?
 - **At closeout-assembly stage:** apply §11's at-assembly verification
-  + §10's at-assembly meta-attestation grep + §1's recompute-before-
-  prose audit + the closeout-assembly checklist deterministic
-  application.
+  + §11's per-section cross-reference grep + §11's register-cardinality
+  verification + §10's at-assembly meta-attestation grep + §1's
+  recompute-before-prose audit + the closeout-assembly checklist
+  deterministic application.
+- **For canonical findings at high-load closeout register:** apply
+  §13 — at least one permanent in-repo parallel-implementation
+  verification gate must exist for canonical findings. Stdlib-only
+  or minimum-dependency code path; byte-identical reproduction across
+  layers required.
 - **Before merging closeout commits:** apply §12 — run mandatory
   adversarial review (Codex or equivalent); fold findings as a
   separate review-response commit; re-run V1-V7 post-fold.
@@ -481,24 +520,28 @@ load. **High-load closeouts** (load-bearing finding sections,
 numerical claims at body-prose resolution, cross-section
 adjudication register) apply the full discipline portfolio: §1-§7
 specific-defect prevention + §9-§11 drafting/assembly disciplines +
-§12 mandatory adversarial-review meta-protocol. **Administrative
-documents** (scoping decisions, plans, dispatch texts with no
-empirical claims and no load-bearing findings) apply only the
-directly-applicable subset: §1 + §2 + §6 typically; §9-§12 do not
-apply by their respective conditional boundaries. The conditional-
-boundary structure of §9-§12 prevents the discipline portfolio from
-generating overhead disproportionate to defect-surface coverage.
+§12 mandatory adversarial-review meta-protocol + §13 parallel-
+implementation verification + §14 bidirectional dual-reviewer
+register-precision + §15 anchor-list empirical-verification
+discipline. **Administrative documents** (scoping decisions, plans,
+dispatch texts with no empirical claims and no load-bearing findings)
+apply only the directly-applicable subset: §1 + §2 + §6 typically;
+§9-§15 do not apply by their respective conditional boundaries. The
+conditional-boundary structure of §9-§15 prevents the discipline
+portfolio from generating overhead disproportionate to defect-
+surface coverage.
 
-§9-§12 surface conditional boundaries explicitly because PHASE2C_7.1's
-drafting cycles surfaced the boundary distinctions empirically. §1-§7
-do not carry explicit conditional boundaries in their existing prose;
-this is not a claim that §1-§7 are universal-application principles.
-PHASE2C_6.6's drafting cycles did not surface the need to name implicit
-conditional boundaries for §1-§7 (e.g., §6's commit-messages-not-
-canonical principle has an implicit boundary — applies to projects with
-closeout documents as canonical result layer). The cost-portfolio
-observation is structural across the full portfolio, not a generation-
-distinguishing claim about pre-2026 vs post-2026 principle drafting.
+§9-§15 surface conditional boundaries explicitly because PHASE2C_7.1's
+and PHASE2C_8.1's drafting cycles surfaced the boundary distinctions
+empirically. §1-§7 do not carry explicit conditional boundaries in
+their existing prose; this is not a claim that §1-§7 are universal-
+application principles. PHASE2C_6.6's drafting cycles did not surface
+the need to name implicit conditional boundaries for §1-§7 (e.g.,
+§6's commit-messages-not-canonical principle has an implicit
+boundary — applies to projects with closeout documents as canonical
+result layer). The cost-portfolio observation is structural across
+the full portfolio, not a generation-distinguishing claim about
+pre-2026 vs post-2026 principle drafting.
 
 ### When new lessons surface
 
@@ -517,14 +560,20 @@ with new evidence, Application checklist gaining new items,
 Failure-mode signal extended — rather than promoting the
 strengthening to a new section. Sub-structure within an existing
 section is acceptable when the strengthening is operational
-refinement rather than new principle. **Empirical case study
+refinement rather than new principle. **Empirical case studies
 (strengthening):** §1's WHEN/HOW operational refinements added
 during the PHASE2C_7.1 update absorbed inside §1's existing 4-part
-structure rather than becoming standalone sections. **Empirical
-case studies (new sections):** §9 / §10 / §11 / §12 added during
-the PHASE2C_7.1 update each became new sections per existing
-convention because each codified a distinct standing principle
-not derivable from §1-§7.
+structure rather than becoming standalone sections. §11's per-section
+cross-reference grep + register-cardinality verification operational
+refinements added during the PHASE2C_8.1 update absorbed inside §11's
+existing 4-part structure for the same structural reason — both are
+operational refinements of §11's running closeout-assembly checklist
+discipline, not distinct standing principles. **Empirical case
+studies (new sections):** §9 / §10 / §11 / §12 added during the
+PHASE2C_7.1 update + §13 / §14 / §15 added during the PHASE2C_8.1
+update each became new sections per existing convention because each
+codified a distinct standing principle not derivable from prior
+sections.
 
 When updating §8's "How to apply" synthesis after adding a new
 section or strengthening an existing one, integrate the new
@@ -535,13 +584,15 @@ codified.
 
 ### Cross-reference register: arc identifiers to canonical documents
 
-The arc identifiers cited throughout §1-§12 trace to canonical
+The arc identifiers cited throughout §1-§15 trace to canonical
 project documents at the following locations:
 
 - **PHASE2C_5** (Phase 2C Phase 1 walk-forward closeout): `docs/closeout/PHASE2C_5_PHASE1_RESULTS.md` + corrected-engine erratum at `docs/closeout/PHASE2C_5_PHASE1_RESULTS_ERRATUM.md`
 - **PHASE2C_6** (Phase 2C single-regime evaluation gate): `docs/closeout/PHASE2C_6_EVALUATION_GATE_RESULTS.md` (PHASE2C_6.6 final closeout commit; PHASE2C_6.7 Codex review-response commit)
 - **PHASE2C_7.0** (Phase 2C scoping decision): `docs/phase2c/PHASE2C_7_SCOPING_DECISION.md`
 - **PHASE2C_7.1** (Phase 2C multi-regime evaluation gate): `docs/closeout/PHASE2C_7_1_RESULTS.md` + plan at `docs/phase2c/PHASE2C_7_1_PLAN.md` (PHASE2C_7.1.7 Codex review-response commit; tag `phase2c-7-1-multi-regime-v1`)
+- **PHASE2C_8.0** (Phase 2C extended-evaluation scoping decision): `docs/phase2c/PHASE2C_8_SCOPING_DECISION.md` (Q-B1 selection over Q-B2/Q-B3.a/Q-B3.b/Q-B4; established the n=4 baseline composition + Option A engine-version invariance + in-sample caveat (Concern A) framework)
+- **PHASE2C_8.1** (Phase 2C multi-regime evaluation gate, extended): `docs/closeout/PHASE2C_8_1_RESULTS.md` + plan at `docs/phase2c/PHASE2C_8_1_PLAN.md` (closeout commit at `69e9af9`; tag `phase2c-8-1-multi-regime-extended-v1`; permanent in-repo recompute gate at `tests/test_phase2c_8_1_independent_recompute.py`)
 - **Corrected WF Engine Project Arc** (engine fix establishing wf-corrected lineage): `docs/closeout/CORRECTED_WF_ENGINE_SIGNOFF.md` + lineage discipline at `backtest/wf_lineage.py` (tag `wf-corrected-v1`)
 - **PHASE1B_WF Corrected Baseline Supplement** (baseline re-validation under corrected engine): `docs/closeout/PHASE1B_WF_CORRECTED_BASELINE_SUPPLEMENT.md`
 - **PHASE2A signoff**: `docs/closeout/PHASE2A_SIGNOFF.md`
@@ -974,6 +1025,44 @@ application. The §11 codification makes the operational structure
 explicit beyond the PHASE2C_7.1 arc; future multi-cycle closeouts
 inherit the running-checklist pattern rather than re-deriving it.
 
+**PHASE2C_8.1 (operational refinement: per-section cross-reference
+grep + register-cardinality verification, April 2026).** The
+running-checklist pattern operated at PHASE2C_8.1 closeout assembly
+without breakdown, but two operational gaps surfaced empirically:
+
+- **Per-section cross-reference grep gap.** Eleven cross-section
+  observations (VVVV through FFFFF in the assembly checklist)
+  accumulated across §3-§9 drafting cycles where a top-level
+  numerical-claim grep cleared but cross-section reference drift
+  remained. The pattern: a section's prose used a number that
+  matched the canonical artifact, but a different section's
+  reference to the same number used a different rounding or a
+  different scope. Top-level grep against the canonical artifact
+  cleared each section in isolation; per-section cross-reference
+  grep would have caught the cross-section drift at section-seal.
+- **Register-cardinality verification gap.** Codex adversarial
+  review's MAJOR finding at PHASE2C_8.1 §1.4 caught register-count
+  enumeration drift: §1.4's verdict-section summary said "seven
+  tracked-fix register entries... plus eighth entry Q-S4-14" while
+  canonical §10 had ten entries (Q-S4-15/16 emerged after §1 was
+  drafted; §1.4 not retroactively updated at full-assembly). V1-V7
+  internal verification cleared §1.4's prose at section-seal;
+  register-cardinality cross-check between §1.4's summary and §10's
+  canonical table would have caught the seven-vs-ten enumeration
+  drift before commit. The defect class generalizes: any section
+  that summarizes a register must match the canonical register's
+  cardinality at full-assembly verification.
+
+The PHASE2C_8.1 evidence operates as operational refinement rather
+than new principle: §11's running closeout-assembly checklist is the
+correct discipline, with two enrichments at the application checklist
+register. Per-section cross-reference grep enriches V7's grep-able
+back-pointer discipline (§1's HOW axis) at full-assembly stage, where
+the cross-section register surfaces. Register-cardinality verification
+enriches the assembly-stage uniform application item with a specific
+sub-rule: register-summary sections must verify cardinality against
+the canonical register table.
+
 ### Application checklist
 
 During section-drafting cycles in multi-cycle closeouts, when a
@@ -1006,6 +1095,30 @@ non-blocking fix surfaces:
    runs. Verify via md5 comparison or equivalent. Non-deterministic
    assembly introduces drift between reviewer copies and committed
    canonical, which is itself a defect class.
+5. **Per-section cross-reference grep (operational refinement,
+   PHASE2C_8.1):** At full-assembly verification stage, run cross-
+   reference grep at per-section resolution, not just top-level
+   numerical-claim grep. For each canonical numerical claim or
+   register entry, verify every section that references the claim
+   uses identical scope, rounding, and cardinality. The discipline
+   catches cross-section reference drift that clears at top-level
+   grep (each section's claim independently matches the canonical
+   artifact) but fails at cross-section grep (different sections
+   reference the same canonical claim at different precision or
+   scope). Top-level grep is necessary but not sufficient at
+   full-assembly register.
+6. **Register-cardinality verification (operational refinement,
+   PHASE2C_8.1):** Any section that summarizes or enumerates a
+   register (e.g., a verdict-section recap of the tracked-fix
+   register, a forward-signals recap of codification candidates)
+   must match the canonical register table's cardinality at
+   full-assembly stage. Verify each register-summary section's
+   enumeration count and entry list against the canonical register
+   table. The defect class is structurally distinct from per-section
+   cross-reference grep: register-summaries can drift because the
+   canonical register continues to grow after the summary section
+   was drafted (e.g., register entries added at later drafting
+   cycles after the verdict section was sealed).
 
 ### Failure-mode signal
 
@@ -1050,6 +1163,24 @@ In assembly-commit verification, watch for closeout-assembly outputs
 that fail the byte-identical reproducibility check. The check is
 operationally bounded (md5 comparison or equivalent) and catches
 non-determinism structurally.
+
+In full-assembly cross-reference verification, watch for the
+top-level-grep-clears-per-section-grep-fails pattern. Each section's
+prose can match the canonical artifact at top-level grep while
+cross-section drift remains: §A says "67% / 33%" and §B says
+"two-thirds / one-third" referencing the same finding, both clear
+top-level grep but disagree on rounding precision. Per-section
+cross-reference grep at full-assembly catches this structurally;
+absent it, defects ship.
+
+In register-summary section verification, watch for cardinality drift
+between section-summary and canonical-register table. A verdict
+section drafted at section N with seven register entries cited remains
+correct at section-N seal; if the canonical register grows to ten
+entries by full-assembly stage, the verdict section's enumeration is
+stale. Register-cardinality verification at full-assembly stage
+catches the drift class structurally; section-seal verification does
+not because section-seal predates later register growth.
 
 ---
 
@@ -1265,3 +1396,504 @@ high-load closeout demonstrates zero adversarial-review catch
 rate post-rigorous-V1-V7 internal-verification, the empirical
 evidence supports adversarial review as mandatory for high-load
 closeout commits, not as discretionary overhead.
+
+---
+
+## §13 Parallel-implementation verification for canonical findings
+
+### Principle
+
+Independent-implementation verification tests have different epistemic
+standing than snapshot tests against the same code path. When a
+verification mechanism re-derives a canonical claim from raw artifacts
+via an independent code path — different language constructs, minimum-
+dependency stdlib-only imports, different algorithm structure, no
+shared module imports with the production pipeline — the verification
+provides structurally distinct epistemic coverage compared to a
+snapshot test that pins the same code path's output. Both have value
+and neither substitutes for the other; snapshot regression tests catch
+unintended output change in the production code path, while parallel-
+implementation tests catch defects that the production code path
+itself encodes.
+
+For canonical findings at high-load closeout register, at least one
+permanent in-repo parallel-implementation verification gate should
+exist. The discipline preserves epistemic distance between the
+production code path and the verification code path; if the production
+code path has a defect that yields the canonical claim, a snapshot
+test pins the defect rather than catching it. The parallel-
+implementation gate's independent code path catches the defect class
+that snapshot tests cannot reach by construction.
+
+The conditional boundary is structural: §13 applies to **canonical
+findings at high-load closeout register** — findings that ship as
+load-bearing claims in committed closeout artifacts and that
+downstream work consumes as authoritative. It does NOT apply to
+intermediate working artifacts, exploratory analyses, or findings
+without committed-closeout consumption.
+
+### Trigger context
+
+This principle was codified during the PHASE2C_8.1 multi-regime
+evaluation gate arc closeout (April 2026). PHASE2C_8.1's verification
+chain operationally instantiated the principle at three independent
+layers:
+
+- **Layer 1 (production):** `scripts/compare_multi_regime.py` with
+  full integration test coverage at `tests/test_compare_multi_regime.py`
+  (32 tests including loader strictness, expected-count helpers, and
+  apply-multi-regime failure paths). The production pipeline produces
+  the canonical comparison artifacts (`comparison.csv`,
+  `comparison_summary.json`).
+- **Layer 2 (one-time external):** Codex adversarial review's
+  independent recomputation from source CSVs at the `018d876`
+  resolution cycle (Q-S4-6 + Q-S4-8 fix bundle review). The Codex
+  review's recomputation operated as one-time external check; it
+  produced epistemic confidence at review time but not persistent
+  CI-time coverage.
+- **Layer 3 (permanent in-repo gate):** `tests/test_phase2c_8_1_independent_recompute.py`
+  (304 lines, stdlib `csv` + `pathlib` only — zero source-code overlap
+  with the production `compare_multi_regime.py` import path). Seven
+  canonical-finding assertions: universe cardinality 198,
+  `cohort_a_unfiltered=["0845d1d7898412f2"]`, `cohort_a_filtered=[]`,
+  cohort_c=76, pass-count distributions for all four regimes,
+  21-vs-8 in-sample-caveat asymmetry. Defensive layers added per-regime
+  CSV row-count assertions and universe symmetry checks. The gate
+  recomputes via independent code path on every CI run.
+
+All three layers reproduced the canonical numbers (cohort_a=1;
+cohort_c=76; 21-vs-8 asymmetry; pass-count distributions) byte-
+identically. The verification chain's structural payoff: Layer 3's
+permanent in-repo gate persists across future code changes, catching
+regressions that would shift the canonical finding without requiring
+external review re-engagement.
+
+The methodology lesson: Layer 1's integration tests provide regression
+coverage for `compare_multi_regime.py`'s output; Layer 1 cannot
+provide epistemic coverage of `compare_multi_regime.py`'s correctness
+at the level Layer 3 provides, because Layer 1's tests share the
+production code path's import surface. Layer 3's stdlib-only recompute
+operates on an independent code path; if `compare_multi_regime.py`
+encoded a defect, Layer 3 catches it where Layer 1 pins it.
+
+### Application checklist
+
+For canonical findings at high-load closeout register:
+
+1. **Identify load-bearing canonical claims:** The findings that the
+   closeout names as load-bearing, that downstream work consumes as
+   authoritative, that future arcs cite as factual anchors. These are
+   the candidates for parallel-implementation gate coverage. Findings
+   without committed-closeout consumption do not require the gate.
+2. **Build at least one permanent in-repo parallel-implementation
+   gate:** Recompute the canonical claim from raw artifacts via an
+   independent code path. Maximize epistemic distance from the
+   production pipeline:
+   - Stdlib-only or minimum-dependency imports (no shared modules
+     with the production pipeline)
+   - Different language constructs where applicable (CSV reader vs
+     pandas DataFrame; manual aggregation vs library aggregation)
+   - Different algorithm structure where applicable (explicit loops
+     vs vectorized operations)
+3. **Pin as permanent CI-time gate, not one-time external check:**
+   The gate must persist across future code changes. One-time external
+   review (Codex, manual reviewer recomputation) provides epistemic
+   confidence at review time but does not persist; persistent CI-time
+   gate is the structural complement.
+4. **Verify byte-identical reproduction:** All canonical numbers must
+   reproduce byte-identically across layers. Non-byte-identical
+   reproduction indicates either a precision defect (rounding
+   inconsistency between layers) or a code-path divergence (one layer
+   computes a structurally different quantity). Non-byte-identical
+   reproduction is a defect, not a tolerance.
+5. **Defensive layer coverage:** Beyond the canonical-finding
+   assertions, add defensive assertions that catch input-corruption
+   defect classes: per-regime row counts, universe symmetry across
+   regimes, cardinality invariants. Defensive layers catch defects
+   that propagate to canonical claims via input corruption.
+
+### Failure-mode signal
+
+Watch for verification chains that rely on snapshot tests against the
+same code path that produces the canonical claim. Snapshot tests pin
+the production code path's output; if the production code path has a
+defect, the snapshot pins the defect rather than catching it. The
+defect class is structurally outside snapshot tests' scope.
+
+Watch for one-time external check substitution for permanent in-repo
+gate. Codex adversarial review or manual reviewer recomputation
+provides epistemic confidence at review time, but the confidence does
+not persist across future code changes. A future code change can
+shift the canonical finding without re-engaging the external review;
+absent the permanent in-repo gate, the shift ships silently.
+
+In closeout drafting, watch for "verified by integration tests" as
+the sole epistemic claim for canonical findings. Integration tests
+provide regression coverage; epistemic coverage at canonical-finding
+register requires either parallel-implementation in-repo gate or
+explicit acknowledgment that epistemic coverage is bounded to
+production code path correctness. The bounded acknowledgment is
+honest; the unqualified "verified" claim overstates.
+
+In review-cycle adjudication, watch for "we already have integration
+tests, we don't need a separate parallel-implementation gate" reasoning.
+Integration tests and parallel-implementation tests cover structurally
+distinct defect surfaces; the cost of building a parallel-implementation
+gate (one stdlib-only test file, ~300 lines for PHASE2C_8.1) is bounded;
+the structural payoff (epistemic coverage of canonical findings against
+production-code-path defects) compounds across arcs as the closeout
+register accumulates load-bearing claims.
+
+---
+
+## §14 Bidirectional dual-reviewer register-precision
+
+### Principle
+
+Register-precision verification at high-load drafting cycles operates
+as a **bidirectional dual-reviewer check**, not as directive arbitration.
+Each reviewer (ChatGPT structural overlay / Claude advisor structural-
+with-register-overlay) has different sensitivities at different defect
+axes. Both reviewers' register-precision checks must fire before
+section-seal for the register-precision quality to hold; single-
+reviewer clean is necessary but not sufficient. The pattern is
+structurally distinct from directive arbitration at non-register
+sealing decisions, where one reviewer's directive can be canonical and
+the other's deferred per the reasoned-reviewer-suggestion adjudication
+discipline.
+
+The structural distinction operates at two registers:
+
+- **Register-precision verification:** bidirectional. Both reviewers'
+  catches are canonical in their own defect class; defects each
+  reviewer surfaces are not subject to "majority-rules" or "primary-
+  reviewer" arbitration. Each reviewer's overlay covers a structural
+  defect axis the other does not.
+- **Directive arbitration (non-register decisions):** unidirectional or
+  case-by-case. Timing decisions, scope decisions, prioritization
+  decisions can be canonical from one reviewer with reasoned
+  deference from the other. The reasoned-reviewer-suggestion
+  adjudication discipline applies here; bidirectional firing is not
+  structurally required.
+
+The conditional boundary: §14 applies to **register-precision
+verification at high-load drafting cycles**. It does NOT apply to
+single-reviewer review cycles (no second overlay available), to
+administrative documents (register-precision is not the binding
+quality dimension), or to non-register sealing decisions (where
+directive arbitration is the appropriate model).
+
+### Trigger context
+
+This principle was codified during the PHASE2C_8.1 multi-regime
+evaluation gate arc closeout drafting (April 2026). PHASE2C_8.1's
+Step 5 sequential drafting cycles operationally validated the
+bidirectional pattern across multiple defect classes — the catches
+went in opposite directions, with each reviewer catching defects the
+other missed:
+
+- **ChatGPT structural overlay caught defects Claude missed:**
+  - §5.4 cross-section terminology drift ("bootstrap" embedded in
+    sealed sections where spec-canonical was "DSR / PBO / CPCV").
+    Claude's per-section register-overlay had cleared each section
+    at section-seal because each section's terminology was internally
+    consistent; ChatGPT's structural overlay caught the cross-section
+    drift by surfacing that the project's spec canonical sequence was
+    "DSR / PBO / CPCV" — a structural-cross-section catch that
+    Claude's per-section overlay missed.
+  - §1.4 register-count enumeration drift ("seven tracked-fix
+    register entries... plus eighth entry Q-S4-14" in the verdict
+    section's recap). ChatGPT-and-internal-V1-V7 cleared, then Codex
+    adversarial review (operating as the structural overlay analog
+    in the dual-reviewer-with-adversarial-review framework) caught
+    the seven-vs-ten enumeration drift against §10's canonical
+    register table. The defect class is register-cardinality drift
+    (now codified at §11's strengthening application checklist
+    item 6); the catch was at the structural-overlay axis.
+
+- **Claude advisor structural-with-register-overlay caught defects
+  ChatGPT missed:**
+  - §6.3 noise-variance phrasing precision (initial draft used
+    register that conflated noise variance with statistical-significance
+    register; Claude's register-precision overlay caught the conflation
+    at section-seal).
+  - §6.5 scare-quote register-shift adjudication (a parenthetical
+    scare-quote pattern that would have shifted the bounded-claim
+    register into editorialization-register; Claude caught the
+    register-shift at section-seal).
+  - §3.3 hedge-phrasing defect catch via empirical verification
+    (initial draft had "~13 within filtered set" hedge that obscured
+    the disk-canonical 12 = lone-survivor 1-trade-margin exclusion;
+    Claude's empirical-verification overlay caught the hedge as
+    obscuring a cardinality-observable single-candidate
+    differential).
+
+The defect classes catch in opposite structural directions. ChatGPT's
+overlay is sensitive to content-level register defects (cross-section
+terminology, register-count enumeration, structural-cross-section
+register coherence). Claude's overlay is sensitive to phrasing-precision
+defects (hedge phrasing, scare quotes, noise-variance precision,
+register-shift at parenthetical embedding). Neither overlay covers
+both axes by construction; both must fire for register-precision to
+hold.
+
+The empirical pattern across PHASE2C_8.1's drafting cycles: every
+section that landed at canonical-closeout register had bidirectional
+fire — both reviewers' register-precision checks cleared at section-
+seal. Sections that defects shipped in (Codex's §1.4 catch) had
+single-overlay clear without the structural-overlay axis firing. The
+catch rate of the bidirectional pattern is non-zero against single-
+overlay verification.
+
+### Application checklist
+
+For register-precision verification at high-load drafting cycles:
+
+1. **Both overlays must fire at section-seal:** ChatGPT structural
+   overlay's register-precision check + Claude advisor structural-
+   with-register-overlay's check. Single-overlay clean does not
+   establish register-precision; it establishes one overlay's defect
+   class is clear.
+2. **Treat each overlay's catch as canonical in its defect class:**
+   Do not aggregate or merge the overlays' adjudications into a
+   "majority-rules" or "primary-reviewer-decides" framework. ChatGPT's
+   cross-section register catches are canonical for cross-section
+   register defects; Claude's phrasing-precision catches are
+   canonical for phrasing-precision defects. Each overlay's catch
+   surfaces a defect in its own class.
+3. **When overlays disagree, treat as adjudication signal:** Disagreement
+   indicates the defect class is at the boundary between overlays.
+   Reason through the disagreement; do not default to one reviewer's
+   judgment. The disagreement itself is an information signal about
+   defect-class taxonomy.
+4. **Distinguish register-precision from directive arbitration:**
+   Register-precision verification (this section) is bidirectional.
+   Directive arbitration at non-register sealing decisions (timing,
+   scope, prioritization) follows the reasoned-reviewer-suggestion
+   adjudication discipline, where one reviewer's directive can be
+   canonical with deference. Do not apply the directive-arbitration
+   register to register-precision verification — it under-protects
+   register quality.
+5. **For closeout-tier documents, treat adversarial review as a
+   third overlay:** §12's adversarial-review meta-protocol covers a
+   structurally distinct defect surface that internal verification
+   (V1-V7 plus dual-reviewer overlays) cannot reach by construction.
+   Adversarial review is not a substitute for either dual-reviewer
+   overlay; it composes with both. PHASE2C_8.1's §1.4 register-count
+   catch demonstrated the composition operationally — both internal
+   overlays cleared at section-seal, full-assembly verification
+   cleared, and adversarial review caught the residual register-
+   cardinality defect.
+
+### Failure-mode signal
+
+Watch for single-reviewer clean substituting for full bidirectional
+check. Single-reviewer clean does not establish register-precision —
+at minimum, it establishes one overlay's defect class is clear. The
+PHASE2C_8.1 §5.4 terminology drift cleared at Claude's per-section
+register-overlay before ChatGPT's structural-cross-section overlay
+caught the cross-section drift; the §1.4 enumeration drift cleared
+both internal overlays at section-seal before Codex's adversarial-
+review structural overlay caught the register-cardinality drift.
+Single-overlay clean is a partial signal, not a complete one.
+
+Watch for "primary reviewer's call" framing applied at register-
+precision verification. The framing is appropriate at directive
+arbitration register (timing, scope, prioritization) but inappropriate
+at register-precision register. Register-precision is not a discretionary
+adjudication — it is structural quality at canonical-artifact register;
+both overlays must fire because each covers a structural defect axis
+the other does not.
+
+In dual-reviewer cycles, watch for one reviewer's clean read short-
+circuiting the other reviewer's check. The pattern surfaces when one
+reviewer's response is treated as authoritative before the other
+reviewer's overlay has fired. The structural appropriate sequence is
+both overlays fire, then adjudication on any catches each surfaces;
+short-circuiting either overlay forecloses its defect-class coverage.
+
+In adjudication of overlay disagreements, watch for "the structural
+reviewer overrides the phrasing-precision reviewer" or "the phrasing-
+precision reviewer overrides the structural reviewer" framings.
+Neither overrides the other at register-precision register; each
+covers a defect class the other does not. Disagreement is information
+about defect-class taxonomy, not directive ranking.
+
+---
+
+## §15 Anchor-list empirical-verification discipline
+
+### Principle
+
+Advisor-supplied numerical or structural anchors require pre-drafting
+empirical verification at the receiving cycle, not just at the
+originating cycle. Anchors are claims supplied to the receiving cycle
+from external context — advisor responses, scoping decisions, prior
+register entries, framing summaries — that operate as drafting-cycle
+inputs. They function epistemically as receiving-cycle inputs and
+must be verified at the receiving cycle, even when the advisor cycle's
+own verification context cleared the anchor at originating cycle.
+
+The discipline operates at the receiving-cycle register because:
+
+- Advisor cycle's verification context and receiving cycle's
+  verification context can differ. The advisor may have verified
+  against an earlier artifact state, a different scope, or a different
+  cardinality; the receiving cycle's drafting commits land at the
+  current canonical state, which may not match the advisor's
+  verification context.
+- Advisor anchors derived from advisor's mental model (rather than
+  from advisor's verified query) carry implicit drift risk. The
+  advisor cycle and receiving cycle do not share mental-model state;
+  receiving-cycle verification is the structural check.
+- The receiving cycle is the canonical commit cycle; receiving-cycle
+  verification is the auditable record. Verification at advisor cycle
+  is necessary but not sufficient — the canonical commit must carry
+  receiving-cycle verification evidence.
+
+The discipline is operationalized at **pre-drafting** stage, not at
+section-seal. Verifying anchors before drafting initiates allows the
+drafting cycle to operate against verified anchors; verifying at
+section-seal would catch defects but require re-drafting, which
+carries higher cost than pre-drafting verification.
+
+### Trigger context
+
+This principle was operationalized during the PHASE2C_8.1 multi-regime
+evaluation gate arc closeout Step 5 drafting cycles (April 2026).
+Eight mid-cycle empirical-verification catches at distinct defect
+classes operationally validated the discipline:
+
+1. **§3.3 cardinality (cohort cardinality):** Initial advisor-supplied
+   anchor cited "13 within filtered set" hedge; pre-drafting recompute
+   produced disk-canonical 12. The 13→12 single-candidate differential
+   surfaced as the lone-survivor 1-trade-margin exclusion in
+   bear_2022 (cardinality-observable single-trade boundary). Pre-
+   drafting verification caught the hedge before §3 prose drafted
+   against incorrect anchor.
+2. **§2.5 cross-section semantics (regime-metadata schema mapping):**
+   Advisor-supplied anchor referenced spec §7.5's regime-metadata
+   semantics; pre-drafting verification confirmed alignment with
+   `compare_multi_regime.py:_resolve_regime_metadata` implementation
+   via the schema discriminator chain. Verification surfaced no defect
+   but operated as canonical alignment-check at receiving cycle.
+3. **§8.5 historical detail (Codex one-time-external review framing):**
+   Advisor-supplied anchor cited Codex review framing at `018d876`
+   resolution cycle as one-time external check; pre-drafting
+   verification confirmed the framing against canonical commit chain
+   evidence.
+4. **§7 speculative theme cardinalities:** Advisor anchor list cited
+   "calendar_effect 17/23 = 73.9% in eval_2020_v1" + "mean_reversion
+   2/26 = 7.7%" without verification. Pre-drafting recompute produced
+   disk-canonical: calendar_effect 26/40 in eval_2020_v1; mean_reversion
+   3/39. Verification caught the speculative anchors before §7 prose
+   committed to incorrect cardinalities.
+5. **§9 section-count audit:** Mental model lost §9 between framing
+   summary commit and §10 anchor enumeration. Pre-drafting verification
+   of framing summary surfaced §9 (Methodology-evidence hierarchy
+   bounds) as canonical; §10 was drafted with §9 properly cited.
+6. **§1.2-§5.4-§6.3-§6.4 cross-section terminology:** Advisor-supplied
+   anchor used "bootstrap" register; pre-drafting verification against
+   spec §10.7 surfaced "DSR / PBO / CPCV" as the canonical sequence.
+   Cross-section terminology fix at D-S5-8 was first explicit
+   operationalization of the discipline at cross-section register.
+7. **cohort_a_filtered cardinality:** Pre-drafting verification before
+   §6 hybrid narration confirmed cohort_a_filtered = 0 against the
+   trade-count filter outcome (lone-survivor excluded by single-trade
+   margin; D-S5-* hybrid narration framing).
+8. **§1.4 register-count drift (Codex adversarial review catch):**
+   Adversarial-review surfaced post-assembly catch when receiving-
+   cycle pre-drafting verification at full-assembly stage did not
+   include register-cardinality verification (now codified at §11
+   strengthening application checklist item 6). The §1.4 catch
+   demonstrates the discipline's catch class extends to register-
+   cardinality at full-assembly stage; the absence of pre-assembly
+   register-cardinality verification was the defect that allowed §1.4
+   to ship in the unfolded form.
+
+The eight catches represent distinct defect classes:
+cardinality (catches 1, 7) / cross-section semantics (catch 2) /
+historical detail (catch 3) / speculative numerical anchor (catch 4) /
+section-count audit (catch 5) / cross-section terminology (catch 6) /
+register-cardinality (catch 8). Cross-section terminology fix at
+D-S5-8 was first explicit operationalization; the other seven
+operationally validated the discipline across distinct defect axes.
+
+### Application checklist
+
+For advisor-supplied anchors at receiving cycle:
+
+1. **Treat anchors as receiving-cycle hypotheses, not facts:**
+   Advisor-supplied numerical or structural anchors operate as
+   drafting-cycle inputs that require verification, not as
+   pre-verified facts that drafting can commit against without
+   re-checking.
+2. **Run empirical verification before drafting initiates:** The
+   verification operates at pre-drafting stage, not at section-seal.
+   Pre-drafting verification allows the drafting cycle to operate
+   against verified anchors; section-seal verification catches
+   defects but requires re-drafting at higher cost.
+3. **Distinguish anchor source for verification scope:**
+   - Anchors from advisor reasoning (advisor's mental model): require
+     full receiving-cycle verification against canonical artifacts
+   - Anchors from advisor's prior empirical verification: still
+     require receiving-cycle re-verification because verification
+     contexts differ (artifact state, scope, cardinality may have
+     shifted between advisor cycle and receiving cycle)
+   - Anchors from advisor's citation to canonical artifact: verify
+     the citation resolves to the canonical artifact's current state,
+     not its state at advisor cycle
+4. **Fix anchor before drafting on inaccuracy:** When verification
+   surfaces anchor inaccuracy, fix the anchor before drafting begins
+   — do not draft against incorrect anchor and fix at section-seal.
+   Drafting against incorrect anchor commits structural assumptions
+   to prose that may not survive anchor correction; pre-drafting
+   correction preserves drafting-cycle coherence.
+5. **Verification evidence in commit record:** When pre-drafting
+   verification surfaces a defect, record both the original advisor
+   anchor and the verified disk-canonical value in drafting notes or
+   commit message. Future readers reading the commit chain see the
+   verification record; the audit trail makes the discipline
+   structurally observable.
+
+### Failure-mode signal
+
+Watch for receiving cycles that draft prose against advisor-supplied
+anchors without pre-drafting verification. Even when the advisor's
+anchor is well-reasoned, receiving-cycle empirical verification is
+structurally necessary because the verification contexts differ.
+Drafting against unverified advisor anchor introduces drift risk
+that may not surface until section-seal or post-commit, at which
+point fix cost is higher.
+
+Watch for "the advisor said X, so we use X" framing applied to
+numerical or structural anchors. The framing under-protects
+receiving-cycle correctness. The advisor's anchor is necessary input
+context but not sufficient for canonical commitment; receiving-cycle
+verification is the structural complement.
+
+In drafting-cycle pacing, watch for cycles that compress pre-drafting
+verification into framing-summary stage without explicit anchor
+verification. Framing summary catches some defect classes (precision-
+overshoot, structural-cross-section coherence per §1's WHEN axis),
+but anchor verification is a distinct discipline with distinct catch
+windows. Conflating them under-covers anchor inaccuracy at receiving
+cycle.
+
+In closeout-assembly verification, watch for register-cardinality
+drift between section-summary anchor enumerations and canonical
+register tables (the §1.4 defect class). Register-cardinality is one
+specific defect class within the broader anchor-verification surface;
+its catch operates at full-assembly stage rather than pre-drafting,
+because register state can grow between section-drafting and
+full-assembly. The anchor-verification discipline at full-assembly
+stage covers the register-cardinality defect class structurally.
+
+In future arc cycles, watch for anchor-verification skipping when the
+advisor cycle's anchor is high-confidence (e.g., "advisor cited a
+canonical artifact directly"). High-confidence anchor source reduces
+defect probability but does not eliminate it; receiving-cycle
+verification remains structurally necessary because canonical
+artifact state may have shifted between advisor cycle and receiving
+cycle, or because the advisor's citation may reference a different
+field than the receiving cycle's drafting needs.
