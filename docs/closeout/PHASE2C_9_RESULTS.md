@@ -1611,13 +1611,433 @@ Observations are mechanism observations for §7 carry-forward, NOT
 
 ## 6. Lone-survivor walkthrough (Step 4 deliverable)
 
-*(deferred — Step 4 deliverable per
-[`PHASE2C_9_PLAN.md`](../phase2c/PHASE2C_9_PLAN.md) §5.4. Inputs:
-`raw_payloads/batch_b6fcbf86-.../attempt_NNNN_*.txt` +
-`data/compiled_strategies/0845d1d7898412f2.json` + PHASE2C_8.1
-closeout §6. Outputs: end-to-end mining-process trace for hash
-`0845d1d7898412f2` (theme `volume_divergence`,
-`volume_surge_momentum_entry`).)*
+This section traces the lone unfiltered cross-regime survivor
+`0845d1d7898412f2` (`volume_surge_momentum_entry`, theme
+`volume_divergence`) end-to-end through the mining-process
+pipeline: generation-side prompt + response → compilation manifest
+→ Critic gate trace → per-regime evaluation summaries (all 4
+PHASE2C regimes) → audit-only partition origin + single-trade-
+margin filter exclusion in bear_2022. Per spec §3.1.6 operational
+disambiguation, this is **single-candidate trace** for the
+empirically-distinguished cohort_a_unfiltered=1 case, not generic
+walkthrough; mechanism interpretation deferred to §7 (Step 5).
+Output register: factual end-to-end trace at file:line citation.
+
+
+### 6.0 Generation-side trace
+
+**Canonical batch position**: 39 (out of 200 attempts in canonical
+batch `b6fcbf86-...`).
+
+**Theme rotation cross-check**: per §3.3.2 rotation formula
+`THEMES[(k - 1) % THEME_CYCLE_LEN]` with `THEME_CYCLE_LEN = 5` at
+[`agents/proposer/stage2d_batch.py:112`](../../agents/proposer/stage2d_batch.py#L112)
++ canonical THEMES tuple at
+[`agents/themes.py:22-29`](../../agents/themes.py#L22-L29):
+`(39 - 1) % 5 = 3`; `THEMES[3] = "volume_divergence"`. Matches the
+candidate's theme assignment. ✓
+
+**Source artifact**: `raw_payloads/batch_b6fcbf86-4d57-4d1f-ae41-1778296b1ae9/attempt_0039_prompt.txt`
+(77 lines).
+
+**Prompt structure** (per §3.1.3 prompt builder mechanism):
+
+- System prompt at lines 1-42 inherits the canonical structure
+  documented at §3.1.3: schema-shape positive block (lines 12-33);
+  synonym-rejection negative block (lines 35-40); markdown-fence
+  prohibition (line 42). Mechanism reproduction matches
+  [`agents/proposer/prompt_builder.py:134-194`](../../agents/proposer/prompt_builder.py#L134-L194)
+  exactly.
+- User prompt block at lines 43-57:
+  - `batch_id: b6fcbf86-4d57-4d1f-ae41-1778296b1ae9` (line 44)
+  - `position: 39/200` (line 45)
+  - `theme (rotating): volume_divergence` (line 46)
+  - Recent batch signal (lines 48-51): `dedup rate so far: n/a`;
+    `top factors by frequency: (no signal yet)`; `critic rejections
+    in last 50: n/a` (these "n/a" / "no signal yet" defaults
+    indicate position 39 within first 50 of the batch; aggregate
+    signals reset at each batch start)
+  - 3 approved-example DSL strings at lines 53-55 (themes
+    `volatility_regime` / `mean_reversion` / `momentum`; provided
+    as DSL-only examples per §3.1.3 contract; no metrics)
+  - Final directive: `Propose hypothesis #39.` (line 57)
+- Factor menu at lines 58-77 inherits factor list at
+  [`factors/registry.py`](../../factors/registry.py) mechanism
+  (per §3.1.3 `factor_menu = reg.menu_for_prompt()` at
+  [`agents/proposer/prompt_builder.py:132`](../../agents/proposer/prompt_builder.py#L132));
+  18 factors across categories (volatility / volume / momentum /
+  moving_averages / returns / structural / price)
+
+**Source artifact**: `raw_payloads/batch_b6fcbf86-4d57-4d1f-ae41-1778296b1ae9/attempt_0039_response.txt`
+(32 lines).
+
+**Response structure**: markdown-fenced JSON object (line 1
+` ```json ` opening fence and line 32 ` ``` ` closing fence). Per
+§3.1.2 generate() mechanism, the markdown fence is stripped by
+`classify_raw_json` in
+[`agents/proposer/sonnet_backend.py:325-330`](../../agents/proposer/sonnet_backend.py#L325-L330)
+before classification.
+
+**DSL content** (post-fence-strip):
+
+- `name`: `volume_surge_momentum_entry`
+- `description`: 1-sentence economic rationale citing volume
+  divergence + momentum continuation + institutional flow narrative
+- `entry`: 1 group with 4 conditions (`volume_zscore_24h > 2.0`;
+  `return_24h > 0.01`; `macd_hist crosses_above 0.0`;
+  `close > sma_20`)
+- `exit`: 2 groups (group 1: `return_24h > 0.04` AND
+  `volume_zscore_24h < 0.0`; group 2: `macd_hist crosses_below 0.0`
+  AND `return_1h < -0.015`)
+- `position_sizing`: `full_equity`
+- `max_hold_bars`: 168
+
+**Theme alignment at generation register**: prompt theme is
+`volume_divergence`; response uses `volume_zscore_24h` (which is
+the single factor in `THEME_HINTS["volume_divergence"]` per
+[`agents/proposer/stage2d_batch.py:117-129`](../../agents/proposer/stage2d_batch.py#L117-L129)
+shared mechanism with Stage 2c). The DSL also uses 3 non-theme-
+hint factors (`return_24h`, `macd_hist`, `close`) and 1 non-theme-
+hint factor in entry's `value` field (`sma_20`).
+
+
+### 6.1 Compilation manifest
+
+**Source artifact**: `data/compiled_strategies/9928d031d6d19eb0af8aa929e077fe62f3e15af386aeccf16e205bc377306f25.json`
+(located by `grep -l "volume_surge_momentum_entry" data/compiled_strategies/*.json`).
+
+**Manifest filename note + spec-vs-empirical-reality finding**:
+compiled-strategy manifest filename is the 64-character SHA-256 of
+the canonical-DSL-string at
+[`agents/hypothesis_hash.py`](../../agents/hypothesis_hash.py)
+register (full hash for this candidate:
+`9928d031d6d19eb0af8aa929e077fe62f3e15af386aeccf16e205bc377306f25`);
+this is structurally distinct from the 16-character
+`hypothesis_hash` field used in evaluation outputs and PHASE2C_8.1
+closeout (`0845d1d7898412f2`). Both hashes refer to the same
+candidate; the 16-char form is the truncation pattern used
+downstream of compilation in evaluation outputs.
+
+The spec at
+[`PHASE2C_9_PLAN.md`](../phase2c/PHASE2C_9_PLAN.md) §2.2 +
+§5.4 references the manifest as
+`data/compiled_strategies/0845d1d7898412f2.json` (using the 16-char
+form); this path does NOT exist on disk. The actual manifest is
+located at the 64-char SHA-256 path above. This is the third spec-
+vs-empirical-reality register-precision finding in PHASE2C_9 cycle
+(after PHASE2C_10 pre-naming at spec drafting + Stage 2c → Stage
+2d at Step 2 §4.2). Located in this section by content cross-
+reference: `grep -l "volume_surge_momentum_entry"
+data/compiled_strategies/*.json` returns the canonical manifest
+file. Spec amendment to the 64-char form is out-of-scope for §6
+(spec amendment is a separate cycle); finding documented here at
+register-precision register for downstream awareness.
+
+**Manifest fields** (per spec §10 compilation manifest contract):
+
+| field | value | source line |
+|---|---|---|
+| `canonical_dsl.name` | `volume_surge_momentum_entry` | line 61 |
+| `compiler_sha` | `b0acd515ee2cf1b0cc549b3d1c4a93c6fc64187523104ee4226ada80a5e71303` | line 65 |
+| `feature_version` | `14e725c9845d95d0ca3a1c54b77582e34921b8ed7cf928445e4ae3c4764127c7` | line 140 |
+| `factor_snapshot` length | 18 factors with warmup_bars | lines 66-139 |
+| `written_at_utc` | `2026-04-26T06:50:52.991246Z` | line 142 |
+
+**Pseudo-code** (line 141): documents the strategy at human-
+readable register:
+
+```
+strategy 'volume_surge_momentum_entry' (...)
+  position_sizing: full_equity
+  max_hold_bars: 168
+  ENTRY when (any of):
+    [1] volume_zscore_24h > 2 AND return_24h > 0.01
+        AND macd_hist crosses_above 0 AND close > sma_20
+  EXIT when (any of):
+    [1] return_24h > 0.04 AND volume_zscore_24h < 0
+    [2] macd_hist crosses_below 0 AND return_1h < -0.015
+```
+
+**Compilation invariant cross-check** (per §3.1.4 / §3.3
+mechanism): the manifest `canonical_dsl` block at lines 2-63 is
+structurally identical to the response payload at
+attempt_0039_response.txt post-fence-strip. The compiler's
+canonical-DSL ordering (alphabetical-by-key serialization at line
+64 `canonical_dsl_string`) matches the
+[`agents/hypothesis_hash.py`](../../agents/hypothesis_hash.py)
+canonicalization contract. The lone-survivor's 4 conditions in
+entry + 2 exit groups (with 2 conditions each) satisfy DSL
+complexity budget per §3.1 (entry/exit ≤ 3 groups; ≤ 4 conditions
+per group).
+
+
+### 6.2 Critic gate trace
+
+**Critic operational at canonical batch (descriptive)**: the
+canonical batch `b6fcbf86-...` was Stage 2d (per §4.2 stage
+attribution + §3.1.4 shared-mechanism reference). Stage 2d
+mechanism inherits the same Critic invocation pattern as Stage 2c
+(per §3.3.2 shared-mechanism documentation): `run_critic()` is
+invoked per candidate at the orchestrator ingest layer,
+post-Proposer + pre-walk-forward. Critic mode at batch
+`b6fcbf86-...` was canonical (D7 v1; per
+[`agents/critic/orchestrator.py:23`](../../agents/critic/orchestrator.py#L23)
+`CRITIC_VERSION = "d7_v1"`).
+
+**Lifecycle path checkpoint verification**: lone-survivor's
+lifecycle path (from §4 + §6 evidence):
+
+| stage | lifecycle state | source |
+|---|---|---|
+| post-Proposer / post-Critic / post-ingest | `pending_backtest` | §4.0 lifecycle_counts (198 candidates including this one) |
+| post-walk-forward / per-regime evaluation | `holdout_passed` (4×; per regime) | 4 holdout_summary.json artifacts at evaluation paths |
+
+The candidate advanced through every checkpoint of the mining-
+process pipeline: Proposer emitted valid DSL (verified by
+manifest cross-check at §6.1); ingest layer assigned
+`pending_backtest` (verified by §4.0 lifecycle distribution
+membership in the 198 count); walk-forward + per-regime
+evaluation produced `holdout_passed` in all 4 regimes (verified
+by 4 holdout_summary.json artifacts at §6.3).
+
+Per §3.2 mechanism reconstruction, `run_critic()` at
+[`agents/critic/orchestrator.py:95-203`](../../agents/critic/orchestrator.py#L95-L203)
+annotates only — it does not assign lifecycle states. Lifecycle-
+state assignment is performed by the orchestrator ingest layer
+(per §3.2.6). The candidate's `pending_backtest` assignment by
+ingest layer is the load-bearing signal that Critic gate did not
+reject this candidate (D7a rule scores + D7b semantic scores
+collectively did not trigger ingest-layer rejection).
+
+**Per-regime evaluation summary `lifecycle_state` field**: all 4
+holdout_summary.json artifacts (audit_v1 / audit_2024_v1 /
+eval_2020_v1 / eval_2021_v1) report `lifecycle_state =
+"holdout_passed"`. This is the post-evaluation lifecycle register
+(distinct from mining-time `pending_backtest` register at §4.0).
+
+The lone-survivor's path through the Critic gate is therefore:
+
+1. Proposer emits valid DSL → ingest layer assigns
+   `pending_backtest` (mining-time terminal state)
+2. Walk-forward evaluation runs (PHASE2C_5)
+3. Per-regime evaluation evaluates against 4-criterion AND-gate
+   per regime
+4. holdout_summary.json records `lifecycle_state =
+   "holdout_passed"` per regime if AND-gate satisfied
+
+The detailed Critic annotation (D7a rule scores, D7b semantic
+scores, reasoning, scan_results) is not surfaced in
+holdout_summary.json artifacts. Detailed Critic-output trace would
+require reading
+[`agents/critic/replay.py`](../../agents/critic/replay.py)
+reconstruction artifacts which are out-of-scope for §6 single-
+candidate end-to-end trace at spec §3.1.6 register. Surfaced as
+carry-forward to §7 if mechanism-vs-observation comparison invokes
+Critic-output mechanism for evidence interpretation.
+
+
+### 6.3 Evaluation-side trace cross-reference
+
+**Per-regime AND-gate evaluation results** (from 4
+`holdout_summary.json` artifacts at
+`data/phase2c_evaluation_gate/{run_id}/0845d1d7898412f2/holdout_summary.json`):
+
+| Regime | run_id | Sharpe | Total Return | Max DD | Trades | AND-gate | trade ≥ 20 filter | Filtered cohort |
+|---|---|---|---|---|---|---|---|---|
+| bear_2022 | `audit_v1` | 0.508 | +6.80% | 0.095 | 19 | PASS | **FAIL (19<20)** | **EXCLUDED** |
+| validation_2024 | `audit_2024_v1` | 1.053 | +18.3% | 0.172 | 23 | PASS | PASS (23≥20) | PRESENT |
+| eval_2020_v1 | `eval_2020_v1` | 0.813 | +18.6% | 0.245 | 27 | PASS | PASS (27≥20) | PRESENT |
+| eval_2021_v1 | `eval_2021_v1` | -0.358 | -10.2% | 0.232 | 29 | PASS | PASS (29≥20) | PRESENT |
+
+**Precision note**: numeric precision in the table above matches
+PHASE2C_8.1 closeout §6.1 anchor precision (Sharpe 3-decimal; Max
+DD 3-decimal; Return 1-decimal except bear_2022 at 2-decimal per
+anchor). Underlying canonical values from holdout_summary.json
+artifacts have additional precision (e.g.,
+bear_2022 Sharpe = 0.5081590272487263; full precision retrievable
+at source-artifact register). Table-level precision matches
+upstream-anchor per anchor-list discipline at METHODOLOGY_NOTES §15.
+
+All 4 cells reproduce per-regime metrics from the corresponding
+holdout_summary.json artifacts at
+`data/phase2c_evaluation_gate/{audit_v1, audit_2024_v1, eval_2020_v1, eval_2021_v1}/0845d1d7898412f2/holdout_summary.json`.
+
+**AND-gate criteria** (from `passing_criteria` field, identical
+across all 4 summaries):
+- `min_sharpe`: -0.5
+- `min_total_return`: -0.15
+- `max_drawdown`: 0.25
+- `min_total_trades`: 5
+
+**`gate_pass_per_criterion` field** (4 booleans per regime): all
+four criteria pass simultaneously in all 4 regimes —
+`drawdown_passed`, `return_passed`, `sharpe_passed`,
+`trades_passed` all `true` per regime.
+
+**Filter-exclusion verification** (cardinality check):
+`data/phase2c_evaluation_gate/audit_v1_filtered/0845d1d7898412f2/`
+does NOT exist on disk (mechanically verified by `ls`); the
+lone-survivor is absent from `audit_v1_filtered` directory (148
+members; lone-survivor not among them). This empirically confirms
+the single-trade-margin filter exclusion in bear_2022 (19 trades
+< 20-trade threshold per the trade-count filter sub-pass at
+PHASE2C_7.1 §5).
+
+The candidate IS present in `audit_2024_v1_filtered`,
+`eval_2020_v1_filtered`, `eval_2021_v1_filtered` directories
+(verified by `ls`); filter cohort membership confirmed in 3 of 4
+regimes. Filter exclusion exclusively in bear_2022 by single-
+trade-margin.
+
+**Audit-only partition origin verification**: all 4
+holdout_summary.json artifacts report `wf_test_period_sharpe =
+-0.071638` (identical value across regimes, since this is the
+PHASE2C_5 walk-forward test-period Sharpe fixed at PHASE2C_5
+generation cycle). Per PHASE2C_8.1 closeout §6.3 audit-only
+partition origin documentation: -0.072 < 0.5 primary threshold
+relegated this candidate to audit partition during PHASE2C_6
+arc. Audit partition origin verified at file:line register.
+
+**Engine lineage cross-check**: all 4 summaries report
+`engine_commit = "eb1c87f"` and `engine_corrected_lineage =
+"wf-corrected-v1"`; `lineage_check = "passed"`. The corrected WF
+engine (post-correction) is the engine that produced these
+evaluation outputs.
+
+**Per-regime artifact schema discriminator**:
+- audit_v1 (PHASE2C_6): no `artifact_schema_version` field
+  (PHASE2C_6 pre-dates schema versioning); evaluation_semantics =
+  "single_run_holdout_v1"
+- audit_2024_v1 (PHASE2C_7.1): `artifact_schema_version =
+  "phase2c_7_1"`
+- eval_2020_v1 / eval_2021_v1 (PHASE2C_8.1):
+  `artifact_schema_version = "phase2c_8_1"` (train-overlap regime
+  discriminator)
+
+
+### 6.4 Step 4 deliverable summary + gating-criterion check
+
+Per spec §5.4 gating criterion: **"§6 working draft has end-to-end
+trace with all relevant artifacts cited at file:line citation
+register"**.
+
+Status:
+
+- **Generation-side trace** (§6.0): batch position 39; theme
+  rotation cross-check verified; prompt + response artifacts cited
+  at file:line; theme alignment documented (1 theme-hint factor +
+  3 non-theme-hint factors in entry); mechanism cross-references
+  to §3.1.3 prompt builder ✓
+- **Compilation manifest** (§6.1): manifest located by name
+  cross-reference; canonical_dsl + compiler_sha + feature_version
+  + factor_snapshot + pseudo_code documented at field-level
+  citation; canonical-DSL-string structural identity to response
+  payload verified ✓
+- **Critic gate trace** (§6.2): lifecycle-state path documented
+  (Proposer → ingest → pending_backtest → walk-forward →
+  holdout_passed); Critic annotation (D7a/D7b) deferred to §7 if
+  mechanism-vs-observation comparison invokes Critic-output
+  mechanism ✓
+- **Evaluation-side trace** (§6.3): all 4 per-regime
+  holdout_summary.json artifacts cited at file:line; per-regime
+  metrics + AND-gate criteria + filter cohort membership verified
+  across 4 regimes; single-trade-margin filter exclusion in
+  bear_2022 verified by `audit_v1_filtered` directory absence;
+  audit-only partition origin verified by wf_test_period_sharpe =
+  -0.072 < 0.5; engine lineage verified ✓
+
+Step 4 gating criterion satisfied. Step 5 (mechanism-vs-observation
+comparison per spec §5.5) authorized to proceed in subsequent
+session per discrete-session-boundary register.
+
+Per spec §6 verification framework + §7 cycle-boundary preservation:
+
+- **§6.1 Evidence-mapping discipline**: every cited fact at
+  file:line or source-key register; no narrative claims without
+  artifact reference ✓
+- **§6.4 Cycle-boundary-preservation language audit**: §6 contains
+  no forbidden forward-pointer language; no Case A/B/C
+  adjudication; no "this suggests / implies / may indicate"
+  interpretation language; trace-only register ✓
+- **§6.3 Canonical-number cross-checks**: hash + theme + name +
+  position + audit-only partition origin all cross-checked at
+  source-artifact register; per-regime metrics all cited from
+  holdout_summary.json artifacts ✓
+
+Scope-completeness audit per Claude advisor's Consideration 3
+carry-forward (necessary-and-sufficient register; no §7-§8
+deliverable leakage):
+
+- **§6 does NOT include 198-candidate full re-analysis** (per spec
+  §3.2.3); single-candidate trace only ✓
+- **§6 does NOT include illustrative non-survivor traces** (spec
+  §3.2.3 caveat allows up to 1-2 illustrative non-survivors if
+  exemplifying population pattern; §6 chose single-candidate
+  bounded scope; non-survivor traces are out-of-scope at this
+  register) ✓
+- **§6 does NOT include Case A/B/C adjudication** (Step 6 §8
+  territory) ✓
+- **§6 does NOT include §7 mechanism interpretation** — the
+  observed pattern (passed unfiltered AND-gate in 4/4 regimes;
+  excluded from filtered cohort_a in bear_2022 by single-trade
+  margin; eval_2021_v1 AND-gate-passing despite -10.2% return) is
+  factual trace; mechanism-vs-evidence comparison deferred to §7 ✓
+
+**Three substantive observations surfaced for §7 (Step 5)
+mechanism-vs-observation comparison register**:
+
+1. **Single-trade-margin filter exclusion in bear_2022**: lone-
+   survivor's 19 trades vs ≥20-trade filter threshold = 1-trade
+   margin. The filter-exclusion-by-single-trade-margin pattern
+   bears on §7 evidence register (whether mining-time → filter-
+   time alignment is part of mining-process design vs whether the
+   trade-count filter threshold itself is calibration-register
+   concern). Cross-arc carry-forward also relevant: PHASE2C_8.1
+   closeout §6.2 surfaced this as the load-bearing exclusion mode.
+2. **eval_2021_v1 AND-gate-passing with -10.2% total_return**:
+   gate criteria Sharpe ≥ -0.5 (actual: -0.358) AND total_return
+   ≥ -0.15 (actual: -0.102) AND max_dd ≤ 0.25 (actual: 0.231)
+   AND trades ≥ 5 (actual: 29) all satisfied. The permissive AND-
+   gate accepting negative-Sharpe + negative-double-digit-return
+   as "holdout_passed" bears on §7 evidence register (whether this
+   reflects gate calibration vs mining-process candidate-quality
+   register). Cross-arc carry-forward: PHASE2C_8.1 closeout §6.0
+   surfaced this as the "permissive AND-gate accepts -10.2%
+   return" finding.
+3. **Theme alignment at generation register**: per §3.2.3 D7a
+   `extract_factors()` at
+   [`agents/critic/d7a_feature_extraction.py:86-100`](../../agents/critic/d7a_feature_extraction.py#L86-L100),
+   the factor set scans both entry AND exit condition groups +
+   includes string-typed `cond.value` (RHS factor-vs-factor). For
+   the lone-survivor's DSL: entry factors `{volume_zscore_24h,
+   return_24h, macd_hist, close, sma_20}` (5 distinct, including
+   `sma_20` from `close > sma_20`); exit factors `{return_24h,
+   volume_zscore_24h, macd_hist, return_1h}` (4 distinct, with
+   3 already in entry). Union: `{volume_zscore_24h, return_24h,
+   macd_hist, close, sma_20, return_1h}` = 6 distinct factors.
+   `THEME_HINTS["volume_divergence"] = {volume_zscore_24h}` per
+   [`agents/proposer/stage2d_batch.py:117-129`](../../agents/proposer/stage2d_batch.py#L117-L129)
+   (1 factor; thin-theme register per §3.2.3 `THIN_THEMES`).
+   Per §3.2.2 D7a `theme_coherence` rule formula at
+   [`agents/critic/d7a_rules.py:24-36`](../../agents/critic/d7a_rules.py#L24-L36)
+   (`len(overlap) / len(factors)`): overlap = 1; total = 6;
+   theme_coherence = 1/6 ≈ 0.1667 (rounded to 4 decimals: 0.1667).
+   The ratio at the entry-only register (1/5 = 0.2 for entry
+   factors; 1/4 = 0.25 if `sma_20` excluded) differs from the
+   D7a-defined whole-DSL register (1/6) — this is a §7
+   mechanism-vs-observation cross-section worth surfacing.
+   Cross-arc carry-forward: PHASE2C_8.1 closeout §6.2 hybrid-
+   narration register. §7 mechanism comparison may invoke for
+   evidence-base register.
+
+Cumulative §7 carry-forward register now at 11 observations across
+Steps 1-4 (3 from Step 1 + 3 from Step 2 + 2 from Step 3 + 3 from
+Step 4). Substantial substantive interpretation surface for §7
+mechanism-vs-evidence comparison; ingest-layer scoping question
+(per session-entry handoff carry-forward) compounds at Step 5 §7
+scoping cycle.
+
+
 
 
 ## 7. Mechanism-vs-observation comparison (Step 5 deliverable)
