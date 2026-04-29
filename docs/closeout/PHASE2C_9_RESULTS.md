@@ -267,17 +267,48 @@ The `audit_prompt_for_leakage()` function at
 returns a list of forbidden patterns that match anywhere in the
 prompt text. Empty list means clean.
 
-**3.1.4 Stage 2c batch orchestration.**
+**3.1.4 Stage 2d batch orchestration (canonical batch); Stage 2c shared mechanism.**
 
-The Stage 2c orchestration code that produced the canonical batch
-is at [`agents/proposer/stage2c_batch.py`](../../agents/proposer/stage2c_batch.py).
-Module docstring at lines 1-34 documents:
+Per §4.2 register-precision finding (post-Step-1-seal correction):
+the canonical batch `b6fcbf86-...` was produced by Stage 2d
+orchestration (`STAGE_LABEL = "D6_STAGE2D"` per
+[`agents/proposer/stage2d_batch.py:103`](../../agents/proposer/stage2d_batch.py#L103);
+`STAGE2D_BATCH_SIZE = 200` per
+[`agents/proposer/stage2d_batch.py:106`](../../agents/proposer/stage2d_batch.py#L106)),
+NOT Stage 2c (which has `STAGE2C_BATCH_SIZE = 20` per
+[`agents/proposer/stage2c_batch.py:87`](../../agents/proposer/stage2c_batch.py#L87)
+and could not have produced 200 attempts in a single batch). This
+sub-section was originally drafted referencing Stage 2c (sealed at
+commit `13be4ff`); the §4.2 finding corrected the stage attribution.
 
-- Batch size: 20 hypotheses per Stage 2c batch (the canonical
-  198-candidate population spans multiple batches; see §4 Step 2
-  audit for the lifecycle-state distribution)
-- Budget cap: $6 per batch
-- Prompt caching: DISABLED
+Stage 2c and Stage 2d share rotation logic, prompt builder, Sonnet
+backend, Critic gate, and theme list — the mechanism descriptions
+in §3.1.1 / §3.1.2 / §3.1.3 / §3.2.* / §3.3 apply identically to
+both stages. Stage-2d-specific differences (batch size 200 vs 20;
+budget cap $20 vs $6; block structure with `BLOCK_SIZE` /
+`BLOCK_COUNT` per
+[`agents/proposer/stage2d_batch.py:145`](../../agents/proposer/stage2d_batch.py#L145);
+stop conditions) are documented at §4.2 cross-reference.
+
+The Stage 2d orchestration code that produced the canonical batch
+is at [`agents/proposer/stage2d_batch.py`](../../agents/proposer/stage2d_batch.py).
+The remainder of this sub-section documents the **Stage 2c
+batch orchestration** at [`agents/proposer/stage2c_batch.py`](../../agents/proposer/stage2c_batch.py)
+as the closest-precedent published code structure that Stage 2d
+extends; constants, helpers, and orchestration patterns described
+below are shared between the two stages (with Stage 2d adjusting
+batch size + budget cap + block structure).
+
+Stage 2c module docstring at lines 1-34 documents (these properties
+are inherited by Stage 2d with the noted batch-size/budget
+adjustments):
+
+- Batch size: 20 hypotheses per Stage 2c batch / 200 per Stage 2d
+  batch (the canonical 198-candidate population is one Stage 2d
+  batch with 2 candidates rejected at `rejected_complexity`; see
+  §4 Step 2 audit for the lifecycle-state distribution)
+- Budget cap: $6 per Stage 2c batch / $20 per Stage 2d batch
+- Prompt caching: DISABLED (both stages)
 - Sequential ordering: call k+1 only after call k fully completes
   (API → payload write → classify → ingest → ledger finalize →
   approved_so_far update)
@@ -919,11 +950,15 @@ Tuple has 6 entries. Operational note at
 > is not in current operational rotation pending separate validation.
 > See CLAUDE.md "Theme rotation operational boundary" for rationale.
 
-**3.3.2 Operational rotation in Stage 2c.**
+**3.3.2 Operational rotation in Stage 2c/2d (shared mechanism).**
 
-The Stage 2c operational rotation cycle length is `THEME_CYCLE_LEN
-= 5` at
-[`agents/proposer/stage2c_batch.py:93`](../../agents/proposer/stage2c_batch.py#L93).
+The operational rotation cycle length is `THEME_CYCLE_LEN = 5` —
+identical constant in both Stage 2c at
+[`agents/proposer/stage2c_batch.py:93`](../../agents/proposer/stage2c_batch.py#L93)
+and Stage 2d at
+[`agents/proposer/stage2d_batch.py:112`](../../agents/proposer/stage2d_batch.py#L112).
+The canonical batch was produced by Stage 2d (per §4.2 finding);
+Stage 2c is the closest published precedent.
 Adjacent comment at lines 94-99 documents:
 
 > multi_factor_combination excluded from rotation; canonical THEMES
@@ -1032,9 +1067,10 @@ Status:
 
 - **§3.1 Proposer prompt mechanism**: documented across 4 sub-
   sections (interface contract; live Sonnet backend; prompt builder
-  + leakage audit; Stage 2c batch orchestration) with file:line
-  citations to `agents/proposer/{interface,sonnet_backend,
-  prompt_builder,stage2c_batch}.py` ✓
+  + leakage audit; Stage 2d batch orchestration with Stage 2c
+  shared-mechanism reference per §4.2 stage-attribution correction)
+  with file:line citations to `agents/proposer/{interface,
+  sonnet_backend,prompt_builder,stage2c_batch,stage2d_batch}.py` ✓
 - **§3.2 Critic gate logic**: documented across 6 sub-sections
   (orchestrator entry point; D7a rule scoring; D7a feature
   extraction; D7b live Sonnet backend; D7b prompt template +
@@ -1071,12 +1107,274 @@ Per spec §6 verification framework + §7 cycle-boundary preservation:
 
 ## 4. Artifact-distribution audit (Step 2 deliverable)
 
-*(deferred — Step 2 deliverable per
-[`PHASE2C_9_PLAN.md`](../phase2c/PHASE2C_9_PLAN.md) §5.2.
-Inputs: `agents/spend_ledger.db` (read-only query) + compiled-
-strategy manifest count at `data/compiled_strategies/`. Outputs:
-lifecycle-state distribution table + canonical-number cross-check
-to anchor `198`.)*
+This section reports artifact-distribution data for the canonical
+batch `b6fcbf86-4d57-4d1f-ae41-1778296b1ae9` from three
+measurement points: (1) `agents/spend_ledger.db` ledger table; (2)
+`raw_payloads/batch_b6fcbf86-.../stage2d_summary.json` summary
+artifact; (3) `data/compiled_strategies/` manifest directory
+count. Per spec §3.1.4 operational disambiguation, this is
+**distribution characterization**, not lifecycle-state redesign.
+Output register: factual cardinalities at file:line citation;
+canonical-number cross-checks against PHASE2C_8.1 closeout
+anchors. Mechanism interpretation deferred to §7 (Step 5).
+
+
+### 4.0 Lifecycle-state distribution
+
+**Source artifact**: `raw_payloads/batch_b6fcbf86-4d57-4d1f-ae41-1778296b1ae9/stage2d_summary.json`
+(canonical batch summary; produced by Stage 2d batch orchestration
+at batch close per
+[`agents/proposer/stage2d_batch.py`](../../agents/proposer/stage2d_batch.py)).
+
+**Top-level batch metadata** (from `stage2d_summary.json`):
+
+| field | value | source key |
+|---|---|---|
+| `batch_id` | `b6fcbf86-4d57-4d1f-ae41-1778296b1ae9` | `batch_id` |
+| `stage_label` | `D6_STAGE2D` | `config.stage_label` |
+| `model_name` | `claude-sonnet-4-5` | `config.model_name` |
+| `prompt_caching_enabled` | `False` | `config.prompt_caching_enabled` |
+| `batch_size` (configured) | 200 | `config.batch_size` |
+| `batch_cap_usd` | 20.0 | `config.batch_cap_usd` |
+| `theme_rotation_mode` | `interleaved_cyclic` | `config.theme_rotation_mode` |
+| `git_commit` (mining-time) | `8d29a6e` | `config.git_commit` |
+| `run_timestamp_utc` | `2026-04-26T04:56:25.376871+00:00` | `config.run_timestamp_utc` |
+| `batch_status` | `completed` | `batch_status` |
+| `batch_duration_seconds` | 1219.56 | `batch_duration_seconds` |
+| `hypotheses_attempted` | 200 | `hypotheses_attempted` |
+| `unissued_slots` | 0 | `unissued_slots` |
+| `truncated` | `False` | `truncated` |
+| `lifecycle_invariant_ok` | `True` | `lifecycle_invariant_ok` |
+| `parse_rate` | 0.99 | `parse_rate` |
+| `total_valid_count` | 198 | `total_valid_count` |
+| `distinct_hash_count` | 198 | `distinct_hash_count` |
+| `total_estimated_cost_usd` | 2.770076999999999 | `total_estimated_cost_usd` |
+| `total_actual_cost_usd` | 2.3021940000000005 | `total_actual_cost_usd` |
+| `cumulative_monthly_spend_usd` | 8.653602 | `cumulative_monthly_spend_usd` |
+
+**Lifecycle-state count distribution** (from `lifecycle_counts`
+key):
+
+| lifecycle state | count |
+|---|---|
+| `pending_backtest` | 198 |
+| `rejected_complexity` | 2 |
+| **TOTAL** | **200** |
+
+All other terminal lifecycle states (`proposer_invalid_dsl`,
+`duplicate`, `critic_rejected`, `train_failed`, `holdout_failed`,
+`dsr_failed`, `shortlisted`, `budget_exhausted`,
+`backend_empty_output`) have count 0 at batch close. The two
+`rejected_complexity` candidates correspond to DSL outputs whose
+`description` field exceeded the 300-character schema limit per
+the StrategyDSL pydantic schema; the `error_breakdown` array
+records both with `error_signature="over_complex"` and
+`parse_error_prefix` indicating "String should have at most 300
+characters" pydantic validation error.
+
+**Per-theme call distribution** (from `per_theme` array):
+
+| theme | n_calls | valid_count | lifecycle_mix |
+|---|---|---|---|
+| `momentum` | 40 | 39 | `pending_backtest=39, rejected_complexity=1` |
+| `mean_reversion` | 40 | 39 | `pending_backtest=39, rejected_complexity=1` |
+| `volatility_regime` | 40 | 40 | `pending_backtest=40` |
+| `volume_divergence` | 40 | 40 | `pending_backtest=40` |
+| `calendar_effect` | 40 | 40 | `pending_backtest=40` |
+| **TOTAL** | **200** | **198** | |
+
+Each of the 5 operational themes received exactly 40 call slots
+(200 / 5 = 40 per spec §3.3 rotation mechanism). Both
+`rejected_complexity` candidates landed in `momentum` and
+`mean_reversion` themes (one each); the three other themes
+produced 40-of-40 valid candidates.
+
+**Cardinality distribution** (from `cardinality_distribution`
+key): 200 of 200 attempts produced `single_object` cardinality;
+0 violations across the batch (`cardinality_violation_count = 0`).
+
+**Anomaly flags** (from `anomaly_flags` array): 1 flag fired —
+`rsi_14_dominance` at scope `first_50_valid_calls` with
+count=46 / total=50 / ratio=0.92 / threshold=0.80. Documents that
+46 of the first 50 valid calls referenced `rsi_14` factor,
+exceeding the 0.80 threshold for first-block factor dominance.
+
+**Factor-set diversity** (from `valid_with_empty_factor_set_count`
++ `distinct_factor_set_count` + `unique_factor_set_ratio`):
+
+| metric | value |
+|---|---|
+| valid candidates with empty factor set | 0 |
+| distinct factor sets across 198 valid candidates | 141 |
+| unique factor set ratio | 0.7121 |
+
+57 of 198 valid candidates use a factor set that is structurally
+identical to at least one other valid candidate in the batch
+(198 - 141 = 57 with shared factor sets). The remaining 141 are
+either unique or first-occurrence-of-shared.
+
+### 4.1 Compiled-strategy manifest count
+
+**Source**: `data/compiled_strategies/*.json` directory.
+
+Manifest count (mechanical `ls *.json | wc -l` at session-entry
+state `13be4ff` on `origin/main`): **198**.
+
+Each manifest filename is the candidate's `hypothesis_hash`
+(64-character SHA-256 hex per
+[`agents/hypothesis_hash.py`](../../agents/hypothesis_hash.py)).
+Manifest cardinality matches `lifecycle_counts.pending_backtest = 198`
+and `total_valid_count = 198` from §4.0.
+
+### 4.2 Canonical-number cross-check
+
+Cross-checks against canonical anchors per
+[`PHASE2C_9_PLAN.md`](../phase2c/PHASE2C_9_PLAN.md) §2.4:
+
+| anchor | spec value | empirical value | source | status |
+|---|---|---|---|---|
+| Total candidates entering PHASE2C_6 evaluation | 198 | 198 | `total_valid_count` from `stage2d_summary.json` | ✓ |
+| Compiled-strategy manifest count | 198 | 198 | `data/compiled_strategies/*.json` directory count | ✓ |
+| Distinct hypothesis-hash count | 198 | 198 | `distinct_hash_count` from `stage2d_summary.json` | ✓ |
+| Theme distribution `~40/40/40/39/39` | matches | 40/40/40/39/39 (volatility_regime/volume_divergence/calendar_effect/momentum/mean_reversion at valid_count register) | `per_theme` array from `stage2d_summary.json` | ✓ |
+| Distinct themes | 5 | 5 | `per_theme` array length | ✓ |
+| `multi_factor_combination` excluded from operational rotation | yes | yes (absent from `per_theme` array; absent from lifecycle_counts) | spec §2.5 + canonical theme list at [`agents/themes.py:22-29`](../../agents/themes.py#L22-L29) + `THEME_CYCLE_LEN = 5` at [`agents/proposer/stage2d_batch.py:112`](../../agents/proposer/stage2d_batch.py#L112) | ✓ |
+
+Three additional cross-checks for spend register
+(per CLAUDE.md Phase Marker `Current UTC-month spend` field of
+`~$8.65`):
+
+| metric | spec/CLAUDE.md value | empirical value | status |
+|---|---|---|---|
+| Canonical batch actual cost | ~$2.30 (Phase 2C Batch-1 component) | $2.30 (`total_actual_cost_usd`) | ✓ |
+| April 2026 cumulative monthly spend | ~$8.65 | $8.65 (`cumulative_monthly_spend_usd`) | ✓ |
+| Cost ratio (actual / estimated) | not explicitly anchored | 0.83 (2.30 / 2.77) | (informational) |
+
+All required canonical-number cross-checks pass.
+
+**Register-precision finding (canonical-number-adjacent)**: The
+canonical batch was produced by **Stage 2d** orchestration
+(`STAGE_LABEL = "D6_STAGE2D"`, `STAGE2D_BATCH_SIZE = 200` per
+[`agents/proposer/stage2d_batch.py:103-106`](../../agents/proposer/stage2d_batch.py#L103-L106)),
+NOT Stage 2c orchestration as referenced at
+[`PHASE2C_9_PLAN.md`](../phase2c/PHASE2C_9_PLAN.md) §2.1 +
+PHASE2C_9_RESULTS.md §3.1.4. Stage 2c batch size is 20 per
+[`agents/proposer/stage2c_batch.py:87`](../../agents/proposer/stage2c_batch.py#L87);
+the canonical batch has 200 attempts, which Stage 2c could not
+produce. The §3 mechanism reconstruction prose at §3.1.4
+referenced `stage2c_batch.py` but the canonical batch was actually
+produced by `stage2d_batch.py`.
+
+The substantive impact on §3 mechanism reconstruction is bounded:
+both stages share theme rotation logic
+(`THEMES[(k - 1) % THEME_CYCLE_LEN]` with `THEME_CYCLE_LEN = 5`
+at both
+[`agents/proposer/stage2c_batch.py:93,156-158`](../../agents/proposer/stage2c_batch.py#L93-L158)
+and
+[`agents/proposer/stage2d_batch.py:112,198-200`](../../agents/proposer/stage2d_batch.py#L112-L200)),
+prompt builder
+([`agents/proposer/prompt_builder.py:110-231`](../../agents/proposer/prompt_builder.py#L110-L231)),
+Sonnet backend
+([`agents/proposer/sonnet_backend.py:150-346`](../../agents/proposer/sonnet_backend.py#L150-L346)),
+and Critic gate (all of `agents/critic/`). The mechanism
+reconstruction in §3.1.1 / §3.1.2 / §3.1.3 / §3.2.* / §3.3 applies
+identically to Stage 2d. The orchestration-specific differences
+(batch size 20 vs 200; per-batch budget cap $6 vs $20; stop
+conditions; block structure with `BLOCK_COUNT = STAGE2D_BATCH_SIZE
+// BLOCK_SIZE` at
+[`agents/proposer/stage2d_batch.py:145`](../../agents/proposer/stage2d_batch.py#L145))
+matter for reproducibility but do not invalidate the mechanism
+descriptions surfaced at §3.
+
+**Resolution applied at §3.1.4**: per ChatGPT first-pass
+dual-reviewer adjudication (§3 mechanism doc must align with
+artifact reality), §3.1.4 was amended in this same commit to:
+(a) retitle "Stage 2d batch orchestration (canonical batch); Stage
+2c shared mechanism"; (b) add a clarifying paragraph documenting
+the stage attribution correction with file:line citations to both
+`stage2c_batch.py` and `stage2d_batch.py`; (c) preserve the
+existing Stage 2c mechanism documentation as the closest-precedent
+published code structure that Stage 2d extends. §3.3.2 also
+amended to "Operational rotation in Stage 2c/2d (shared mechanism)"
+with cross-citation to both stage files. The post-Step-1-seal
+correction is structurally bounded — mechanism descriptions in
+§3.1.1-§3.1.3, §3.2.*, §3.3 apply identically to both stages and
+are unchanged. Stage-2d-specific differences (batch size 200 vs 20;
+budget cap $20 vs $6; block structure) cross-referenced at §4.2.
+
+### 4.3 Step 2 deliverable summary + gating-criterion check
+
+Per spec §5.2 gating criterion: **"§4 working draft has documented
+lifecycle-state cardinalities; total candidates entering PHASE2C_6
+evaluation matches canonical anchor (198)"**.
+
+Status:
+
+- **Lifecycle-state cardinalities documented** (§4.0): 198
+  pending_backtest + 2 rejected_complexity = 200 total; per-theme
+  distribution 40/40/40/39/39 (valid_count) ✓
+- **Total entering PHASE2C_6 evaluation = 198** (§4.0 +
+  §4.1 + §4.2): canonical anchor matches; cross-checks pass at
+  three independent measurement points (lifecycle_counts;
+  total_valid_count; manifest count) ✓
+
+Step 2 gating criterion satisfied. Step 3 (theme × pass-count
+cross-tab per spec §5.3) authorized to proceed in subsequent
+session per discrete-session-boundary register.
+
+Per spec §6 verification framework + §7 cycle-boundary preservation:
+
+- **§6.1 Evidence-mapping discipline**: every cardinality cited at
+  source key from `stage2d_summary.json` or directory listing
+  result; canonical-number cross-checks at file:line register; no
+  narrative claims without artifact reference ✓
+- **§6.4 Cycle-boundary-preservation language audit**: §4 contains
+  no forbidden forward-pointer language (no "next we will run X" /
+  "this confirms Y is the next arc" / "Case Z determination") ✓
+- **§6.3 Canonical-number cross-checks**: 198-anchor verified at
+  three independent measurement points; per-theme anchor verified;
+  spend-register anchors verified ✓
+
+**Three substantive observations surfaced for §7 (Step 5)
+mechanism-vs-observation comparison register**:
+
+1. **Two rejected_complexity candidates** at description-length
+   boundary (>300 chars per StrategyDSL pydantic schema) — affects
+   2 of 200 attempts; canonical anchor 198 reflects the
+   post-rejection survival count. Both fell in `momentum` and
+   `mean_reversion` themes. This is a §3.1 / §3.2 mechanism
+   intersection (Proposer DSL output + DSL schema validation at
+   ingest layer rejecting before lifecycle-state assignment).
+2. **`rsi_14_dominance` first-50-block anomaly** at 92% (46/50
+   valid calls) exceeding 0.80 threshold — surfaced as anomaly
+   flag at batch close. Per §3.1.3 prompt-builder mechanism, the
+   prompt does not explicitly encode rsi_14 in any block; the 92%
+   first-50 dominance is an emergent Proposer-side pattern. §7
+   mechanism-vs-observation comparison register may invoke this
+   for Case A.1 (Proposer prompt defect) evidence.
+3. **Factor-set repetition rate of ~28.79%** (57 of 198 valid
+   candidates with shared factor sets; 1 - 0.7121 = 0.2879). §3.2.2
+   D7a `structural_novelty` rule at
+   [`agents/critic/d7a_rules.py:44-55`](../../agents/critic/d7a_rules.py#L44-L55)
+   computes per-candidate novelty; aggregate batch-level
+   repetition rate (28.79%) provides per-batch context. §7 may
+   invoke for Case A.2 (Critic gate calibration) evidence.
+
+These observations are surfaced at register-precision register
+without §7 adjudication; substantive interpretation deferred to
+Step 5 per spec §5.5 sequential gating.
+
+**§3 register-precision correction applied** (this commit, per
+ChatGPT first-pass dual-reviewer adjudication): §3.1.4 retitled
+"Stage 2d batch orchestration (canonical batch); Stage 2c shared
+mechanism" + amended lead paragraph documenting stage attribution
+correction with citations to both `stage2c_batch.py` and
+`stage2d_batch.py`; §3.3.2 retitled "Operational rotation in Stage
+2c/2d (shared mechanism)"; §3.4 deliverable summary updated to
+reflect both stage-file citations. Mechanism descriptions in §3.1.1-
+§3.1.3, §3.2.*, §3.3 unchanged (apply identically to both stages).
+
+
 
 
 ## 5. Theme × pass-count cross-tab (Step 3 deliverable)
