@@ -7,6 +7,35 @@ review plus two author-added items. See "v1 → v2 Change Log" at end of documen
 
 ---
 
+## Operational freshness note — superseded in part after PHASE2C_8.1 / PHASE2C_9
+
+This Phase 2 Blueprint v2 remains the historical foundation for Phase 2A and the
+Phase 2B D6-D8 mechanism design. It is still useful for understanding the
+intended mining pipeline, Proposer/Critic structure, lifecycle states, ledger
+discipline, and scope fences.
+
+It is **not** the current operational source of truth for post-D8 / D9-style
+evaluation work. The original D9 framing has been superseded by the PHASE2C_5
+through PHASE2C_9 arc series, including corrected walk-forward lineage,
+multi-regime evaluation gates, PHASE2C_8.1 closeout findings, and the
+PHASE2C_9 Q-9.B mining-process retrospective spec.
+
+Current operational guidance should be read in this order:
+
+1. [`CLAUDE.md`](../CLAUDE.md) Phase Marker
+2. [`docs/phase2c/PHASE2C_*_PLAN.md`](../docs/phase2c/)
+3. [`docs/closeout/PHASE2C_*_RESULTS.md`](../docs/closeout/)
+4. [`docs/discipline/METHODOLOGY_NOTES.md`](../docs/discipline/METHODOLOGY_NOTES.md)
+5. This blueprint as historical Phase 2 design context
+
+Known drift areas in this blueprint include the D9 evaluation framework,
+operational theme rotation boundary (canonical 6 themes vs operational 5 per
+`agents/themes.py`), model identifier (`claude-sonnet-4-20250514` cited here
+vs `claude-sonnet-4-5` in code), corrected walk-forward lineage, and empirical
+success criteria after `cohort_a_filtered = 0`.
+
+---
+
 ## Phase 2 Target
 
 Build an AI-assisted hypothesis generation loop on top of the validated Phase 1
