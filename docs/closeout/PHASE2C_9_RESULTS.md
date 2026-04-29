@@ -1379,11 +1379,234 @@ reflect both stage-file citations. Mechanism descriptions in §3.1.1-
 
 ## 5. Theme × pass-count cross-tab (Step 3 deliverable)
 
-*(deferred — Step 3 deliverable per
-[`PHASE2C_9_PLAN.md`](../phase2c/PHASE2C_9_PLAN.md) §5.3.
-Inputs: PHASE2C_8.1 closeout §7 theme-level cross-regime pattern
-table. Outputs: theme × regime × pass-count cross-tab + per-theme
-asymmetry observations + canonical-number cross-checks.)*
+This section constructs the theme × regime × pass-count cross-tab
+from two canonical inputs: (1) PHASE2C_8.1 closeout §7.1 per-theme
+AND-gate pass counts at unfiltered tier across the 4 evaluation
+regimes; (2) §4.0 generation-side per-theme distribution (40/40/40/39/39
+valid_count). Per spec §3.1.5 operational disambiguation, this is
+**factual cross-tab description + asymmetry observation surfacing**,
+not statistical-significance testing. Output register: cross-tab
+cardinalities + mechanical asymmetry observations + canonical-number
+cross-checks. Mechanism interpretation deferred to §7 (Step 5);
+lone-survivor walkthrough deferred to §6 (Step 4); case adjudication
+deferred to §8 (Step 6).
+
+
+### 5.0 Cross-tab construction
+
+**Source artifacts**:
+- PHASE2C_8.1 closeout §7.1 (per-theme AND-gate pass counts at
+  unfiltered tier) at
+  [`docs/closeout/PHASE2C_8_1_RESULTS.md:941-947`](PHASE2C_8_1_RESULTS.md#L941-L947)
+- §4.0 generation-side per-theme distribution (`per_theme` array
+  from `stage2d_summary.json`)
+
+**Cross-tab: theme × regime × unfiltered AND-gate pass count**:
+
+| Theme | Generation (n_calls) | Generation (valid_count) | bear_2022 | validation_2024 | eval_2020_v1 | eval_2021_v1 | Sum across regimes |
+|---|---|---|---|---|---|---|---|
+| calendar_effect | 40 | 40 | 6 | 24 | 26 | 10 | 66 |
+| volume_divergence | 40 | 40 | 4 | 25 | 23 | 12 | 64 |
+| volatility_regime | 40 | 40 | 0 | 4 | 10 | 2 | 16 |
+| momentum | 40 | 39 | 3 | 21 | 12 | 6 | 42 |
+| mean_reversion | 40 | 39 | 0 | 13 | 3 | 8 | 24 |
+| **Column total** | **200** | **198** | **13** | **87** | **74** | **38** | **212** |
+
+**Cross-tab cell semantics**:
+- Each cell at row `theme` × column `regime` is the count of
+  candidates of that theme that passed the unfiltered 4-criterion
+  AND-gate in that regime
+- "Sum across regimes" column: per-theme cumulative pass count
+  (each candidate counted once per regime where it passed; a
+  candidate passing 4 regimes contributes 4)
+- "Column total" row: per-regime overall pass count (matches
+  PHASE2C_8.1 closeout §3.3 per-regime AND-gate cardinalities)
+- Cross-tab cell-sum total (212) is per-regime-pass total; it is
+  NOT the joint-pass cardinality (the 21-vs-8 in-sample-caveat
+  asymmetry at PHASE2C_8.1 §5.2 is joint-pass cardinality across
+  category; this cross-tab is independent-per-cell pass count)
+
+### 5.1 Per-theme pass-count asymmetry observations
+
+Mechanical asymmetry observations from the cross-tab cells. Each
+observation is a factual cardinality report; mechanism
+interpretation deferred to §7.
+
+**Observation 1 — `volatility_regime` shows lowest pass rates
+across all regimes**: pass counts of 0/40, 4/40, 10/40, 2/40 in
+bear_2022 / validation_2024 / eval_2020_v1 / eval_2021_v1
+respectively. Sum-across-regimes total of 16 is lowest among the
+5 themes; per-regime maxima are also among the lowest.
+
+**Observation 2 — `mean_reversion` shows zero-pass in bear_2022
+plus mid-range elsewhere**: pass counts of 0/39, 13/39, 3/39, 8/39
+in the four regimes. The 0/39 bear_2022 cell matches PHASE2C_8.1
+§7.2 Observation A "volatility_regime and mean_reversion show 0/40
+and 0/39 zero-pass counts" in bear_2022.
+
+**Observation 3 — `calendar_effect` shows highest concentration in
+eval_2020_v1**: 26/40 = 65% pass rate, the highest single cell in
+the cross-tab. The validation_2024 pass count is also high at
+24/40 = 60%; eval_2021_v1 pass count is 10/40 = 25%; bear_2022
+pass count is 6/40 = 15%.
+
+**Observation 4 — `volume_divergence` shows highest validation_2024
+pass count**: 25/40 = 62.5%, the highest validation_2024 cell.
+This matches PHASE2C_8.1 §7.2 Observation B "maximum theme pass
+count in validation_2024 is 25/40 (volume_divergence)."
+
+**Observation 5 — `momentum` shows lowest concentration in
+bear_2022**: 3/39 = 7.7% pass rate. The remaining three regimes
+show 21/39 = 53.8% (validation_2024), 12/39 = 30.8% (eval_2020_v1),
+6/39 = 15.4% (eval_2021_v1).
+
+**Observation 6 — bear_2022 column shows uniformly low pass counts**:
+maximum cell is 6/40 (calendar_effect); 2 themes show zero passes
+(volatility_regime + mean_reversion). The bear_2022 column total
+of 13/198 = 6.6% is the lowest per-regime pass rate across the 4
+evaluation regimes.
+
+**Observation 7 — validation_2024 column shows highest pass counts
+overall**: column total 87/198 = 43.9%. Per-theme distribution at
+this column: calendar_effect 24, volume_divergence 25, momentum 21,
+mean_reversion 13, volatility_regime 4. Spread across themes
+ranges 4-25.
+
+**Observation 8 — eval_2020_v1 vs eval_2021_v1 train-overlap
+divergence**: column totals are 74/198 (eval_2020_v1) and 38/198
+(eval_2021_v1). Per-theme distribution diverges substantially:
+calendar_effect 26/10; volume_divergence 23/12; volatility_regime
+10/2; momentum 12/6; mean_reversion 3/8. eval_2020_v1 column total
+is roughly 2x eval_2021_v1 column total. This matches PHASE2C_8.1
+§7.2 Observation C "within-train-overlap pass-rate heterogeneity
+is observed at theme-level cross-tab."
+
+**Observation 9 — train-overlap regime sum vs fully-OOS regime
+sum (per-regime cell totals)**: train-overlap regimes
+(eval_2020_v1 + eval_2021_v1) sum to 74 + 38 = 112 cell-passes;
+fully-OOS regimes (bear_2022 + validation_2024) sum to 13 + 87 =
+100 cell-passes. The cell-pass-total parity is approximate (112 vs
+100); per-cell distribution is asymmetric across themes. This is
+the per-regime-pass cell-total comparison; it is NOT the
+21-vs-8 joint-pass cardinality at PHASE2C_8.1 §5.2 (which counts
+candidates passing both regimes within a category).
+
+### 5.2 Canonical-number cross-checks
+
+Cross-checks at four axes:
+
+**Axis 1 — Theme totals match §4.0 generation-side distribution**:
+
+| Theme | §4.0 valid_count | §5.0 cross-tab Generation valid_count | match |
+|---|---|---|---|
+| calendar_effect | 40 | 40 | ✓ |
+| volume_divergence | 40 | 40 | ✓ |
+| volatility_regime | 40 | 40 | ✓ |
+| momentum | 39 | 39 | ✓ |
+| mean_reversion | 39 | 39 | ✓ |
+| **Total** | **198** | **198** | ✓ |
+
+**Axis 2 — Per-regime totals match PHASE2C_8.1 closeout §3.3 + §7.1**:
+
+| Regime | §5.0 column total | PHASE2C_8.1 §3.3 anchor | match |
+|---|---|---|---|
+| bear_2022 | 13 | 13 | ✓ |
+| validation_2024 | 87 | 87 | ✓ |
+| eval_2020_v1 | 74 | 74 | ✓ |
+| eval_2021_v1 | 38 | 38 | ✓ |
+
+**Axis 3 — Cell-by-cell match against PHASE2C_8.1 §7.1 source
+table**: All 20 cells (5 themes × 4 regimes) reproduce
+PHASE2C_8.1 closeout §7.1 byte-for-byte at
+[`docs/closeout/PHASE2C_8_1_RESULTS.md:941-947`](PHASE2C_8_1_RESULTS.md#L941-L947).
+No cell drift detected; cross-tab construction inherits canonical
+numbers exactly.
+
+**Axis 4 — Generation-side `n_calls` to `valid_count` reconciliation**:
+calendar_effect / volume_divergence / volatility_regime show
+n_calls=40 = valid_count=40 (zero rejected_complexity). momentum +
+mean_reversion show n_calls=40 + 1 rejected_complexity each =
+valid_count=39. §4.0 lifecycle distribution + per-theme
+distribution are internally consistent with §5.0 cross-tab
+Generation columns. ✓
+
+All canonical-number cross-checks pass.
+
+### 5.3 Step 3 deliverable summary + gating-criterion check
+
+Per spec §5.3 gating criterion: **"§5 working draft has the
+cross-tab with all canonical anchor cross-checks satisfied"**.
+
+Status:
+
+- **Cross-tab constructed** (§5.0): 5 themes × 4 regimes + Generation
+  + Sum-across-regimes columns + Column-total row; 20 cells
+  reproduce PHASE2C_8.1 §7.1 byte-for-byte ✓
+- **Per-theme asymmetry observations documented** (§5.1): 9
+  observations at mechanical-cardinality register; cross-references
+  to PHASE2C_8.1 §7.2 observations where applicable ✓
+- **Canonical-number cross-checks pass** (§5.2): 4 axes — theme
+  totals match §4.0; per-regime totals match PHASE2C_8.1 §3.3 +
+  §7.1; cell-by-cell match against PHASE2C_8.1 §7.1; generation-
+  side n_calls/valid_count internally consistent ✓
+
+Step 3 gating criterion satisfied. Step 4 (lone-survivor walkthrough
+per spec §5.4) authorized to proceed in subsequent session per
+discrete-session-boundary register.
+
+Per spec §6 verification framework + §7 cycle-boundary preservation:
+
+- **§6.1 Evidence-mapping discipline**: every cross-tab cell cited
+  at PHASE2C_8.1 §7.1 source; canonical-number cross-checks at
+  file:line register; no narrative claims without artifact reference ✓
+- **§6.4 Cycle-boundary-preservation language audit**: §5 contains
+  no forbidden forward-pointer language; no "this suggests" / "this
+  implies" / "this may indicate Case X" interpretation language;
+  observations are mechanical cardinality reports only ✓
+- **§6.3 Canonical-number cross-checks**: 4-axis cross-check passes
+  including byte-for-byte 20-cell reproduction of PHASE2C_8.1 §7.1 ✓
+
+Scope-completeness audit per Claude advisor's Consideration 3
+carry-forward (necessary-and-sufficient register; no §6 / §7-§8
+deliverable leakage):
+
+- **§5 does NOT include lone-survivor walkthrough** (Step 4 §6
+  territory). The lone-survivor reference at PHASE2C_8.1 §7.3
+  ("`0845d1d7898412f2` is one of 4 volume_divergence candidates
+  passing in bear_2022") is mentioned only in cross-tab cell
+  context (`volume_divergence × bear_2022 = 4`); detailed trace
+  deferred to §6.
+- **§5 does NOT include Case A/B/C adjudication** (Step 6 §8
+  territory). Asymmetry observations at §5.1 are mechanical
+  cardinality reports; mechanism-vs-observation comparison + case
+  determination deferred to §7 + §8.
+- **§5 does NOT include statistical-significance testing**
+  (Q-9.A territory; out-of-scope per spec §3.2.5). Cross-tab cells
+  are factual cardinalities; pass-rate asymmetries are described at
+  cardinality register without significance claims.
+
+**Two register-precision observations surfaced for §7 (Step 5)
+mechanism-vs-observation comparison register**:
+
+1. **Train-overlap regime divergence** (§5.1 Observation 8):
+   eval_2020_v1 column total (74) is roughly 2x eval_2021_v1
+   column total (38) at per-theme level; the divergence is
+   theme-distributional, not uniform. Mechanism intersection at
+   §3 (Proposer/Critic produces candidate population) × §7
+   (mechanism comparison may invoke this for Case A.X / B.X /
+   C.X evidence at register).
+2. **Per-regime pass-rate range across themes**: bear_2022 cells
+   span 0-6 (range 6); validation_2024 cells span 4-25 (range 21);
+   eval_2020_v1 cells span 3-26 (range 23); eval_2021_v1 cells
+   span 2-12 (range 10). The validation_2024 + eval_2020_v1 ranges
+   are roughly 2-3x bear_2022 + eval_2021_v1 ranges; the per-regime
+   spread itself is asymmetric. §7 may invoke for evidence-base
+   register.
+
+Observations are mechanism observations for §7 carry-forward, NOT
+§5 evidence claims pre-empting §7 adjudication.
+
+
 
 
 ## 6. Lone-survivor walkthrough (Step 4 deliverable)
