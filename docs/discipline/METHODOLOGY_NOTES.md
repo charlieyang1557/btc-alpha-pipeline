@@ -2298,3 +2298,164 @@ across session boundary. Conflating the two registers under-applies
 the discipline at one and over-applies at the other.
 
 ---
+
+---
+
+## §18 §7 carry-forward density at interpretive arc closeouts
+
+### Principle
+
+Interpretive arc closeouts — closeouts whose load-bearing register
+includes synthesis of empirical findings into observations for
+downstream cross-cycle consumption — accumulate observations across
+implementation steps and surface them in dedicated registers. The
+convention has emerged across PHASE2C interpretive closeouts at
+increasing density and is the observation §18 codifies.
+
+The convention operates at the interpretive-arc-closeout register
+specifically. Closeouts whose primary register is empirical results
+without cross-cycle interpretive load do not carry the same dedicated-
+register expectation; the convention applies where downstream cycles
+will consume the closeout's observations as scoping input.
+
+Per-closeout register format may vary across cycles: lessons-synthesis
+prose, numbered observation enumeration, tracked-fix register table
+with codification-candidate flagging, or cumulative-observation
+inventory at a §N.0.0 anchor. The format adapts to closeout structure;
+the convention is the dedicated register itself, not a fixed format.
+
+§18 operates adjacent to §11's closeout-assembly checklist within the
+closeout-assembly discipline family. §11 covers the running tracked-fix
+checklist for multi-cycle closeout assembly; §18 specifies a distinct
+carry-forward observation register surface used when interpretive
+closeouts need downstream cross-cycle consumption.
+
+§18 ships at **Medium tier with operating-rule-pending status note**.
+The 4/4 PHASE2C interpretive arc closeout saturation gives the
+observation pattern a broad empirical basis; codification at this
+register is observation-framing, not operating-rule-codification per
+§13/§14/§15 precedent. Strong-tier promotion is contingent on
+operating-rule articulation that crystallizes the convention into a
+concrete prescriptive rule, such as requiring interpretive multi-step
+closeouts to maintain a dedicated carry-forward register with explicit
+candidate-status flagging. Tier-promotion authority remains out of
+scope for §18's seal unless Activity H crystallizes a concrete
+operating rule.
+
+### Trigger context
+
+This convention was operationalized across four PHASE2C interpretive
+arc closeouts with §7-equivalent carry-forward observation registers
+at increasing density:
+
+1. **PHASE2C_6 evaluation gate arc closeout** —
+   `PHASE2C_6_EVALUATION_GATE_RESULTS.md` §10 Methodology-discipline
+   observation register; 2 lessons-synthesis observations seeded the
+   register convention. Codified METHODOLOGY_NOTES §4-§7 via commit
+   `536f737`. The first PHASE2C cycle to surface a dedicated
+   methodology-discipline-observation register at closeout end.
+
+2. **PHASE2C_7.1 multi-regime evaluation gate arc closeout** —
+   `PHASE2C_7_1_RESULTS.md` §10 Methodology-discipline observations
+   register; 5 numbered observations. Format extended from lessons-
+   synthesis prose (PHASE2C_6) to numbered observation enumeration.
+   Density growth: 2 → 5.
+
+3. **PHASE2C_8.1 multi-regime evaluation gate arc (extended)
+   closeout** — `PHASE2C_8_1_RESULTS.md` §10 Tracked-fix register; 10
+   register entries (4 codification candidates) + §7.2 cross-regime
+   observations (3). Format introduced tracked-fix register table with
+   codification-candidate status precision flagging. Codified
+   METHODOLOGY_NOTES §13/§14/§15 via commit `8154e99`. Density growth:
+   5 → 10+3.
+
+4. **PHASE2C_9 mining-process retrospective arc closeout** —
+   `PHASE2C_9_RESULTS.md` §7 Mechanism-vs-observation comparison;
+   cumulative-11 carry-forward register at §7.0.0 inventory table.
+   Format consolidated cumulative observations across Steps 1-4
+   feeding §7 evidence map at Step 5. Density growth: 10+3 → 11
+   cumulative.
+
+The four closeouts span structurally distinct register formats
+(lessons-synthesis / numbered / tracked-fix / cumulative-inventory)
+demonstrating format adaptation across cycle-specific closeout
+structures while maintaining the dedicated-register convention.
+The sequence (2 → 5 → 10 tracked-fix entries plus 3 §7.2 observations
+→ 11 cumulative carry-forward observations) demonstrates increasing
+register load and repeated adaptation across cycles, rather than a
+single homogeneous count series.
+
+### Application checklist
+
+At Medium tier, this checklist is an observation-backed application
+guide, not yet a mandatory operating rule.
+
+For interpretive arc closeouts (closeouts whose load-bearing register
+includes synthesis of empirical findings into observations for
+downstream cycles):
+
+1. **Include a dedicated carry-forward observation register section.**
+   Interpretive arc closeouts include a dedicated register section
+   that surfaces observations for downstream cross-cycle consumption.
+   The register is structurally distinct from substantive findings
+   sections; observations buried within substantive sections without
+   dedicated register surface reduce cross-cycle visibility.
+
+2. **Align register format with closeout structure.** Format options
+   include lessons-synthesis prose, numbered observation enumeration,
+   tracked-fix register table with codification-candidate flagging, or
+   cumulative-observation inventory at §N.0.0 anchor. Format choice
+   reflects closeout structure; the convention is the dedicated
+   register itself, not a fixed format.
+
+3. **Flag codification candidates with status precision.**
+   Observations that are candidates for METHODOLOGY_NOTES codification
+   (or other downstream operationalization) carry explicit status
+   precision: candidate vs operationalized vs purely-observation. By
+   analogy to §10's anti-pre-naming discipline for forward-pointing
+   prose, observations enter the register with status precision pending
+   successor cycle adjudication; the closeout register flags candidate
+   status without pre-committing successor-cycle codification outcomes.
+
+4. **Enable cross-cycle consumption.** The register is positioned and
+   formatted to support successor cycles consuming the register as
+   scoping input. Successor scoping cycles operate against the
+   register's observations; format that obstructs cross-cycle
+   consumption defeats the convention's structural purpose.
+
+5. **Position near closeout end.** The register section is positioned
+   near closeout end (after substantive findings; before
+   cross-references) consistent with the four PHASE2C closeout
+   pattern. Position supports closeout-reading flow: substantive
+   findings → register synthesis → cross-references.
+
+### Failure-mode signal
+
+Watch for interpretive arc closeouts that omit the carry-forward
+observation register entirely. The omission is the primary defect the
+convention catches — observations from the closeout's empirical work
+are not surfaced for cross-cycle consumption.
+
+Watch for observations buried within substantive sections without
+dedicated register surface. Cross-cycle consumption requires register-
+register visibility; observations distributed across substantive
+sections are structurally invisible at register-register scoping.
+
+Watch for codification-candidate status absent. When the register
+includes codification candidates without status-precision flagging,
+register entries become indistinguishable from in-section observations;
+successor cycles lose the precision needed for codification-threshold
+adjudication.
+
+Watch for register format misalignment with closeout structure (e.g.,
+tracked-fix register without table format; cumulative observations
+without inventory anchor). Format choice reflects closeout structure;
+misalignment under-serves the convention's cross-cycle consumption
+purpose.
+
+Watch for register positioned away from closeout end (e.g., embedded
+mid-closeout near substantive findings; or at closeout opening).
+Position supports closeout-reading flow; non-end positioning under-
+supports cross-cycle scoping access.
+
+---
