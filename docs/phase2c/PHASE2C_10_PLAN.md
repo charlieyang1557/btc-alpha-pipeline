@@ -30,6 +30,16 @@ Five disciplines operate at this plan's drafting cycle and at the Step 2 impleme
 - **Empirical verification discipline** (METHODOLOGY_NOTES §1; PHASE2C_10 scoping cycle's §1-§7 / §16-single-section catches operationalized the lesson): file-structure citations verified before use; advisor-supplied anchors verified at receiving cycle.
 - **Self-first-then-reviewer adjudication discipline** (PHASE2C_10 scoping §6.4 emergent candidate; observation-only register): Claude advisor's own substantive review fires before reviewer-suggestion adjudication, not as substitute.
 
+### §0.4 Process note — working-draft commit / dual-reviewer pass / patch-commit-seal sequencing
+
+This plan's working draft was first committed at `d0222c7` before instance #5 dual-reviewer pass fired. Per Claude advisor + ChatGPT instance #5 substantive adjudication, the working-draft-commit-before-prose-pass pattern is itself a **third instance** of candidate (2) procedural-confirmation defect class (operating during this very session): the working-draft commit fired at procedural register (commit landed; tree clean) while substantive register (dual-reviewer prose-access pass) had not yet fired. Defect ι (§3.7 internal-consistency violation between summary table rows 3/5/6 and §2.2 placement decisions) landed at `d0222c7` precisely because pre-commit substantive prose-access pass had not fired; defect ι operationally validated the procedural-confirmation defect class at instance #3.
+
+**Resolution path (per ChatGPT instance #5 disposition)**: follow-up patch commit (this commit's patch register) rather than amending `d0222c7` history. Audit-trail rationale — local history preservation makes the procedural-confirmation defect class operationally observable at the commit chain, which is itself instructive content for candidate (2) §17 codification at Step 2 implementation arc. Amend would erase the empirical evidence of instance #3.
+
+**Instance count update for candidate (2)**: 3 instances cumulative (PHASE2C_9 Step 5 working-draft commit `e11e806`; PHASE2C_9 Step 6 closeout assembly first commit; PHASE2C_10 plan working-draft commit `d0222c7`). §3.2 evidence count and §17 codification scope at Step 2 implementation arc reflect 3-instance count, not the 2-instance count cited at §3.2 prose pre-instance-#5-pass.
+
+**Discipline correction**: future PHASE2C_10 commits at this plan's seal register fire AFTER dual-reviewer pass clears, not before. Working-draft-commit-before-prose-pass pattern flagged as defect class instance, not legitimized as variant pattern.
+
 ---
 
 ## §1 Filename and document-type lock (anti-pre-naming option (ii) resolution)
@@ -128,14 +138,15 @@ Each instance surfaced real defects via prose access that structural-summary rev
 
 **Candidate framing**: a procedural-confirmation defect class operates at the first-commit-before-prose-access register. The defect class surfaces when a deliverable's first-commit fire is procedurally complete (commit lands; CI passes; reviewer sees commit notification) but the substantive prose has not yet received reviewer prose-access. Reviewer's procedural-confirmation ("commit landed") may be misread as substantive-confirmation ("prose reviewed clean"); the misread substitutes procedure for substance at the seal register.
 
-**Evidence count**: 2 instances at PHASE2C_9:
+**Evidence count**: **3 instances cumulative** (2 PHASE2C_9 + 1 PHASE2C_10):
 
 1. PHASE2C_9 Step 5 §7 working-draft commit (first-commit at `e11e806` before advisor substantive prose-access pass; advisor follow-up surfaced Concerns A residual / C internal-consistency / D "hampered" register requiring patches at `d548ea2`)
 2. PHASE2C_9 Step 6 closeout assembly first commit (first-commit fire before advisor substantive prose-access; advisor pass surfaced 8 Concerns O-V at instance #3; 3 patches applied)
+3. PHASE2C_10 plan working-draft commit `d0222c7` (first-commit fire before instance #5 dual-reviewer prose-access pass; defect ι — §3.7 internal-consistency violation between summary table rows 3/5/6 and §2.2 placement decisions — landed at `d0222c7`; instance #5 substantive prose-access pass surfaced ι; patches applied at follow-up patch commit per §0.4 disposition). Instance #3 surfaced during this very session; operationally observable at the commit chain `d0222c7` → instance #5 dual-reviewer pass → patch commit (this commit).
 
-**Tier adjudication**: **Strong** (confirms scoping doc §5.2 provisional tier).
+**Tier adjudication**: **Strong** (confirms scoping doc §5.2 provisional tier; instance count incremented per §0.4).
 
-Two PHASE2C_9 instances at structurally distinct defect surfaces (interpretive-register at §7 evidence map; closeout-assembly at §8 + cross-cutting at §1 / §2 / §9). Each instance demonstrated the defect class operationally — procedural-confirmation cleared while substantive defects remained; prose-access fire was the structural complement that surfaced the defects. The discipline's structural payoff: prose-access-before-seal preserves substantive register-precision at deliverables where procedural-confirmation alone under-protects.
+Three instances at structurally distinct defect surfaces (PHASE2C_9 Step 5 interpretive-register at §7 evidence map; PHASE2C_9 Step 6 closeout-assembly at §8 + cross-cutting at §1 / §2 / §9; PHASE2C_10 plan summary-table internal-consistency at §3.7). Each instance demonstrated the defect class operationally — procedural-confirmation cleared while substantive defects remained; prose-access fire was the structural complement that surfaced the defects. The discipline's structural payoff: prose-access-before-seal preserves substantive register-precision at deliverables where procedural-confirmation alone under-protects.
 
 **Codification scope**: full §17 codification with all four standard subsections.
 
@@ -150,18 +161,21 @@ Two PHASE2C_9 instances at structurally distinct defect surfaces (interpretive-r
 
 **Candidate framing**: spec / scoping / sub-spec documents may contain references to file structure, content, or state that diverges from empirical reality. The divergence pattern operates at receiving cycles when authors / reviewers cite remembered structure rather than verified structure. Pattern instances accumulate across cycles where the discipline of empirical verification (METHODOLOGY_NOTES §1) is operationalized; per-cycle within-cycle counts plus cumulative cross-cycle counts are the evidence registers.
 
-**Evidence count**: 5 cumulative across PHASE2C_9 + PHASE2C_10 scoping cycles; per-cycle (3+2):
+**Evidence count**: **6 cumulative across 3 cycles** (PHASE2C_9 = 3; PHASE2C_10 scoping = 2; PHASE2C_10 plan drafting = 1):
 
 - PHASE2C_9 within-arc count = 3 (entries 1-3 per scoping doc §6.2 reference to PHASE2C_9 §8.4 mandatory entry #2)
 - PHASE2C_10 scoping cycle within-cycle count = 2 (entry 4: §1-§7 stale anchor; entry 5: §16-as-single-section framing)
+- PHASE2C_10 plan drafting cycle within-cycle count = 1 (entry 6: CLAUDE.md project-discipline notes section staleness, observed at this plan's Fire 3(ii) METHODOLOGY_NOTES.md prose-reading; CLAUDE.md line 459 lists "§1 empirical verification...§7 asymmetric confidence reporting" as codified principles when actual file state is §1-§15)
 
-A potential 6th instance was observed at this plan's Fire 3(ii) METHODOLOGY_NOTES.md prose-reading: CLAUDE.md project-discipline notes section (line 459) lists "§1 empirical verification...§7 asymmetric confidence reporting" as the codified principles, when actual METHODOLOGY_NOTES.md state is §1-§15. This is a stale-anchor instance at the CLAUDE.md project-discipline notes register. Whether this 6th instance counts as within-cycle (PHASE2C_10 implementation arc) or cross-cycle (CLAUDE.md staleness predates PHASE2C_10) is a registration question deferred to §4 emergent-vs-folded adjudication.
+Instance #6 included per dual-reviewer pass instance #5 disposition: both reviewers (Claude advisor + ChatGPT) adjudicated entry 6 as same defect class as entries 1-5 (cite remembered structure rather than verified structure; same source defect; same correction path of empirical verification of file state). Defect class boundary is the citation-without-verification register, regardless of which document carries the stale anchor.
 
-**Tier adjudication**: **Weak** (confirms scoping doc §5.2 provisional tier; potential medium-tier promotion deferred to successor cycle per §6.2).
+**Tier adjudication**: **Weak** with **medium-pending** status note (confirms scoping doc §5.2 provisional tier; potential medium-tier promotion deferred to successor cycle).
 
-Per scoping doc §6.2: "Cross-cycle accumulation pattern operating; sub-spec drafting cycle's per-candidate evidence review adjudicates whether cross-cycle accumulation reaches medium-tier codification threshold (Option A flag carries forward)." Adjudication: cumulative count of 5 (or 6 with §4 disposition) demonstrates pattern operational across cycles, but per-cycle within-cycle counts (3 PHASE2C_9; 2 PHASE2C_10 scoping; potentially 1 PHASE2C_10 implementation) are each within the within-cycle-count register that the existing §1 empirical-verification discipline already covers structurally. The pattern is observed; the codification value beyond §1 is incremental.
+Per scoping doc §6.2 cross-cycle accumulation framing: cumulative count of 6 demonstrates pattern operational across 3 distinct cycles, but per-cycle within-cycle counts (3 PHASE2C_9; 2 PHASE2C_10 scoping; 1 PHASE2C_10 plan drafting) are each within the within-cycle-count register that the existing §1 empirical-verification discipline already covers structurally. The pattern is observed; the codification value beyond §1 is incremental.
 
-Promotion to medium tier is structurally available if cross-cycle accumulation reaches a threshold where the cross-cycle pattern itself becomes a load-bearing claim distinct from per-cycle empirical verification. At cumulative 5-6 instances across 2-3 cycles, the threshold is plausibly reachable but not obviously cleared. Per anti-momentum-binding + ChatGPT guardrail 2 ("weak candidates visibly weak"), tier holds at weak; codification register is observation-only with cross-cycle-pending status.
+Operating-rule articulation question (per Claude advisor instance #5 substantive pass): the operating rule this candidate would codify — "verify file structure citations before drafting prose" — is structurally already covered by §15 anchor-list empirical-verification discipline applied to file-structure-anchors register. Candidate (3) may be a sub-class of §15 rather than a distinct discipline; the structural relationship adjudicated at Step 2 implementation arc when §19 authoring fires. Either §19 cross-references §15 as parent discipline (sub-class register), OR §19 stands as standalone observation-only register if structurally distinct.
+
+Promotion to medium tier is structurally available if cross-cycle accumulation reaches a threshold where the cross-cycle pattern itself becomes a load-bearing claim distinct from per-cycle empirical verification AND operating-rule articulation crystallizes beyond §15's existing coverage. At cumulative 6 instances across 3 cycles, the threshold is plausibly reachable but operating-rule articulation incomplete. Per anti-momentum-binding + ChatGPT guardrail 2 ("weak candidates visibly weak"), tier holds at weak; codification register is observation-only with cross-cycle-pending status.
 
 **Codification scope**: brief §19 dedicated section with status-precision register (observation-only + cross-cycle-pending). The folding-into-existing-§1 option is structurally precluded by §5.4 ChatGPT guardrail 4 (§1-§15 stable; only §16+ append) — modifying §1's ### Failure-mode signal would be a §1-§15 edit out of PHASE2C_10 scope. Brief §19 dedicated section is the only in-scope placement.
 
@@ -186,16 +200,17 @@ Step 2 implementation arc dual-reviewer pass adjudicates the §19 prose register
 
 Empirical findings from this plan's Fire 3(i) verification: §7-style carry-forward observation registers are present at 4 of 4 PHASE2C interpretive arc closeouts; density increasing across cycles; structural pattern stable (dedicated section near closeout end; observation enumeration; codification-candidate flagging where applicable).
 
-**Tier adjudication**: **Strong** — patches scoping doc §5.2 provisional medium tier upward.
+**Tier adjudication**: **Medium** (confirms scoping doc §5.2 provisional tier; operating-rule-pending status note attached).
 
-Per anti-momentum-binding (PHASE2C_10 scoping §6.1 Option A flag): provisional tier labels are inputs to per-candidate evidence review, not constraints. Fire 3(i) evidence base supports strong tier at:
+Initial draft of this section adjudicated Strong tier upward from scoping doc §5.2 provisional Medium based on Fire 3(i) 4/4 instance saturation + density growth (2 → 5 → 10+3 → 11). Both reviewers (Claude advisor + ChatGPT) at instance #5 dual-reviewer pass adjudicated Strong-tier promotion as premature on operating-rule-articulation grounds:
 
-- 4/4 instance saturation across PHASE2C interpretive closeouts
-- Density growth pattern (2 → 5 → 10+3 → 11) suggesting convention is operational and growing
-- Structural stability (dedicated section near closeout end; observation enumeration; explicit codification-candidate flagging at PHASE2C_8.1 / PHASE2C_9)
-- Cross-cycle consumption (PHASE2C_8.1's Q-S4-10 / Q-S4-14 / Q-S4-15 / Q-S4-16 codification candidates → METHODOLOGY_NOTES §13 / §14 / §15 codifications via separate commit `76e46d4`; PHASE2C_9's §7 carry-forward register → PHASE2C_10's six methodology candidates feeding this plan)
+- 4/4 instance saturation + density growth establishes the **observation pattern** is real (4 PHASE2C interpretive closeouts each maintain a §7-equivalent carry-forward register; density grew across cycles)
+- Strong-tier codification per existing §13/§14/§15 precedent requires an **operating rule** the discipline codifies — what to *do* when the discipline applies. §13's operating rule: "build at least one permanent in-repo parallel-implementation gate for canonical findings at high-load closeout register." §14's operating rule: "fire both reviewer overlays at section-seal." §15's operating rule: "verify advisor-supplied anchors before drafting initiates."
+- §3.4's Application checklist as authored is observation-framing ("watch for omission of carry-forward register at interpretive closeouts"; "watch for missing codification-candidate status precision"), not operating-rule-codification. The framing aligns with weak/medium-tier observation register, not strong-tier discipline codification
 
-The strong tier is supported by 4-instance saturation + increasing density + cross-cycle consumption demonstrating the convention is load-bearing for downstream methodology codification. Provisional medium tier under-rates evidence; strong tier matches.
+Per anti-momentum-binding (PHASE2C_10 scoping §6.1 Option A flag): provisional tier labels are inputs to per-candidate evidence review, not constraints. The reverse direction also operates — initial sub-spec adjudication (Strong) is also an input to dual-reviewer pass, not a constraint. Both reviewers' substantive pushback at operating-rule-articulation grounds carries; tier reverts to Medium.
+
+**Operating-rule-pending status note**: Step 2 implementation arc may promote tier to Strong if §18 authoring articulates a concrete operating rule (e.g., "for interpretive arc closeouts at multi-step-arc register, maintain a dedicated §N carry-forward observation register near closeout end with explicit codification-candidate status flagging"). If operating rule does not crystallize at Step 2 dual-reviewer pass, tier holds at Medium with observation-strengthening status note rather than full discipline codification. Tier-promotion authority resides at Step 2 implementation arc dual-reviewer pass, not at this plan's seal.
 
 **Codification scope**: full §18 codification with all four standard subsections.
 
@@ -257,11 +272,11 @@ Final tier adjudication for the six candidates after §3.1-§3.6 evidence review
 | # | Candidate | Scoping §5.2 provisional | §3 adjudicated | Adjudication basis | §16+ placement |
 |---|---|---|---|---|---|
 | 1 | Anchor-prose-access discipline | Strong | **Strong** (confirmed) | 4 instances; real catches each instance; structural inevitability | §16 dedicated section |
-| 2 | Procedural-confirmation defect class | Strong | **Strong** (confirmed) | 2 PHASE2C_9 instances at distinct surfaces; defect class operationally validated | §17 dedicated section |
-| 3 | Spec-vs-empirical-reality finding pattern | Weak | **Weak** (confirmed; medium-pending) | Cumulative 5-6 across cycles; pattern observed but increment over §1 incremental | Observation-only at §1 ### Failure-mode signal OR brief §19 |
-| 4 | §7 carry-forward density at interpretive arc closeouts | Medium | **Strong** (patch upward) | 4/4 instance saturation; density growth; cross-cycle consumption demonstrating convention load-bearing | §18 dedicated section |
-| 5 | Pre-fire audit pattern | Weak | **Weak** (confirmed) | 1 instance; below codification threshold | Observation-only at §16 OR §11 OR brief §20 |
-| 6 | Self-first-then-reviewer | Weak | **Weak** (confirmed) | 1 instance; emerged at scoping cycle itself | Observation-only at §14 OR brief §20 |
+| 2 | Procedural-confirmation defect class | Strong | **Strong** (confirmed) | 3 instances at distinct surfaces (2 PHASE2C_9 + 1 PHASE2C_10 plan working-draft commit `d0222c7`; instance #3 operationally validated at this very session per §0.4); defect class operationally validated | §17 dedicated section |
+| 3 | Spec-vs-empirical-reality finding pattern | Weak | **Weak** (confirmed; medium-pending) | Cumulative 6 across 3 cycles (PHASE2C_9 = 3; scoping = 2; PHASE2C_10 plan drafting = 1); pattern observed but increment over §1 incremental | Brief §19 dedicated section (observation-only + cross-cycle-pending status-register) |
+| 4 | §7 carry-forward density at interpretive arc closeouts | Medium | **Medium** (confirmed; operating-rule-pending) | 4/4 instance saturation + density growth supports observation-strengthening, but operating-rule articulation incomplete (Application checklist as authored is observation-framing not operating-rule-codification per §13/§14/§15 precedent); strong-tier promotion deferred to Step 2 implementation arc if operating rule articulated | §18 dedicated section at Medium codification scope (full 4-subsection structure with operating-rule status note) |
+| 5 | Pre-fire audit pattern | Weak | **Weak** (confirmed) | 1 instance; below codification threshold | Folded into §16 ### Failure-mode signal OR brief §20 |
+| 6 | Self-first-then-reviewer | Weak | **Weak** (confirmed) | 1 instance; emerged at scoping cycle itself | Folded into §16 ### Failure-mode signal OR brief §20 |
 
 **Patches applied vs scoping doc §5.2**: candidate (4) §7 carry-forward density patched upward Medium → Strong per Fire 3(i) 4/4 instance saturation finding. All other tier labels confirmed.
 
@@ -303,7 +318,7 @@ The advisor-register anchor sub-pattern is observed within candidate (3); its sp
 - §15's existing principle covers the catch mechanism structurally
 - Cross-cycle accumulation pattern operating; if advisor-register anchor sub-pattern's catch rate exceeds general spec-vs-empirical-reality pattern's catch rate at a future cycle, separate emergence may surface at successor cycle scoping; not pre-staged at PHASE2C_10
 
-A potential 6th instance of candidate (3) was observed at this plan's Fire 3(ii): CLAUDE.md project-discipline notes section (line 459) cites METHODOLOGY_NOTES §1-§7 / §8 synthesis only, when actual file state is §1-§15. The instance fits candidate (3)'s pattern definition (cite remembered structure rather than verified structure) at the CLAUDE.md project-discipline notes register. **Disposition for the 6th instance**: registered within candidate (3) cumulative count (cumulative now 5-or-6 depending on whether the CLAUDE.md staleness counts as a within-cycle instance; adjudication of this sub-question deferred to Step 2 implementation arc — the CLAUDE.md staleness predates PHASE2C_10 implementation but surfaces at PHASE2C_10's drafting cycle via Fire 3(ii)). Tier holds at weak per §3.3 adjudication regardless of 5-or-6 disposition.
+A 6th instance of candidate (3) was observed at this plan's Fire 3(ii): CLAUDE.md project-discipline notes section (line 459) cites METHODOLOGY_NOTES §1-§7 / §8 synthesis only, when actual file state is §1-§15. The instance fits candidate (3)'s pattern definition (cite remembered structure rather than verified structure) at the CLAUDE.md project-discipline notes register. **Disposition for the 6th instance**: registered within candidate (3) cumulative count per dual-reviewer pass instance #5 adjudication (Claude advisor + ChatGPT both confirmed: same defect class regardless of source document). Cumulative count = 6 as locked at §3.3 evidence count. The CLAUDE.md staleness counts as a within-cycle PHASE2C_10 plan drafting instance (surfaces at PHASE2C_10's drafting cycle via Fire 3(ii)) regardless of when the staleness was originally introduced into CLAUDE.md. Tier holds at weak per §3.3 adjudication.
 
 CLAUDE.md project-discipline notes section update is NOT in PHASE2C_10 scope per §1.4 hard scope ("scope limited to METHODOLOGY_NOTES update from PHASE2C_9 + PHASE2C_10 scoping carry-forward candidates"); the CLAUDE.md staleness fix carries forward as a tracked observation for either successor cycle scoping consideration OR a separate one-line CLAUDE.md project-discipline notes refresh outside PHASE2C_10's implementation register.
 
@@ -398,8 +413,8 @@ Per the discipline's structural payoff: each of instances #1-#4 surfaced real de
 Evidence counts cited in §3.1-§3.6 are anchored at:
 
 - Candidate (1) anchor-prose-access discipline 4 instances: PHASE2C_9 §8.4 mandatory entry #4 standing instruction record + scoping doc §6.3 instance #4 disposition (verified at Fire 3 pre-drafting against scoping doc actual prose)
-- Candidate (2) procedural-confirmation defect class 2 instances: PHASE2C_9 Step 5 working-draft commit `e11e806` + Step 6 closeout assembly first commit (verified at scoping doc §5.2 strong-tier pairing)
-- Candidate (3) spec-vs-empirical-reality 5-6 cumulative: PHASE2C_9 §8.4 mandatory entry #2 (3 within-arc) + scoping doc §6.2 entries 4-5 (2 within-cycle) + Fire 3(ii) CLAUDE.md project-discipline notes staleness observation (1 within-cycle, disposition pending §4.3)
+- Candidate (2) procedural-confirmation defect class **3 instances**: PHASE2C_9 Step 5 working-draft commit `e11e806` + PHASE2C_9 Step 6 closeout assembly first commit (verified at scoping doc §5.2 strong-tier pairing) + PHASE2C_10 plan working-draft commit `d0222c7` (instance #3 surfaced at instance #5 dual-reviewer pass per §0.4)
+- Candidate (3) spec-vs-empirical-reality **6 cumulative across 3 cycles**: PHASE2C_9 §8.4 mandatory entry #2 (3 within-arc) + scoping doc §6.2 entries 4-5 (2 within-cycle) + Fire 3(ii) CLAUDE.md project-discipline notes staleness observation (1 within-cycle, dispositioned at instance #5 dual-reviewer pass per §4.3)
 - Candidate (4) §7 carry-forward density 4 instances: Fire 3(i) verification across PHASE2C_6 §10 + PHASE2C_7.1 §10 + PHASE2C_8.1 §10 + PHASE2C_9 §7 (verified at Fire 3(i) against actual closeout structure)
 - Candidate (5) pre-fire audit pattern 1 instance: PHASE2C_9 Step 6 sub-spec session-close 5 sequencing checks (verified at scoping doc §6.4 and CLAUDE.md Phase Marker entry for Step 6 sub-spec)
 - Candidate (6) self-first-then-reviewer 1 instance: PHASE2C_10 scoping cycle Q1 engagement mode reflection (verified at scoping doc §5.5 + §6.4)
@@ -444,7 +459,7 @@ PHASE2C_10 implementation arc covers METHODOLOGY_NOTES update only per §1.4 har
 
 Cross-cycle accumulation registers carrying forward from PHASE2C_10:
 
-- Candidate (3) spec-vs-empirical-reality cumulative count (5-or-6 pending §4.3 disposition): cross-cycle accumulation pattern operating; future-cycle adjudication of medium-tier promotion threshold per Option A flag preserved
+- Candidate (3) spec-vs-empirical-reality cumulative count = 6 across 3 cycles (locked at instance #5 dual-reviewer pass per §3.3 + §4.3 + §0.4): cross-cycle accumulation pattern operating; future-cycle adjudication of medium-tier promotion threshold per Option A flag preserved; operating-rule articulation question (whether candidate (3) is sub-class of §15 anchor-list empirical-verification) carries to Step 2 implementation arc
 - Candidate (5) pre-fire audit pattern (1 instance): cross-cycle accumulation pending; future-cycle recurrence at distinct surface raises codification candidacy
 - Candidate (6) self-first-then-reviewer (1 instance): cross-cycle accumulation pending; same pattern
 - CLAUDE.md project-discipline notes staleness fix: pending §4.3 disposition (PHASE2C_10 implementation scope inclusion vs successor cycle carry-forward)
