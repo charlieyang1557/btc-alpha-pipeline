@@ -2459,3 +2459,49 @@ Position supports closeout-reading flow; non-end positioning under-
 supports cross-cycle scoping access.
 
 ---
+
+---
+
+## §19 Spec-vs-empirical-reality finding pattern (Weak tier; observation-only + cross-cycle-pending)
+
+Spec / scoping / sub-spec documents may contain references to file
+structure, content, or state that diverge from empirical reality
+when authors or reviewers cite remembered structure rather than
+verified structure. The pattern is a per-cycle defect mode under
+the broader empirical-verification discipline §1 codifies; §19
+captures the cross-cycle observation register where pattern
+instances accumulate across cycles, distinct from per-cycle catch.
+
+Cumulative evidence: 6 instances across 3 PHASE2C cycles. PHASE2C_9
+mining-process retrospective arc carries 3 within-arc instances
+(per §8.4 mandatory-tracked-fix register entry #2). PHASE2C_10
+scoping cycle carries 2 within-cycle instances (entry 4 §1-§7 stale
+anchor; entry 5 §16-as-single-section framing; both originated from
+advisor-supplied framings referencing non-current file state).
+PHASE2C_10 plan drafting cycle carries 1 within-cycle instance
+(entry 6 CLAUDE.md project-discipline notes section staleness
+citing "§1-§7" when actual file state was §1-§15).
+
+Relationship to §1 / §15: §1 codifies empirical verification for
+factual and referential claims at the broader principle register;
+§15 codifies receiving-cycle, pre-drafting empirical verification
+for advisor-supplied numerical or structural anchors. §19 tracks
+the cross-cycle recurrence pattern where spec/scoping/sub-spec
+references to current file structure, content, or state diverge
+from empirical reality. It stands at the cumulative observation
+layer under §1's general empirical-verification surface, with §15
+covering the advisor-anchor subset at receiving-cycle catch.
+
+Status: Weak, observation-only, cross-cycle-pending. §19 adds no
+operating-rule codification beyond existing §1 / §15 coverage; for
+advisor-supplied structural anchors, the pre-drafting
+receiving-cycle verification rule remains §15's, while general
+factual/referential verification remains §1's. Medium-tier promotion is available at
+successor cycle when (a) cumulative count threshold reaches
+load-bearing register AND (b) operating-rule articulation
+crystallizes a discipline distinct from existing §1 / §15 coverage. Successor cycles
+encountering additional pattern instances should log at this
+register for tier-promotion adjudication at successor scoping or
+implementation register.
+
+---
