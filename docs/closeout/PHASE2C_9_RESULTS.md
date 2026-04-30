@@ -25,20 +25,275 @@ authoring. Step 1 deliverable populates §3 only.
 
 ## 1. Verdict
 
-*(deferred — Step 6 deliverable per
-[`PHASE2C_9_PLAN.md`](../phase2c/PHASE2C_9_PLAN.md) §5.6 and §8.
-Case determination (A / B / C with sub-register) emerges from §7
-mechanism-vs-observation comparison applied to §4 §5 §6 evidence
-maps. Per spec §4.4 one-and-only-one rule, exactly one case
-determination produced; multi-case findings prohibited.)*
+### 1.0 Case determination
+
+**Case C — sub-registers C.1 + C.2 + C.3 applicable; light-touch
+retrospective produced direct qualifying evidence at all three
+Case C sub-registers under spec §4.3 evidence-pattern register;
+§4.4 one-and-only-one rule applied to §7 evidence map outputs
+Case C with sub-register documentation per §8.0 derivation chain
++ §8.1 sub-register documentation.**
+
+§1.0 Case determination is the §8.0 mechanical-procedure output
+under sub-spec §1.1 framing decision (§4.4 applied as mechanical
+decision rule over threshold evaluations) + sub-spec §1.5
+evidence-comparison rule (rule 3 ambiguity-routing). §1 verdict
+reports §8 output; §1 does not perform the procedure (per sub-spec
+§2.1 + §1.2 verbatim-inheritance discipline).
+
+### 1.1 Per-case evidence summary
+
+Per sub-spec §2.2: §1.1 cites §7 evidence map per sub-register at
+descriptive register; reports qualifying-evidence + disqualifying-
+counter-evidence at descriptive register; cross-references §7.X.X
+for full evidence detail.
+
+**Case A evidence-base summary** (§7.0.5 cross-sub-register
+summary inherited verbatim per sub-spec §1.2): A.1 weak qualifying
++ comparable disqualifying; A.2 weak qualifying + strong
+disqualifying (Critic annotates only per §3.2.6 + CLAUDE.md hard
+rule; 0 critic_rejected lifecycle state at §4.0; ingest-layer-as-
+actual-gate out-of-scope per §3.1 reconstruction enumeration);
+A.3 weak qualifying + strong disqualifying (uniform 40/40/40/39/39
+generation distribution per §4.0; no budget exhaustion;
+CONTRACT BOUNDARY documents `multi_factor_combination` exclusion);
+A.4 direct qualifying (Observations 9 + 10 + composite hybrid
+quality observation align with spec §4.1 A.4 qualifying-evidence
+text per §7.0.4) + direct disqualifying (canonical AND-gate
+deliberately permissive at generation-cycle register; ingest-layer
+out-of-scope; one-of-198 cardinality consistent with B.3
+interpretation) + qualifying-vs-disqualifying balance interpretively
+ambiguous at light-touch register.
+
+**Case B evidence-base summary** (§7.1.4 cross-sub-register
+summary inherited verbatim): B.1 partial qualification (3 of 4
+Case A sub-registers satisfy "weaker-than-disqualifying"; A.4 sits
+at qualifying-vs-disqualifying boundary); B.2 + B.3 partial
+qualification at descriptive register (cohort_a_filtered = 0
+consistent with noise floor at descriptive register;
+volume_divergence theme distribution consistent with random
+allocation) + moderate disqualifying counter-evidence (lone-
+survivor specificity traces to specific mining-process inputs
+per §6.3 + §7.0.4 A.4 Observations 9 + 10 + 11; rigorous null-
+distribution comparison Q-9.A territory out-of-scope per §3.2.5).
+
+**Case C evidence-base summary** (§7.2.4 cross-sub-register
+summary inherited verbatim): C.1 direct qualifying (A.4
+qualifying-vs-disqualifying balance ambiguous at §7.0 register
+matching spec §4.3 C.1 "partial qualifying evidence for Case A
+... without clean Case A.x qualification"); C.2 direct qualifying
+(B.2 + B.3 mixed qualifying / counter-qualifying for lone-survivor
+specificity register at §7.1 register matching spec §4.3 C.2
+"mixed qualifying / counter-qualifying evidence for Case B");
+C.3 direct qualifying (multiple light-touch-register limitations
+across §7.0 + §7.1 cross-cutting register matching spec §4.3 C.3
+"light-touch register insufficient for discrimination").
+
+### 1.2 Falsifiability statement
+
+Per sub-spec §1.6 chain-falsifiability per-link-point structure +
+spec §6.2 falsifiability-statement discipline: PHASE2C_9 Case C
+determination would be falsified by changes to the §7 evidence
+map characterization that, when fed mechanically through §4.1 /
+§4.2 / §4.3 + §4.4 + §1.5 evidence-comparison rule, produce a
+different case determination. Three link-point counterfactuals
+applicable to Case C determination:
+
+**Link-point 1 — §7 characterization layer counterfactual**:
+structured re-examination of §3-§6 register at depth greater than
+light-touch that would, when fed into §7 evidence-map construction,
+produce a different §7 sub-register qualifying-vs-disqualifying
+characterization. Specifically: ingest-layer mechanism reconstruction
+(currently out-of-§3-scope per Q-9-01 tracked-fix register at
+§8.3) that would resolve the §7.0.4 A.4 sub-register
+"INTERPRETIVELY AMBIGUOUS" balance to either (a) "qualifying
+stronger than disqualifying" (Case A.4 clean qualification) or
+(b) "disqualifying stronger than qualifying" (Case B-direction at
+A.4); and resolve the §7.1.2 B.2 + §7.1.3 B.3 "mixed qualifying /
+counter-qualifying" pattern at lone-survivor specificity register
+to either (a) "tail-event consistent" (Case B.3 clean qualification)
+or (b) "mining-time-vs-evaluation-time gate misalignment" (Case
+A.4 clean qualification at structured re-examination depth).
+
+**Link-point 2 — §4.1 / §4.2 / §4.3 threshold layer
+counterfactual**: counterfactual change in threshold-criterion
+satisfaction at the §1.5 evidence-comparison rule application
+register. Specifically: §1.5 rule 3 ambiguity-routing canonical
+resolution (Reading (i) at §4.1 "stronger than" hard case per
+sub-spec §1.5) is the load-bearing rule pathway producing Case A
+NOT-cleanly-satisfied at A.4. If Reading (ii) were canonical
+instead of Reading (i), §1.5 rule 3 would route ambiguity to
+"NOT cleanly satisfied" symmetrically at Case B "weaker than"
+register but might route differently at §4.1 "stronger than"
+register; rigorous adjudication requires deeper retrospective
+register that would, when fed through §4.4, produce a different
+mechanical-rule output.
+
+**Link-point 3 — §4.4 multi-case-findings rule layer
+counterfactual**: counterfactual change in multi-case-findings
+determination. Specifically: if exactly one Case (A or B) were
+cleanly satisfied at §1 + §2 link-points, the §4.4 multi-case-
+findings rule would not trigger Case C; instead the cleanly-
+satisfied single Case would be the determination. The
+counterfactual requires Case A or Case B to satisfy clean
+qualification at all sub-registers (per §4.1 "at least ONE" or
+§4.2 "ALL" criterion respectively) without disqualifying counter-
+evidence stronger than qualifying.
+
+Per spec §6.2 specificity discipline + sub-spec §1.6 specificity
+requirement: each link-point counterfactual is specific (cites
+specific §7.X.X sub-register + specific counter-evidence /
+pattern / resolution mechanism + specific mechanical-rule
+pathway producing different determination), not gestural.
+
+### 1.3 Forward-pointer register
+
+Per sub-spec §3.3 + spec §4.4 Case C row allowed-register: §1.3
+forward-pointer register (cross-reference §8.2 for expanded
+register).
+
+Light-touch retrospective produced ambiguous evidence at
+sub-registers C.1 + C.2 + C.3. Post-Q-9.B scoping cycle's
+deliberation surface includes (a) structured re-examination at
+depth greater than light-touch (specifically: ingest-layer
+mechanism reconstruction per Q-9-01 tracked-fix register at §8.3;
+A.4 deliberate-staged-tightening-vs-defect adjudication; lone-
+survivor specificity register adjudication at A.4-vs-B.3
+register), (b) statistical-significance machinery to disambiguate
+noise-floor vs systematic-pattern at Q-9.A register (specifically:
+B.2 cohort_a_filtered = 0 noise-floor null-distribution test; B.3
+one-of-N tail-event-vs-systematic-pattern null-distribution test),
+(c) calibration-variation at Q-9.C register (specifically: A.4
+canonical AND-gate calibration variation; lone-survivor permissive
+AND-gate-acceptance-of--10.2%-return calibration variation), (d)
+other paths surfaced at scoping cycle.
+
+Per spec §4.4 + §7.2 cycle-boundary preservation: this
+forward-pointer register does NOT pre-name the successor scoping
+cycle's substantive direction; it surfaces the deliberation surface
+that the successor scoping cycle will adjudicate. Specific
+direction selection is not pre-committed at PHASE2C_9 closeout.
+
+### 1.4 Verdict register
+
+Per sub-spec §2.5: explicit "what this arc establishes" + "what
+this arc does not establish" framing per spec §3.2 hard scope
+boundaries + §9 risks-and-out-of-scope items.
+
+**What PHASE2C_9 establishes**:
+
+- §3 mechanism reconstruction at file:line citation register
+  (Proposer prompt + Critic gate + theme rotation; ingest-layer
+  out-of-scope)
+- §4 artifact-distribution audit at canonical-anchor cross-check
+  register (198 valid candidates verified at three independent
+  measurement points; per-theme valid_count distribution
+  40/40/40/39/39; total_actual_cost_usd = $2.30; lifecycle-state
+  distribution table)
+- §5 theme × pass-count cross-tab reproducing PHASE2C_8.1 §7.1
+  byte-for-byte across 5 themes × 4 regimes (theme totals
+  40/40/40/39/39 + per-regime totals 13/87/74/38; 4-axis
+  canonical-number cross-checks pass)
+- §6 lone-survivor walkthrough at end-to-end mining-process trace
+  register (hash `0845d1d7898412f2`; theme `volume_divergence`;
+  batch position 39; audit-only partition origin verified at
+  `wf_test_period_sharpe = -0.072 < 0.5`; engine lineage
+  `eb1c87f` / `wf-corrected-v1` cross-checked across 4 regimes)
+- §7 evidence maps for Case A.1-A.4 / B.1-B.3 / C.1-C.3
+  sub-registers (cumulative-11 carry-forward observations all
+  explicitly cited at §7.0.0 inventory + §7.0-§7.2 prose)
+- §8 case determination per §4.4 mechanical-procedure application
+  (Case C with sub-registers C.1 + C.2 + C.3 documented;
+  derivation chain at §8.0; sub-register documentation at §8.1)
+- §8.3 tracked-fix register entries surfaced (Q-9-01 ingest-layer
+  mechanism reconstruction; Q-9-02 evidence asymmetry that
+  produced Case C determination)
+- §8.4 methodology-codification candidates surfaced (5 entries;
+  4 mandatory cumulative + 1 emergent from Step 6 cycle; each
+  at status-register precision per Concern L disposition)
+
+**What PHASE2C_9 does not establish**:
+
+- New candidate generation or evaluation outputs (per §3.2.1 +
+  §3.2.2 hard scope boundaries)
+- Statistical-significance discrimination of noise-floor-vs-
+  systematic-pattern (Q-9.A territory; out-of-scope per §3.2.5)
+- Calibration-variation grid outputs (Q-9.C territory; out-of-scope
+  per §3.2.6)
+- Phase 3 progression scoping (Q-9.D territory; out-of-scope per
+  §3.2.7)
+- Mining-process redesign proposals (out-of-scope per §3.2.4)
+- Successor scoping cycle direction (per §4.4 + §7.2 + §7.4
+  anti-pre-naming discipline)
+- Ingest-layer mechanism reconstruction (out-of-scope per §3 +
+  §7.4 register-precision Obs 2 + Q-9-01 tracked-fix register;
+  structured re-examination scope)
+- Resolution of A.4 qualifying-vs-disqualifying balance ambiguity
+  at deeper register than light-touch (deferred per §1.2
+  link-point 1 falsifiability counterfactual)
 
 
 ## 2. Scope and methodology
 
-*(deferred — Step 6 deliverable. Mirrors
+Per sub-spec §3 + §4 + spec §8 canonical structure §2 sub-section
+enumeration: §2.0 arc setup + §2.1 input universe + §2.2 hard
+scope boundaries + §2.3 pre-registered exit conditions + §2.4
+verification framework. Mirror of PHASE2C_9_PLAN.md §2 + §3 + §4
++ §6 at canonical anchor register; cross-references at §9.0.
+
+### 2.0 Arc setup
+
+PHASE2C_9 implementation arc per
+[`PHASE2C_9_PLAN.md`](../phase2c/PHASE2C_9_PLAN.md) (commit
+`8aa1c66`) + Step 6 sub-spec
+[`PHASE2C_9_STEP6_SUBSPEC.md`](../phase2c/PHASE2C_9_STEP6_SUBSPEC.md)
+(commit `d1657bd`). Six-step sequential gating: Step 1 mechanism
+reconstruction (sealed `13be4ff`) → Step 2 artifact-distribution
+audit (sealed `777ea3c`) → Step 3 theme × pass-count cross-tab
+(sealed `c3a2f20`) → Step 4 lone-survivor walkthrough (sealed
+`1d069ba`) → Step 5 §7 evidence maps (sealed `d548ea2`) → Step 6
+case determination + closeout assembly (this commit cycle).
+Pre-fire Concern N audit CLEAN at session-close (5 sequencing
+checks pass against verbatim sub-spec §5.2 prose).
+
+### 2.1 Input universe
+
+Per
 [`PHASE2C_9_PLAN.md`](../phase2c/PHASE2C_9_PLAN.md) §2 input
-universe + §3 hard scope boundaries + §4 pre-registered exit
-conditions + §6 verification framework.)*
+universe enumeration: §2.1 code artifacts (Proposer + Critic + theme
+rotation source); §2.2 batch artifact files (canonical batch
+`b6fcbf86-4d57-4d1f-ae41-1778296b1ae9`); §2.3 evaluation artifact
+files (PHASE2C_6 / PHASE2C_7.1 / PHASE2C_8.1 outputs); §2.4
+canonical-number anchors (PHASE2C_8.1 closeout-derived); §2.5
+operational themes (5 themes in operational rotation;
+`multi_factor_combination` excluded per CONTRACT BOUNDARY).
+
+### 2.2 Hard scope boundaries
+
+Per
+[`PHASE2C_9_PLAN.md`](../phase2c/PHASE2C_9_PLAN.md) §3 in-scope
+✔ + out-of-scope ❌ enumeration. Bright-line summary table at
+§3.3.
+
+### 2.3 Pre-registered exit conditions
+
+Per
+[`PHASE2C_9_PLAN.md`](../phase2c/PHASE2C_9_PLAN.md) §4 Case A.1-A.4
+/ §4.2 B.1-B.3 / §4.3 C.1-C.3 sub-register evidence-pattern
+register + §4.4 one-and-only-one rule. §4 case definitions frozen
+at spec commit; mid-arc rewrite forbidden per spec §4
+pre-registration discipline.
+
+### 2.4 Verification framework
+
+Per
+[`PHASE2C_9_PLAN.md`](../phase2c/PHASE2C_9_PLAN.md) §6
+verification framework: §6.1 evidence-mapping discipline; §6.2
+falsifiability-statement discipline; §6.3 canonical-number
+cross-checks; §6.4 cycle-boundary-preservation language audit;
+§6.5 independent-recompute gate (light-touch register; no new
+canonical numbers; no new test required). §9.2 §9 verification
+framework audit checklist at final-commit register.
 
 
 ---
@@ -3207,20 +3462,681 @@ territory) deliverable.
 
 ## 8. Case determination (Step 6 deliverable)
 
-*(deferred — Step 6 deliverable per
-[`PHASE2C_9_PLAN.md`](../phase2c/PHASE2C_9_PLAN.md) §5.6 + §8
-canonical structure. Applies §4.4 one-and-only-one rule to §7
-evidence maps; produces single Case A / B / C determination with
-sub-register; surfaces tracked-fix register entries +
-methodology-codification candidates.)*
+This section produces the PHASE2C_9 case determination per spec
+§4.4 one-and-only-one rule applied to the §7 evidence maps
+(sealed at `d548ea2` Step 5 final state) under the locked Step 6
+sub-spec §1.5 evidence-comparison rule (sub-spec sealed at
+`d1657bd`). Per sub-spec §1.1 framing decision: §4.4 is applied
+as **mechanical decision rule over threshold evaluations** with
+no discretionary synthesis at case-selection layer; bounded
+comparison only against §7's already-characterized
+qualifying-vs-disqualifying register. §8 author inherits §7
+characterization verbatim per sub-spec §1.2; does NOT
+re-characterize.
+
+### 8.0 Determination
+
+**Case determination: Case C with sub-registers C.1 + C.2 + C.3
+documented.**
+
+Derivation chain (per sub-spec §3.1 §8.0 format requirement: §7.X
+cross-sub-register summary tables + §4.1/§4.2/§4.3 determination
+criteria + §4.4 mechanical rule application + determination
+output):
+
+**Step 1 — §7 cross-sub-register summary tables (verbatim
+inheritance per sub-spec §1.2)**:
+
+§7.0.5 Case A cross-sub-register summary (verbatim):
+
+| sub-register | qualifying evidence weight | disqualifying counter-evidence weight | net qualification at light-touch register |
+|---|---|---|---|
+| A.1 | weak | comparable to weak qualifying | NOT cleanly satisfied |
+| A.2 | weak (Observations 6 / 10 / 11 map weakly) | strong (Critic annotates only; 0 critic_rejected; ingest-layer-as-actual-gate out-of-scope) | NOT cleanly satisfied |
+| A.3 | weak (modulus mismatch is design-as-intended; per-regime divergence maps more to B.2) | strong (uniform generation-side distribution; no budget exhaustion; CONTRACT BOUNDARY documents exclusion) | NOT cleanly satisfied |
+| A.4 | direct (Observations 9 + 10 + 11 align with spec §4.1 A.4 text) | direct (canonical AND-gate is deliberately permissive; ingest-layer out-of-scope; one-of-198 consistent with B.3) | INTERPRETIVELY AMBIGUOUS at light-touch |
+
+§7.1.4 Case B cross-sub-register summary (verbatim):
+
+| sub-register | qualifying evidence weight | disqualifying counter-evidence weight | net qualification at light-touch register |
+|---|---|---|---|
+| B.1 | partial (3 of 4 Case A sub-registers satisfy weaker-than-disqualifying; A.4 sits at boundary) | strong at A.4 register | PARTIALLY satisfied (3 of 4 sub-registers) |
+| B.2 | moderate at descriptive register | moderate (lone-survivor specificity; rigorous null-test out-of-scope) | NOT cleanly satisfied at significance-test register; partially at descriptive |
+| B.3 | moderate at descriptive register | moderate (lone-survivor specificity; rigorous tail-event-vs-systematic out-of-scope) | NOT cleanly satisfied at significance-test register; partially at descriptive |
+
+§7.2.4 Case C cross-sub-register summary (verbatim):
+
+| sub-register | qualifying evidence at descriptive register | applicable to §7 evidence base? |
+|---|---|---|
+| C.1 | direct (A.4 qualifying-vs-disqualifying balance ambiguous) | YES — §7.0 A.4 register |
+| C.2 | direct (B.2 + B.3 mixed qualifying / counter-qualifying for lone-survivor specificity register) | YES — §7.1 B.2 + B.3 register |
+| C.3 | direct (multiple light-touch-register limitations across §7.0 + §7.1) | YES — cross-cutting |
+
+**Step 2 — §4.1 / §4.2 / §4.3 determination criteria (verbatim)**:
+
+§4.1 Case A determination criterion (verbatim from
+[`PHASE2C_9_PLAN.md`](../phase2c/PHASE2C_9_PLAN.md) §4.1): *"at
+least ONE of A.1 / A.2 / A.3 / A.4 satisfied with concrete evidence
+... that meets the qualifying criteria; AND no disqualifying
+counter-evidence surfaces stronger than the qualifying evidence;
+AND the identified defect is plausibly addressable."*
+
+§4.2 Case B determination criterion (verbatim): *"ALL of B.1, B.2,
+B.3 satisfied with concrete evidence; AND no disqualifying
+counter-evidence surfaces."*
+
+§4.3 Case C determination criterion (verbatim): *"any ONE of C.1
+/ C.2 / C.3 applicable; AND closeout document explicitly identifies
+which sub-register (C.1 / C.2 / C.3) the determination falls in;
+AND tracked-fix register entry surfaces the specific evidence
+asymmetry that produced the Case C determination."*
+
+**Step 3 — §1.5 evidence-comparison rule application (per sub-spec
+§1.5)**:
+
+Per sub-spec §1.5 rule 1 (use ONLY §7 evidence) + rule 2 (NO new
+analysis beyond §7 descriptions) + rule 3 (ambiguity → NOT clean
+qualification):
+
+Case A application:
+- A.1: qualifying weak; disqualifying comparable (per §7.0.5
+  table). §1.5 rule 3 ambiguity-routing applies: comparable
+  qualifying-vs-disqualifying → ambiguity at threshold register
+  → NOT cleanly satisfied. §4.1 "satisfied with concrete evidence
+  ... that meets the qualifying criteria" not met (qualifying is
+  weak, not concrete-and-meeting-criteria). **A.1 NOT cleanly
+  satisfied.**
+- A.2: qualifying weak; disqualifying strong (per §7.0.5 table).
+  Disqualifying stronger than qualifying → §4.1 "no disqualifying
+  counter-evidence stronger than qualifying" criterion FAILS.
+  **A.2 NOT cleanly satisfied.**
+- A.3: qualifying weak; disqualifying strong (per §7.0.5 table).
+  §4.1 FAILS at "stronger than" register. **A.3 NOT cleanly
+  satisfied.**
+- A.4: qualifying direct; disqualifying direct; balance
+  INTERPRETIVELY AMBIGUOUS (per §7.0.5 table). §1.5 rule 3
+  ambiguity-routing applies: balance ambiguity → §4.1 "stronger
+  than" register cannot be established directionally → NOT clean
+  qualification. **A.4 NOT cleanly satisfied per §1.5 rule 3.**
+
+→ **Case A NOT satisfied** per §4.1 "at least ONE of A.1 / A.2 /
+A.3 / A.4 satisfied" criterion (no A.x cleanly satisfied at §7
+evidence base under §1.5 rule application).
+
+Case B application:
+- B.1: requires "All four Case A categories' qualifying evidence
+  absent OR present-but-weaker-than-disqualifying-counter-evidence."
+  A.1 / A.2 / A.3 satisfy "weaker-than-disqualifying" (per §7.0.5
+  table). A.4 qualifying is direct (not weaker); balance
+  INTERPRETIVELY AMBIGUOUS → §1.5 rule 3 routes ambiguity to NOT
+  satisfying clean qualification at "weaker-than" register
+  symmetrically. **B.1 NOT cleanly satisfied** because A.4 ambiguity
+  does not establish weaker-than-disqualifying.
+- B.2: §7.1.4 table reports moderate qualifying + moderate
+  disqualifying (lone-survivor specificity; rigorous null-test
+  out-of-scope). §4.2 requires "no disqualifying counter-evidence
+  surfaces" — disqualifying counter-evidence surfaces at B.2.
+  **B.2 NOT cleanly satisfied.**
+- B.3: §7.1.4 table reports moderate qualifying + moderate
+  disqualifying (lone-survivor specificity; rigorous
+  tail-event-vs-systematic out-of-scope). §4.2 "no disqualifying"
+  fails. **B.3 NOT cleanly satisfied.**
+
+→ **Case B NOT satisfied** per §4.2 "ALL of B.1, B.2, B.3
+satisfied with concrete evidence; AND no disqualifying
+counter-evidence surfaces" criterion. B.1 NOT cleanly satisfied
+alone is sufficient for Case B failure (per §4.2 "ALL satisfied"
+criterion: any single sub-register failure produces Case B
+failure). B.2 and B.3 derivation above included for completeness
+of derivation chain (each independently fails the §4.2 "no
+disqualifying counter-evidence surfaces" criterion); completeness
+is auditing register, not necessity register.
+
+Case C application:
+- C.1: §7.2.4 table reports direct qualifying matching spec §4.3
+  C.1 evidence-pattern text ("Partial qualifying evidence for
+  Case A. One or more Case A categories show 'weak qualifying
+  evidence' (suggestive but not concretely demonstrable defect)
+  without clean Case A.x qualification"). §7.0.5 documents A.4
+  qualifying-vs-disqualifying balance interpretively ambiguous
+  → matches "without clean Case A.x qualification" pattern.
+  **C.1 applicable.**
+- C.2: §7.2.4 table reports direct qualifying matching spec §4.3
+  C.2 evidence-pattern text ("Mixed qualifying / counter-qualifying
+  evidence for Case B. Evidence is consistent with Case B at
+  population-property register but inconsistent at lone-survivor
+  or theme-level register"). §7.1.2 + §7.1.3 prose surfaces
+  exactly this pattern (B.2 + B.3 partial qualifying at descriptive
+  register; lone-survivor specificity at disqualifying-counter
+  register). **C.2 applicable.**
+- C.3: §7.2.4 table reports direct qualifying matching spec §4.3
+  C.3 evidence-pattern text ("Light-touch register insufficient
+  for discrimination"). §7.2.3 prose documents multiple
+  light-touch-register limitations (A.1 / A.2 / A.4 / B.2 / B.3 /
+  one-of-198 sample size) at cross-cutting register.
+  **C.3 applicable.**
+
+→ **Case C satisfied** at all three sub-registers C.1 + C.2 + C.3
+per §4.3 "any ONE of C.1 / C.2 / C.3 applicable" criterion.
+
+**Step 4 — §4.4 one-and-only-one rule application**:
+
+§4.4 verbatim: *"PHASE2C_9 closeout produces exactly one case
+determination (A, B, or C). Multi-case findings (e.g., 'Case A for
+Proposer prompts; Case B for theme rotation') are explicitly
+prohibited at closeout register; if the evidence base supports
+multi-case findings, the determination is Case C with sub-registers
+documented."*
+
+Mechanical-rule input:
+- Case A: NOT satisfied (no A.x cleanly satisfied)
+- Case B: NOT satisfied (B.1/B.2/B.3 each fail)
+- Case C: satisfied at C.1 + C.2 + C.3 sub-registers
+
+Mechanical-rule output: **Case C with sub-registers C.1 + C.2 +
+C.3 documented**. §4.4 one-and-only-one rule satisfied (exactly
+ONE case determination = Case C). §4.3 sub-register documentation
+requirement satisfied (closeout document explicitly identifies
+applicable C.x sub-registers). §4.3 tracked-fix register requirement
+satisfied (per §8.3 below: Q-9-02 evidence-asymmetry entry).
+
+### 8.1 Sub-register documentation
+
+Per sub-spec §3.2: §8.1 sub-register documentation required for
+Case C; format = cite §7 sub-register evidence map directly +
+report qualifying-vs-disqualifying register summary verbatim from
+§7.X.X prose; per sub-spec §1.2 verbatim-inheritance scope, ≤2
+sentences per sub-register characterization with explicit
+attribution.
+
+**C.1 sub-register documentation** (per §7.2.1 evidence-base
+summary):
+
+Per §7.2.1 C.1 sub-register evidence-base summary (verbatim
+quoted, ≤2 sentences): *"qualifying evidence is **direct** at
+descriptive register — §7.0 A.4 sub-register evidence-base shows
+the spec §4.3 C.1 evidence-pattern register ('partial qualifying
+evidence for Case A ... without clean Case A.x qualification') at
+the qualifying-vs-disqualifying boundary. Boundary disqualifying
+counter-evidence is conditional on structured re-examination depth
+resolution, which is out-of-light-touch-scope."* C.1 applies at
+PHASE2C_9 evidence base because §7.0.5 A.4 sub-register
+qualifying-vs-disqualifying balance is interpretively ambiguous at
+light-touch register, matching spec §4.3 C.1 "partial qualifying
+evidence for Case A" register.
+
+**C.2 sub-register documentation** (per §7.2.2 evidence-base
+summary):
+
+Per §7.2.2 C.2 sub-register evidence-base summary (verbatim
+quoted, ≤2 sentences): *"qualifying evidence is **direct** at
+descriptive register — §7.1 Case B evidence-base shows the spec
+§4.3 C.2 evidence-pattern register ('mixed qualifying /
+counter-qualifying evidence for Case B'). Boundary disqualifying
+counter-evidence is conditional on structured re-examination depth
+resolution, out-of-light-touch-scope."* C.2 applies at PHASE2C_9
+evidence base because §7.1.2 B.2 + §7.1.3 B.3 sub-register
+evidence shows mixed qualifying / counter-qualifying at
+population-property vs lone-survivor-specificity register pattern,
+matching spec §4.3 C.2 evidence-pattern text.
+
+**C.3 sub-register documentation** (per §7.2.3 evidence-base
+summary):
+
+Per §7.2.3 C.3 sub-register evidence-base summary (verbatim
+quoted, ≤2 sentences): *"qualifying evidence is **direct** at
+descriptive register — §7.0 + §7.1 evidence-base summaries
+explicitly document light-touch-register limitations at multiple
+sub-registers; the cross-cutting pattern of 'evidence at descriptive
+register; rigorous discrimination out-of-scope' matches spec §4.3
+C.3 evidence-pattern register descriptively."* C.3 applies at
+PHASE2C_9 evidence base because §7.0 + §7.1 evidence-base summaries
+document multiple light-touch-register limitations (A.1 prompt-side
+defect vs LLM-property-independent-of-prompt; A.2 Critic-as-gate
+precondition does not hold; A.4 deliberate-staged-tightening-vs-defect
+adjudication unresolved; B.2 + B.3 noise-floor consistency at
+descriptive register only; one-of-198 sample-size limitation),
+cross-cutting pattern matches spec §4.3 C.3 register.
+
+### 8.2 Forward-pointer register
+
+Per sub-spec §3.3 + spec §4.4 Case C row allowed-register: *"Light-
+touch retrospective produced ambiguous evidence at sub-register
+C.X; post-Q-9.B scoping cycle's deliberation surface includes (a)
+structured re-examination at depth greater than light-touch, (b)
+statistical-significance machinery to disambiguate noise-floor vs
+systematic-pattern at Q-9.A register, (c) calibration-variation at
+Q-9.C register, (d) other paths surfaced at scoping cycle."*
+
+Forward-pointer register at PHASE2C_9 closeout:
+
+Light-touch retrospective produced ambiguous evidence at
+sub-registers C.1 + C.2 + C.3 (per §8.0 derivation chain + §8.1
+sub-register documentation). Post-Q-9.B scoping cycle's
+deliberation surface includes (a) structured re-examination at
+depth greater than light-touch (specifically: ingest-layer
+mechanism reconstruction surfaced at Q-9-01 tracked-fix register
+per §8.3; A.4 deliberate-staged-tightening-vs-defect adjudication;
+lone-survivor specificity register adjudication at A.4-vs-B.3
+register), (b) statistical-significance machinery to disambiguate
+noise-floor vs systematic-pattern at Q-9.A register (specifically:
+B.2 cohort_a_filtered = 0 noise-floor null-distribution test; B.3
+one-of-N tail-event-vs-systematic-pattern null-distribution test),
+(c) calibration-variation at Q-9.C register (specifically: A.4
+canonical AND-gate calibration variation; lone-survivor permissive
+AND-gate-acceptance-of--10.2%-return calibration variation), (d)
+other paths surfaced at scoping cycle.
+
+Per spec §4.4 + §7.2 cycle-boundary preservation: this
+forward-pointer register does NOT pre-name the successor scoping
+cycle's substantive direction; it surfaces the deliberation surface
+that the successor scoping cycle will adjudicate. Specific
+direction selection is not pre-committed at PHASE2C_9 closeout.
+
+### 8.3 Tracked-fix register entries surfaced
+
+Per sub-spec §3.4: §8.3 tracked-fix register entries with Q-9-N
+numbering convention (PHASE2C_9 arc, sequential N starting from
+1). Default §8.3 enumerated list register; PHASE2C_8.1 §10
+separate-section precedent not invoked at PHASE2C_9 closeout
+(entry count + register at §8.3 sub-section scope).
+
+**Q-9-01 — Ingest-layer mechanism reconstruction as structured
+re-examination scope**.
+
+Description: orchestrator ingest layer (`agents/orchestrator/ingest.py`,
+which performs the actual lifecycle-state assignment per §3.2.6
+"Critic annotates only — lifecycle-state assignment is the
+orchestrator ingest layer's responsibility") is NOT in Step 1 §3
+reconstruction scope. PHASE2C_9 §3 reconstruction covers Proposer
+prompt + Critic gate + theme rotation at code register; ingest-
+layer mechanism reconstruction is out-of-scope per spec §3.1
+in-scope enumeration + spec §3.2.4 NO mining-process redesign.
+The cross-cutting light-touch-register limitation surfaces at A.2
+(Critic-as-gate precondition does not hold; actual gate is ingest
+layer) + A.4 (deliberate-staged-tightening-vs-defect adjudication
+references ingest-layer mechanism) + C.3 sub-register
+(cross-cutting limitation register).
+
+Surface origin: §7.4 register-precision Obs 2 (Step 5 §7.4
+deliverable summary) + §7.0.2 A.2 sub-register evidence base +
+§7.0.4 A.4 sub-register evidence base + §7.2.3 C.3 sub-register
+evidence base.
+
+Resolution disposition: deferred to follow-up structured
+re-examination arc (NOT pre-named per spec §7.2 anti-pre-naming
+discipline; "this is tracked-fix register, not pre-named
+successor-arc"). The successor scoping cycle's deliberation surface
+includes ingest-layer mechanism reconstruction as one of multiple
+paths per §8.2 forward-pointer register; specific path selection
+is not pre-committed at PHASE2C_9 closeout.
+
+**Q-9-02 — Evidence asymmetry that produced Case C determination**.
+
+Description (per spec §4.3 *"tracked-fix register entry surfaces
+the specific evidence asymmetry that produced the Case C
+determination"* requirement; content authored against §8 fresh per
+sub-spec §3.4 Concern K slot-vs-content discipline):
+
+The specific evidence asymmetry that produced the Case C
+determination at PHASE2C_9 §8.0 derivation chain operates at three
+sub-register pathways per §8.1 documentation:
+
+- **C.1 evidence asymmetry**: §7.0.4 A.4 sub-register direct
+  qualifying evidence (Observations 9 + 10 + the composite hybrid
+  quality observation per §7.0.4 matching spec §4.1 A.4 qualifying-
+  evidence text) interacts with §7.0.4 A.4 direct disqualifying
+  counter-evidence (canonical AND-gate deliberately permissive at
+  generation-cycle register; ingest-layer out-of-scope; one-of-198
+  cardinality consistent with B.3 interpretation). Asymmetry: §7
+  evidence map characterizes the qualifying-vs-disqualifying balance
+  as "INTERPRETIVELY AMBIGUOUS at light-touch register" — neither
+  qualifying nor disqualifying directionally established stronger
+  at light-touch register. Per §1.5 evidence-comparison rule 3
+  (ambiguity-routing): ambiguity NOT cleanly satisfying §4.1
+  "stronger than" comparison register; §4.1 fails at A.4 → Case A
+  not satisfied at A.4 sub-register. The ambiguity is the C.1
+  evidence-pattern surface.
+- **C.2 evidence asymmetry**: §7.1.2 B.2 + §7.1.3 B.3 sub-register
+  evidence base shows lone-survivor specificity at disqualifying-
+  counter register (audit-only origin per §6.3 + single-trade-margin
+  filter exclusion per §7.0.4 A.4 Obs 9 + permissive AND-gate
+  acceptance of -10.2% return per §7.0.4 A.4 Obs 10 + theme
+  alignment at thin-theme register per §7.0.4 A.4 Obs 11). The
+  specificity register interacts with §7.1 Case B population-property
+  register (cohort_a_filtered = 0 + per-regime pass-rate cross-tab
+  + theme-distributional 40/40/40/39/39 per §7.1.2 B.2). Asymmetry:
+  evidence is consistent with Case B at population-property register
+  but inconsistent at lone-survivor specificity register — the
+  specificity is mining-process-input-specific (THIN_THEMES at
+  THEME_HINTS; trade-count filter threshold; AND-gate criteria),
+  not random-pattern-consistent. The asymmetry is the C.2 evidence-
+  pattern surface.
+- **C.3 evidence asymmetry**: cross-cutting light-touch-register
+  limitation at A.1 (prompt-side defect vs LLM-property-
+  independent-of-prompt interpretation requires structured
+  re-examination at depth greater than light-touch) + A.2
+  (Critic-as-gate precondition does not hold; actual gate is
+  ingest layer per §3.2.6 + CLAUDE.md hard rule, out of §3
+  reconstruction scope) + A.4 (deliberate-staged-tightening-vs-
+  defect adjudication unresolved at light-touch) + B.2 + B.3
+  (noise-floor consistency at descriptive register only; rigorous
+  null-distribution comparison Q-9.A territory out-of-scope per
+  §3.2.5) + one-of-198 sample-size limitation. Asymmetry: per
+  spec §4.3 C.3 evidence-pattern text (verbatim quoted): *"Light-
+  touch retrospective produces evidence that suggests Case A or
+  Case B but at strength below the qualification threshold; the
+  honest read is 'structured re-examination would be needed to
+  discriminate.'"* — at PHASE2C_9 §7 evidence base, evidence at
+  descriptive register matches Case A or Case B sub-register
+  patterns at descriptive-register-only level; rigorous
+  discrimination requires structured re-examination at depth
+  greater than light-touch + statistical-significance machinery +
+  ingest-layer mechanism reconstruction. The descriptive-vs-
+  rigorous-discrimination asymmetry is the C.3 evidence-pattern
+  surface.
+
+Surface origin: §8.0 derivation chain + §8.1 sub-register
+documentation + §1.5 evidence-comparison rule application produced
+Case C output via three independent sub-register pathways
+(C.1 + C.2 + C.3); the asymmetry per sub-register is the spec §4.3
+required asymmetry documentation.
+
+Resolution disposition: documentation-register; closeout-of-arc
+completion. Cross-reference §8.2 forward-pointer register for
+deliberation-surface options at successor scoping cycle.
+
+### 8.4 Methodology-codification candidates surfaced
+
+Per sub-spec §3.5 + §3.5 status-register precision per Concern L
+disposition: four mandatory cumulative entries from Step 5 close
+carry-forward + optional emergent entries from Step 6 cycle.
+Format: description + surface origin + codification register +
+status per Concern L precision.
+
+**Mandatory methodology-codification candidate entries (4
+cumulative; NOT tracked-fix entries — distinct from §8.3 register
+per ChatGPT round-3 §3.5 disambiguation patch)**:
+
+1. **Procedural-confirmation defect class instance #2** at advisor
+   register.
+
+   Description: Step 5 first-commit pattern with "verified on
+   record" against own self-resolution surfaced procedural-
+   confirmation defect class at advisor register; corrected via
+   anchor-prose-access discipline standing instruction codification
+   at Step 5 close.
+
+   Surface origin: Step 5 dual-reviewer cycle + advisor substantive
+   prose-access pass at Step 5 close + advisor process-pushback
+   register.
+
+   Codification register: §16+ METHODOLOGY_NOTES section candidate
+   (procedural-confirmation defect class identification +
+   corrective standing instruction codification pattern).
+
+   **Status**: operationalized (correction operating throughout
+   Step 5 follow-up patch + Step 6 sub-spec drafting cycle + Step
+   6 fire authoring cycle) + codification-pending (canonical
+   METHODOLOGY_NOTES update arc).
+
+2. **Spec-vs-empirical-reality within-cycle count at 3**.
+
+   Description: PHASE2C_10 pre-naming caught at PHASE2C_9 spec
+   drafting + Stage 2c→Stage 2d attribution patched at Step 2 +
+   16-char-vs-64-char hash spec divergence — three within-cycle
+   spec-vs-empirical-reality findings during PHASE2C_9 arc.
+   Cross-cycle accumulation pending.
+
+   Surface origin: cross-arc carry-forward observation at advisor
+   register from Step 4 → Step 5 → Step 6 sub-spec drafting cycles.
+
+   Codification register: §16+ METHODOLOGY_NOTES section candidate
+   (spec-vs-empirical-reality finding pattern; cross-cycle
+   threshold for codification).
+
+   **Status**: observation-only + cross-cycle-pending (within-cycle
+   count alone below codification threshold; cross-cycle
+   accumulation register required to reach threshold).
+
+3. **Cumulative §7 carry-forward register at 11 observations
+   stress-tested §7 scope at Step 5**.
+
+   Description: Step 5 §7 evidence-mapping deliverable consumed
+   11 cumulative carry-forward observations from Steps 1-4;
+   selection-criterion question (do all 11 enter §7 evidence
+   maps?) resolved as "all 11 enter" by spec-silence +
+   inclusion-discipline reasoning. Documentation pattern (§7.0
+   selection-criterion documentation + §7.0.0 inventory table
+   with per-observation source-step + evidence-anchor + applicable
+   sub-register columns) reusable for future N-observation
+   evidence-mapping deliverables.
+
+   Surface origin: Step 5 §7 working draft authoring cycle +
+   advisor register-precision flag at Step 5 close.
+
+   Codification register: §16+ METHODOLOGY_NOTES section candidate
+   (N-observation evidence-mapping deliverable selection-criterion
+   + inventory-table documentation pattern).
+
+   **Status**: observation-only + codification-candidate
+   (selection-criterion documentation pattern operationalized at
+   §7.0 introduction + §7.0.0 inventory table; reusable pattern
+   surfaced; codification candidate within-cycle).
+
+4. **Anchor-prose-access discipline at multi-hundred-line
+   interpretive deliverables**.
+
+   Description: standing instruction codified at Step 5 close —
+   when advisor flags substantive concerns from a structural
+   summary, the next operational step is paste relevant prose
+   excerpts (load-bearing sub-registers + §X.0 introductions +
+   §X.3-equivalent cross-case summaries + §X.4-equivalent
+   deliverable summaries + any sub-register named specifically),
+   advisor does substantive pass, THEN commit. Cheap on
+   documentation register; expensive when an unfound defect ships
+   sealed. The "verified on record" labeling against Claude Code's
+   own self-resolution (Step 5 first-commit pattern) is the
+   procedural-confirmation defect class at advisor register;
+   discipline does not regress.
+
+   Surface origin: Step 5 close advisor process-pushback register
+   + Step 5 follow-up patch cycle + Step 6 sub-spec drafting cycle
+   (instance #2 of standing instruction) + Step 6 fire dual-reviewer
+   pass cycle (instance #3 of standing instruction).
+
+   Codification register: §16+ METHODOLOGY_NOTES section candidate
+   (anchor-prose-access discipline standing instruction at
+   multi-hundred-line interpretive deliverables).
+
+   **Status**: operationalized (standing instruction operating at
+   Step 5 follow-up + Step 6 sub-spec drafting cycle + Step 6 fire
+   authoring + dual-reviewer pass cycle; instance #1 + instance #2
+   + instance #3 corrections completed) + codification-pending
+   (canonical METHODOLOGY_NOTES §16+ section candidate).
+
+**Optional emergent entries from Step 6 cycle**:
+
+Per Concern M acknowledgment carry-forward at sub-spec §3.5: format
+matches the four mandatory entries (description + surface origin +
+codification register + status); emergent entries authored at §8
+closeout-cycle by §8 author; no pre-staging.
+
+5. **Pre-fire-audit pattern at session-close-of-prior-session**.
+
+   Description: when next operational fire is interpretive-load-
+   bearing, doing pre-fire advisor audit at session-close-of-prior-
+   session (rather than fire-start-of-fire-session) precludes
+   mid-fire sequencing pauses. Step 5 close → Step 6 sub-spec
+   drafting cycle demonstrated this pattern (Concern N §5.2
+   sequencing audit at session-close took 5 checks against ~90
+   lines of prose; ~5 minutes of work; precluded fire-time pause
+   if any of the five had been off). Pattern reusable when bandwidth
+   at session-close allows; not applicable when session-close hits
+   resource limits.
+
+   Surface origin: Step 6 sub-spec drafting cycle session-close
+   close + advisor pre-fire-audit-pattern observation at
+   session-close-of-prior-session register.
+
+   Codification register: §16+ METHODOLOGY_NOTES section candidate
+   (pre-fire-audit-pattern at session-close discipline; conditional
+   on bandwidth availability).
+
+   **Status**: observation-only + cross-cycle-pending (pattern
+   operationalized once at Step 5 close → Step 6 sub-spec;
+   reusable but bandwidth-conditional; codification candidate
+   pending cross-cycle replication; status aligns with mandatory
+   entry #2 register precedent — within-cycle observation alone
+   below codification threshold; cross-cycle accumulation register
+   required).
 
 
 ## 9. Cross-references and verification
 
-*(deferred — Step 6 deliverable. PHASE2C_9_PLAN.md cross-references
-+ PHASE2C_8.1 canonical anchor cross-references + verification
-framework audit, per
-[`PHASE2C_9_PLAN.md`](../phase2c/PHASE2C_9_PLAN.md) §8.)*
+Per sub-spec §4 §9 sub-section enumeration: §9.0 PHASE2C_9_PLAN.md
+cross-references + §9.1 PHASE2C_8.1 canonical anchor cross-references
++ §9.2 verification framework audit (evidence-mapping; falsifiability;
+canonical-number; cycle-boundary language).
+
+### 9.0 PHASE2C_9_PLAN.md cross-references
+
+PHASE2C_9_RESULTS.md mirrors / applies the following PHASE2C_9_PLAN.md
+sections (commit `8aa1c66`):
+
+| PHASE2C_9_PLAN.md section | PHASE2C_9_RESULTS.md mirror / application |
+|---|---|
+| §1 Scope and verdict | §1 Verdict |
+| §2 Input universe | §2.1 Input universe |
+| §3 Hard scope boundaries | §2.2 Hard scope boundaries |
+| §4 Pre-registered exit conditions | §2.3 Pre-registered exit conditions; §4.1-§4.4 case-determination criteria applied at §8.0 derivation chain |
+| §5.1-§5.5 Steps 1-5 implementation | §3 Mining-process source review; §4 Artifact-distribution audit; §5 Theme × pass-count cross-tab; §6 Lone-survivor walkthrough; §7 Mechanism-vs-observation comparison |
+| §5.6 Step 6 implementation | §8 Case determination (this section) + §1 Verdict + §9 Cross-references and verification |
+| §6 Verification framework | §2.4 Verification framework; §9.2 Verification framework audit |
+| §7 Cycle-boundary preservation | §6.4 cycle-boundary-preservation language audit at closeout-document scope (Activity 10 of Step 6 fire) |
+| §8 Closeout document structure | This document's §1-§9 structure (canonical compliance) |
+| §9 Risks and out-of-scope items | §1.4 Verdict register (what PHASE2C_9 does not establish); §3.2 hard scope boundaries cross-references |
+| §10 Cross-references | §9.0 (this section) |
+
+PHASE2C_9 Step 6 sub-spec
+[`PHASE2C_9_STEP6_SUBSPEC.md`](../phase2c/PHASE2C_9_STEP6_SUBSPEC.md)
+(commit `d1657bd`) cross-references:
+
+| PHASE2C_9_STEP6_SUBSPEC.md section | PHASE2C_9_RESULTS.md application |
+|---|---|
+| §1.1 Framing decision | §8.0 derivation chain (mechanical-procedure framing applied) |
+| §1.2 §8 author responsibilities (verbatim-inheritance scope) | §8.1 sub-register documentation (verbatim quotes ≤2 sentences + cite-only); §1.1 per-case evidence summary (verbatim §7 inheritance) |
+| §1.3 §8 author residual discretion | §8.2 forward-pointer composition; §8.3 tracked-fix entries; §8.4 methodology-codification candidates; §1.4 verdict register |
+| §1.4 Framing falsifiability | §8.0 derivation chain (framing application register) |
+| §1.5 Evidence-comparison rule | §8.0 Step 3 §1.5 evidence-comparison rule application; §1.2 falsifiability link-point 2 |
+| §1.6 §4.4 application falsifiability (chain-falsifiability) | §1.2 falsifiability statement (3 link-points per Case C) |
+| §3.1 §8.0 Determination | §8.0 (this section's derivation chain narration) |
+| §3.2 §8.1 Sub-register documentation | §8.1 (C.1 + C.2 + C.3 sub-register documentation) |
+| §3.3 §8.2 Forward-pointer register | §8.2 (this document's forward-pointer register) |
+| §3.4 §8.3 Tracked-fix register entries | §8.3 (Q-9-01 + Q-9-02 entries; Q-9-N numbering convention) |
+| §3.5 §8.4 Methodology-codification candidates | §8.4 (5 entries; 4 mandatory + 1 emergent; status-register precision per Concern L) |
+| §5.2 14-step Step 6 fire activity sequence | This commit cycle (Activities 1-14; Activities 1-12 in this commit cycle; Activities 13-14 at subsequent commit cycles) |
+| §5.3 Step 6 fire gating criteria | §9.2 verification framework audit checklist |
+
+### 9.1 PHASE2C_8.1 canonical anchor cross-references
+
+Canonical-number anchors consumed at PHASE2C_9 evidence base
+(per spec §2.4):
+
+| PHASE2C_8.1 canonical anchor | value | PHASE2C_8.1 source | PHASE2C_9 application |
+|---|---|---|---|
+| Total candidates | 198 | [`PHASE2C_8_1_RESULTS.md`](PHASE2C_8_1_RESULTS.md) §3.0 | §4.0 (verified at three independent measurement points) |
+| Theme distribution | ~40/40/40/39/39 | PHASE2C_8.1 §7.1 | §4.0 + §5.0 |
+| `cohort_a_unfiltered` cardinality | 1 | PHASE2C_8.1 §3.1 | §6.0 (lone-survivor `0845d1d7898412f2`) |
+| `cohort_a_filtered` cardinality | 0 | PHASE2C_8.1 §3.1 | §7.1.2 B.2 sub-register evidence base |
+| `cohort_c` cardinality | 76 | PHASE2C_8.1 §3.1 | §7.1 Case B evidence base context |
+| Lone-survivor hypothesis hash | `0845d1d7898412f2` | PHASE2C_8.1 §3.1 + §6.0 | §6.0 + §7.0.4 A.4 evidence base |
+| Lone-survivor theme | `volume_divergence` | PHASE2C_8.1 §7.0 + §6.0 | §6.0 + §7.0.4 A.4 evidence base |
+| Lone-survivor name | `volume_surge_momentum_entry` | PHASE2C_8.1 §6.0 | §6.0 |
+| Lone-survivor partition origin | audit (PHASE2C_6 audit_v1) | PHASE2C_8.1 §6.3 | §6.3 |
+| In-sample-caveat asymmetry | 21 vs 8 (train-overlap pass / fully-OOS pass jointly) | PHASE2C_8.1 §5.2 | §5.1 Observation 9 + §7.1.2 B.2 evidence base context |
+
+PHASE2C_8.1 closeout sealed at commit `69e9af9`; tag
+`phase2c-8-1-multi-regime-extended-v1`. PHASE2C_9 retrospective
+produces no new canonical numbers (light-touch register per spec
+§6.5 independent-recompute gate; no new test required).
+
+### 9.2 Verification framework audit
+
+Per sub-spec §4.3 verification framework audit checklist at
+final-commit register:
+
+- [x] **§6.1 Evidence-mapping discipline**: every claim cited at
+  file:line / canonical-anchor / §X-cross-reference register;
+  explicit "interpretation, not observation" framing at qualifying-
+  vs-disqualifying boundary register where applicable. ✓
+  (§3 file:line citations to `agents/proposer/*.py` +
+  `agents/critic/*.py` + `agents/themes.py`; §4 source-key citations
+  to `stage2d_summary.json` + `lifecycle_counts`; §5 cross-tab
+  cell citations to PHASE2C_8.1 §7.1; §6 file:line citations to
+  `holdout_summary.json` artifacts + `audit_v1_filtered/`
+  directory absence; §7 cross-references to §3-§6 + spec §4.1-§4.3
+  evidence-pattern text; §8 derivation chain quotes spec §4.1-§4.4
+  + §7.X cross-sub-register summary tables verbatim per sub-spec
+  §1.2 verbatim-inheritance.)
+
+- [x] **§6.2 Falsifiability-statement discipline**: case-determination
+  assertion includes "what would falsify this conclusion" language;
+  per sub-spec §1.6 chain-falsifiability per-link-point structure
+  (3 link-points per Case C). ✓ (§1.2 falsifiability statement
+  enumerates link-point 1 §7 characterization layer + link-point 2
+  §4.1/§4.2/§4.3 threshold layer + link-point 3 §4.4 multi-case-
+  findings rule layer counterfactuals applicable to Case C
+  determination.)
+
+- [x] **§6.3 Canonical-number cross-checks**: §7 / §8 references
+  reproduce PHASE2C_8.1 canonical anchors. ✓ (PHASE2C_8.1 anchors
+  cohort_a_filtered = 0; per-regime pass rates; one-of-198
+  cardinality; lone-survivor hash + theme + name + partition
+  origin; 21-vs-8 in-sample-caveat asymmetry — all reproduced at
+  PHASE2C_9 §3-§7 + §8 register; no cross-check failures surfaced;
+  no new canonical numbers required at light-touch register per
+  §6.5.)
+
+- [x] **§6.4 Cycle-boundary-preservation language audit at
+  closeout-document scope** (Activity 10 of Step 6 fire): no
+  PHASE2C_10 / successor-arc pre-naming at §1 verdict + §8 case
+  determination + §9; no "next we will run X" / "this confirms Y
+  is the next arc" / "this requires Z" forward-pointer language;
+  no Case A/B/C single-case adjudication beyond the §8.0
+  mechanical-procedure-output one Case (Case C); §1.3 + §8.2
+  forward-pointer register stays at allowed-register only per
+  spec §4.4 Case C row. Forbidden-language hits at meta-audit
+  register / spec §7.2 historical-defect-by-descriptor-name
+  register / forbidden-language scope discipline register only;
+  no actual forward-pointer assertions. ✓
+
+- [x] **§6.5 Independent-recompute gate**: light-touch register;
+  no new canonical numbers requiring test. PHASE2C_9 inherits
+  PHASE2C_8.1 anchors; canonical-number cross-checks at §9.1
+  + §6.3 verify reproduction without new test infrastructure.
+  ✓ (PHASE2C_9 produces no new numbers per spec §6.5; existing
+  `tests/test_phase2c_8_1_independent_recompute.py` covers
+  PHASE2C_8.1 anchors at independent-recompute register.)
+
+Verification framework audit complete. Step 6 fire gating
+criteria per sub-spec §5.3 satisfied:
+
+- [x] Case determination per §4.4 mechanical procedure (Case C
+  with sub-registers C.1 + C.2 + C.3 documented per §8.0)
+- [x] §1 / §8 / §9 sub-section structure per spec §8 canonical
+  structure
+- [x] §6 verification framework checklist (this section)
+- [x] §7 cycle-boundary preservation language audit at closeout-
+  document scope (verified clean at §6.4 audit above)
+- [x] Tracked-fix register entries surface §7.4 register-precision
+  observations (Q-9-01 ingest-layer mechanism reconstruction
+  mandatory minimum 1 entry; Q-9-02 evidence-asymmetry mandatory
+  minimum 2 entries per §4.3 Case C requirement; both surfaced at
+  §8.3)
+- [x] Methodology-codification candidates surface 4 cumulative
+  carry-forward observations from Step 5 close (mandatory minimum
+  + 1 emergent entry from Step 6 cycle = 5 total; surfaced at §8.4)
 
 ---
 
