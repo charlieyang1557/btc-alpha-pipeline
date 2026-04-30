@@ -82,7 +82,7 @@ Section numbers assigned to each tier-strong-or-medium candidate per Step 2 impl
 |---|---|---|---|
 | (1) Anchor-prose-access discipline | Strong | Strong (confirmed §3.1) | §16 dedicated section |
 | (2) Procedural-confirmation defect class | Strong | Strong (confirmed §3.2) | §17 dedicated section |
-| (4) §7 carry-forward density | Medium | Strong (patch §3.4) | §18 dedicated section |
+| (4) §7 carry-forward density | Medium | Medium (confirmed §3.4; operating-rule-pending) | §18 dedicated section |
 | (3) Spec-vs-empirical-reality finding pattern | Weak | Weak (confirmed §3.3) | brief §19 dedicated section (observation-only + cross-cycle-pending status-register) |
 | (5) Pre-fire audit pattern | Weak | Weak (confirmed §3.5) | folded into §16 ### Failure-mode signal (topical adjacency: session-boundary register precision) OR brief §20 |
 | (6) Self-first-then-reviewer | Weak | Weak (confirmed §3.6) | folded into §16 ### Failure-mode signal (topical adjacency: reviewer-engagement register) OR brief §20 |
