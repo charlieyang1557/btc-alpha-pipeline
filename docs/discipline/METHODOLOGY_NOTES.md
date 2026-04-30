@@ -1897,3 +1897,191 @@ verification remains structurally necessary because canonical
 artifact state may have shifted between advisor cycle and receiving
 cycle, or because the advisor's citation may reference a different
 field than the receiving cycle's drafting needs.
+
+---
+
+## §16 Anchor-prose-access discipline at multi-hundred-line interpretive deliverables
+
+### Principle
+
+At multi-hundred-line interpretive deliverables — closeout sections,
+sub-spec drafts, scoping decisions — dual-reviewer pass requires
+reviewer access to actual prose, not summary or structural overview
+alone. Summary-only review covers a structural-defect axis (section-
+boundary coherence, cross-section enumeration, table-and-list integrity);
+substantive register-precision requires the prose-access overlay
+because phrasing-precision, interpretive-register, and verbatim-anchor
+defects do not surface against summary by construction.
+
+The discipline operates at a register-distinguishing pair with §15.
+§15 covers **pre-drafting anchor verification at the receiving cycle**
+— anchors arriving from advisor cycles, scoping decisions, or prior
+register entries are verified against canonical artifacts before
+drafting initiates. §16 covers **section-seal prose-access at the
+reviewer register** — once drafting completes and a section approaches
+seal, both reviewers' adjudication must fire against the actual prose
+content, not against a summary or structural overview the author
+supplies.
+
+The two disciplines are complementary, not redundant: §15 catches
+defects at anchor-receipt boundary; §16 catches defects at section-
+seal boundary. Each operates at a structurally distinct point in the
+drafting-cycle pipeline. A deliverable can pass §15 (all anchors
+verified at receipt) and still ship register-precision defects that
+only §16's reviewer prose-access catches.
+
+The discipline is operationally a standing instruction once codified.
+Reviewer prose-access is the default mode at multi-hundred-line
+interpretive deliverables; per-cycle re-authorization is not required.
+
+### Trigger context
+
+This principle was operationalized across four cumulative instances
+spanning the PHASE2C_9 mining-process retrospective arc (Steps 5-6
+cumulative across follow-up + sub-spec drafting + closeout-assembly
+fire) and the PHASE2C_10 scoping cycle (March-April 2026). Each
+instance surfaced real defects that structural-summary review missed
+by construction; cumulative across instances reaches the strong-tier
+codification threshold.
+
+1. **PHASE2C_9 Step 5 follow-up dual-reviewer round** (advisor
+   substantive prose-access pass at the §7 evidence-map closeout).
+   Round-1 ChatGPT structural review + Claude advisor structural-
+   summary pass cleared at section-seal register. Round-2 advisor
+   substantive prose-access pass surfaced Concerns A residual / C
+   internal-consistency / D "hampered" interpretive register; verified
+   B framing scope + F Path B operationalization clean. The defects
+   surfaced in round-2 were not visible at the round-1 structural-
+   summary register; prose-access was the structural complement that
+   exposed them.
+
+2. **PHASE2C_9 Step 6 sub-spec drafting cycle** (instance #2 throughout
+   sub-spec drafting; surfaced Concerns G/H/I/J at Round 1 + Flags
+   1/2/3 at Round 2 + Concerns K/L at Round 3). The sub-spec's
+   substantive content was §4.4 application framing pre-registration
+   with bounded comparison rule; framing-scope verification was the
+   load-bearing register, with successive prose-access rounds
+   verifying register-precision of the framing-decision substance
+   (mechanical-procedure framing; chain-falsifiability per-link-point
+   structure; verbatim-quote scope). Successive prose-access rounds
+   surfaced residual defects across the evolving draft, demonstrating
+   that sub-spec register-precision requires repeated prose-access
+   against framing-decision substance, not single prose-access at
+   terminal seal.
+
+3. **PHASE2C_9 Step 6 closeout assembly fire** (instance #3 at
+   closeout assembly final; advisor substantive prose-access pass
+   surfaced 8 Concerns O-V; 3 patches applied; 5 Concerns verified
+   clean on prose access). Closeout-tier registers carry the highest-
+   load substantive content; prose-access at the closeout assembly
+   fire was the structural complement that caught Concerns O-V which
+   internal verification (V1-V7) and structural-summary review missed.
+
+4. **PHASE2C_10 scoping cycle dual-reviewer pass** (instance #4 at
+   scoping doc seal). The cycle had two distinct prose-access surfaces:
+   stale-anchor catches at the scoping inputs lock cycle were
+   empirical-verification discipline (§15) catches against advisor-
+   supplied framing anchors, structurally upstream of §16's register;
+   instance #4 prose-access fired at scoping doc seal against the
+   actual scoping doc prose, surfacing register-precision defects at
+   the seal register (cumulative-vs-per-cycle count framing
+   disambiguation; path enumeration completeness verification). The
+   instance demonstrated the discipline at scoping-tier register, not
+   just closeout-tier or sub-spec-tier; the catch class extends across
+   deliverable tiers.
+
+The four instances span distinct defect classes: interpretive-register
+precision (instance 1) / framing-scope verification (instance 2) /
+closeout-assembly section-author discipline (instance 3) / seal-
+register count-and-enumeration consistency (instance 4). Each instance's
+defect class was structurally invisible at the structural-summary
+register; prose-access was the catch mechanism in every case.
+
+### Application checklist
+
+For multi-hundred-line interpretive deliverables at dual-reviewer pass:
+
+1. **Schedule prose-access prerequisite for deliverables ≥200 lines OR
+   with interpretive-register content:** "deliverables" here means
+   closeout sections, sub-spec drafts, scoping decisions — multi-page
+   documents at the project's interpretive-output register, distinct
+   from individual METHODOLOGY_NOTES sections which operate at section-
+   codification register. The threshold is structural, not strict —
+   sub-300-line deliverables with high interpretive-register density
+   (case adjudications, evidence-pattern adjudications, discipline
+   codifications at deliverable tier) qualify even when below the line-
+   count anchor. The deliverable's character, not just its size,
+   determines whether prose-access is required.
+2. **Treat reviewer-supplied summary or structural overview as
+   necessary input but not sufficient for substantive adjudication:**
+   summary covers structural-defect axis; substantive register-
+   precision requires prose-access overlay. Single-overlay clean at
+   structural register establishes structural-defect axis clear; it
+   does not establish substantive register-precision clear. §16
+   specifies the prose-access mode of the §14 dual-reviewer register-
+   precision fire — both overlays must operate at prose-access register
+   for §14's bidirectional check to satisfy §16's substantive
+   register-precision requirement.
+3. **Fire prose-access against actual prose, not author-supplied
+   summary:** the failure mode the discipline catches is summary-
+   substituted-for-prose at the reviewer register. The author's
+   summary and structural overview are author-cycle artifacts that
+   can clear at author-cycle register while the underlying prose
+   ships register-precision defects. Reviewer prose-access requires
+   reviewer engagement with the prose itself, not with the author's
+   distillation of the prose.
+4. **Track instance count for cross-arc accumulation visibility:** at
+   each prose-access fire, record the instance number for cross-arc
+   accumulation register. The instance count is the operational
+   evidence anchor for the discipline's tier; absence of accumulation
+   tracking forecloses the visibility that supports tier-promotion or
+   discipline-evolution decisions at successor cycles.
+5. **Operate as standing instruction once codified:** once §16 is
+   sealed, prose-access is the default mode at multi-hundred-line
+   interpretive deliverables. Per-cycle re-authorization is not
+   required. The discipline operates as the project's standing
+   reviewer-engagement protocol; deviations require explicit
+   adjudication.
+
+### Failure-mode signal
+
+Watch for summary-substituted-for-prose at high-load reviewer cycles.
+The pattern surfaces when a reviewer's response is anchored to the
+author's structural overview rather than to the prose itself; the
+reviewer's clean read at the structural register may be misread as
+substantive clean when it is only a structural-defect-axis clear.
+Reviewer prose-access requires reviewer engagement with the prose
+content, not with the author's distillation.
+
+Watch for "the structural overview is sufficient" framing at multi-
+hundred-line interpretive deliverables. The framing is appropriate at
+short-section register or at structural-only review (table integrity,
+section enumeration, cross-section anchor verification) but inappropriate
+at substantive register-precision verification. Treating structural
+overview as sufficient at substantive register under-protects
+register-precision quality.
+
+Watch for instance-count tracking absence. The discipline's tier
+adjudication and operational lifecycle visibility depend on cumulative
+instance accumulation across cycles. When prose-access fires but
+instance count is not tracked, the accumulation register goes
+unmaintained, and successor cycles lose the empirical anchor for
+tier-promotion or discipline-refinement decisions. Instance-count
+tracking is structural to the discipline's operational coherence, not
+auxiliary metadata.
+
+Watch for prose-access deferred-to-next-cycle when the fire register
+is current cycle's seal. The deferral substitutes successor-cycle
+prose-access for current-cycle prose-access at higher fix cost; the
+seal boundary has already cleared at the deferral register. Bandwidth
+constraint at seal is real but does not justify the substitution.
+
+In future arc cycles, watch for prose-access skipping when the
+deliverable is "obviously fine" at structural overlay. Obvious-fine
+framing at structural register does not establish substantive register-
+precision; the discipline's catch class is precisely the defects that
+structural-overlay-clean fails to surface. Prose-access is the
+structural complement — its catch is the defects the other overlay
+misses by construction.
+
+---
