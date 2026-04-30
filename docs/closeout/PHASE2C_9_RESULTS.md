@@ -2337,7 +2337,7 @@ language scan over-trigger.
   re-examination at depth greater than light-touch register. Per
   spec §3.2.5 NO statistical-significance machinery, this
   evidentiary direction is bounded.
-- **Observation 8 (Step 4 §6.4) — permissive AND-gate accepts
+- **Observation 10 (Step 4 §6.4) — permissive AND-gate accepts
   -10.2% return in eval_2021_v1 for lone-survivor**: per §6.3
   evaluation-side trace, gate criteria are Sharpe ≥ -0.5
   (actual: -0.358) AND total_return ≥ -0.15 (actual: -0.102) AND
@@ -2350,7 +2350,7 @@ language scan over-trigger.
   D7b) calibration; the permissive AND-gate at evaluation-time is
   at PHASE2C_6 / PHASE2C_7.1 / PHASE2C_8.1 register, not at Phase
   2B Critic gate register. **The qualifying-evidence path at A.2
-  is therefore NOT primary** — Observation 8 maps more directly
+  is therefore NOT primary** — Observation 10 maps more directly
   to A.4 (mining-time vs evaluation-time gate misalignment) than
   to A.2 (Critic gate defect at mining-time register). Per spec
   §3.2.6 NO calibration-variation grid, evaluation-time gate
@@ -2560,21 +2560,22 @@ evaluation-time gate misalignment.
   defect at noise-floor variance is interpretively bounded at
   light-touch register. Per spec §3.2.6 NO calibration-variation
   grid, evaluation-time gate threshold variation is out-of-scope.
-- **Observation 11 (Step 4 §6.4) — lone-survivor's hybrid quality
-  profile**: audit-only partition origin (`wf_test_period_sharpe =
-  -0.072 < 0.5` primary threshold per §6.3) + filter exclusion in
-  bear_2022 by 1-trade margin (Observation 9) + permissive AND-gate
-  accepting -10.2% return in eval_2021_v1 (Observation 10) + theme
-  alignment at thin-theme register (theme_coherence = 1/6 ≈ 0.1667
-  per §6.4). The hybrid quality profile **does** match spec §4.1
-  A.4 qualifying-evidence text: "lone-survivor's hybrid quality
-  profile (audit-only origin + filter exclusion by single-trade
-  margin + permissive AND-gate accepting -10.2% return) reflects
-  mining-time / evaluation-time gate misalignment more than
-  candidate-population coherence." **Evidentiary weight at A.4**:
-  the hybrid quality profile is **directly aligned** with the spec
-  §4.1 A.4 qualifying-evidence text; this is the strongest
-  qualifying evidence at A.4 register.
+- **Composite hybrid quality observation (composite of Obs 9 + Obs
+  10 + audit-only partition origin per §6.3 + Obs 11)**: composite
+  comprises audit-only partition origin (`wf_test_period_sharpe =
+  -0.072 < 0.5` primary threshold per §6.3; this is a §6.3 fact,
+  not a §7-internal observation) + filter exclusion in bear_2022 by
+  1-trade margin (Observation 9) + permissive AND-gate accepting
+  -10.2% return in eval_2021_v1 (Observation 10) + theme alignment
+  at thin-theme register (theme_coherence = 1/6 ≈ 0.1667 per §6.4;
+  Observation 11 narrowly). The composite matches spec §4.1 A.4
+  qualifying-evidence text: "lone-survivor's hybrid quality profile
+  (audit-only origin + filter exclusion by single-trade margin +
+  permissive AND-gate accepting -10.2% return) reflects mining-time
+  / evaluation-time gate misalignment more than candidate-population
+  coherence." **Evidentiary weight at A.4**: the composite hybrid
+  quality observation matches the spec §4.1 A.4 qualifying-evidence
+  text directly at descriptive register.
 
 **Disqualifying counter-evidence**:
 
@@ -2605,17 +2606,22 @@ evaluation-time gate misalignment.
   light-touch register.
 
 **Sub-register A.4 summary**: qualifying evidence at A.4 is
-**direct** — Observations 9 + 10 + 11 align with spec §4.1 A.4
+**direct** at descriptive register — Observations 9 + 10 + the
+composite hybrid quality observation (composite of Obs 9 + Obs 10
++ audit-only origin per §6.3 + Obs 11) match spec §4.1 A.4
 qualifying-evidence text (hybrid quality profile of lone-survivor;
 single-trade-margin exclusion; permissive AND-gate at -10.2%
-return). Disqualifying counter-evidence at A.4 is **also direct**:
-the 4-criterion AND-gate is canonical at deliberately-permissive
-register at generation-cycle; ingest-layer mechanism is
-out-of-light-touch-scope; one-of-198 cardinality is consistent
-with both Case A.4 and Case B.3 interpretations.
-**Interpretive ambiguity at A.4 sub-register register**: whether
-the gate-misalignment is **defect** or **deliberate staged
-tightening** is not resolvable at light-touch register.
+return). Disqualifying counter-evidence at A.4 is **also direct**
+at descriptive register: the 4-criterion AND-gate is canonical at
+deliberately-permissive register at generation-cycle; ingest-layer
+mechanism is out-of-light-touch-scope; one-of-198 cardinality is
+consistent with both Case A.4 and Case B.3 interpretations.
+**Qualifying-vs-disqualifying balance at A.4 sub-register**:
+whether the gate-misalignment register matches "defect" or
+"deliberate staged tightening" is not resolvable at light-touch
+register; the balance sits at the spec §4.3 C.1 evidence-pattern
+boundary register descriptively, with §8 (Step 6 territory)
+applying §4.4 one-and-only-one rule for case determination.
 
 #### 7.0.5 Case A evidence-base summary
 
@@ -2631,7 +2637,7 @@ determination):
 | sub-register | qualifying evidence weight | disqualifying counter-evidence weight | net qualification at light-touch register |
 |---|---|---|---|
 | A.1 | weak | comparable to weak qualifying | NOT cleanly satisfied |
-| A.2 | weak (Observations 6 / 8 / 11 map weakly) | strong (Critic annotates only; 0 critic_rejected; ingest-layer-as-actual-gate out-of-scope) | NOT cleanly satisfied |
+| A.2 | weak (Observations 6 / 10 / 11 map weakly) | strong (Critic annotates only; 0 critic_rejected; ingest-layer-as-actual-gate out-of-scope) | NOT cleanly satisfied |
 | A.3 | weak (modulus mismatch is design-as-intended; per-regime divergence maps more to B.2) | strong (uniform generation-side distribution; no budget exhaustion; CONTRACT BOUNDARY documents exclusion) | NOT cleanly satisfied |
 | A.4 | direct (Observations 9 + 10 + 11 align with spec §4.1 A.4 text) | direct (canonical AND-gate is deliberately permissive; ingest-layer out-of-scope; one-of-198 consistent with B.3) | INTERPRETIVELY AMBIGUOUS at light-touch |
 
@@ -3060,12 +3066,15 @@ specifically:
    register ambiguity (C.2 register).
 3. **Cross-cutting light-touch-register limitation tension**: B.2
    + B.3 noise-floor consistency at descriptive register only
-   (Q-9.A territory out-of-scope); A.2 Critic-as-gate
-   interpretation hampered by ingest-layer out-of-scope; A.4
-   deliberate-staged-tightening-vs-defect adjudication unresolved
-   at light-touch; §8 must adjudicate whether the evidence
-   base is sufficient for clean Case A or Case B determination
-   at light-touch register or whether C.3 register applies.
+   (Q-9.A territory out-of-scope per §3.2.5); A.2 sub-register
+   evidence-mapping requires the Critic-as-gate precondition that
+   does not hold at this batch (Critic operates as annotator per
+   §3.2.6 + CLAUDE.md hard rule "Critic annotates only, never
+   filters"); A.4 deliberate-staged-tightening-vs-defect
+   adjudication unresolved at light-touch register; §8 must
+   adjudicate whether the evidence base is sufficient for clean
+   Case A or Case B determination at light-touch register or
+   whether C.3 register applies.
 
 §7 does NOT enumerate forward-pointer options at §7.3; per spec
 §4.4 Case A / Case B / Case C rows, the forward-pointer register
@@ -3175,9 +3184,13 @@ territory):
    balance ambiguity (Case C.1 register).
 2. **Ingest-layer mechanism out-of-scope is the cross-cutting
    light-touch-register limitation surfaced at §7**: A.2
-   (Critic-as-gate interpretation hampered by Critic-annotates-only
-   per §3.2.6) and A.4 (deliberate-staged-tightening-vs-defect
-   adjudication) both reference ingest-layer mechanism
+   sub-register evidence-mapping assumes Critic-as-gate
+   precondition; Critic operates as annotator per §3.2.6 +
+   CLAUDE.md hard rule "Critic annotates only, never filters", so
+   the gate-mode precondition does not hold and the actual gate
+   is the orchestrator ingest layer (out of Step 1 §3 reconstruction
+   scope). A.4 (deliberate-staged-tightening-vs-defect
+   adjudication) similarly references ingest-layer mechanism
    reconstruction outside Step 1 §3 scope. The cross-cutting
    pattern surfaces at C.3 sub-register's spec-§4.3-C.3 evidence-
    pattern register. §8 (Step 6 territory) tracked-fix register
