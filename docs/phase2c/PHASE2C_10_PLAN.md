@@ -1,6 +1,6 @@
 # PHASE2C_10 Plan — Methodology Consolidation Drafting Framework
 
-**Status: WORKING DRAFT — pre-seal; anchor-prose-access discipline instance #5 fires at dual-reviewer pass before seal.**
+**Status: SEALED at instance #5 dual-reviewer pass; both reviewers (Claude advisor + ChatGPT) authorized seal post-patches at follow-up patch commits per §0.4 audit-trail rationale.**
 
 **Anchor:** PHASE2C_10 scoping decision sealed at commit `1053c73` ([`docs/phase2c/PHASE2C_10_SCOPING_DECISION.md`](PHASE2C_10_SCOPING_DECISION.md)). This document operationalizes the scoping decision's §5 pre-registered framing decisions for the methodology consolidation arc, executes the Option A tier-precision-per-candidate adjudication (§6.1 Option A flag), and locks the deliverable structure for the Step 2 implementation arc that performs the actual METHODOLOGY_NOTES.md §16+ updates.
 
@@ -151,7 +151,7 @@ Three instances at structurally distinct defect surfaces (PHASE2C_9 Step 5 inter
 **Codification scope**: full §17 codification with all four standard subsections.
 
 - ### Principle: at high-load deliverable registers (closeout sections, sub-spec drafts), procedural-confirmation (commit landed; CI passed; reviewer notified) is necessary but not sufficient for seal authorization. Substantive prose-access by both reviewers is the complement; seal authorization requires both procedural and substantive confirmation.
-- ### Trigger context: PHASE2C_9 Step 5 working-draft commit `e11e806` → advisor substantive pass → patches at `d548ea2` (April 2026); PHASE2C_9 Step 6 closeout assembly first commit → advisor instance #3 substantive pass → 3 patches applied (April 2026). Both instances demonstrated the defect class at structurally distinct surfaces.
+- ### Trigger context: PHASE2C_9 Step 5 working-draft commit `e11e806` → advisor substantive pass → patches at `d548ea2` (April 2026); PHASE2C_9 Step 6 closeout assembly first commit → advisor instance #3 substantive pass → 3 patches applied (April 2026); PHASE2C_10 plan working-draft commit `d0222c7` → instance #5 dual-reviewer pass → patches at `d2b6166` + this follow-up patch commit (April 2026; instance #3 of candidate-2 defect class operationally observable at the commit chain `d0222c7` → `d2b6166` → patch commit, with each commit register surfacing residual defects that the prior register missed). All three instances demonstrated the defect class at structurally distinct surfaces; instance #3 specifically also demonstrated the iterative pattern where each "seal" commit before final full-file prose pass surfaces residual defects (§17 Application checklist sub-rule candidate at Step 2 implementation arc).
 - ### Application checklist: (a) distinguish procedural-confirmation register (commit landed, CI clean, reviewer notified) from substantive-confirmation register (prose reviewed, defects surfaced and adjudicated, seal authorized); (b) seal authorization requires both registers cleared, not procedural alone; (c) when first-commit fires before substantive prose-access, mark deliverable status "working draft" until substantive pass clears; (d) reviewer notifications of commits are NOT seal authorizations; reviewer authorization at substantive register is the seal authorization.
 - ### Failure-mode signal: watch for "commit landed, we're done" at multi-hundred-line interpretive deliverables; watch for reviewer-notification-as-seal-authorization framing; watch for first-commit-cleared-CI substituted-for-substantive-clean; watch for patches-after-first-commit framed as scope creep rather than structural completion of the seal cycle.
 
@@ -278,9 +278,9 @@ Final tier adjudication for the six candidates after §3.1-§3.6 evidence review
 | 5 | Pre-fire audit pattern | Weak | **Weak** (confirmed) | 1 instance; below codification threshold | Folded into §16 ### Failure-mode signal OR brief §20 |
 | 6 | Self-first-then-reviewer | Weak | **Weak** (confirmed) | 1 instance; emerged at scoping cycle itself | Folded into §16 ### Failure-mode signal OR brief §20 |
 
-**Patches applied vs scoping doc §5.2**: candidate (4) §7 carry-forward density patched upward Medium → Strong per Fire 3(i) 4/4 instance saturation finding. All other tier labels confirmed.
+**Patches applied vs scoping doc §5.2 (post-instance-#5 final dispositions)**: candidate (4) §7 carry-forward density Medium tier confirmed (initial sub-spec drafting cycle's Strong-tier promotion reverted to scoping doc §5.2 provisional Medium per dual-reviewer pushback at operating-rule-articulation grounds; tier-promotion authority resides at Step 2 implementation arc per §3.4). Candidate (2) procedural-confirmation defect class evidence count incremented 2 → 3 instances per §0.4 (instance #3 = working-draft-commit-before-prose-pass at d0222c7). Candidate (3) spec-vs-empirical-reality cumulative count locked at 6 across 3 cycles per §3.3 + §4.3. All other tier labels confirmed.
 
-**Per anti-momentum-binding flag operating**: provisional tier labels were inputs to per-candidate evidence review, not constraints. Patch on candidate (4) is reasoned via Fire 3(i) empirical evidence count; no other patches applied.
+**Per anti-momentum-binding flag operating**: provisional tier labels were inputs to per-candidate evidence review, not constraints. Initial sub-spec adjudication on candidate (4) (Strong-tier promotion) was also an input to dual-reviewer pass, not a constraint; both reviewers' substantive pushback at operating-rule-articulation grounds carried; tier reverted to Medium. Direction of the patch (downward from initial sub-spec adjudication, not upward from scoping doc §5.2 provisional) reflects dual-reviewer pass instance #5 substantive register operating.
 
 ---
 
@@ -397,16 +397,14 @@ Step 2 implementation arc seals when:
 
 ### §6.1 Anchor-prose-access discipline at sub-spec dual-reviewer pass (instance #5)
 
-This plan's seal requires anchor-prose-access discipline instance #5 dual-reviewer pass:
+This plan's seal required anchor-prose-access discipline instance #5 dual-reviewer pass; the pass fired at the working-draft → patch-commit-seal cycle:
 
-- Paste relevant prose excerpts from this plan (§1 filename lock + §2 section numbering + §3 per-candidate codification text + §4 emergent-vs-folded adjudication + §5 Step 2 fire procedure)
-- ChatGPT first-pass at substantive register against actual prose
-- Claude advisor substantive prose-access pass at instance #5 register against actual prose
-- Both reviewers authorize commit; patches surfaced applied; THEN seal
+- Prose excerpts surfaced from this plan (§1 filename lock + §2 section numbering + §3 per-candidate codification text + §4 emergent-vs-folded adjudication + §5 Step 2 fire procedure + §6 verification framework)
+- ChatGPT first-pass at substantive register against surfaced prose
+- Claude advisor substantive prose-access pass at instance #5 register against surfaced prose; subsequent full-prose-access pass against the post-patch sealed file (467+ lines) caught residual defects (λ status banner staleness; μ §3.7 patch-direction misstatement; ν §6.1 + §7.2 pre-pass framing survival; ξ §3.2 trigger context count drift) that section-excerpt review missed
+- Both reviewers authorized seal at follow-up patch commit register per §0.4 audit-trail rationale (preserve d0222c7 + d2b6166 in local history; sequential patch commits rather than amend)
 
-Instance #5 fires as next operational step post-this-draft-commit. Commit authorization at both reviewer registers required before this plan seals.
-
-Per the discipline's structural payoff: each of instances #1-#4 surfaced real defects via prose access that summary-only review missed by construction. Instance #5 expectation: prose-access pass at this plan's substantive register may surface defects in (a) per-candidate codification text precision, (b) tier adjudication rationale, (c) cross-reference target accuracy, (d) Step 2 fire procedure sequencing — defects that summary-only review would not surface.
+Per the discipline's structural payoff: each of instances #1-#5 surfaced real defects via prose access that summary-only review missed by construction. Instance #5 specifically surfaced: (a) §3.3/§3.5/§3.6 §1-§15-stable violations (defect ι; caught at section-excerpt prose pass); (b) candidate (4) tier promotion premature on operating-rule-articulation grounds (defect γ); (c) candidate (3) instance count under-recorded (defect β); (d) §0.4 procedural-confirmation defect class instance #3 documentation (defect α); (e) λ/μ/ν/ξ status-marker + cross-section-consistency defects caught at full-file prose pass post initial patch commits — operationally validating that section-excerpt review is necessary but not sufficient for full-document register-precision; full-file prose access is the structural complement.
 
 ### §6.2 Per-candidate evidence count cross-checks
 
@@ -446,12 +444,12 @@ If reviewer surfaces section-numbering concerns (collision, topical-adjacency ob
 
 ### §7.2 Dual-reviewer disposition
 
-This plan's seal requires anchor-prose-access discipline instance #5 dual-reviewer pass per §6.1. Status at this draft register: pre-seal; dual-reviewer pass next operational step.
+This plan sealed at instance #5 dual-reviewer pass per §6.1; status at sealed register: SEALED with both reviewers' authorization at follow-up patch commit register.
 
-Reviewer registers carrying forward from PHASE2C_10 scoping cycle:
+Reviewer dispositions at instance #5 dual-reviewer pass:
 
-- ChatGPT: scoping cycle adjudication on record (path (e) selected; Phase Marker defer; Codex skip). Available for sub-spec scope-lock + dual-reviewer pass instance #5.
-- Claude advisor: scoping cycle adjudication on record (anti-momentum-binding flags; empirical verification on framing patches; instance #4 prose-access pass). Available for sub-spec scope-lock + dual-reviewer pass instance #5 + per-candidate tier review.
+- ChatGPT: instance #5 first-pass on surfaced excerpts adjudicated 4-patch set (ι internal-consistency; β count update; γ candidate (4) Medium reversion; α follow-up-patch-commit resolution path). All patches applied at d2b6166. Subsequent full-file pass acknowledged status-marker + cross-section-consistency defects (λ/μ/ν/ξ) caught at advisor's full-prose access; patches applied at this follow-up patch commit register.
+- Claude advisor: instance #5 substantive prose-access pass on surfaced excerpts surfaced concerns α/β/γ + verified δ/ε/ζ/κ + flagged ι. Substantive disagreement on γ (Medium-tier defended over initial Strong) carried; advisor lean accepted. Subsequent full-file prose-access pass surfaced λ/μ/ν/ξ defects that section-excerpt pass missed by construction; patches applied at this follow-up patch commit register; advisor authorization for sealed register granted post-full-file pass.
 
 ### §7.3 Successor cycle deferral
 
@@ -466,4 +464,4 @@ Cross-cycle accumulation registers carrying forward from PHASE2C_10:
 
 ---
 
-**End of PHASE2C_10 Plan working draft. Status: pre-seal; instance #5 dual-reviewer pass next operational step.**
+**End of PHASE2C_10 Plan. Status: SEALED at instance #5 dual-reviewer pass; Step 2 implementation arc next operational fire boundary per §5.2.**
