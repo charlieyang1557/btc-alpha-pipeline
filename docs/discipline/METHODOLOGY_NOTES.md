@@ -2085,3 +2085,216 @@ structural complement — its catch is the defects the other overlay
 misses by construction.
 
 ---
+
+---
+
+## §17 Procedural-confirmation defect class at first-commit-before-prose-access
+
+### Principle
+
+At high-load interpretive deliverables — closeout sections, sub-spec
+drafts, scoping decisions — procedural-confirmation (commit landed; CI
+clean; reviewer notification fired) is necessary but not sufficient for
+seal authorization. The procedural register's clean state under-protects
+substantive register-precision quality; substantive prose-access by both
+reviewers operates as the structural complement that completes the seal
+cycle.
+
+The discipline operates at a register-distinguishing pair with §16. §16
+covers **section-seal prose-access at the reviewer register** — once
+drafting completes, both reviewers' adjudication must fire against the
+actual prose, not against summary or structural overview. §17 covers
+**seal-authorization-register precision at the commit boundary** —
+procedural-confirmation (commit landed; CI clean; reviewer notification
+visible) must not be misread as substantive-confirmation; both registers
+are required for seal authorization.
+
+The two disciplines are operationally chained. §17's substantive-
+confirmation fire requires §16's prose-access mode; §17 cannot be
+satisfied if §16 has not fired. But §17 adds an additional gate beyond
+§16: even after §16's prose-access fires and clears, the seal commit
+itself must wait for explicit substantive-confirmation at reviewer
+register, not just procedural-confirmation at commit-landed register.
+
+§17 also operates orthogonally to §6 (commit messages are not canonical
+result layers). §6 catches commit-message-as-result-claim defects (the
+commit message asserts a result that the prose may not support); §17
+catches commit-as-seal-authorization defects (the commit landing is
+misread as substantive seal authorization). Both concern procedural-
+substantive register precision at distinct registers — §6 at the commit-
+message layer; §17 at the seal-cycle layer. §6 governs what commit
+messages can claim; §17 governs what a landed commit can authorize.
+
+The discipline is operationally a standing instruction once codified.
+Substantive-confirmation by reviewer prose-access is the default
+seal-authorization gate at multi-hundred-line interpretive
+deliverables; procedural-confirmation alone never satisfies the gate.
+
+### Trigger context
+
+This principle's primary defect class was operationalized across three
+primary instances (instances 1-3), with two additional instances
+(instances 4-5) supporting the iterative-pattern sub-rule at
+Application checklist item 4. The five instances span the
+PHASE2C_9 mining-process retrospective arc (Step 5 + Step 6 closeout
+assembly) and the PHASE2C_10 methodology consolidation arc (Step 1
+plan iteration chain) (March-April 2026). Primary instances surfaced
+procedural-substantive register confusion at first-commit-before-prose-
+access register; sub-rule support instances surfaced cross-section
+residuals at sealed-commit register that section-targeted patches did
+not preclude.
+
+1. **PHASE2C_9 Step 5 §7 working-draft commit** (instance #1 at first-
+   commit-before-prose-access register). Working draft committed at
+   `e11e806`; advisor substantive pass surfaced Concerns A residual /
+   C internal-consistency / D "hampered" interpretive register; patches
+   applied at `d548ea2`. The first-commit at `e11e806` cleared procedural
+   register (commit landed; CI passed; reviewer notification fired) but
+   did not clear substantive register; substantive pass surfaced material
+   defects that the procedural register did not protect against.
+
+2. **PHASE2C_9 Step 6 closeout assembly first commit** (instance #2 at
+   closeout-assembly register). Closeout assembly committed first;
+   advisor instance #3 substantive pass surfaced 8 Concerns O-V; 3
+   patches applied. Same defect class pattern as instance #1 but at
+   distinct deliverable surface: procedural-confirmation cleared at
+   first-commit; substantive defects surfaced only at subsequent prose-
+   access pass.
+
+3. **PHASE2C_10 plan working-draft commit `d0222c7`** (instance #3 at
+   summary-table cross-section register). First-commit at `d0222c7`;
+   instance #5 dual-reviewer prose-access pass surfaced defect ι (§3.7
+   summary table internal-consistency violation between rows 3/5/6 and
+   §2.2 placement decisions); patches applied at `d2b6166`. Instance
+   demonstrated the defect class at the summary-table cross-section
+   register, structurally distinct from instances 1-2.
+
+4. **PHASE2C_10 plan post-seal full-file prose-pass `d2b6166` →
+   `1f9a015`** (instance #4 — iterative-pattern sub-rule support, not
+   primary defect class instance). Plan was sealed at `d2b6166` (with
+   instance-#5 dual-reviewer patches applied); subsequent full-file
+   prose-pass surfaced additional residuals; patches applied at
+   `1f9a015`. Instance demonstrates the iterative-pattern sub-rule at
+   sealed-commit register: section-targeted patches do not preclude
+   need for full-file final pass before downstream operational fire
+   authorizes. Empirical anchor for Application checklist sub-rule 4.
+
+5. **PHASE2C_10 plan post-`1f9a015` pre-fire audit `1f9a015` →
+   `d2a53fa`** (instance #5 — iterative-pattern sub-rule support at
+   pre-fire audit register). Post-`1f9a015` pre-fire audit surfaced
+   §2.2 row 4 tier consistency defect; patches applied at `d2a53fa`.
+   Instance demonstrates that the iterative-pattern sub-rule operates
+   at multiple iteration registers (full-file prose-pass register at
+   instance 4; pre-fire audit register at instance 5), not just first-
+   commit register. Empirical anchor for Application checklist sub-
+   rule 4.
+
+The three primary instances span structurally distinct defect surfaces
+within the procedural-confirmation defect class: interpretive-register
+at §7 evidence map (instance 1) / closeout-assembly cross-cutting at
+§8/§1/§2/§9 (instance 2) / summary-table internal-consistency at §3.7
+(instance 3). Each primary instance's defect surface was structurally
+invisible at the procedural-confirmation register; the substantive
+register fire was the catch mechanism in every case. The two sub-rule
+support instances (4-5) operate at sealed-commit register where
+section-targeted patches cleared at section register but cross-section
+residuals surfaced at full-file or pre-fire-audit register; both
+support the Application checklist sub-rule 4 iterative-pattern
+operating-rule rather than introducing new primary defect class
+surfaces.
+
+### Application checklist
+
+For multi-hundred-line interpretive deliverables at seal-authorization
+register:
+
+1. **Distinguish procedural-confirmation register from substantive-
+   confirmation register**: procedural-confirmation = commit landed,
+   CI clean, reviewer notification fired; substantive-confirmation =
+   prose reviewed by reviewers, defects surfaced and adjudicated,
+   patches applied where needed, and reviewer authorization explicit
+   at substantive register. The two registers operate at independent
+   axes; clean at one register does not establish clean at the other.
+2. **Seal authorization requires both registers cleared**: never seal
+   on procedural-confirmation alone. Reviewer notification of a commit
+   is not a seal authorization; CI passing on a working draft commit
+   is not substantive verification of the prose. Seal commit fires
+   only after both procedural register (commit can land cleanly) AND
+   substantive register (prose reviewed, residuals adjudicated) are
+   both cleared.
+3. **Mark deliverable status "working draft" until substantive pass
+   clears**: when first-commit fires before substantive prose-access,
+   the deliverable is at working-draft status, not at sealed status,
+   regardless of procedural register state. The working-draft status
+   designation prevents reviewer-cycle misread of "commit landed = we're
+   done" framing. Per the PHASE2C_10 single-seal-commit correction,
+   working drafts hold local until dual-reviewer pass clears; the seal
+   commit fires at single-commit register integrating both registers.
+4. **Apply iterative-pattern sub-rule at sealed-commit register**: this
+   is a sub-rule supporting the primary procedural-confirmation defect
+   class — section-targeted patches at a seal cycle may clear targeted
+   sites at section register but leave residual defects at cross-
+   section sites that share structural form with patched sites; full-
+   file prose-access pass at sealed-commit register is the structural
+   complement that surfaces cross-section residuals before substantive
+   register clears.
+
+   The sub-rule applies at shipping-content register (substantive
+   content migrating to canonical artifact at seal); scaffolding
+   cleanness at seal-time operates at a register-class distinct from
+   this sub-rule's seal-authorization scope (see Failure-mode signal
+   entry on scaffolding-cleanness conflation for the distinction).
+   Empirically validated at PHASE2C_10 Step 1 plan iteration chain
+   (Trigger context instances 4-5) and PHASE2C_10 Step 2 §16 seal
+   cycle (3 patch-verify cycles; §16 prose body clean-on-pass after
+   Cycle 1).
+5. **Operate as standing instruction once codified**: once §17 is
+   sealed, substantive-confirmation by reviewer prose-access is the
+   default seal-authorization gate at multi-hundred-line interpretive
+   deliverables. Per-cycle re-authorization is not required. The
+   discipline operates as the project's standing seal-authorization
+   protocol; deviations require explicit adjudication.
+
+### Failure-mode signal
+
+Watch for "commit landed, we're done" framing at multi-hundred-line
+interpretive deliverables. The framing substitutes procedural-
+confirmation for substantive-confirmation at seal register. Reviewer's
+notification of a working-draft commit is not a seal authorization;
+the substantive register has not yet fired.
+
+Watch for reviewer-notification-as-seal-authorization framing. CI
+passing on a working draft commit clears procedural register but does
+not establish substantive register-precision; reviewer notification
+of a commit landing does not establish reviewer adjudication of the
+prose content. Both registers must clear independently for seal
+authorization.
+
+Watch for first-commit-cleared-CI substituted-for-substantive-clean.
+The substitution operates at working-draft commit cycle when the
+deliverable's CI passes (procedural register clean) before reviewer
+substantive pass; the procedural-clean state can be misread as overall-
+clean state. The misread under-protects substantive register-precision
+quality.
+
+Watch for patches-after-first-commit framed as scope creep. Patches
+following first-commit fire are structural completion of the seal
+cycle, not scope creep. The deliverable is at working-draft status
+until substantive pass clears; patches at this register are operational
+to the seal completion, not optional refinements.
+
+Watch for iterative-pattern skipping at sealed-commit register.
+Section-targeted patches that clear at section register may leave
+cross-section residuals; full-file prose-access pass at sealed-commit
+register is the discipline's structural complement. Skipping the
+full-file pass under the framing "patches landed, we're sealed"
+recreates the defect class at the sealed-commit boundary.
+
+At temporary-file or handoff registers, watch for scaffolding-cleanness
+conflation with shipping-content cleanness at seal register. Scaffolding
+cleanness does not gate seal commit content (scaffolding rm'd at seal);
+however, scaffolding cleanness DOES gate next-session entry quality
+across session boundary. Conflating the two registers under-applies
+the discipline at one and over-applies at the other.
+
+---
