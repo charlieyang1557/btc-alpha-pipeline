@@ -2084,6 +2084,22 @@ structural-overlay-clean fails to surface. Prose-access is the
 structural complement — its catch is the defects the other overlay
 misses by construction.
 
+Watch for absence of pre-fire audit at session-close of prior session
+for sub-spec or scoping deliverables (drafting-cycle register). The
+pattern relates to §11 closeout-assembly checklist as parent
+discipline; one PHASE2C_9 instance operationally validated the
+discipline at a distinct surface (session-close five sequencing checks
+before next-session fire). Single instance; observation-only at this
+register.
+
+Watch for reviewer-engagement cycles absent the receiving cycle's
+own substantive overlay before reviewer-suggestion adjudication
+(reviewer-engagement register). The pattern relates to §14
+bidirectional dual-reviewer register-precision as parent discipline;
+orthogonal to reasoned-reviewer-suggestion adjudication (which
+addresses post-engagement processing). One PHASE2C_10 scoping cycle
+instance; observation-only at this register.
+
 ---
 
 ---
