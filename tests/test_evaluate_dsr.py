@@ -9,6 +9,7 @@ Verifies:
 
 from __future__ import annotations
 
+import json
 import math
 import sqlite3
 from pathlib import Path
@@ -24,6 +25,78 @@ from backtest.evaluate_dsr import (
     load_audit_v1_candidates,
     query_sharpe_ratios,
 )
+
+
+# ---------------------------------------------------------------------------
+# PHASE2C_11 Step 3 — Synthetic RS-3 attestation JSONs for tests that
+# synthesize CandidateInput without going through load_audit_v1_candidates().
+#
+# Per (β-mod) Charlie-register adjudication at PHASE2C_11 Step 3 implementation
+# turn (TDD-RED hotfix register; sealed RED commit 73221c6 + this hotfix):
+# compute_simplified_dsr() fires RS-3 guard
+# (backtest.wf_lineage.check_evaluation_semantics_or_raise) per
+# candidate.audit_v1_artifact_path at function entry, per §2.5 + §4.5 fail-loud
+# RS-3 lockpoint. Tests that bypass the Step 2 loader (Classes #2-#5, #6, #8-#11,
+# #13 partial) reference synthetic paths /tmp/syn_*.json + /tmp/synthetic_*.json
+# + /tmp/syn_target.json + /tmp/syn_filler_*.json that do not exist on disk at
+# RED authoring time.
+#
+# Module-scoped autouse fixture creates valid attestation JSONs at those exact
+# paths at module init; tests reference them as before. Production guard
+# discipline (fail-loud on missing/malformed) preserved at production register;
+# test convenience paths backed by valid synthetic attestations satisfying RS-3.
+#
+# Test method bodies untouched per (β-mod) minimal-mutation discipline; this is
+# a TDD-RED authoring miss correction at fixture register, not test substance
+# correction at routing register.
+#
+# Adjudication trail: advisor initially proposed (γ) monkeypatch path; ChatGPT
+# proposed (β-mod) write-valid-JSON path; Charlie-register adjudicated
+# convergence on (β-mod) per ChatGPT's test/production parity argument.
+# Module-scope autouse fixture variant chosen over per-method tmp_path threading
+# for minimum diff at sealed test method bodies.
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _phase2c_11_synthetic_rs_attestations():
+    """Module-scoped autouse: create valid RS-3 attestation JSONs at the
+    synthetic /tmp paths referenced by PHASE2C_11 Step 3 RED tests'
+    CandidateInput constructions.
+
+    See module-level discussion above for adjudication trail.
+    """
+    valid_attestation = json.dumps({
+        "evaluation_semantics": "single_run_holdout_v1",
+        "engine_commit": "eb1c87f",
+        "engine_corrected_lineage": "wf-corrected-v1",
+        "lineage_check": "passed",
+        "current_git_sha": "deadbeef",
+        "holdout_metrics": {"sharpe_ratio": 0.0, "total_trades": 10},
+    })
+
+    paths_to_create: list[Path] = []
+    # Class #5 boundary disposition fixture: target + 197 fillers (range(200) for safety margin).
+    paths_to_create.append(Path("/tmp/syn_target.json"))
+    paths_to_create.extend(Path(f"/tmp/syn_filler_{i}.json") for i in range(200))
+    # Most classes: /tmp/syn_{i}.json for i in range(198) (range(200) for safety margin).
+    paths_to_create.extend(Path(f"/tmp/syn_{i}.json") for i in range(200))
+    # Class #2 BonferroniThreshold: /tmp/synthetic_{i}.json for i in range(198).
+    paths_to_create.extend(Path(f"/tmp/synthetic_{i}.json") for i in range(200))
+
+    created: list[Path] = []
+    for path in paths_to_create:
+        path.write_text(valid_attestation)
+        created.append(path)
+
+    yield
+
+    # Cleanup: remove only files we created (idempotent best-effort).
+    for path in created:
+        try:
+            path.unlink()
+        except FileNotFoundError:
+            pass
 
 
 # ---------------------------------------------------------------------------
