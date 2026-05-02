@@ -1145,13 +1145,20 @@ class TestComputeSimplifiedDSRGumbelExpectedMax:
             CandidateInput,
             compute_simplified_dsr,
         )
-        # Construct 198 candidates with sharpe variance = 1 exactly.
-        # Use values centered at 0 with var=1; e.g., split half at +1, half at -1
-        # gives exactly Var(SR)=1.0 (ddof=1) given equal counts.
-        # Simpler: use values from a well-defined distribution with known var.
-        # We use the 198 values [i/100 for i in range(-99, 99)] - too convoluted;
-        # instead, use 99 values at +0.99499 and 99 at -0.99499 (=> var ≈ 1).
-        sharpes = [0.99499] * 99 + [-0.99499] * 99
+        # Construct 198 candidates with sharpe variance = 1.0 EXACTLY (ddof=1).
+        # PHASE2C_11 hotfix-2 fixture math correction (F1): the original
+        # fixture used ±0.99499 with claim "var ≈ 1", but actual sample
+        # variance was 0.9950305 (delta from 1.0 = 0.005), producing
+        # E[max] = 2.755365 vs reference 2.762237 (delta 0.0069 > 1e-3
+        # tolerance). The fixed fixture uses a = sqrt(197/198) so that
+        # 2 * 99 * a^2 / (198 - 1) = 1.0 exactly.
+        #
+        # Vestigial-tolerance note: 1e-3 is now generous (post-fix delta
+        # is ~1e-15 floating-point noise). Tolerance kept at 1e-3 per
+        # minimum-mutation discipline at sealed-test register; future
+        # successor cycle may tighten if assertion-precision is in scope.
+        a = math.sqrt(197.0 / 198.0)
+        sharpes = [a] * 99 + [-a] * 99
         candidates = [
             CandidateInput(
                 hypothesis_hash=f"h{i:03d}",
@@ -1164,8 +1171,6 @@ class TestComputeSimplifiedDSRGumbelExpectedMax:
         ]
         result = compute_simplified_dsr(candidates, n_trials=198)
         # E[max|null] linear in sqrt(Var); verify against canonical reference at Var=1.
-        # statistics.variance with these inputs ≈ 1.0 exactly.
-        # Tolerance 1e-3 absorbs the 1e-5 deviation in synthetic var.
         assert abs(result.expected_max_sharpe_null - 2.762237) < 1e-3
 
     def test_expected_max_linear_in_sqrt_var(self):
@@ -1837,8 +1842,20 @@ class TestComputeSimplifiedDSRReproducibility:
             compute_simplified_dsr,
         )
         import random
-        sharpes = [(i - 99) * 0.05 for i in range(198)]  # mix of +/-
-        sharpes[42] = 3.5  # explicit argmax
+        # PHASE2C_11 hotfix-2 fixture math correction (F2): original ramp
+        # coefficient 0.05 produced sharpes[197] = (197-99)*0.05 = 4.9 which
+        # exceeded sharpes[42]=3.5, making h197 the actual argmax (not h042
+        # as the assertion claims). Path α (chosen): scale ramp coefficient
+        # 0.05 → 0.01 so the ramp range becomes [-0.99, 0.98], making 3.5
+        # genuinely dominant and h042 the actual argmax.
+        # Path β considered: rewrite the assertion to test only shuffle-
+        # reproducibility invariant without the specific "h042" hash claim.
+        # α chosen on minimum-mutation grounds (changes 1 fixture constant
+        # vs assertion structure). Future test maintenance: if argmax-hash-
+        # specific assertions surface as a brittle pattern in successor
+        # cycles, β refactor at successor cycle is the canonical path.
+        sharpes = [(i - 99) * 0.01 for i in range(198)]  # range [-0.99, 0.98]
+        sharpes[42] = 3.5  # explicit argmax (genuinely dominant post-fix)
         candidates_a = [
             CandidateInput(
                 hypothesis_hash=f"h{i:03d}",
