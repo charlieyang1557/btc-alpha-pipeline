@@ -968,13 +968,17 @@ def compute_simplified_dsr(
 
     Dual-gate (§3.2 + Step 2 §5.3 forward-flag) at function entry; raises
     ValueError on either failure (per P-L3 invariant-as-state anti-pattern
-    correction). After dual-gate but before RS-3 fire, validates that every
-    candidate has a finite ``sharpe_ratio`` (Codex first-fire #4 defensive
-    enforcement add — non-finite Sharpe at the Step 3 API entry would
-    silently collapse the result via NaN-propagated ``sharpe_var``; raise
-    fail-loud with Step 2 enum-aligned ``missing_sharpe`` token instead).
-    RS-3 guard fires per candidate.audit_v1_artifact_path BEFORE any
-    formula computation (§2.5 + §4.5 fail-loud lockpoint).
+    correction). After dual-gate but before RS-3 fire, validates per-
+    candidate (a) finite ``sharpe_ratio`` (Codex first-fire #4) AND
+    (b) ``total_trades >= MIN_TRADES_FOR_PRIMARY=5`` (Codex first-fire #2
+    §4.4(1) enforcement add). Both validations fire fail-loud at API
+    boundary with Step 2 enum-aligned diagnostic tokens
+    (``missing_sharpe`` and ``low_trade_count`` respectively). Lockpoint
+    substance unchanged — §4.4 pre-registered exclusion rules are
+    codified at the second enforcement layer (Step 2 loader filter →
+    Step 3 API surface) without redefinition. RS-3 guard fires per
+    candidate.audit_v1_artifact_path BEFORE any formula computation
+    (§2.5 + §4.5 fail-loud lockpoint).
 
     Args:
         candidates: Eligible candidate list (post-§4.4 filter at canonical
@@ -1001,6 +1005,8 @@ def compute_simplified_dsr(
             len(candidates) ∉ {EXPECTED_N_RAW,
             EXPECTED_N_ELIGIBLE_AT_CANONICAL}), on any candidate with
             non-finite ``sharpe_ratio`` (``missing_sharpe (§4.4(3))``
+            diagnostic), on any candidate with ``total_trades <
+            MIN_TRADES_FOR_PRIMARY`` (``low_trade_count (§4.4(1))``
             diagnostic), or on any candidate's RS-3 attestation failure.
     """
     # ----- Dual-gate (§3.2 + Step 2 §5.3 forward-flag) -----
@@ -1022,9 +1028,16 @@ def compute_simplified_dsr(
             f"+ Step 2 §5.3 forward-flag. Caller passed an n_raw mismatch."
         )
 
-    # ----- Patch #4 (Codex first-fire): non-finite sharpe_ratio fail-loud
-    # at API boundary; align Step 2 CandidateExclusion.reason='missing_sharpe'
-    # enum (§4.4(3)). Fires before RS-3 to avoid I/O on doomed input. ------
+    # ----- Patch #4 + Patch #2 (Codex first-fire): single-pass §4.4
+    # API entry validation. Both checks fire fail-loud BEFORE RS-3 to
+    # avoid I/O on doomed input. Patch #2 enforces §4.4(1) pre-
+    # registered T_c < MIN_TRADES_FOR_PRIMARY=5 exclusion threshold at
+    # the Step 3 API surface — lockpoint substance unchanged (already
+    # locked at c021c60 sub-spec); this commit codifies enforcement at
+    # the second layer (Step 2 loader filter → Step 3 API) without
+    # lockpoint mutation. Diagnostic tokens align Step 2
+    # CandidateExclusion.reason enum (`missing_sharpe`,
+    # `low_trade_count`). -----
     for c in candidates:
         if not math.isfinite(c.sharpe_ratio):
             raise ValueError(
@@ -1035,6 +1048,18 @@ def compute_simplified_dsr(
                 f"Production callers must pre-filter via "
                 f"load_audit_v1_candidates() (which routes non-finite "
                 f"Sharpe values to excluded_candidates at Step 2)."
+            )
+        if c.total_trades < MIN_TRADES_FOR_PRIMARY:
+            raise ValueError(
+                f"low_trade_count (§4.4(1)): candidate "
+                f"hypothesis_hash={c.hypothesis_hash!r} has "
+                f"total_trades={c.total_trades} < "
+                f"MIN_TRADES_FOR_PRIMARY={MIN_TRADES_FOR_PRIMARY}; "
+                f"§4.4(1) pre-registered exclusion threshold. "
+                f"Production callers must pre-filter via "
+                f"load_audit_v1_candidates() (which routes T_c<5 to "
+                f"excluded_candidates with reason='low_trade_count' at "
+                f"Step 2)."
             )
 
     # ----- Patch #1 (Codex first-fire): build excluded_candidates_summary
@@ -1060,13 +1085,16 @@ def compute_simplified_dsr(
 
     if n_eligible == 0:
         # §1.5 dual-handling: n_eligible_zero degenerate state.
-        # NOTE: unreachable under the current §3.2 dual-gate (which forces
-        # len(candidates) ∈ {198, 154}); preserved as defensive coverage
-        # for future API expansion (e.g., a Step-2-aware entry point that
-        # accepts SimplifiedDSRInputs directly per future §4.5 update).
-        # Codex first-fire #3 flagged this dead branch; minimal-mutation
-        # disposition is to retain the path with explicit unreachability
-        # docstring rather than drop the schema-sealed Literal value.
+        # UNREACHABLE under current API contract: §3.2 dual-gate forces
+        # len(candidates) ∈ {EXPECTED_N_RAW, EXPECTED_N_ELIGIBLE_AT_CANONICAL},
+        # so len == 0 cannot reach this branch via canonical entry. Patch #2
+        # (Codex first-fire #2 §4.4(1) enforcement add at API entry) further
+        # raises ValueError before this branch on T_c < MIN_TRADES_FOR_PRIMARY
+        # admission; Patch #4 (Codex first-fire #4) raises on non-finite
+        # sharpe_ratio. Branch retained as defensive coverage for future API
+        # expansion (specific path TBD; not currently planned in §4.5).
+        # Schema-sealed Literal value "n_eligible_zero" preserved per
+        # minimum-mutation discipline.
         return _build_degenerate_result(
             degenerate_state="n_eligible_zero",
             n_trials=n_trials,

@@ -1991,12 +1991,25 @@ class TestComputeSimplifiedDSRDualGateNRawCheck:
 class TestComputeSimplifiedDSREdgeCases:
     """§4.4(4) + §1.5 dual-handling: degenerate states route to inconclusive."""
 
-    def test_n_eligible_zero_returns_inconclusive(self):
+    def test_low_trade_population_raises_value_error(self):
+        """T_c < MIN_TRADES_FOR_PRIMARY=5 candidates raise ValueError per
+        §4.4(1) pre-registered exclusion threshold at compute_simplified_dsr()
+        API entry.
+
+        Codex first-fire #2 substantive correction (Hotfix-3 sealed-test-
+        substance flip event): this test previously accepted a degenerate
+        result for all-low-trade input, which silently bypassed §4.4(1)
+        lockpoint enforcement. Post-Hotfix-3, the API rejects low-trade
+        candidates fail-loud instead of computing on them. Schema P-L3
+        "raise OR degenerate" wording resolved at "raise" branch;
+        degenerate_state n_eligible_zero remains schema-sealed Literal
+        value but is unreachable under the current API per Patch #3
+        unreachability docstring.
+        """
         from backtest.evaluate_dsr import (
             CandidateInput,
             compute_simplified_dsr,
         )
-        # All 198 candidates have T_c < 5 → all excluded → n_eligible = 0.
         candidates = [
             CandidateInput(
                 hypothesis_hash=f"h{i:03d}",
@@ -2007,16 +2020,8 @@ class TestComputeSimplifiedDSREdgeCases:
             )
             for i in range(198)
         ]
-        # Note: candidates passed here are pre-eligible; engine logic depends
-        # on whether eligibility filter operates inside compute_simplified_dsr
-        # or the caller pre-filters. Per §4.5 API, candidates are eligible-only;
-        # this test models direct invocation with all-low-T candidates which
-        # SHOULD NOT happen in production but tests the degenerate-state guard.
-        # Schema P-L3 expects this to either (a) raise or (b) return
-        # degenerate_state="n_eligible_zero" + population_disposition="inconclusive".
-        result = compute_simplified_dsr(candidates, n_trials=198)
-        assert result.population_disposition == "inconclusive"
-        assert result.degenerate_state in ("n_eligible_zero", "var_zero")
+        with pytest.raises(ValueError, match="low_trade_count"):
+            compute_simplified_dsr(candidates, n_trials=198)
 
     def test_zero_variance_returns_inconclusive(self):
         from backtest.evaluate_dsr import (
