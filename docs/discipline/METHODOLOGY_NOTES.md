@@ -2521,3 +2521,392 @@ register for tier-promotion adjudication at successor scoping or
 implementation register.
 
 ---
+
+## §20 Pre-result lockpoint mis-specification: documented exception path under arc-level anti-p-hacking guardrails
+
+This section codifies a narrow, explicitly bounded exception path
+under arc-level anti-p-hacking guardrails (e.g., PHASE2C_11_PLAN §0.4)
+that forbid "any post-result parameter adjustment to pre-registered
+lockpoints." Strict literal reading of those guardrails admits no
+mid-arc lockpoint patch under any condition. §20 documents the path
+under which an in-arc patch is admissible without weakening the
+post-hoc-adjustment prohibition the guardrail is actually defending
+against.
+
+The exception is not a relaxation of the guardrail. It is a
+clarification of which adjustment class the guardrail targets
+(result-favorable post-hoc tuning) versus which class the guardrail
+does not target (pre-result correction of structural infeasibility
+between a lockpoint and its canonical input register). Conflating
+the two would either erode the guardrail at first ambiguous case
+(if patches are admitted ad hoc) or burn entire successor cycles on
+typo-class structural infeasibilities (if every misalignment between
+lockpoint and canonical-artifact register triggers a successor
+cycle).
+
+Tier: Strong. Operating-rule codification with five explicit
+trigger conditions (individually necessary, jointly sufficient);
+one precedent instance at codification fire (PHASE2C_11 v3 → v3.1
+Instance 6); future instances log here at register satisfaction.
+The Strong tier reflects that §20 articulates a binding operating
+rule (admissibility test for in-arc patches under arc-level
+anti-p-hacking guardrails), not an observation pattern. Tier
+re-evaluation (including potential demotion) at successor methodology
+consolidation cycle if cumulative-instance pattern surfaces evidence
+of misuse OR if alternative codification register supersedes §20.
+
+### Principle
+
+The arc-level anti-p-hacking guardrail (e.g., §0.4) defends against
+a specific defect class: a result is computed; the result is
+unfavorable; the spec author or reviewer cycle revisits the
+pre-registered lockpoint and adjusts it to flip the result toward
+favorable. The discipline forbids that move because it converts
+pre-registration into post-registration via lockpoint mutation,
+which destroys the anti-p-hacking guarantee the pre-registration
+was supposed to provide.
+
+The defect class §20 covers is structurally distinct: a lockpoint
+is pre-registered at sub-spec drafting cycle; at implementation
+arc Step 1 (artifact inventory + verification, BEFORE any
+pre-registered screen output / interpretive disposition fires),
+canonical-artifact register verification surfaces that the
+lockpoint is structurally infeasible against the canonical input
+register-precision (e.g., a tolerance lockpoint at 1e-9 against an
+artifact stored at 6-decimal precision; max physical |delta| ≈ 5e-7
+by storage-format construction; literal lockpoint application
+excludes 100% of inputs by construction). The lockpoint is wrong
+not because it produces an unfavorable result, but because it
+cannot produce any result at all under the canonical input format.
+
+Patching that lockpoint pre-result, with full audit trail and
+explicit Charlie-register authorization, does not implicate the
+post-hoc adjustment defect class the guardrail forbids. The five
+trigger conditions in §20 Application checklist enumerate the
+specific structural conditions under which the patch is admissible.
+Outside those conditions, the guardrail's strict literal reading
+applies: mis-specifications surface as inconclusive disposition
+and defer to successor cycle for re-pre-registration.
+
+### Trigger context
+
+§20 fires when ALL FIVE of the following conditions hold at a
+candidate in-arc patch (individually necessary, jointly sufficient):
+
+1. **Pre-result register**. The patch is authored before any
+   pre-registered screen output / interpretive disposition has
+   fired at the implementation arc. Specifically: Step 1 (artifact
+   inventory + RS guard verification + descriptive distribution
+   diagnostics) is pre-result; Step 2 (compute pre-registered screen
+   *inputs* — cross-trial scalars, eligible-subset N, edge-case
+   filtering) is also pre-result. Step 3 (the pre-registered screen
+   computation producing pass/fail/inconclusive disposition) and
+   Step 4+ (result interpretation) are post-result. The boundary is
+   placed at "before any pre-registered screen output observed at
+   register-bearing register"; descriptive diagnostics that don't
+   bear on pass/fail (e.g., Sharpe distribution percentiles,
+   forward-traceability descriptors) do not constitute pre-registered
+   screen output.
+
+   **Trade-off acknowledged at this trigger boundary:** placing the
+   boundary at end-of-Step-2 admits the case where input statistics
+   are observed before patch (e.g., cross-trial Sharpe variance
+   already computed). This trade-off is mitigated by Trigger 3 +
+   Trigger 5: Trigger 3 forbids any pass/fail criterion change
+   (so post-input-observation patches cannot change disposition
+   threshold), and Trigger 5 forbids loosening parameters beyond
+   the canonical-artifact register-precision floor (so
+   post-input-observation patches cannot cherry-pick a
+   result-favorable parameter). The boundary is liberal enough to
+   admit canonical-artifact-precision corrections that surface at
+   Step 2 input loading; conservative enough to forbid
+   result-favorable tuning. See Failure-mode signal §20 for
+   explicit warning on input-observation-before-patch caution.
+
+2. **Structural infeasibility at canonical-artifact register**.
+   The lockpoint cannot be satisfied by the canonical input register
+   under literal application due to format / precision / encoding
+   incompatibility verified at canonical-artifact register
+   (filesystem inventory, schema introspection, format inspection).
+   The infeasibility must be physical (storage-format-induced) or
+   structural (schema-induced), not a judgment call about whether
+   the lockpoint is "too strict." A lockpoint that is satisfiable
+   by some canonical inputs but not others is NOT structurally
+   infeasible — it produces an eligibility filter, not a
+   by-construction exclusion of all inputs.
+
+3. **No substantive pass/fail criterion changes**. The patch must
+   not change any of: the canonical formula(s) at the spec; the
+   pass/fail thresholds at sub-spec lockpoints; the AND-gate /
+   OR-gate logic at result interpretation; the **substantive
+   eligible-subset definition** (i.e., filters that produce a
+   non-degenerate eligible subset under canonical-artifact register;
+   e.g., trade-count filter `T_c < 5`); the canonical input
+   source(s) at the primary computation register.
+
+   **Boundary clarification (resolves Trigger 2 / Trigger 3
+   non-contradiction):** when Trigger 2 is satisfied, the original
+   lockpoint produces a *structurally degenerate* (100%-exclusion)
+   eligibility filter — by construction it does not define a
+   substantive eligible subset, so changing its binding action
+   (e.g., from auto-exclude to reviewer-route) does not change the
+   substantive eligible-subset definition. The patch operates at
+   the binding-action register (what to do when a discrepancy
+   surfaces under a structurally degenerate filter) or at the
+   descriptive-register reframe layer, not at the substantive
+   lockpoint layer. Trigger 3 protects substantive filters
+   (non-degenerate; e.g., `T_c < 5`); Trigger 2 + Trigger 3 together
+   guarantee that admissible patches operate only on the structurally
+   degenerate subset.
+
+4. **Full audit trail v* → v*.1**. The pre-patch lockpoint reading
+   is preserved at canonical record. The "labeled commit pair" is
+   defined as: (a) the v* sub-spec seal commit (canonical pre-patch
+   reading); (b) the v*.1 patch commit (post-patch reading with
+   inline `(v*.1 patch per §19 Instance N + §20 trigger
+   verification)` annotations at every patch site). Deliverable
+   records (Step deliverables citing v* and v*.1) preserve the
+   adjudication trail at register-precision. The audit trail must
+   allow a reader to reconstruct the v* canonical reading without
+   recourse to git archaeology beyond the labeled commit pair.
+
+5. **Patch parameter calibrated to canonical-artifact register-precision floor (parameter calibration discipline)**. The replacement parameter value (e.g., the new tolerance, the new precision threshold) is calibrated to the minimum register-precision required to address the structural infeasibility — i.e., empirically grounded in the canonical-artifact register-precision floor (storage-format precision, schema-encoded precision, or equivalent canonical-artifact-derived bound), NOT loosened beyond that floor for "more reasonable" or "future-flexibility" reasons.
+
+   The calibration must be independently verifiable: a reader
+   examining the canonical-artifact register and the patched
+   parameter value should be able to confirm that the parameter
+   value is the tightest bound that satisfies the infeasibility
+   correction at the canonical register. Looser values (e.g., one
+   or more orders of magnitude beyond the empirical floor) are
+   forbidden under §20 — they implicate post-hoc result-favorable
+   tuning even when Triggers 1-4 are satisfied. Successor cycle
+   re-pre-registration is the path for parameter values that
+   require justification beyond canonical-artifact-precision-floor
+   matching.
+
+### Application checklist
+
+When a candidate in-arc patch surfaces:
+
+1. Verify ALL FIVE trigger conditions hold at canonical-artifact
+   register; if any fails, §20 does not apply; route to strict
+   §0.4-style inconclusive disposition + successor cycle.
+2. Surface the candidate patch + the five-trigger verification at
+   reviewer-routing register. Both reviewers (ChatGPT structural +
+   advisor substantive) must adversarially scrutinize all five
+   triggers; reviewer convergence is necessary, not sufficient.
+3. **Reviewer divergence path:** if reviewers do not converge after
+   one or more substantive passes, §20 does NOT fire. Charlie-register
+   adjudicates the divergence; only Charlie-register adjudication on
+   the divergence (selecting reviewer position OR custom resolution)
+   re-opens §20 fire eligibility. Without reviewer convergence
+   achieved, the candidate patch defers to strict §0.4-style path.
+4. Charlie-register authorization is canonical for operational
+   fire per `feedback_authorization_routing.md`. Reviewer
+   convergence alone does NOT authorize the patch.
+5. **One patch per pre-registered lockpoint per arc** (binding
+   constraint, not heuristic). Subsequent patches on the same
+   lockpoint within the same arc defer to successor cycle
+   re-pre-registration; §20 cannot be invoked for repeat patches
+   at the same lockpoint within an arc. Multiple distinct lockpoints
+   may each take one §20 patch within an arc; the constraint is
+   per-lockpoint, not per-arc.
+6. Patch sites carry explicit `(v*.1 patch per §19 Instance N + §20
+   trigger verification)` annotations preserving v* canonical
+   reading. Annotations cite the §19 instance number AND the
+   §20 trigger satisfaction fact at register-precision.
+7. Bundle: sub-spec patch commit + deliverable v2 commit + (if
+   first instance under §20 register) METHODOLOGY_NOTES §20
+   codification commit. The codification fires at first instance;
+   subsequent instances log at §20.5 cumulative-instance register
+   without re-codification.
+8. Step gating: subsequent operational fires (Step 2 / Step 3 /
+   etc.) AUTHORIZED POST-SEAL ONLY. The patch landing does not
+   authorize the next step; Charlie-register seal authorization on
+   the bundle does.
+
+### Failure-mode signal
+
+Watch for any of the following, which indicate misuse of §20:
+
+- "The lockpoint is too strict; the result would be inconclusive
+  if we applied it strictly" — this is the post-hoc adjustment
+  defect class §0.4 forbids; §20 does not admit pragmatic-strictness
+  arguments. Trigger 2 (structural infeasibility) requires
+  by-construction exclusion of all inputs, not "more candidates
+  excluded than the spec author intended."
+- "Reviewers ratified the patch" without Charlie-register
+  authorization — reviewer convergence is advisory only per
+  `feedback_authorization_routing.md`. Application checklist item 4
+  is the operational-fire gate.
+- "We can patch this and document later" — the audit trail must
+  be authored at the same arc as the patch (Trigger 4); deferring
+  the audit annotation to a successor cycle erodes the
+  reconstructability the trigger guarantees.
+- "Step 3 has already partially fired; Step 1 verification surfaced
+  the defect" — partial Step 3 firing implicates the post-result
+  register; Trigger 1 fails. §20 does not apply; route to strict
+  inconclusive disposition. (Trigger 1 boundary is end-of-Step-2;
+  any Step 3+ output observed = post-result.)
+- **"We saw the input statistics at Step 2 and that motivated the
+  patch direction"** — even though Trigger 1 admits Step 2 as
+  pre-result, Trigger 3 + Trigger 5 must be satisfied
+  *independently of input observation*. Specifically: the patch
+  must be derivable from canonical-artifact register-precision
+  alone (Trigger 5), not from input-statistic-favorable selection.
+  If a reviewer asks "would you have authored the same patch
+  without seeing the Step 2 input statistics?" and the honest
+  answer is no, the patch implicates the post-hoc-tuning defect
+  class even if Trigger 1 surface-passes. Charlie-register
+  adjudication required at this boundary case.
+- "The new tolerance is more reasonable / industry-standard / a
+  cleaner round number" — Trigger 5 forbids parameter calibration
+  beyond canonical-artifact register-precision floor.
+  "Reasonableness" arguments not grounded in the canonical-artifact
+  register are post-hoc tuning. Successor cycle re-pre-registration
+  is the path for parameter substance debates.
+- "This is the second time we've patched this lockpoint" —
+  Application checklist item 5 forbids repeat patches on the same
+  lockpoint within an arc. Multiple in-arc patches suggest the
+  lockpoint substance is unstable, which strict §0.4 covers via
+  successor-cycle re-pre-registration.
+
+### §20.5 Cumulative instance register
+
+**Instance entry template (mandatory fields for each entry):**
+
+(a) **Anchor citation:** arc + cycle + canonical-artifact register
+    citation locating the lockpoint and the structural infeasibility.
+(b) **Per-trigger verification:** explicit per-trigger
+    verification at register-precision (T1 + T2 + T3 + T4 + T5;
+    each trigger's satisfaction grounded in canonical-artifact
+    register).
+(c) **Reviewer convergence record:** ChatGPT lean + Claude advisor
+    lean + convergence path (direct convergence / divergence
+    adjudicated by Charlie-register).
+(d) **Charlie-register authorization citation:** the canonical
+    Charlie-register message authorizing the operational fire.
+(e) **Patch-substance adjudication notes:** any substantive
+    parameter / wording adjudication at register-precision (e.g.,
+    parameter value selection rationale citing canonical-artifact
+    register-precision floor).
+
+---
+
+**Instance 1 (this codification fire):** PHASE2C_11 v3 → v3.1 patch
+slate, Instance 6 of §19 enumeration.
+
+(a) **Anchor citation:** PHASE2C_11 implementation arc Step 1
+    inventory cycle. Lockpoint: JSON-vs-CSV cross-validation
+    tolerance at v3 §3.4 + §4.4(5) set at `|delta| > 1e-9`.
+    Canonical-artifact register: `holdout_results.csv` at
+    `data/phase2c_evaluation_gate/audit_v1/` stored at 6-decimal
+    precision; physical max |delta| ≈ 5e-7 between CSV and JSON
+    full-precision floats by CSV format construction.
+
+(b) **Per-trigger verification:**
+    - **T1 (pre-result):** Step 1 inventory only fired at patch
+      author cycle; no Step 2 input loading, no Step 3 screen
+      output, no Step 4 interpretation. Pre-result at strict
+      end-of-Step-1 boundary (more conservative than the §20 T1
+      end-of-Step-2 boundary). Anti-rationalization audit per §20
+      Failure-mode signal honest test: a forward-traceability
+      descriptor (Bonferroni threshold = 3.2522 + max observed
+      Sharpe = 1.262) was computed and observed at Step 1
+      verification cycle, but did NOT bear on patch direction —
+      Instance 6 patch is canonical-artifact-precision-derived
+      (CSV 6-decimal storage floor → 1e-6 calibration), not
+      Sharpe-distribution-derived. The honest test "would the same
+      patch have been authored without observing Step 1 descriptors?"
+      passes at register-precision: yes, the structural infeasibility
+      surfaces from CSV format inspection alone.
+    - **T2 (structural infeasibility):** by-construction 100%
+      exclusion of all 198 candidates under literal 1e-9
+      application — every JSON-vs-CSV scalar pair has |delta| in
+      [~0, ~5e-7] range due to CSV 6-decimal storage; literal 1e-9
+      tolerance excludes every pair. Verified empirically at
+      `/tmp/phase2c_11_step1_verify.py` cycle: 488 disagreements
+      at 1e-9 register / 0 at 1e-6 register.
+    - **T3 (no substantive pass/fail criterion changes):** formula
+      lockpoints (Bonferroni `sqrt(2*ln(N))`; DSR-style p-value;
+      Gumbel approximation), pass/fail thresholds (p < 0.05;
+      Bonferroni at N=198), conservative AND-gate at §3.6,
+      substantive eligible-subset filter (`T_c < 5` per §4.4(1)),
+      JSON canonical scalar source per §3.3 — all unchanged. Patch
+      operates at binding-action register (auto-exclude →
+      reviewer-route) on a structurally degenerate filter
+      (Trigger 2 satisfied), not on the substantive eligible-subset
+      definition.
+    - **T4 (full audit trail):** v3 seal commit `c5b740c` preserved
+      as pre-patch canonical reading; v3.1 patch sites at §3.4
+      line 224 + §4.4(5) line 350 carry inline annotations with
+      §19 Instance N + §20 trigger verification citation.
+      Step 1 deliverable v2 records adjudication trail at
+      register-precision.
+    - **T5 (canonical-artifact-precision-floor calibration):**
+      replacement tolerance value 1e-6 selected as one order of
+      magnitude above the empirical CSV 6-decimal storage floor
+      (~5e-7). Independently verifiable: 1e-6 catches CSV storage
+      rounding cleanly (max physical delta < 1e-6) without
+      permitting genuine engine-output divergence (≥1e-6 surfaces
+      for adjudication). Looser candidates (1e-5, 1e-3, "any
+      reasonable tolerance") rejected at register-precision per
+      `feedback_reviewer_suggestion_adjudication.md` — 1e-5 admits
+      20× the empirical floor without justification at canonical
+      register; 1e-3 admits 2000× and is post-hoc by construction.
+
+(c) **Reviewer convergence record:**
+    - Initial ChatGPT lean: option (b) reframing; tolerance "1e-6
+      or 1e-5"; "would be too rigid; would waste the cycle".
+    - Initial Claude advisor lean: R1 verify-first; option (b) lean
+      if scenario A confirmed; substantive objection at register-
+      precision — bare P2 weakens §0.4 anti-p-hacking guardrail at
+      first ambiguous case; precedent doc bundle required for §0.4
+      integrity.
+    - Divergence path: ChatGPT → bare P2 (skip codification);
+      Claude advisor → P2 + precedent doc (codify with explicit
+      triggers); Claude Code substantive read converged with
+      advisor on §0.4-integrity grounds.
+    - Convergence achieved at second adjudication round: ChatGPT +
+      Claude advisor + Claude Code aligned on P2 + precedent doc
+      path.
+    - §20 wording itself: ChatGPT structural pass + Claude advisor
+      substantive pass on §20 v1 wording surfaced 5 substantive
+      concerns (L1: T3/T2 internal contradiction; L2: T1 boundary
+      placement; L3: missing T5 parameter calibration; L4:
+      one-patch-per-lockpoint promotion to checklist; L5: 4 polish
+      items). All 5 incorporated at §20 v2 (this codification).
+
+(d) **Charlie-register authorization citation:** Charlie-register
+    message ratified P2 + precedent doc path after advisor objection
+    surfaced trichotomy P1 / P2+precedent-doc / bare-P2. Subsequent
+    Charlie-register message ratified β path (final advisor pass
+    on §20 wording + ChatGPT structural pass on full bundle, then
+    seal). Subsequent Charlie-register message ratified incorporating
+    advisor L1+L2+L3+L4+L5 fixes at §20 v2 ("approved on both
+    reviewer synthesis β").
+
+(e) **Patch-substance adjudication notes:** tolerance 1e-6 selected
+    over 1e-5 per `feedback_reviewer_suggestion_adjudication.md`
+    adjudication: empirical CSV storage floor ~5e-7 → 1e-6 sits one
+    order of magnitude above (Trigger 5 satisfied); 1e-5 would sit
+    20× above (Trigger 5 violated); 1e-9 (the v3 lockpoint) sits
+    below empirical floor (Trigger 2 satisfied). §20 v2 incorporates
+    advisor L1-L5 fixes per second-pass adjudication: T3 boundary
+    clarification (resolves T2/T3 internal contradiction); T1
+    boundary at end-of-Step-2 with explicit input-observation
+    trade-off acknowledgment; T5 parameter calibration discipline
+    added; one-patch-per-lockpoint promoted to Application checklist
+    item 5; §20.5 instance template + tier-re-evaluation honesty +
+    labeled commit pair definition + reviewer-divergence-path all
+    polished.
+
+---
+
+Future instances log here at register satisfaction following the
+mandatory entry template; tier re-evaluation (including potential
+demotion if cumulative misuse pattern emerges, OR supersession if
+alternative codification register supersedes §20) at successor
+methodology consolidation cycle.
+
+---
