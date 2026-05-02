@@ -31,8 +31,10 @@ import logging
 import math
 import statistics
 import sys
+from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any, Literal, Mapping
 
 from scipy.stats import norm
@@ -954,6 +956,8 @@ def _route_disposition(
 def compute_simplified_dsr(
     candidates: list[CandidateInput],
     n_trials: int,
+    *,
+    excluded_candidates: list[CandidateExclusion] | None = None,
 ) -> SimplifiedDSRResult:
     """PHASE2C_11 Step 3 simplified DSR-style screen.
 
@@ -964,8 +968,13 @@ def compute_simplified_dsr(
 
     Dual-gate (§3.2 + Step 2 §5.3 forward-flag) at function entry; raises
     ValueError on either failure (per P-L3 invariant-as-state anti-pattern
-    correction). RS-3 guard fires per candidate.audit_v1_artifact_path
-    BEFORE any formula computation (§2.5 + §4.5 fail-loud lockpoint).
+    correction). After dual-gate but before RS-3 fire, validates that every
+    candidate has a finite ``sharpe_ratio`` (Codex first-fire #4 defensive
+    enforcement add — non-finite Sharpe at the Step 3 API entry would
+    silently collapse the result via NaN-propagated ``sharpe_var``; raise
+    fail-loud with Step 2 enum-aligned ``missing_sharpe`` token instead).
+    RS-3 guard fires per candidate.audit_v1_artifact_path BEFORE any
+    formula computation (§2.5 + §4.5 fail-loud lockpoint).
 
     Args:
         candidates: Eligible candidate list (post-§4.4 filter at canonical
@@ -974,6 +983,15 @@ def compute_simplified_dsr(
             EXPECTED_N_ELIGIBLE_AT_CANONICAL) at canonical fire.
         n_trials: N for multiple-testing correction; MUST equal
             EXPECTED_N_RAW per §3.2 lockpoint.
+        excluded_candidates: Optional Step 2 ``CandidateExclusion`` list
+            from ``load_audit_v1_candidates(...).excluded_candidates`` —
+            consumed solely to populate ``SimplifiedDSRResult.excluded_
+            candidates_summary`` per schema P-T2 (Codex first-fire #1).
+            When ``None`` (synthetic fixture-driven fires that bypass the
+            Step 2 loader), the summary is an empty tuple — this is a
+            valid degraded audit, NOT a schema violation; "expected counts
+            at canonical fire sum to 44" per schema §1 line 51 is a
+            canonical-fire invariant, NOT an all-fires invariant.
 
     Returns:
         SimplifiedDSRResult — canonical Step 3 output.
@@ -981,8 +999,9 @@ def compute_simplified_dsr(
     Raises:
         ValueError: On dual-gate failure (n_trials != EXPECTED_N_RAW OR
             len(candidates) ∉ {EXPECTED_N_RAW,
-            EXPECTED_N_ELIGIBLE_AT_CANONICAL}) or on any candidate's
-            RS-3 attestation failure.
+            EXPECTED_N_ELIGIBLE_AT_CANONICAL}), on any candidate with
+            non-finite ``sharpe_ratio`` (``missing_sharpe (§4.4(3))``
+            diagnostic), or on any candidate's RS-3 attestation failure.
     """
     # ----- Dual-gate (§3.2 + Step 2 §5.3 forward-flag) -----
     if n_trials != EXPECTED_N_RAW:
@@ -1003,6 +1022,32 @@ def compute_simplified_dsr(
             f"+ Step 2 §5.3 forward-flag. Caller passed an n_raw mismatch."
         )
 
+    # ----- Patch #4 (Codex first-fire): non-finite sharpe_ratio fail-loud
+    # at API boundary; align Step 2 CandidateExclusion.reason='missing_sharpe'
+    # enum (§4.4(3)). Fires before RS-3 to avoid I/O on doomed input. ------
+    for c in candidates:
+        if not math.isfinite(c.sharpe_ratio):
+            raise ValueError(
+                f"missing_sharpe (§4.4(3)): candidate "
+                f"hypothesis_hash={c.hypothesis_hash!r} has non-finite "
+                f"sharpe_ratio={c.sharpe_ratio!r}; aligns Step 2 "
+                f"CandidateExclusion.reason='missing_sharpe' enum. "
+                f"Production callers must pre-filter via "
+                f"load_audit_v1_candidates() (which routes non-finite "
+                f"Sharpe values to excluded_candidates at Step 2)."
+            )
+
+    # ----- Patch #1 (Codex first-fire): build excluded_candidates_summary
+    # from optional Step 2 CandidateExclusion list. Sorted by reason key
+    # per P-T2 lock; empty tuple when caller didn't provide context (valid
+    # degraded audit at synthetic fixture fires). -----
+    if excluded_candidates is not None:
+        excluded_summary: tuple[tuple[str, int], ...] = tuple(
+            sorted(Counter(e.reason for e in excluded_candidates).items())
+        )
+    else:
+        excluded_summary = tuple()
+
     # ----- RS-3 guard per candidate (fail-loud per §2.5 + §4.5) -----
     rs_guard_call_count = 0
     for c in candidates:
@@ -1015,12 +1060,20 @@ def compute_simplified_dsr(
 
     if n_eligible == 0:
         # §1.5 dual-handling: n_eligible_zero degenerate state.
+        # NOTE: unreachable under the current §3.2 dual-gate (which forces
+        # len(candidates) ∈ {198, 154}); preserved as defensive coverage
+        # for future API expansion (e.g., a Step-2-aware entry point that
+        # accepts SimplifiedDSRInputs directly per future §4.5 update).
+        # Codex first-fire #3 flagged this dead branch; minimal-mutation
+        # disposition is to retain the path with explicit unreachability
+        # docstring rather than drop the schema-sealed Literal value.
         return _build_degenerate_result(
             degenerate_state="n_eligible_zero",
             n_trials=n_trials,
             n_eligible=0,
             sharpe_var=0.0,
             rs_guard_call_count=rs_guard_call_count,
+            excluded_candidates_summary=excluded_summary,
         )
 
     if n_eligible >= 2:
@@ -1035,6 +1088,7 @@ def compute_simplified_dsr(
             n_eligible=n_eligible,
             sharpe_var=0.0,
             rs_guard_call_count=rs_guard_call_count,
+            excluded_candidates_summary=excluded_summary,
         )
 
     # ----- §4.3 Step 1: Bonferroni-style threshold -----
@@ -1042,14 +1096,63 @@ def compute_simplified_dsr(
 
     if sharpe_var == 0.0:
         # §1.5 dual-handling: var_zero degenerate state.
-        # Bonferroni threshold still well-defined; emit per_candidate with
-        # SE/z/p as best-effort defensive defaults (z undefined → 0; p →
-        # 0.5; disposition → inconclusive).
+        # Bonferroni threshold still well-defined; emit per-candidate
+        # records with SE/z/p as defensive defaults (z=0, p=0.5,
+        # disposition=inconclusive) per existing helper.
         per_candidate_records = tuple(
             _build_degenerate_per_candidate_record(c, bonferroni_threshold)
             for c in candidates
         )
         argmax_idx = sharpes.index(max(sharpes))
+        argmax_candidate = candidates[argmax_idx]
+        # Patch #5 (Codex first-fire): emit the §5.4 4-row sensitivity
+        # table even in var_zero. Per-row formula compute fires normally
+        # (Bonferroni / Gumbel / SE / z / p — Gumbel returns 0.0 at
+        # sharpe_var=0 per _gumbel_expected_max guard; SE is var-
+        # independent; z and p remain finite); per-row disposition is
+        # forced to "inconclusive" because population-level screen is
+        # undefined under var_zero per §3.6 + §4.4(4). Schema §1 line 49
+        # specifies 4 rows at N_eff ∈ {198, 80, 40, 5} unconditionally;
+        # var_zero must not drop the table per Codex first-fire #5
+        # adjudication (advisor refinement: per-row compute over Codex's
+        # proposed hardcoded argmax_p_value=0.5 placeholder).
+        sensitivity_rows: list[SensitivityRow] = []
+        for n_eff in (EXPECTED_N_RAW, 80, 40, 5):
+            bonf_thr_row = math.sqrt(2.0 * math.log(n_eff))
+            e_max_row = _gumbel_expected_max(0.0, n_eff)
+            if argmax_candidate.total_trades > 1:
+                se_row = math.sqrt(1.0 / (argmax_candidate.total_trades - 1))
+                z_row = (argmax_candidate.sharpe_ratio - e_max_row) / se_row
+                p_row = float(norm.sf(z_row))
+            else:
+                p_row = 1.0
+            label_row: Literal["primary", "sensitivity"] = (
+                "primary" if n_eff == EXPECTED_N_RAW else "sensitivity"
+            )
+            sensitivity_rows.append(SensitivityRow(
+                n_eff=n_eff,
+                bonferroni_threshold=bonf_thr_row,
+                expected_max_sharpe_null=e_max_row,
+                argmax_p_value=p_row,
+                argmax_disposition_descriptive="inconclusive",
+                register_label=label_row,
+            ))
+        # Patch #6 (Codex first-fire): MappingProxyType wrap on
+        # bonferroni_cross_check — schema field type is Mapping[str, bool|
+        # float] (schema §1 line 50); MappingProxyType conforms while
+        # preventing post-construction mutation that frozen=True alone does
+        # not catch.
+        bonferroni_cross_check_var_zero: Mapping[str, bool | float] = (
+            MappingProxyType({
+                "sr_max": float(max(sharpes)),
+                "bonferroni_threshold": bonferroni_threshold,
+                "bonferroni_pass": bool(max(sharpes) > bonferroni_threshold),
+                "dsr_style_pass": False,
+                "criteria_agree": bool(
+                    (max(sharpes) > bonferroni_threshold) is False
+                ),
+            })
+        )
         return SimplifiedDSRResult(
             per_candidate=per_candidate_records,
             population_disposition="inconclusive",
@@ -1060,17 +1163,9 @@ def compute_simplified_dsr(
             bonferroni_threshold=bonferroni_threshold,
             expected_max_sharpe_null=0.0,
             sharpe_var_used=0.0,
-            sensitivity_table=tuple(),
-            bonferroni_cross_check={
-                "sr_max": float(max(sharpes)),
-                "bonferroni_threshold": bonferroni_threshold,
-                "bonferroni_pass": bool(max(sharpes) > bonferroni_threshold),
-                "dsr_style_pass": False,
-                "criteria_agree": bool(
-                    (max(sharpes) > bonferroni_threshold) is False
-                ),
-            },
-            excluded_candidates_summary=tuple(),
+            sensitivity_table=tuple(sensitivity_rows),
+            bonferroni_cross_check=bonferroni_cross_check_var_zero,
+            excluded_candidates_summary=excluded_summary,
             degenerate_state="var_zero",
             rs_guard_call_count=rs_guard_call_count,
         )
@@ -1122,10 +1217,10 @@ def compute_simplified_dsr(
             register_label=label,
         ))
 
-    # ----- §6.6 bonferroni_cross_check -----
+    # ----- §6.6 bonferroni_cross_check (Patch #6: MappingProxyType wrap) -----
     bonferroni_pass_overall = bool(sharpe_max > bonferroni_threshold)
     dsr_style_pass_overall = bool(argmax_record.dsr_style_pass)
-    bonferroni_cross_check: Mapping[str, bool | float] = {
+    bonferroni_cross_check: Mapping[str, bool | float] = MappingProxyType({
         "sr_max": float(sharpe_max),
         "bonferroni_threshold": float(bonferroni_threshold),
         "bonferroni_pass": bonferroni_pass_overall,
@@ -1133,7 +1228,7 @@ def compute_simplified_dsr(
         "criteria_agree": bool(
             bonferroni_pass_overall == dsr_style_pass_overall
         ),
-    }
+    })
 
     return SimplifiedDSRResult(
         per_candidate=per_candidate_records,
@@ -1147,7 +1242,7 @@ def compute_simplified_dsr(
         sharpe_var_used=sharpe_var,
         sensitivity_table=tuple(sensitivity_rows),
         bonferroni_cross_check=bonferroni_cross_check,
-        excluded_candidates_summary=tuple(),
+        excluded_candidates_summary=excluded_summary,
         degenerate_state="none",
         rs_guard_call_count=rs_guard_call_count,
     )
@@ -1228,8 +1323,17 @@ def _build_degenerate_result(
     n_eligible: int,
     sharpe_var: float,
     rs_guard_call_count: int,
+    excluded_candidates_summary: tuple[tuple[str, int], ...] = (),
 ) -> SimplifiedDSRResult:
-    """Construct a SimplifiedDSRResult for n_eligible_zero (no candidates)."""
+    """Construct a SimplifiedDSRResult for n_eligible_zero (no candidates).
+
+    Patch #1 (Codex first-fire): accepts ``excluded_candidates_summary``
+    kw-only so degenerate-path callers can thread the Step 2 exclusion
+    summary through (preserving audit-trail even on degenerate fires).
+    Patch #6: ``bonferroni_cross_check`` wrapped in MappingProxyType to
+    conform schema field type ``Mapping[str, bool | float]`` and prevent
+    post-construction mutation.
+    """
     return SimplifiedDSRResult(
         per_candidate=tuple(),
         population_disposition="inconclusive",
@@ -1241,14 +1345,14 @@ def _build_degenerate_result(
         expected_max_sharpe_null=0.0,
         sharpe_var_used=sharpe_var,
         sensitivity_table=tuple(),
-        bonferroni_cross_check={
+        bonferroni_cross_check=MappingProxyType({
             "sr_max": 0.0,
             "bonferroni_threshold": 0.0,
             "bonferroni_pass": False,
             "dsr_style_pass": False,
             "criteria_agree": True,
-        },
-        excluded_candidates_summary=tuple(),
+        }),
+        excluded_candidates_summary=excluded_candidates_summary,
         degenerate_state=degenerate_state,
         rs_guard_call_count=rs_guard_call_count,
     )

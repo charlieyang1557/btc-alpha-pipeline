@@ -37,35 +37,53 @@ from backtest.evaluate_dsr import (
 # (backtest.wf_lineage.check_evaluation_semantics_or_raise) per
 # candidate.audit_v1_artifact_path at function entry, per §2.5 + §4.5 fail-loud
 # RS-3 lockpoint. Tests that bypass the Step 2 loader (Classes #2-#5, #6, #8-#11,
-# #13 partial) reference synthetic paths /tmp/syn_*.json + /tmp/synthetic_*.json
-# + /tmp/syn_target.json + /tmp/syn_filler_*.json that do not exist on disk at
-# RED authoring time.
+# #13 partial) reference synthetic paths SYN_BASE/syn_*.json,
+# SYN_BASE/synthetic_*.json, SYN_BASE/syn_target.json, and
+# SYN_BASE/syn_filler_*.json that do not exist on disk at RED authoring time.
 #
-# Module-scoped autouse fixture creates valid attestation JSONs at those exact
-# paths at module init; tests reference them as before. Production guard
-# discipline (fail-loud on missing/malformed) preserved at production register;
-# test convenience paths backed by valid synthetic attestations satisfying RS-3.
+# ``SYN_BASE`` (module-level constant; updated by the autouse fixture below) is
+# a unique per-test-session tmp directory derived from pytest's
+# ``tmp_path_factory``. Production guard discipline (fail-loud on missing/
+# malformed) preserved at production register; test convenience paths backed by
+# valid synthetic attestations satisfying RS-3.
 #
-# Test method bodies untouched per (β-mod) minimal-mutation discipline; this is
-# a TDD-RED authoring miss correction at fixture register, not test substance
-# correction at routing register.
+# Patch #8 (Codex first-fire): the original fixture wrote hundreds of files to
+# fixed ``/tmp/syn_*.json`` paths, creating global side effects + concurrent-run
+# collision risk + sandbox-incompatibility (Codex first-fire could not run
+# pytest in its read-only sandbox because of this). Routing through
+# ``tmp_path_factory`` eliminates all three concerns; pytest auto-cleans
+# session tmp dirs (last 3 sessions retained by default), so the manual
+# cleanup loop is dropped. Test method bodies updated mechanically to reference
+# ``SYN_BASE`` instead of the fixed ``/tmp`` prefix; assertion substance
+# unchanged per minimum-mutation discipline at sealed test register.
 #
-# Adjudication trail: advisor initially proposed (γ) monkeypatch path; ChatGPT
-# proposed (β-mod) write-valid-JSON path; Charlie-register adjudicated
-# convergence on (β-mod) per ChatGPT's test/production parity argument.
-# Module-scope autouse fixture variant chosen over per-method tmp_path threading
-# for minimum diff at sealed test method bodies.
+# Original adjudication trail (β-mod): advisor initially proposed (γ)
+# monkeypatch path; ChatGPT proposed (β-mod) write-valid-JSON path; Charlie-
+# register adjudicated convergence on (β-mod) per ChatGPT's test/production
+# parity argument. Codex first-fire #8 adjudication: Charlie-register approved
+# (γ-1) tmp_path_factory variant for sandbox + concurrency hardening.
 # ---------------------------------------------------------------------------
 
 
+# Module-level constant; overridden by ``_phase2c_11_synthetic_rs_attestations``
+# autouse fixture before any Step 3 test runs. Default value is intentionally
+# a sentinel that would fail RS-3 guard read if used pre-fixture — ensures
+# accidental fixture-bypass surfaces immediately rather than silently.
+SYN_BASE: str = "/tmp/PHASE2C_11_SYN_BASE_NOT_INITIALIZED"
+
+
 @pytest.fixture(scope="module", autouse=True)
-def _phase2c_11_synthetic_rs_attestations():
-    """Module-scoped autouse: create valid RS-3 attestation JSONs at the
-    synthetic /tmp paths referenced by PHASE2C_11 Step 3 RED tests'
-    CandidateInput constructions.
+def _phase2c_11_synthetic_rs_attestations(tmp_path_factory):
+    """Module-scoped autouse: create valid RS-3 attestation JSONs at a unique
+    per-session tmp directory derived from ``tmp_path_factory``; expose path
+    via ``SYN_BASE`` module constant.
 
     See module-level discussion above for adjudication trail.
     """
+    global SYN_BASE
+    base = tmp_path_factory.mktemp("phase2c_11_rs3_attestations")
+    SYN_BASE = str(base)
+
     valid_attestation = json.dumps({
         "evaluation_semantics": "single_run_holdout_v1",
         "engine_commit": "eb1c87f",
@@ -75,28 +93,19 @@ def _phase2c_11_synthetic_rs_attestations():
         "holdout_metrics": {"sharpe_ratio": 0.0, "total_trades": 10},
     })
 
-    paths_to_create: list[Path] = []
-    # Class #5 boundary disposition fixture: target + 197 fillers (range(200) for safety margin).
-    paths_to_create.append(Path("/tmp/syn_target.json"))
-    paths_to_create.extend(Path(f"/tmp/syn_filler_{i}.json") for i in range(200))
-    # Most classes: /tmp/syn_{i}.json for i in range(198) (range(200) for safety margin).
-    paths_to_create.extend(Path(f"/tmp/syn_{i}.json") for i in range(200))
-    # Class #2 BonferroniThreshold: /tmp/synthetic_{i}.json for i in range(198).
-    paths_to_create.extend(Path(f"/tmp/synthetic_{i}.json") for i in range(200))
-
-    created: list[Path] = []
-    for path in paths_to_create:
-        path.write_text(valid_attestation)
-        created.append(path)
+    # Class #5 boundary disposition fixture: target + fillers.
+    (base / "syn_target.json").write_text(valid_attestation)
+    for i in range(200):
+        (base / f"syn_filler_{i}.json").write_text(valid_attestation)
+    # Most classes: syn_{i}.json (range(200) for safety margin over n=198).
+    for i in range(200):
+        (base / f"syn_{i}.json").write_text(valid_attestation)
+    # Class #2 BonferroniThreshold: synthetic_{i}.json.
+    for i in range(200):
+        (base / f"synthetic_{i}.json").write_text(valid_attestation)
 
     yield
-
-    # Cleanup: remove only files we created (idempotent best-effort).
-    for path in created:
-        try:
-            path.unlink()
-        except FileNotFoundError:
-            pass
+    # No manual cleanup; pytest auto-removes tmp_path_factory-derived dirs.
 
 
 # ---------------------------------------------------------------------------
@@ -181,12 +190,51 @@ class TestSimplifiedDSRDataclasses:
         reuses it across PerCandidateDisposition.disposition,
         SimplifiedDSRResult.population_disposition,
         SensitivityRow.argmax_disposition_descriptive.
+
+        Patch #7 (Codex first-fire): the original assertion only checked
+        ``typing.get_args(DispositionLiteral)`` — that would still pass if
+        any individual field annotation drifted to a wider/separate Literal
+        with the same args. Verify field annotations directly via
+        ``typing.get_type_hints()`` introspection on each dataclass.
         """
-        from backtest.evaluate_dsr import DispositionLiteral
-        # Literal accepts these three values; verify by introspection.
         import typing
-        args = typing.get_args(DispositionLiteral)
-        assert set(args) == {"signal_evidence", "artifact_evidence", "inconclusive"}
+        from backtest.evaluate_dsr import (
+            DispositionLiteral,
+            PerCandidateDisposition,
+            SensitivityRow,
+            SimplifiedDSRResult,
+        )
+
+        expected_args = {"signal_evidence", "artifact_evidence", "inconclusive"}
+        assert set(typing.get_args(DispositionLiteral)) == expected_args
+
+        pc_hints = typing.get_type_hints(PerCandidateDisposition)
+        sd_hints = typing.get_type_hints(SimplifiedDSRResult)
+        sr_hints = typing.get_type_hints(SensitivityRow)
+
+        # Each annotated field MUST equal the canonical DispositionLiteral
+        # alias (Literal types compare by args, so drift to a wider/narrower
+        # Literal at any of the three sites is caught here).
+        assert pc_hints["disposition"] == DispositionLiteral, (
+            f"PerCandidateDisposition.disposition drifted from "
+            f"DispositionLiteral; got {pc_hints['disposition']!r}"
+        )
+        assert sd_hints["population_disposition"] == DispositionLiteral, (
+            f"SimplifiedDSRResult.population_disposition drifted from "
+            f"DispositionLiteral; got {sd_hints['population_disposition']!r}"
+        )
+        assert sr_hints["argmax_disposition_descriptive"] == DispositionLiteral, (
+            f"SensitivityRow.argmax_disposition_descriptive drifted from "
+            f"DispositionLiteral; got {sr_hints['argmax_disposition_descriptive']!r}"
+        )
+
+        # Belt-and-suspenders: verify args set at each field site identical
+        # to expected_args (catches drift to type aliases that reduce to the
+        # same Literal but where ``==`` semantics may hypothetically differ
+        # under future typing-module behavior changes).
+        assert set(typing.get_args(pc_hints["disposition"])) == expected_args
+        assert set(typing.get_args(sd_hints["population_disposition"])) == expected_args
+        assert set(typing.get_args(sr_hints["argmax_disposition_descriptive"])) == expected_args
 
     def test_sensitivity_table_is_tuple_not_list(self):
         """sensitivity_table field type is tuple[SensitivityRow, ...]."""
@@ -200,7 +248,7 @@ class TestSimplifiedDSRDataclasses:
                 hypothesis_hash=f"h{i:03d}",
                 sharpe_ratio=sharpes[i],
                 total_trades=10,
-                audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                audit_v1_artifact_path=f"{SYN_BASE}/syn_{i}.json",
                 name="syn", theme="syn", lifecycle_state="shortlisted",
             )
             for i in range(198)
@@ -221,7 +269,7 @@ class TestSimplifiedDSRDataclasses:
                 hypothesis_hash=f"h{i:03d}",
                 sharpe_ratio=sharpes[i],
                 total_trades=10,
-                audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                audit_v1_artifact_path=f"{SYN_BASE}/syn_{i}.json",
                 name="syn", theme="syn", lifecycle_state="shortlisted",
             )
             for i in range(198)
@@ -1263,7 +1311,7 @@ class TestComputeSimplifiedDSRBonferroniThreshold:
                 hypothesis_hash=f"h{i:02d}",
                 sharpe_ratio=0.0,
                 total_trades=10,
-                audit_v1_artifact_path=f"/tmp/synthetic_{i}.json",
+                audit_v1_artifact_path=f"{SYN_BASE}/synthetic_{i}.json",
                 name="syn",
                 theme="syn",
                 lifecycle_state="shortlisted",
@@ -1286,7 +1334,7 @@ class TestComputeSimplifiedDSRBonferroniThreshold:
                 hypothesis_hash=f"h{i:02d}",
                 sharpe_ratio=0.0,
                 total_trades=10,
-                audit_v1_artifact_path=f"/tmp/synthetic_{i}.json",
+                audit_v1_artifact_path=f"{SYN_BASE}/synthetic_{i}.json",
                 name="syn",
                 theme="syn",
                 lifecycle_state="shortlisted",
@@ -1346,7 +1394,7 @@ class TestComputeSimplifiedDSRGumbelExpectedMax:
                 hypothesis_hash=f"h{i:03d}",
                 sharpe_ratio=sharpes[i],
                 total_trades=10,
-                audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                audit_v1_artifact_path=f"{SYN_BASE}/syn_{i}.json",
                 name="syn", theme="syn", lifecycle_state="shortlisted",
             )
             for i in range(198)
@@ -1368,7 +1416,7 @@ class TestComputeSimplifiedDSRGumbelExpectedMax:
                     hypothesis_hash=f"h{i:03d}",
                     sharpe_ratio=sharpes[i],
                     total_trades=10,
-                    audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                    audit_v1_artifact_path=f"{SYN_BASE}/syn_{i}.json",
                     name="syn", theme="syn", lifecycle_state="shortlisted",
                 )
                 for i in range(198)
@@ -1391,7 +1439,7 @@ class TestComputeSimplifiedDSRGumbelExpectedMax:
                     hypothesis_hash=f"h{i:04d}",
                     sharpe_ratio=sharpes[i],
                     total_trades=10,
-                    audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                    audit_v1_artifact_path=f"{SYN_BASE}/syn_{i}.json",
                     name="syn", theme="syn", lifecycle_state="shortlisted",
                 )
                 for i in range(n)
@@ -1419,7 +1467,7 @@ class TestComputeSimplifiedDSRGumbelExpectedMax:
                 hypothesis_hash=f"h{i:03d}",
                 sharpe_ratio=sharpes[i],
                 total_trades=10,
-                audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                audit_v1_artifact_path=f"{SYN_BASE}/syn_{i}.json",
                 name="syn", theme="syn", lifecycle_state="shortlisted",
             )
             for i in range(198)
@@ -1450,7 +1498,7 @@ class TestComputeSimplifiedDSRPerCandidateFormula:
                 hypothesis_hash=f"h{i:03d}",
                 sharpe_ratio=sharpes[i],
                 total_trades=10,
-                audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                audit_v1_artifact_path=f"{SYN_BASE}/syn_{i}.json",
                 name="syn", theme="syn", lifecycle_state="shortlisted",
             )
             for i in range(198)
@@ -1471,7 +1519,7 @@ class TestComputeSimplifiedDSRPerCandidateFormula:
                 hypothesis_hash=f"h{i:03d}",
                 sharpe_ratio=sharpes[i],
                 total_trades=10,
-                audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                audit_v1_artifact_path=f"{SYN_BASE}/syn_{i}.json",
                 name="syn", theme="syn", lifecycle_state="shortlisted",
             )
             for i in range(198)
@@ -1492,7 +1540,7 @@ class TestComputeSimplifiedDSRPerCandidateFormula:
                 hypothesis_hash=f"h{i:03d}",
                 sharpe_ratio=sharpes[i],
                 total_trades=10,
-                audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                audit_v1_artifact_path=f"{SYN_BASE}/syn_{i}.json",
                 name="syn", theme="syn", lifecycle_state="shortlisted",
             )
             for i in range(198)
@@ -1514,7 +1562,7 @@ class TestComputeSimplifiedDSRPerCandidateFormula:
                 hypothesis_hash=f"h{i:03d}",
                 sharpe_ratio=sharpes[i],
                 total_trades=10,
-                audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                audit_v1_artifact_path=f"{SYN_BASE}/syn_{i}.json",
                 name="syn", theme="syn", lifecycle_state="shortlisted",
             )
             for i in range(198)
@@ -1612,7 +1660,7 @@ class TestComputeSimplifiedDSRBoundaryDispositions:
                 hypothesis_hash="h_target",
                 sharpe_ratio=target_sr,
                 total_trades=target_t,
-                audit_v1_artifact_path="/tmp/syn_target.json",
+                audit_v1_artifact_path=f"{SYN_BASE}/syn_target.json",
                 name="syn", theme="syn", lifecycle_state="shortlisted",
             )
         ]
@@ -1622,7 +1670,7 @@ class TestComputeSimplifiedDSRBoundaryDispositions:
                 hypothesis_hash=f"h_filler_{i:03d}",
                 sharpe_ratio=mag,
                 total_trades=10,
-                audit_v1_artifact_path=f"/tmp/syn_filler_{i}.json",
+                audit_v1_artifact_path=f"{SYN_BASE}/syn_filler_{i}.json",
                 name="syn", theme="syn", lifecycle_state="shortlisted",
             ))
         return candidates
@@ -1709,7 +1757,7 @@ class TestComputeSimplifiedDSRPopulationDisposition:
                 hypothesis_hash=f"h{i:03d}",
                 sharpe_ratio=sharpes[i],
                 total_trades=200,
-                audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                audit_v1_artifact_path=f"{SYN_BASE}/syn_{i}.json",
                 name="syn", theme="syn", lifecycle_state="shortlisted",
             )
             for i in range(198)
@@ -1729,7 +1777,7 @@ class TestComputeSimplifiedDSRPopulationDisposition:
                 hypothesis_hash=f"h{i:03d}",
                 sharpe_ratio=sharpes[i],
                 total_trades=200,
-                audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                audit_v1_artifact_path=f"{SYN_BASE}/syn_{i}.json",
                 name="syn", theme="syn", lifecycle_state="shortlisted",
             )
             for i in range(198)
@@ -1754,7 +1802,7 @@ class TestComputeSimplifiedDSRPopulationDisposition:
                 hypothesis_hash=f"h{i:03d}",
                 sharpe_ratio=sharpes[i],
                 total_trades=100,
-                audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                audit_v1_artifact_path=f"{SYN_BASE}/syn_{i}.json",
                 name="syn", theme="syn", lifecycle_state="shortlisted",
             )
             for i in range(198)
@@ -1892,7 +1940,7 @@ class TestComputeSimplifiedDSRDualGateNRawCheck:
                 hypothesis_hash=f"h{i:03d}",
                 sharpe_ratio=0.0,
                 total_trades=10,
-                audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                audit_v1_artifact_path=f"{SYN_BASE}/syn_{i}.json",
                 name="syn", theme="syn", lifecycle_state="shortlisted",
             )
             for i in range(197)  # 197 != EXPECTED_N_RAW=198
@@ -1911,7 +1959,7 @@ class TestComputeSimplifiedDSRDualGateNRawCheck:
                 hypothesis_hash=f"h{i:03d}",
                 sharpe_ratio=0.0,
                 total_trades=10,
-                audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                audit_v1_artifact_path=f"{SYN_BASE}/syn_{i}.json",
                 name="syn", theme="syn", lifecycle_state="shortlisted",
             )
             for i in range(197)
@@ -1929,7 +1977,7 @@ class TestComputeSimplifiedDSRDualGateNRawCheck:
                 hypothesis_hash=f"h{i:03d}",
                 sharpe_ratio=(0.5 if i % 2 == 0 else -0.5),
                 total_trades=10,
-                audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                audit_v1_artifact_path=f"{SYN_BASE}/syn_{i}.json",
                 name="syn", theme="syn", lifecycle_state="shortlisted",
             )
             for i in range(198)
@@ -1954,7 +2002,7 @@ class TestComputeSimplifiedDSREdgeCases:
                 hypothesis_hash=f"h{i:03d}",
                 sharpe_ratio=0.5,
                 total_trades=2,  # T_c < MIN_TRADES_FOR_PRIMARY=5
-                audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                audit_v1_artifact_path=f"{SYN_BASE}/syn_{i}.json",
                 name="syn", theme="syn", lifecycle_state="shortlisted",
             )
             for i in range(198)
@@ -1981,7 +2029,7 @@ class TestComputeSimplifiedDSREdgeCases:
                 hypothesis_hash=f"h{i:03d}",
                 sharpe_ratio=0.5,  # identical
                 total_trades=10,
-                audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                audit_v1_artifact_path=f"{SYN_BASE}/syn_{i}.json",
                 name="syn", theme="syn", lifecycle_state="shortlisted",
             )
             for i in range(198)
@@ -2001,7 +2049,7 @@ class TestComputeSimplifiedDSREdgeCases:
                 hypothesis_hash=f"h{i:03d}",
                 sharpe_ratio=sharpes[i],
                 total_trades=10,
-                audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                audit_v1_artifact_path=f"{SYN_BASE}/syn_{i}.json",
                 name="syn", theme="syn", lifecycle_state="shortlisted",
             )
             for i in range(198)
@@ -2043,7 +2091,7 @@ class TestComputeSimplifiedDSRReproducibility:
                 hypothesis_hash=f"h{i:03d}",
                 sharpe_ratio=sharpes[i],
                 total_trades=100,
-                audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                audit_v1_artifact_path=f"{SYN_BASE}/syn_{i}.json",
                 name="syn", theme="syn", lifecycle_state="shortlisted",
             )
             for i in range(198)
@@ -2068,7 +2116,7 @@ class TestComputeSimplifiedDSRReproducibility:
                 hypothesis_hash=f"h{i:03d}",
                 sharpe_ratio=sharpes[i],
                 total_trades=100,
-                audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                audit_v1_artifact_path=f"{SYN_BASE}/syn_{i}.json",
                 name="syn", theme="syn", lifecycle_state="shortlisted",
             )
             for i in range(198)
@@ -2093,7 +2141,7 @@ class TestComputeSimplifiedDSRSensitivityTable:
                 hypothesis_hash=f"h{i:03d}",
                 sharpe_ratio=sharpes[i],
                 total_trades=10,
-                audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                audit_v1_artifact_path=f"{SYN_BASE}/syn_{i}.json",
                 name="syn", theme="syn", lifecycle_state="shortlisted",
             )
             for i in range(198)
@@ -2113,7 +2161,7 @@ class TestComputeSimplifiedDSRSensitivityTable:
                 hypothesis_hash=f"h{i:03d}",
                 sharpe_ratio=sharpes[i],
                 total_trades=10,
-                audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                audit_v1_artifact_path=f"{SYN_BASE}/syn_{i}.json",
                 name="syn", theme="syn", lifecycle_state="shortlisted",
             )
             for i in range(198)
@@ -2136,7 +2184,7 @@ class TestComputeSimplifiedDSRSensitivityTable:
                 hypothesis_hash=f"h{i:03d}",
                 sharpe_ratio=sharpes[i],
                 total_trades=10,
-                audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                audit_v1_artifact_path=f"{SYN_BASE}/syn_{i}.json",
                 name="syn", theme="syn", lifecycle_state="shortlisted",
             )
             for i in range(198)
@@ -2190,14 +2238,63 @@ class TestComputeSimplifiedDSRRealDataIntegration:
             self.AUDIT_V1, self.HOLDOUT_CSV,
             expected_n_raw=EXPECTED_N_RAW,
         )
+        # Patch #1 (Codex first-fire): thread inputs.excluded_candidates so
+        # SimplifiedDSRResult.excluded_candidates_summary is populated per
+        # schema §1 line 51 + P-T2 lock (sealed schema requires sorted
+        # tuple-of-(reason, count) pairs; expected counts at canonical fire
+        # sum to 44 per "expected counts at canonical fire sum to 44"
+        # schema lockpoint).
         result = compute_simplified_dsr(
             list(inputs.eligible_candidates),
             n_trials=EXPECTED_N_RAW,
+            excluded_candidates=list(inputs.excluded_candidates),
         )
         assert result.n_raw == 198
         assert result.n_eligible == 154
         assert result.population_disposition in (
             "signal_evidence", "artifact_evidence", "inconclusive",
+        )
+
+        # Patch #1 enhancement: verify excluded_candidates_summary canonical
+        # invariants. Schema §1 line 51 + P-T2: tuple-of-(str, int) pairs
+        # sorted by reason key alphabetically; reason keys ⊂ Step 2
+        # CandidateExclusion.reason enum {low_trade_count, zero_trades,
+        # missing_sharpe, missing_trades}; sum at canonical fire = 44
+        # (= n_raw - n_eligible = 198 - 154).
+        summary = result.excluded_candidates_summary
+        assert isinstance(summary, tuple)
+        assert len(summary) > 0, (
+            "excluded_candidates_summary is empty at canonical fire; "
+            "Patch #1 wiring failed to thread Step 2 excluded_candidates."
+        )
+        # Every element is a (reason: str, count: int) pair.
+        for entry in summary:
+            assert isinstance(entry, tuple) and len(entry) == 2
+            reason, count = entry
+            assert isinstance(reason, str)
+            assert isinstance(count, int)
+        # Sorted by reason key alphabetically (P-T2).
+        reasons = [r for r, _ in summary]
+        assert reasons == sorted(reasons), (
+            f"excluded_candidates_summary not sorted by reason key; got "
+            f"reasons={reasons}"
+        )
+        # Reason keys ⊂ canonical Step 2 enum.
+        canonical_reasons = {
+            "low_trade_count", "zero_trades",
+            "missing_sharpe", "missing_trades",
+        }
+        for reason, _ in summary:
+            assert reason in canonical_reasons, (
+                f"unknown exclusion reason {reason!r}; Step 2 enum is "
+                f"{sorted(canonical_reasons)}"
+            )
+        # Counts sum to canonical 44 (= 198 - 154).
+        total = sum(count for _, count in summary)
+        assert total == 44, (
+            f"excluded_candidates_summary counts sum to {total}, "
+            f"expected 44 at canonical fire (= EXPECTED_N_RAW=198 - "
+            f"EXPECTED_N_ELIGIBLE_AT_CANONICAL=154 per schema §1 line 51)"
         )
 
     def test_canonical_disposition_reproducible(self):
@@ -2258,7 +2355,7 @@ class TestComputeSimplifiedDSRNumericalStabilityAtExtremeN:
                 hypothesis_hash=f"h{i:05d}",
                 sharpe_ratio=sharpes[i],
                 total_trades=10,
-                audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                audit_v1_artifact_path=f"{SYN_BASE}/syn_{i}.json",
                 name="syn", theme="syn", lifecycle_state="shortlisted",
             )
             for i in range(10000)
