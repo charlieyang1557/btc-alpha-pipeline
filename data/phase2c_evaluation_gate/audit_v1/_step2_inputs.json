@@ -1,0 +1,1675 @@
+{
+  "discrepancies_documented": [],
+  "discrepancy_kind_counts": {},
+  "eligible_candidates": [
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/01f077141926ca19/holdout_summary.json",
+      "hypothesis_hash": "01f077141926ca19",
+      "lifecycle_state": "holdout_failed",
+      "name": "rsi_momentum_continuation",
+      "sharpe_ratio": 0.1360599286363915,
+      "theme": "momentum",
+      "total_trades": 26
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/031723666371b1aa/holdout_summary.json",
+      "hypothesis_hash": "031723666371b1aa",
+      "lifecycle_state": "holdout_failed",
+      "name": "momentum_acceleration_191",
+      "sharpe_ratio": -1.9391144526956752,
+      "theme": "momentum",
+      "total_trades": 39
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/03421cb3529a6029/holdout_summary.json",
+      "hypothesis_hash": "03421cb3529a6029",
+      "lifecycle_state": "holdout_failed",
+      "name": "monday_mean_reversion_170",
+      "sharpe_ratio": -0.5043670151111798,
+      "theme": "calendar_effect",
+      "total_trades": 30
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/0381f071b457bc86/holdout_summary.json",
+      "hypothesis_hash": "0381f071b457bc86",
+      "lifecycle_state": "holdout_failed",
+      "name": "macd_momentum_acceleration",
+      "sharpe_ratio": -1.1629942263804884,
+      "theme": "momentum",
+      "total_trades": 62
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/0845d1d7898412f2/holdout_summary.json",
+      "hypothesis_hash": "0845d1d7898412f2",
+      "lifecycle_state": "holdout_passed",
+      "name": "volume_surge_momentum_entry",
+      "sharpe_ratio": 0.5081590272487263,
+      "theme": "volume_divergence",
+      "total_trades": 19
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/089107e7226d162a/holdout_summary.json",
+      "hypothesis_hash": "089107e7226d162a",
+      "lifecycle_state": "holdout_failed",
+      "name": "macd_momentum_surge",
+      "sharpe_ratio": -0.7217565104648225,
+      "theme": "momentum",
+      "total_trades": 18
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/09efaaf58f9630f5/holdout_summary.json",
+      "hypothesis_hash": "09efaaf58f9630f5",
+      "lifecycle_state": "holdout_failed",
+      "name": "low_vol_bbands_breakout",
+      "sharpe_ratio": -1.1851199330489977,
+      "theme": "volatility_regime",
+      "total_trades": 82
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/0a4ab3ea59a242b7/holdout_summary.json",
+      "hypothesis_hash": "0a4ab3ea59a242b7",
+      "lifecycle_state": "holdout_failed",
+      "name": "weekend_low_vol_momentum_continuation",
+      "sharpe_ratio": -0.44020252605063215,
+      "theme": "calendar_effect",
+      "total_trades": 49
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/0c83568d7037d1a3/holdout_summary.json",
+      "hypothesis_hash": "0c83568d7037d1a3",
+      "lifecycle_state": "holdout_failed",
+      "name": "macd_histogram_surge_momentum",
+      "sharpe_ratio": -1.602110021909669,
+      "theme": "momentum",
+      "total_trades": 70
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/0da08a1f8a7130ce/holdout_summary.json",
+      "hypothesis_hash": "0da08a1f8a7130ce",
+      "lifecycle_state": "holdout_failed",
+      "name": "macd_momentum_surge_161",
+      "sharpe_ratio": -1.2511737108239473,
+      "theme": "momentum",
+      "total_trades": 78
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/0e2dc353833de320/holdout_summary.json",
+      "hypothesis_hash": "0e2dc353833de320",
+      "lifecycle_state": "holdout_failed",
+      "name": "volatility_compression_breakout_168",
+      "sharpe_ratio": -2.6517933307202797,
+      "theme": "volatility_regime",
+      "total_trades": 162
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/0e926e65350cdd51/holdout_summary.json",
+      "hypothesis_hash": "0e926e65350cdd51",
+      "lifecycle_state": "holdout_failed",
+      "name": "bollinger_mean_reversion_oversold_142",
+      "sharpe_ratio": -1.3027635101228927,
+      "theme": "mean_reversion",
+      "total_trades": 122
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/1042a23b008a1b28/holdout_summary.json",
+      "hypothesis_hash": "1042a23b008a1b28",
+      "lifecycle_state": "holdout_failed",
+      "name": "weekend_ema_momentum_fade",
+      "sharpe_ratio": -1.0376054415658509,
+      "theme": "calendar_effect",
+      "total_trades": 36
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/11aac8a4ad58f803/holdout_summary.json",
+      "hypothesis_hash": "11aac8a4ad58f803",
+      "lifecycle_state": "holdout_failed",
+      "name": "bollinger_band_oversold_mean_reversion_127",
+      "sharpe_ratio": -1.1790990757829134,
+      "theme": "mean_reversion",
+      "total_trades": 77
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/128aa2c137b15437/holdout_summary.json",
+      "hypothesis_hash": "128aa2c137b15437",
+      "lifecycle_state": "holdout_failed",
+      "name": "momentum_cascade_continuation",
+      "sharpe_ratio": -1.2518860626714283,
+      "theme": "momentum",
+      "total_trades": 140
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/1290b6494ec0ba43/holdout_summary.json",
+      "hypothesis_hash": "1290b6494ec0ba43",
+      "lifecycle_state": "holdout_failed",
+      "name": "volume_divergence_momentum_reversal_129",
+      "sharpe_ratio": -1.6339486843214557,
+      "theme": "volume_divergence",
+      "total_trades": 60
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/138c8bbe9f979a64/holdout_summary.json",
+      "hypothesis_hash": "138c8bbe9f979a64",
+      "lifecycle_state": "holdout_failed",
+      "name": "weekend_momentum_fade_200",
+      "sharpe_ratio": -0.43877102803841583,
+      "theme": "calendar_effect",
+      "total_trades": 14
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/174a520db2521d1c/holdout_summary.json",
+      "hypothesis_hash": "174a520db2521d1c",
+      "lifecycle_state": "holdout_failed",
+      "name": "macd_momentum_surge_196",
+      "sharpe_ratio": -0.789929374733588,
+      "theme": "momentum",
+      "total_trades": 48
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/1797418c4817e55f/holdout_summary.json",
+      "hypothesis_hash": "1797418c4817e55f",
+      "lifecycle_state": "holdout_failed",
+      "name": "low_vol_breakout_momentum",
+      "sharpe_ratio": 0.3961625566073328,
+      "theme": "volatility_regime",
+      "total_trades": 54
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/1848161d2ac06479/holdout_summary.json",
+      "hypothesis_hash": "1848161d2ac06479",
+      "lifecycle_state": "holdout_failed",
+      "name": "monday_mean_reversion",
+      "sharpe_ratio": -0.10602479436883418,
+      "theme": "calendar_effect",
+      "total_trades": 33
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/18c2a5f742c20e31/holdout_summary.json",
+      "hypothesis_hash": "18c2a5f742c20e31",
+      "lifecycle_state": "holdout_passed",
+      "name": "ema_crossover_momentum_surge",
+      "sharpe_ratio": 0.9602178531387877,
+      "theme": "momentum",
+      "total_trades": 20
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/1d6a587a1da34f78/holdout_summary.json",
+      "hypothesis_hash": "1d6a587a1da34f78",
+      "lifecycle_state": "holdout_passed",
+      "name": "monday_weakness_friday_strength",
+      "sharpe_ratio": 0.5855968314482742,
+      "theme": "calendar_effect",
+      "total_trades": 52
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/20220115544cbfe5/holdout_summary.json",
+      "hypothesis_hash": "20220115544cbfe5",
+      "lifecycle_state": "holdout_failed",
+      "name": "volatility_contraction_breakout_188",
+      "sharpe_ratio": -1.6690236215953052,
+      "theme": "volatility_regime",
+      "total_trades": 116
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/212dd31075955697/holdout_summary.json",
+      "hypothesis_hash": "212dd31075955697",
+      "lifecycle_state": "holdout_failed",
+      "name": "monday_morning_contrarian_fade",
+      "sharpe_ratio": 0.07317219008399958,
+      "theme": "calendar_effect",
+      "total_trades": 13
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/24b4398850c2b5c1/holdout_summary.json",
+      "hypothesis_hash": "24b4398850c2b5c1",
+      "lifecycle_state": "holdout_failed",
+      "name": "macd_momentum_continuation",
+      "sharpe_ratio": -1.691598939005884,
+      "theme": "momentum",
+      "total_trades": 62
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/29433868dc3c7f0a/holdout_summary.json",
+      "hypothesis_hash": "29433868dc3c7f0a",
+      "lifecycle_state": "holdout_failed",
+      "name": "volume_divergence_breakout",
+      "sharpe_ratio": -1.1636194615506497,
+      "theme": "volume_divergence",
+      "total_trades": 49
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/2abc599557b592b1/holdout_summary.json",
+      "hypothesis_hash": "2abc599557b592b1",
+      "lifecycle_state": "holdout_failed",
+      "name": "macd_momentum_acceleration",
+      "sharpe_ratio": -0.8317079498029364,
+      "theme": "momentum",
+      "total_trades": 97
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/2b1860c6d8ace591/holdout_summary.json",
+      "hypothesis_hash": "2b1860c6d8ace591",
+      "lifecycle_state": "holdout_failed",
+      "name": "bollinger_overshoot_mean_revert_122",
+      "sharpe_ratio": -0.9909114270399947,
+      "theme": "mean_reversion",
+      "total_trades": 96
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/2c0d31a84aa02db7/holdout_summary.json",
+      "hypothesis_hash": "2c0d31a84aa02db7",
+      "lifecycle_state": "holdout_failed",
+      "name": "weekday_momentum_continuation",
+      "sharpe_ratio": -0.8319404351967445,
+      "theme": "calendar_effect",
+      "total_trades": 250
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/2c3f2e5ab1af5b4a/holdout_summary.json",
+      "hypothesis_hash": "2c3f2e5ab1af5b4a",
+      "lifecycle_state": "holdout_failed",
+      "name": "volume_divergence_breakout",
+      "sharpe_ratio": -1.0212638902248246,
+      "theme": "volume_divergence",
+      "total_trades": 116
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/2d08c375c1035eaa/holdout_summary.json",
+      "hypothesis_hash": "2d08c375c1035eaa",
+      "lifecycle_state": "holdout_failed",
+      "name": "monday_mean_reversion_dip",
+      "sharpe_ratio": 0.3564909282595616,
+      "theme": "calendar_effect",
+      "total_trades": 29
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/2e3153889a1727dc/holdout_summary.json",
+      "hypothesis_hash": "2e3153889a1727dc",
+      "lifecycle_state": "holdout_failed",
+      "name": "bollinger_bounce_oversold",
+      "sharpe_ratio": -1.2715484006333164,
+      "theme": "mean_reversion",
+      "total_trades": 62
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/2f88323bd87241bf/holdout_summary.json",
+      "hypothesis_hash": "2f88323bd87241bf",
+      "lifecycle_state": "holdout_failed",
+      "name": "volume_divergence_momentum_184",
+      "sharpe_ratio": -1.3761261956464634,
+      "theme": "volume_divergence",
+      "total_trades": 206
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/301d74bc8be99e68/holdout_summary.json",
+      "hypothesis_hash": "301d74bc8be99e68",
+      "lifecycle_state": "holdout_failed",
+      "name": "volatility_compression_breakout",
+      "sharpe_ratio": -1.5124933142599746,
+      "theme": "volatility_regime",
+      "total_trades": 45
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/30d3a0e0eb3e093b/holdout_summary.json",
+      "hypothesis_hash": "30d3a0e0eb3e093b",
+      "lifecycle_state": "holdout_failed",
+      "name": "volatility_compression_breakout_153",
+      "sharpe_ratio": -1.5741092766157083,
+      "theme": "volatility_regime",
+      "total_trades": 126
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/31416afaaec5a15b/holdout_summary.json",
+      "hypothesis_hash": "31416afaaec5a15b",
+      "lifecycle_state": "holdout_failed",
+      "name": "bb_mean_reversion_oversold",
+      "sharpe_ratio": -1.1954715472414534,
+      "theme": "mean_reversion",
+      "total_trades": 94
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/317377a1a86b3c52/holdout_summary.json",
+      "hypothesis_hash": "317377a1a86b3c52",
+      "lifecycle_state": "holdout_failed",
+      "name": "volume_surge_momentum_continuation",
+      "sharpe_ratio": -0.7537891384717541,
+      "theme": "volume_divergence",
+      "total_trades": 64
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/35ee0b0d3b2ff527/holdout_summary.json",
+      "hypothesis_hash": "35ee0b0d3b2ff527",
+      "lifecycle_state": "holdout_failed",
+      "name": "volatility_compression_breakout_193",
+      "sharpe_ratio": -2.5281473028976076,
+      "theme": "volatility_regime",
+      "total_trades": 491
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/37c0661e6fcbf31c/holdout_summary.json",
+      "hypothesis_hash": "37c0661e6fcbf31c",
+      "lifecycle_state": "holdout_passed",
+      "name": "macd_momentum_surge_166",
+      "sharpe_ratio": 0.07016848977822863,
+      "theme": "momentum",
+      "total_trades": 65
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/38ff3786cdac3e1c/holdout_summary.json",
+      "hypothesis_hash": "38ff3786cdac3e1c",
+      "lifecycle_state": "holdout_failed",
+      "name": "bbands_squeeze_mean_revert",
+      "sharpe_ratio": -1.034563785839261,
+      "theme": "mean_reversion",
+      "total_trades": 166
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/3c00ec4328fb5af7/holdout_summary.json",
+      "hypothesis_hash": "3c00ec4328fb5af7",
+      "lifecycle_state": "holdout_failed",
+      "name": "macd_histogram_momentum_surge",
+      "sharpe_ratio": -1.4443419228032173,
+      "theme": "momentum",
+      "total_trades": 70
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/3d3bf1db8eb8c79d/holdout_summary.json",
+      "hypothesis_hash": "3d3bf1db8eb8c79d",
+      "lifecycle_state": "holdout_failed",
+      "name": "macd_hist_momentum_reversal_120",
+      "sharpe_ratio": -0.8304280626182298,
+      "theme": "momentum",
+      "total_trades": 89
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/3e366757c1bad9bf/holdout_summary.json",
+      "hypothesis_hash": "3e366757c1bad9bf",
+      "lifecycle_state": "holdout_failed",
+      "name": "bollinger_mean_reversion_182",
+      "sharpe_ratio": -0.7188928652731479,
+      "theme": "mean_reversion",
+      "total_trades": 92
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/4191f7a326267e9a/holdout_summary.json",
+      "hypothesis_hash": "4191f7a326267e9a",
+      "lifecycle_state": "holdout_failed",
+      "name": "volume_spike_divergence_reversal",
+      "sharpe_ratio": -1.4652193355499927,
+      "theme": "volume_divergence",
+      "total_trades": 69
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/419f332f0366e9a9/holdout_summary.json",
+      "hypothesis_hash": "419f332f0366e9a9",
+      "lifecycle_state": "holdout_failed",
+      "name": "momentum_regime_confirmation",
+      "sharpe_ratio": -0.5610052068050029,
+      "theme": "momentum",
+      "total_trades": 74
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/422ba4e0e2dac8ae/holdout_summary.json",
+      "hypothesis_hash": "422ba4e0e2dac8ae",
+      "lifecycle_state": "holdout_failed",
+      "name": "bollinger_oversold_mean_reversion",
+      "sharpe_ratio": -0.8384633425446624,
+      "theme": "mean_reversion",
+      "total_trades": 54
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/43a948f5d4c3c999/holdout_summary.json",
+      "hypothesis_hash": "43a948f5d4c3c999",
+      "lifecycle_state": "holdout_failed",
+      "name": "volume_divergence_rsi_reversal_124",
+      "sharpe_ratio": -1.1726874043278086,
+      "theme": "volume_divergence",
+      "total_trades": 77
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/43ef7041b39e8dd9/holdout_summary.json",
+      "hypothesis_hash": "43ef7041b39e8dd9",
+      "lifecycle_state": "holdout_failed",
+      "name": "bollinger_oversold_reversion",
+      "sharpe_ratio": -1.3876860582867274,
+      "theme": "mean_reversion",
+      "total_trades": 39
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/484181e1e7d80839/holdout_summary.json",
+      "hypothesis_hash": "484181e1e7d80839",
+      "lifecycle_state": "holdout_failed",
+      "name": "volatility_compression_breakout",
+      "sharpe_ratio": -1.7154412590741934,
+      "theme": "volatility_regime",
+      "total_trades": 184
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/492a8592906b80d8/holdout_summary.json",
+      "hypothesis_hash": "492a8592906b80d8",
+      "lifecycle_state": "holdout_failed",
+      "name": "volume_divergence_momentum_149",
+      "sharpe_ratio": -1.9356927512953825,
+      "theme": "volume_divergence",
+      "total_trades": 154
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/4a9419d1df12fcd1/holdout_summary.json",
+      "hypothesis_hash": "4a9419d1df12fcd1",
+      "lifecycle_state": "holdout_failed",
+      "name": "volume_surge_momentum_breakout",
+      "sharpe_ratio": 0.1416565891101631,
+      "theme": "volume_divergence",
+      "total_trades": 51
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/4d5e9952dca1d75f/holdout_summary.json",
+      "hypothesis_hash": "4d5e9952dca1d75f",
+      "lifecycle_state": "holdout_failed",
+      "name": "volume_divergence_breakout_174",
+      "sharpe_ratio": -0.669097562592411,
+      "theme": "volume_divergence",
+      "total_trades": 24
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/4dc53c92e3073ae2/holdout_summary.json",
+      "hypothesis_hash": "4dc53c92e3073ae2",
+      "lifecycle_state": "holdout_failed",
+      "name": "volume_divergence_momentum_fade",
+      "sharpe_ratio": -0.3118767062462612,
+      "theme": "volume_divergence",
+      "total_trades": 74
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/4f04d4c88799516c/holdout_summary.json",
+      "hypothesis_hash": "4f04d4c88799516c",
+      "lifecycle_state": "holdout_failed",
+      "name": "volume_div_momentum_fade",
+      "sharpe_ratio": -2.3222501406799556,
+      "theme": "volume_divergence",
+      "total_trades": 106
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/4f3eb68101aa3ade/holdout_summary.json",
+      "hypothesis_hash": "4f3eb68101aa3ade",
+      "lifecycle_state": "holdout_failed",
+      "name": "volume_divergence_reversal",
+      "sharpe_ratio": -1.2701626398252748,
+      "theme": "volume_divergence",
+      "total_trades": 52
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/4f48338d798e2234/holdout_summary.json",
+      "hypothesis_hash": "4f48338d798e2234",
+      "lifecycle_state": "holdout_failed",
+      "name": "low_vol_regime_breakout",
+      "sharpe_ratio": 0.3840741515574795,
+      "theme": "volatility_regime",
+      "total_trades": 33
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/4f4a03bf01cbb34e/holdout_summary.json",
+      "hypothesis_hash": "4f4a03bf01cbb34e",
+      "lifecycle_state": "holdout_failed",
+      "name": "macd_momentum_acceleration_136",
+      "sharpe_ratio": -1.743753068652792,
+      "theme": "momentum",
+      "total_trades": 48
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/4f8d79e0f1888a9a/holdout_summary.json",
+      "hypothesis_hash": "4f8d79e0f1888a9a",
+      "lifecycle_state": "holdout_failed",
+      "name": "volume_divergence_momentum_154",
+      "sharpe_ratio": -0.6668120722223417,
+      "theme": "volume_divergence",
+      "total_trades": 26
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/500a3fd4acd1d5bf/holdout_summary.json",
+      "hypothesis_hash": "500a3fd4acd1d5bf",
+      "lifecycle_state": "holdout_failed",
+      "name": "volume_divergence_momentum_144",
+      "sharpe_ratio": -0.8463955178252587,
+      "theme": "volume_divergence",
+      "total_trades": 32
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/5078aa523ce9a1ae/holdout_summary.json",
+      "hypothesis_hash": "5078aa523ce9a1ae",
+      "lifecycle_state": "holdout_failed",
+      "name": "monday_weakness_fade",
+      "sharpe_ratio": -0.03873080878719946,
+      "theme": "calendar_effect",
+      "total_trades": 47
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/512d56a6c2208a18/holdout_summary.json",
+      "hypothesis_hash": "512d56a6c2208a18",
+      "lifecycle_state": "holdout_failed",
+      "name": "momentum_rsi_breakout",
+      "sharpe_ratio": -0.2886744927622617,
+      "theme": "momentum",
+      "total_trades": 24
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/536ea97386e8319a/holdout_summary.json",
+      "hypothesis_hash": "536ea97386e8319a",
+      "lifecycle_state": "holdout_failed",
+      "name": "volume_divergence_momentum_fade",
+      "sharpe_ratio": -1.3710835628317923,
+      "theme": "volume_divergence",
+      "total_trades": 194
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/5453dfee45656e87/holdout_summary.json",
+      "hypothesis_hash": "5453dfee45656e87",
+      "lifecycle_state": "holdout_failed",
+      "name": "monday_dip_reversal",
+      "sharpe_ratio": 0.22639449785746624,
+      "theme": "calendar_effect",
+      "total_trades": 32
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/56def67e133498e1/holdout_summary.json",
+      "hypothesis_hash": "56def67e133498e1",
+      "lifecycle_state": "holdout_failed",
+      "name": "bollinger_mean_reversion_172",
+      "sharpe_ratio": -1.4087810215594965,
+      "theme": "mean_reversion",
+      "total_trades": 100
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/57ef331140f0776a/holdout_summary.json",
+      "hypothesis_hash": "57ef331140f0776a",
+      "lifecycle_state": "holdout_failed",
+      "name": "volume_surge_breakout_confirmation",
+      "sharpe_ratio": 0.4833881295548436,
+      "theme": "volume_divergence",
+      "total_trades": 24
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/5df42210cdc8ca3a/holdout_summary.json",
+      "hypothesis_hash": "5df42210cdc8ca3a",
+      "lifecycle_state": "holdout_failed",
+      "name": "low_vol_breakout_163",
+      "sharpe_ratio": -1.0596123199804925,
+      "theme": "volatility_regime",
+      "total_trades": 78
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/5f1d7f3bffeabbc6/holdout_summary.json",
+      "hypothesis_hash": "5f1d7f3bffeabbc6",
+      "lifecycle_state": "holdout_failed",
+      "name": "volume_divergence_momentum_fade_134",
+      "sharpe_ratio": -1.589084227342247,
+      "theme": "volume_divergence",
+      "total_trades": 66
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/6059c88ee3ccdfa6/holdout_summary.json",
+      "hypothesis_hash": "6059c88ee3ccdfa6",
+      "lifecycle_state": "holdout_failed",
+      "name": "bollinger_lower_breach_reversion",
+      "sharpe_ratio": -1.3863977489911326,
+      "theme": "mean_reversion",
+      "total_trades": 76
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/6134ef26aba352b4/holdout_summary.json",
+      "hypothesis_hash": "6134ef26aba352b4",
+      "lifecycle_state": "holdout_failed",
+      "name": "vol_divergence_rsi_breakout",
+      "sharpe_ratio": -1.7409940593728799,
+      "theme": "volume_divergence",
+      "total_trades": 19
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/61395958b9c15d61/holdout_summary.json",
+      "hypothesis_hash": "61395958b9c15d61",
+      "lifecycle_state": "holdout_passed",
+      "name": "macd_rsi_momentum_confirmation_156",
+      "sharpe_ratio": -0.16659978702117045,
+      "theme": "momentum",
+      "total_trades": 85
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/619af609d58cc2ce/holdout_summary.json",
+      "hypothesis_hash": "619af609d58cc2ce",
+      "lifecycle_state": "holdout_failed",
+      "name": "macd_momentum_acceleration_146",
+      "sharpe_ratio": -1.6676080208782293,
+      "theme": "momentum",
+      "total_trades": 83
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/62442fb8f7fb7bf5/holdout_summary.json",
+      "hypothesis_hash": "62442fb8f7fb7bf5",
+      "lifecycle_state": "holdout_failed",
+      "name": "monday_mean_reversion_175",
+      "sharpe_ratio": -0.2944130379177246,
+      "theme": "calendar_effect",
+      "total_trades": 39
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/67b5a6a15abfd050/holdout_summary.json",
+      "hypothesis_hash": "67b5a6a15abfd050",
+      "lifecycle_state": "holdout_failed",
+      "name": "monday_mean_reversion_135",
+      "sharpe_ratio": 0.06930319994764994,
+      "theme": "calendar_effect",
+      "total_trades": 43
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/686b4903ece224d0/holdout_summary.json",
+      "hypothesis_hash": "686b4903ece224d0",
+      "lifecycle_state": "holdout_failed",
+      "name": "monday_dip_buy_140",
+      "sharpe_ratio": -0.29692204056140453,
+      "theme": "calendar_effect",
+      "total_trades": 58
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/69e046c952f68ab5/holdout_summary.json",
+      "hypothesis_hash": "69e046c952f68ab5",
+      "lifecycle_state": "holdout_failed",
+      "name": "bb_oversold_reversion_137",
+      "sharpe_ratio": -0.8591182825499176,
+      "theme": "mean_reversion",
+      "total_trades": 93
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/6a5e15ada634bfa6/holdout_summary.json",
+      "hypothesis_hash": "6a5e15ada634bfa6",
+      "lifecycle_state": "holdout_failed",
+      "name": "volume_divergence_vol_spike_reversal",
+      "sharpe_ratio": -1.7477397279291838,
+      "theme": "volume_divergence",
+      "total_trades": 132
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/73b8b49811ce1e41/holdout_summary.json",
+      "hypothesis_hash": "73b8b49811ce1e41",
+      "lifecycle_state": "holdout_failed",
+      "name": "volume_divergence_momentum_189",
+      "sharpe_ratio": -1.6339295349043559,
+      "theme": "volume_divergence",
+      "total_trades": 25
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/745347ebfc538992/holdout_summary.json",
+      "hypothesis_hash": "745347ebfc538992",
+      "lifecycle_state": "holdout_failed",
+      "name": "macd_momentum_surge",
+      "sharpe_ratio": -1.6221191380931688,
+      "theme": "momentum",
+      "total_trades": 67
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/75c2d8bfb8619327/holdout_summary.json",
+      "hypothesis_hash": "75c2d8bfb8619327",
+      "lifecycle_state": "holdout_failed",
+      "name": "oversold_bb_mean_reversion",
+      "sharpe_ratio": -1.1185180733283855,
+      "theme": "mean_reversion",
+      "total_trades": 85
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/79f4d112930d7c76/holdout_summary.json",
+      "hypothesis_hash": "79f4d112930d7c76",
+      "lifecycle_state": "holdout_failed",
+      "name": "bb_mean_reversion_oversold_187",
+      "sharpe_ratio": -1.2908833994915767,
+      "theme": "mean_reversion",
+      "total_trades": 79
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/7f296ee9bc79ce61/holdout_summary.json",
+      "hypothesis_hash": "7f296ee9bc79ce61",
+      "lifecycle_state": "holdout_passed",
+      "name": "weekend_volatility_compression_monday_breakout_125",
+      "sharpe_ratio": 0.7222828681723811,
+      "theme": "calendar_effect",
+      "total_trades": 24
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/7f940d485e97d829/holdout_summary.json",
+      "hypothesis_hash": "7f940d485e97d829",
+      "lifecycle_state": "holdout_failed",
+      "name": "vol_regime_atr_compression_breakout_123",
+      "sharpe_ratio": -0.9296354880686917,
+      "theme": "volatility_regime",
+      "total_trades": 48
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/80d0d98376ec43fa/holdout_summary.json",
+      "hypothesis_hash": "80d0d98376ec43fa",
+      "lifecycle_state": "holdout_failed",
+      "name": "bb_zscore_reversion_192",
+      "sharpe_ratio": -0.7851834234177502,
+      "theme": "mean_reversion",
+      "total_trades": 75
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/812216d4f9123035/holdout_summary.json",
+      "hypothesis_hash": "812216d4f9123035",
+      "lifecycle_state": "holdout_failed",
+      "name": "bb_squeeze_oversold_reversal",
+      "sharpe_ratio": -1.0153433476162181,
+      "theme": "mean_reversion",
+      "total_trades": 67
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/812343ae26017ffa/holdout_summary.json",
+      "hypothesis_hash": "812343ae26017ffa",
+      "lifecycle_state": "holdout_failed",
+      "name": "volume_divergence_momentum_199",
+      "sharpe_ratio": -1.9051670496666429,
+      "theme": "volume_divergence",
+      "total_trades": 143
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/81c8faab6f6e7583/holdout_summary.json",
+      "hypothesis_hash": "81c8faab6f6e7583",
+      "lifecycle_state": "holdout_failed",
+      "name": "bb_mean_reversion_oversold",
+      "sharpe_ratio": -0.8684533783036994,
+      "theme": "mean_reversion",
+      "total_trades": 94
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/82e38bdf332ed25b/holdout_summary.json",
+      "hypothesis_hash": "82e38bdf332ed25b",
+      "lifecycle_state": "holdout_failed",
+      "name": "weekday_momentum_continuation",
+      "sharpe_ratio": -0.7493360565211941,
+      "theme": "calendar_effect",
+      "total_trades": 237
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/871bd406bc20fca0/holdout_summary.json",
+      "hypothesis_hash": "871bd406bc20fca0",
+      "lifecycle_state": "holdout_failed",
+      "name": "momentum_acceleration_macd_ema_convergence_126",
+      "sharpe_ratio": -1.7250604558312812,
+      "theme": "momentum",
+      "total_trades": 316
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/877c05952e69f1fd/holdout_summary.json",
+      "hypothesis_hash": "877c05952e69f1fd",
+      "lifecycle_state": "holdout_failed",
+      "name": "volatility_contraction_breakout",
+      "sharpe_ratio": -1.801493576335243,
+      "theme": "volatility_regime",
+      "total_trades": 319
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/88195df81e8dbd06/holdout_summary.json",
+      "hypothesis_hash": "88195df81e8dbd06",
+      "lifecycle_state": "holdout_failed",
+      "name": "macd_crossover_momentum_186",
+      "sharpe_ratio": -1.250770940932216,
+      "theme": "momentum",
+      "total_trades": 68
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/8b4dec28f454f352/holdout_summary.json",
+      "hypothesis_hash": "8b4dec28f454f352",
+      "lifecycle_state": "holdout_failed",
+      "name": "vol_compression_breakout",
+      "sharpe_ratio": -1.131604795790976,
+      "theme": "volatility_regime",
+      "total_trades": 74
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/8c3993c71d05857a/holdout_summary.json",
+      "hypothesis_hash": "8c3993c71d05857a",
+      "lifecycle_state": "holdout_failed",
+      "name": "bollinger_oversold_mean_reversion",
+      "sharpe_ratio": -1.2689140503711618,
+      "theme": "mean_reversion",
+      "total_trades": 76
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/9031d823621523ee/holdout_summary.json",
+      "hypothesis_hash": "9031d823621523ee",
+      "lifecycle_state": "holdout_failed",
+      "name": "macd_momentum_reversal_capture",
+      "sharpe_ratio": -1.87909999863806,
+      "theme": "momentum",
+      "total_trades": 72
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/910cf4fe0570874c/holdout_summary.json",
+      "hypothesis_hash": "910cf4fe0570874c",
+      "lifecycle_state": "holdout_failed",
+      "name": "volume_divergence_momentum_179",
+      "sharpe_ratio": -1.2253383987651367,
+      "theme": "volume_divergence",
+      "total_trades": 11
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/911e1b00ccd7c836/holdout_summary.json",
+      "hypothesis_hash": "911e1b00ccd7c836",
+      "lifecycle_state": "holdout_failed",
+      "name": "volume_divergence_momentum_fade",
+      "sharpe_ratio": -0.985079673523332,
+      "theme": "volume_divergence",
+      "total_trades": 72
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/938e135ccfed7b97/holdout_summary.json",
+      "hypothesis_hash": "938e135ccfed7b97",
+      "lifecycle_state": "holdout_failed",
+      "name": "macd_momentum_continuation_141",
+      "sharpe_ratio": -1.4654269413121719,
+      "theme": "momentum",
+      "total_trades": 38
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/9436a54bfd00b266/holdout_summary.json",
+      "hypothesis_hash": "9436a54bfd00b266",
+      "lifecycle_state": "holdout_failed",
+      "name": "oversold_bb_reversion_mean",
+      "sharpe_ratio": -1.1584915375510605,
+      "theme": "mean_reversion",
+      "total_trades": 77
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/94b3d1fdf4ca331e/holdout_summary.json",
+      "hypothesis_hash": "94b3d1fdf4ca331e",
+      "lifecycle_state": "holdout_passed",
+      "name": "monday_morning_accumulation",
+      "sharpe_ratio": 0.47898295687493747,
+      "theme": "calendar_effect",
+      "total_trades": 34
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/95bc2ed6b216e977/holdout_summary.json",
+      "hypothesis_hash": "95bc2ed6b216e977",
+      "lifecycle_state": "holdout_failed",
+      "name": "volatility_compression_breakout",
+      "sharpe_ratio": -1.6014614419649864,
+      "theme": "volatility_regime",
+      "total_trades": 134
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/95bf56e74564ea34/holdout_summary.json",
+      "hypothesis_hash": "95bf56e74564ea34",
+      "lifecycle_state": "holdout_failed",
+      "name": "macd_momentum_reversal",
+      "sharpe_ratio": -1.4889057463215745,
+      "theme": "momentum",
+      "total_trades": 16
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/9812acef46760353/holdout_summary.json",
+      "hypothesis_hash": "9812acef46760353",
+      "lifecycle_state": "holdout_failed",
+      "name": "bollinger_oversold_mean_reversion",
+      "sharpe_ratio": -2.7146827563995544,
+      "theme": "mean_reversion",
+      "total_trades": 139
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/98775adbe12753a6/holdout_summary.json",
+      "hypothesis_hash": "98775adbe12753a6",
+      "lifecycle_state": "holdout_failed",
+      "name": "volume_divergence_momentum_169",
+      "sharpe_ratio": -1.1393049120260526,
+      "theme": "volume_divergence",
+      "total_trades": 53
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/990e800e6a111d60/holdout_summary.json",
+      "hypothesis_hash": "990e800e6a111d60",
+      "lifecycle_state": "holdout_failed",
+      "name": "momentum_exhaustion_rsi_divergence",
+      "sharpe_ratio": -1.400110992385199,
+      "theme": "momentum",
+      "total_trades": 23
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/99c854c75db22f72/holdout_summary.json",
+      "hypothesis_hash": "99c854c75db22f72",
+      "lifecycle_state": "holdout_failed",
+      "name": "vol_regime_compression_breakout",
+      "sharpe_ratio": -1.2763822790774537,
+      "theme": "volatility_regime",
+      "total_trades": 96
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/9ba47c9ef9c4165e/holdout_summary.json",
+      "hypothesis_hash": "9ba47c9ef9c4165e",
+      "lifecycle_state": "holdout_failed",
+      "name": "bb_oversold_mean_reversion",
+      "sharpe_ratio": -0.987256744211207,
+      "theme": "mean_reversion",
+      "total_trades": 73
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/9c18b832698ca307/holdout_summary.json",
+      "hypothesis_hash": "9c18b832698ca307",
+      "lifecycle_state": "holdout_failed",
+      "name": "volume_divergence_momentum_fade",
+      "sharpe_ratio": -1.0203957700993318,
+      "theme": "volume_divergence",
+      "total_trades": 89
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/9dc5c37389b6738d/holdout_summary.json",
+      "hypothesis_hash": "9dc5c37389b6738d",
+      "lifecycle_state": "holdout_passed",
+      "name": "weekend_effect_momentum_185",
+      "sharpe_ratio": -0.04571155960266921,
+      "theme": "calendar_effect",
+      "total_trades": 78
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/9e6ad9108b95b446/holdout_summary.json",
+      "hypothesis_hash": "9e6ad9108b95b446",
+      "lifecycle_state": "holdout_failed",
+      "name": "volume_divergence_breakout_139",
+      "sharpe_ratio": -0.60006105274414,
+      "theme": "volume_divergence",
+      "total_trades": 29
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/a09d6ddd8b96d908/holdout_summary.json",
+      "hypothesis_hash": "a09d6ddd8b96d908",
+      "lifecycle_state": "holdout_failed",
+      "name": "volume_divergence_breakout_164",
+      "sharpe_ratio": -1.104313623632572,
+      "theme": "volume_divergence",
+      "total_trades": 39
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/ab101b4325cd97cf/holdout_summary.json",
+      "hypothesis_hash": "ab101b4325cd97cf",
+      "lifecycle_state": "holdout_failed",
+      "name": "volume_divergence_mean_revert",
+      "sharpe_ratio": -0.35034492863090466,
+      "theme": "volume_divergence",
+      "total_trades": 61
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/ab7584d223700d8b/holdout_summary.json",
+      "hypothesis_hash": "ab7584d223700d8b",
+      "lifecycle_state": "holdout_passed",
+      "name": "volume_divergence_breakout_159",
+      "sharpe_ratio": 0.3978738902079945,
+      "theme": "volume_divergence",
+      "total_trades": 47
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/abf1c7c17306234f/holdout_summary.json",
+      "hypothesis_hash": "abf1c7c17306234f",
+      "lifecycle_state": "holdout_failed",
+      "name": "macd_rsi_momentum_aligned_entry",
+      "sharpe_ratio": -1.9202152610703325,
+      "theme": "momentum",
+      "total_trades": 60
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/acfebedc27728d3f/holdout_summary.json",
+      "hypothesis_hash": "acfebedc27728d3f",
+      "lifecycle_state": "holdout_failed",
+      "name": "low_vol_breakout_regime_shift",
+      "sharpe_ratio": -0.8475108416813195,
+      "theme": "volatility_regime",
+      "total_trades": 51
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/b1ad348696b97141/holdout_summary.json",
+      "hypothesis_hash": "b1ad348696b97141",
+      "lifecycle_state": "holdout_failed",
+      "name": "momentum_acceleration_macd_cross_131",
+      "sharpe_ratio": -0.9276043884190378,
+      "theme": "momentum",
+      "total_trades": 71
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/b2ddd47c46a21a6a/holdout_summary.json",
+      "hypothesis_hash": "b2ddd47c46a21a6a",
+      "lifecycle_state": "holdout_passed",
+      "name": "volume_divergence_breakout_momentum",
+      "sharpe_ratio": -0.48507045013935013,
+      "theme": "volume_divergence",
+      "total_trades": 29
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/b3558e62922c393f/holdout_summary.json",
+      "hypothesis_hash": "b3558e62922c393f",
+      "lifecycle_state": "holdout_failed",
+      "name": "bollinger_zscore_reversion_167",
+      "sharpe_ratio": -0.7228117756394254,
+      "theme": "mean_reversion",
+      "total_trades": 85
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/b5e798dc17844263/holdout_summary.json",
+      "hypothesis_hash": "b5e798dc17844263",
+      "lifecycle_state": "holdout_failed",
+      "name": "volume_divergence_accumulation",
+      "sharpe_ratio": -0.9622166224383778,
+      "theme": "volume_divergence",
+      "total_trades": 60
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/b65ca5a66342dd0c/holdout_summary.json",
+      "hypothesis_hash": "b65ca5a66342dd0c",
+      "lifecycle_state": "holdout_failed",
+      "name": "volume_divergence_momentum_fade",
+      "sharpe_ratio": -0.6179263086619665,
+      "theme": "volume_divergence",
+      "total_trades": 83
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/b7c1aaadcfc35d25/holdout_summary.json",
+      "hypothesis_hash": "b7c1aaadcfc35d25",
+      "lifecycle_state": "holdout_failed",
+      "name": "low_vol_breakout_ema_cross",
+      "sharpe_ratio": -1.389477408583145,
+      "theme": "volatility_regime",
+      "total_trades": 116
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/b8c0edfada682ccd/holdout_summary.json",
+      "hypothesis_hash": "b8c0edfada682ccd",
+      "lifecycle_state": "holdout_failed",
+      "name": "monday_dip_buy_weekly_momentum",
+      "sharpe_ratio": -0.5483214827059489,
+      "theme": "calendar_effect",
+      "total_trades": 15
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/b8ee6bac4bcca6db/holdout_summary.json",
+      "hypothesis_hash": "b8ee6bac4bcca6db",
+      "lifecycle_state": "holdout_failed",
+      "name": "volume_divergence_momentum_entry",
+      "sharpe_ratio": -0.44522024557459816,
+      "theme": "volume_divergence",
+      "total_trades": 65
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/bafcd36b00bc82ad/holdout_summary.json",
+      "hypothesis_hash": "bafcd36b00bc82ad",
+      "lifecycle_state": "holdout_failed",
+      "name": "volatility_contraction_breakout",
+      "sharpe_ratio": -1.9063891310736745,
+      "theme": "volatility_regime",
+      "total_trades": 272
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/bc6f44ca94be739c/holdout_summary.json",
+      "hypothesis_hash": "bc6f44ca94be739c",
+      "lifecycle_state": "holdout_failed",
+      "name": "momentum_persistence_multi_tf_151",
+      "sharpe_ratio": -0.734584848396632,
+      "theme": "momentum",
+      "total_trades": 44
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/bd8df6138292f7e3/holdout_summary.json",
+      "hypothesis_hash": "bd8df6138292f7e3",
+      "lifecycle_state": "holdout_failed",
+      "name": "low_vol_breakout_regime",
+      "sharpe_ratio": -0.28383942159921444,
+      "theme": "volatility_regime",
+      "total_trades": 20
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/be70a34ca81d8b9f/holdout_summary.json",
+      "hypothesis_hash": "be70a34ca81d8b9f",
+      "lifecycle_state": "holdout_failed",
+      "name": "weekday_momentum_fade",
+      "sharpe_ratio": -0.7545796372001914,
+      "theme": "calendar_effect",
+      "total_trades": 27
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/be9d303c78634d08/holdout_summary.json",
+      "hypothesis_hash": "be9d303c78634d08",
+      "lifecycle_state": "holdout_failed",
+      "name": "monday_mean_reversion",
+      "sharpe_ratio": -0.35899552768826976,
+      "theme": "calendar_effect",
+      "total_trades": 40
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/bf83ffec97485f47/holdout_summary.json",
+      "hypothesis_hash": "bf83ffec97485f47",
+      "lifecycle_state": "holdout_passed",
+      "name": "monday_weakness_tuesday_rebound_130",
+      "sharpe_ratio": 0.013750821877713306,
+      "theme": "calendar_effect",
+      "total_trades": 22
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/c200a95d24b6d8f5/holdout_summary.json",
+      "hypothesis_hash": "c200a95d24b6d8f5",
+      "lifecycle_state": "holdout_passed",
+      "name": "weekday_momentum_calendar_150",
+      "sharpe_ratio": 0.35549623430753235,
+      "theme": "calendar_effect",
+      "total_trades": 126
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/c22ec5e440af351d/holdout_summary.json",
+      "hypothesis_hash": "c22ec5e440af351d",
+      "lifecycle_state": "holdout_failed",
+      "name": "monday_dip_buy",
+      "sharpe_ratio": -0.1421959863855268,
+      "theme": "calendar_effect",
+      "total_trades": 58
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/c55c8ad2f58375af/holdout_summary.json",
+      "hypothesis_hash": "c55c8ad2f58375af",
+      "lifecycle_state": "holdout_failed",
+      "name": "monday_mean_reversion_oversold",
+      "sharpe_ratio": 0.13559932874154204,
+      "theme": "calendar_effect",
+      "total_trades": 51
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/ca5b4c3a2eb3e6fa/holdout_summary.json",
+      "hypothesis_hash": "ca5b4c3a2eb3e6fa",
+      "lifecycle_state": "holdout_failed",
+      "name": "ema_crossover_momentum_surge",
+      "sharpe_ratio": -0.18237956343034478,
+      "theme": "momentum",
+      "total_trades": 45
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/cc2951778a531f0e/holdout_summary.json",
+      "hypothesis_hash": "cc2951778a531f0e",
+      "lifecycle_state": "holdout_failed",
+      "name": "volume_divergence_reversal",
+      "sharpe_ratio": -0.6741641313467822,
+      "theme": "volume_divergence",
+      "total_trades": 62
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/cc6a6fcf84ad0e27/holdout_summary.json",
+      "hypothesis_hash": "cc6a6fcf84ad0e27",
+      "lifecycle_state": "holdout_failed",
+      "name": "rsi_momentum_reversal_surge",
+      "sharpe_ratio": -0.7915869739229264,
+      "theme": "momentum",
+      "total_trades": 33
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/ccfbac0aa702444f/holdout_summary.json",
+      "hypothesis_hash": "ccfbac0aa702444f",
+      "lifecycle_state": "holdout_failed",
+      "name": "monday_mean_reversion_dip",
+      "sharpe_ratio": 0.1668826665207495,
+      "theme": "calendar_effect",
+      "total_trades": 34
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/d17760763a3ba7f0/holdout_summary.json",
+      "hypothesis_hash": "d17760763a3ba7f0",
+      "lifecycle_state": "holdout_failed",
+      "name": "macd_hist_golden_cross_momentum",
+      "sharpe_ratio": -0.39371302072191317,
+      "theme": "momentum",
+      "total_trades": 50
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/d195de413a41f730/holdout_summary.json",
+      "hypothesis_hash": "d195de413a41f730",
+      "lifecycle_state": "holdout_failed",
+      "name": "weekday_momentum_continuation",
+      "sharpe_ratio": -0.16308368092201964,
+      "theme": "calendar_effect",
+      "total_trades": 168
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/d81a39d8294d9fcb/holdout_summary.json",
+      "hypothesis_hash": "d81a39d8294d9fcb",
+      "lifecycle_state": "holdout_failed",
+      "name": "momentum_continuation_filter_171",
+      "sharpe_ratio": -1.3136431808196132,
+      "theme": "momentum",
+      "total_trades": 23
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/dc14ce0447c5bb0f/holdout_summary.json",
+      "hypothesis_hash": "dc14ce0447c5bb0f",
+      "lifecycle_state": "holdout_failed",
+      "name": "monday_morning_dip_reversal_145",
+      "sharpe_ratio": -0.07036712671740188,
+      "theme": "calendar_effect",
+      "total_trades": 23
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/e135fc0d11a0fee3/holdout_summary.json",
+      "hypothesis_hash": "e135fc0d11a0fee3",
+      "lifecycle_state": "holdout_failed",
+      "name": "volatility_compression_breakout_158",
+      "sharpe_ratio": -2.0910291571706314,
+      "theme": "volatility_regime",
+      "total_trades": 182
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/e52efc855694e167/holdout_summary.json",
+      "hypothesis_hash": "e52efc855694e167",
+      "lifecycle_state": "holdout_failed",
+      "name": "monday_dip_buy_195",
+      "sharpe_ratio": -0.8619956100658884,
+      "theme": "calendar_effect",
+      "total_trades": 23
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/e5a386d1ab0167e5/holdout_summary.json",
+      "hypothesis_hash": "e5a386d1ab0167e5",
+      "lifecycle_state": "holdout_failed",
+      "name": "volume_divergence_momentum_fade",
+      "sharpe_ratio": -1.37422397352126,
+      "theme": "volume_divergence",
+      "total_trades": 35
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/e5dfab684dbda2bb/holdout_summary.json",
+      "hypothesis_hash": "e5dfab684dbda2bb",
+      "lifecycle_state": "holdout_failed",
+      "name": "monday_dip_buying",
+      "sharpe_ratio": -0.031113750871107772,
+      "theme": "calendar_effect",
+      "total_trades": 40
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/e70d021f56009f63/holdout_summary.json",
+      "hypothesis_hash": "e70d021f56009f63",
+      "lifecycle_state": "holdout_failed",
+      "name": "bollinger_mean_reversion",
+      "sharpe_ratio": -1.2555486692562277,
+      "theme": "mean_reversion",
+      "total_trades": 97
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/ebda9a17ff4a0890/holdout_summary.json",
+      "hypothesis_hash": "ebda9a17ff4a0890",
+      "lifecycle_state": "holdout_failed",
+      "name": "macd_histogram_momentum_surge",
+      "sharpe_ratio": -0.1029887536040085,
+      "theme": "momentum",
+      "total_trades": 23
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/ec6c5e0b91d3f3f1/holdout_summary.json",
+      "hypothesis_hash": "ec6c5e0b91d3f3f1",
+      "lifecycle_state": "holdout_failed",
+      "name": "bb_mean_reversion_rsi_oversold",
+      "sharpe_ratio": -1.0681691977047951,
+      "theme": "mean_reversion",
+      "total_trades": 100
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/ec920953f614e9f5/holdout_summary.json",
+      "hypothesis_hash": "ec920953f614e9f5",
+      "lifecycle_state": "holdout_failed",
+      "name": "macd_histogram_momentum_surge",
+      "sharpe_ratio": -1.1298146365067163,
+      "theme": "momentum",
+      "total_trades": 53
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/f127b247d000c5c4/holdout_summary.json",
+      "hypothesis_hash": "f127b247d000c5c4",
+      "lifecycle_state": "holdout_failed",
+      "name": "low_vol_breakout_confirmation",
+      "sharpe_ratio": -0.12764761056439403,
+      "theme": "volatility_regime",
+      "total_trades": 24
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/f285a4f95e71b4fc/holdout_summary.json",
+      "hypothesis_hash": "f285a4f95e71b4fc",
+      "lifecycle_state": "holdout_failed",
+      "name": "macd_momentum_acceleration",
+      "sharpe_ratio": -1.2080098348531285,
+      "theme": "momentum",
+      "total_trades": 53
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/f4977b3ebc662a17/holdout_summary.json",
+      "hypothesis_hash": "f4977b3ebc662a17",
+      "lifecycle_state": "holdout_passed",
+      "name": "volume_spike_momentum_entry",
+      "sharpe_ratio": 0.34744998181151643,
+      "theme": "volume_divergence",
+      "total_trades": 65
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/f73a047b393580fb/holdout_summary.json",
+      "hypothesis_hash": "f73a047b393580fb",
+      "lifecycle_state": "holdout_failed",
+      "name": "oversold_rsi_bollinger_reversion",
+      "sharpe_ratio": -0.832703298743774,
+      "theme": "mean_reversion",
+      "total_trades": 75
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/f8e9655ef48c2ac7/holdout_summary.json",
+      "hypothesis_hash": "f8e9655ef48c2ac7",
+      "lifecycle_state": "holdout_failed",
+      "name": "momentum_acceleration_rsi_181",
+      "sharpe_ratio": -1.4622021444835804,
+      "theme": "momentum",
+      "total_trades": 76
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/fa1cac0148b8da1c/holdout_summary.json",
+      "hypothesis_hash": "fa1cac0148b8da1c",
+      "lifecycle_state": "holdout_failed",
+      "name": "volume_divergence_reversal",
+      "sharpe_ratio": -0.5258375691195556,
+      "theme": "volume_divergence",
+      "total_trades": 44
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/fa8e28ab1d51ddec/holdout_summary.json",
+      "hypothesis_hash": "fa8e28ab1d51ddec",
+      "lifecycle_state": "holdout_failed",
+      "name": "bollinger_squeeze_reversion",
+      "sharpe_ratio": -1.1774603439915987,
+      "theme": "mean_reversion",
+      "total_trades": 73
+    },
+    {
+      "audit_v1_artifact_path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/audit_v1/fab6218118487d89/holdout_summary.json",
+      "hypothesis_hash": "fab6218118487d89",
+      "lifecycle_state": "holdout_failed",
+      "name": "monday_oversold_mean_reversion",
+      "sharpe_ratio": 0.4276193428133579,
+      "theme": "calendar_effect",
+      "total_trades": 29
+    }
+  ],
+  "excluded_candidates": [
+    {
+      "hypothesis_hash": "06c3b4a2f7ff8338",
+      "reason": "low_trade_count",
+      "sharpe_ratio": 0.7113271652208213,
+      "total_trades": 1
+    },
+    {
+      "hypothesis_hash": "072ec63b80f53ba1",
+      "reason": "zero_trades",
+      "sharpe_ratio": 0.0,
+      "total_trades": 0
+    },
+    {
+      "hypothesis_hash": "09d511fb4e786ed2",
+      "reason": "zero_trades",
+      "sharpe_ratio": 0.0,
+      "total_trades": 0
+    },
+    {
+      "hypothesis_hash": "0bf34de1eeb57782",
+      "reason": "low_trade_count",
+      "sharpe_ratio": -1.5631646179802041,
+      "total_trades": 2
+    },
+    {
+      "hypothesis_hash": "10bc410920945653",
+      "reason": "zero_trades",
+      "sharpe_ratio": 0.0,
+      "total_trades": 0
+    },
+    {
+      "hypothesis_hash": "1433c0ffda419418",
+      "reason": "zero_trades",
+      "sharpe_ratio": 0.0,
+      "total_trades": 0
+    },
+    {
+      "hypothesis_hash": "18f650793b9963d7",
+      "reason": "zero_trades",
+      "sharpe_ratio": 0.0,
+      "total_trades": 0
+    },
+    {
+      "hypothesis_hash": "194251436b96518e",
+      "reason": "zero_trades",
+      "sharpe_ratio": 0.0,
+      "total_trades": 0
+    },
+    {
+      "hypothesis_hash": "1b9e7ef4b028be44",
+      "reason": "zero_trades",
+      "sharpe_ratio": 0.0,
+      "total_trades": 0
+    },
+    {
+      "hypothesis_hash": "1df2aaa1520f34f5",
+      "reason": "zero_trades",
+      "sharpe_ratio": 0.0,
+      "total_trades": 0
+    },
+    {
+      "hypothesis_hash": "1f30b687318e3738",
+      "reason": "zero_trades",
+      "sharpe_ratio": 0.0,
+      "total_trades": 0
+    },
+    {
+      "hypothesis_hash": "21ec8692a7ed6dcd",
+      "reason": "zero_trades",
+      "sharpe_ratio": 0.0,
+      "total_trades": 0
+    },
+    {
+      "hypothesis_hash": "2204e5adf1e88105",
+      "reason": "zero_trades",
+      "sharpe_ratio": 0.0,
+      "total_trades": 0
+    },
+    {
+      "hypothesis_hash": "32268c4913afbe4c",
+      "reason": "zero_trades",
+      "sharpe_ratio": 0.0,
+      "total_trades": 0
+    },
+    {
+      "hypothesis_hash": "327ea7174c11d16a",
+      "reason": "zero_trades",
+      "sharpe_ratio": 0.0,
+      "total_trades": 0
+    },
+    {
+      "hypothesis_hash": "336fa2be3aa1d7ae",
+      "reason": "zero_trades",
+      "sharpe_ratio": 0.0,
+      "total_trades": 0
+    },
+    {
+      "hypothesis_hash": "378d934f271479eb",
+      "reason": "zero_trades",
+      "sharpe_ratio": 0.0,
+      "total_trades": 0
+    },
+    {
+      "hypothesis_hash": "3d0c1d22ad433644",
+      "reason": "low_trade_count",
+      "sharpe_ratio": 0.5624325419622472,
+      "total_trades": 1
+    },
+    {
+      "hypothesis_hash": "458f14ce83dec71a",
+      "reason": "zero_trades",
+      "sharpe_ratio": 0.0,
+      "total_trades": 0
+    },
+    {
+      "hypothesis_hash": "48436c0291098058",
+      "reason": "low_trade_count",
+      "sharpe_ratio": -1.1179861340873791,
+      "total_trades": 2
+    },
+    {
+      "hypothesis_hash": "5164c39668939bd1",
+      "reason": "zero_trades",
+      "sharpe_ratio": 0.0,
+      "total_trades": 0
+    },
+    {
+      "hypothesis_hash": "5972c4b3e78db6a5",
+      "reason": "low_trade_count",
+      "sharpe_ratio": 0.3183292447378971,
+      "total_trades": 4
+    },
+    {
+      "hypothesis_hash": "5cf4a5054f77e800",
+      "reason": "zero_trades",
+      "sharpe_ratio": 0.0,
+      "total_trades": 0
+    },
+    {
+      "hypothesis_hash": "77f31cd358ff535d",
+      "reason": "zero_trades",
+      "sharpe_ratio": 0.0,
+      "total_trades": 0
+    },
+    {
+      "hypothesis_hash": "7be2e3e71eb3298d",
+      "reason": "zero_trades",
+      "sharpe_ratio": 0.0,
+      "total_trades": 0
+    },
+    {
+      "hypothesis_hash": "7d9c2315f9ae46cf",
+      "reason": "zero_trades",
+      "sharpe_ratio": 0.0,
+      "total_trades": 0
+    },
+    {
+      "hypothesis_hash": "90886ec890997a8a",
+      "reason": "zero_trades",
+      "sharpe_ratio": 0.0,
+      "total_trades": 0
+    },
+    {
+      "hypothesis_hash": "a67bf0ef189e6bce",
+      "reason": "zero_trades",
+      "sharpe_ratio": 0.0,
+      "total_trades": 0
+    },
+    {
+      "hypothesis_hash": "aa94792213d52955",
+      "reason": "zero_trades",
+      "sharpe_ratio": 0.0,
+      "total_trades": 0
+    },
+    {
+      "hypothesis_hash": "b1a0797a43dcde74",
+      "reason": "zero_trades",
+      "sharpe_ratio": 0.0,
+      "total_trades": 0
+    },
+    {
+      "hypothesis_hash": "b3e0b3c6621e3652",
+      "reason": "zero_trades",
+      "sharpe_ratio": 0.0,
+      "total_trades": 0
+    },
+    {
+      "hypothesis_hash": "b4dbd6c5eec229a5",
+      "reason": "low_trade_count",
+      "sharpe_ratio": 0.8692621875029356,
+      "total_trades": 1
+    },
+    {
+      "hypothesis_hash": "b6bbf528c75e5bd7",
+      "reason": "zero_trades",
+      "sharpe_ratio": 0.0,
+      "total_trades": 0
+    },
+    {
+      "hypothesis_hash": "b6eaa3b37c041bc3",
+      "reason": "low_trade_count",
+      "sharpe_ratio": -0.39676455125244514,
+      "total_trades": 3
+    },
+    {
+      "hypothesis_hash": "cc1d6b8eb1a3a840",
+      "reason": "zero_trades",
+      "sharpe_ratio": 0.0,
+      "total_trades": 0
+    },
+    {
+      "hypothesis_hash": "d11e345f0bb9294e",
+      "reason": "zero_trades",
+      "sharpe_ratio": 0.0,
+      "total_trades": 0
+    },
+    {
+      "hypothesis_hash": "d8e92ae49dcc2cb2",
+      "reason": "low_trade_count",
+      "sharpe_ratio": 1.2624200293356078,
+      "total_trades": 4
+    },
+    {
+      "hypothesis_hash": "d9a64d02ee540fee",
+      "reason": "zero_trades",
+      "sharpe_ratio": 0.0,
+      "total_trades": 0
+    },
+    {
+      "hypothesis_hash": "e0c9b236c1fa3bf7",
+      "reason": "zero_trades",
+      "sharpe_ratio": 0.0,
+      "total_trades": 0
+    },
+    {
+      "hypothesis_hash": "e12477c998bddaeb",
+      "reason": "low_trade_count",
+      "sharpe_ratio": 0.5316863063714955,
+      "total_trades": 4
+    },
+    {
+      "hypothesis_hash": "e38ce718c7bd5c64",
+      "reason": "zero_trades",
+      "sharpe_ratio": 0.0,
+      "total_trades": 0
+    },
+    {
+      "hypothesis_hash": "ea2485cd75ee0727",
+      "reason": "zero_trades",
+      "sharpe_ratio": 0.0,
+      "total_trades": 0
+    },
+    {
+      "hypothesis_hash": "f81256dc36980a78",
+      "reason": "zero_trades",
+      "sharpe_ratio": 0.0,
+      "total_trades": 0
+    },
+    {
+      "hypothesis_hash": "fee68761a883672d",
+      "reason": "zero_trades",
+      "sharpe_ratio": 0.0,
+      "total_trades": 0
+    }
+  ],
+  "exclusion_reason_counts": {
+    "low_trade_count": 9,
+    "zero_trades": 35
+  },
+  "expected_n_raw": 198,
+  "json_vs_csv_tolerance": 1e-06,
+  "min_trades_for_primary": 5,
+  "n_eligible": 154,
+  "n_raw": 198,
+  "schema_changes_from_v1": "Added discrepancy 'kind' field (delta_above_tolerance / missing_csv_row / missing_csv_value / missing_json_value / missing_both); added missing_trades exclusion reason class; n_raw enforced against EXPECTED_N_RAW=198 at loader entry.",
+  "schema_version": "phase2c_11_step2_v2",
+  "sharpe_max": 0.9602178531387877,
+  "sharpe_mean": -0.8730362312112776,
+  "sharpe_median": -0.973648147980855,
+  "sharpe_min": -2.7146827563995544,
+  "sharpe_std": 0.7284865909562044,
+  "sharpe_var": 0.5306927132029922
+}
