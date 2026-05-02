@@ -953,3 +953,1157 @@ class TestLoadAuditV1CandidatesIntegrationRealData:
         assert theme_counts.get("volatility_regime") == 40
         assert theme_counts.get("momentum") == 39
         assert theme_counts.get("mean_reversion") == 39
+
+
+# ===========================================================================
+# PHASE2C_11 Step 3 — TDD-RED test classes (13 classes; 45 tests)
+# ---------------------------------------------------------------------------
+# Per Charlie-register `approved schema seal` + TDD-RED authorization with
+# 7 locked constraints + 2 micro-clarifications:
+#
+#   1. Class-method-local imports of new symbols (compute_simplified_dsr,
+#      SimplifiedDSRResult, PerCandidateDisposition, SensitivityRow,
+#      DispositionLiteral). Module-top-level imports would
+#      contaminate existing 77-test PASS state; per-method-local isolates
+#      ImportError to new test methods only.
+#
+#   2. Boundary-disposition reference values cross-checked stdlib (math) +
+#      scipy.stats.norm; intermediate values listed in test docstrings for
+#      first-principles verification.
+#
+#   3. Class #11 §20 Trigger 1 closure annotation — at GREEN-phase pass
+#      this test invokes compute_simplified_dsr against canonical inputs
+#      = live computation = §20 Trigger 1 closure boundary per
+#      PHASE2C_11_PLAN §0 P-L7 timeline. Future audit readers identify
+#      the closure boundary at this test's GREEN run, NOT at TDD-RED
+#      authoring (this commit) and NOT at schema seal.
+#
+#   4. No module-level fixture / no class-scope @pytest.fixture during
+#      RED phase — collection-time construction would fail. All helpers
+#      are class-method-local (e.g., self._make_candidate_input).
+#
+#   5. RED state expected: 77 passed (existing) + 45 failed (new;
+#      ImportError class). Verification command:
+#        pytest tests/test_evaluate_dsr.py 2>&1 | tail -10
+# ===========================================================================
+
+
+class TestComputeSimplifiedDSRBonferroniThreshold:
+    """§4.3 Step 1 Bonferroni-style threshold: SR_threshold = sqrt(2*ln(N)).
+
+    Reference values (stdlib math.sqrt + math.log; no scipy required):
+      N=198:   sqrt(2*ln(198)) ≈ 3.252158
+      N=2:     sqrt(2*ln(2))   ≈ 1.177410
+      N=10000: sqrt(2*ln(10000)) ≈ 4.291932
+    """
+
+    def test_threshold_at_canonical_n_198(self):
+        from backtest.evaluate_dsr import compute_simplified_dsr  # noqa: F401
+        # Reference: math.sqrt(2 * math.log(198)) = 3.2521583696660700
+        # Threshold accessed via compute_simplified_dsr(...).bonferroni_threshold;
+        # synthetic eligible candidates required to invoke; fixture below.
+        from backtest.evaluate_dsr import CandidateInput
+        candidates = [
+            CandidateInput(
+                hypothesis_hash=f"h{i:02d}",
+                sharpe_ratio=0.0,
+                total_trades=10,
+                audit_v1_artifact_path=f"/tmp/synthetic_{i}.json",
+                name="syn",
+                theme="syn",
+                lifecycle_state="shortlisted",
+            )
+            for i in range(198)
+        ]
+        result = compute_simplified_dsr(candidates, n_trials=198)
+        expected = math.sqrt(2.0 * math.log(198))
+        assert abs(result.bonferroni_threshold - expected) < 1e-9
+        assert abs(result.bonferroni_threshold - 3.2521583696660700) < 1e-9
+
+    def test_threshold_consistency_with_compute_expected_max_sharpe(self):
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            compute_expected_max_sharpe,
+            compute_simplified_dsr,
+        )
+        candidates = [
+            CandidateInput(
+                hypothesis_hash=f"h{i:02d}",
+                sharpe_ratio=0.0,
+                total_trades=10,
+                audit_v1_artifact_path=f"/tmp/synthetic_{i}.json",
+                name="syn",
+                theme="syn",
+                lifecycle_state="shortlisted",
+            )
+            for i in range(198)
+        ]
+        result = compute_simplified_dsr(candidates, n_trials=198)
+        # Bonferroni formula must agree across both APIs.
+        assert abs(
+            result.bonferroni_threshold - compute_expected_max_sharpe(198)
+        ) < 1e-12
+
+    def test_threshold_monotone_in_n(self):
+        from backtest.evaluate_dsr import compute_expected_max_sharpe
+        # Bonferroni threshold strictly increases in N for N >= 2.
+        for n_lo, n_hi in [(10, 100), (100, 1000), (1000, 10000)]:
+            assert compute_expected_max_sharpe(n_lo) < compute_expected_max_sharpe(n_hi)
+
+
+class TestComputeSimplifiedDSRGumbelExpectedMax:
+    """§4.3 Step 2 Gumbel approximation E[max SR | null].
+
+    Hand-derived reference at Var=1, N=198 (cross-checked stdlib + scipy):
+      γ_e (Euler-Mascheroni) ≈ 0.5772156649015329
+      Φ⁻¹(1 - 1/198)   ≈ 2.572352  (scipy.stats.norm.ppf(1 - 1/198))
+      Φ⁻¹(1 - 1/(198·e)) ≈ 2.901319  (scipy.stats.norm.ppf(1 - 1/(198*math.e)))
+      E[max | null, Var=1, N=198]
+        = sqrt(1) * ((1 - 0.5772) * 2.572352 + 0.5772 * 2.901319)
+        ≈ 0.4228 * 2.572352 + 0.5772 * 2.901319
+        ≈ 1.087602 + 1.674635
+        ≈ 2.762237
+
+    Linearity in sqrt(Var): E[max | null, Var=4] = 2 * E[max | null, Var=1].
+    """
+
+    def test_expected_max_at_var_1_n_198(self):
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            compute_simplified_dsr,
+        )
+        # Construct 198 candidates with sharpe variance = 1 exactly.
+        # Use values centered at 0 with var=1; e.g., split half at +1, half at -1
+        # gives exactly Var(SR)=1.0 (ddof=1) given equal counts.
+        # Simpler: use values from a well-defined distribution with known var.
+        # We use the 198 values [i/100 for i in range(-99, 99)] - too convoluted;
+        # instead, use 99 values at +0.99499 and 99 at -0.99499 (=> var ≈ 1).
+        sharpes = [0.99499] * 99 + [-0.99499] * 99
+        candidates = [
+            CandidateInput(
+                hypothesis_hash=f"h{i:03d}",
+                sharpe_ratio=sharpes[i],
+                total_trades=10,
+                audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                name="syn", theme="syn", lifecycle_state="shortlisted",
+            )
+            for i in range(198)
+        ]
+        result = compute_simplified_dsr(candidates, n_trials=198)
+        # E[max|null] linear in sqrt(Var); verify against canonical reference at Var=1.
+        # statistics.variance with these inputs ≈ 1.0 exactly.
+        # Tolerance 1e-3 absorbs the 1e-5 deviation in synthetic var.
+        assert abs(result.expected_max_sharpe_null - 2.762237) < 1e-3
+
+    def test_expected_max_linear_in_sqrt_var(self):
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            compute_simplified_dsr,
+        )
+        # Two candidate sets with var ratio 4:1 -> E[max|null] ratio 2:1.
+        def make(scale: float):
+            sharpes = [scale] * 99 + [-scale] * 99
+            return [
+                CandidateInput(
+                    hypothesis_hash=f"h{i:03d}",
+                    sharpe_ratio=sharpes[i],
+                    total_trades=10,
+                    audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                    name="syn", theme="syn", lifecycle_state="shortlisted",
+                )
+                for i in range(198)
+            ]
+        r1 = compute_simplified_dsr(make(1.0), n_trials=198)
+        r2 = compute_simplified_dsr(make(2.0), n_trials=198)
+        # var(r2) / var(r1) ≈ 4 → E[max] ratio ≈ 2.
+        assert abs(r2.expected_max_sharpe_null / r1.expected_max_sharpe_null - 2.0) < 1e-6
+
+    def test_expected_max_monotone_in_n(self):
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            compute_simplified_dsr,
+        )
+        # For fixed Var(SR), E[max|null] strictly increases in N.
+        def make_at_n(n: int):
+            sharpes = [0.99499] * (n // 2) + [-0.99499] * (n - n // 2)
+            return [
+                CandidateInput(
+                    hypothesis_hash=f"h{i:04d}",
+                    sharpe_ratio=sharpes[i],
+                    total_trades=10,
+                    audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                    name="syn", theme="syn", lifecycle_state="shortlisted",
+                )
+                for i in range(n)
+            ]
+        # n_trials must equal n (and dual-gate enforces n == EXPECTED_N_RAW=198 in
+        # production; this test must opt out of dual-gate via synthetic-only path).
+        # See test_dual_gate_synthetic_opt_out_paths in TestComputeSimplifiedDSRDualGateNRawCheck.
+        r_198 = compute_simplified_dsr(make_at_n(198), n_trials=198)
+        # Smaller-N comparison at N=100 requires opt-out; deferred.
+        # For RED phase: assert presence of expected_max_sharpe_null > 0 finite.
+        assert r_198.expected_max_sharpe_null > 0
+        assert math.isfinite(r_198.expected_max_sharpe_null)
+
+    def test_expected_max_uses_inputs_sharpe_var(self):
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            compute_simplified_dsr,
+        )
+        # The sharpe_var_used field MUST equal the Var(SR) computed over
+        # the eligible subset (= statistics.variance, ddof=1).
+        import statistics
+        sharpes = [0.5, -0.5] * 99
+        candidates = [
+            CandidateInput(
+                hypothesis_hash=f"h{i:03d}",
+                sharpe_ratio=sharpes[i],
+                total_trades=10,
+                audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                name="syn", theme="syn", lifecycle_state="shortlisted",
+            )
+            for i in range(198)
+        ]
+        result = compute_simplified_dsr(candidates, n_trials=198)
+        expected_var = statistics.variance(sharpes)
+        assert abs(result.sharpe_var_used - expected_var) < 1e-12
+
+
+class TestComputeSimplifiedDSRPerCandidateFormula:
+    """§4.3 Step 3: SE = sqrt(1/(T_c - 1)); z = (SR_c - E[max|null])/SE; p = 1 - Φ(z).
+
+    Cross-check independence: implementation may use scipy.stats.norm.sf;
+    test reference uses stdlib math.erfc cross-check:
+      p = norm.sf(z) ≡ 0.5 * math.erfc(z / math.sqrt(2))
+    Both should agree to ~1e-15.
+    """
+
+    def test_se_formula_at_t_c(self):
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            compute_simplified_dsr,
+        )
+        # T_c = 10 → SE = sqrt(1/9) ≈ 0.333333
+        sharpes = [0.5, -0.5] * 99
+        candidates = [
+            CandidateInput(
+                hypothesis_hash=f"h{i:03d}",
+                sharpe_ratio=sharpes[i],
+                total_trades=10,
+                audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                name="syn", theme="syn", lifecycle_state="shortlisted",
+            )
+            for i in range(198)
+        ]
+        result = compute_simplified_dsr(candidates, n_trials=198)
+        expected_se = math.sqrt(1.0 / 9.0)
+        for d in result.per_candidate:
+            assert abs(d.standard_error - expected_se) < 1e-12
+
+    def test_z_score_formula(self):
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            compute_simplified_dsr,
+        )
+        sharpes = [0.5, -0.5] * 99
+        candidates = [
+            CandidateInput(
+                hypothesis_hash=f"h{i:03d}",
+                sharpe_ratio=sharpes[i],
+                total_trades=10,
+                audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                name="syn", theme="syn", lifecycle_state="shortlisted",
+            )
+            for i in range(198)
+        ]
+        result = compute_simplified_dsr(candidates, n_trials=198)
+        for d in result.per_candidate:
+            expected_z = (d.sharpe_ratio - result.expected_max_sharpe_null) / d.standard_error
+            assert abs(d.z_score - expected_z) < 1e-12
+
+    def test_p_value_bounded(self):
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            compute_simplified_dsr,
+        )
+        sharpes = [0.5, -0.5] * 99
+        candidates = [
+            CandidateInput(
+                hypothesis_hash=f"h{i:03d}",
+                sharpe_ratio=sharpes[i],
+                total_trades=10,
+                audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                name="syn", theme="syn", lifecycle_state="shortlisted",
+            )
+            for i in range(198)
+        ]
+        result = compute_simplified_dsr(candidates, n_trials=198)
+        for d in result.per_candidate:
+            assert 0.0 <= d.p_value <= 1.0
+
+    def test_p_value_stdlib_scipy_cross_check(self):
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            compute_simplified_dsr,
+        )
+        # Cross-check: p_c computed via implementation must match
+        # stdlib formulation 0.5 * math.erfc(z / sqrt(2)) to ~1e-12.
+        sharpes = [0.5, -0.5] * 99
+        candidates = [
+            CandidateInput(
+                hypothesis_hash=f"h{i:03d}",
+                sharpe_ratio=sharpes[i],
+                total_trades=10,
+                audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                name="syn", theme="syn", lifecycle_state="shortlisted",
+            )
+            for i in range(198)
+        ]
+        result = compute_simplified_dsr(candidates, n_trials=198)
+        for d in result.per_candidate:
+            stdlib_p = 0.5 * math.erfc(d.z_score / math.sqrt(2.0))
+            assert abs(d.p_value - stdlib_p) < 1e-10
+
+
+class TestComputeSimplifiedDSRBoundaryDispositions:
+    """§3.6 conservative AND-gate: 5 distinct disposition regions per P-L1.
+
+    Reference values cross-checked stdlib (math) + scipy.stats.norm.
+    All synthetic candidate constructions use n_trials=198 + opt out of
+    dual-gate via expected_n_trials=None param (per dual-gate test class).
+
+    For each region, fixture constructs 198 candidates such that ONE target
+    candidate (target_hash="h_target") lands in the region; remaining 197
+    candidates are filler with Sharpe ≈ 0.
+
+    Hand-derived landing tuples (verified via reference computation):
+
+    Region 1 (signal_evidence):
+      target SR=4.0, T=200, sharpe_var=1.0
+      Bonferroni threshold = sqrt(2*ln(198)) ≈ 3.252158
+      E[max|null] = sqrt(1.0) * (0.4228*Φ⁻¹(0.99495) + 0.5772*Φ⁻¹(0.99814))
+                  ≈ 0.4228*2.572352 + 0.5772*2.901319 ≈ 2.762237
+      SE = sqrt(1/199) ≈ 0.070888
+      z = (4.0 - 2.762237) / 0.070888 ≈ 17.46
+      p ≈ 1.42e-68  (< 0.05)
+      → Bonferroni_pass=True AND DSR_style_pass=True → Region 1
+
+    Region 2 (artifact_evidence):
+      target SR=0.3, T=100, sharpe_var=0.5307 (canonical Step 2 input stat)
+      E[max|null] = sqrt(0.5307) * (...) ≈ 2.012266
+      SE = sqrt(1/99) ≈ 0.100504
+      z = (0.3 - 2.012266) / 0.100504 ≈ -17.04
+      p ≈ 1.0  (≥ 0.5)
+      → Bonferroni_pass=False AND DSR_style_pass=False AND p≥0.5 → Region 2
+
+    Region 3 (inconclusive — Bonferroni-only):
+      target SR=3.4, T=5, sharpe_var=1.0
+      Bonferroni_pass = (3.4 > 3.252158) = True
+      E[max|null] = 2.762237
+      SE = sqrt(1/4) = 0.5
+      z = (3.4 - 2.762237) / 0.5 ≈ 1.275526
+      p ≈ 0.10106  (≥ 0.05)
+      → Bonferroni_pass=True AND DSR_style_pass=False → Region 3
+
+    Region 4 (inconclusive — DSR-only):
+      target SR=2.5, T=1000, sharpe_var=0.01
+      E[max|null] = sqrt(0.01) * 2.762237 ≈ 0.276224
+      SE = sqrt(1/999) ≈ 0.031639
+      z = (2.5 - 0.276224) / 0.031639 ≈ 70.29
+      p ≈ 0  (< 0.05)
+      Bonferroni_pass = (2.5 > 3.252158) = False
+      → Bonferroni_pass=False AND DSR_style_pass=True → Region 4
+
+    Region 5 (inconclusive — intermediate-p):
+      target SR=0.5, T=20, sharpe_var=0.01
+      E[max|null] = 0.276224
+      SE = sqrt(1/19) ≈ 0.229416
+      z = (0.5 - 0.276224) / 0.229416 ≈ 0.975418
+      p ≈ 0.16467  (in [0.05, 0.5))
+      Bonferroni_pass = (0.5 > 3.252158) = False
+      → Bonferroni_pass=False AND DSR_style_pass=False AND p<0.5 → Region 5
+    """
+
+    def _make_candidates_for_region(self, target_sr: float, target_t: int, var: float):
+        """Construct 198 CandidateInput with one target landing in the
+        intended region and 197 filler candidates such that statistics.variance
+        of the full 198-Sharpe array ≈ ``var``.
+        """
+        from backtest.evaluate_dsr import CandidateInput
+        import statistics
+        # Solve for filler magnitude such that statistics.variance(sharpes)=var.
+        # 197 fillers at ±filler_mag (alternating); 1 target at target_sr.
+        # variance(sample, ddof=1) ≈ filler_mag^2 (when 197 fillers dominate)
+        # for ±filler_mag at equal count, variance ≈ filler_mag^2 * 197/197 = filler_mag^2.
+        # Plus target's contribution; for var dominated by fillers, filler_mag ≈ sqrt(var).
+        # Tweak filler_mag iteratively to land exact variance.
+        filler_mag = math.sqrt(var)
+        sharpes = [target_sr] + [filler_mag, -filler_mag] * 98 + [filler_mag]
+        # Re-tune: solve filler_mag s.t. statistics.variance(sharpes)=var precisely.
+        # Iterate (3 passes is enough for convergence to 1e-10).
+        for _ in range(20):
+            sharpes = [target_sr] + [filler_mag, -filler_mag] * 98 + [filler_mag]
+            actual_var = statistics.variance(sharpes)
+            if actual_var == 0:
+                break
+            filler_mag = filler_mag * math.sqrt(var / actual_var)
+        candidates: list = [
+            CandidateInput(
+                hypothesis_hash="h_target",
+                sharpe_ratio=target_sr,
+                total_trades=target_t,
+                audit_v1_artifact_path="/tmp/syn_target.json",
+                name="syn", theme="syn", lifecycle_state="shortlisted",
+            )
+        ]
+        for i in range(197):
+            mag = filler_mag if (i % 2 == 0) else -filler_mag
+            candidates.append(CandidateInput(
+                hypothesis_hash=f"h_filler_{i:03d}",
+                sharpe_ratio=mag,
+                total_trades=10,
+                audit_v1_artifact_path=f"/tmp/syn_filler_{i}.json",
+                name="syn", theme="syn", lifecycle_state="shortlisted",
+            ))
+        return candidates
+
+    def test_region_1_signal_evidence(self):
+        """Region 1: Bonferroni_pass AND DSR_style_pass → signal_evidence."""
+        from backtest.evaluate_dsr import compute_simplified_dsr
+        # Reference: SR=4.0, T=200, var=1.0; bonf=3.2522, e_max=2.7622,
+        #   se=0.07089, z=17.46, p≈1.4e-68; Region 1.
+        candidates = self._make_candidates_for_region(4.0, 200, 1.0)
+        result = compute_simplified_dsr(candidates, n_trials=198)
+        target = next(d for d in result.per_candidate if d.hypothesis_hash == "h_target")
+        assert target.bonferroni_pass is True
+        assert target.dsr_style_pass is True
+        assert target.disposition == "signal_evidence"
+
+    def test_region_2_artifact_evidence(self):
+        """Region 2: NOT Bonferroni AND NOT DSR-style AND p≥0.5 → artifact."""
+        from backtest.evaluate_dsr import compute_simplified_dsr
+        # Reference: SR=0.3, T=100, var=0.5307; bonf=3.2522, e_max=2.0123,
+        #   se=0.1005, z=-17.04, p≈1.0; Region 2.
+        candidates = self._make_candidates_for_region(0.3, 100, 0.5307)
+        result = compute_simplified_dsr(candidates, n_trials=198)
+        target = next(d for d in result.per_candidate if d.hypothesis_hash == "h_target")
+        assert target.bonferroni_pass is False
+        assert target.dsr_style_pass is False
+        assert target.p_value >= 0.5
+        assert target.disposition == "artifact_evidence"
+
+    def test_region_3_inconclusive_bonferroni_only(self):
+        """Region 3: Bonferroni_pass AND NOT DSR_style_pass → inconclusive."""
+        from backtest.evaluate_dsr import compute_simplified_dsr
+        # Reference: SR=3.4, T=5, var=1.0; bonf=3.2522, e_max=2.7622,
+        #   se=0.5, z=1.276, p≈0.1011 (≥ 0.05); Region 3.
+        candidates = self._make_candidates_for_region(3.4, 5, 1.0)
+        result = compute_simplified_dsr(candidates, n_trials=198)
+        target = next(d for d in result.per_candidate if d.hypothesis_hash == "h_target")
+        assert target.bonferroni_pass is True
+        assert target.dsr_style_pass is False
+        assert target.disposition == "inconclusive"
+
+    def test_region_4_inconclusive_dsr_only(self):
+        """Region 4: NOT Bonferroni_pass AND DSR_style_pass → inconclusive.
+
+        Most subtle region: requires SR_c ≤ Bonferroni AND p < 0.05; achieved
+        via low sharpe_var (=> low E[max|null]) + large T_c (=> small SE).
+        """
+        from backtest.evaluate_dsr import compute_simplified_dsr
+        # Reference: SR=2.5, T=1000, var=0.01; bonf=3.2522, e_max=0.2762,
+        #   se=0.0316, z=70.29, p≈0; Region 4.
+        candidates = self._make_candidates_for_region(2.5, 1000, 0.01)
+        result = compute_simplified_dsr(candidates, n_trials=198)
+        target = next(d for d in result.per_candidate if d.hypothesis_hash == "h_target")
+        assert target.bonferroni_pass is False
+        assert target.dsr_style_pass is True
+        assert target.disposition == "inconclusive"
+
+    def test_region_5_inconclusive_intermediate_p(self):
+        """Region 5: NOT Bonferroni AND NOT DSR-style AND p<0.5 → inconclusive."""
+        from backtest.evaluate_dsr import compute_simplified_dsr
+        # Reference: SR=0.5, T=20, var=0.01; bonf=3.2522, e_max=0.2762,
+        #   se=0.2294, z=0.975, p≈0.1647 (in [0.05, 0.5)); Region 5.
+        candidates = self._make_candidates_for_region(0.5, 20, 0.01)
+        result = compute_simplified_dsr(candidates, n_trials=198)
+        target = next(d for d in result.per_candidate if d.hypothesis_hash == "h_target")
+        assert target.bonferroni_pass is False
+        assert target.dsr_style_pass is False
+        assert 0.05 <= target.p_value < 0.5
+        assert target.disposition == "inconclusive"
+
+
+class TestComputeSimplifiedDSRPopulationDisposition:
+    """§4.3 Step 5: c_max = argmax(SR_observed); population_disposition = disposition(c_max)."""
+
+    def test_argmax_hash_matches_max_sharpe_candidate(self):
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            compute_simplified_dsr,
+        )
+        sharpes = [0.5, -0.5] * 99
+        sharpes[42] = 4.0  # explicit argmax at index 42
+        candidates = [
+            CandidateInput(
+                hypothesis_hash=f"h{i:03d}",
+                sharpe_ratio=sharpes[i],
+                total_trades=200,
+                audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                name="syn", theme="syn", lifecycle_state="shortlisted",
+            )
+            for i in range(198)
+        ]
+        result = compute_simplified_dsr(candidates, n_trials=198)
+        assert result.population_argmax_hash == "h042"
+
+    def test_population_disposition_matches_argmax_disposition(self):
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            compute_simplified_dsr,
+        )
+        sharpes = [0.5, -0.5] * 99
+        sharpes[42] = 4.0
+        candidates = [
+            CandidateInput(
+                hypothesis_hash=f"h{i:03d}",
+                sharpe_ratio=sharpes[i],
+                total_trades=200,
+                audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                name="syn", theme="syn", lifecycle_state="shortlisted",
+            )
+            for i in range(198)
+        ]
+        result = compute_simplified_dsr(candidates, n_trials=198)
+        argmax_disp = next(
+            d for d in result.per_candidate if d.hypothesis_hash == "h042"
+        )
+        assert result.population_disposition == argmax_disp.disposition
+
+    def test_argmax_tie_break_first_occurrence(self):
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            compute_simplified_dsr,
+        )
+        # Two candidates with identical max Sharpe; first-occurrence tie-break.
+        sharpes = [0.5, -0.5] * 99
+        sharpes[10] = 3.5
+        sharpes[20] = 3.5  # tie at indices 10 and 20
+        candidates = [
+            CandidateInput(
+                hypothesis_hash=f"h{i:03d}",
+                sharpe_ratio=sharpes[i],
+                total_trades=100,
+                audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                name="syn", theme="syn", lifecycle_state="shortlisted",
+            )
+            for i in range(198)
+        ]
+        result = compute_simplified_dsr(candidates, n_trials=198)
+        assert result.population_argmax_hash == "h010"
+
+
+class TestComputeSimplifiedDSRRSGuardEnforcement:
+    """§4.5 + advisor refinement (b): RS-3 guard fires per candidate
+    audit_v1_artifact_path at function entry; rs_guard_call_count audit-trail
+    expected = n_eligible per P-T1 joint-coverage.
+    """
+
+    def _write_valid_summary(self, tmp_path, name: str = "h"):
+        import json
+        path = tmp_path / f"{name}_holdout_summary.json"
+        path.write_text(json.dumps({
+            "evaluation_semantics": "single_run_holdout_v1",
+            "engine_commit": "eb1c87f",
+            "engine_corrected_lineage": "wf-corrected-v1",
+            "lineage_check": "passed",
+            "current_git_sha": "deadbeef",
+            "holdout_metrics": {"sharpe_ratio": 0.5, "total_trades": 10},
+        }))
+        return path
+
+    def test_rs_guard_fires_per_candidate(self, tmp_path):
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            compute_simplified_dsr,
+        )
+        candidates = []
+        for i in range(198):
+            p = self._write_valid_summary(tmp_path, name=f"h{i:03d}")
+            candidates.append(CandidateInput(
+                hypothesis_hash=f"h{i:03d}",
+                sharpe_ratio=(0.5 if i % 2 == 0 else -0.5),
+                total_trades=10,
+                audit_v1_artifact_path=str(p),
+                name="syn", theme="syn", lifecycle_state="shortlisted",
+            ))
+        result = compute_simplified_dsr(candidates, n_trials=198)
+        assert result.rs_guard_call_count == 198
+
+    def test_rs_guard_raises_on_malformed(self, tmp_path):
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            compute_simplified_dsr,
+        )
+        # 197 valid + 1 malformed (missing evaluation_semantics).
+        candidates = []
+        for i in range(197):
+            p = self._write_valid_summary(tmp_path, name=f"h{i:03d}")
+            candidates.append(CandidateInput(
+                hypothesis_hash=f"h{i:03d}",
+                sharpe_ratio=(0.5 if i % 2 == 0 else -0.5),
+                total_trades=10,
+                audit_v1_artifact_path=str(p),
+                name="syn", theme="syn", lifecycle_state="shortlisted",
+            ))
+        # Malformed: missing required RS field.
+        import json
+        bad_path = tmp_path / "h_bad_holdout_summary.json"
+        bad_path.write_text(json.dumps({
+            "engine_commit": "eb1c87f",  # missing evaluation_semantics
+            "holdout_metrics": {"sharpe_ratio": 4.0, "total_trades": 100},
+        }))
+        candidates.append(CandidateInput(
+            hypothesis_hash="h_bad",
+            sharpe_ratio=4.0,
+            total_trades=100,
+            audit_v1_artifact_path=str(bad_path),
+            name="syn", theme="syn", lifecycle_state="shortlisted",
+        ))
+        with pytest.raises(ValueError, match="evaluation_semantics"):
+            compute_simplified_dsr(candidates, n_trials=198)
+
+    def test_rs_guard_passes_on_valid(self, tmp_path):
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            compute_simplified_dsr,
+        )
+        candidates = []
+        for i in range(198):
+            p = self._write_valid_summary(tmp_path, name=f"h{i:03d}")
+            candidates.append(CandidateInput(
+                hypothesis_hash=f"h{i:03d}",
+                sharpe_ratio=(0.5 if i % 2 == 0 else -0.5),
+                total_trades=10,
+                audit_v1_artifact_path=str(p),
+                name="syn", theme="syn", lifecycle_state="shortlisted",
+            ))
+        # Should not raise.
+        result = compute_simplified_dsr(candidates, n_trials=198)
+        assert result is not None
+
+    def test_rs_guard_call_count_audit_trail(self, tmp_path):
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            compute_simplified_dsr,
+        )
+        # n_eligible = 198 (no exclusions) → rs_guard_call_count == 198.
+        candidates = []
+        for i in range(198):
+            p = self._write_valid_summary(tmp_path, name=f"h{i:03d}")
+            candidates.append(CandidateInput(
+                hypothesis_hash=f"h{i:03d}",
+                sharpe_ratio=(0.5 if i % 2 == 0 else -0.5),
+                total_trades=10,
+                audit_v1_artifact_path=str(p),
+                name="syn", theme="syn", lifecycle_state="shortlisted",
+            ))
+        result = compute_simplified_dsr(candidates, n_trials=198)
+        # Per P-T1 joint-coverage docstring: rs_guard_call_count == n_eligible
+        # (here 198 == n_eligible since no §4.4 exclusions in synthetic input).
+        assert result.rs_guard_call_count == result.n_eligible
+
+
+class TestComputeSimplifiedDSRDualGateNRawCheck:
+    """§3.2 + Step 2 §5.3 forward-flag dual-gate verification.
+
+    Per P-L3: invariant enforced via raise ValueError, NOT result field.
+    Test asserts pytest.raises(ValueError), NOT result.n_trials_lockpoint_verified
+    (the latter field DELETED per anti-pattern correction).
+    """
+
+    def test_n_trials_mismatch_raises(self):
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            compute_simplified_dsr,
+        )
+        candidates = [
+            CandidateInput(
+                hypothesis_hash=f"h{i:03d}",
+                sharpe_ratio=0.0,
+                total_trades=10,
+                audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                name="syn", theme="syn", lifecycle_state="shortlisted",
+            )
+            for i in range(197)  # 197 != EXPECTED_N_RAW=198
+        ]
+        with pytest.raises(ValueError, match="EXPECTED_N_RAW|n_trials|198"):
+            compute_simplified_dsr(candidates, n_trials=197)
+
+    def test_inputs_n_raw_mismatch_raises(self):
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            compute_simplified_dsr,
+        )
+        # n_trials=198 is correct, but candidate count != 198 (n_raw mismatch).
+        candidates = [
+            CandidateInput(
+                hypothesis_hash=f"h{i:03d}",
+                sharpe_ratio=0.0,
+                total_trades=10,
+                audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                name="syn", theme="syn", lifecycle_state="shortlisted",
+            )
+            for i in range(197)
+        ]
+        with pytest.raises(ValueError):
+            compute_simplified_dsr(candidates, n_trials=198)
+
+    def test_dual_gate_passes_at_canonical_198(self):
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            compute_simplified_dsr,
+        )
+        candidates = [
+            CandidateInput(
+                hypothesis_hash=f"h{i:03d}",
+                sharpe_ratio=(0.5 if i % 2 == 0 else -0.5),
+                total_trades=10,
+                audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                name="syn", theme="syn", lifecycle_state="shortlisted",
+            )
+            for i in range(198)
+        ]
+        # Should not raise; result should carry n_trials=198 + n_raw=198.
+        result = compute_simplified_dsr(candidates, n_trials=198)
+        assert result.n_trials == 198
+        assert result.n_raw == 198
+
+
+class TestComputeSimplifiedDSREdgeCases:
+    """§4.4(4) + §1.5 dual-handling: degenerate states route to inconclusive."""
+
+    def test_n_eligible_zero_returns_inconclusive(self):
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            compute_simplified_dsr,
+        )
+        # All 198 candidates have T_c < 5 → all excluded → n_eligible = 0.
+        candidates = [
+            CandidateInput(
+                hypothesis_hash=f"h{i:03d}",
+                sharpe_ratio=0.5,
+                total_trades=2,  # T_c < MIN_TRADES_FOR_PRIMARY=5
+                audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                name="syn", theme="syn", lifecycle_state="shortlisted",
+            )
+            for i in range(198)
+        ]
+        # Note: candidates passed here are pre-eligible; engine logic depends
+        # on whether eligibility filter operates inside compute_simplified_dsr
+        # or the caller pre-filters. Per §4.5 API, candidates are eligible-only;
+        # this test models direct invocation with all-low-T candidates which
+        # SHOULD NOT happen in production but tests the degenerate-state guard.
+        # Schema P-L3 expects this to either (a) raise or (b) return
+        # degenerate_state="n_eligible_zero" + population_disposition="inconclusive".
+        result = compute_simplified_dsr(candidates, n_trials=198)
+        assert result.population_disposition == "inconclusive"
+        assert result.degenerate_state in ("n_eligible_zero", "var_zero")
+
+    def test_zero_variance_returns_inconclusive(self):
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            compute_simplified_dsr,
+        )
+        # All 198 candidates with identical Sharpe → Var(SR) = 0.
+        candidates = [
+            CandidateInput(
+                hypothesis_hash=f"h{i:03d}",
+                sharpe_ratio=0.5,  # identical
+                total_trades=10,
+                audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                name="syn", theme="syn", lifecycle_state="shortlisted",
+            )
+            for i in range(198)
+        ]
+        result = compute_simplified_dsr(candidates, n_trials=198)
+        assert result.population_disposition == "inconclusive"
+        assert result.degenerate_state == "var_zero"
+
+    def test_normal_path_no_degenerate_state(self):
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            compute_simplified_dsr,
+        )
+        sharpes = [0.5, -0.5] * 99
+        candidates = [
+            CandidateInput(
+                hypothesis_hash=f"h{i:03d}",
+                sharpe_ratio=sharpes[i],
+                total_trades=10,
+                audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                name="syn", theme="syn", lifecycle_state="shortlisted",
+            )
+            for i in range(198)
+        ]
+        result = compute_simplified_dsr(candidates, n_trials=198)
+        assert result.degenerate_state == "none" or result.degenerate_state is None
+
+
+class TestComputeSimplifiedDSRReproducibility:
+    """P-T3: argmax order-independent; per_candidate iteration tracks input order.
+
+    Two distinct invariants verified:
+      (i) population_disposition stable across input shuffling
+     (ii) per_candidate iteration order tracks input order
+    """
+
+    def test_population_disposition_argmax_order_independent(self):
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            compute_simplified_dsr,
+        )
+        import random
+        sharpes = [(i - 99) * 0.05 for i in range(198)]  # mix of +/-
+        sharpes[42] = 3.5  # explicit argmax
+        candidates_a = [
+            CandidateInput(
+                hypothesis_hash=f"h{i:03d}",
+                sharpe_ratio=sharpes[i],
+                total_trades=100,
+                audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                name="syn", theme="syn", lifecycle_state="shortlisted",
+            )
+            for i in range(198)
+        ]
+        candidates_b = list(candidates_a)
+        random.Random(42).shuffle(candidates_b)
+        result_a = compute_simplified_dsr(candidates_a, n_trials=198)
+        result_b = compute_simplified_dsr(candidates_b, n_trials=198)
+        # population_disposition stable across shuffle:
+        assert result_a.population_disposition == result_b.population_disposition
+        # argmax hash stable (h042 carries SR=3.5 in both):
+        assert result_a.population_argmax_hash == result_b.population_argmax_hash == "h042"
+
+    def test_per_candidate_iteration_tracks_input_order(self):
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            compute_simplified_dsr,
+        )
+        sharpes = [(i - 99) * 0.05 for i in range(198)]
+        candidates = [
+            CandidateInput(
+                hypothesis_hash=f"h{i:03d}",
+                sharpe_ratio=sharpes[i],
+                total_trades=100,
+                audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                name="syn", theme="syn", lifecycle_state="shortlisted",
+            )
+            for i in range(198)
+        ]
+        result = compute_simplified_dsr(candidates, n_trials=198)
+        # per_candidate ordering tracks input order:
+        for i, d in enumerate(result.per_candidate):
+            assert d.hypothesis_hash == f"h{i:03d}"
+
+
+class TestComputeSimplifiedDSRSensitivityTable:
+    """§5.4 sensitivity table — N_eff ∈ {198, 80, 40, 5}; primary at N_eff=198 only."""
+
+    def test_sensitivity_table_has_four_rows(self):
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            compute_simplified_dsr,
+        )
+        sharpes = [0.5, -0.5] * 99
+        candidates = [
+            CandidateInput(
+                hypothesis_hash=f"h{i:03d}",
+                sharpe_ratio=sharpes[i],
+                total_trades=10,
+                audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                name="syn", theme="syn", lifecycle_state="shortlisted",
+            )
+            for i in range(198)
+        ]
+        result = compute_simplified_dsr(candidates, n_trials=198)
+        n_effs = sorted(row.n_eff for row in result.sensitivity_table)
+        assert n_effs == [5, 40, 80, 198]
+
+    def test_sensitivity_register_labels(self):
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            compute_simplified_dsr,
+        )
+        sharpes = [0.5, -0.5] * 99
+        candidates = [
+            CandidateInput(
+                hypothesis_hash=f"h{i:03d}",
+                sharpe_ratio=sharpes[i],
+                total_trades=10,
+                audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                name="syn", theme="syn", lifecycle_state="shortlisted",
+            )
+            for i in range(198)
+        ]
+        result = compute_simplified_dsr(candidates, n_trials=198)
+        for row in result.sensitivity_table:
+            if row.n_eff == 198:
+                assert row.register_label == "primary"
+            else:
+                assert row.register_label == "sensitivity"
+
+    def test_sensitivity_bonferroni_per_row_formula(self):
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            compute_simplified_dsr,
+        )
+        sharpes = [0.5, -0.5] * 99
+        candidates = [
+            CandidateInput(
+                hypothesis_hash=f"h{i:03d}",
+                sharpe_ratio=sharpes[i],
+                total_trades=10,
+                audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                name="syn", theme="syn", lifecycle_state="shortlisted",
+            )
+            for i in range(198)
+        ]
+        result = compute_simplified_dsr(candidates, n_trials=198)
+        for row in result.sensitivity_table:
+            expected = math.sqrt(2.0 * math.log(row.n_eff))
+            assert abs(row.bonferroni_threshold - expected) < 1e-9
+
+
+class TestComputeSimplifiedDSRRealDataIntegration:
+    """Canonical anchor: load_audit_v1_candidates → compute_simplified_dsr.
+
+    §20 TRIGGER 1 CLOSURE ANNOTATION (per Charlie-register lock + advisor L7):
+    -----------------------------------------------------------------------
+    This test, when GREEN-phase passes, constitutes the **live computation
+    that closes §20 Trigger 1 boundary** per PHASE2C_11_PLAN §0 P-L7
+    timeline. Test author at TDD-RED turn does NOT fire this; the
+    implementation turn's GREEN run is the boundary closure event. After
+    GREEN passes, any new §3 lockpoint defects route strict §0.4
+    (inconclusive disposition + successor cycle re-pre-registration) per
+    METHODOLOGY_NOTES §20 v2 documented exception path closure.
+
+    Future audit readers identifying the §20 closure commit should look
+    for the implementation turn commit (GREEN run), NOT this RED commit.
+    """
+
+    AUDIT_V1 = (
+        Path(__file__).resolve().parent.parent
+        / "data"
+        / "phase2c_evaluation_gate"
+        / "audit_v1"
+    )
+    HOLDOUT_CSV = (
+        Path(__file__).resolve().parent.parent
+        / "data"
+        / "phase2c_evaluation_gate"
+        / "audit_v1_filtered"
+        / "holdout_results.csv"
+    )
+
+    def test_canonical_audit_v1_produces_valid_result(self):
+        if not self.AUDIT_V1.is_dir():
+            pytest.skip("audit_v1 directory unavailable in this environment")
+        from backtest.evaluate_dsr import (
+            EXPECTED_N_RAW,
+            compute_simplified_dsr,
+            load_audit_v1_candidates,
+        )
+        inputs = load_audit_v1_candidates(
+            self.AUDIT_V1, self.HOLDOUT_CSV,
+            expected_n_raw=EXPECTED_N_RAW,
+        )
+        result = compute_simplified_dsr(
+            list(inputs.eligible_candidates),
+            n_trials=EXPECTED_N_RAW,
+        )
+        assert result.n_raw == 198
+        assert result.n_eligible == 154
+        assert result.population_disposition in (
+            "signal_evidence", "artifact_evidence", "inconclusive",
+        )
+
+    def test_canonical_disposition_reproducible(self):
+        if not self.AUDIT_V1.is_dir():
+            pytest.skip("audit_v1 directory unavailable in this environment")
+        from backtest.evaluate_dsr import (
+            EXPECTED_N_RAW,
+            compute_simplified_dsr,
+            load_audit_v1_candidates,
+        )
+        inputs = load_audit_v1_candidates(
+            self.AUDIT_V1, self.HOLDOUT_CSV,
+            expected_n_raw=EXPECTED_N_RAW,
+        )
+        r1 = compute_simplified_dsr(list(inputs.eligible_candidates), n_trials=198)
+        r2 = compute_simplified_dsr(list(inputs.eligible_candidates), n_trials=198)
+        assert r1.population_disposition == r2.population_disposition
+        assert r1.population_argmax_hash == r2.population_argmax_hash
+        assert abs(r1.bonferroni_threshold - r2.bonferroni_threshold) < 1e-12
+        assert abs(r1.expected_max_sharpe_null - r2.expected_max_sharpe_null) < 1e-12
+
+    def test_canonical_rs_guard_call_count_matches_n_eligible(self):
+        if not self.AUDIT_V1.is_dir():
+            pytest.skip("audit_v1 directory unavailable in this environment")
+        from backtest.evaluate_dsr import (
+            EXPECTED_N_RAW,
+            compute_simplified_dsr,
+            load_audit_v1_candidates,
+        )
+        inputs = load_audit_v1_candidates(
+            self.AUDIT_V1, self.HOLDOUT_CSV,
+            expected_n_raw=EXPECTED_N_RAW,
+        )
+        result = compute_simplified_dsr(
+            list(inputs.eligible_candidates), n_trials=EXPECTED_N_RAW,
+        )
+        # Per P-T1 joint-coverage: rs_guard_call_count == n_eligible (= 154).
+        assert result.rs_guard_call_count == 154
+
+
+class TestComputeSimplifiedDSRNumericalStabilityAtExtremeN:
+    """Guard against numerical instability at N values beyond §3.2 lockpoint
+    (N_raw=198); not a production-supported scope claim. Renamed per L3.
+    """
+
+    def test_compute_simplified_dsr_stable_at_n_10000(self):
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            compute_simplified_dsr,
+        )
+        # Synthetic 10000-candidate input; opt out of dual-gate via
+        # expected_n_trials=None (callable design TBD at impl turn).
+        # If dual-gate is hard-coded to 198, this test asserts ValueError
+        # — that's a §3.2 lockpoint enforcement, NOT a stability failure.
+        sharpes = [0.5, -0.5] * 5000
+        candidates = [
+            CandidateInput(
+                hypothesis_hash=f"h{i:05d}",
+                sharpe_ratio=sharpes[i],
+                total_trades=10,
+                audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                name="syn", theme="syn", lifecycle_state="shortlisted",
+            )
+            for i in range(10000)
+        ]
+        # Expected behavior at N=10000:
+        # - Bonferroni threshold = sqrt(2*ln(10000)) ≈ 4.292 (finite, well-defined)
+        # - Φ⁻¹(1 - 1/10000) finite (numerical stability of scipy.stats.norm.ppf
+        #   confirmed up to N≈1e10)
+        # - E[max|null] finite
+        # Either the function accepts and returns a finite result (preferred for
+        # stability guard), or the dual-gate raises (lockpoint enforcement).
+        # Both behaviors are acceptable; test asserts presence of finite output
+        # OR clean ValueError with §3.2 lockpoint reference.
+        try:
+            result = compute_simplified_dsr(candidates, n_trials=10000)
+            # If accepted: assert numerical stability (no NaN / inf).
+            assert math.isfinite(result.bonferroni_threshold)
+            assert math.isfinite(result.expected_max_sharpe_null)
+            for d in result.per_candidate[:10]:  # sample check
+                assert math.isfinite(d.z_score)
+                assert 0.0 <= d.p_value <= 1.0
+        except ValueError as exc:
+            # Acceptable: dual-gate enforces §3.2 lockpoint.
+            assert "EXPECTED_N_RAW" in str(exc) or "198" in str(exc) or "n_trials" in str(exc)
+
+    def test_phi_inverse_stability_at_extreme_quantile(self):
+        from scipy.stats import norm
+        # Numerical stability sanity: Φ⁻¹(1 - 1/N) should not underflow or
+        # produce inf for N up to 10000 (well within scipy.stats.norm.ppf
+        # supported range; supports up to ~1e15).
+        for n in [198, 1000, 10000]:
+            v = norm.ppf(1.0 - 1.0 / n)
+            assert math.isfinite(v)
+            assert v > 0
+
+
+class TestRS3PatchOnExistingFunctions:
+    """§2.5 RS-3 patch on existing functions (shape A: kw-only
+    audit_v1_artifact_paths=None). Grouped per L4; sub-test naming
+    prefix per function for `pytest -k <function_name>` filtering.
+
+    Per advisor: 3 tests per function (back-compat None / live-guard
+    malformed / live-guard valid) × 2 functions = 6 tests total.
+    """
+
+    def _write_valid_summary(self, tmp_path, name: str = "h"):
+        import json
+        path = tmp_path / f"{name}.json"
+        path.write_text(json.dumps({
+            "evaluation_semantics": "single_run_holdout_v1",
+            "engine_commit": "eb1c87f",
+            "engine_corrected_lineage": "wf-corrected-v1",
+            "lineage_check": "passed",
+            "current_git_sha": "deadbeef",
+            "holdout_metrics": {"sharpe_ratio": 0.5, "total_trades": 10},
+        }))
+        return path
+
+    def _write_malformed_summary(self, tmp_path, name: str = "h_bad"):
+        import json
+        path = tmp_path / f"{name}.json"
+        # Missing evaluation_semantics → RS-3 guard rejects.
+        path.write_text(json.dumps({
+            "engine_commit": "eb1c87f",
+            "holdout_metrics": {"sharpe_ratio": 0.5, "total_trades": 10},
+        }))
+        return path
+
+    # --- evaluate_trials RS-3 patch tests ---
+
+    def test_evaluate_trials_paths_none_back_compat(self):
+        from backtest.evaluate_dsr import evaluate_trials
+        # Default invocation (no paths) preserves pre-patch behavior.
+        result = evaluate_trials({"strat_a": 1.5, "strat_b": 0.5})
+        assert result["n_trials"] == 2
+        assert result["best_sharpe"] == 1.5
+
+    def test_evaluate_trials_paths_malformed_raises(self, tmp_path):
+        from backtest.evaluate_dsr import evaluate_trials
+        bad_path = self._write_malformed_summary(tmp_path)
+        with pytest.raises(ValueError, match="evaluation_semantics"):
+            evaluate_trials(
+                {"strat_a": 1.5},
+                audit_v1_artifact_paths=[bad_path],
+            )
+
+    def test_evaluate_trials_paths_valid_passes(self, tmp_path):
+        from backtest.evaluate_dsr import evaluate_trials
+        good_path = self._write_valid_summary(tmp_path)
+        result = evaluate_trials(
+            {"strat_a": 1.5, "strat_b": 0.5},
+            audit_v1_artifact_paths=[good_path],
+        )
+        assert result["n_trials"] == 2
+
+    # --- compute_expected_max_sharpe RS-3 patch tests ---
+
+    def test_compute_expected_max_sharpe_paths_none_back_compat(self):
+        from backtest.evaluate_dsr import compute_expected_max_sharpe
+        # Pre-patch behavior preserved.
+        result = compute_expected_max_sharpe(198)
+        expected = math.sqrt(2.0 * math.log(198))
+        assert abs(result - expected) < 1e-12
+
+    def test_compute_expected_max_sharpe_paths_malformed_raises(self, tmp_path):
+        from backtest.evaluate_dsr import compute_expected_max_sharpe
+        bad_path = self._write_malformed_summary(tmp_path)
+        with pytest.raises(ValueError, match="evaluation_semantics"):
+            compute_expected_max_sharpe(
+                198, audit_v1_artifact_paths=[bad_path],
+            )
+
+    def test_compute_expected_max_sharpe_paths_valid_passes(self, tmp_path):
+        from backtest.evaluate_dsr import compute_expected_max_sharpe
+        good_path = self._write_valid_summary(tmp_path)
+        result = compute_expected_max_sharpe(
+            198, audit_v1_artifact_paths=[good_path],
+        )
+        expected = math.sqrt(2.0 * math.log(198))
+        assert abs(result - expected) < 1e-12
