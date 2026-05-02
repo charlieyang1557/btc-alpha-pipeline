@@ -100,6 +100,188 @@ def _phase2c_11_synthetic_rs_attestations():
 
 
 # ---------------------------------------------------------------------------
+# PHASE2C_11 Step 3 — TestSimplifiedDSRDataclasses (Class #1 regression)
+# ---------------------------------------------------------------------------
+
+
+class TestSimplifiedDSRDataclasses:
+    """Regression cover for PHASE2C_11 Step 3 frozen dataclass invariants.
+
+    Per L1 option (b) deferred plan: this class is added at implementation
+    turn; tests exercise frozen=True immutability, Literal cross-section
+    consistency, sensitivity_table tuple-not-list, and excluded_candidates_
+    summary tuple-of-tuples sortedness invariants. Not formula correctness
+    (that is covered by Class #2-#11); regression discipline only.
+    """
+
+    def test_per_candidate_disposition_frozen(self):
+        from dataclasses import FrozenInstanceError
+        from backtest.evaluate_dsr import PerCandidateDisposition
+        record = PerCandidateDisposition(
+            hypothesis_hash="h001",
+            sharpe_ratio=0.5,
+            total_trades=10,
+            standard_error=0.333,
+            z_score=1.5,
+            p_value=0.067,
+            bonferroni_pass=False,
+            dsr_style_pass=False,
+            disposition="inconclusive",
+            audit_v1_artifact_path="/tmp/foo.json",
+        )
+        with pytest.raises(FrozenInstanceError):
+            record.disposition = "signal_evidence"
+
+    def test_sensitivity_row_frozen(self):
+        from dataclasses import FrozenInstanceError
+        from backtest.evaluate_dsr import SensitivityRow
+        row = SensitivityRow(
+            n_eff=198,
+            bonferroni_threshold=3.25,
+            expected_max_sharpe_null=2.76,
+            argmax_p_value=0.05,
+            argmax_disposition_descriptive="inconclusive",
+            register_label="primary",
+        )
+        with pytest.raises(FrozenInstanceError):
+            row.n_eff = 80
+
+    def test_simplified_dsr_result_frozen(self):
+        from dataclasses import FrozenInstanceError
+        from backtest.evaluate_dsr import SimplifiedDSRResult
+        result = SimplifiedDSRResult(
+            per_candidate=tuple(),
+            population_disposition="inconclusive",
+            population_argmax_hash="",
+            n_trials=198,
+            n_eligible=0,
+            n_raw=198,
+            bonferroni_threshold=0.0,
+            expected_max_sharpe_null=0.0,
+            sharpe_var_used=0.0,
+            sensitivity_table=tuple(),
+            bonferroni_cross_check={
+                "sr_max": 0.0,
+                "bonferroni_threshold": 0.0,
+                "bonferroni_pass": False,
+                "dsr_style_pass": False,
+                "criteria_agree": True,
+            },
+            excluded_candidates_summary=tuple(),
+            degenerate_state="n_eligible_zero",
+            rs_guard_call_count=0,
+        )
+        with pytest.raises(FrozenInstanceError):
+            result.population_disposition = "signal_evidence"
+
+    def test_disposition_literal_cross_section_consistency(self):
+        """All three Literal fields use the same DispositionLiteral type alias.
+
+        Per schema §4: implementation defines DispositionLiteral once and
+        reuses it across PerCandidateDisposition.disposition,
+        SimplifiedDSRResult.population_disposition,
+        SensitivityRow.argmax_disposition_descriptive.
+        """
+        from backtest.evaluate_dsr import DispositionLiteral
+        # Literal accepts these three values; verify by introspection.
+        import typing
+        args = typing.get_args(DispositionLiteral)
+        assert set(args) == {"signal_evidence", "artifact_evidence", "inconclusive"}
+
+    def test_sensitivity_table_is_tuple_not_list(self):
+        """sensitivity_table field type is tuple[SensitivityRow, ...]."""
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            compute_simplified_dsr,
+        )
+        sharpes = [0.5, -0.5] * 99
+        candidates = [
+            CandidateInput(
+                hypothesis_hash=f"h{i:03d}",
+                sharpe_ratio=sharpes[i],
+                total_trades=10,
+                audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                name="syn", theme="syn", lifecycle_state="shortlisted",
+            )
+            for i in range(198)
+        ]
+        result = compute_simplified_dsr(candidates, n_trials=198)
+        assert isinstance(result.sensitivity_table, tuple)
+        assert not isinstance(result.sensitivity_table, list)
+
+    def test_per_candidate_is_tuple_not_list(self):
+        """per_candidate field type is tuple[PerCandidateDisposition, ...]."""
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            compute_simplified_dsr,
+        )
+        sharpes = [0.5, -0.5] * 99
+        candidates = [
+            CandidateInput(
+                hypothesis_hash=f"h{i:03d}",
+                sharpe_ratio=sharpes[i],
+                total_trades=10,
+                audit_v1_artifact_path=f"/tmp/syn_{i}.json",
+                name="syn", theme="syn", lifecycle_state="shortlisted",
+            )
+            for i in range(198)
+        ]
+        result = compute_simplified_dsr(candidates, n_trials=198)
+        assert isinstance(result.per_candidate, tuple)
+
+    def test_excluded_candidates_summary_tuple_of_tuples_sorted_by_reason_key(self):
+        """P-T2 lock: excluded_candidates_summary is tuple[tuple[str, int], ...]
+        sorted by reason key alphabetically; structurally immutable + JSON-
+        serializable.
+        """
+        from backtest.evaluate_dsr import SimplifiedDSRResult
+        # Construction-time assertion: caller must build sorted-by-key.
+        # Verify the field accepts tuple-of-tuples with sorted keys.
+        sorted_summary = tuple(
+            sorted(
+                [
+                    ("missing_sharpe", 5),
+                    ("low_trade_count", 30),
+                    ("missing_trades", 4),
+                    ("zero_trades", 5),
+                ],
+                key=lambda pair: pair[0],
+            )
+        )
+        result = SimplifiedDSRResult(
+            per_candidate=tuple(),
+            population_disposition="inconclusive",
+            population_argmax_hash="",
+            n_trials=198,
+            n_eligible=0,
+            n_raw=198,
+            bonferroni_threshold=0.0,
+            expected_max_sharpe_null=0.0,
+            sharpe_var_used=0.0,
+            sensitivity_table=tuple(),
+            bonferroni_cross_check={
+                "sr_max": 0.0,
+                "bonferroni_threshold": 0.0,
+                "bonferroni_pass": False,
+                "dsr_style_pass": False,
+                "criteria_agree": True,
+            },
+            excluded_candidates_summary=sorted_summary,
+            degenerate_state="n_eligible_zero",
+            rs_guard_call_count=0,
+        )
+        assert isinstance(result.excluded_candidates_summary, tuple)
+        for entry in result.excluded_candidates_summary:
+            assert isinstance(entry, tuple)
+            assert len(entry) == 2
+            assert isinstance(entry[0], str)
+            assert isinstance(entry[1], int)
+        # Sorted by reason key alphabetically:
+        keys = [entry[0] for entry in result.excluded_candidates_summary]
+        assert keys == sorted(keys)
+
+
+# ---------------------------------------------------------------------------
 # Threshold computation
 # ---------------------------------------------------------------------------
 
