@@ -435,12 +435,14 @@ Descriptive-register only; primary uses N_eff = 198.
 
 | N_eff | Bonferroni threshold | DSR-style p-value (max) | Disposition | Register |
 |---|---|---|---|---|
-| 198 (PRIMARY per §3.2) | sqrt(2*ln(198))≈3.07 | computed | per §3.6 | primary |
-| 80 (sensitivity) | sqrt(2*ln(80))≈2.79 | computed | descriptive | sensitivity |
+| 198 (PRIMARY per §3.2) | sqrt(2*ln(198))≈3.2522 | computed | per §3.6 | primary |
+| 80 (sensitivity) | sqrt(2*ln(80))≈2.9604 | computed | descriptive | sensitivity |
 | 40 (sensitivity) | sqrt(2*ln(40))≈2.72 | computed | descriptive | sensitivity |
 | 5 (sensitivity) | sqrt(2*ln(5))≈1.79 | computed | descriptive | sensitivity |
 
 **Primary register reads ONLY N_eff = 198 row.** Other rows descriptive-only.
+
+(v3.2 patch per Step 4 §19 Instance — symmetric defect class as Step 1 §19 Instance 5 at v3.1 c021c60: cited numerical approximations at N=198 and N=80 corrected to match formula `sqrt(2*ln(N))`; formula lockpoint unchanged; 0 result-field impact at Step 3 substance run since computation goes through formula directly per §4.3 Step 1 + §6.2 §3.6 conservative AND-gate; v3.1 §3.6 patch missed parallel §5.4 table site, this patch closes coverage gap. §7.3 hard rule does not fire — cited approximations are explanatory prose, not specification defects affecting results. §0.4 strict-binding does not fire — cited decimals are not §3 lockpoint substance. N=40 and N=5 entries within rounding tolerance, unchanged.)
 
 ### §5.5 Conservative-when-uncertain policy at simplified MVD register
 
