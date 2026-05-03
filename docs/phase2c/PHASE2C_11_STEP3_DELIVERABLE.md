@@ -39,7 +39,7 @@
 
 ### §1.4 Reproducibility lockpoint
 
-Schema reproducibility lockpoint (per [SCHEMA_DRAFT §1](PHASE2C_11_STEP3_SCHEMA_DRAFT.md)): same `SimplifiedDSRInputs` + same `n_trials` → byte-identical `SimplifiedDSRResult` (modulo float formatting at 1e-9 tolerance). At canonical fire: result artifact at [`data/phase2c_evaluation_gate/audit_v1/_step3_result.json`](../../data/phase2c_evaluation_gate/audit_v1/_step3_result.json) (83,347 bytes; sha256=`327bbc6cdc36935aefb5663de53b1752466e46da815b0fe1fabe182d931806e7`).
+Schema reproducibility lockpoint (per [SCHEMA_DRAFT §1](PHASE2C_11_STEP3_SCHEMA_DRAFT.md)): same `SimplifiedDSRInputs` + same `n_trials` → byte-identical `SimplifiedDSRResult` (modulo float formatting at 1e-9 tolerance). At canonical fire: result artifact at [`data/phase2c_evaluation_gate/audit_v1/_step3_result.json`](../../data/phase2c_evaluation_gate/audit_v1/_step3_result.json) (83,347 bytes; sha256=`64f733833e3cc47d32fc3a81c3f603c54c478c2064b455d161dbab6dff82ae03`).
 
 ---
 
@@ -150,7 +150,7 @@ Computed per [§4.3 Step 4](PHASE2C_11_PLAN.md) routing applied to each eligible
 
 ### §5.2 Disposition concentration register
 
-All 154 eligible candidates routed to `artifact_evidence` at primary register; conservative AND-gate is unanimous across the eligible subset. Per-candidate p-values cluster tightly in the upper tail (max observed `argmax_p_value` ≈ 1.00 at `c_max`; minimum p-value across the 154 per-candidate records is also ≥ 0.05 per `dsr_style_pass = False` for every per-candidate record). Per-candidate `bonferroni_pass = False` for every record (max `SR_c = SR_max = 0.9602` < threshold 3.2522).
+All 154 eligible candidates routed to `artifact_evidence` at primary register; conservative AND-gate is unanimous across the eligible subset. Per-candidate p-values cluster tightly in the upper tail (max observed `p_value` ≈ 1.00 at `c_max`; minimum `p_value` across the 154 per-candidate records is also ≥ 0.05 per `dsr_style_pass = False` for every per-candidate record). Per-candidate `bonferroni_pass = False` for every record (max `SR_c = SR_max = 0.9602` < threshold 3.2522).
 
 ### §5.3 Per-candidate full table reference
 
@@ -240,7 +240,7 @@ Cumulative §19 instance count tracking is the methodology consolidation cycle's
 | §3 lockpoint compliance | 0 mutations across 8 lockpoint categories | formula / threshold / AND-gate / Sharpe estimation / null-deflation / pass-fail / canonical input / eligible-subset all preserved |
 | Schema (P-T1/T2/T3/T4) compliance | all P-T lockpoints ✓ | rs_guard_call_count = n_eligible (P-T1); excluded_candidates_summary sums to 44 (P-T2); per_candidate input-order preserved (P-T3); Path I locked (P-T4) |
 | RS guard discipline (RS-2 + RS-3) | 198 + 154 = full coverage | Section RS canonical hard prohibition observed |
-| Reproducibility lockpoint | byte-identical artifact at canonical fire | sha256=`327bbc6cdc36935aefb5663de53b1752466e46da815b0fe1fabe182d931806e7` |
+| Reproducibility lockpoint | byte-identical artifact at canonical fire | sha256=`64f733833e3cc47d32fc3a81c3f603c54c478c2064b455d161dbab6dff82ae03` |
 | Pre-registration discipline | computation interprets pre-registered parameters; no post-results parameter adjustment | n_trials=198 (§3.2); SE formula (§4.3 Step 3 IID); Gumbel approximation (§4.3 Step 2); AND-gate routing (§3.6 + §4.3 Step 4) |
 | §6.2 forbidden-phrase compliance | N/A at this deliverable register | (α) strict-canonical scope: no §6.7 narrative authored; §6.2 narrative discipline applies at Step 4 |
 | §20 v2 Trigger 1 status | CLOSED at `f82d040` per [SCHEMA_DRAFT §0 timeline](PHASE2C_11_STEP3_SCHEMA_DRAFT.md) | Step 3 deliverable operates at INTERPRETATION register, post-Trigger-1 closure |
@@ -266,7 +266,7 @@ Per memory `feedback_reviewer_suggestion_adjudication.md`: each reviewer finding
 - **Canonical spec:** [PHASE2C_11_PLAN.md](PHASE2C_11_PLAN.md) v3.1 (commit `c021c60`); §3.2 / §3.3 / §3.4 / §3.6 / §4.3 / §4.4 / §4.5 / §5.4 / §6 / §2.5 / §7.1 / §7.2 / §7.3
 - **Sealed schema:** [PHASE2C_11_STEP3_SCHEMA_DRAFT.md](PHASE2C_11_STEP3_SCHEMA_DRAFT.md) (commit `dbcf19d`)
 - **Implementation:** [`backtest/evaluate_dsr.py:956-1278`](../../backtest/evaluate_dsr.py) (function `compute_simplified_dsr`); commit chain `f82d040` → `f2e4087` → `1b8132e`
-- **Result artifact:** [`data/phase2c_evaluation_gate/audit_v1/_step3_result.json`](../../data/phase2c_evaluation_gate/audit_v1/_step3_result.json) (sha256=`327bbc6cdc36935aefb5663de53b1752466e46da815b0fe1fabe182d931806e7`)
+- **Result artifact:** [`data/phase2c_evaluation_gate/audit_v1/_step3_result.json`](../../data/phase2c_evaluation_gate/audit_v1/_step3_result.json) (sha256=`64f733833e3cc47d32fc3a81c3f603c54c478c2064b455d161dbab6dff82ae03`)
 - **Engine lineage:** engine_commit=`eb1c87f`, engine_tag=`wf-corrected-v1`
 - **Source-batch anchor:** PHASE2C_8.1 audit_v1 mining batch_id=`b6fcbf86-4d57-4d1f-ae41-1778296b1ae9`
 - **Test-suite GREEN baseline at this deliverable seal:** `python -m pytest tests/test_evaluate_dsr.py tests/test_wf_lineage_guard.py -q` → 174 passed in 2.23s; project regression baseline 1504 passed at `1b8132e` per session-entry verification
