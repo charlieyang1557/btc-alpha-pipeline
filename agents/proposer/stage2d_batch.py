@@ -115,7 +115,38 @@ from factors.registry import get_registry
 STAGE_LABEL = "D6_STAGE2D"
 MODEL_NAME = "claude-sonnet-4-5"
 PROMPT_CACHING_ENABLED = False
-STAGE2D_BATCH_SIZE = 200
+
+
+# PHASE2C_12 Step 2 fire-prep (Q1/Q3 LOCKED): STAGE2D_BATCH_SIZE is
+# config-driven via PHASE2C_BATCH_SIZE env var at module-load register,
+# parallel to Q10 PHASE2C_THEME_CYCLE_LEN mechanism. Default = 200
+# preserves canonical b6fcbf86 operational baseline (parse_rate = 0.99 =
+# 198/200 per PHASE2C_9 Step 2 closeout). PHASE2C_12 smoke fire sets
+# PHASE2C_BATCH_SIZE=40 (per Q1 LOCKED at PHASE2C_12_PLAN.md §4.1);
+# PHASE2C_12 main fire sets PHASE2C_BATCH_SIZE=198 (per Q3 LOCKED at
+# §4.2). Closes Step 1 deliverable §9.4 carry-forward at register-precision.
+#
+# Range validation: bounded at [1, 200] = canonical-baseline ceiling
+# (defensive-but-not-prescriptive; NOT hardcoded {40, 198}; successor
+# cycle may legitimately use other batch sizes within the canonical-tested
+# range without re-modifying validation).
+def _resolve_batch_size() -> int:
+    raw = os.environ.get("PHASE2C_BATCH_SIZE", "200")
+    try:
+        n = int(raw)
+    except (TypeError, ValueError) as err:
+        raise ValueError(
+            f"PHASE2C_BATCH_SIZE={raw!r} is not a valid integer"
+        ) from err
+    if not (1 <= n <= 200):
+        raise ValueError(
+            f"PHASE2C_BATCH_SIZE={n} out of range; "
+            f"must be in [1, 200] (canonical-baseline ceiling)"
+        )
+    return n
+
+
+STAGE2D_BATCH_SIZE = _resolve_batch_size()
 STAGE2D_BATCH_CAP_USD = 20.0
 STAGE2D_MONTHLY_CAP_USD = 100.0
 STAGE2D_CUMULATIVE_CAP_USD = 30.0
