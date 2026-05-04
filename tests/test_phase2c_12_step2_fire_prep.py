@@ -581,3 +581,168 @@ def test_stub_critic_skips_pre_charge(
     assert len(rows) == 0, (
         f"Stub critic mode wrote {len(rows)} ledger rows; expected 0"
     )
+
+
+# ---------------------------------------------------------------------------
+# Codex first-fire hotfix tests (Findings #1 + #2)
+# ---------------------------------------------------------------------------
+
+
+def test_live_critic_skipped_when_cap_would_be_exceeded(
+    small_batch, tmp_ledger, tmp_payloads,
+):
+    """Codex Finding #1 (HIGH) hotfix: live critic call MUST be gated
+    by ``ledger.can_afford()`` against batch + monthly caps BEFORE
+    ``write_pending``. If the $0.05 critic estimate would push spend
+    over a cap, skip the live D7b call and do NOT call run_critic.
+
+    Parallel register-class to proposer affordability gate at lines
+    1086-1115 (cumulative + can_afford pre-call). Closes the same
+    hard-constraint class as OPEN-3 D1 (CLAUDE.md "NEVER perform a
+    budget check AFTER an API call").
+
+    Test setup: pre-populate the ledger with completed rows that bring
+    batch spend to $19.96 (within $20 cap by $0.04, but a $0.05 critic
+    pre-charge would push it over). Then run a single-call batch with
+    live critic. Expect: zero critic ledger rows written, no run_critic
+    called for that candidate, and a non-fatal "skipped budget" signal
+    in the call summary.
+    """
+    from agents.proposer.stage2d_batch import run_stage2d
+
+    # Pre-populate ledger to bring batch close to $20 cap.
+    # Use a deterministic batch_id and inject it into run_stage2d via
+    # the new test-only ``_batch_id`` parameter (parallel to existing
+    # ``_backend`` / ``_ledger_path`` / ``_payload_dir`` / ``_d7b_backend``
+    # injection points). Cleaner than patching uuid.uuid4 module-globally
+    # which collides with budget_ledger.write_pending's own uuid use.
+    fixed_batch_id = "test-cap-near-batch-aaaaaaaaaa"
+
+    ledger = BudgetLedger(tmp_ledger)
+    # Write enough completed rows to bring batch_spent to $19.96.
+    # Each row = $4.99; 4 rows = $19.96. $19.96 + $0.05 critic = $20.01 > $20.
+    for i in range(4):
+        rid = ledger.write_pending(
+            batch_id=fixed_batch_id,
+            api_call_kind="proposer",
+            backend_kind="d6_proposer",
+            call_role="propose",
+            estimated_cost_usd=4.99,
+            now=datetime.now(timezone.utc),
+        )
+        ledger.finalize(
+            rid,
+            actual_cost_usd=4.99,
+            now=datetime.now(timezone.utc),
+        )
+    assert ledger.batch_spent_usd(fixed_batch_id) == pytest.approx(19.96)
+
+    registry = get_registry()
+    fake_live = _FakeLiveD7bBackend(cost_actual_usd=0.012)
+
+    summary = run_stage2d(
+        dry_run=True,
+        with_critic=True,
+        live_critic=True,
+        _backend=_SmallVariedProposer(registry),
+        _ledger_path=tmp_ledger,
+        _payload_dir=tmp_payloads,
+        _d7b_backend=fake_live,
+        _batch_id=fixed_batch_id,
+    )
+    assert summary["batch_id"] == fixed_batch_id
+
+    # Expect: zero critic ledger rows for this batch despite live mode
+    # (affordability gate at write_pending should have blocked it).
+    rows = _critic_pending_rows(tmp_ledger)
+    rows_for_batch = [r for r in rows if r["batch_id"] == fixed_batch_id]
+    assert len(rows_for_batch) == 0, (
+        f"Live critic wrote {len(rows_for_batch)} ledger rows when batch "
+        f"cap would be exceeded; expected 0 (affordability gate skipped "
+        f"the call)"
+    )
+
+    # Critic-skipped signal recorded in per-call data so smoke PASS
+    # adjudication can distinguish this from genuine critic-approved.
+    pending_calls = [
+        c for c in summary["calls"]
+        if c.get("lifecycle_state") == "pending_backtest"
+    ]
+    assert len(pending_calls) >= 1
+    # Each pending_backtest call where live critic was skipped should
+    # surface critic_status='budget_skipped' or critic_result=None plus
+    # a 'critic_skipped_budget' marker.
+    skipped_count = sum(
+        1 for c in pending_calls
+        if c.get("critic_skipped_budget") is True
+    )
+    assert skipped_count >= 1, (
+        "Expected at least 1 candidate with critic_skipped_budget=True "
+        "marker when affordability gate blocks the live call"
+    )
+
+    # FakeLiveD7bBackend.score should NOT have been called for any
+    # candidate that was budget-skipped.
+    # (Allow some non-skipped calls if cap is reached gradually.)
+
+
+def test_live_critic_finalize_failure_does_not_mask_original_error(
+    small_batch, tmp_ledger, tmp_payloads, capsys,
+):
+    """Codex Finding #2 (MEDIUM) hotfix: when ``ledger.finalize()`` for
+    a critic row raises, the original exception ``fin_exc`` MUST be
+    surfaced (logged to stderr or otherwise visible) — not silently
+    swallowed by ``mark_crashed`` succeeding.
+
+    Patch refinement vs. Codex's exact suggestion: do NOT re-raise
+    (would terminate the entire batch on one critic finalize failure,
+    contradicting fail-open semantics). Instead, log the exception to
+    stderr while continuing the batch. Cost is sunk (API call already
+    completed); terminating the batch wastes already-spent budget.
+    """
+    from agents.proposer.stage2d_batch import run_stage2d
+
+    registry = get_registry()
+    fake_live = _FakeLiveD7bBackend(cost_actual_usd=0.012)
+
+    real_finalize = BudgetLedger.finalize
+    flaked_critic_count = {"n": 0}
+
+    def _flaky_finalize(self, row_id, *, actual_cost_usd, **kwargs):
+        import sqlite3
+        with sqlite3.connect(tmp_ledger) as conn:
+            row = conn.execute(
+                "SELECT backend_kind FROM ledger WHERE id = ?", (row_id,),
+            ).fetchone()
+        backend_kind = row[0] if row else None
+        if (
+            backend_kind == BACKEND_KIND_D7B_CRITIC
+            and flaked_critic_count["n"] == 0
+        ):
+            flaked_critic_count["n"] += 1
+            raise RuntimeError("simulated critic finalize failure")
+        return real_finalize(
+            self, row_id, actual_cost_usd=actual_cost_usd, **kwargs,
+        )
+
+    with patch.object(BudgetLedger, "finalize", _flaky_finalize):
+        run_stage2d(
+            dry_run=True,
+            with_critic=True,
+            live_critic=True,
+            _backend=_SmallVariedProposer(registry),
+            _ledger_path=tmp_ledger,
+            _payload_dir=tmp_payloads,
+            _d7b_backend=fake_live,
+        )
+
+    captured = capsys.readouterr()
+    # Original exception must be surfaced in stderr (not silently masked).
+    assert "simulated critic finalize failure" in (
+        captured.err + captured.out
+    ), (
+        "Codex Finding #2 hotfix: finalize() failure must be surfaced "
+        "(not silently swallowed by mark_crashed). Expected the original "
+        "RuntimeError message in stderr/stdout. Captured stderr: "
+        f"{captured.err[:500]!r}"
+    )

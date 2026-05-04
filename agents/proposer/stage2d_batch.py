@@ -918,6 +918,7 @@ def run_stage2d(
     _ledger_path: Path | None = None,
     _payload_dir: Path | None = None,
     _d7b_backend: object | None = None,
+    _batch_id: str | None = None,
 ) -> dict:
     """Execute the Stage 2d 200-hypothesis observation batch.
 
@@ -943,7 +944,7 @@ def run_stage2d(
     _load_dotenv()
     smoke_theme_override = _resolve_smoke_theme_override()
     registry = get_registry()
-    batch_id = str(uuid.uuid4())
+    batch_id = _batch_id if _batch_id is not None else str(uuid.uuid4())
     payload_dir = _payload_dir or RAW_PAYLOAD_DIR
     ledger_path = _ledger_path or LEDGER_PATH
     run_timestamp_utc = datetime.now(timezone.utc).isoformat()
@@ -1237,6 +1238,7 @@ def run_stage2d(
 
         # --- D7 Critic (optional, after step 6) ---
         critic_result_dict = None
+        critic_skipped_budget = False
         if with_critic and lifecycle_state == PENDING_BACKTEST and isinstance(
             cand, ValidCandidate
         ):
@@ -1260,24 +1262,64 @@ def run_stage2d(
             # codes — so finalize ALWAYS runs in the happy path; the
             # try/finally guards finalize() exceptions only (which are
             # infrastructural, not API-level).
+            #
+            # Codex first-fire Finding #1 hotfix (HIGH): affordability
+            # gate BEFORE write_pending. Parallel register-class to
+            # proposer affordability gate at lines ~1086-1115. Without
+            # this gate, near-cap proposer spend can pass its check at
+            # $19.95 and then live critic can push to $20.05+ and still
+            # call the API. Per CLAUDE.md $20/batch hard cap.
             from agents.critic.d7b_live import (
                 D7B_STAGE2A_COST_CEILING_USD,
             )
             critic_row_id = None
             if critic_d7b.mode == "live":
-                critic_row_id = ledger.write_pending(
-                    batch_id=batch_id,
-                    api_call_kind="critic_d7b",
-                    backend_kind=BACKEND_KIND_D7B_CRITIC,
-                    call_role=CALL_ROLE_CRITIQUE,
-                    estimated_cost_usd=D7B_STAGE2A_COST_CEILING_USD,
-                    now=datetime.now(timezone.utc),
+                critic_now = datetime.now(timezone.utc)
+                # Cumulative monthly cap check (parallel to proposer
+                # cumulative gate at lines ~1086-1097).
+                critic_monthly_after = (
+                    ledger.monthly_spent_usd(now=critic_now)
+                    + D7B_STAGE2A_COST_CEILING_USD
                 )
+                if critic_monthly_after > STAGE2D_CUMULATIVE_CAP_USD:
+                    critic_skipped_budget = True
+                elif not ledger.can_afford(
+                    batch_id=batch_id,
+                    estimated_cost_usd=D7B_STAGE2A_COST_CEILING_USD,
+                    now=critic_now,
+                    batch_cap_usd=STAGE2D_BATCH_CAP_USD,
+                    monthly_cap_usd=STAGE2D_MONTHLY_CAP_USD,
+                ):
+                    critic_skipped_budget = True
 
-            cr = run_critic(cand.dsl, theme, critic_ctx, critic_d7b)
-            critic_result_dict = cr.to_dict()
+                if not critic_skipped_budget:
+                    critic_row_id = ledger.write_pending(
+                        batch_id=batch_id,
+                        api_call_kind="critic_d7b",
+                        backend_kind=BACKEND_KIND_D7B_CRITIC,
+                        call_role=CALL_ROLE_CRITIQUE,
+                        estimated_cost_usd=D7B_STAGE2A_COST_CEILING_USD,
+                        now=critic_now,
+                    )
 
-            if critic_row_id is not None:
+            if critic_skipped_budget:
+                # Live critic gated out by affordability check; do NOT
+                # call run_critic for this candidate (skip protects the
+                # batch/monthly/cumulative caps). Mark on call summary
+                # so smoke PASS adjudication can distinguish from
+                # genuine critic-approved.
+                cr = None
+                critic_result_dict = None
+                print(
+                    f"[Stage 2d] critic skipped at call {k}: "
+                    f"affordability gate (estimated ${D7B_STAGE2A_COST_CEILING_USD} "
+                    f"would exceed batch/monthly/cumulative cap)"
+                )
+            else:
+                cr = run_critic(cand.dsl, theme, critic_ctx, critic_d7b)
+                critic_result_dict = cr.to_dict()
+
+            if critic_row_id is not None and cr is not None:
                 # cr.d7b_cost_actual_usd is None when D7b never ran
                 # (e.g., d7a_error short-circuit). Finalize at $0 in
                 # that case — pre-charge represented the upper bound;
@@ -1292,6 +1334,19 @@ def run_stage2d(
                         output_tokens=cr.d7b_output_tokens,
                     )
                 except Exception as fin_exc:
+                    # Codex first-fire Finding #2 hotfix (MEDIUM):
+                    # surface the original exception explicitly via
+                    # stderr (not silently swallowed by mark_crashed).
+                    # Patch refinement vs. Codex's exact suggestion: do
+                    # NOT re-raise — would terminate batch on one
+                    # critic finalize failure, contradicting fail-open.
+                    # Cost is already sunk (API call completed); log +
+                    # continue is the correct pattern.
+                    print(
+                        f"[Stage 2d] CRITIC FINALIZE FAILED at call {k}: "
+                        f"{type(fin_exc).__name__}: {fin_exc}",
+                        file=sys.stderr,
+                    )
                     # Best-effort mark_crashed; pre-charge invariant
                     # preserved (crashed rows still count as spent at
                     # estimated_cost upper bound).
@@ -1304,25 +1359,31 @@ def run_stage2d(
                                 f"{type(fin_exc).__name__}: {fin_exc}"
                             ),
                         )
-                    except Exception:
-                        # mark_crashed itself failed; do not mask
-                        # the original infrastructural problem
-                        pass
+                    except Exception as mc_exc:
+                        # mark_crashed itself failed; surface that too
+                        # so neither failure is silent.
+                        print(
+                            f"[Stage 2d] CRITIC MARK_CRASHED FAILED at "
+                            f"call {k}: {type(mc_exc).__name__}: "
+                            f"{mc_exc}",
+                            file=sys.stderr,
+                        )
 
-            if cr.critic_status == "ok":
-                critic_ok_count += 1
-            elif cr.critic_status == "d7a_error":
-                critic_d7a_error_count += 1
-            elif cr.critic_status == "d7b_error":
-                critic_d7b_error_count += 1
-            elif cr.critic_status == "both_error":
-                critic_both_error_count += 1
-            # Update prior state for next critic call
-            fs_tuple = critic_factor_set_tuple(cand.dsl)
-            if fs_tuple:
-                critic_prior_factor_sets.append(fs_tuple)
-            if hypothesis_hash:
-                critic_prior_hashes.append(hypothesis_hash)
+            if cr is not None:
+                if cr.critic_status == "ok":
+                    critic_ok_count += 1
+                elif cr.critic_status == "d7a_error":
+                    critic_d7a_error_count += 1
+                elif cr.critic_status == "d7b_error":
+                    critic_d7b_error_count += 1
+                elif cr.critic_status == "both_error":
+                    critic_both_error_count += 1
+                # Update prior state for next critic call
+                fs_tuple = critic_factor_set_tuple(cand.dsl)
+                if fs_tuple:
+                    critic_prior_factor_sets.append(fs_tuple)
+                if hypothesis_hash:
+                    critic_prior_hashes.append(hypothesis_hash)
 
         telemetry = output.telemetry
         input_tokens = telemetry.get("input_tokens")
@@ -1390,6 +1451,11 @@ def run_stage2d(
         })
         if with_critic:
             call_summaries[-1]["critic_result"] = critic_result_dict
+            # Codex first-fire Finding #1 hotfix: surface
+            # affordability-gate skip on call summary so smoke PASS
+            # adjudication can distinguish from genuine critic-approved.
+            if critic_skipped_budget:
+                call_summaries[-1]["critic_skipped_budget"] = True
 
         if k <= 5 or k % 50 == 0 or k == STAGE2D_BATCH_SIZE:
             print(f"[Stage 2d] k={k} lifecycle={lifecycle_state} "
