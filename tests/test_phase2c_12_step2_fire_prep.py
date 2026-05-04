@@ -230,8 +230,11 @@ class _FakeLiveD7bBackend(D7bBackend):
             "structural_variant_risk": 0.3,
         }
         reasoning_text = (
-            "Fake live D7b reasoning for tests; mimics live backend "
-            "shape without API access."
+            "Fake live D7b reasoning text used in unit tests to mimic "
+            "the canonical Sonnet response shape and length without "
+            "actually calling the Anthropic API. The schema requires at "
+            "least 100 characters of reasoning, so this string is padded "
+            "to satisfy that contract while remaining clearly synthetic."
         )
         _, _, scan_results = parse_d7b_response(
             json.dumps({**scores, "reasoning": reasoning_text})
@@ -408,10 +411,14 @@ def test_live_critic_writes_pending_before_run_critic(
         call_order.append("run_critic")
         return real_run_critic(*args, **kwargs)
 
+    # NB: ``run_critic`` is lazy-imported inside ``run_stage2d`` via
+    # ``from agents.critic.orchestrator import run_critic``. Patching the
+    # source module ``agents.critic.orchestrator.run_critic`` BEFORE the
+    # import statement runs ensures the local binding picks up the spy.
     with patch.object(
         BudgetLedger, "write_pending", _spy_write_pending,
     ), patch(
-        "agents.proposer.stage2d_batch.run_critic", _spy_run_critic,
+        "agents.critic.orchestrator.run_critic", _spy_run_critic,
     ):
         run_stage2d(
             dry_run=True,
@@ -507,12 +514,24 @@ def test_live_critic_marks_crashed_on_finalize_exception(
     fake_live = _FakeLiveD7bBackend(cost_actual_usd=0.012)
 
     real_finalize = BudgetLedger.finalize
-    finalize_call_count = {"n": 0}
+    flaked_critic_count = {"n": 0}
 
     def _flaky_finalize(self, row_id, *, actual_cost_usd, **kwargs):
-        finalize_call_count["n"] += 1
-        if finalize_call_count["n"] == 1:
-            raise RuntimeError("simulated finalize failure")
+        # Only flake the FIRST critic finalize; pass through proposer
+        # finalizes and subsequent critic finalizes. Look up the row's
+        # backend_kind directly from the ledger to discriminate.
+        import sqlite3
+        with sqlite3.connect(tmp_ledger) as conn:
+            row = conn.execute(
+                "SELECT backend_kind FROM ledger WHERE id = ?", (row_id,),
+            ).fetchone()
+        backend_kind = row[0] if row else None
+        if (
+            backend_kind == BACKEND_KIND_D7B_CRITIC
+            and flaked_critic_count["n"] == 0
+        ):
+            flaked_critic_count["n"] += 1
+            raise RuntimeError("simulated critic finalize failure")
         return real_finalize(
             self, row_id, actual_cost_usd=actual_cost_usd, **kwargs,
         )

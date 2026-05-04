@@ -76,7 +76,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from statistics import median
 
-from agents.orchestrator.budget_ledger import BudgetLedger
+from agents.orchestrator.budget_ledger import (
+    BACKEND_KIND_D7B_CRITIC,
+    BudgetLedger,
+    CALL_ROLE_CRITIQUE,
+)
 from agents.orchestrator.ingest import (
     BACKEND_EMPTY_OUTPUT,
     DUPLICATE,
@@ -909,6 +913,7 @@ def run_stage2d(
     *,
     dry_run: bool = False,
     with_critic: bool = False,
+    live_critic: bool = False,
     _backend: object | None = None,
     _ledger_path: Path | None = None,
     _payload_dir: Path | None = None,
@@ -916,9 +921,25 @@ def run_stage2d(
 ) -> dict:
     """Execute the Stage 2d 200-hypothesis observation batch.
 
+    Args:
+        dry_run: Use stub Proposer backend (no API calls).
+        with_critic: Enable D7 Critic (rule-based + D7b).
+        live_critic: When ``with_critic=True``, instantiate
+            ``LiveSonnetD7bBackend`` instead of ``StubD7bBackend``.
+            Mutually exclusive with ``with_critic=False`` (raises
+            ``ValueError`` for the cross-product). PHASE2C_12 Q-OPEN-2
+            LOCKED = live D7b for criterion (B) measurement
+            register-precision.
+
     Returns a summary dict. Parameters prefixed with ``_`` are test
     injection points; production callers should leave them at None.
     """
+    if live_critic and not with_critic:
+        raise ValueError(
+            "live_critic=True requires with_critic=True; cannot enable "
+            "live D7b backend while critic gate is disabled "
+            "(anti-fishing-license at flag-interaction register-precision)"
+        )
     _load_dotenv()
     smoke_theme_override = _resolve_smoke_theme_override()
     registry = get_registry()
@@ -990,6 +1011,18 @@ def run_stage2d(
         )
         if _d7b_backend is not None:
             critic_d7b = _d7b_backend
+        elif live_critic:
+            # PHASE2C_12 Step 2 fire-prep Surface (2): live D7b for
+            # criterion (B) measurement at register-precision against
+            # canonical b6fcbf86 baseline. CONTRACT BOUNDARY:
+            # LiveSonnetD7bBackend instantiates its OWN anthropic client
+            # independent of the D6 Proposer client (per d7b_live.py
+            # dataclass docstring).
+            from agents.critic.d7b_live import LiveSonnetD7bBackend
+            critic_d7b = LiveSonnetD7bBackend(
+                raw_payload_dir=payload_dir,
+                batch_id=batch_id,
+            )
         else:
             critic_d7b = StubD7bCriticBackend()
         print(f"[Stage 2d] critic: enabled (d7b_mode={critic_d7b.mode})")
@@ -1215,8 +1248,67 @@ def run_stage2d(
                 default_momentum_factors=DEFAULT_MOMENTUM_FACTORS,
                 theme_anchor_factors=THEME_ANCHOR_FACTORS,
             )
+
+            # PHASE2C_12 Step 2 fire-prep Surface (3): pre-charge ledger
+            # for live D7b critic call BEFORE run_critic. Closes
+            # PHASE2C_3 + PHASE2C_5 carry-forward warning at register-
+            # precision. Stub mode (cost = $0) skips pre-charge to avoid
+            # $0 noise rows polluting the ledger. Per CLAUDE.md:
+            # "NEVER perform a budget check AFTER an API call (must be
+            # pre-call)". Per orchestrator contract, run_critic() never
+            # raises — all D7b errors are captured in critic_status
+            # codes — so finalize ALWAYS runs in the happy path; the
+            # try/finally guards finalize() exceptions only (which are
+            # infrastructural, not API-level).
+            from agents.critic.d7b_live import (
+                D7B_STAGE2A_COST_CEILING_USD,
+            )
+            critic_row_id = None
+            if critic_d7b.mode == "live":
+                critic_row_id = ledger.write_pending(
+                    batch_id=batch_id,
+                    api_call_kind="critic_d7b",
+                    backend_kind=BACKEND_KIND_D7B_CRITIC,
+                    call_role=CALL_ROLE_CRITIQUE,
+                    estimated_cost_usd=D7B_STAGE2A_COST_CEILING_USD,
+                    now=datetime.now(timezone.utc),
+                )
+
             cr = run_critic(cand.dsl, theme, critic_ctx, critic_d7b)
             critic_result_dict = cr.to_dict()
+
+            if critic_row_id is not None:
+                # cr.d7b_cost_actual_usd is None when D7b never ran
+                # (e.g., d7a_error short-circuit). Finalize at $0 in
+                # that case — pre-charge represented the upper bound;
+                # if no API call, actual = 0 is correct.
+                actual_critic_cost = cr.d7b_cost_actual_usd or 0.0
+                try:
+                    ledger.finalize(
+                        critic_row_id,
+                        actual_cost_usd=actual_critic_cost,
+                        now=datetime.now(timezone.utc),
+                        input_tokens=cr.d7b_input_tokens,
+                        output_tokens=cr.d7b_output_tokens,
+                    )
+                except Exception as fin_exc:
+                    # Best-effort mark_crashed; pre-charge invariant
+                    # preserved (crashed rows still count as spent at
+                    # estimated_cost upper bound).
+                    try:
+                        ledger.mark_crashed(
+                            critic_row_id,
+                            now=datetime.now(timezone.utc),
+                            notes=(
+                                f"critic finalize raised: "
+                                f"{type(fin_exc).__name__}: {fin_exc}"
+                            ),
+                        )
+                    except Exception:
+                        # mark_crashed itself failed; do not mask
+                        # the original infrastructural problem
+                        pass
+
             if cr.critic_status == "ok":
                 critic_ok_count += 1
             elif cr.critic_status == "d7a_error":
@@ -1624,8 +1716,22 @@ def main() -> None:
         action="store_true",
         help="Enable D7 Critic (rule-based + stub D7b in Stage 1)",
     )
+    parser.add_argument(
+        "--live-critic",
+        action="store_true",
+        help=(
+            "Use LiveSonnetD7bBackend instead of StubD7bBackend "
+            "(requires --with-critic). Adds ~$0.01-0.02 per Critic "
+            "call to ledger via pre-charge wrap. Required for "
+            "PHASE2C_12 smoke criterion (B) register-precision."
+        ),
+    )
     args = parser.parse_args()
-    run_stage2d(dry_run=args.dry_run, with_critic=args.with_critic)
+    run_stage2d(
+        dry_run=args.dry_run,
+        with_critic=args.with_critic,
+        live_critic=args.live_critic,
+    )
 
 
 if __name__ == "__main__":
