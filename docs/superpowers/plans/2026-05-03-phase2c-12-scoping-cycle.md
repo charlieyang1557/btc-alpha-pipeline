@@ -439,9 +439,12 @@ Expected: HEAD === origin/main; working tree clean modulo carry-forward; 174 pas
 PushNotification (terminal) + Discord webhook (phone). Status line under 200 chars; lead with actionable bit; include commit SHAs + test verdict.
 
 ```bash
+# Webhook URL loaded from .env (DISCORD_WEBHOOK_URL); never hardcoded per CLAUDE.md security rule
+# + feedback_long_task_pings.md memory scope note (memory may inline; committed code MUST env-var reference)
+set -a && source .env && set +a
 curl -s -H 'Content-Type: application/json' \
   -d '{"content":"PHASE2C_12 scoping cycle SEALED + pushed: <selected path class> arc; <SHA scoping-seal> + <SHA marker-advance>; pytest 174 GREEN"}' \
-  'https://discord.com/api/webhooks/1500286755562193019/0r6qRvlXj6uON-qDXPPW6VmPQKnbkrCrVZj1yROOHEKu96mPO1AbtOzYvkvvq9FzwfDR' \
+  "$DISCORD_WEBHOOK_URL" \
   > /dev/null
 ```
 
