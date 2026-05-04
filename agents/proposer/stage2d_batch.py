@@ -109,13 +109,18 @@ STAGE2D_MONTHLY_CAP_USD = 100.0
 STAGE2D_CUMULATIVE_CAP_USD = 30.0
 APPROVED_EXAMPLES_CAP = 3
 THEME_ROTATION_MODE = "interleaved_cyclic"
-THEME_CYCLE_LEN = 5  # multi_factor_combination excluded from rotation;
-# canonical THEMES tuple in agents/themes.py retains all 6 themes. The
-# 6th theme (multi_factor_combination) remains canonical/theoretical
-# but is not included in current Stage 2c/2d operational rotation
-# pending separate validation. See CLAUDE.md "Theme rotation" note for
-# rationale and Issue 6 of D8.4 (commit 03112aa) for the diagnostic
-# context.
+# Q10 LOCKED (PHASE2C_12_PLAN.md §3.3 + §4.2): THEME_CYCLE_LEN is
+# config-driven via PHASE2C_THEME_CYCLE_LEN env var at module-load
+# register; default = 5 preserves canonical Stage 2c/2d operational
+# rotation invariant (multi_factor_combination excluded). PHASE2C_12
+# main batch fire sets PHASE2C_THEME_CYCLE_LEN=6 explicitly at fire
+# boundary to enable 6-theme rotation including multi_factor_combination
+# (33 candidates × 6 themes = 198 clean integer distribution per Q6).
+# Persistence decision register: post-PHASE2C_12 successor scoping cycle
+# adjudication; default stays 5 at code register until explicitly
+# adjudicated otherwise. See CLAUDE.md "Theme rotation operational
+# boundary (Stage 2c/2d)" for canonical rationale.
+THEME_CYCLE_LEN = int(os.environ.get("PHASE2C_THEME_CYCLE_LEN", "5"))
 CHARS_PER_TOKEN = 2.9
 EST_OUTPUT_TOKENS = 500
 RAW_PAYLOAD_DIR = Path("raw_payloads")
