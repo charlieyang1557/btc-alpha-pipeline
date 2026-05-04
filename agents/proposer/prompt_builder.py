@@ -193,7 +193,16 @@ def build_prompt(
     ]
     system = "\n".join(system_lines)
 
-    theme = _theme_for_slot(context.theme_slot)
+    # PHASE2C_12 Q9 smoke fire register: theme_override (when set) wins
+    # over theme_slot rotation at the prompt-LLM-visible register, so the
+    # smoke batch generates exclusively the override theme regardless of
+    # rotation position. theme_slot remains pure rotation-position
+    # metadata at telemetry register. See PHASE2C_12_PLAN.md §3.3 Q9
+    # LOCKED + §4.1 (smoke batch theme operationalization).
+    if context.theme_override is not None:
+        theme = context.theme_override
+    else:
+        theme = _theme_for_slot(context.theme_slot)
     approved_block = (
         "\n".join(f"  - {ex}" for ex in approved_examples)
         if approved_examples

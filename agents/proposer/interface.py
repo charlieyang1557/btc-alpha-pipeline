@@ -65,7 +65,19 @@ class BatchContext:
         theme_slot: Optional rotating theme identifier for this call
             (integer index into :data:`agents.themes.THEMES`). D6
             accepts and forwards but does NOT decide rotation strategy;
-            the orchestrator owns theme assignment.
+            the orchestrator owns theme assignment. Remains pure
+            rotation-position metadata even when ``theme_override`` is
+            active (see ``theme_override`` below).
+        theme_override: Optional explicit theme name that supersedes
+            ``theme_slot``-derived rotation at the prompt-LLM-visible
+            register. When set, ``build_prompt()`` injects this theme
+            into the proposer prompt regardless of ``theme_slot``;
+            ``theme_slot`` continues to record rotation-position
+            metadata for telemetry/audit-trail clarity. Used at PHASE2C_12
+            Q9 smoke fire register to lock the LLM to a single theme
+            (typically ``multi_factor_combination``). MUST be a member
+            of :data:`agents.themes.THEMES` when set; ``None`` falls
+            through to canonical rotation per ``theme_slot``.
         budget_remaining: ``{"batch_usd": float, "monthly_usd": float}``
             snapshot at call time. Informational; the budget gate is
             enforced pre-call by the orchestrator, not by the backend.
@@ -80,6 +92,7 @@ class BatchContext:
     allowed_factors: tuple[str, ...]
     allowed_operators: tuple[str, ...]
     theme_slot: int | None = None
+    theme_override: str | None = None
     budget_remaining: dict[str, float] = field(default_factory=dict)
     batch_metadata: dict[str, object] = field(default_factory=dict)
 

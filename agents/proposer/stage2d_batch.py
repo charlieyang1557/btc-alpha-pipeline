@@ -5,9 +5,21 @@ Proves contract-stable 200-call execution, freezes per-theme statistics
 at N=40, characterizes long-horizon mode-collapse signals, and provides
 production cost/time profile for D8 orchestrator planning.
 
-Each of the 5 themes (momentum, mean_reversion, volatility_regime,
-volume_divergence, calendar_effect) gets exactly 40 calls via
-interleaved-cyclic rotation (``theme_slot = (k - 1) % 5``).
+By default each of the 5 themes (momentum, mean_reversion,
+volatility_regime, volume_divergence, calendar_effect) gets exactly 40
+calls via interleaved-cyclic rotation
+(``theme_slot = (k - 1) % THEME_CYCLE_LEN``; default
+``THEME_CYCLE_LEN=5``).
+
+PHASE2C_12 Q10 LOCKED: ``THEME_CYCLE_LEN`` is config-driven via the
+``PHASE2C_THEME_CYCLE_LEN`` env var at module-load register; setting
+``PHASE2C_THEME_CYCLE_LEN=6`` enables 6-theme rotation including
+``multi_factor_combination``.
+
+PHASE2C_12 Q9 LOCKED: setting ``PHASE2C_SMOKE_THEME_OVERRIDE`` to a
+canonical theme name (typically ``multi_factor_combination``) locks
+every prompt-LLM-visible theme to that override regardless of rotation
+position.
 
 Hard constraints enforced:
     - batch_size = 200
@@ -120,7 +132,29 @@ THEME_ROTATION_MODE = "interleaved_cyclic"
 # adjudication; default stays 5 at code register until explicitly
 # adjudicated otherwise. See CLAUDE.md "Theme rotation operational
 # boundary (Stage 2c/2d)" for canonical rationale.
-THEME_CYCLE_LEN = int(os.environ.get("PHASE2C_THEME_CYCLE_LEN", "5"))
+#
+# Range validation (Codex Finding #3 ADOPT): module-load fail-fast
+# bound at 1 <= THEME_CYCLE_LEN <= len(THEMES). Anti-pre-naming
+# preserved via defensive-but-not-prescriptive bound (NOT hardcoded
+# {5, 6}); successor cycle may legitimately use other cardinalities
+# without re-modifying validation.
+def _resolve_theme_cycle_len() -> int:
+    raw = os.environ.get("PHASE2C_THEME_CYCLE_LEN", "5")
+    try:
+        n = int(raw)
+    except (TypeError, ValueError) as err:
+        raise ValueError(
+            f"PHASE2C_THEME_CYCLE_LEN={raw!r} is not a valid integer"
+        ) from err
+    if not (1 <= n <= len(THEMES)):
+        raise ValueError(
+            f"PHASE2C_THEME_CYCLE_LEN={n} out of range; "
+            f"must be in [1, {len(THEMES)}] (len(THEMES)={len(THEMES)})"
+        )
+    return n
+
+
+THEME_CYCLE_LEN = _resolve_theme_cycle_len()
 CHARS_PER_TOKEN = 2.9
 EST_OUTPUT_TOKENS = 500
 RAW_PAYLOAD_DIR = Path("raw_payloads")
@@ -226,17 +260,33 @@ def _theme_for_position(
 def _resolve_smoke_theme_override() -> str | None:
     """Read ``PHASE2C_SMOKE_THEME_OVERRIDE`` env var once at batch entry.
 
-    Returns the override theme name if the env var is set to a non-empty
-    string, otherwise ``None``. Validation against :data:`THEMES` is
-    deferred to :func:`_theme_for_position` so that an empty/unset env
-    var produces canonical-rotation fall-through (R3).
+    Distinguishes three states (Codex Finding #2 PARTIAL ADOPT
+    refinement):
+
+    - env var **unset** → returns ``None`` (R3 canonical-rotation
+      fall-through preserved)
+    - env var **set to empty/whitespace string** → raises
+      ``ValueError`` (signals user intent to override but value missing;
+      anti-fishing-license at malformed-config register)
+    - env var **set to a non-empty string** → returns the value verbatim
+      (validation against :data:`THEMES` is deferred to
+      :func:`_theme_for_position`)
 
     Binding source: ``docs/phase2c/PHASE2C_12_PLAN.md`` §3.3 Q9 LOCKED
     + Charlie-register R2 binding (env-var read at caller register, not
-    inside ``_theme_for_position``).
+    inside ``_theme_for_position``) + Codex Finding #2 PARTIAL ADOPT.
     """
     raw = os.environ.get("PHASE2C_SMOKE_THEME_OVERRIDE")
-    return raw if raw else None
+    if raw is None:
+        return None
+    if not raw.strip():
+        raise ValueError(
+            "PHASE2C_SMOKE_THEME_OVERRIDE is set to an empty/whitespace "
+            "string. Unset the variable to fall through to canonical "
+            "rotation, or set it to a canonical theme name from "
+            f"{THEMES} to activate the smoke override."
+        )
+    return raw
 
 
 def _load_dotenv(path: Path | None = None) -> None:
@@ -1010,6 +1060,7 @@ def run_stage2d(
             allowed_factors=tuple(registry.list_names()),
             allowed_operators=ALLOWED_OPERATORS,
             theme_slot=(k - 1) % THEME_CYCLE_LEN,
+            theme_override=smoke_theme_override,
             budget_remaining={
                 "batch_usd": ledger.batch_remaining_usd(
                     batch_id, batch_cap_usd=STAGE2D_BATCH_CAP_USD),
