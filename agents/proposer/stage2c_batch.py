@@ -153,9 +153,43 @@ def _git_commit_short() -> str:
         return "unknown"
 
 
-def _theme_for_position(k: int) -> str:
-    """Interleaved cyclic theme rotation: theme_slot = (k - 1) % 5."""
+def _theme_for_position(
+    k: int, theme_override: str | None = None,
+) -> str:
+    """Interleaved cyclic theme rotation: theme_slot = (k - 1) % THEME_CYCLE_LEN.
+
+    When ``theme_override`` is provided (smoke-fire register at PHASE2C_12
+    Q9 LOCKED operationalization), returns it directly and bypasses the
+    canonical rotation. ``theme_override`` MUST be a member of
+    :data:`agents.themes.THEMES` or a ``ValueError`` is raised
+    (anti-fishing-license boundary at theme-content register-precision).
+
+    Binding source: ``docs/phase2c/PHASE2C_12_PLAN.md`` §3.3 Q9 LOCKED.
+    """
+    if theme_override is not None:
+        if theme_override not in THEMES:
+            raise ValueError(
+                f"theme_override={theme_override!r} not in canonical "
+                f"THEMES tuple {THEMES}"
+            )
+        return theme_override
     return THEMES[(k - 1) % THEME_CYCLE_LEN]
+
+
+def _resolve_smoke_theme_override() -> str | None:
+    """Read ``PHASE2C_SMOKE_THEME_OVERRIDE`` env var once at batch entry.
+
+    Returns the override theme name if the env var is set to a non-empty
+    string, otherwise ``None``. Validation against :data:`THEMES` is
+    deferred to :func:`_theme_for_position` so that an empty/unset env
+    var produces canonical-rotation fall-through (R3).
+
+    Binding source: ``docs/phase2c/PHASE2C_12_PLAN.md`` §3.3 Q9 LOCKED
+    + Charlie-register R2 binding (env-var read at caller register, not
+    inside ``_theme_for_position``).
+    """
+    raw = os.environ.get("PHASE2C_SMOKE_THEME_OVERRIDE")
+    return raw if raw else None
 
 
 # ---------------------------------------------------------------------------
@@ -493,6 +527,7 @@ def run_stage2c(
     injection points; production callers should leave them at None.
     """
     _load_dotenv()
+    smoke_theme_override = _resolve_smoke_theme_override()
     registry = get_registry()
     batch_id = str(uuid.uuid4())
     payload_dir = _payload_dir or RAW_PAYLOAD_DIR
@@ -506,6 +541,9 @@ def run_stage2c(
           f"cap=${STAGE2C_BATCH_CAP_USD}")
     print(f"[Stage 2c] theme_rotation={THEME_ROTATION_MODE} "
           f"cycle_len={THEME_CYCLE_LEN}")
+    if smoke_theme_override is not None:
+        print(f"[Stage 2c] smoke_theme_override={smoke_theme_override!r} "
+              f"(PHASE2C_12 Q9 fire register)")
 
     # --- Pre-flight: clear stale pending entries ---
     ledger = BudgetLedger(ledger_path)
@@ -552,7 +590,7 @@ def run_stage2c(
 
     # --- Sequential call loop ---
     for k in range(1, STAGE2C_BATCH_SIZE + 1):
-        theme = _theme_for_position(k)
+        theme = _theme_for_position(k, theme_override=smoke_theme_override)
         print(f"\n[Stage 2c] --- Call {k}/{STAGE2C_BATCH_SIZE} "
               f"(theme={theme}) ---")
 
@@ -620,7 +658,7 @@ def run_stage2c(
                   f"would exceed cap ${STAGE2C_CUMULATIVE_CAP_USD}")
             truncated_at = k
             for j in range(k, STAGE2C_BATCH_SIZE + 1):
-                t_j = _theme_for_position(j)
+                t_j = _theme_for_position(j, theme_override=smoke_theme_override)
                 call_summaries.append({
                     "position": j, "theme": t_j, "truncated_by_cap": True,
                     "lifecycle_state": None, "hypothesis_hash": None,
@@ -652,7 +690,7 @@ def run_stage2c(
                   f"${ledger.batch_spent_usd(batch_id):.6f})")
             truncated_at = k
             for j in range(k, STAGE2C_BATCH_SIZE + 1):
-                t_j = _theme_for_position(j)
+                t_j = _theme_for_position(j, theme_override=smoke_theme_override)
                 call_summaries.append({
                     "position": j, "theme": t_j, "truncated_by_cap": True,
                     "lifecycle_state": None, "hypothesis_hash": None,
@@ -874,7 +912,7 @@ def run_stage2c(
         if early_stop_reason is not None:
             truncated_at = k + 1 if k < STAGE2C_BATCH_SIZE else None
             for j in range(k + 1, STAGE2C_BATCH_SIZE + 1):
-                t_j = _theme_for_position(j)
+                t_j = _theme_for_position(j, theme_override=smoke_theme_override)
                 call_summaries.append({
                     "position": j, "theme": t_j, "truncated_by_cap": True,
                     "lifecycle_state": None, "hypothesis_hash": None,
