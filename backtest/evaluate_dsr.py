@@ -812,11 +812,16 @@ def load_audit_v1_candidates(
 # PHASE2C_11_PLAN §4.3 + §4.5 + §5.4 + §3.6 + §6 + §2.5.
 #
 # Implementation contract:
-#   - Inputs: list[CandidateInput] + n_trials (= EXPECTED_N_RAW for canonical
-#     fire); function output is SimplifiedDSRResult.
-#   - Dual-gate at function entry: n_trials == EXPECTED_N_RAW AND
-#     len(candidates) ∈ {EXPECTED_N_RAW, EXPECTED_N_ELIGIBLE_AT_CANONICAL};
-#     ValueError on mismatch.
+#   - Inputs: list[CandidateInput] + n_trials (∈ ALLOWED_DUAL_GATE_PAIRS
+#     accepted n_trials values: {EXPECTED_N_RAW=198, PHASE2C_12_N_RAW=197});
+#     function output is SimplifiedDSRResult.
+#   - Dual-gate at function entry: paired-pair allowlist validation per
+#     PHASE2C_12 Auth #6.x β1 narrow. The pair (n_trials, len(candidates))
+#     MUST be in ALLOWED_DUAL_GATE_PAIRS = {(198,198), (198,154), (197,197)}.
+#     All other pair combinations raise ValueError, including cross-pairs
+#     such as (198,197) or (197,198) — paired strictness, no implicit
+#     cross-cycle blending. PHASE2C_11 anchors: (198,198) full / (198,154)
+#     eligible subset; PHASE2C_12 anchor: (197,197) full population.
 #   - RS-3 guard per candidate.audit_v1_artifact_path before any formula
 #     computation per §2.5 + §4.5 fail-loud lockpoint; per (β-mod)
 #     adjudication at TDD-RED hotfix register, no silent skip on missing
@@ -1011,12 +1016,18 @@ def compute_simplified_dsr(
     (§2.5 + §4.5 fail-loud lockpoint).
 
     Args:
-        candidates: Eligible candidate list (post-§4.4 filter at canonical
-            fire). May be the full population (len == EXPECTED_N_RAW) for
-            synthetic tests, or the canonical eligible subset (len ==
-            EXPECTED_N_ELIGIBLE_AT_CANONICAL) at canonical fire.
-        n_trials: N for multiple-testing correction; MUST equal
-            EXPECTED_N_RAW per §3.2 lockpoint.
+        candidates: Candidate list. The (n_trials, len(candidates)) pair
+            MUST be in ``ALLOWED_DUAL_GATE_PAIRS`` per PHASE2C_12 Auth #6.x
+            β1 narrow allowlist:
+              (198, 198) — PHASE2C_11 full population
+              (198, 154) — PHASE2C_11 eligible subset (post-§4.4 filter)
+              (197, 197) — PHASE2C_12 full population
+            Cross-pairs (e.g. (198, 197) or (197, 198)) are rejected per
+            paired strictness — no implicit cross-cycle blending.
+        n_trials: N for multiple-testing correction. MUST be in
+            ``{EXPECTED_N_RAW=198, PHASE2C_12_N_RAW=197}`` AND paired
+            correctly with ``len(candidates)`` per
+            ``ALLOWED_DUAL_GATE_PAIRS``.
         excluded_candidates: Optional Step 2 ``CandidateExclusion`` list
             from ``load_audit_v1_candidates(...).excluded_candidates`` —
             consumed solely to populate ``SimplifiedDSRResult.excluded_
@@ -1031,9 +1042,8 @@ def compute_simplified_dsr(
         SimplifiedDSRResult — canonical Step 3 output.
 
     Raises:
-        ValueError: On dual-gate failure (n_trials != EXPECTED_N_RAW OR
-            len(candidates) ∉ {EXPECTED_N_RAW,
-            EXPECTED_N_ELIGIBLE_AT_CANONICAL}), on any candidate with
+        ValueError: On dual-gate failure ((n_trials, len(candidates)) not
+            in ``ALLOWED_DUAL_GATE_PAIRS``), on any candidate with
             non-finite ``sharpe_ratio`` (``missing_sharpe (§4.4(3))``
             diagnostic), on any candidate with ``total_trades <
             MIN_TRADES_FOR_PRIMARY`` (``low_trade_count (§4.4(1))``
