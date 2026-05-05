@@ -3165,4 +3165,397 @@ register without claiming Strong-tier prescriptive force prematurely.
 
 ---
 
+## §22 Framework parameter pre-lock audit at sub-spec drafting cycle terminus
+
+### Principle
+
+Sub-spec drafting cycle SEAL pre-fire boundary requires a mechanical
+framework parameter pre-lock audit step that enumerates each Q-LOCKED
+parameter at the sub-spec and traces it to the framework code site
+where the parameter is bound at fire-time. The audit produces, for
+each Q-LOCKED parameter, a register-precision triple: (a) the
+canonical sub-spec lock value with explicit Q-number anchor; (b) the
+framework code site at file:line citation level; (c) the canonical
+framework value at the code site. Sub-spec lock vs framework code
+divergence at the audit register surfaces handoff-noise propagation
+before the sub-spec seals, rather than after — preventing the canonical
+divergence pattern from propagating into implementation arc fire-prep
+and fire-time registers where the same drift surfaces as §19 spec-vs-
+empirical-reality instance class downstream.
+
+The discipline operates at a register distinct from §1 empirical
+verification for factual claims, §15 anchor-list empirical verification
+at the receiving cycle, and §21 fire-prep precondition checklist
+discipline at multi-step implementation arc Step boundaries. §1 covers
+general empirical verification of factual claims at any drafting
+register. §15 covers pre-drafting anchor verification at the receiving
+cycle — anchors arriving from advisor cycles, scoping decisions, or
+prior register entries verified against canonical artifacts before
+drafting initiates. §21 covers pre-fire mechanical verification at the
+implementation arc Step boundary — Q-LOCKED parameters mechanically
+traced from sub-spec lock to framework code site to fire-time runtime
+state at the Step fire-prep boundary. §22 covers **pre-lock mechanical
+verification at the sub-spec drafting cycle terminus** — Q-LOCKED
+parameters mechanically traced from sub-spec lock to framework code
+site at the sub-spec SEAL pre-fire boundary, before the lock is sealed
+and before any implementation arc Step fires. The four disciplines
+form a complementary chain: §1 catches defects at any drafting
+register; §15 catches defects at anchor receipt boundary; §22 catches
+defects at sub-spec SEAL pre-fire boundary; §21 catches defects at
+implementation arc fire-prep boundary.
+
+The chain's structural value is register-class-distinct catch points.
+A defect that escapes one register catches at the next; absence of any
+one register increases retroactive §19 instance accumulation plus auth-
+iteration overhead at the next register. §22's specific catch class is
+sub-spec → framework drift detectable at sub-spec SEAL pre-fire — the
+class of drift that, absent §22, propagates through SEAL and surfaces
+as fire-prep ad hoc patching or fire-time post-fire detection.
+
+The audit operates at mechanical register, not interpretive register.
+Mechanical execution does not require interpretive judgment at any
+step; the audit is a procedural gate at the sub-spec SEAL boundary,
+distinct from interpretive-register reviewer pass cycle activities
+operating at substantive content register. The procedural gate's catch
+class is canonical lock value vs framework code value divergence;
+substantive content quality is reviewer pass cycle scope, register-
+class-distinct from §22 audit scope.
+
+### Trigger context
+
+This discipline's empirical basis is four PHASE2C_12 cycle §19
+instances (canonical numbering per closeout
+[`docs/closeout/PHASE2C_12_RESULTS.md`](../closeout/PHASE2C_12_RESULTS.md)
+§8.1 row register; instance descriptions cited verbatim from §8.1
+canonical source artifact, not from sub-spec parenthetical labels).
+The four instances are bound by Item 2 verbatim source at PHASE2C_12
+closeout §10.2 lines 509-513 ("Prevents handoff-noise propagation that
+produced §19 instances #5, #6, #8, #10"):
+
+1. **§19 instance #5 — Batch size config-driven Step 2 blocker.**
+   PHASE2C_12 sub-spec Q3 LOCKED main batch N=198 candidates at
+   canonical baseline `b6fcbf86` total_valid_count anchor. At Step 2
+   fire-prep boundary, the framework `STAGE2D_BATCH_SIZE` constant
+   was hardcoded at 200 (engine-side config-driven cap) while sub-spec
+   semantics required 198 at runtime; the 200-vs-198 divergence
+   surfaced at Step 2 fire-prep as a Step-2-blocker. Resolution at
+   commit `7c682fd`: Surface (1) `_resolve_batch_size()` env-var-
+   driven resolver introduced. A pre-lock audit at sub-spec SEAL
+   terminus enumerating Q3 → framework code (`stage2d_batch.py`
+   batch-size constant) would have surfaced the 200-vs-198 drift at
+   sub-spec SEAL pre-fire register; absent the audit, drift surfaced
+   one register downstream at Step 2 fire-prep with auth-iteration
+   overhead.
+
+2. **§19 instance #6 — Ledger pre-charge coupling at Critic cost
+   (PHASE2C_3 + PHASE2C_5 carry-forward).** PHASE2C_3 + PHASE2C_5
+   closeouts surfaced a ledger pre-charge constraint coupling to
+   `--live-critic` operational fire register; the coupling required a
+   3-surface coupled patch (`PHASE2C_BATCH_SIZE` env-var + `--live-
+   critic` CLI flag + ledger pre-charge wrap around `run_critic`) at
+   Step 2 fire-prep. Resolution at commit `30d3bfd`. **The instance
+   is register-class-distinct from instances #5/#8/#10 at coupling-
+   discovery vs parameter-drift register; §22 audit discipline
+   accommodates both register-classes at Trigger context evidence
+   basis register, per Item 2 verbatim source binding that includes
+   #6 at evidence basis citation.** Application checklist item 1's
+   "Q-LOCKED parameter" enumeration register binds parameter-drift
+   register-class strictly per Item 2 verbatim source ("framework
+   parameter audit"); coupling-discovery register-class at instance
+   #6 surfaces at audit metadata register adjacent to Application
+   checklist item 1 enumeration, per Q-LOCKED items broader binding
+   at sub-spec drafting cycle SEAL pre-fire boundary. Pre-lock audit
+   at sub-spec SEAL terminus enumerating Q-LOCKED items and tracing
+   each to operational coupling at framework code (e.g., ledger
+   pre-charge call site at `run_critic` integration register) would
+   have surfaced the coupling-discovery as a Q-LOCKED audit metadata
+   entry at sub-spec SEAL register-precision rather than at Step 2
+   fire-prep ad hoc patch register.
+
+3. **§19 instance #8 — Sub-spec Q15 [REVISED] N_eff `{198, 80, 40,
+   6}` vs framework hardcoded `{198, 80, 40, 5}` (5 themes anchor).**
+   PHASE2C_12 sub-spec Q15 [REVISED] specified N_eff at "number of
+   operational themes" register at PHASE2C_12 6-theme cycle. Framework
+   hardcoded the prior 5-themes anchor at `evaluate_dsr.py` N_eff
+   set; the 6-vs-5 divergence surfaced at Auth #6.x extension fire-
+   prep iteration. Resolution at commit `995fdb2`: cycle-conditional
+   `_resolve_n_eff_set()` resolver. A pre-lock audit at sub-spec SEAL
+   enumerating Q15 → framework code N_eff set canonical value would
+   have caught the 6-vs-5 drift at sub-spec SEAL pre-fire register;
+   absent the audit, drift surfaced at Auth #6.x extension with auth
+   re-fire overhead.
+
+4. **§19 instance #10 — ALLOWED_DUAL_GATE_PAIRS parallel-structure
+   incompleteness.** PHASE2C_12 Auth #6.x β1 narrow added (197, 197)
+   to the `ALLOWED_DUAL_GATE_PAIRS` frozenset at
+   `backtest/evaluate_dsr.py` but missed (197, 139) parallel to
+   PHASE2C_11's (198, 154). The asymmetry surfaced at Step 8 fire-
+   time (post-fire detection). Resolution at commit `08e1488`: Auth
+   #6.y `(PHASE2C_12_N_RAW, PHASE2C_12_N_ELIGIBLE_OBSERVED)` allowlist
+   plus baseline re-fire. A pre-lock audit at sub-spec SEAL enumerating
+   the dual-gate frozenset structure and tracing PHASE2C_11 register-
+   class-parallel completeness would have caught the asymmetry at
+   sub-spec SEAL pre-fire register; absent the audit, asymmetry
+   surfaced one register-pair downstream at Step 8 fire-time with
+   post-fire detection overhead and baseline re-fire cost.
+
+The four instances span sub-spec → framework drift at distinct
+parameter classes (canonical batch size constant / operational
+coupling discovery / parametric N_eff set / frozenset parametric
+structure) and at distinct downstream surfacing registers (Step 2
+fire-prep / Step 2 fire-prep / Auth #6.x extension fire-prep / Step 8
+fire-time). The discipline operates across parameter classes and
+downstream surfacing registers; the trigger condition is the sub-spec
+SEAL pre-fire boundary itself, not a specific parameter class or
+downstream surfacing register. Each instance, absent §22 audit,
+cost auth-iteration overhead at its downstream catch register;
+audit at sub-spec SEAL pre-fire register-class avoids the auth-
+iteration overhead by mechanical pre-lock catch.
+
+### Application checklist
+
+At sub-spec drafting cycle SEAL pre-fire boundary:
+
+1. **Enumerate all Q-LOCKED parameters at sub-spec.** Q-LOCKED
+   parameters are sub-spec lockpoints (Q-numbered summary table
+   entries; explicit `Q<N> LOCKED` annotations; framework parameter
+   set entries cited at sub-spec body) whose runtime resolution at
+   any implementation arc Step exercises framework code. Enumeration
+   precision requires reading the sub-spec at register-precision, not
+   summary register; Q-LOCKED parameters cited only indirectly
+   (e.g., "per sub-spec §X" without explicit lock value) require
+   resolution to canonical lock value before enumeration completes.
+   Mirrors §21 Application checklist item 1 register-class precision
+   discipline; the two enumerations operate at the same Q-LOCKED
+   parameter set but at distinct fire-prep boundaries (§22 sub-spec
+   SEAL terminus vs §21 implementation arc Step fire-prep).
+
+2. **For each Q-LOCKED parameter: cite framework code site (file:line)
+   where the parameter is bound at fire-time.** The citation produces
+   the framework code anchor at register-precision: file path + line
+   number + the parametric construct (constant declaration, frozenset
+   literal, functional resolver definition site, configuration default,
+   etc.) at the cited line. Citation precision requires reading the
+   framework code, not framework documentation alone; documentation
+   may diverge from code state at the audit register-event boundary.
+
+3. **For each Q-LOCKED parameter: confirm sub-spec lock value =
+   framework code canonical value (no drift at audit register).** The
+   confirmation produces a binary outcome at register-precision: PASS
+   (canonical lock value matches framework code value at the cited
+   site) or DRIFT (canonical lock value diverges from framework code
+   value, with diverged-pair recorded as `<Q-number, sub-spec value,
+   framework code value, divergence-class>`). DRIFT outcome routes to
+   item 5 below for §19 instance candidate surfacing at register-
+   class-distinct register before SEAL fire.
+
+4. **For framework parameters that are runtime-resolved (functional
+   resolvers, cycle-conditional state, dual-gate frozenset structure,
+   parametric value sets): MUST author corresponding executable
+   verification function spec at sub-spec.** This sub-rule operationalizes
+   Item 4 (LOCKED items → executable verification function checklist)
+   as fold-in to §22 at parent-operationalization coupling register:
+   §22 codifies the sub-spec terminus mechanical audit; Item 4 codifies
+   the runtime executable verification function discipline that the
+   audit produces as a sub-spec specification deliverable. Per Item 4
+   fold-in mechanism:
+
+   - **(4a) Executable verification function spec authoring.** For
+     each Q-LOCKED item at sub-spec whose runtime resolution exercises
+     framework code (constants, frozenset literals, functional
+     resolvers, cycle-conditional resolvers, parametric value sets),
+     author a corresponding executable verification function spec at
+     sub-spec drafting cycle. The spec format: function signature
+     (`def verify_Q_<n>() -> bool` or
+     `def verify_Q_<n>(framework_state: <type>) -> tuple[bool, str]`
+     for diagnostic-return register); return semantics (True iff
+     fire-time framework state preserves the Q-LOCKED constraint;
+     False otherwise with diagnostic tuple at extended-return register
+     if applicable); invocation surface annotation at the
+     implementation arc fire-prep boundary (which Step's fire-prep
+     checklist register provides the canonical invocation surface
+     per §21 Application checklist item 3 register-class binding;
+     invocation surface annotation at sub-spec authoring register
+     declares the intended fire-prep boundary for downstream §21
+     fire-prep register reference, register-class-distinct from
+     invocation-binding at implementation register).
+
+   - **(4b) Pattern reference at register-precision.**
+     `_resolve_n_eff_set()` at PHASE2C_12 Auth #6.x-extension commit
+     `995fdb2` is the concrete pattern reference for the executable
+     verification function discipline. The resolver was authored
+     post-fire-prep as ad hoc resolution to §19 instance #8 (canonical
+     §8.1 numbering); Item 4 codifies the discipline that the resolver
+     should have been authored pre-fire at sub-spec drafting cycle as
+     part of the Q15 [REVISED] LOCKED specification. The pattern
+     extends to other Q-LOCKED items at PHASE2C_12 + future cycles:
+     each Q-LOCKED item with framework runtime resolution produces
+     one verification function spec at sub-spec drafting register.
+
+   - **(4c) Coupling with §21 Application checklist item 3.** §21
+     Application checklist item 3 covers fire-prep mechanical
+     verification of framework parametric values at implementation
+     arc Step boundary; §22 Application checklist item 4 (this fold-
+     in) covers sub-spec drafting cycle authoring of executable
+     verification function specs. §21 fire-prep checklist register
+     provides the canonical invocation surface for verification
+     functions authored per this sub-rule, per §21 Application
+     checklist item 3 register-class binding ("codified separately
+     at PHASE2C_13 implementation arc Step 2 per sub-spec §5.4
+     disposition"). The two items operate at register-class-distinct
+     boundaries (sub-spec SEAL terminus vs implementation arc Step
+     fire-prep) but reference the same Q-LOCKED parameter set at
+     register-precision; cross-reference at Application checklist
+     item 4 preserves the chain's load-bearing structural coupling
+     at codification register, register-class-distinct from
+     invocation-binding register at implementation register.
+
+5. **Surface any drift detected as §19 instance candidate at register-
+   class-distinct register before SEAL fire.** Drift detected at
+   sub-spec SEAL pre-fire boundary logs at the cycle-internal §19
+   instance register; the log entry's mitigation-note column carries
+   the sub-spec SEAL pre-fire boundary register-class annotation as
+   metadata. The drift may be resolved before SEAL (e.g., framework
+   code patch + sub-spec lock value re-confirmation) or surfaced as
+   carry-forward to next-cycle register if framework code change is
+   out-of-scope; either disposition requires explicit register-class
+   logging at sub-spec SEAL pre-fire boundary, not implicit
+   propagation through SEAL. Mirrors §21 Application checklist item 5
+   register-class-distinct surfacing pattern at companion fire-prep
+   boundary.
+
+The five-item checklist (with item 4 internally structured at three
+sub-rules per Item 4 fold-in mechanism) is structurally designed for
+mechanical execution at sub-spec SEAL pre-fire register: enumeration
+→ per-parameter framework code site citation → canonical value
+divergence check → executable verification function spec authoring
+(fold-in) → drift surface routing. Mechanical execution does not
+require interpretive judgment at any item; the audit operates as a
+procedural gate at the sub-spec SEAL boundary, register-class-distinct
+from interpretive-register reviewer pass cycle activities operating at
+substantive content register.
+
+### Failure-mode signal
+
+Watch for sub-spec SEAL fires without explicit framework parameter
+audit at sub-spec drafting cycle terminus. The omission is the primary
+defect §22 catches: absent the audit, sub-spec → framework drift
+propagates through SEAL and surfaces at downstream fire-prep or fire-
+time register. PHASE2C_12 cycle's four §19 instances (canonical §8.1
+numbering #5 + #6 + #8 + #10) are concrete evidence basis: each
+instance, absent §22 audit at sub-spec SEAL pre-fire register, cost
+auth-iteration overhead at its downstream catch register (Step 2 fire-
+prep / Step 2 fire-prep / Auth #6.x extension / Step 8 fire-time).
+
+Watch for Q-LOCKED parameter enumeration at summary register rather
+than register-precision register. The pattern surfaces when the audit
+enumerates Q-LOCKED parameters by reading the sub-spec summary table
+without resolving each Q-numbered entry to its canonical lock value.
+Summary-level enumeration covers the structural parameter set but
+does not resolve canonical lock values; framework code value
+comparison against an unresolved canonical lock cannot detect
+divergence by construction. Inherits the register-precision discipline
+codified at §21 Failure-mode signal item 2.
+
+Watch for framework code site citation absent or imprecise. The
+pattern surfaces when the audit cites framework code at module
+register ("at `evaluate_dsr.py`") rather than at file:line register
+("at `evaluate_dsr.py:153` `_resolve_n_eff_set()`"). Module-level
+citation covers structural framework anchor but does not establish
+register-precision needed for canonical value comparison; framework
+code may contain multiple parametric sites for related Q-LOCKED items
+where divergence-class distinction requires line-precision register.
+
+Watch for canonical value comparison treated as interpretive judgment
+rather than mechanical procedure. The pattern surfaces when the
+comparison fires at high-level overview register ("looks aligned with
+sub-spec"; "framework appears to match the lock") rather than at
+mechanical comparison register (canonical lock value + framework code
+value at cited line + binary PASS / DRIFT outcome explicit).
+Interpretive-judgment execution covers the structural-defect axis at
+low cost but does not establish the register-precision the discipline
+requires; mechanical execution is load-bearing for the discipline's
+catch class.
+
+Watch for runtime-resolved parameter audit deferred to fire-prep
+without executable verification function spec at sub-spec. The
+pattern surfaces when the audit covers static Q-LOCKED items
+(constants, configuration defaults) at canonical value comparison
+register but defers runtime-resolved Q-LOCKED items (functional
+resolvers, cycle-conditional state, dual-gate frozenset structure)
+to fire-prep mechanical verification (§21) without authoring the
+corresponding executable verification function spec at sub-spec.
+The deferral substitutes runtime catch (§21) for sub-spec drafting
+register catch (§22 item 4 fold-in); each substitution leaves the
+runtime-resolved parameter without an executable verification anchor
+at fire-prep boundary, recreating the ad hoc resolution pattern that
+PHASE2C_12 §19 instance #8 (canonical §8.1 numbering) exemplifies.
+
+Watch for description drift between sub-spec parenthetical labels
+and source artifact canonical descriptions. The pattern surfaces
+when sub-spec body cites source-artifact register entries by number
+plus parenthetical description, where the parenthetical description
+diverges from the canonical source-artifact entry at the cited number.
+The drift is a sub-class of the §22 canonical failure mode pattern at
+sub-spec drafting register-class itself: handoff-noise propagation
+between authoring register and source artifact, undetected at
+sub-spec SEAL pre-fire absent register-precision empirical
+verification per §1 + §15 disciplines. PHASE2C_13 sub-spec §2.2
+codification mechanism prose contains a concrete instance:
+parenthetical descriptions for §19 instances #5 + #6 + #8 inverted
+relative to canonical PHASE2C_12 closeout §8.1 row register; the
+inverted descriptions did not block sub-spec SEAL because §22 audit
+discipline did not yet exist at the sub-spec SEAL register-event
+boundary. Future sub-spec drafting cycles operating §22 audit
+discipline at SEAL pre-fire register catch this drift class at the
+audit register itself.
+
+Watch for sub-spec SEAL fires under time pressure without §22 audit
+completed. The pattern surfaces when sub-spec SEAL pre-fire register
+elides §22 audit on the framing that "framework code looks aligned"
+or "audit can fire at implementation arc Step 1 instead." The
+elision substitutes downstream register catch (§21 fire-prep) for
+the sub-spec SEAL pre-fire register catch (§22 audit); the
+substitution cost is auth-iteration overhead at the downstream
+register relative to the same Q-LOCKED parameter audit at sub-spec
+SEAL pre-fire register. The pattern is the canonical failure mode
+the discipline catches.
+
+### Tier disposition
+
+§22 ships at **Medium tier with cross-cycle-pending status note**.
+The four PHASE2C_12 cycle §19 instances enumerated at Trigger
+context (canonical §8.1 numbering #5 + #6 + #8 + #10) give the
+discipline single-cycle empirical basis at sub-spec drafting →
+framework code drift register-class. Cross-cycle accumulation
+register is fed by historical PHASE2C_8.1 / PHASE2C_9 / PHASE2C_10 /
+PHASE2C_11 instance backfill at the cycle-complexity scaling
+diagnosis discipline (codified separately at PHASE2C_13
+implementation arc Step 7 per sub-spec §5.4 disposition, Carry-
+forward A new-§ slot). Strong-tier promotion is contingent on (i)
+Strong-tier promotion bar criteria codified at the existing §13-§20
+tier framework refinement (codified at PHASE2C_13 implementation arc
+Step 9 per sub-spec §5.4 disposition, Carry-forward C fold-in to §20
+appendix-style sub-§) and (ii) cross-cycle accumulation evidence
+threshold met per the Strong-tier bar; tier re-evaluation at
+successor methodology consolidation cycle once both contingencies
+resolve. Medium tier preserves the discipline at observation-backed
+application register without claiming Strong-tier prescriptive force
+prematurely.
+
+The Item 4 fold-in (Application checklist item 4 sub-rules 4a/4b/4c)
+inherits §22's tier disposition at register-precision: the executable
+verification function discipline operates at register-class-coupled
+register with §22's framework parameter pre-lock audit; tier-class
+parallel preserves the parent-operationalization coupling per sub-
+spec §5.4 fold-in 4-criteria check. Independent tier evaluation of
+the Item 4 fold-in is register-class-distinct concern: the fold-in
+ships under §22 Medium tier disposition at codification register; the
+Item 4 evidence basis (one concrete pattern reference at
+`_resolve_n_eff_set()` plus indirect evidence via §22's four §19
+instances) supports the parent §22 tier disposition at fold-in
+register without requiring separate Item 4 tier evaluation.
+
+---
+
 ---
