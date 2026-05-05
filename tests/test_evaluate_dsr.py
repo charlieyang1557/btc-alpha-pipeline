@@ -2703,3 +2703,189 @@ class TestComputeSimplifiedDSRPHASE2C12NAllowlist:
         ]
         with pytest.raises(ValueError):
             compute_simplified_dsr(candidates, n_trials=PHASE2C_12_N_RAW)
+
+
+# ---------------------------------------------------------------------------
+# PHASE2C_12 Auth #6.x-extension — sensitivity table cycle-conditional N_eff
+# ---------------------------------------------------------------------------
+#
+# Per Charlie auth #6.x-extension (ratified via convergence post Codex
+# first-fire empirical verification finding A+B+C):
+#
+# Finding A: doc drift at line 1130 (folded into hotfix; not separately tested)
+# Finding B: sensitivity table primary anchor must parameterize to fire's
+#   n_trials (NOT hardcoded EXPECTED_N_RAW=198)
+# Finding C: sub-spec Q15 [REVISED] N_eff set must respect "number of
+#   operational themes" semantic per cycle:
+#     PHASE2C_11 fire (n_trials=198): {198, 80, 40, 5}  — 5 themes
+#     PHASE2C_12 fire (n_trials=197): {197, 80, 40, 6}  — 6 themes (added mfc)
+#
+# §19 instance #9: sub-spec Q15 [REVISED] specified {198, 80, 40, 6} for
+# PHASE2C_12 cycle but framework code still hardcoded {198, 80, 40, 5}.
+# Sub-spec drafting cycle text-register pass clean / framework code update
+# missed / fire-prep audit catch. Cumulative count 8→9 PHASE2C_12,
+# 18→19 cross-cycle.
+
+
+class TestComputeSimplifiedDSRPHASE2C12SensitivityTable:
+    """PHASE2C_12 sensitivity table cycle-conditional N_eff (Auth #6.x-extension).
+
+    Tests Finding B (parameterize primary anchor) + Finding C (Q15 [REVISED]
+    sub-spec compliance for PHASE2C_12 N_eff = {n_trials, 80, 40, 6}):
+    - PHASE2C_11 fire (n_trials=198): preserves {198, 80, 40, 5} unchanged
+    - PHASE2C_12 fire (n_trials=197): produces {197, 80, 40, 6}
+    - Primary anchor parameterizes to actual n_trials per fire
+    """
+
+    def test_sensitivity_table_phase2c_11_n_eff_set_unchanged(self):
+        """PHASE2C_11 fire (n_trials=198) preserves {5, 40, 80, 198} backward-compat."""
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            compute_simplified_dsr,
+        )
+        sharpes = [0.5, -0.5] * 99
+        candidates = [
+            CandidateInput(
+                hypothesis_hash=f"p11_{i:03d}",
+                sharpe_ratio=sharpes[i],
+                total_trades=10,
+                audit_v1_artifact_path=f"{SYN_BASE}/syn_{i}.json",
+                name="syn", theme="syn", lifecycle_state="shortlisted",
+            )
+            for i in range(198)
+        ]
+        result = compute_simplified_dsr(candidates, n_trials=198)
+        n_effs = sorted(row.n_eff for row in result.sensitivity_table)
+        assert n_effs == [5, 40, 80, 198]
+
+    def test_sensitivity_table_phase2c_12_n_eff_set_uses_6_and_197(self):
+        """PHASE2C_12 fire (n_trials=197) produces {6, 40, 80, 197} per Q15 [REVISED]."""
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            PHASE2C_12_N_RAW,
+            compute_simplified_dsr,
+        )
+        sharpes = [0.5, -0.5] * 98 + [0.5]  # length 197
+        candidates = [
+            CandidateInput(
+                hypothesis_hash=f"p12_{i:03d}",
+                sharpe_ratio=sharpes[i],
+                total_trades=10,
+                audit_v1_artifact_path=f"{SYN_BASE}/syn_{i}.json",
+                name="syn", theme="syn", lifecycle_state="shortlisted",
+            )
+            for i in range(PHASE2C_12_N_RAW)
+        ]
+        result = compute_simplified_dsr(candidates, n_trials=PHASE2C_12_N_RAW)
+        n_effs = sorted(row.n_eff for row in result.sensitivity_table)
+        assert n_effs == [6, 40, 80, 197]
+
+    def test_sensitivity_table_phase2c_12_primary_at_n_trials(self):
+        """PHASE2C_12 fire: row with n_eff=197 has register_label='primary';
+        row with n_eff=198 absent (replaced by 197)."""
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            PHASE2C_12_N_RAW,
+            compute_simplified_dsr,
+        )
+        sharpes = [0.5, -0.5] * 98 + [0.5]
+        candidates = [
+            CandidateInput(
+                hypothesis_hash=f"p12_{i:03d}",
+                sharpe_ratio=sharpes[i],
+                total_trades=10,
+                audit_v1_artifact_path=f"{SYN_BASE}/syn_{i}.json",
+                name="syn", theme="syn", lifecycle_state="shortlisted",
+            )
+            for i in range(PHASE2C_12_N_RAW)
+        ]
+        result = compute_simplified_dsr(candidates, n_trials=PHASE2C_12_N_RAW)
+        primary_rows = [
+            row for row in result.sensitivity_table
+            if row.register_label == "primary"
+        ]
+        assert len(primary_rows) == 1
+        assert primary_rows[0].n_eff == 197
+        # Confirm n_eff=198 is NOT present in PHASE2C_12 sensitivity table.
+        n_effs = {row.n_eff for row in result.sensitivity_table}
+        assert 198 not in n_effs
+        assert 197 in n_effs
+        assert 6 in n_effs
+
+    def test_sensitivity_table_phase2c_11_primary_at_198(self):
+        """PHASE2C_11 fire: backward-compat — row with n_eff=198 is primary."""
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            compute_simplified_dsr,
+        )
+        sharpes = [0.5, -0.5] * 99
+        candidates = [
+            CandidateInput(
+                hypothesis_hash=f"p11_{i:03d}",
+                sharpe_ratio=sharpes[i],
+                total_trades=10,
+                audit_v1_artifact_path=f"{SYN_BASE}/syn_{i}.json",
+                name="syn", theme="syn", lifecycle_state="shortlisted",
+            )
+            for i in range(198)
+        ]
+        result = compute_simplified_dsr(candidates, n_trials=198)
+        primary_rows = [
+            row for row in result.sensitivity_table
+            if row.register_label == "primary"
+        ]
+        assert len(primary_rows) == 1
+        assert primary_rows[0].n_eff == 198
+
+    def test_sensitivity_table_phase2c_12_no_5_themes_row(self):
+        """PHASE2C_12 fire: n_eff=5 (PHASE2C_11 themes count) NOT present;
+        replaced with n_eff=6 (PHASE2C_12 themes count) per Q15 [REVISED]."""
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            PHASE2C_12_N_RAW,
+            compute_simplified_dsr,
+        )
+        sharpes = [0.5, -0.5] * 98 + [0.5]
+        candidates = [
+            CandidateInput(
+                hypothesis_hash=f"p12_{i:03d}",
+                sharpe_ratio=sharpes[i],
+                total_trades=10,
+                audit_v1_artifact_path=f"{SYN_BASE}/syn_{i}.json",
+                name="syn", theme="syn", lifecycle_state="shortlisted",
+            )
+            for i in range(PHASE2C_12_N_RAW)
+        ]
+        result = compute_simplified_dsr(candidates, n_trials=PHASE2C_12_N_RAW)
+        n_effs = {row.n_eff for row in result.sensitivity_table}
+        assert 5 not in n_effs  # PHASE2C_11 themes count NOT applicable
+        assert 6 in n_effs       # PHASE2C_12 themes count IS present
+
+    def test_sensitivity_table_phase2c_12_var_zero_branch_also_uses_q15(self):
+        """PHASE2C_12 fire under var_zero degenerate state: sensitivity table
+        must still use {197, 80, 40, 6} (NOT fall back to PHASE2C_11 set)."""
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            PHASE2C_12_N_RAW,
+            compute_simplified_dsr,
+        )
+        # All identical Sharpe → variance zero → degenerate-state branch.
+        candidates = [
+            CandidateInput(
+                hypothesis_hash=f"p12vz_{i:03d}",
+                sharpe_ratio=0.0,
+                total_trades=10,
+                audit_v1_artifact_path=f"{SYN_BASE}/syn_{i}.json",
+                name="syn", theme="syn", lifecycle_state="shortlisted",
+            )
+            for i in range(PHASE2C_12_N_RAW)
+        ]
+        result = compute_simplified_dsr(candidates, n_trials=PHASE2C_12_N_RAW)
+        n_effs = sorted(row.n_eff for row in result.sensitivity_table)
+        assert n_effs == [6, 40, 80, 197]
+        primary_rows = [
+            row for row in result.sensitivity_table
+            if row.register_label == "primary"
+        ]
+        assert len(primary_rows) == 1
+        assert primary_rows[0].n_eff == 197
