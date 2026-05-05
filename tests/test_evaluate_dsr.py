@@ -2706,6 +2706,185 @@ class TestComputeSimplifiedDSRPHASE2C12NAllowlist:
 
 
 # ---------------------------------------------------------------------------
+# PHASE2C_12 Auth #6.y — eligible-subset (197, 139) parallel-structure pair
+# ---------------------------------------------------------------------------
+#
+# Per Charlie auth #6.y (ratified via convergence post §19 instance #10
+# fire-time surface):
+#
+# Finding (§19 instance #10): Auth #6.x β1 narrow + Auth #6.x-extension
+# scope added (197, 197) full-population pair to ALLOWED_DUAL_GATE_PAIRS
+# but missed parallel-structure (197, 139) eligible-subset pair. PHASE2C_11
+# canonical Step 3 fire used (198, 154) eligible-subset pair per
+# _step3_result.json verbatim; PHASE2C_12 Step 8 canonical fire requires
+# parallel (197, 139) per sub-spec §6.2 Component 6 framework reuse.
+# Cumulative §19 count: 9→10 PHASE2C_12, 19→20 cross-cycle.
+#
+# Auth #6.y scope: add PHASE2C_12_N_ELIGIBLE_OBSERVED = 139 constant +
+# add (PHASE2C_12_N_RAW, PHASE2C_12_N_ELIGIBLE_OBSERVED) pair to
+# ALLOWED_DUAL_GATE_PAIRS. Empirical attribution per advisor sharpening:
+# 139 is observed n_eligible at PHASE2C_12 cycle post Q16 [Path A patch]
+# T_c<5 filter — cycle-specific empirical value, NOT magic number.
+#
+# Forward discipline: PHASE2C_13+ cycles with different n_eligible require
+# explicit Q16-equivalent ratification + extension here. No tolerance band;
+# cycle-discrete (parallel to existing ALLOWED_DUAL_GATE_PAIRS discipline).
+
+
+class TestComputeSimplifiedDSRPHASE2C12NEligibleAllowlist:
+    """PHASE2C_12 Auth #6.y eligible-subset (197, 139) verification.
+
+    Tests the parallel-structure addition mirroring PHASE2C_11 (198, 154):
+    - PHASE2C_12_N_ELIGIBLE_OBSERVED constant = 139 (cycle-specific empirical)
+    - (197, 139) eligible-subset pair newly accepted
+    - PHASE2C_11 (198, 154) backward-compat preserved
+    - PHASE2C_12 (197, 197) full-population still accepted
+    - Off-by-one neighbors (197, 138) + (197, 140) still rejected (no tolerance)
+    - Cross-pairs (e.g. (198, 139)) still rejected
+    """
+
+    def test_phase2c_12_n_eligible_observed_constant_exists_and_equals_139(self):
+        """Constant PHASE2C_12_N_ELIGIBLE_OBSERVED must exist and equal 139.
+
+        139 = empirical n_eligible at PHASE2C_12 cycle post Q16 [Path A
+        patch] T_c<5 filter, observed at fire-time surface 2026-05-04
+        from load_audit_v1_candidates(phase2c_12_audit_v1, expected_n_raw=197).
+        Cycle-specific empirical attribution; NOT magic number.
+        """
+        from backtest.evaluate_dsr import PHASE2C_12_N_ELIGIBLE_OBSERVED
+        assert PHASE2C_12_N_ELIGIBLE_OBSERVED == 139
+
+    def test_phase2c_12_eligible_subset_pair_in_allowlist(self):
+        """Pair (PHASE2C_12_N_RAW, PHASE2C_12_N_ELIGIBLE_OBSERVED)
+        must be in ALLOWED_DUAL_GATE_PAIRS.
+        """
+        from backtest.evaluate_dsr import (
+            ALLOWED_DUAL_GATE_PAIRS,
+            PHASE2C_12_N_ELIGIBLE_OBSERVED,
+            PHASE2C_12_N_RAW,
+        )
+        assert (PHASE2C_12_N_RAW, PHASE2C_12_N_ELIGIBLE_OBSERVED) in (
+            ALLOWED_DUAL_GATE_PAIRS
+        )
+
+    def test_phase2c_12_eligible_subset_accepted(self):
+        """Canonical PHASE2C_12 eligible-subset fire: n_trials=197 + len=139
+        must NOT raise; produces result.
+
+        Parallel structure to PHASE2C_11 test_phase2c_11_eligible_subset_still_accepted
+        (n_trials=198 + len=154).
+        """
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            PHASE2C_12_N_ELIGIBLE_OBSERVED,
+            PHASE2C_12_N_RAW,
+            compute_simplified_dsr,
+        )
+        candidates = [
+            CandidateInput(
+                hypothesis_hash=f"p12e_{i:03d}",
+                sharpe_ratio=(0.3 if i % 2 == 0 else -0.3),
+                total_trades=10,
+                audit_v1_artifact_path=f"{SYN_BASE}/syn_{i}.json",
+                name="syn", theme="syn", lifecycle_state="shortlisted",
+            )
+            for i in range(PHASE2C_12_N_ELIGIBLE_OBSERVED)
+        ]
+        result = compute_simplified_dsr(candidates, n_trials=PHASE2C_12_N_RAW)
+        assert result.n_trials == 197
+
+    def test_phase2c_12_eligible_subset_off_by_one_low_rejected(self):
+        """Pair (197, 138) must still raise — no tolerance band; one-below
+        eligible count is NOT in allowlist.
+        """
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            PHASE2C_12_N_RAW,
+            compute_simplified_dsr,
+        )
+        candidates = [
+            CandidateInput(
+                hypothesis_hash=f"o138_{i:03d}",
+                sharpe_ratio=0.0,
+                total_trades=10,
+                audit_v1_artifact_path=f"{SYN_BASE}/syn_{i}.json",
+                name="syn", theme="syn", lifecycle_state="shortlisted",
+            )
+            for i in range(138)
+        ]
+        with pytest.raises(ValueError):
+            compute_simplified_dsr(candidates, n_trials=PHASE2C_12_N_RAW)
+
+    def test_phase2c_12_eligible_subset_off_by_one_high_rejected(self):
+        """Pair (197, 140) must still raise — no tolerance band; one-above
+        eligible count is NOT in allowlist.
+        """
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            PHASE2C_12_N_RAW,
+            compute_simplified_dsr,
+        )
+        candidates = [
+            CandidateInput(
+                hypothesis_hash=f"o140_{i:03d}",
+                sharpe_ratio=0.0,
+                total_trades=10,
+                audit_v1_artifact_path=f"{SYN_BASE}/syn_{i}.json",
+                name="syn", theme="syn", lifecycle_state="shortlisted",
+            )
+            for i in range(140)
+        ]
+        with pytest.raises(ValueError):
+            compute_simplified_dsr(candidates, n_trials=PHASE2C_12_N_RAW)
+
+    def test_cross_pair_198_139_rejected(self):
+        """Cross-pair n_trials=198 + len=139 must still raise — PHASE2C_12
+        eligible count is NOT paired with PHASE2C_11 N (198).
+        """
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            EXPECTED_N_RAW,
+            compute_simplified_dsr,
+        )
+        candidates = [
+            CandidateInput(
+                hypothesis_hash=f"xp139_{i:03d}",
+                sharpe_ratio=0.0,
+                total_trades=10,
+                audit_v1_artifact_path=f"{SYN_BASE}/syn_{i}.json",
+                name="syn", theme="syn", lifecycle_state="shortlisted",
+            )
+            for i in range(139)
+        ]
+        with pytest.raises(ValueError):
+            compute_simplified_dsr(candidates, n_trials=EXPECTED_N_RAW)
+
+    def test_allowlist_contains_exactly_four_pairs_post_auth_6y(self):
+        """ALLOWED_DUAL_GATE_PAIRS must contain exactly 4 pairs after
+        Auth #6.y: PHASE2C_11 {(198,198), (198,154)} +
+        PHASE2C_12 {(197,197), (197,139)}.
+
+        Forward discipline guard: PHASE2C_13+ extensions add cycle-specific
+        constants here, increasing this count.
+        """
+        from backtest.evaluate_dsr import (
+            ALLOWED_DUAL_GATE_PAIRS,
+            EXPECTED_N_ELIGIBLE_AT_CANONICAL,
+            EXPECTED_N_RAW,
+            PHASE2C_12_N_ELIGIBLE_OBSERVED,
+            PHASE2C_12_N_RAW,
+        )
+        assert len(ALLOWED_DUAL_GATE_PAIRS) == 4
+        expected = frozenset({
+            (EXPECTED_N_RAW, EXPECTED_N_RAW),
+            (EXPECTED_N_RAW, EXPECTED_N_ELIGIBLE_AT_CANONICAL),
+            (PHASE2C_12_N_RAW, PHASE2C_12_N_RAW),
+            (PHASE2C_12_N_RAW, PHASE2C_12_N_ELIGIBLE_OBSERVED),
+        })
+        assert ALLOWED_DUAL_GATE_PAIRS == expected
+
+
+# ---------------------------------------------------------------------------
 # PHASE2C_12 Auth #6.x-extension — sensitivity table cycle-conditional N_eff
 # ---------------------------------------------------------------------------
 #
