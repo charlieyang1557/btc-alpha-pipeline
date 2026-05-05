@@ -101,6 +101,56 @@ ALLOWED_DUAL_GATE_PAIRS: frozenset[tuple[int, int]] = frozenset({
     (PHASE2C_12_N_RAW, PHASE2C_12_N_RAW),                 # (197, 197) PHASE2C_12 full
 })
 
+
+# PHASE2C_12 Auth #6.x-extension (Charlie ratified via convergence + Codex
+# first-fire empirical Findings B+C surface). Sensitivity table N_eff set
+# is cycle-conditional per sub-spec Q15 [REVISED] semantic-reuse register
+# at "number of operational themes":
+#   PHASE2C_11 (n_trials=198): {198, 80, 40, 5} — 5 operational themes
+#   PHASE2C_12 (n_trials=197): {197, 80, 40, 6} — 6 operational themes
+#                                                  (added multi_factor_combination)
+#
+# Forward discipline: PHASE2C_13+ cycles with different theme count require
+# explicit Q15 [REVISED] sub-spec ratification + extension here. No
+# tolerance band; cycle-discrete (parallel to ALLOWED_DUAL_GATE_PAIRS
+# discipline).
+#
+# Closes Codex first-fire Finding B (parameterize primary anchor to fire's
+# n_trials) + Finding C (sub-spec Q15 [REVISED] {n_trials, 80, 40, 6} for
+# PHASE2C_12). Rectifies §19 instance #9 (sub-spec drafting cycle Q15
+# [REVISED] LOCKED but framework code never updated; multi-reviewer
+# convergence did not verify sub-spec compliance against code).
+def _resolve_n_eff_set(n_trials: int) -> tuple[int, ...]:
+    """Resolve sensitivity table N_eff set per cycle anchor.
+
+    Args:
+        n_trials: Fire's n_trials value (must be in ALLOWED_DUAL_GATE_PAIRS
+            n_trials values: {EXPECTED_N_RAW=198, PHASE2C_12_N_RAW=197}).
+
+    Returns:
+        4-tuple of N_eff values for sensitivity table iteration. The first
+        element is the cycle's primary anchor (= n_trials); remaining 3
+        are sensitivity rows ({80, 40, themes_count}).
+
+    Raises:
+        ValueError: If n_trials is not a recognized cycle anchor.
+            Should be unreachable under canonical entry (dual-gate
+            ALLOWED_DUAL_GATE_PAIRS enforces n_trials membership at
+            function entry); defensive coverage for future API surface
+            extension.
+    """
+    if n_trials == EXPECTED_N_RAW:  # 198 — PHASE2C_11
+        return (EXPECTED_N_RAW, 80, 40, 5)
+    if n_trials == PHASE2C_12_N_RAW:  # 197 — PHASE2C_12
+        return (PHASE2C_12_N_RAW, 80, 40, 6)
+    raise ValueError(
+        f"_resolve_n_eff_set: unhandled n_trials={n_trials}. "
+        f"Recognized cycle anchors: EXPECTED_N_RAW={EXPECTED_N_RAW} "
+        f"(PHASE2C_11) or PHASE2C_12_N_RAW={PHASE2C_12_N_RAW} "
+        f"(PHASE2C_12). Future cycles require explicit extension here "
+        f"+ sub-spec Q15 [REVISED] ratification."
+    )
+
 # Euler–Mascheroni constant γ_e per §4.3 Step 2 Gumbel approximation.
 EULER_MASCHERONI = 0.5772156649015329
 
@@ -1126,9 +1176,10 @@ def compute_simplified_dsr(
 
     if n_eligible == 0:
         # §1.5 dual-handling: n_eligible_zero degenerate state.
-        # UNREACHABLE under current API contract: §3.2 dual-gate forces
-        # len(candidates) ∈ {EXPECTED_N_RAW, EXPECTED_N_ELIGIBLE_AT_CANONICAL},
-        # so len == 0 cannot reach this branch via canonical entry. Patch #2
+        # UNREACHABLE under current API contract: paired-pair dual-gate
+        # forces (n_trials, len(candidates)) ∈ ALLOWED_DUAL_GATE_PAIRS
+        # = {(198,198), (198,154), (197,197)}, so len == 0 cannot reach
+        # this branch via canonical entry. Patch #2
         # (Codex first-fire #2 §4.4(1) enforcement add at API entry) further
         # raises ValueError before this branch on T_c < MIN_TRADES_FOR_PRIMARY
         # admission; Patch #4 (Codex first-fire #4) raises on non-finite
@@ -1181,12 +1232,15 @@ def compute_simplified_dsr(
         # independent; z and p remain finite); per-row disposition is
         # forced to "inconclusive" because population-level screen is
         # undefined under var_zero per §3.6 + §4.4(4). Schema §1 line 49
-        # specifies 4 rows at N_eff ∈ {198, 80, 40, 5} unconditionally;
-        # var_zero must not drop the table per Codex first-fire #5
-        # adjudication (advisor refinement: per-row compute over Codex's
-        # proposed hardcoded argmax_p_value=0.5 placeholder).
+        # specifies 4 rows at N_eff ∈ _resolve_n_eff_set(n_trials)
+        # unconditionally; var_zero must not drop the table per Codex
+        # first-fire #5 adjudication (advisor refinement: per-row compute
+        # over Codex's proposed hardcoded argmax_p_value=0.5 placeholder).
+        # PHASE2C_12 Auth #6.x-extension: N_eff set is cycle-conditional
+        # (PHASE2C_11 {198,80,40,5} / PHASE2C_12 {197,80,40,6}); primary
+        # anchor parameterizes to fire's n_trials per Finding B.
         sensitivity_rows: list[SensitivityRow] = []
-        for n_eff in (EXPECTED_N_RAW, 80, 40, 5):
+        for n_eff in _resolve_n_eff_set(n_trials):
             bonf_thr_row = math.sqrt(2.0 * math.log(n_eff))
             e_max_row = _gumbel_expected_max(0.0, n_eff)
             if argmax_candidate.total_trades > 1:
@@ -1196,7 +1250,7 @@ def compute_simplified_dsr(
             else:
                 p_row = 1.0
             label_row: Literal["primary", "sensitivity"] = (
-                "primary" if n_eff == EXPECTED_N_RAW else "sensitivity"
+                "primary" if n_eff == n_trials else "sensitivity"
             )
             sensitivity_rows.append(SensitivityRow(
                 n_eff=n_eff,
@@ -1260,9 +1314,13 @@ def compute_simplified_dsr(
     population_argmax_hash = candidates[argmax_idx].hypothesis_hash
 
     # ----- §5.4 sensitivity table (descriptive only) -----
+    # PHASE2C_12 Auth #6.x-extension: N_eff set is cycle-conditional via
+    # _resolve_n_eff_set(n_trials); primary anchor parameterizes to fire's
+    # n_trials per Finding B + Q15 [REVISED] sub-spec compliance per
+    # Finding C.
     sensitivity_rows: list[SensitivityRow] = []
     argmax_candidate = candidates[argmax_idx]
-    for n_eff in (EXPECTED_N_RAW, 80, 40, 5):
+    for n_eff in _resolve_n_eff_set(n_trials):
         bonf_thr = math.sqrt(2.0 * math.log(n_eff))
         e_max = _gumbel_expected_max(sharpe_var, n_eff)
         if argmax_candidate.total_trades > 1:
@@ -1275,7 +1333,7 @@ def compute_simplified_dsr(
         dsr_pass_row = bool(p < 0.05)
         disp_row = _route_disposition(bonf_pass_row, dsr_pass_row, p)
         label: Literal["primary", "sensitivity"] = (
-            "primary" if n_eff == EXPECTED_N_RAW else "sensitivity"
+            "primary" if n_eff == n_trials else "sensitivity"
         )
         sensitivity_rows.append(SensitivityRow(
             n_eff=n_eff,
