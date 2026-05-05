@@ -3558,4 +3558,348 @@ register without requiring separate Item 4 tier evaluation.
 
 ---
 
+## §23 Inter-step contract standardization at multi-step implementation arc Step boundaries
+
+### Principle
+
+Multi-step implementation arc Step boundaries (Step N output → Step N+1
+input) require explicit interface contract specification at sub-spec
+authoring time. The interface contract specification produces three
+artifacts at register-precision per Step boundary: (a) schema (field
+enumeration + type + constraint at the Step N output / Step N+1 input
+boundary; explicit declarative specification, not narrative
+description); (b) sample (canonical example of the Step N output
+artifact at field-by-field instantiation; concrete instance, not
+abstract template); (c) validation (consumer-side check function
+specification or schema-validator invocation surface at Step N+1
+fire-prep register). Absent the contract specification at sub-spec
+authoring register, the Step N+1 fire register consumes the Step N
+output at implicit-contract register, with schema-vs-input divergence
+surfacing only at Step N+1 fire-time integration debugging or post-
+fire empirical observation.
+
+The discipline operates at a register distinct from §1 empirical
+verification for factual claims, §15 anchor-list empirical verification
+at the receiving cycle, §22 framework parameter pre-lock audit at
+sub-spec drafting cycle terminus, and §21 fire-prep precondition
+checklist discipline at multi-step implementation arc Step boundaries.
+§1 covers general empirical verification of factual claims at any
+drafting register. §15 covers pre-drafting anchor verification at the
+receiving cycle — anchors arriving from advisor cycles, scoping
+decisions, or prior register entries verified against canonical
+artifacts before drafting initiates. §23 covers **sub-spec authoring of
+inter-step interface contracts** — the explicit schema + sample +
+validation triple authored at sub-spec body for each Step N → Step N+1
+boundary, register-class-distinct from per-parameter Q-LOCKED audit
+content scope. §22 covers pre-lock mechanical verification at the
+sub-spec drafting cycle terminus — Q-LOCKED parameters mechanically
+traced from sub-spec lock to framework code site at the sub-spec SEAL
+pre-fire boundary. §21 covers pre-fire mechanical verification at the
+implementation arc Step fire-prep boundary — Q-LOCKED parameters and
+inter-step interface contracts mechanically verified at fire-prep
+boundary, with the inter-step interface verification authored per §23
+providing the canonical contract reference at §21 Application checklist
+item 4 register.
+
+The five disciplines form a complementary chain ordered by register-
+class catch boundary tracking workflow time: §1 catches defects at any
+drafting register; §15 catches defects at anchor receipt boundary
+(drafting cycle start); §23 catches defects at sub-spec authoring of
+inter-step interface contracts (drafting cycle mid); §22 catches
+defects at sub-spec SEAL pre-fire boundary (drafting cycle terminus);
+§21 catches defects at implementation arc Step fire-prep boundary
+(post-SEAL). §23 is ordered before §22 in the chain because §23 fires
+at sub-spec authoring time per sub-spec §2.3 binding, while §22 fires
+at sub-spec drafting cycle terminus per §22 binding. The chain's
+structural value is register-class-distinct catch points across
+discipline scope. A defect that escapes one register catches at the
+next; absence of any one register increases retroactive defect
+propagation overhead at downstream registers. §23's specific catch
+class is sub-spec → inter-step interface specification absence
+detectable at sub-spec authoring register — the class of interface-
+specification gap that, absent §23, propagates through sub-spec SEAL
+and surfaces as Step N+1 fire-time integration debugging or post-fire
+empirical observation.
+
+§23 operates at register distinct from §22 and §21 at coupled but
+distinct register-class scopes. §22's catch class is canonical
+Q-LOCKED parameter value vs framework code value divergence at
+sub-spec SEAL pre-fire register; §23's catch class is inter-step
+interface contract specification absence at sub-spec authoring register
+— register-class-coupled at sub-spec drafting cycle but register-
+class-distinct at content scope (per-parameter values vs per-Step-
+boundary interfaces). §21's catch class is fire-time runtime resolution
+at implementation arc Step fire-prep boundary; §23's catch class is
+sub-spec authoring at sub-spec body register — register-class-coupled
+at inter-step interface verification (the contract authored per §23
+provides the canonical reference for §21 Application checklist item 4
+fire-prep verification) but register-class-distinct at temporal scope
+(sub-spec authoring vs implementation arc fire-prep). Cross-§ register-
+class collision is avoided in both cases by content-scope or temporal-
+scope distinction at register-precision.
+
+### Trigger context
+
+This discipline's empirical basis is one PHASE2C_12 cycle instance
+per Item 3 verbatim source at PHASE2C_12 closeout
+[`docs/closeout/PHASE2C_12_RESULTS.md`](../closeout/PHASE2C_12_RESULTS.md)
+§10.2 lines 515-518:
+
+> Item 3 — Step 7/8 contract standardization. Codify inter-step
+> contract test (schema + sample + validation) at each Step boundary.
+> Step 7 evaluation gate output schema → Step 8 input contract had no
+> explicit interface spec at PHASE2C_12 fire-time.
+
+PHASE2C_12 cycle Step 7 evaluation gate output → Step 8 mechanical
+disposition fire input boundary fired at PHASE2C_12 cycle without
+explicit interface contract specification at sub-spec body. Step 7
+produced evaluation gate output artifacts at
+`data/phase2c_evaluation_gate/phase2c_12_*` (audit_v1 + audit_2024_v1
++ eval_2020_v1 + eval_2021_v1 per CLAUDE.md PHASE2C_12 cycle
+implementation arc commit register); Step 8 consumed these artifacts
+at fire-time without an explicit schema + sample + validation triple
+authored at sub-spec body. The interface gap surfaced at fire-time
+integration debugging register-precision rather than at sub-spec
+authoring register; absent §23 audit at sub-spec authoring boundary,
+the gap propagated through sub-spec SEAL to Step 8 fire-prep with
+downstream integration overhead at register-class-distinct register
+from per-parameter §22 audit class.
+
+The single PHASE2C_12 instance represents the canonical fire-time
+contract gap evidence basis at the Step N → Step N+1 boundary register-
+class. Single-instance basis per cycle is sufficient for Medium-tier
+codification per sub-spec §4.3.4 binding; the register-class-distinction
+from §19 finding pattern accumulation density and the Strong-tier
+promotion contingency framing are anchored at Tier disposition
+register-class-canonical anchor below.
+
+The pattern generalizes from the PHASE2C_12 Step 7 → Step 8 boundary
+to any multi-step implementation arc Step N → Step N+1 boundary with
+chained output → input dependencies. Generalization scope: any Step
+pair where Step N produces an artifact (file path + format + schema)
+consumed at Step N+1 register; the trigger condition is the inter-step
+boundary itself, not the specific Step pair or specific output / input
+semantics. The discipline's Application checklist (items 1-5 below)
+operates uniformly across Step pair instances; the per-Step-pair
+instantiation produces register-class-specific schema + sample +
+validation triple at register-precision but the Application checklist
+procedural structure is invariant.
+
+### Application checklist
+
+At sub-spec drafting cycle for each multi-step implementation arc Step
+boundary:
+
+1. **Identify Step N output artifact(s).** For each Step N → Step N+1
+   boundary at sub-spec, enumerate the canonical output artifact set
+   produced at Step N register. The enumeration produces three sub-
+   artifacts at register-precision per output: (a) file path at
+   canonical project structure register (e.g.,
+   `data/phase2c_evaluation_gate/audit_v1/`); (b) format at file-
+   format register (e.g., JSON, Parquet, CSV); (c) schema at field-
+   enumeration register (field name + type + constraint per field).
+   Enumeration precision requires reading sub-spec Step N description
+   at register-precision, not summary register; output artifacts cited
+   only indirectly (e.g., "per Step N output") require resolution to
+   canonical artifact path + format + schema before enumeration
+   completes. Mirrors §21 Application checklist item 1 register-
+   precision discipline at the parallel Q-LOCKED parameter enumeration
+   register-class.
+
+2. **Identify Step N+1 input requirement(s).** For each Step N → Step
+   N+1 boundary at sub-spec, enumerate the consumed input artifact
+   set required at Step N+1 register. The enumeration produces three
+   sub-artifacts at register-precision per input: (a) consumed file
+   path at the Step N+1 fire-time register; (b) expected schema at
+   field-enumeration register (field name + type + constraint per
+   field); (c) validation rules (consumer-side check function or
+   schema-validator invocation surface at Step N+1 fire-prep register).
+   Enumeration precision matches item 1 register precision; input
+   artifacts cited only indirectly require resolution to canonical
+   consumed-path + expected-schema + validation-rule before
+   enumeration completes.
+
+3. **Author explicit interface spec triple at sub-spec body.** For
+   each Step N → Step N+1 boundary at sub-spec, author the schema +
+   sample + validation triple at sub-spec body register. The triple
+   format at register-precision: schema (field enumeration + type +
+   constraint at the Step N output / Step N+1 input boundary; explicit
+   declarative specification, not narrative description); sample
+   (canonical example of the Step N output artifact at field-by-field
+   instantiation; concrete instance, not abstract template); validation
+   (consumer-side check function specification or schema-validator
+   invocation surface at Step N+1 fire-prep register; specifies the
+   validation function signature, return semantics, and invocation
+   surface annotation at sub-spec authoring register, register-class-
+   distinct from invocation-binding at implementation register per §22
+   Application checklist item 4 sub-rule 4a precedent). All three
+   artifacts of the triple must be authored explicitly at sub-spec
+   body; partial authoring (schema-only or sample-only) leaves the
+   consumer-side validation surface unspecified, recreating the
+   implicit-contract gap pattern that §23 catches.
+
+4. **Bind interface spec at sub-spec § for the Step boundary.** Each
+   interface spec triple binds at a sub-spec § (sub-§ or content
+   paragraph cluster at register-precision) referenced by both Step N
+   and Step N+1 sub-spec content. The binding produces a register-
+   class-canonical anchor for the interface spec; sub-spec content at
+   Step N register cross-references the binding § for Step N output
+   specification; sub-spec content at Step N+1 register cross-
+   references the binding § for Step N+1 input requirement. Mutual
+   cross-reference at the binding § preserves the inter-step contract
+   at register-class-coherent canonical anchor; partial cross-reference
+   (Step N references only or Step N+1 references only) recreates the
+   asymmetric specification pattern that the contract standardization
+   discipline catches.
+
+5. **Implementation arc Step N+1 fire-prep boundary invokes the
+   interface validation function authored per item 3 as fire-prep
+   precondition (cross-reference §21 fire-prep precondition checklist
+   Application checklist item 4).** §21 Application checklist item 4
+   ("For inter-step interface contracts (Step N output → Step N+1
+   input): verify schema + sample compatibility before fire") covers
+   the fire-prep verification register-class; §23 Application checklist
+   item 5 (this item) covers the sub-spec authoring → implementation
+   arc fire-prep handoff register-class. The two items operate at
+   register-class-distinct boundaries (§23 sub-spec authoring vs §21
+   implementation arc fire-prep) but reference the same inter-step
+   interface contract at register-precision; cross-reference at item 5
+   preserves the chain's load-bearing structural coupling at
+   codification register, register-class-distinct from invocation-
+   binding register at implementation register.
+
+The five-item checklist is structurally designed for mechanical
+execution at sub-spec authoring register: Step N output enumeration →
+Step N+1 input enumeration → interface spec triple authoring → sub-
+spec § binding → implementation arc fire-prep handoff annotation.
+Mechanical execution does not require interpretive judgment at any
+item; the discipline operates as a procedural gate at the sub-spec
+authoring boundary, register-class-distinct from interpretive-register
+reviewer pass cycle activities operating at substantive content
+register and register-class-distinct from interpretive-register Step
+description authoring at narrative content register.
+
+### Failure-mode signal
+
+Watch for inter-step interface contracts left implicit at sub-spec
+body. The omission is the primary defect §23 catches: absent the
+explicit schema + sample + validation triple at sub-spec body
+register, the Step N+1 fire register consumes the Step N output at
+implicit-contract register with schema-vs-input divergence surfacing
+only at Step N+1 fire-time empirical observation. PHASE2C_12 cycle
+Step 7 evaluation gate output → Step 8 mechanical disposition fire
+input boundary is concrete evidence basis: absent §23 audit at sub-
+spec authoring register, the boundary fired with implicit-contract
+specification and consumed Step 7 output at fire-time integration
+debugging register-precision rather than at sub-spec authoring
+register-precision.
+
+Watch for Step N output schema documented at descriptive register but
+not at validation-checkable register. The pattern surfaces when sub-
+spec Step N description includes prose narrative of output artifacts
+("Step N produces evaluation gate output at `data/.../`") without
+explicit field enumeration + type + constraint at schema register.
+Descriptive narrative covers structural output existence at low cost
+but does not establish schema register-precision needed for consumer-
+side validation; Step N+1 fire register cannot construct schema-
+validator invocation against descriptive narrative by construction.
+Schema authoring requires explicit field enumeration at sub-spec body,
+not narrative inference.
+
+Watch for interface validation deferred to fire-time without explicit
+pre-fire spec at sub-spec body. The pattern surfaces when sub-spec
+Step N+1 description includes ad hoc validation language ("Step N+1
+verifies Step N output before consuming") without authoring the
+validation function spec at sub-spec body register. Fire-time deferral
+substitutes fire-prep ad hoc check for sub-spec authoring-register
+catch; the discipline's catch class — interface-specification absence
+at sub-spec authoring register — is the absence the deferral cannot
+detect by construction. Validation function spec authoring at sub-spec
+body is the load-bearing artifact at sub-spec authoring register;
+fire-time invocation register is downstream from authoring register at
+temporal sequence.
+
+Watch for asymmetric inter-step interface specification at the binding
+§. The pattern surfaces in two register-class-distinct forms: (i)
+**asymmetric cross-reference at the binding §** — sub-spec content at
+one Step register cross-references the binding § but the other Step
+register does not, leaving the binding § anchoring only one side of
+the contract while the other side consumes or produces the artifact
+at implicit-contract register; (ii) **asymmetric content specification
+at the binding §** — sub-spec content covers Step N output
+specification at register-precision but does not cover Step N+1 input
+expectations at register-precision (or vice versa), leaving consumer-
+side validation surface implicitly inferred from producer-side
+specification. Mutual cross-reference plus bidirectional content
+specification at the binding § preserves both producer and consumer
+register-class explicitly; either asymmetry fails the contract
+structure by construction at the consumer-side validation register.
+
+Watch for interface contract verification treated as interpretive
+judgment rather than mechanical procedure at sub-spec authoring
+register. The pattern surfaces when sub-spec authoring fires at high-
+level overview register ("Step N output looks compatible with Step
+N+1 input"; "interface spec is implicit but obvious") rather than at
+mechanical specification register (schema + sample + validation triple
+authored at sub-spec body explicitly). Interpretive-judgment authoring
+covers the structural-defect axis at low cost but does not establish
+the register-precision the discipline requires; mechanical authoring
+is load-bearing for the discipline's catch class.
+
+Watch for sub-spec SEAL fires under time pressure without §23 audit
+completed for all multi-step Step boundaries. The pattern surfaces
+when sub-spec SEAL pre-fire register elides §23 audit on the framing
+that "Step boundaries can be specified at implementation arc Step
+entry instead." The elision substitutes downstream register catch
+(implementation arc Step entry register or §21 fire-prep register)
+for the sub-spec authoring register catch (§23 audit); the
+substitution cost is downstream integration overhead at the catch
+register relative to the same inter-step interface specification at
+sub-spec authoring register. The pattern is the canonical failure mode the
+discipline catches at sub-spec authoring register-precision register-
+class.
+
+### Tier disposition
+
+§23 ships at **Medium tier with cross-cycle-pending status note**.
+The single PHASE2C_12 cycle instance enumerated at Trigger context
+(Step 7 evaluation gate output → Step 8 mechanical disposition fire
+input boundary) gives the discipline single-cycle empirical basis at
+inter-step interface contract gap register-class. Single-instance
+basis per cycle is typical given implementation arc Step boundaries
+are register-class-distinct from §19 finding register-class: §19
+finding pattern accumulates per-cycle multiple instances at framework
+parameter divergence register; §23 inter-step interface contract gap
+pattern accumulates at most one or two instances per cycle at Step
+boundary register. Cross-cycle accumulation register is fed by
+historical PHASE2C_8.1 / PHASE2C_9 / PHASE2C_10 / PHASE2C_11 instance
+backfill at the cycle-complexity scaling diagnosis discipline
+(codified separately at PHASE2C_13 implementation arc Step 7 per
+sub-spec §5.4 disposition, Carry-forward A new-§ slot). Strong-tier
+promotion is contingent on (i) Strong-tier promotion bar criteria
+codified at the existing §13-§20 tier framework refinement (codified
+at PHASE2C_13 implementation arc Step 9 per sub-spec §5.4 disposition,
+Carry-forward C fold-in to §20 appendix-style sub-§) and (ii) cross-
+cycle accumulation evidence threshold met per the Strong-tier bar;
+tier re-evaluation at successor methodology consolidation cycle once
+both contingencies resolve. Medium tier preserves the discipline at
+observation-backed application register without claiming Strong-tier
+prescriptive force prematurely.
+
+The single-instance basis at PHASE2C_12 cycle is sufficient for
+codification at Medium tier per sub-spec §4.3.4 binding. Cross-cycle
+accumulation register at §23-relevant Step boundary class may
+accumulate sparse instances per cycle due to register-class-
+distinction from §19 finding pattern. The cross-cycle accumulation
+evidence threshold for §23 Strong-tier promotion at §20.2 register may
+bind at lower cumulative instance count than disciplines accumulating
+at §19 finding register-class; the bar criteria specification at Step
+9 §20.2 register operates at register-precision per cross-cycle
+observation pattern, register-class-distinct from §19 finding pattern
+accumulation. Tier evaluation at successor cycle resolves the bar
+criteria interaction at register-precision once §20.2 sub-§ codifies
+bar criteria 1-4.
+
+---
+
 ---
