@@ -71,6 +71,36 @@ EXPECTED_N_RAW = 198
 # a different candidate basis.
 EXPECTED_N_ELIGIBLE_AT_CANONICAL = 154
 
+# PHASE2C_12 Auth #6.x β1 narrow allowlist (Charlie ratified via convergence).
+# Per Q-D2 β1 narrow + ChatGPT 5 key requirements:
+#   1. Preserve PHASE2C_11 N=198 behavior unchanged
+#   2. Add PHASE2C_12_N_RAW = 197 explicitly
+#   3. Reject all other N values (paired-pair validation)
+#   4. Step 8 output records n_trials=197 + PHASE2C_12 allowlist basis
+#   5. NO tolerance band (discrete allowlist only)
+#
+# §19 instance #8: sub-spec Q3 LOCKED specified main batch=198 candidates
+# but did NOT account for terminal-state lifecycle (rejected_complexity
+# at pos=75) reducing actual valid count from 198 attempted to 197 valid.
+# Cumulative count 7→8 PHASE2C_12, 17→18 cross-cycle.
+#
+# Successor cycle pattern: if PHASE2C_13+ has main batch with N != 198 or
+# 197, add PHASE2C_13_N_RAW = N constant + extend ALLOWED_DUAL_GATE_PAIRS
+# explicitly (per anti-momentum-binding discipline; tolerance bands
+# explicitly rejected). Each cycle's N is a discrete cycle anchor
+# requiring explicit Charlie-register authorization.
+PHASE2C_12_N_RAW = 197
+
+# Paired-pair allowlist for compute_simplified_dsr() dual-gate.
+# Each tuple = (n_trials, len(candidates)) accepted at function entry.
+# All other (n_trials, n_input) combinations raise ValueError (paired
+# strictness per ChatGPT requirement #3).
+ALLOWED_DUAL_GATE_PAIRS: frozenset[tuple[int, int]] = frozenset({
+    (EXPECTED_N_RAW, EXPECTED_N_RAW),                     # (198, 198) PHASE2C_11 full
+    (EXPECTED_N_RAW, EXPECTED_N_ELIGIBLE_AT_CANONICAL),   # (198, 154) PHASE2C_11 eligible subset
+    (PHASE2C_12_N_RAW, PHASE2C_12_N_RAW),                 # (197, 197) PHASE2C_12 full
+})
+
 # Euler–Mascheroni constant γ_e per §4.3 Step 2 Gumbel approximation.
 EULER_MASCHERONI = 0.5772156649015329
 
@@ -1009,23 +1039,24 @@ def compute_simplified_dsr(
             MIN_TRADES_FOR_PRIMARY`` (``low_trade_count (§4.4(1))``
             diagnostic), or on any candidate's RS-3 attestation failure.
     """
-    # ----- Dual-gate (§3.2 + Step 2 §5.3 forward-flag) -----
-    if n_trials != EXPECTED_N_RAW:
-        raise ValueError(
-            f"Dual-gate (a) failure: n_trials={n_trials} != "
-            f"EXPECTED_N_RAW={EXPECTED_N_RAW} per PHASE2C_11_PLAN §3.2 "
-            f"lockpoint."
-        )
+    # ----- Dual-gate (§3.2 + Step 2 §5.3 forward-flag + PHASE2C_12 Auth #6.x β1 narrow) -----
+    # Paired-pair allowlist validation per ChatGPT requirement #3 strictness:
+    # both n_trials AND len(candidates) checked TOGETHER as a tuple.
+    # Each accepted pair = a discrete cycle anchor (PHASE2C_11 full / eligible
+    # / PHASE2C_12 full). Cross-pairs (e.g. n_trials=198 with len=197) are
+    # rejected — no implicit cross-cycle blending.
     n_input = len(candidates)
-    allowed_lengths = {EXPECTED_N_RAW, EXPECTED_N_ELIGIBLE_AT_CANONICAL}
-    if n_input not in allowed_lengths:
+    pair = (n_trials, n_input)
+    if pair not in ALLOWED_DUAL_GATE_PAIRS:
+        allowed_sorted = sorted(ALLOWED_DUAL_GATE_PAIRS)
         raise ValueError(
-            f"Dual-gate (b) failure: len(candidates)={n_input} not in "
-            f"{sorted(allowed_lengths)} (canonical full population "
-            f"EXPECTED_N_RAW={EXPECTED_N_RAW} or canonical eligible subset "
-            f"EXPECTED_N_ELIGIBLE_AT_CANONICAL="
-            f"{EXPECTED_N_ELIGIBLE_AT_CANONICAL}) per PHASE2C_11_PLAN §3.2 "
-            f"+ Step 2 §5.3 forward-flag. Caller passed an n_raw mismatch."
+            f"Dual-gate failure: (n_trials, len(candidates))={pair} not "
+            f"in allowed paired allowlist {allowed_sorted}. "
+            f"PHASE2C_11 anchors: (198, 198) full population OR (198, 154) "
+            f"eligible subset per PHASE2C_11_PLAN §3.2 lockpoint. "
+            f"PHASE2C_12 anchor: (197, 197) full population per Auth #6.x "
+            f"β1 narrow. All other (n_trials, n_input) combinations rejected "
+            f"(paired-pair strictness; no tolerance band)."
         )
 
     # ----- Patch #4 + Patch #2 (Codex first-fire): single-pass §4.4
