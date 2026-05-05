@@ -1,0 +1,39 @@
+{
+  "artifact_schema_version": "phase2c_8_1",
+  "current_git_sha": "a6b1c1aad3f00f930bbbcbe9203a290f1fc87e8f",
+  "engine_commit": "eb1c87f",
+  "engine_corrected_lineage": "wf-corrected-v1",
+  "error_message": null,
+  "evaluation_semantics": "single_run_holdout_v1",
+  "gate_pass_per_criterion": {
+    "drawdown_passed": true,
+    "return_passed": true,
+    "sharpe_passed": false,
+    "trades_passed": true
+  },
+  "holdout_metrics": {
+    "max_drawdown": 0.19516915986239225,
+    "sharpe_ratio": -1.220842642372682,
+    "total_return": -0.13272654355961477,
+    "total_trades": 13
+  },
+  "holdout_passed": false,
+  "hypothesis_hash": "38a03883db818c1e",
+  "lifecycle_state": "holdout_failed",
+  "lineage_check": "passed",
+  "name": "multi_factor_momentum_breakout_138",
+  "passing_criteria": {
+    "max_drawdown": 0.25,
+    "min_sharpe": -0.5,
+    "min_total_return": -0.15,
+    "min_total_trades": 5
+  },
+  "position": 138,
+  "regime_key": "evaluation_regimes.eval_2020_v1",
+  "regime_label": "eval_2020_v1",
+  "run_id": "phase2c_12_eval_2020_v1",
+  "source_batch_id": "7f2f7d3e-df22-4ef7-9d7a-6f1733fe5c67",
+  "theme": "multi_factor_combination",
+  "wall_clock_seconds": 1.151,
+  "wf_test_period_sharpe": -2.123257
+}
