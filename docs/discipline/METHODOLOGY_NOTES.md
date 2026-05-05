@@ -2910,3 +2910,259 @@ alternative codification register supersedes §20) at successor
 methodology consolidation cycle.
 
 ---
+
+---
+
+## §21 Fire-prep precondition checklist discipline at multi-step implementation arc Step boundaries
+
+### Principle
+
+Multi-step implementation arc fire boundaries — Step 5 main fire, Step
+6.5 walk-forward backtest, Step 7 evaluation gate, Step 8 mechanical
+disposition fire, and other Step boundaries that exercise sub-spec
+Q-LOCKED parameters against framework code at runtime — require
+mechanical pre-fire precondition checklist verification before fire
+authorization. The checklist traces each Q-LOCKED parameter at the
+sub-spec lock register against the framework code site at fire-time
+and against fire-time empirical state. Without an explicit precondition
+checklist, divergence between sub-spec lock and framework code state
+surfaces late, typically at ad hoc fire-prep, fire-time, or post-fire
+empirical observation register, where it manifests as §19 spec-vs-
+empirical-reality instance class plus auth-iteration overhead.
+
+The discipline operates at a register distinct from §1 empirical
+verification for factual claims and §15 anchor-list empirical
+verification at the receiving cycle. §1 covers general empirical
+verification of factual claims at any drafting register. §15 covers
+pre-drafting anchor verification at the receiving cycle — anchors
+arriving from advisor cycles, scoping decisions, or prior register
+entries verified against canonical artifacts before drafting initiates.
+§21 covers **pre-fire mechanical verification at the implementation
+arc Step boundary** — once a sub-spec Q-LOCKED parameter set is sealed
+and a Step is about to fire against framework code, each Q-LOCKED
+parameter is mechanically traced from sub-spec lock to framework code
+site to fire-time runtime state, and the trace passes before fire
+authorization. The three disciplines are complementary: §1 catches
+defects at any drafting register; §15 catches defects at anchor receipt
+boundary; §21 catches defects at fire-prep boundary specifically.
+
+### Trigger context
+
+This discipline was operationalized across four PHASE2C_12 cycle
+instances per closeout §10.2 enumeration ("Step 6.5 WF lineage +
+framework N mismatch + sensitivity table N_eff + ALLOWED_DUAL_GATE_PAIRS
+asymmetry"); each instance exhibited Q-LOCKED-vs-framework-code
+divergence resolved through ad hoc rather than systematic mechanical
+verification:
+
+1. **Step 6.5 walk-forward lineage gap.** PHASE2C_12 Step 6.5 WF
+   backtest fired against 197 candidates corrected-engine walk-forward
+   (artifacts at `data/phase2c_12_wf/_corrected/`; per closeout §11.2).
+   The WF lineage attestation guards (`check_wf_semantics_or_raise()` /
+   `check_evaluation_semantics_or_raise()` in `backtest/wf_lineage.py`;
+   per closeout §11.4) are present at framework code. PHASE2C_12
+   closeout §10.2 enumerates "Step 6.5 WF lineage" as a fire-time
+   precondition gap class; a systematic pre-fire mechanical trace of
+   the WF lineage attestation domain at the Step 6.5 fire-prep boundary
+   would have substituted procedural verification for ad hoc detection.
+
+2. **Framework N mismatch (Q3 LOCKED 198 vs actual 197 valid).**
+   PHASE2C_12 sub-spec Q3 locked N=198 (canonical baseline `b6fcbf86`
+   total_valid_count). At Step 8 fire-prep boundary, eligible-count
+   resolved to N=197 (one candidate dropped at `rejected_complexity` at
+   position 75; per closeout §8.1 §19 instance #7). Resolution was ad
+   hoc: `PHASE2C_12_N_RAW = 197` constant + paired-pair allowlist at
+   commit `8887651`. A pre-fire trace of Q3 → eligibility filter
+   resolution → fire-time N-count would have substituted procedural
+   verification for ad hoc detection.
+
+3. **Sensitivity table N_eff parameterization gap.** PHASE2C_12
+   sub-spec Q15 [REVISED] specified N_eff `{198, 80, 40, 6}` at "number
+   of operational themes" register. Framework hardcoded
+   `{198, 80, 40, 5}` at the prior 5-themes anchor. The 6-vs-5
+   divergence surfaced at Auth #6.x extension fire-prep iteration (per
+   closeout §8.1 §19 instance #8); resolution was the cycle-conditional
+   `_resolve_n_eff_set()` resolver at commit `995fdb2`. Like instance 2,
+   caught at fire-prep through ad hoc patching rather than systematic
+   verification.
+
+4. **ALLOWED_DUAL_GATE_PAIRS parallel-structure incompleteness.**
+   PHASE2C_12 Auth #6.x β1 narrow added (197, 197) to the
+   `ALLOWED_DUAL_GATE_PAIRS` frozenset at `backtest/evaluate_dsr.py`
+   but missed (197, 139) parallel to PHASE2C_11's (198, 154). The
+   asymmetry surfaced at Step 8 fire-time (post-fire detection; per
+   closeout §8.1 §19 instance #10); resolution was Auth #6.y
+   `(PHASE2C_12_N_RAW, PHASE2C_12_N_ELIGIBLE_OBSERVED)` allowlist at
+   commit `08e1488` plus baseline re-fire. A pre-fire trace enumerating
+   `ALLOWED_DUAL_GATE_PAIRS` against PHASE2C_11 register-class-parallel
+   structure would have caught the asymmetry before fire-time
+   resolution cost.
+
+The four instances span the fire-prep / fire-time boundary at distinct
+surfacing points (instance 1 at Step 6.5 fire boundary as precondition
+gap class; instances 2-3 at fire-prep with ad hoc patches at commits
+`8887651` / `995fdb2`; instance 4 at fire-time with auth re-fire at
+commit `08e1488`) and span distinct Q-LOCKED parameter classes (WF
+lineage attestation binding / framework N count / framework N_eff set /
+framework frozenset parametric structure). The discipline operates
+across surfacing-points and parameter classes; the trigger condition
+is the fire-prep boundary itself, not a specific surfacing-point or
+parameter form.
+
+### Application checklist
+
+At each multi-step implementation arc Step boundary fire-prep:
+
+1. **Enumerate all Q-LOCKED parameters at sub-spec relevant to this
+   Step.** Q-LOCKED parameters are sub-spec lockpoints (Q-numbered
+   summary table entries; explicit `Q<N> LOCKED` annotations; framework
+   parameter set entries cited at sub-spec body) whose runtime
+   resolution at this Step exercises framework code. Enumeration
+   precision requires reading the sub-spec at register-precision, not
+   summary register; Q-LOCKED parameters cited only indirectly (e.g.,
+   "per sub-spec §X" without explicit lock value) require resolution
+   to canonical lock value before enumeration completes.
+
+2. **For each Q-LOCKED parameter: trace to framework code site
+   (file:line); verify fire-time framework state matches sub-spec lock
+   value.** The trace produces three artifacts at register-precision:
+   (a) the canonical sub-spec lock value with explicit Q-number anchor;
+   (b) the framework code site at file:line citation level; (c) the
+   fire-time runtime resolution (state of the parameter at the moment
+   the Step fires). All three must agree for the trace to pass. A
+   trace that resolves canonical lock and framework code site but
+   defers fire-time runtime resolution to post-fire register has not
+   passed; the discipline's catch class is precisely the divergence
+   between sub-spec lock and fire-time runtime state.
+
+3. **For framework N + threshold + frozenset + similar parametric
+   values: verify fire-time runtime parameter resolution matches
+   sub-spec lock.** Parametric values bound at framework code
+   (constants, frozenset literals, functional resolver outputs like
+   `_resolve_n_eff_set()`) are fire-time-resolved at runtime; the
+   verification step requires reading the runtime resolution, not the
+   constant declaration alone. §21 specifies the checklist trace at
+   fire-prep boundary; the broader executable verification function
+   discipline operationalizing this trace as a callable runtime check
+   is codified separately at PHASE2C_13 implementation arc Step 2 per
+   sub-spec §5.4 disposition (Item 4 fold-in to Item 2 framework
+   parameter pre-lock new-§ slot).
+
+4. **For inter-step interface contracts (Step N output → Step N+1
+   input): verify schema + sample compatibility before fire.** Inter-
+   step interfaces operate as a register-class-distinct sub-class of
+   parametric values: the Step N+1 fire register consumes the Step N
+   output schema; schema-vs-input-contract divergence surfaces only at
+   Step N+1 fire-time empirical observation. The verification step
+   requires explicit schema + sample compatibility check at fire-prep
+   register before Step N+1 fire authorization. The broader inter-step
+   contract standardization discipline is codified separately at
+   PHASE2C_13 implementation arc Step 3 per sub-spec §5.4 disposition
+   (Item 3 new-§ slot).
+
+5. **Surface any drift detected as a §19 instance candidate; annotate
+   the cycle-internal §19 instance log entry with fire-prep boundary
+   register-class.** Drift detected at fire-prep boundary logs at the
+   cycle-internal §19 instance register (under §19 single-class
+   register-class invariance per V#10 anchor); the log entry's
+   mitigation-note column carries the fire-prep boundary register-
+   class annotation as metadata. Sub-register-class formalization at
+   §19 itself is deferred to a future cycle when cross-cycle
+   accumulation supports formalization at the §19 register; §21's
+   checklist contributes log entries at the existing §19 register
+   without mutating §19's register-class taxonomy. Pre-fire-detected
+   drift is the catch the discipline targets; post-fire-detected drift
+   is the failure mode the discipline prevents.
+
+The five-item checklist is structurally designed for mechanical
+execution at fire-prep register: enumeration → per-parameter trace →
+parametric runtime resolution → inter-step interface contract check →
+drift surface routing. Mechanical execution does not require
+interpretive judgment at any step; the discipline operates as a
+procedural gate at the fire-prep boundary, distinct from interpretive-
+register checks operating at drafting or reviewer register.
+
+### Failure-mode signal
+
+Watch for ad hoc resolution at fire-prep or fire-time boundaries
+substituting for systematic pre-fire mechanical verification. The
+pattern is the canonical failure mode the discipline catches:
+PHASE2C_12 cycle's four instances (Step 6.5 walk-forward lineage gap
+class / framework N mismatch caught at Step 8 fire-prep / sensitivity
+table N_eff parameterization gap caught at Auth #6.x extension /
+ALLOWED_DUAL_GATE_PAIRS asymmetry caught at Step 8 fire-time) are
+concrete evidence basis spanning both fire-prep ad hoc patching
+(instances 2 and 3) and fire-time post-fire resolution (instance 4).
+Pattern recognition: ad hoc fire-prep parameter patches or fire-time
+auth re-fires resolving sub-spec → framework code drift indicate
+retroactive §19 instance accumulation plus auth-iteration overhead
+that systematic pre-fire mechanical verification would prevent at
+register-class register-precision.
+
+Watch for Q-LOCKED parameter enumeration at summary register rather
+than register-precision register. The pattern surfaces when the
+fire-prep checklist enumerates Q-LOCKED parameters by reading the
+sub-spec summary table without resolving each Q-numbered entry to its
+canonical lock value. Summary-level enumeration covers the structural
+parameter set but does not resolve canonical lock values; fire-time
+runtime resolution against an unresolved canonical lock cannot detect
+divergence by construction. Q-LOCKED parameter enumeration requires
+register-precision read at the sub-spec body, not summary read.
+
+Watch for trace completion at canonical lock + framework code site
+without fire-time runtime resolution. The pattern surfaces when the
+trace completes the (a) canonical lock and (b) framework code site
+artifacts but defers (c) fire-time runtime resolution to post-fire
+register. The deferral substitutes post-fire discovery for pre-fire
+verification; the discipline's catch class — divergence between
+sub-spec lock and fire-time runtime state — is the divergence the
+deferral cannot detect by construction.
+
+Watch for inter-step interface contract verification absent at fire-
+prep register. Inter-step interfaces operate at register-class-distinct
+register from per-parameter Q-LOCKED traces; verification absence at
+fire-prep register surfaces the contract-divergence defect class only
+at Step N+1 fire-time empirical observation. The deferral pattern
+mirrors the parameter-trace deferral pattern at register-class-distinct
+register; both substitutions cost the same retroactive §19 instance
+accumulation plus auth-iteration overhead.
+
+Watch for fire-prep checklist treated as interpretive judgment rather
+than mechanical procedure. The pattern surfaces when the checklist
+fires at high-level overview register ("looks aligned with sub-spec";
+"framework appears to match the lock") rather than at mechanical trace
+register (canonical lock value + file:line citation + fire-time
+runtime resolution explicit). Interpretive-judgment execution covers
+the structural-defect axis at low cost but does not establish the
+register-precision the discipline requires; mechanical execution is
+load-bearing for the discipline's catch class.
+
+Watch for fire-prep checklist skipping when the Step boundary is
+"obviously aligned" at sub-spec → framework register. Obvious-alignment
+framing at structural register does not establish fire-time runtime
+resolution alignment; the discipline's catch class is precisely the
+divergence that obvious-alignment-clean fails to surface. Fire-prep
+checklist is the mechanical complement — its catch is the divergence
+that interpretive-judgment alignment misses by construction.
+
+### Tier disposition
+
+§21 ships at **Medium tier**. The four PHASE2C_12 cycle instances
+enumerated at Trigger context give the discipline single-cycle empirical
+basis. Cross-cycle accumulation register is fed by historical
+PHASE2C_8.1 / PHASE2C_9 / PHASE2C_10 / PHASE2C_11 instance backfill at
+the cycle-complexity scaling diagnosis discipline (codified separately
+at PHASE2C_13 implementation arc Step 7 per sub-spec §5.4 disposition,
+Carry-forward A new-§ slot). Strong-tier promotion is contingent on
+(i) Strong-tier promotion bar criteria codified at the existing §13-§20
+tier framework refinement (codified at PHASE2C_13 implementation arc
+Step 9 per sub-spec §5.4 disposition, Carry-forward C fold-in to §20
+appendix-style sub-§) and (ii) cross-cycle accumulation evidence
+threshold met per the Strong-tier bar; tier re-evaluation at successor
+methodology consolidation cycle once both contingencies resolve.
+Medium tier preserves the discipline at observation-backed application
+register without claiming Strong-tier prescriptive force prematurely.
+
+---
+
+---
