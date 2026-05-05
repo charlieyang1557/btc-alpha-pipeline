@@ -91,14 +91,46 @@ EXPECTED_N_ELIGIBLE_AT_CANONICAL = 154
 # requiring explicit Charlie-register authorization.
 PHASE2C_12_N_RAW = 197
 
+# PHASE2C_12 Auth #6.y eligible-subset (Charlie ratified via convergence
+# post §19 instance #10 fire-time surface 2026-05-04).
+#
+# 139 = empirical n_eligible at PHASE2C_12 cycle post Q16 [Path A patch]
+# T_c<5 filter, observed at fire-time via load_audit_v1_candidates(
+# phase2c_12_audit_v1, expected_n_raw=197) returning n_eligible=139,
+# n_excluded=58. Empirical attribution per advisor sharpening: cycle-
+# specific value, NOT magic number.
+#
+# Parallel structure to PHASE2C_11 EXPECTED_N_ELIGIBLE_AT_CANONICAL=154.
+# Required for canonical Step 8 fire pair (197, 139) parallel to
+# PHASE2C_11 canonical Step 3 fire pair (198, 154) per sub-spec §6.2
+# Component 6 framework reuse + §6.1.3 Element 1 (n_eligible secondary
+# descriptive register).
+#
+# §19 instance #10: ALLOWED_DUAL_GATE_PAIRS at HEAD 995fdb2 (post auth
+# #6.x β1 narrow + extension) added (197, 197) full-population pair but
+# missed parallel-structure (197, 139) eligible-subset pair. PHASE2C_11
+# canonical Step 3 fire used (198, 154) eligible-subset per
+# _step3_result.json verbatim; PHASE2C_12 Step 8 canonical fire requires
+# parallel (197, 139). 4-reviewer convergence (Charlie + advisor +
+# ChatGPT + Claude Code) at auth #6.x β1 narrow ratification did not
+# audit allowlist parallel-structure completeness with PHASE2C_11.
+# Cumulative count 9→10 PHASE2C_12, 19→20 cross-cycle.
+#
+# Forward discipline: PHASE2C_13+ cycles with different n_eligible value
+# (post Q16-equivalent filter) require explicit ratification + extension
+# here. No tolerance band; cycle-discrete (parallel to PHASE2C_12_N_RAW
+# discipline).
+PHASE2C_12_N_ELIGIBLE_OBSERVED = 139
+
 # Paired-pair allowlist for compute_simplified_dsr() dual-gate.
 # Each tuple = (n_trials, len(candidates)) accepted at function entry.
 # All other (n_trials, n_input) combinations raise ValueError (paired
 # strictness per ChatGPT requirement #3).
 ALLOWED_DUAL_GATE_PAIRS: frozenset[tuple[int, int]] = frozenset({
-    (EXPECTED_N_RAW, EXPECTED_N_RAW),                     # (198, 198) PHASE2C_11 full
-    (EXPECTED_N_RAW, EXPECTED_N_ELIGIBLE_AT_CANONICAL),   # (198, 154) PHASE2C_11 eligible subset
-    (PHASE2C_12_N_RAW, PHASE2C_12_N_RAW),                 # (197, 197) PHASE2C_12 full
+    (EXPECTED_N_RAW, EXPECTED_N_RAW),                              # (198, 198) PHASE2C_11 full
+    (EXPECTED_N_RAW, EXPECTED_N_ELIGIBLE_AT_CANONICAL),            # (198, 154) PHASE2C_11 eligible subset
+    (PHASE2C_12_N_RAW, PHASE2C_12_N_RAW),                          # (197, 197) PHASE2C_12 full
+    (PHASE2C_12_N_RAW, PHASE2C_12_N_ELIGIBLE_OBSERVED),            # (197, 139) PHASE2C_12 eligible subset (Auth #6.y)
 })
 
 
@@ -866,12 +898,14 @@ def load_audit_v1_candidates(
 #     accepted n_trials values: {EXPECTED_N_RAW=198, PHASE2C_12_N_RAW=197});
 #     function output is SimplifiedDSRResult.
 #   - Dual-gate at function entry: paired-pair allowlist validation per
-#     PHASE2C_12 Auth #6.x β1 narrow. The pair (n_trials, len(candidates))
-#     MUST be in ALLOWED_DUAL_GATE_PAIRS = {(198,198), (198,154), (197,197)}.
-#     All other pair combinations raise ValueError, including cross-pairs
-#     such as (198,197) or (197,198) — paired strictness, no implicit
-#     cross-cycle blending. PHASE2C_11 anchors: (198,198) full / (198,154)
-#     eligible subset; PHASE2C_12 anchor: (197,197) full population.
+#     PHASE2C_12 Auth #6.x β1 narrow + Auth #6.y. The pair
+#     (n_trials, len(candidates)) MUST be in ALLOWED_DUAL_GATE_PAIRS =
+#     {(198,198), (198,154), (197,197), (197,139)}. All other pair
+#     combinations raise ValueError, including cross-pairs such as
+#     (198,197) or (197,198) — paired strictness, no implicit cross-cycle
+#     blending. PHASE2C_11 anchors: (198,198) full / (198,154) eligible
+#     subset; PHASE2C_12 anchors: (197,197) full / (197,139) eligible
+#     subset (post Q16 [Path A patch] T_c<5 filter).
 #   - RS-3 guard per candidate.audit_v1_artifact_path before any formula
 #     computation per §2.5 + §4.5 fail-loud lockpoint; per (β-mod)
 #     adjudication at TDD-RED hotfix register, no silent skip on missing
@@ -1068,12 +1102,16 @@ def compute_simplified_dsr(
     Args:
         candidates: Candidate list. The (n_trials, len(candidates)) pair
             MUST be in ``ALLOWED_DUAL_GATE_PAIRS`` per PHASE2C_12 Auth #6.x
-            β1 narrow allowlist:
+            β1 narrow + Auth #6.y allowlist:
               (198, 198) — PHASE2C_11 full population
               (198, 154) — PHASE2C_11 eligible subset (post-§4.4 filter)
               (197, 197) — PHASE2C_12 full population
-            Cross-pairs (e.g. (198, 197) or (197, 198)) are rejected per
-            paired strictness — no implicit cross-cycle blending.
+              (197, 139) — PHASE2C_12 eligible subset (post Q16 [Path A
+                            patch] T_c<5 filter; Auth #6.y empirical
+                            attribution at fire-time surface 2026-05-04)
+            Cross-pairs (e.g. (198, 197) or (197, 198) or (198, 139)) are
+            rejected per paired strictness — no implicit cross-cycle
+            blending.
         n_trials: N for multiple-testing correction. MUST be in
             ``{EXPECTED_N_RAW=198, PHASE2C_12_N_RAW=197}`` AND paired
             correctly with ``len(candidates)`` per
@@ -1114,8 +1152,10 @@ def compute_simplified_dsr(
             f"in allowed paired allowlist {allowed_sorted}. "
             f"PHASE2C_11 anchors: (198, 198) full population OR (198, 154) "
             f"eligible subset per PHASE2C_11_PLAN §3.2 lockpoint. "
-            f"PHASE2C_12 anchor: (197, 197) full population per Auth #6.x "
-            f"β1 narrow. All other (n_trials, n_input) combinations rejected "
+            f"PHASE2C_12 anchors: (197, 197) full population per Auth #6.x "
+            f"β1 narrow OR (197, 139) eligible subset per Auth #6.y "
+            f"(empirical n_eligible at PHASE2C_12 cycle post Q16 filter). "
+            f"All other (n_trials, n_input) combinations rejected "
             f"(paired-pair strictness; no tolerance band)."
         )
 
