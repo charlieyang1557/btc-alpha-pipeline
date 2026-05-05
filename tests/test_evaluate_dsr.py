@@ -1931,6 +1931,13 @@ class TestComputeSimplifiedDSRDualGateNRawCheck:
     """
 
     def test_n_trials_mismatch_raises(self):
+        """n_trials=196 (NOT in {198, 197} allowlist) must raise.
+
+        UPDATED post-PHASE2C_12 Auth #6.x β1 narrow: original test used
+        n_trials=197 which is now ALLOWED per PHASE2C_12_N_RAW. Replaced
+        with n_trials=196 to preserve the test intent (out-of-allowlist
+        n_trials raises).
+        """
         from backtest.evaluate_dsr import (
             CandidateInput,
             compute_simplified_dsr,
@@ -1943,17 +1950,25 @@ class TestComputeSimplifiedDSRDualGateNRawCheck:
                 audit_v1_artifact_path=f"{SYN_BASE}/syn_{i}.json",
                 name="syn", theme="syn", lifecycle_state="shortlisted",
             )
-            for i in range(197)  # 197 != EXPECTED_N_RAW=198
+            for i in range(196)  # 196 NOT in {198, 197} allowlist
         ]
-        with pytest.raises(ValueError, match="EXPECTED_N_RAW|n_trials|198"):
-            compute_simplified_dsr(candidates, n_trials=197)
+        with pytest.raises(ValueError):
+            compute_simplified_dsr(candidates, n_trials=196)
 
     def test_inputs_n_raw_mismatch_raises(self):
+        """n_trials=198 with len(candidates)=200 (cross-pair) must raise.
+
+        UPDATED post-PHASE2C_12 Auth #6.x β1 narrow: original test used
+        len=197 which is now valid (PHASE2C_12 full population), but only
+        with n_trials=197 (paired). The cross-pair (n_trials=198, len=197)
+        must still raise. Replaced with len=200 to preserve test intent
+        (n_raw mismatch with allowed n_trials raises).
+        """
         from backtest.evaluate_dsr import (
             CandidateInput,
             compute_simplified_dsr,
         )
-        # n_trials=198 is correct, but candidate count != 198 (n_raw mismatch).
+        # n_trials=198 is correct, but candidate count != allowed (200 not in any pair).
         candidates = [
             CandidateInput(
                 hypothesis_hash=f"h{i:03d}",
@@ -1962,7 +1977,7 @@ class TestComputeSimplifiedDSRDualGateNRawCheck:
                 audit_v1_artifact_path=f"{SYN_BASE}/syn_{i}.json",
                 name="syn", theme="syn", lifecycle_state="shortlisted",
             )
-            for i in range(197)
+            for i in range(200)
         ]
         with pytest.raises(ValueError):
             compute_simplified_dsr(candidates, n_trials=198)
@@ -2481,3 +2496,210 @@ class TestRS3PatchOnExistingFunctions:
         )
         expected = math.sqrt(2.0 * math.log(198))
         assert abs(result - expected) < 1e-12
+
+
+# ---------------------------------------------------------------------------
+# PHASE2C_12 Step 8 framework reuse — N=197 allowlist (Auth #6.x β1 narrow)
+# ---------------------------------------------------------------------------
+#
+# Per Charlie auth #6.x (ratified via convergence) + Q-D2 β1 narrow {198, 197}
+# allowlist + ChatGPT 5 key requirements:
+#   1. Preserve PHASE2C_11 N=198 behavior unchanged
+#   2. Add PHASE2C_12_N_RAW = 197 explicitly
+#   3. Reject all other N values
+#   4. Step 8 output records n_trials=197 + PHASE2C_12 allowlist basis
+#   5. NO tolerance band (discrete allowlist only)
+#
+# §19 instance #8: sub-spec Q3 LOCKED specified main batch=198 candidates but
+# did NOT account for terminal-state lifecycle (rejected_complexity at pos=75)
+# reducing actual valid count from 198 attempted to 197 valid. Sub-spec
+# drafting cycle text-register pass clean / empirical fire-time audit catch
+# at substantive blocker boundary. Cumulative count 7→8 PHASE2C_12,
+# 17→18 cross-cycle.
+#
+# Discipline: paired-pair validation per ChatGPT requirement #3 strictness.
+# Allowed (n_trials, len(candidates)) pairs:
+#   (198, 198) — PHASE2C_11 full population
+#   (198, 154) — PHASE2C_11 eligible subset
+#   (197, 197) — PHASE2C_12 full population
+# All other combinations raise ValueError.
+
+
+class TestComputeSimplifiedDSRPHASE2C12NAllowlist:
+    """PHASE2C_12 N=197 allowlist verification (Auth #6.x β1 narrow).
+
+    Tests the {198, 197} discrete allowlist (NOT tolerance band):
+    - PHASE2C_11 N=198 backward-compat preserved (full + eligible subset)
+    - PHASE2C_12 N=197 newly accepted at full population fire
+    - All other N values (including cross-pairs) rejected
+    """
+
+    def test_phase2c_12_n_raw_constant_exists_and_equals_197(self):
+        """Constant PHASE2C_12_N_RAW must exist and equal 197."""
+        from backtest.evaluate_dsr import PHASE2C_12_N_RAW
+        assert PHASE2C_12_N_RAW == 197
+
+    def test_phase2c_12_full_population_accepted(self):
+        """n_trials=197 + len(candidates)=197 must NOT raise; produces result."""
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            PHASE2C_12_N_RAW,
+            compute_simplified_dsr,
+        )
+        candidates = [
+            CandidateInput(
+                hypothesis_hash=f"p12_{i:03d}",
+                sharpe_ratio=(0.3 if i % 2 == 0 else -0.3),
+                total_trades=10,
+                audit_v1_artifact_path=f"{SYN_BASE}/syn_{i}.json",
+                name="syn", theme="syn", lifecycle_state="shortlisted",
+            )
+            for i in range(PHASE2C_12_N_RAW)
+        ]
+        # Should not raise.
+        result = compute_simplified_dsr(
+            candidates, n_trials=PHASE2C_12_N_RAW,
+        )
+        assert result.n_trials == 197
+
+    def test_phase2c_11_full_population_still_accepted(self):
+        """Backward-compat: n_trials=198 + len=198 still works (PHASE2C_11)."""
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            EXPECTED_N_RAW,
+            compute_simplified_dsr,
+        )
+        candidates = [
+            CandidateInput(
+                hypothesis_hash=f"p11_{i:03d}",
+                sharpe_ratio=(0.3 if i % 2 == 0 else -0.3),
+                total_trades=10,
+                audit_v1_artifact_path=f"{SYN_BASE}/syn_{i}.json",
+                name="syn", theme="syn", lifecycle_state="shortlisted",
+            )
+            for i in range(EXPECTED_N_RAW)
+        ]
+        result = compute_simplified_dsr(candidates, n_trials=EXPECTED_N_RAW)
+        assert result.n_trials == 198
+
+    def test_phase2c_11_eligible_subset_still_accepted(self):
+        """Backward-compat: n_trials=198 + len=154 still works (eligible subset)."""
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            EXPECTED_N_ELIGIBLE_AT_CANONICAL,
+            EXPECTED_N_RAW,
+            compute_simplified_dsr,
+        )
+        candidates = [
+            CandidateInput(
+                hypothesis_hash=f"p11e_{i:03d}",
+                sharpe_ratio=(0.3 if i % 2 == 0 else -0.3),
+                total_trades=10,
+                audit_v1_artifact_path=f"{SYN_BASE}/syn_{i}.json",
+                name="syn", theme="syn", lifecycle_state="shortlisted",
+            )
+            for i in range(EXPECTED_N_ELIGIBLE_AT_CANONICAL)
+        ]
+        # n_trials=198 (full canonical) + len=154 (eligible subset) is allowed pair.
+        # NB: result.n_raw reports n_trials (not len(candidates)) per existing
+        # SimplifiedDSRResult schema; eligible-subset fire still has n_raw=198.
+        result = compute_simplified_dsr(candidates, n_trials=EXPECTED_N_RAW)
+        assert result.n_trials == 198
+
+    @pytest.mark.parametrize("bad_n_trials", [196, 199, 200, 0, 1, -1, 1000])
+    def test_n_trials_outside_allowlist_rejected(self, bad_n_trials):
+        """n_trials NOT in {198, 197} must raise ValueError."""
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            compute_simplified_dsr,
+        )
+        # Use len(candidates) matching n_trials so we isolate dual-gate (a) failure.
+        n = max(bad_n_trials, 1)
+        candidates = [
+            CandidateInput(
+                hypothesis_hash=f"bad_{i:03d}",
+                sharpe_ratio=0.0,
+                total_trades=10,
+                audit_v1_artifact_path=f"{SYN_BASE}/syn_{i}.json",
+                name="syn", theme="syn", lifecycle_state="shortlisted",
+            )
+            for i in range(n)
+        ]
+        with pytest.raises(ValueError):
+            compute_simplified_dsr(candidates, n_trials=bad_n_trials)
+
+    def test_cross_pair_198_197_rejected(self):
+        """Cross-pair n_trials=198 + len(candidates)=197 must raise.
+
+        Paired-pair validation per ChatGPT #3 strictness: even though both
+        n_trials=198 (PHASE2C_11) and len=197 (PHASE2C_12) are individually in
+        accepted sets, the combination is NOT a documented allowed pair.
+        """
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            EXPECTED_N_RAW,
+            compute_simplified_dsr,
+        )
+        # 197 candidates with n_trials=198: cross-pair, must raise.
+        candidates = [
+            CandidateInput(
+                hypothesis_hash=f"xp_{i:03d}",
+                sharpe_ratio=0.0,
+                total_trades=10,
+                audit_v1_artifact_path=f"{SYN_BASE}/syn_{i}.json",
+                name="syn", theme="syn", lifecycle_state="shortlisted",
+            )
+            for i in range(197)
+        ]
+        with pytest.raises(ValueError):
+            compute_simplified_dsr(candidates, n_trials=EXPECTED_N_RAW)
+
+    def test_cross_pair_197_198_rejected(self):
+        """Cross-pair n_trials=197 + len(candidates)=198 must raise.
+
+        Paired-pair strictness: PHASE2C_12 N (197) with PHASE2C_11 population
+        (198) is not a documented allowed pair.
+        """
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            EXPECTED_N_RAW,
+            PHASE2C_12_N_RAW,
+            compute_simplified_dsr,
+        )
+        candidates = [
+            CandidateInput(
+                hypothesis_hash=f"xp_{i:03d}",
+                sharpe_ratio=0.0,
+                total_trades=10,
+                audit_v1_artifact_path=f"{SYN_BASE}/syn_{i}.json",
+                name="syn", theme="syn", lifecycle_state="shortlisted",
+            )
+            for i in range(EXPECTED_N_RAW)
+        ]
+        with pytest.raises(ValueError):
+            compute_simplified_dsr(candidates, n_trials=PHASE2C_12_N_RAW)
+
+    def test_cross_pair_197_154_rejected(self):
+        """Cross-pair n_trials=197 + len=154 (PHASE2C_11 eligible) must raise.
+
+        Eligible subset (154) is PHASE2C_11-anchored; not paired with
+        PHASE2C_12 N (197).
+        """
+        from backtest.evaluate_dsr import (
+            CandidateInput,
+            EXPECTED_N_ELIGIBLE_AT_CANONICAL,
+            PHASE2C_12_N_RAW,
+            compute_simplified_dsr,
+        )
+        candidates = [
+            CandidateInput(
+                hypothesis_hash=f"xp_{i:03d}",
+                sharpe_ratio=0.0,
+                total_trades=10,
+                audit_v1_artifact_path=f"{SYN_BASE}/syn_{i}.json",
+                name="syn", theme="syn", lifecycle_state="shortlisted",
+            )
+            for i in range(EXPECTED_N_ELIGIBLE_AT_CANONICAL)
+        ]
+        with pytest.raises(ValueError):
+            compute_simplified_dsr(candidates, n_trials=PHASE2C_12_N_RAW)
