@@ -4283,4 +4283,563 @@ Strong-tier prescriptive force prematurely.
 
 ---
 
+## §26 §9.0c instance density continuous-vs-batch improvement choice + register-class taxonomy preservation
+
+### Principle
+
+Methodology consolidation cycles accumulating §9.0c process-design observation
+instances at cross-cycle measurement register require an explicit choice
+between continuous improvement register (each instance triggers immediate
+process patch at occurrence) and batch improvement register (instances
+accumulate within cycle and mitigate at next consolidation cycle SEAL),
+plus preservation of a register-class taxonomy for instance enumeration
+that stays invariant across cycles. The continuous-vs-batch choice fires
+at cycle-class register (which improvement register applies to the cycle);
+the taxonomy preservation fires at instance-class register (each instance
+receives a register-class label at the 3-class taxonomy: sub-spec drafting
+/ authorization / reviewer). Bulk-mitigation against a single "process
+failure" bucket collapses the taxonomy's register-class precision and is
+explicitly rejected at this codification register; cross-cycle methodology
+measurement of §9.0c density requires register-class-distinct counting,
+not single-bucket counting, to preserve cross-cycle comparability anchor.
+
+The discipline operates at register-class-distinct content scope from
+§1 / §15 / §21 / §22 / §23 / §25 cluster, which catches per-instance
+defects at workflow time boundaries (any drafting register / anchor receipt
+/ sub-spec authoring of inter-step contracts / sub-spec SEAL pre-fire /
+Step fire-prep / Step deliverable authoring). §26 catches defects at
+cross-cycle observation density measurement register-class — how §9.0c
+instances accumulate across cycles and which register-class taxonomy
+applies to that accumulation register — rather than at a specific workflow
+time boundary catch-class. The workflow catch-boundary chain ordering
+established across §1 / §15 / §21 / §22 / §23 / §25 does not directly
+govern §26's cross-cycle accumulation register-class; §26 is register-
+class-orthogonal to the cluster at content scope axis.
+
+§26 operates at register-class-coupled content scope with §18 §7 carry-
+forward density at interpretive arc closeouts and §19 spec-vs-empirical-
+reality finding pattern (all three at cross-cycle accumulation observation
+register-class) but at register-class-distinct catch class: §18 catches
+§7 carry-forward density at PHASE2C interpretive arc closeouts; §19
+catches spec-vs-empirical-reality drift class; §26 catches §9.0c process-
+design observation class. The pattern of register-class-distinct cross-
+cycle accumulation observations across §18 / §19 / §26 preserves cross-
+cycle comparability anchor at each register-class independently per Item 7
+boundary clause invariance binding (taxonomy + counting invariant; only
+mitigation TIMING varies per cycle-class binding). §26 operates at
+register-class-distinct content scope from §16 anchor-prose-access
+discipline (engagement fidelity register vs cross-cycle density mechanism
+register) and from §17 procedural-confirmation defect class at first-
+commit-before-prose-access (single-cycle implementer register vs cross-
+cycle meta-measurement register). Cross-§ register-class collision is
+avoided by content-scope distinction at register-precision across the
+cluster.
+
+The §3 sub-rule of PHASE2C_13 sub-spec operationalizes the 3-class
+register-class taxonomy at register-precision register with mitigation
+strategy enumeration per register-class + cross-cycle comparability
+requirement per Item 7 boundary clause invariant. §3 folds into §26
+Application checklist items 2 + 3 + 4 with internal sub-rule structure
+per item; item 5 cross-references back to §3 of the sub-spec for full
+sub-rule scope. The fold-in mechanism is register-class-parallel to §22
+Item 4 fold-in at parent-operationalization coupling principle but
+register-class-distinct at fold-in scope: both §22 and §26 fold-ins
+operate at sub-rule level within Application checklist items (§22 has
+sub-rules 4a/4b/4c at item 4; §26 has sub-rules 2a/2b/2c at item 2 +
+3a/3b at item 3 + 4a/4b/4c/4d at item 4); the distinction is at scope
+of items containing fold-in content — §22 fold-in is single-item
+(item 4 only); §26 fold-in is multi-item (items 2 + 3 + 4) plus
+cross-reference at item 5. Cross-§ collision at §22 ↔ §26 fold-in
+mechanism is avoided by fold-in scope register-class distinction at
+register-precision; the two fold-in mechanisms share parent-§ tier
+disposition inheritance pattern at codification register.
+
+### Trigger context
+
+This discipline's empirical basis is eight PHASE2C_12 cycle §9.0c
+process-design observation instances enumerated at canonical §8.2 row
+register at PHASE2C_12 closeout
+[`docs/closeout/PHASE2C_12_RESULTS.md`](../closeout/PHASE2C_12_RESULTS.md)
+§8.2 (instance descriptions cited verbatim from §8.2 canonical source
+artifact, not from sub-spec parenthetical labels per §22 Failure-mode
+signal item 7 description-drift discipline). The eight instances span
+heterogeneous register-classes; per Item 6 verbatim source at PHASE2C_12
+closeout §10.2 lines 532-545, the 3-class register-class taxonomy
+collapses the §8.2 canonical entries to clean register-class assignment.
+The collapse operation functions as a canonicalization rule for cross-
+cycle comparability measurement, not as a claim that the source event
+was single-register in empirical reality:
+
+> **Item 6 — §9.0c instance density mechanism + register-class taxonomy
+> sub-rule.** PHASE2C_12 cycle accumulated 8 §9.0c instances (substantively
+> higher than PHASE2C_10 + PHASE2C_11 at comparable cycle stages). Codify
+> **continuous improvement vs batch improvement** register choice:
+> - Each §9.0c instance should trigger immediate process patch (continuous)
+> - vs current pattern of carry-forward to next consolidation cycle (batch)
+> - **Sub-rule: §9.0c register-class taxonomy.** Single "process failure"
+>   bucket collapses register-class distinctions. Codify taxonomy with
+>   separate register-class enumeration:
+>   - Sub-spec drafting register (instances #1, #2, #6)
+>   - Authorization register (instance #3)
+>   - Reviewer register (instances #4, #5, #7, #8)
+> - Mitigation strategies are register-class-distinct; bulk-mitigation
+>   collapses register-class precision.
+
+The eight §8.2 row register entries enumerated at register-precision
+register (instance description verbatim from §8.2 row register column 2;
+register-class assignment per §10.2 Item 6 codification mechanism
+collapsing §8.2 multi-class hybrid entries to 3-class taxonomy):
+
+1. **§9.0c instance #1 — Sub-spec drafting cycle structural-overlay
+   reviewer pass operating without empirical verification fire.** Sub-spec
+   drafting register. Surfaced at PHASE2C_12 sub-spec drafting cycle
+   authoring register where reviewer pass operated at structural-overlay
+   register-class without empirical verification fire at canonical-
+   artifact register; §22 framework parameter pre-lock audit discipline
+   (codified at PHASE2C_13 implementation arc Step 2) addresses this
+   defect class at sub-spec drafting cycle terminus catch-boundary.
+
+2. **§9.0c instance #2 — Same-agent fresh-register full-file pass at
+   sub-spec drafting cycle.** Sub-spec drafting register. Surfaced at
+   PHASE2C_12 sub-spec drafting cycle reviewer pass operation register-
+   class as carry-forward observation; cross-cycle accumulation register-
+   class candidate per §17 sub-rule 4 recursive operating rule (full-file
+   prose-access pass at sealed-commit register).
+
+3. **§9.0c instance #3 — Authorization-routing momentum (auth #1
+   implicit-cover Step 2 fire-prep).** Authorization register. Surfaced
+   at PHASE2C_12 implementation arc register where authorization-routing
+   momentum at auth #1 register implicit-covered Step 2 fire-prep
+   operational fire boundary; anti-momentum-binding strict reading at
+   Auth #6 + #6.y register addresses this defect class at authorization
+   register-event boundary.
+
+4. **§9.0c instance #4 — Reviewer divergence on Q10 operationalization
+   site (entry vs config-driven).** Reviewer register. Surfaced at
+   PHASE2C_12 sub-spec drafting cycle Q10 reviewer pass register where
+   ChatGPT and Claude advisor diverged on Q10 operationalization site;
+   resolved at Charlie register adjudication per reviewer-divergence-
+   adjudication discipline at register-class-distinct register from bulk-
+   accept anti-pattern.
+
+5. **§9.0c instance #5 — Pre-fire structure validation gap (β1 narrow
+   scope didn't audit allowlist parallel-structure with PHASE2C_11).**
+   Reviewer register per §10.2 Item 6 codification (canonical §8.2 row
+   register column lists "Multi-reviewer convergence"; collapse to
+   reviewer register at 3-class taxonomy). Surfaced at PHASE2C_12 Step 8
+   fire-prep boundary; folded into §16 Failure-mode signal at PHASE2C_12
+   cycle close.
+
+6. **§9.0c instance #6 — Fire-time discovery handoff-noise propagation
+   (eligible≈154 PHASE2C_11 anchor → PHASE2C_12 actual 139).** Sub-spec
+   drafting register per §10.2 Item 6 codification (canonical §8.2 row
+   register column lists "Sub-spec drafting → fire-time"; collapse to
+   sub-spec drafting register at 3-class taxonomy). Surfaced at PHASE2C_12
+   Step 8 fire-time empirical register; §22 framework parameter pre-lock
+   audit discipline addresses this defect class at sub-spec drafting
+   cycle SEAL pre-fire boundary.
+
+7. **§9.0c instance #7 — Multi-reviewer convergence on β1 narrow scope at
+   auth #6.x didn't audit ALLOWED_DUAL_GATE_PAIRS for parallel-structure
+   completeness with PHASE2C_11.** Reviewer register per §10.2 Item 6
+   codification (canonical §8.2 row register column lists "Multi-reviewer
+   + Charlie register convergence"; collapse to reviewer register at
+   3-class taxonomy). Surfaced at PHASE2C_12 Auth #6.x register; resolution
+   at Auth #6.y allowlist extension + baseline re-fire register.
+
+8. **§9.0c instance #8 — Advisor pre-fire interpretive overlay on
+   mechanical Q22 LOCKED compute output (predicted artifact_evidence;
+   actual inconclusive at fire-time).** Reviewer register. Surfaced at
+   PHASE2C_12 Step 8 fire-prep boundary where advisor cycle produced
+   pre-fire prediction at interpretive-overlay register-class semantics
+   layered over Q22 LOCKED mechanical compute output; §25 register-class
+   explicit declaration discipline (codified at PHASE2C_13 implementation
+   arc Step 4) addresses this defect class at deliverable authoring
+   register.
+
+Cross-cycle cumulative §9.0c count is not authoritatively established at
+PHASE2C_10 + PHASE2C_11 register precedent (per PHASE2C_12 closeout §8.2
+note "Cross-cycle cumulative §9.0c count: not authoritatively established
+at this register"); cross-cycle accumulation register at the cycle-
+complexity scaling diagnosis discipline (codified separately at PHASE2C_13
+implementation arc Step 7 per sub-spec §5.4 disposition, Carry-forward A
+new-§ slot) backfills PHASE2C_10 + PHASE2C_11 instance counts at canonical
+register-class taxonomy. The eight PHASE2C_12 instances at canonical §8.2
+row register establish single-cycle empirical basis at 3-class taxonomy
+distribution (3 sub-spec drafting + 1 authorization + 4 reviewer)
+sufficient for Medium-tier codification per sub-spec §4.3.4 binding.
+
+### Application checklist
+
+At each PHASE2C methodology consolidation cycle accumulating §9.0c process-
+design observation instances:
+
+1. **At cycle-entry: declare continuous-vs-batch improvement register
+   choice for §9.0c instance handling at this cycle.** The declaration
+   produces an explicit register-class label at register-precision:
+   `continuous` (each §9.0c instance triggers immediate process patch at
+   occurrence; mitigation fires real-time at instance surface event) or
+   `batch` (instances accumulate within cycle and mitigate at next
+   consolidation cycle SEAL register-event boundary). Default disposition
+   is `batch` at consolidation cycle terminus register; `continuous`
+   applies recursively when cycle scope binds Item 7 anti-meta-pattern
+   discipline (codified at PHASE2C_13 implementation arc Step 6 per
+   sub-spec §5.4 disposition, Item 7 §27 new-§ slot) — Item 7 boundary
+   clause invariant: TIMING-only mutation; taxonomy + counting logic
+   invariant per cross-cycle comparability requirement (sub-rule fold-in
+   from PHASE2C_13 sub-spec §3.3 #3 mitigation timing variance allowed).
+   The choice declaration ships at cycle scoping decision or sub-spec
+   drafting cycle terminus register; absent the declaration, the cycle
+   defaults to `batch` register at register-class-distinct outcome from
+   explicit `continuous` binding under Item 7.
+
+2. **At each §9.0c instance surface: assign register-class label per
+   3-class taxonomy.** Sub-rule fold-in from PHASE2C_13 sub-spec §3.1
+   3-class enumeration at operationalization-detail coupling register:
+
+   - **(2a) Sub-spec drafting register.** §9.0c instances surfacing at
+     sub-spec authoring activity register-class (implementer-time mechanics
+     decision absent from sub-spec specification; sub-spec section
+     structural choice ambiguity surfacing at authoring register; pre-
+     empirical-verification structural-overlay reviewer pass register-
+     class). PHASE2C_12 examples per §10.2 Item 6 codification: instances
+     #1, #2, #6.
+
+   - **(2b) Authorization register.** §9.0c instances surfacing at Charlie
+     register authorization boundary register-class (authorization-routing
+     ambiguity at register-event boundary; authorization scope ambiguity
+     at adjudication register; authorization momentum at implicit-cover
+     register-class violating anti-momentum-binding strict reading).
+     PHASE2C_12 example per §10.2 Item 6 codification: instance #3.
+
+   - **(2c) Reviewer register.** §9.0c instances surfacing at reviewer
+     pass cycle register-class (reviewer over-interpretation at register-
+     class divergence with mechanical compute output per §25; reviewer
+     suggestion bulk-accept candidate; reviewer pass surface absent from
+     sub-spec specification register; reviewer divergence on operationaliz-
+     ation site at substantive-content register; pre-fire structure
+     validation gap at multi-reviewer convergence register-class). PHASE2C_12
+     examples per §10.2 Item 6 codification: instances #4, #5, #7, #8.
+
+   Register-class label assignment precision requires reading the instance
+   surface event at register-precision register, not summary register;
+   multi-class hybrid entries at canonical §8.2 row register column collapse
+   to single dominant register-class per Item 6 codification mechanism at
+   3-class taxonomy invariant.
+
+3. **At cycle-internal log: track cumulative count per register-class
+   distinct.** Cross-cycle methodology measurement requires register-
+   class-distinct counting, NOT single-bucket "process failure" counting;
+   cumulative count register per cycle reads three register-class-distinct
+   counts (sub-spec drafting + authorization + reviewer) plus single-
+   bucket sum for cross-cycle comparison register. Item 7 boundary clause
+   invariance binds two register-class-distinct invariants at this register
+   (per sub-spec §3.3 #1 + #2 operational requirements): **taxonomy
+   invariant** (3-class enumeration + register-class assignment rules
+   stay fixed across cycles; new register-classes added only under
+   cross-cycle comparability anchor preservation conditions per §3.3 #1)
+   and **counting invariant** (instances NEVER removed or re-scoped
+   retroactively from cumulative count; closure status changes preserve
+   count register; cross-cycle cumulative comparison reads canonical register-
+   class-distinct counts at cumulative register at canonical taxonomy
+   invariant). Both invariants operate at register-class-distinct scope:
+   taxonomy invariant binds register-class assignment rule stability;
+   counting invariant binds instance enumeration register stability.
+   Sub-rules at register-precision:
+
+   - **(3a) Cluster-format log entries cross-cycle parse register-precision.**
+     Cluster log entries at cycle-internal log MUST enumerate sub-defect
+     count explicitly at mitigation note register (e.g., "#4-#10 cluster
+     representing 7 distinct sub-defects per cluster surface event") for
+     cross-cycle parse register-precision. Cumulative count register
+     integrity requires per-defect numbering preserved across cluster;
+     cross-cycle reader (PHASE2C_14+) parsing cluster format MUST sum
+     per-defect numbers at cumulative count comparability anchor
+     preservation. Cluster format is acceptable register-class for multi-
+     defect single-surface-event logging when per-defect register-precision
+     content enumerated at mitigation note + cumulative count clarification
+     at closure status register (sub-rule fold-in from sub-spec §3.3 #6).
+
+   - **(3b) Row-level mapping methodology for V#-anchor verification.**
+     Cycle-internal log V#-anchor verification at cycle SEAL register-event
+     boundary applies row-level 1:1 mapping methodology between log entries
+     and boundary assessments at register-precision register, NOT string-
+     count grep proxy. Verification methodology at register-precision:
+     bounded-section awk extraction (e.g., `awk '/^## §A1/,/^## §A2/'`
+     for §A1 + `awk '/^## §A2/,EOF'` for §A2) + row-grep at column-1
+     instance-numbering pattern (e.g., `^\| #[0-9]+`) + closure-column
+     N=clean count cross-check. Row count matches boundary assessment
+     count at register-precision; cluster row at single boundary assessment
+     = 1 mitigation entry per cluster surface event per Item 6 sub-rule
+     register-class-distinct counting; cluster format does NOT violate
+     1:1 row-to-boundary-assessment mapping at register-precision.
+     **String-count "N=clean" grep proxy method is unreliable and discarded
+     at PHASE2C_13 sub-spec drafting cycle SEAL boundary register-event
+     per ChatGPT advisor SEAL pre-fire pushback** (sub-rule fold-in from
+     sub-spec §3.3 #7).
+
+4. **At mitigation: apply register-class-distinct mitigation strategy.**
+   Mitigation strategies are register-class-distinct per sub-rule fold-in
+   from PHASE2C_13 sub-spec §3.2; bulk-mitigation against single "process
+   failure" bucket explicitly REJECTED at codification register. Each
+   mitigation entry at cycle-internal log MUST include boundary compliance
+   assessment (Y=BOUNDARY VIOLATION if mitigation altered taxonomy or
+   counting; N=clean if mitigation altered TIMING or structure only) per
+   sub-spec §3.3 #4 operational requirement; the boundary compliance column
+   at log register itself catches violations at register-precision distinct
+   from cycle SEAL pre-fire V#-chain register (the V#-chain anchor is a
+   backup, not primary). Sub-rule fold-in at register-precision:
+
+   - **(4a) Sub-spec drafting register mitigation strategies.** Pre-Task
+     specification of mechanics decisions that would otherwise surface at
+     implementer-time register; sub-spec section structural choice anchored
+     at scoping decision binding scope; Items 1-N codification mechanism
+     specified at register-precision per §13-§17 4-subsection precedent or
+     fold-in slot per §5 fold-in 4-criteria check; §22 framework parameter
+     pre-lock audit at sub-spec SEAL pre-fire register. Mitigation timing:
+     at occurrence per Item 7 (a) lightweight tracking OR at sub-spec
+     drafting cycle SEAL pre-fire per Item 7 (c) boundary-fire mitigation
+     review.
+
+   - **(4b) Authorization register mitigation strategies.** Authorization-
+     routing discipline operating per
+     [`feedback_authorization_routing.md`](../../.claude/projects/-Users-yutianyang-Documents-GitHub-btc-alpha-pipeline/memory/feedback_authorization_routing.md)
+     hard rule (Charlie-register-only authorization for operational fires;
+     reviewer convergence is advisory only); anti-momentum-binding strict
+     reading at every authorization boundary; authorization sub-question
+     surfacing at register-event boundary detection. Mitigation timing:
+     at register-event boundary occurrence per Item 7 (a) lightweight
+     tracking — authorization-class instances are typically real-time
+     mitigation per anti-momentum-binding discipline (carry-forward
+     batching of authorization decisions violates anti-momentum-binding
+     strict reading register).
+
+   - **(4c) Reviewer register mitigation strategies.** Reasoned reviewer-
+     suggestion adjudication per
+     [`feedback_reviewer_suggestion_adjudication.md`](../../.claude/projects/-Users-yutianyang-Documents-GitHub-btc-alpha-pipeline/memory/feedback_reviewer_suggestion_adjudication.md)
+     (no bulk-accept; per-fix verification at register-precision register);
+     reviewer scope clarification at sub-spec specification register (e.g.,
+     Codex skip per scoping decision §5.3 +
+     [`feedback_codex_review_scope.md`](../../.claude/projects/-Users-yutianyang-Documents-GitHub-btc-alpha-pipeline/memory/feedback_codex_review_scope.md);
+     ChatGPT structural overlay vs Claude advisor full-prose-access pass
+     register-class distinction); reviewer over-interpretation prevention
+     per §25 register-class explicit declaration discipline at deliverable
+     authoring register-class. Mitigation timing: at reviewer pass cycle
+     iteration per Item 7 (a) OR at sub-spec drafting cycle SEAL pre-fire
+     per Item 7 (c) when reviewer-pass-aggregated mitigation is appropriate.
+
+   - **(4d) Mitigation-note text register-precision discipline at log
+     entry register.** Mitigation-note text correction at log entry register
+     (e.g., correcting self-contradictory claim that fails empirical
+     verification against canonical anchor) preserves cycle-internal log
+     boundary compliance N=clean at register-precision IF cumulative count
+     register integrity preserved (instance still present at log; instance
+     # preserved; closure status preserved; taxonomy register-class label
+     preserved). Mitigation-note text register-precision discipline operates
+     at register-class-distinct register from taxonomy/counting invariance
+     (Item 7 boundary clause core); text correction at log register-class
+     = register-precision-discipline-application register, NOT taxonomy/
+     counting mutation (sub-rule fold-in from sub-spec §3.3 #5).
+
+5. **Cross-reference §3 of PHASE2C_13 sub-spec
+   [`docs/phase2c/PHASE2C_13_PLAN.md`](../phase2c/PHASE2C_13_PLAN.md)
+   for full operationalization detail of register-class taxonomy 3-class
+   sub-rule.** §3 of sub-spec contains the full sub-rule operationalization
+   at register-precision register: §3.1 3-class enumeration with PHASE2C_12
+   instance examples; §3.2 register-class-distinct mitigation strategies
+   per register-class; §3.3 cross-cycle comparability requirement at Item 7
+   boundary clause anchor with 7 operational requirements (3-class
+   enumeration invariance / counting logic invariance / mitigation timing
+   variance allowed / boundary compliance check / mitigation-note text
+   register-precision / cluster-format log entries / row-level mapping
+   methodology). Cross-reference register-class-distinct from items 1-4
+   above — items 1-4 contain operationalization detail folded into §26
+   Application checklist register; item 5 routes downstream readers to §3
+   of sub-spec for full sub-rule scope at canonical artifact register.
+   §3 of the sub-spec remains the authoritative operationalization source
+   artifact for the sub-rule at drafting-cycle register; the Application
+   checklist items 1-4 fold-in is operationalization-detail register-
+   class derivative of §3, register-class-distinct from authoritative-
+   source register binding at sub-spec §3.
+
+The five-item checklist (with items 2 + 3 + 4 internally structured at
+sub-rules per §3 fold-in mechanism; item 5 cross-references §3 of sub-spec
+for full sub-rule scope) is structurally designed for mechanical execution
+at cycle-class register (continuous-vs-batch choice + cycle-internal log
+discipline) and at instance-class register (label assignment + mitigation
+strategy application). Mechanical execution does not require interpretive
+judgment at any item; the discipline operates as a procedural gate at
+both registers, register-class-distinct from interpretive-register
+reviewer pass cycle activities operating at substantive content register.
+
+### Failure-mode signal
+
+Watch for §9.0c instance enumeration at single "process failure" bucket
+register without 3-class register-class taxonomy assignment. The omission
+is the primary enumeration-collapse defect §26 catches: absent the
+taxonomy, cross-cycle methodology measurement at cumulative count register
+operates at single-bucket comparison register-class with register-class
+precision collapsed across instance-class boundaries. PHASE2C_12 cycle 8
+instances at canonical §8.2 row register with explicit register-class
+column per §10.2 Item 6 codification register (3 sub-spec drafting + 1
+authorization + 4 reviewer) is concrete evidence basis: absent §26
+codification, cross-cycle comparability at PHASE2C_14+ measurement
+register operates at register-class-collapsed comparison register,
+recreating the register-class precision collapse pattern that Item 6
+sub-rule explicitly rejects at enumeration register-class.
+
+Watch for bulk-mitigation strategy applied across heterogeneous register-
+class instances. The pattern surfaces when mitigation execution at cycle
+SEAL register fires at single-strategy register-class (e.g., "improve
+reviewer pass discipline" applied to instances spanning sub-spec drafting
++ authorization + reviewer register-classes) without register-class-
+distinct mitigation strategy enumeration per §3.2 codification register.
+Bulk-mitigation conflates the mitigation register-classes (sub-spec
+drafting strategies = pre-Task specification + Items codification
+mechanism; authorization strategies = anti-momentum-binding strict reading
++ register-event boundary detection; reviewer strategies = reasoned
+reviewer-suggestion adjudication + reviewer scope clarification + reviewer
+over-interpretation prevention) and recreates the register-class precision
+collapse pattern at mitigation register-class — register-class-distinct
+catch class from the enumeration-collapse pattern above; both patterns
+share the meta-pattern of register-class precision collapse but operate
+at register-class-distinct catch registers (enumeration vs mitigation).
+
+Watch for cross-cycle methodology measurement comparison absent register-
+class-distinct counting. The pattern surfaces when cross-cycle accumulation
+register at consolidation cycle accumulation reads single-bucket cumulative
+count comparison ("PHASE2C_12 had 8 instances; PHASE2C_11 had fewer")
+without register-class-distinct counting at 3-class taxonomy register.
+Single-bucket comparison covers structural axis at high-level overview
+register but does not establish register-class precision at cumulative
+count register; register-class distribution heterogeneity (e.g., 3 sub-
+spec drafting + 1 authorization + 4 reviewer at PHASE2C_12 vs different
+distribution at PHASE2C_11) is observable only at register-class-distinct
+counting register. Cross-cycle comparability anchor preservation per Item
+7 boundary clause invariant requires register-class-distinct counting at
+cumulative count register; single-bucket counting corrupts the
+comparability anchor by construction.
+
+Watch for register-class label assignment at summary register rather than
+register-precision register. The pattern surfaces when §9.0c instance
+register-class assignment at cycle-internal log fires at structural overlay
+register-class ("the instance is process-related" without 3-class taxonomy
+label) rather than at register-precision register-class label per §3.1
+canonical taxonomy. Multi-class hybrid entries at canonical §8.2 row
+register column ("Multi-reviewer convergence" at #5; "Sub-spec drafting →
+fire-time" at #6; "Multi-reviewer + Charlie register convergence" at #7)
+require resolution to single dominant register-class per Item 6
+codification mechanism collapse rule before instance enumeration completes
+at register-precision register. Inherits the register-precision discipline
+codified at §21 + §22 + §23 + §25 Failure-mode signal precedent at
+parallel enumeration register-class.
+
+Watch for cluster-format log entries authored without per-defect numbering
+or sub-defect count enumeration at mitigation note register, plus V#-
+anchor verification at cycle-internal log applied via string-count grep
+proxy method at full-file register rather than row-level 1:1 mapping
+methodology at bounded-section register. Both patterns conflate register-
+class-distinct counting registers: cluster entries without per-defect
+numbering recreate register-class precision collapse at cumulative count
+register (cross-cycle reader unable to distinguish single-instance cluster
+vs multi-instance cluster at register-precision); string-count grep proxy
+method conflates row-level instance entries with prose summary mentions
+at register-class-distinct registers (e.g., "N=clean" in prose summary
+text counts as string match identical to row-level closure-column N=clean
+at instance entry register), producing register-class precision collapse
+at verification register-class. Row-level 1:1 mapping methodology at
+bounded-section register-precision is the binding verification methodology
+per §3.3 #7 operational requirement; string-count grep proxy method is
+unreliable and discarded at PHASE2C_13 sub-spec drafting cycle SEAL
+boundary register-event per ChatGPT advisor SEAL pre-fire pushback.
+
+Watch for mitigation-note text correction without explicit boundary
+compliance check against cumulative count register integrity. The pattern
+surfaces when mitigation-note text correction at log entry register fires
+without explicit verification that cumulative count register integrity
+preserved (instance presence at log; instance # preservation; closure
+status preservation; taxonomy register-class label preservation).
+Mitigation-note text register-precision discipline operates at register-
+class-distinct register from Item 7 boundary clause core (taxonomy +
+counting invariance); text correction may introduce taxonomy mutation or
+counting mutation by mistake if boundary compliance check elided at
+correction register. Boundary compliance check at every mitigation per
+§3.3 #4 operational requirement catches both text correction and core
+mitigation alterations at cycle-internal log register itself, register-
+class-distinct from cycle SEAL pre-fire V#-chain verification register.
+
+Watch for continuous-vs-batch choice elided at cycle-entry register without
+explicit declaration. The pattern surfaces when methodology consolidation
+cycle entry fires without explicit `continuous` or `batch` register-class
+declaration, defaulting to `batch` register at register-class-distinct
+outcome from explicit `continuous` binding under Item 7 anti-meta-pattern
+discipline (codified at §27 codification register at PHASE2C_13 implementation
+arc Step 6 per sub-spec §5.4 disposition). Cycles binding Item 7 require
+explicit `continuous` declaration with Item 7 boundary clause invariant
+preservation (TIMING-only mutation; taxonomy + counting logic invariant);
+absent declaration, cycles default to `batch` register-class without Item
+7 binding, recreating the carry-forward to next-consolidation-cycle pattern
+that Item 6 codification mechanism explicitly identifies as the discipline's
+trigger context.
+
+Watch for description drift between sub-spec parenthetical labels and
+canonical §8.2 row register descriptions. The pattern surfaces when sub-
+spec body cites §9.0c instance entries by number plus parenthetical
+description, where the parenthetical description diverges from the
+canonical §8.2 source-artifact entry at the cited number. Inherits the
+description-drift discipline codified at §22 Failure-mode signal item 7
+register-class precedent applied to §9.0c register-class taxonomy
+enumeration register; the drift is a sub-class of handoff-noise propagation
+between sub-spec authoring register and canonical source artifact register,
+undetected at sub-spec SEAL pre-fire absent register-precision empirical
+verification per §1 + §15 disciplines. §26 Trigger context citation
+discipline binds verbatim citation from canonical §8.2 row register, not
+sub-spec §3.1 parenthetical labels, at codification register precedent.
+
+### Tier disposition
+
+§26 ships at **Medium tier with cross-cycle-pending status note**. The
+eight PHASE2C_12 cycle §9.0c instances enumerated at Trigger context
+(canonical §8.2 row register #1-#8 with register-class assignment per
+§10.2 Item 6 codification mechanism: 3 sub-spec drafting + 1 authorization
++ 4 reviewer at 3-class taxonomy distribution) give the discipline single-
+cycle empirical basis at cross-cycle observation density measurement
+register-class, sufficient for Medium-tier codification per sub-spec §4.3.4
+binding. The provisional Strong-tier candidate framing at sub-spec §2.6
+codification mechanism downgrades to Medium-tier-with-cross-cycle-pending
+at this Step 5 codification register per §4.3.4 binding (NO Strong-tier
+promotions authorized at PHASE2C_13 cycle register; criterion 4 maturation
+requirement fails by construction at first codification cycle); the
+downgrade aligns with §21 + §22 + §23 + §25 tier disposition register
+precedent at the same PHASE2C_13 implementation arc cycle.
+
+Cross-cycle accumulation register is fed by historical PHASE2C_8.1 /
+PHASE2C_9 / PHASE2C_10 / PHASE2C_11 instance backfill at the cycle-
+complexity scaling diagnosis discipline (codified separately at PHASE2C_13
+implementation arc Step 7 per sub-spec §5.4 disposition, Carry-forward A
+new-§ slot). The backfill ships register-class-distinct counting at 3-class
+taxonomy invariant per §3.3 #1 operational requirement; cross-cycle
+distribution comparison reads register-class-distinct counts at cumulative
+register at canonical taxonomy invariant. Strong-tier promotion is
+contingent on (i) Strong-tier promotion bar criteria codified at the
+existing §13-§20 tier framework refinement (codified at PHASE2C_13
+implementation arc Step 9 per sub-spec §5.4 disposition, Carry-forward C
+fold-in to §20 appendix-style sub-§) and (ii) cross-cycle accumulation
+evidence threshold met per the Strong-tier bar; tier re-evaluation at
+successor methodology consolidation cycle once both contingencies resolve.
+Medium tier preserves the discipline at observation-backed application
+register without claiming Strong-tier prescriptive force prematurely.
+
+The §3 sub-rule fold-in at Application checklist items 2 + 3 + 4 + cross-
+reference at item 5 inherits §26's tier disposition at register-precision
+per §22 Item 4 fold-in tier inheritance precedent; fold-in scope register-
+class-distinct between §22 single-item vs §26 multi-item scope per
+Principle ¶4 framing. The §3 evidence basis (3-class taxonomy
+operationalization at PHASE2C_13 sub-spec drafting cycle register + 7
+operational requirements at §3.3 + canonical PHASE2C_12 instance examples
+at §3.1) supports the parent §26 tier disposition at fold-in register
+without requiring separate §3 sub-rule tier evaluation.
+
+---
+
 ---
