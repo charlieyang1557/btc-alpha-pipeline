@@ -3902,4 +3902,385 @@ bar criteria 1-4.
 
 ---
 
+## §25 Register-class explicit declaration at Step deliverable authoring
+
+### Principle
+
+Multi-step implementation arc Step deliverables that contain metrics
+and outputs at multiple register-classes — mechanical-output / inter-
+pretive-overlay / intermediate / final / sensitivity — require an
+explicit register-class declaration block at the deliverable §-opening
+that states which register-class(es) each metric or output operates
+at, plus inline register-class context preserved at each first-
+reference site within the deliverable body. Reviewer pass cycle then
+receives the deliverable with explicit register-class context;
+reviewers operate at register-precision matching the declared
+register-class, and reviewer prompt template includes a register-
+class match verification annotation. Without the explicit declaration,
+reviewer over-interpretation at the wrong register-class is the
+canonical defect class — a §9.0c reviewer-register instance class
+where interpretive-overlay framing is applied to a mechanical-output
+register-class metric (or vice versa) at reviewer engagement time.
+Reviewer prompt template verification is part of the deliverable-
+authoring contract scope, not a separate reviewer-process discipline:
+the prompt template is authored at sub-spec specification register
+as a sub-component of the deliverable-authoring discipline, with
+invocation at reviewer pass cycle runtime register downstream of
+deliverable authoring boundary.
+
+The discipline operates at a register distinct from §1 empirical
+verification for factual claims, §15 anchor-list empirical verification
+at the receiving cycle, §23 inter-step contract standardization at
+multi-step implementation arc Step boundaries, §22 framework parameter
+pre-lock audit at sub-spec drafting cycle terminus, and §21 fire-prep
+precondition checklist discipline at multi-step implementation arc
+Step boundaries. The six disciplines form a complementary chain
+ordered by register-class catch boundary tracking workflow time: §1
+catches defects at any drafting register; §15 catches defects at
+anchor receipt boundary (drafting cycle start); §23 catches defects
+at sub-spec authoring of inter-step interface contracts (drafting
+cycle mid); §22 catches defects at sub-spec SEAL pre-fire boundary
+(drafting cycle terminus); §21 catches defects at implementation arc
+Step fire-prep boundary (post-SEAL, pre-Step-execution); §25 catches
+defects at Step deliverable authoring boundary (post-Step-execution,
+pre-reviewer-pass). §25 is ordered after §21 in the chain because
+§21 fires before the Step executes (mechanical pre-fire verification)
+while §25 fires after the Step's metrics and outputs are produced
+(register-class declaration binding output semantics for downstream
+reviewer engagement). The chain's structural value is register-class-
+distinct catch points across discipline scope; absence of any one
+register increases retroactive defect propagation overhead at the
+downstream registers, including the reviewer pass cycle register
+where §25's specific catch class operates. The chain ordering is at
+workflow catch-boundary register, not at numeric § register: §25
+ships at numeric §-slot 25 sequential to §21-§23 codification slots
+at PHASE2C_13 implementation arc but operates at the latest catch
+boundary in the workflow time chain, post-§21 fire-prep boundary.
+
+§25 operates at register-class-distinct content scope from §21-§23
+cluster (per-parameter values vs per-Step-boundary interfaces vs
+metric / output register-class semantics) and at register-class-
+coupled content scope with §16 anchor-prose-access discipline at
+multi-hundred-line interpretive deliverables. §16 covers the prose-
+access mode at section-seal reviewer engagement (reviewer adjudication
+fires against actual prose, not summary or structural overview); §25
+covers the register-class declaration mode at deliverable §-opening
+(reviewer engagement receives explicit register-class context for
+metrics and outputs). §16 + §25 both operate at reviewer-engagement
+register-class but register-class-distinct at content scope: §16
+ensures reviewers engage the actual content; §25 ensures reviewers
+engage at register-precision matching the metric / output register-
+class semantics. Cross-§ register-class collision is avoided by
+content-scope distinction at register-precision — prose-access mode
+(engagement fidelity) vs register-class declaration (engagement
+register-class semantics).
+
+### Trigger context
+
+This discipline's empirical basis is one PHASE2C_12 cycle §9.0c
+instance per Item 5 verbatim source at PHASE2C_12 closeout
+[`docs/closeout/PHASE2C_12_RESULTS.md`](../closeout/PHASE2C_12_RESULTS.md)
+§10.2 lines 525-530:
+
+> Item 5 — Reviewer over-interpretation prevention. Codify register-
+> class explicit declaration in each Step deliverable: "Before
+> interpreting metric X, declare which register-class (intermediate /
+> final / sensitivity)". §9.0c instance #8 (advisor pre-fire prediction
+> wrong) is concrete instance of this defect class. Add reviewer prompt
+> template: "Does this metric belong to mechanical-output register or
+> interpretive-overlay register?"
+
+The single instance is canonical §8.2 row register entry #8 at
+PHASE2C_12 closeout enumeration:
+
+1. **§9.0c instance #8 — Advisor pre-fire interpretive overlay on
+   mechanical Q22 LOCKED compute output (predicted artifact_evidence;
+   actual inconclusive at fire-time).** PHASE2C_12 Step 8 mechanical
+   disposition fire executed Q22 LOCKED routing at deterministic
+   mechanical compute register — a 4-region routing structure mapping
+   `(argmax_sharpe vs Bonferroni_threshold, argmax_p_value)` to one of
+   `signal_evidence` / `inconclusive` / `artifact_evidence` / etc.
+   without interpretive judgment at any routing step — producing
+   disposition output at mechanical-output register-class semantics.
+   Pre-fire at Step 8 fire-prep boundary, an advisor cycle produced a
+   prediction at interpretive-overlay register-class semantics
+   (`artifact_evidence`) based on substantive interpretive framing of
+   the cross-regime AND-gate evidence and cross-cycle directional
+   improvement pattern. At Step 8 fire-time, Q22 LOCKED mechanical
+   compute produced disposition `inconclusive` at primary anchor
+   n_eff=197 (argmax sharpe 2.798 above null 2.487 with z=0.881
+   positive but argmax p-value 0.189 in intermediate region 0.05 <
+   p < 0.5 → Region 5 routing). The interpretive-overlay prediction
+   and the mechanical-output disposition diverged at fire-time; the
+   divergence surfaced as a §9.0c reviewer-register instance per
+   closeout §8.2 row register #8 with explicit register-class label
+   "Reviewer register" and codification candidate "§10 Item 5 reviewer
+   over-interpretation prevention". The defect class is precisely
+   interpretive-overlay register prediction applied to mechanical-
+   output register output at reviewer engagement time without explicit
+   register-class declaration distinguishing the two semantics.
+
+The single PHASE2C_12 cycle instance represents the canonical
+reviewer-register §9.0c defect class evidence basis at the metric /
+output register-class declaration register; single-instance basis per
+cycle is sufficient for Medium-tier codification per sub-spec §4.3.4
+binding (register-class-distinction from §19 finding pattern density
+and Strong-tier promotion contingency framing anchored at Tier
+disposition register below). The pattern generalizes from the
+PHASE2C_12 Step 8 instance to any Step deliverable containing metrics
+and outputs at multiple register-classes; the trigger condition is
+the deliverable authoring boundary itself. The register-class taxonomy
+at the declaration block aligns with PHASE2C_13 sub-spec §3 §9.0c
+register-class taxonomy 3-class sub-rule (sub-spec drafting / author-
+ization / reviewer registers) at the reviewer-register class — the
+§3 sub-rule operationalization detail codified separately at PHASE2C_13
+implementation arc Step 5 per sub-spec §5.4 disposition (Item 6 §26
+new-§ slot with §3 sub-rule fold-in at Application checklist).
+
+### Application checklist
+
+At each multi-step implementation arc Step deliverable authoring:
+
+1. **Enumerate metric and output register-classes present in the
+   deliverable.** The enumeration produces, for each metric and output
+   cited in the deliverable, an explicit register-class label at
+   register-precision: `mechanical-output` (deterministic compute
+   output from Q-LOCKED routing or framework runtime resolution);
+   `interpretive-overlay` (advisor pre-fire prediction, post-fire
+   substantive interpretation, cross-cycle pattern observation, or
+   other interpretive-judgment content layered over mechanical
+   output); `intermediate` (compute output at intermediate register
+   not yet routed to final disposition); `final` (terminal compute
+   output bound at the deliverable as canonical disposition);
+   `sensitivity` (parametric variation output at sensitivity axis).
+   Enumeration precision requires reading the deliverable at register-
+   precision, not summary register; metrics and outputs cited only
+   indirectly require resolution to canonical register-class label
+   before enumeration completes. Mirrors §21 + §22 + §23 Application
+   checklist item 1 register-precision discipline at the parallel
+   parameter / interface enumeration register-class.
+
+2. **Author explicit register-class declaration block at deliverable
+   §-opening.** The declaration block is a structurally-marked
+   paragraph or table at the deliverable §-opening that enumerates
+   register-class assignment per metric / output: "This deliverable
+   operates at <register-class A> register for metrics <list>;
+   <register-class B> register for metrics <list>; <register-class C>
+   register for outputs <list>." The declaration may use prose
+   register or table register at register-precision; what is load-
+   bearing is that each metric / output enumerated at item 1 receives
+   an explicit register-class label at the §-opening, and that the
+   labels collectively cover the full enumerated set. Partial coverage
+   (some metrics labeled, others left implicit) recreates the
+   implicit-register-class gap that §25 catches at the reviewer
+   engagement surface; full coverage at the §-opening preserves
+   register-class semantics across the deliverable for downstream
+   reviewer engagement.
+
+3. **For each metric and output: bind register-class context inline
+   at first reference site.** Beyond the §-opening declaration block,
+   each metric and output receives an inline register-class binding
+   at its first reference site within the deliverable body. The
+   binding may be parenthetical ("disposition `inconclusive` at
+   mechanical-output register"), prose-anchored ("at the mechanical-
+   compute register the routing produced ..."), or annotation-
+   anchored at the metric / output mention; what is load-bearing is
+   that the first-reference site preserves the register-class context
+   the §-opening declaration block established. Repeated mentions
+   inherit the first-reference register-class binding by construction
+   unless an explicit register-class transition is annotated;
+   transitions across register-classes within the deliverable body
+   are explicitly annotated at the transition site to preserve
+   register-class semantics across the transition.
+
+4. **Reviewer pass cycle prompt template includes register-class
+   match verification annotation.** The reviewer prompt template
+   authored at sub-spec specification register includes an explicit
+   verification annotation: "For each metric and output cited in the
+   deliverable, verify register-class declaration matches actual
+   register-class semantics; flag any register-class mismatch as
+   §9.0c reviewer-register instance candidate." The annotation
+   applies uniformly across the active reviewer pass cycle
+   invocations under scoping decision routing (advisor full-prose-
+   access pass + ChatGPT structural overlay routinely; Codex
+   adversarial pass when in scope per `feedback_codex_review_scope.md`
+   substantive-deliverable routing). Reviewer prompt template
+   specification authored at sub-spec specification register declares
+   the intended reviewer pass cycle register-class for downstream
+   reviewer-engagement reference; specification register at sub-spec
+   register-class-distinct from invocation-binding at reviewer pass
+   cycle register at runtime.
+
+5. **Surface any register-class mismatch detected as §9.0c reviewer-
+   register instance candidate at register-class-distinct register
+   before deliverable SEAL fire.** Mismatch detected at reviewer pass
+   cycle register (per item 4 verification annotation) or at
+   deliverable authoring self-pass register logs at the cycle-
+   internal §9.0c reviewer-register class log per PHASE2C_13 sub-spec
+   §3 register-class taxonomy 3-class sub-rule operationalization
+   register; the log entry's mitigation-note column carries the Step
+   deliverable authoring boundary register-class annotation as
+   metadata. Mismatch may be resolved before deliverable SEAL
+   (declaration block patch + inline binding patch + reviewer pass
+   cycle re-fire) or surfaced as carry-forward to next-cycle register
+   if resolution is out-of-scope; either disposition requires explicit
+   register-class logging at deliverable SEAL pre-fire boundary, not
+   implicit propagation through SEAL. Mirrors §21 + §22 Application
+   checklist item 5 register-class-distinct surfacing pattern at
+   companion catch boundaries; routing target is §9.0c reviewer-
+   register class log register (codified at PHASE2C_13 implementation
+   arc Step 5 per sub-spec §5.4 disposition, Item 6 §26 new-§ slot
+   with §3 sub-rule fold-in) rather than §19 finding register-class
+   log register per §9.0c vs §19 register-class distinction at sub-
+   spec §3 + §A1 register precedent.
+
+The five-item checklist is structurally designed for mechanical
+execution at Step deliverable authoring register: register-class
+enumeration → §-opening declaration block authoring → inline first-
+reference binding → reviewer prompt template specification with
+verification annotation → mismatch surface routing. Mechanical
+execution does not require interpretive judgment at any item; the
+discipline operates as a procedural gate at the deliverable authoring
+boundary, register-class-distinct from interpretive-register reviewer
+pass cycle activities operating at substantive content register and
+register-class-distinct from interpretive-register Step description
+authoring at narrative content register.
+
+### Failure-mode signal
+
+Watch for Step deliverables authored without register-class
+declaration block at the deliverable §-opening. The omission is the
+primary defect §25 catches: absent the declaration block, reviewer
+engagement at the deliverable surface operates at implicit-register-
+class register, with metric / output register-class context inferred
+from prose register rather than declared at register-precision.
+PHASE2C_12 §9.0c instance #8 (canonical §8.2 row register) is concrete
+evidence basis: absent §25 audit at Step 8 deliverable authoring
+register, the interpretive-overlay register prediction (advisor pre-
+fire `artifact_evidence` prediction) operated at the same deliverable
+surface as the mechanical-output register disposition (Q22 LOCKED
+`inconclusive` at primary anchor n_eff=197) without register-class
+context distinguishing the two semantics, and the over-interpretation
+defect surfaced at fire-time empirical observation register rather
+than at deliverable authoring register-precision register.
+
+Watch for register-class enumeration at summary register rather than
+register-precision register. The pattern surfaces when the §-opening
+declaration block enumerates register-classes by structural overlay
+("the deliverable contains mechanical and interpretive content")
+without resolving each metric / output to its canonical register-
+class label. Summary-level enumeration covers the structural axis
+but does not establish per-metric register-class precision; reviewer
+pass cycle verifying register-class match against an unresolved
+canonical assignment cannot detect mismatch by construction. Inherits
+the register-precision discipline codified at §21 + §22 + §23
+Failure-mode signal precedent at parallel enumeration register-class.
+
+Watch for §-opening declaration block authored at structural register
+without inline binding at first reference site. The pattern surfaces
+when the declaration block lists register-class assignments at the
+deliverable §-opening but the body content references metrics and
+outputs without inline register-class context, leaving the §-opening
+declaration disconnected from the body's register-class semantics.
+Reviewer engagement at the body register-class then defaults to
+implicit-register-class register for body content; the §-opening
+declaration covers the structural-defect axis but does not establish
+register-precision at the body register where the substantive
+reviewer engagement occurs. Inline first-reference binding is load-
+bearing for register-class semantics propagation across the
+deliverable; declaration-only authoring (item 2 without item 3)
+recreates the implicit-register-class gap pattern at the body
+register.
+
+Watch for reviewer pass cycle prompt template absent register-class
+match verification annotation. The pattern surfaces when the reviewer
+prompt template authored at sub-spec specification register includes
+substantive content adjudication scope ("verify substantive content
+quality") without the register-class match verification annotation
+("verify register-class declaration matches actual register-class
+semantics"). Substantive-only reviewer engagement covers the
+substantive-defect axis at low cost but does not establish register-
+class match precision; the reviewer cannot detect register-class
+mismatch by construction without the verification annotation firing
+at the engagement surface. Reviewer prompt template authoring
+requires explicit register-class match verification annotation at
+sub-spec specification register, not implicit reliance on reviewer
+substantive overlay.
+
+Watch for advisor pre-fire interpretive overlay applied to deter-
+ministic mechanical compute output without explicit register-class
+declaration distinguishing the two semantics. The pattern is the
+canonical PHASE2C_12 §9.0c instance #8 defect class: a Q-LOCKED
+mechanical compute (Q22 LOCKED routing producing disposition output)
+fires at deterministic mechanical-output register-class semantics
+with no interpretive judgment at any compute step; an advisor cycle
+produces a pre-fire prediction at interpretive-overlay register-class
+semantics layered over the same metric / output. Absent explicit
+register-class declaration, prediction and compute output operate at
+the same deliverable surface without register-class context; the
+divergence between interpretive prediction and mechanical output
+surfaces at fire-time empirical observation register rather than at
+deliverable authoring register-precision register. Pattern recognition:
+any pre-fire prediction over a deterministic mechanical compute
+output requires explicit register-class declaration ("advisor pre-
+fire prediction at interpretive-overlay register; Q-LOCKED compute
+output at mechanical-output register") at deliverable §-opening to
+preserve register-class semantics at adjudication surface; absent
+declaration, the register-classes operate at conflated register
+without distinguishing semantics, recreating the §9.0c reviewer-
+register instance #8 defect class pattern.
+
+Watch for deliverable SEAL fires under time pressure without §25
+audit completed at the §-opening declaration block + inline binding
+register. The pattern surfaces when SEAL pre-fire register elides
+§25 audit on the framing that "register-class is obvious from prose
+context" or "audit can fire at reviewer pass cycle instead." The
+elision substitutes downstream register catch (reviewer pass cycle)
+for the deliverable authoring register catch (§25 audit at §-opening
+register); the substitution cost is reviewer over-interpretation
+overhead at the downstream register relative to the same register-
+class declaration audit at deliverable authoring register-precision.
+The pattern is the canonical failure mode the discipline catches.
+
+### Tier disposition
+
+§25 ships at **Medium tier with cross-cycle-pending status note**.
+The single PHASE2C_12 cycle §9.0c instance enumerated at Trigger
+context (canonical §8.2 row register #8: advisor pre-fire interpretive
+overlay on mechanical Q22 LOCKED compute output) gives the discipline
+single-cycle empirical basis at reviewer-register §9.0c defect class
+register. Single-instance basis per cycle is sufficient for Medium-
+tier codification per sub-spec §4.3.4 binding. The provisional
+Strong-tier candidate framing at sub-spec §2.5 codification mechanism
+downgrades to Medium-tier-with-cross-cycle-pending at this Step 4
+codification register per §4.3.4 binding (NO Strong-tier promotions
+authorized at PHASE2C_13 cycle register; criterion 4 maturation
+requirement fails by construction at first codification cycle); the
+downgrade aligns with §21 + §22 + §23 tier disposition register
+precedent at the same PHASE2C_13 implementation arc cycle.
+
+Cross-cycle accumulation register is fed by historical PHASE2C_8.1 /
+PHASE2C_9 / PHASE2C_10 / PHASE2C_11 instance backfill at the cycle-
+complexity scaling diagnosis discipline (codified separately at
+PHASE2C_13 implementation arc Step 7 per sub-spec §5.4 disposition,
+Carry-forward A new-§ slot). §25 reviewer-register class scope
+(interpretive-overlay vs mechanical-output mismatch at any deliverable
+authoring boundary) is broader than §23 inter-step interface contract
+gap class scope (Step N → Step N+1 boundary specifically); cross-cycle
+accumulation density at §25 may accumulate at a denser register-class
+than §23 sparse register, register-class-distinct from §19 finding
+pattern accumulation at sub-spec → empirical reality drift boundary
+per sub-spec §3 + closeout §8.2 register-class taxonomy precedent.
+Strong-tier promotion is contingent on (i) Strong-tier promotion bar
+criteria codified at the existing §13-§20 tier framework refinement
+(codified at PHASE2C_13 implementation arc Step 9 per sub-spec §5.4
+disposition, Carry-forward C fold-in to §20 appendix-style sub-§) and
+(ii) cross-cycle accumulation evidence threshold met per the Strong-
+tier bar; tier re-evaluation at successor methodology consolidation
+cycle once both contingencies resolve. Medium tier preserves the
+discipline at observation-backed application register without claiming
+Strong-tier prescriptive force prematurely.
+
+---
+
 ---
