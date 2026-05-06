@@ -5393,3 +5393,534 @@ Medium-tier register-class-distinct registers.
 ---
 
 ---
+
+## §28 Cycle-complexity scaling diagnosis at PHASE2C consolidation cycles (canonical metric set + cross-cycle backfill + forward observation framing)
+
+### Principle
+
+Methodology consolidation cycles accumulate complexity at register-class-distinct
+measurement registers across cycle iterations. PHASE2C_8.1 through PHASE2C_12
+cycle empirical evidence demonstrates that single-axis complexity descriptors
+("commits per cycle" or "auth events per cycle" alone) collapse register-class
+precision at cross-cycle scaling diagnosis register: cycles vary along
+multiple register-class-distinct axes (Charlie register authorization
+boundary count + git commit count + §19 spec-vs-empirical-reality finding
+pattern instance count + §9.0c process-design observation instance count) and
+single-axis summary at cross-cycle comparison register obscures register-
+class-distinct scaling patterns. §28 codifies a canonical metric set at
+register-class-distinct measurement register-class binding cross-cycle scaling
+diagnosis discipline; cross-cycle scaling diagnosis at register-class-distinct
+metric register-precision register-class is the discipline's catch class.
+
+The discipline operates at cycle-cumulative measurement register-class
+distinct from §26 cross-cycle observation density measurement register-class,
+distinct from §18 §7 carry-forward density at interpretive arc closeouts
+register-class, and distinct from §19 cross-cycle spec-vs-empirical-reality
+finding pattern accumulation register-class. §26 catches cross-cycle
+accumulation at §9.0c-specific instance density register at register-class
+taxonomy preservation scope; §18 catches §7 carry-forward observation density
+at interpretive arc closeouts register; §19 catches cross-cycle accumulation
+of spec-vs-empirical-reality finding pattern at single-pattern-class register.
+§28 catches cross-cycle accumulation at canonical metric set scope register-
+class — multi-metric cycle-complexity scaling diagnosis at register-class-
+distinct canonical metric set register-precision binding. §28 register-class-
+coupled with §26 + §18 + §19 cluster at cross-cycle accumulation observation
+register-class but register-class-distinct catch class at content scope
+register-precision: §26 = §9.0c-specific accumulation register at instance-
+density register-class; §18 = §7 carry-forward density register at interpretive
+arc closeout register-class; §19 = spec-vs-empirical-reality drift register
+at single-pattern-class register-class; §28 = multi-metric cycle-complexity
+scaling register at canonical metric set register-class.
+
+§28 is register-class-orthogonal to the §1 / §15 / §21 / §22 / §23 / §25 / §27
+per-instance / per-cycle catch-boundary cluster at content scope axis. The
+cluster catches defects at workflow time boundaries (any drafting register /
+anchor receipt / sub-spec authoring of inter-step contracts / sub-spec SEAL
+pre-fire / Step fire-prep / Step deliverable authoring / cycle-class anti-
+meta-pattern); §28's specific catch class is multi-metric cycle-complexity
+scaling diagnosis at canonical metric set scope rather than a workflow time
+boundary catch-class or per-instance catch register-class. Cross-§ register-
+class collision at §28 ↔ §26 / §18 / §19 framing is avoided by content-scope
+distinction at register-precision: §28 operates at canonical metric set scope
+register binding multi-metric register-class-distinct measurement registers
+together at single cross-cycle scaling diagnosis register-class; §26 / §18 /
+§19 each operate at single-pattern-class register at their own register-class-
+distinct content scope.
+
+The canonical metric set codified at §28 binds cross-cycle scaling diagnosis
+at four register-class-distinct measurement registers per scoping decision
+§6.4 advisor-lean (a) quantitative metric tracking specification: (1) Charlie
+register authorization boundaries per cycle at authorization register-class;
+(2) git commit count per cycle at commit register-class; (3) §19 spec-vs-
+empirical-reality finding pattern instance count per cycle at §19 register-
+class; (4) §9.0c process-design observation instance count per cycle at §9.0c
+register-class. The four metrics are register-class-distinct measurement
+registers at cross-cycle scaling diagnosis register; collapsing to single-
+axis composite at cross-cycle comparison register corrupts register-class
+precision by construction at canonical metric set discipline binding.
+
+Forward observation framing at §28 binds the discipline at PHASE2C_14+
+cross-cycle scaling diagnosis register-class through cycle SEAL closeout
+deliverable cycle-cumulative metric reporting requirement at canonical metric
+set scope + cross-cycle delta tracking at register-precision register-class
++ scaling-concern threshold check at register-class-distinct provisional
+threshold register + scaling-concern surface line at closeout deliverable
+register-class binding. Anti-pre-naming preserved at §28 codification register:
+specific future-cycle scope (PHASE2C_14 / PHASE2C_15 / etc.) NOT pre-committed
+at canonical-artifact register; §28 specifies WHAT each future cycle's closeout
+MUST report on (canonical metric set + delta + threshold check) without naming
+specific future cycles per anti-pre-naming discipline binding.
+
+### Trigger context
+
+This discipline's empirical basis is five PHASE2C consolidation cycle instances
+per Carry-forward A verbatim source at PHASE2C_13 scoping decision
+[`docs/phase2c/PHASE2C_13_SCOPING_DECISION.md`](../phase2c/PHASE2C_13_SCOPING_DECISION.md)
+§6.4 lines 290-298 (verbatim source citation per §22 Failure-mode signal item 7
+description-drift discipline applied to Carry-forward A verbatim source register;
+instance descriptions cited verbatim from canonical scoping decision source
+artifact, NOT from sub-spec §4.1 parenthetical labels):
+
+> ### §6.4 Carry-forward A — cycle-complexity scaling diagnosis
+>
+> **Scope:** PHASE2C_13 sub-spec drafting cycle authors deliverable framing
+> for cycle-complexity scaling observation per Step 9 §10.6.
+>
+> **Deliverable framing direction (advisor lean; binding at scoping):**
+>
+> - **(a) Quantitative metric tracking** — historical analysis output covering
+>   auth boundaries / commits / §19 instances / §9.0c instances per cycle
+>   across PHASE2C_8 through PHASE2C_12 register. Specific metric set authored
+>   at sub-spec.
+> - **(c) Forward observation framing** — "what to monitor in PHASE2C_14+"
+>   anchor; specific monitoring mechanism authored at sub-spec.
+> - **(b) Qualitative root cause analysis** DEFER until (a) data observed.
+>   Pure diagnosis without action recommendation is limited value at scoping
+>   register; (a) data observation may inform whether (b) is in-scope at
+>   PHASE2C_13 or carry-forward to PHASE2C_14+.
+
+Empirical backfill at canonical-artifact register-precision register-class
+across PHASE2C_8.1 through PHASE2C_12 cycles + PHASE2C_13 in-progress through
+implementation arc Step 6 SEAL boundary (data sources cited per §4.1.1 metric
+definition: cycle closeout deliverable §-cumulative-count register reads +
+git log empirical fire for commit count + canonical METHODOLOGY_NOTES §19
+codification register where applicable):
+
+| Cycle | Auth boundaries | Commit count | §19 instance count | §9.0c instance count |
+| ----- | --------------- | ------------ | ------------------ | -------------------- |
+| PHASE2C_8.1 | not enumerated at canonical-artifact register at PHASE2C_8.1 closeout deliverable | 11 (empirical: `git log f223316..69e9af9`; range: PHASE2C_8.0 scoping SEAL → PHASE2C_8.1 closeout SEAL) | n/a (register post-codified at PHASE2C_10 §19 seal `0c6831f`) | n/a (register post-surfaced at PHASE2C_12 §8.2 cycle SEAL register-class register) |
+| PHASE2C_9 | not enumerated at canonical-artifact register at PHASE2C_9 closeout deliverable | 18 (empirical: `git log 69e9af9..2c96889`; range: PHASE2C_8.1 SEAL → PHASE2C_9 closeout SEAL) | 3 (canonical: PHASE2C_9 closeout §8.4 mandatory-tracked-fix entry #2 + METHODOLOGY_NOTES §19 codification register at `0c6831f`) | n/a (register post-surfaced at PHASE2C_12) |
+| PHASE2C_10 | ~6 (canonical: PHASE2C_12 closeout §2.2 retrospective at "~" qualifier register-precision) | 19 (empirical: `git log 2c96889..ff3e4ca`; range: PHASE2C_9 SEAL → PHASE2C_10 closeout SEAL) | 3 cycle-local at METHODOLOGY_NOTES §19 codification register (2 scoping + 1 plan drafting) / 4 at PHASE2C_12 closeout §8.1 cross-cycle accounting (cross-register description-drift surfaced as §A2 finding pattern instance during this Step 7 backfill empirical fire register) | n/a (register post-surfaced at PHASE2C_12) |
+| PHASE2C_11 | ~10 (canonical: PHASE2C_12 closeout §2.2 retrospective at "~" qualifier register-precision) | 22 (empirical: `git log ff3e4ca..5dba0df`; range: PHASE2C_10 SEAL → PHASE2C_11 closeout SEAL) | 6 at PHASE2C_12 closeout §8.1 cross-cycle accounting (3 sub-spec drafting + 3 implementation/closeout) / 10 at CLAUDE.md PHASE2C_11 SEAL prose summary register (4 sub-spec drafting + 3 Step 1 implementation + 3 Step 4 closeout); cross-register description-drift surfaced as §A2 finding pattern instance during this Step 7 backfill empirical fire register | n/a (register post-surfaced at PHASE2C_12) |
+| PHASE2C_12 | 16 (canonical: PHASE2C_12 closeout §2.2 explicit enumeration "15 explicit Charlie auth boundaries... Auth #7 = 16th = this deliverable seal") | 25 at PHASE2C_12 closeout §2.2 register / 26 at empirical git log fire `5dba0df..1989c85` register (boundary-inclusive convention off-by-one description-drift surfaced as §A2 finding pattern instance during this Step 7 backfill empirical fire register) | 10 (canonical: PHASE2C_12 closeout §8.1 explicit enumeration with 10-row table register) | 8 (canonical: PHASE2C_12 closeout §8.2 explicit enumeration with 8-row table; 3 sub-spec drafting + 1 authorization + 4 reviewer per §8.2 register-class taxonomy) |
+| PHASE2C_13 (in progress through implementation arc Step 6 SEAL boundary) | counting-convention drift surfaced cross-cycle: ~52 Q-S register events at fine-grained register-precision register / ~38 explicit Charlie auth events at coarse-grained register-precision register (PHASE2C_12 used Auth-# coarse register; PHASE2C_13 uses Q-S fine register) — surfaced as §A2 finding pattern instance during this Step 7 backfill empirical fire register | 17 (empirical: `git log 1989c85..4735503`; range: PHASE2C_12 SEAL → Step 6 SEAL bundle) | 15 (canonical: §A2 sealed at sub-spec SEAL `92d8c45`; implementation arc Steps 1-6 cycle-internal log at WORKING DRAFT register only per Q-S46 sub-question 2 OPTION (a) precedent; cumulative count finalized at Step 12 closeout deliverable §6 cumulative count register at register-event boundary) | 6 (canonical: §A1 sealed at sub-spec SEAL `92d8c45`; same WORKING DRAFT register caveat) |
+
+The 5-cycle empirical basis (PHASE2C_8.1 / PHASE2C_9 / PHASE2C_10 / PHASE2C_11
+/ PHASE2C_12) at canonical-artifact register reads exposes register-class-
+distinct scaling patterns across the four canonical metrics: commit count
+exhibits monotone increase (11 → 18 → 19 → 22 → 25-26) at modest growth rate;
+auth boundary count exhibits non-monotone variability (— → — → ~6 → ~10 → 16)
+with PHASE2C_12 step-change to 16 at breadth-expansion arc complexity register;
+§19 instance count exhibits PHASE2C_12 step-change to 10 from 3-6 baseline at
+PHASE2C_9-PHASE2C_11 register; §9.0c instance count exhibits register first
+surface at PHASE2C_12 = 8. PHASE2C_13 in-progress cycle through Step 6 SEAL
+boundary already exhibits §19 = 15 (sub-spec drafting cycle alone at sealed
+register) — exceeds PHASE2C_12 cycle-cumulative §19 = 10 at register-precision
+register-class — and §9.0c = 6 at sub-spec drafting register; cross-cycle
+scaling diagnosis at register-precision register-class is the discipline's
+substantive trigger context binding §28 codification.
+
+The §28 codification is a difficult methodology concept at register-precision
+register — multi-metric cycle-cumulative measurement discipline + cross-cycle
+scaling diagnosis at canonical metric set scope register binding + provisional
+threshold values at scaling-concern surface register + cross-register
+description-drift discipline applied to empirical backfill register-precision
+register. The bilingual concept anchor below operationalizes the discipline
+anchor at PHASE2C_13 sub-spec §0.3 register (bilingual explanation for
+difficult methodology concepts) at the canonical-artifact register where the
+discipline is codified for cross-cycle reading per §27 bilingual anchor
+register precedent at register-class match register:
+
+**Bilingual concept anchor:**
+
+- **English:** §28 binds cross-cycle scaling diagnosis at a canonical metric
+  set of four register-class-distinct measurement registers (auth boundaries
+  + commit count + §19 instances + §9.0c instances per cycle). Each cycle's
+  closeout deliverable reports cumulative metrics per the canonical set; each
+  cycle's closeout reports cross-cycle delta vs the prior cycle's metrics;
+  each cycle checks scaling-concern threshold per provisional values (auth
+  > 20 / §9.0c > 12 / §19 > 15); if any threshold is crossed, the closeout
+  surfaces a "scaling-concern" line + forward-pointer to the next consolidation
+  cycle for codification of mitigation if the cross-cycle pattern persists.
+  **Why a canonical metric set rather than single-axis composite:** cycles
+  vary along multiple register-class-distinct axes; collapsing to single-axis
+  summary obscures register-class-distinct scaling patterns at cross-cycle
+  comparison register. The canonical set preserves register-class precision
+  by construction at scaling diagnosis discipline. **Why provisional thresholds:**
+  the threshold values are calibrated against PHASE2C_12 baseline + 50%
+  growth rule of thumb at scaling-concern surface register; they are
+  provisional pending Charlie register adjudication at §28 codification register
+  + future-cycle empirical recalibration as additional cycles accumulate at
+  cross-cycle comparison register-precision register-class.
+
+- **中文:** §28 把 cross-cycle scaling diagnosis (跨 cycle 复杂度增长诊断) bind
+  在一个 canonical metric set (规范度量集合) 上, 由四个 register-class-distinct
+  measurement registers 组成: auth boundaries (Charlie register 授权边界数) +
+  commit count (git commit 数) + §19 instances (spec-vs-empirical-reality 不匹配
+  发现模式实例数) + §9.0c instances (process-design 观察实例数) per cycle。
+  每个 cycle 的 closeout deliverable 在 canonical metric set scope 上 report
+  cumulative metrics; 每个 cycle 的 closeout report 与上一 cycle 的 cross-cycle
+  delta; 每个 cycle 按 provisional 阈值 (auth > 20 / §9.0c > 12 / §19 > 15)
+  check scaling-concern threshold; 如果任何阈值被穿过, closeout surface 出
+  "scaling-concern" 行 + forward-pointer 到下一 consolidation cycle 在
+  cross-cycle 模式持续时 codify mitigation。**为什么用 canonical metric set
+  而不是 single-axis composite:** cycle 在多个 register-class-distinct axis
+  上 vary; collapse 到 single-axis summary 在 cross-cycle 比较 register
+  obscure 掉 register-class-distinct 的 scaling pattern。canonical set 通过
+  构造保留 register-class precision (类别精度)。**为什么阈值是 provisional:**
+  阈值是用 PHASE2C_12 baseline + 50% 增长 rule of thumb 校准在 scaling-concern
+  surface register; 它们 pending Charlie register 在 §28 codification register
+  上的 adjudication, 同时 pending 未来 cycle 经验重新校准 (随着更多 cycle
+  在 cross-cycle 比较 register-precision register-class 上 accumulate)。
+
+The PHASE2C_13 row at the backfill table register is interim diagnostic
+context only at register-precision register-class binding, NOT a finalized
+cycle-closeout row at register-class match register. PHASE2C_13 cycle is
+in-progress through implementation arc Step 6 SEAL boundary at register-
+event boundary register; cycle-cumulative metrics through Step 12 closeout
+register-event boundary will substantively exceed Step 6 SEAL register
+snapshot at register-class match register-precision register binding
+(PHASE2C_13 §A2 = 15 at sub-spec drafting cycle terminus snapshot register
+already exceeds PHASE2C_12 cycle-cumulative §19 = 10 at register-precision
+register-class binding; cycle-cumulative count at PHASE2C_13 closeout register
+will further accumulate through Steps 7-12 implementation arc cycle-internal
+log register binding at working-draft register-class binding per Q-S46 sub-
+question 2 OPTION (a) precedent).
+
+PHASE2C_13 cycle is the first concrete instance binding §28 cross-cycle
+scaling diagnosis discipline. The cycle's empirical backfill empirical fire
+at this implementation arc Step 7 boundary surfaced 4 cross-register
+description-drift instances at canonical-artifact register-precision register
+during the backfill empirical fire register (observed at working-draft
+register at backfill empirical fire register-event boundary per Q-S46 sub-
+question 2 OPTION (a) precedent; working-draft register is rm'd at § seal
+commit per single-atomic-commit per §0.4 binding; intended for Step 12
+closeout §6 cumulative count register at register-event boundary at finalized
+durable register-class binding):
+PHASE2C_10 §19 cumulative cross-register +1 drift between METHODOLOGY_NOTES
+§19 register and PHASE2C_12 closeout §8.1 register; PHASE2C_11 §19 cumulative
+cross-register 6-vs-10 drift between PHASE2C_12 closeout §8.1 register and
+CLAUDE.md SEAL prose summary register; PHASE2C_12 commit count off-by-one
+drift between closeout §2.2 register-prose ("25 commits") and empirical git
+log fire (26 commits at boundary-inclusive convention); PHASE2C_13 auth
+boundary counting-convention drift between PHASE2C_12 Auth-# coarse register
+and PHASE2C_13 Q-S fine register at cross-cycle counting-convention register-
+class. These cross-register description-drift instances are themselves §19
+spec-vs-empirical-reality finding pattern instances at register-class match
+register; their surfacing during this Step 7 backfill empirical fire is
+substantive evidence that single-axis canonical metric registers without
+cross-register reconciliation discipline accumulate register-class-distinct
+description-drift across cycles at canonical-artifact register-precision
+register-class — exactly the discipline failure mode §28 codification binds
+the canonical metric set against by construction at cycle SEAL closeout
+deliverable register-class binding.
+
+### Application checklist
+
+At each PHASE2C consolidation cycle SEAL closeout deliverable register:
+
+1. **Report cycle-cumulative metrics per canonical metric set at closeout
+   deliverable §-cumulative-count register.** The canonical metric set is
+   four register-class-distinct measurement registers per scoping decision
+   §6.4 (a) operationalization: (1) Charlie register authorization boundaries
+   per cycle at authorization register-class (count of explicit Charlie
+   register auth events fired during cycle scope inclusive of scoping + sub-
+   spec drafting + implementation arc + SEAL bundle); (2) git commit count
+   per cycle at commit register-class (count of git commits within cycle
+   scope range = prior-cycle-SEAL → this-cycle-SEAL inclusive at upper
+   boundary, exclusive at lower boundary; data source: `git log <prior-SEAL>..
+   <this-SEAL>`); (3) §19 spec-vs-empirical-reality finding pattern instance
+   count per cycle at §19 register-class (cumulative count at cycle-internal
+   log + §19 codification register reads); (4) §9.0c process-design observation
+   instance count per cycle at §9.0c register-class (cumulative count at
+   cycle-internal log + §A1 / §26 codification register reads). Closeout
+   deliverable §-cumulative-count register includes all four metrics at
+   register-class-distinct measurement register; single-axis summary at
+   collapsed canonical metric set register is forbidden by construction at
+   §28 codification register binding.
+
+   The commit count metric data source convention at §28 register-class-
+   precision register binding: `git log <prior-cycle-SEAL>..<this-cycle-SEAL>`
+   empirical fire register IS the canonical convention at §28 cross-cycle
+   scaling diagnosis register binding; closeout-declared count at register-
+   prose summary register may differ at off-by-one register-precision
+   register-class binding (e.g., PHASE2C_12 closeout §2.2 cited 25 vs
+   empirical fire 26 at boundary-inclusive convention register-precision
+   register-class). Canonical convention for §28 cross-cycle scaling
+   diagnosis register binding = git-range empirical fire register at
+   canonical-artifact register-class binding; closeout-declared count
+   surfaced at register-prose summary register at register-class-distinct
+   register from canonical empirical fire register; cross-register
+   discrepancy surfaced as §A2 §19 finding pattern instance at register-
+   class match register per §22 description-drift discipline binding.
+
+   1d. **Sub-rule: scoping cycle iteration count metric (sub-spec §4.1.4
+       §6.9 methodology candidate fold-in).** Per sub-spec §4.1.4 binding
+       (operationalization-detail coupling at canonical metric set sub-rule
+       register-class, parallel to §26 §3 sub-rule fold-in register precedent):
+       scoping cycle iteration count per cycle is a register-class-distinct
+       sub-metric at canonical metric set register-precision register. The
+       sub-metric tracks scoping cycle iteration count per cycle (PHASE2C_10
+       / PHASE2C_11 / PHASE2C_12 baseline = 1-cycle scoping; PHASE2C_13 =
+       2-cycle scoping per scoping decision §4.5 verbatim) + iteration cause
+       summary line (substantive divergence on which sub-questions, at which
+       reviewer register). Cycle scoping decision SEAL register includes
+       scoping cycle iteration count + iteration cause summary line per sub-
+       rule 1d operationalization. Sub-rule 1d disposition at PHASE2C_13
+       codification register inherits §28 Medium-tier disposition at sub-rule
+       fold-in register (sub-rule evidence basis supports parent §28 tier
+       disposition without separate sub-rule tier evaluation per §26 §3 fold-in
+       register precedent at register-class match register; the Weak-tier
+       observation-only with cross-cycle-accumulation-pending framing at sub-
+       spec §4.1.4 register applies at sub-spec scope register, distinct from
+       sub-rule fold-in register at this codification register).
+
+2. **Compute cross-cycle delta per canonical metric set at closeout
+   deliverable register.** Each cycle SEAL closeout deliverable reports cycle
+   metrics + delta vs prior cycle's metrics per canonical metric set: PHASE2C_<N>
+   metric vs PHASE2C_<N-1> metric at each of the four register-class-distinct
+   measurement registers + sub-rule 1d scoping cycle iteration count register.
+   Cross-cycle delta tracking at register-precision register-class operates
+   at register-class-distinct level per metric (NOT collapsed to composite
+   delta); register-class-distinct delta-per-metric reporting preserves
+   register-class precision by construction at cross-cycle comparison
+   register-class binding. Delta sign + magnitude reported at register-
+   precision register-class without interpretation at this register; threshold
+   check + scaling-concern surface operates at item 3 register at register-
+   class-distinct binding from delta computation register.
+
+3. **Check scaling-concern threshold per provisional threshold values at
+   register-class-distinct measurement register.** Provisional threshold
+   values per scoping decision §6.4 (c) operationalization + sub-spec §4.1.2
+   binding at register-class-distinct measurement register: auth boundaries
+   per cycle > 20 (~+25% above PHASE2C_12 baseline 16 at conservative
+   calibration register; below uniform +50% calibration which would yield
+   24 at register-class-distinct sensitivity register binding); §9.0c
+   instance count per cycle > 12 (+50% above PHASE2C_12 baseline 8 at
+   uniform calibration register); §19 instance count per cycle > 15 (+50%
+   above PHASE2C_12 baseline 10 at uniform calibration register). Threshold
+   calibration is asymmetric across the four register-class-distinct
+   measurement registers per sub-spec §4.1.2 PROVISIONAL values register
+   binding: §9.0c + §19 metrics calibrated at uniform +50% growth rule of
+   thumb register-precision register; auth metric calibrated at conservative
+   register-precision register (lower threshold than uniform +50% would
+   yield) to surface complexity-scaling concerns earlier at auth-metric-
+   specific sensitivity register-class binding. Threshold values are
+   PROVISIONAL at §28 codification register-precision register-class —
+   final threshold values pending Charlie register adjudication at PHASE2C_13
+   implementation arc Step 7 § seal pre-fire register-event boundary per
+   Step 7 entry handoff threshold values forward-binding-strength binding
+   register-precision register-class at this codification register +
+   future-cycle empirical recalibration as additional cycles accumulate at
+   cross-cycle comparison register-precision register-class. Threshold
+   check operates at register-class-distinct level per metric (NOT aggregated
+   to single-axis composite threshold); register-class-distinct threshold-
+   per-metric checking preserves register-class precision by construction at
+   scaling-concern surface register-class binding.
+
+   Threshold values at item 3 register are **diagnostic surface thresholds**
+   at scaling-concern observation register-class binding, NOT pass/fail gates
+   at cycle SEAL register-event boundary AND NOT mitigation mandates at
+   cycle-class register binding. Threshold-crossing event triggers cycle
+   SEAL closeout deliverable scaling-concern surface line at item 4 register-
+   class binding; threshold-crossing event does NOT block cycle SEAL register-
+   event boundary at SEAL pre-fire register-class binding; threshold-crossing
+   event does NOT mandate mitigation at cycle-class register binding
+   (mitigation strategy selection at successor methodology consolidation
+   cycle scoping cycle adjudication register-event boundary per item 5
+   register-class binding). The discipline operates at observation register
+   binding cross-cycle scaling diagnosis register-precision register-class,
+   NOT at gating register binding cycle SEAL register-event boundary register-
+   class.
+
+4. **Surface scaling-concern line at closeout deliverable §-cumulative-count
+   register if any threshold crossed.** If item 3 threshold check surfaces
+   any threshold crossing at any of the four register-class-distinct measurement
+   registers (or sub-rule 1d scoping cycle iteration count register), closeout
+   deliverable §-cumulative-count register includes a "scaling-concern surface"
+   line at register-precision register-class identifying which register-class-
+   distinct metric crossed which threshold + magnitude of crossing + cycle-
+   cumulative count vs threshold register. The scaling-concern surface line
+   is register-class-distinct from the metric reporting line at item 1
+   register; surface line operates at threshold-crossing notification
+   register-class binding. Closeout deliverable additionally fires a
+   forward-pointer to the next consolidation cycle for codification of
+   mitigation if the cross-cycle pattern persists at multi-cycle accumulation
+   register-class binding.
+
+5. **Recognize cross-cycle pattern at multi-cycle accumulation register if
+   3+ consecutive cycles cross same threshold.** Single-cycle threshold
+   crossing at register-class-distinct measurement register is single-cycle
+   anomaly register-class; 3+ consecutive cycles crossing the same register-
+   class-distinct threshold register at cross-cycle accumulation register-
+   class is cross-cycle pattern register at register-class-distinct catch
+   class binding. Cross-cycle pattern register binding triggers forward-
+   pointer to next consolidation cycle for codification of mitigation at
+   register-class-distinct mitigation register-class (mitigation strategy
+   selection at next consolidation cycle scoping cycle adjudication register-
+   event boundary per anti-pre-naming discipline binding; specific mitigation
+   strategies NOT pre-committed at §28 codification register). Single-cycle
+   anomaly register-class vs cross-cycle pattern register-class register-
+   class-distinction at register-precision register binds threshold-crossing
+   register-class binding from mitigation register-class binding by
+   construction.
+
+### Failure-mode signal
+
+Watch for cycle SEAL closeout deliverable absent cycle-cumulative metric
+reporting at canonical metric set scope. If a closeout deliverable does NOT
+include the four register-class-distinct metrics at §-cumulative-count
+register, the discipline is operating at single-axis collapsed register-class
+register (or absent register-class register) at cross-cycle scaling diagnosis
+register-class binding. Per item 1 application register binding, all four
+metrics + sub-rule 1d scoping cycle iteration count register are mandatory
+at register-precision register-class at every cycle SEAL closeout deliverable
+register; absence at any metric register-class signals discipline failure
+at canonical metric set binding register-precision register.
+
+Watch for cross-cycle delta tracking elided at closeout register. If a
+closeout deliverable reports cycle-cumulative metrics per canonical metric
+set but does NOT report cross-cycle delta vs prior cycle metrics per register-
+class-distinct measurement register, the discipline is operating at single-
+cycle measurement register-class register only (without cross-cycle scaling
+diagnosis register-class register binding). Per item 2 application register
+binding, cross-cycle delta tracking at register-class-distinct level per
+metric is mandatory at register-precision register-class; collapsed single-
+axis composite delta at cross-cycle comparison register corrupts register-
+class precision by construction at cross-cycle scaling diagnosis discipline
+binding.
+
+Watch for scaling-concern threshold check elided at SEAL pre-fire register.
+If a closeout deliverable reports cycle metrics + delta but does NOT include
+threshold check at register-class-distinct measurement register per item 3
+application register binding, the discipline is operating at descriptive
+register-class register only (without scaling-concern surface register-class
+register binding). Threshold check at register-class-distinct level per metric
+is mandatory at SEAL pre-fire register-event boundary per item 3 binding.
+Threshold values may shift at future-cycle empirical recalibration register,
+but the threshold check itself is mandatory at every cycle SEAL closeout
+deliverable register-precision register-class.
+
+Watch for "scaling-concern surface" line elided at threshold-crossing register.
+If item 3 threshold check surfaces a threshold crossing at any register-
+class-distinct measurement register (or sub-rule 1d scoping cycle iteration
+count register), but the closeout deliverable §-cumulative-count register
+does NOT include a "scaling-concern surface" line at register-precision
+register-class identifying which register-class-distinct metric crossed which
+threshold + magnitude of crossing, the discipline is operating at threshold-
+check-without-surface register-class binding (which collapses scaling-concern
+notification register by construction). Per item 4 application register
+binding, scaling-concern surface line at threshold-crossing register is
+mandatory at register-precision register-class; absence at any threshold-
+crossing event signals discipline failure at scaling-concern notification
+binding register-precision register.
+
+Watch for register-class-collapsed metric reporting at single-bucket scope
+without canonical metric set decomposition. If a closeout deliverable reports
+cycle complexity at single-axis composite scope ("cycle complexity = N
+cumulative events per cycle") without decomposition to canonical metric set's
+four register-class-distinct measurement registers, the discipline is operating
+at register-class-collapsed scope at cross-cycle scaling diagnosis register-
+class binding (which corrupts register-class precision by construction). Per
+item 1 application register binding, canonical metric set decomposition is
+mandatory at register-precision register-class; single-axis composite reporting
+at cross-cycle scaling diagnosis register collapses register-class precision
+at canonical metric set discipline binding.
+
+Watch for description-drift between §28 cite of canonical metric set and
+PHASE2C_13 sub-spec §4.1.1 source artifact register per §22 Failure-mode
+item 7 description-drift register-class precedent. If §28 codification at
+canonical-artifact register cites canonical metric set descriptions
+(authorization boundary definition / commit count definition / §19 instance
+definition / §9.0c instance definition) at non-verbatim paraphrase register
+of sub-spec §4.1.1 source artifact descriptions, description-drift
+accumulates at register-class match register-precision register cross-cycle.
+Per §22 Failure-mode item 7 register-class precedent established at PHASE2C_13
+implementation arc Step 2 + reinforced at Steps 3 / 4 / 5 / 6 register
+precedent: cite verbatim from canonical source artifact at register-precision
+register-class binding to preserve cross-cycle source artifact authority at
+register-class match register.
+
+Watch for cross-register description-drift surfaced during empirical backfill
+fire WITHOUT observation at cycle-internal §A2 §19 instance log register at
+register-precision register-class binding. The Step 7 backfill empirical fire
+surfaced 4 cross-register description-drift instances at canonical-artifact
+register-precision register (PHASE2C_10 §19 +1 drift / PHASE2C_11 §19 6-vs-10
+drift / PHASE2C_12 commit count off-by-one drift / PHASE2C_13 auth counting-
+convention drift); each is a §19 spec-vs-empirical-reality finding pattern
+instance at register-class match register. Observation at cycle-internal §A2
+§19 instance log register at working-draft register per Q-S46 sub-question 2
+OPTION (a) precedent is mandatory at register-precision register-class binding
+(working-draft register is rm'd at § seal commit per single-atomic-commit
+per §0.4 binding; intended for Step 12 closeout §6 cumulative count register
+at register-event boundary at finalized durable register-class binding).
+Absence of cycle-internal §A2 observation at empirical backfill fire surface
+register would collapse cross-cycle comparability anchor by construction at
+§A2 cumulative count register register-class binding.
+
+### Tier disposition
+
+§28 ships at **Medium tier with cross-cycle-pending status note** per sub-spec
+§4.3.3 re-check binding (Carry-forward A row final disposition = "Medium tier"
+per criterion 1 first-cycle codification ✓ + criterion 2 operating rule
+articulating ✓ at canonical metric set + threshold specification + Application
+checklist 5-item structure + criterion 3 cross-cycle register-class consistency
+pending + criterion 4 0 prior consolidation cycle FAILS C4 at first-cycle
+codification register-precision register). The criterion 4 maturation
+requirement fails by construction at PHASE2C_13 first-cycle codification
+register; Medium-tier disposition at cross-cycle-pending status preserves
+register-class precision by construction at first-cycle codification + future-
+cycle accumulation register-class binding. §28 register-class-precedent-
+coupling with §21 / §22 / §23 / §25 / §26 Medium-tier register-class precedent
+at first-cycle Medium-tier codification register at tier disposition framing
+register-class match; §28 differs from §27 Weak-tier register-class precedent
+at tier disposition register at register-class-distinct register binding —
+§28 evidence basis is 5-cycle empirical backfill at canonical-artifact
+register reads + 1 PHASE2C_13 in-progress cycle row, register-class-distinct
+from §27 single-cycle Weak-tier basis at register-class match register.
+
+Promotion path Medium → Strong at successor methodology consolidation cycles
+after sufficient cross-cycle accumulation evidence at register-class match
+register binding per §4.3 bar criteria codified at PHASE2C_13 implementation
+arc Step 9 per sub-spec §5.4 disposition (Carry-forward C fold-in to §20.2).
+The Strong-tier promotion bar register-class-distinct from §28 base
+codification register at register-class match register; the specific bar
+criteria authored at Step 9 §20.2 codification register, NOT pre-committed
+at §28 codification register per anti-pre-naming discipline binding. Future
+cycles binding §28 cross-cycle scaling diagnosis discipline log additional
+cycle rows at canonical metric set register at register-precision register-
+class binding; cross-cycle accumulation evidence at 3+ cycles at register-
+class match accumulates at promotion-eligible register-class binding for
+Strong-tier promotion adjudication at successor methodology consolidation
+cycle scoping cycle register-event boundary per §4.3 codification register
+binding. Anti-pre-naming preserved at canonical-artifact register: specific
+future-cycle scope (cycle name + count from PHASE2C_13 forward) NOT pre-
+committed at promotion path register; "successor methodology consolidation
+cycles after sufficient accumulation" framing preserves anti-pre-naming
+discipline binding at register-class match register.
+
+Forward-references to §29 (Carry-forward B framework architectural refactor
+evaluation; codified at PHASE2C_13 implementation arc Step 8 per sub-spec
+§5.4 disposition (Carry-forward B row new-§ slot)) and §20.2 (Carry-forward C
+Strong-tier promotion bar criteria sub-§ host-slot accommodation framing;
+codified at PHASE2C_13 implementation arc Step 9 per sub-spec §5.4 disposition
+(Carry-forward C row §20 sub-§ fold-in)) cite sub-spec §5.4 disposition table
+as canonical binding source per Step 1 §21 F2 patch + Step 2 §22 + Step 3
+§23 + Step 4 §25 + Step 5 §26 + Step 6 §27 register precedent at register-
+class match register binding. §29 + §20.2 are unsealed at PHASE2C_13
+implementation arc Step 7 entry register-event boundary; forward-reference
+language at sub-spec §5.4 disposition canonical anchoring is appropriate
+at register-precision register-class binding parallel to Steps 1-6 register
+precedent at register-class match register.
+
+---
