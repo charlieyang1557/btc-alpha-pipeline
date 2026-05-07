@@ -5924,3 +5924,754 @@ at register-precision register-class binding parallel to Steps 1-6 register
 precedent at register-class match register.
 
 ---
+
+## §29 Framework architectural refactor evaluation at analysis register (alternative pattern enumeration + evaluation criteria + disposition)
+
+### Principle
+
+Framework code architectural pattern sustainability evaluation operates at
+meta-evaluation register-class — evaluation of framework code architectural
+pattern sustainability vs alternative architectural patterns under per-cycle
+code change accretion register binding. The discipline catches a register-
+class-distinct defect class from per-instance / per-cycle catch-boundary
+cluster (§1 / §15 / §21 / §22 / §23 / §25 / §27) AND from cross-cycle
+accumulation observation cluster (§26 / §18 / §19 / §28); §29 is register-
+class-orthogonal to both clusters at content scope axis at register-precision
+register-class binding.
+
+The cluster register-class-orthogonality at §29 codification register-
+precision register-class operates at content scope axis: the per-instance /
+per-cycle catch-boundary cluster catches defects at workflow time boundaries
+(any drafting register / anchor receipt / sub-spec authoring of inter-step
+contracts / sub-spec SEAL pre-fire / Step fire-prep / Step deliverable
+authoring / cycle-class anti-meta-pattern); the cross-cycle accumulation
+observation cluster catches cross-cycle accumulation at single-pattern-class
+register (§19 = spec-vs-empirical-reality drift register at single-pattern-
+class register-class; §26 = §9.0c-specific accumulation register at instance-
+density register-class; §18 = §7 carry-forward density register at
+interpretive arc closeout register-class) or at canonical metric set scope
+(§28 = multi-metric cycle-complexity scaling register at canonical metric
+set scope register-class). §29's specific catch class is framework code
+architectural pattern sustainability evaluation at meta-evaluation register-
+class — register-class-distinct catch class at content scope register-
+precision register-class binding from both clusters.
+
+The discipline operates at framework code structural register-class binding
+distinct from methodology rule codification register-class binding. §29
+codifies the evaluation methodology + alternative pattern enumeration + 4-
+criteria evaluation + disposition outcome at analysis register; §29 does NOT
+codify a methodology rule for application at workflow boundaries (parallel
+to §13-§28 codification register-class). The evaluation methodology operates
+at meta-evaluation register binding — evaluating whether framework code
+architectural pattern (cycle-specific hardcoded constants + per-cycle helper
+functions added per cycle at framework code site) is a sustainable
+architectural pattern across consolidation cycles; the methodology output is
+a disposition (refactor-needed / sustainable-through-next-cycle / inconclusive)
+at register-precision register-class binding cycle SEAL register-event
+boundary at register-class match register.
+
+**Anti-implementation guardrail explicit at §29 codification register binding
+per sub-spec §4.2.1 binding:** §29 codifies evaluation methodology + outcome
+ONLY at analysis register; §29 codification at PHASE2C_13 implementation arc
+Step 8 register-event boundary does NOT modify framework code at
+[`backtest/evaluate_dsr.py`](../../backtest/evaluate_dsr.py) site. Framework
+code refactor implementation (if disposition is "refactor-needed" or
+"inconclusive" at register-class match register) defers to PHASE2C_14 sub-
+spec drafting cycle or later cycle per anti-pre-naming discipline binding.
+The discipline catch class is meta-evaluation register-class; the discipline
+output is disposition outcome register-class binding cycle SEAL register-
+event boundary register-precision register-class — NOT framework code
+mutation at implementation register-class binding by construction at §4.2.1
+register binding. **Final disposition outcome (refactor-needed / sustainable-
+through-next-cycle / inconclusive) at register-precision register-class
+binding adjudicated at § seal pre-fire register-event boundary at Charlie
+register adjudication boundary parallel to §28 threshold value option (α)
+at Q-S71 register precedent at register-class match register binding;** the
+3-option survey at the cycle-evaluation block (folded under Trigger context)
+is option weighing at adjudication-pending register-class binding, NOT final
+disposition at register-class match register.
+
+§29 register-class-precedent-coupling with §21 / §22 / §23 / §25 / §26 / §28
+Medium-tier register-class precedent at first-cycle Medium-tier codification
+register at tier disposition framing register-class match. §29 differs from
+§27 Weak-tier register-class precedent at tier disposition register at
+register-class-distinct register binding (§29 evidence basis is single-cycle
+empirical at PHASE2C_12 cycle 4 commits to evaluate_dsr.py + §28 5-cycle
+backfill data feed at criteria (i)+(iv) register; §27 evidence basis is
+single-cycle Weak-tier basis at register-class match register). §29 + §28 +
+§26 + §19 + §18 cluster at content scope axis register-class-distinct
+catch classes per content scope register-precision register-class binding —
+each register catches defects at register-class-distinct content scope by
+construction at register-precision register-class.
+
+### Trigger context
+
+This discipline's empirical basis is the PHASE2C_12 cycle framework code
+patching pattern at Carry-forward B verbatim source at PHASE2C_13 scoping
+decision
+[`docs/phase2c/PHASE2C_13_SCOPING_DECISION.md`](../phase2c/PHASE2C_13_SCOPING_DECISION.md)
+§6.5 lines 300-309 (verbatim source citation per §22 Failure-mode signal item 7
+description-drift discipline applied to Carry-forward B verbatim source register;
+instance descriptions cited verbatim from canonical scoping decision source
+artifact, NOT from sub-spec §4.2 parenthetical labels):
+
+> ### §6.5 Carry-forward B — framework architectural refactor evaluation
+>
+> **Scope:** PHASE2C_13 sub-spec drafting cycle authors framework architectural
+> refactor evaluation at **analysis register only** (NOT implementation).
+>
+> **Register-class clarification (binding at scoping per advisor Observation 3):**
+> Carry-forward B is process / spec scope. Implementation defers to PHASE2C_14
+> sub-spec drafting cycle or later cycle if PHASE2C_13 evaluation indicates
+> need. PHASE2C_13 sub-spec authors evaluation methodology (e.g., what counts
+> as "needed refactor" criteria, evidence basis from PHASE2C_12 7 commits to
+> evaluate_dsr.py at lines 92/124/129/153, alternative architectural patterns
+> considered) but not refactor implementation.
+>
+> **Evidence basis (from Step 9 §11.3):**
+> - 7 commits to `backtest/evaluate_dsr.py` at PHASE2C_12 cycle (`8887651`,
+>   `2a5c63a`, `605dfc6`, `995fdb2`, `3e1ee89`, `08e1488` + intermediate
+>   commits)
+> - Cycle-specific framework patches: `PHASE2C_12_N_RAW = 197` at line 92;
+>   `PHASE2C_12_N_ELIGIBLE_OBSERVED = 139` at line 124; `ALLOWED_DUAL_GATE_PAIRS`
+>   4-pair frozenset at line 129; `_resolve_n_eff_set()` at line 153
+> - Sustainability question: PHASE2C_13 evaluation methodology assesses whether
+>   cycle-specific hardcoded constants are sustainable architectural pattern;
+>   alternative architectural patterns (config injection, cycle-state-machine,
+>   abstract base class for cycle parameters, etc.) considered at evaluation
+>   register without false-binary framing; specific evaluation criteria
+>   authored at sub-spec drafting cycle
+
+Empirical fire at framework code site at register-precision register-class
+binding (data sources cited per §22 Failure-mode signal item 7 description-
+drift discipline applied to canonical-artifact register reads):
+
+| Cycle | Range | Commits to evaluate_dsr.py | + lines | − lines | Net |
+| ----- | ----- | -------------------------- | ------- | ------- | --- |
+| PHASE2C_8.1 | `f223316..69e9af9` | 0 | 0 | 0 | 0 |
+| PHASE2C_9 | `69e9af9..2c96889` | 0 | 0 | 0 | 0 |
+| PHASE2C_10 | `2c96889..ff3e4ca` | 0 | 0 | 0 | 0 |
+| PHASE2C_11 | `ff3e4ca..5dba0df` | 4 (creation cycle: input loader + simplified DSR + Codex first-fire + Hotfix-3) | +1224 | −45 | +1179 |
+| PHASE2C_12 | `5dba0df..1989c85` | 4 (patching cycle: cycle-specific constants + cycle-conditional helper) | +193 | −54 | +139 |
+| PHASE2C_13 (in-progress through Step 7 SEAL) | `1989c85..788198c` | 0 (analysis register only per §4.2.1 binding) | 0 | 0 | 0 |
+
+Framework code site read at canonical-artifact register-precision register-class
+binding (current HEAD `788198c` at PHASE2C_13 implementation arc Step 7 SEAL
+boundary; line numbers verified empirically against source artifact register
+per §22 description-drift discipline binding):
+
+- `PHASE2C_12_N_RAW = 197` at line 92 (sub-spec §4.2.2 cite at line 92 verified
+  empirically)
+- `PHASE2C_12_N_ELIGIBLE_OBSERVED = 139` at line 123 (sub-spec §4.2.2 cite at
+  line 124 differs from empirical at line 123 — cross-register description-
+  drift instance at canonical-artifact register-precision register-class match
+  register; §A2 §19 finding pattern instance at register-class match register
+  per §22 + §28 description-drift discipline precedent at register-class match
+  register binding; **observed at non-final cycle-internal observation register
+  only at working-draft register** at backfill empirical fire register-event
+  boundary per Q-S46 sub-question 2 OPTION (a) precedent + §28 Step 7 backfill
+  empirical fire register precedent at register-class match register; closeout
+  §6 cumulative count register at Step 12 register-event boundary at finalized
+  durable register-class binding)
+- `ALLOWED_DUAL_GATE_PAIRS` at line 129 (sub-spec §4.2.2 cite at line 129
+  verified empirically)
+- `_resolve_n_eff_set()` at line 155 (sub-spec §4.2.2 cite at line 153 differs
+  from empirical at line 155 — cross-register description-drift instance at
+  canonical-artifact register-precision register-class match register; §A2
+  §19 finding pattern instance at register-class match register binding +
+  same Q-S46 OPTION (a) precedent + §28 Step 7 register precedent at register-
+  class match register)
+
+Empirical commit count register: PHASE2C_12 cycle commits to evaluate_dsr.py
+= 4 at canonical-artifact register-precision register-class (`8887651` +
+`2a5c63a` + `995fdb2` + `08e1488`); sub-spec §4.2.2 + scoping decision §6.5
+prose framing of "7 commits to `backtest/evaluate_dsr.py`" at PHASE2C_12 cycle
+includes 2 TDD-RED test commits (`605dfc6` + `3e1ee89`) at test-file register-
+class binding distinct from framework-code register-class binding + 1
+implicit "intermediate commits" framing at scoping prose register-class
+binding; cross-register description-drift between scoping prose framing
+register and framework-code empirical fire register at register-precision
+register-class match register; §A2 §19 finding pattern instance at register-
+class match register binding + Q-S46 OPTION (a) precedent at working-draft
+register. The PHASE2C_12 cycle framework-code patching pattern at
+evaluate_dsr.py site is canonically documented at 4 framework-code commits
+register; the "7 commits" framing operates at PHASE2C_12 cycle Step 8 fire-
+prep total commit count register-class binding (4 framework-code commits +
+2 TDD-RED test commits + 1 intermediate commit) at register-class-distinct
+content scope register binding from framework-code register-class.
+
+§28 canonical metric set 5-cycle backfill data feeds §29 evaluation criteria
+(i) framework code accretion rate per cycle + (iv) cross-cycle implementation
+arc § seal cumulative effort per sub-spec §4.2.4 sequencing dependency
+register binding. The §28 5-cycle backfill table at METHODOLOGY_NOTES line
+5511-5516 surfaces register-class-distinct cross-cycle scaling patterns per
+canonical metric set: PHASE2C_8.1 / PHASE2C_9 / PHASE2C_10 = methodology-
+consolidation cycles without framework code mutation register; PHASE2C_11 =
+implementation cycle creating framework code register at +1179 net lines;
+PHASE2C_12 = patching cycle adding cycle-specific constants register at +139
+net lines; PHASE2C_13 = analysis-register-only cycle without framework code
+mutation register per §4.2.1 binding. Cross-cycle pattern at framework-code
+register-class binding is bursty (creation + patching cycle pairs) rather
+than steady accretion across all cycles at register-class match register.
+
+§29 codification at PHASE2C_13 implementation arc Step 8 register-event
+boundary fires the evaluation methodology + alternative pattern enumeration
++ 4-criteria evaluation + disposition outcome at analysis register only per
+sub-spec §4.2.1 binding. Charlie register adjudication required at § seal
+pre-fire register-event boundary (Q-S76) per §4.2.1 disposition adjudication
+binding parallel to §28 threshold value option (α) at Q-S71 § seal pre-fire
+precedent at register-class match register binding; final disposition
+selected from 3-option register-class binding (refactor-needed / sustainable-
+through-next-cycle / inconclusive) at Charlie register-event boundary.
+
+§29 codification at register-precision register-class binding requires
+bilingual concept anchor at Trigger context register per sub-spec §0.3
+discipline anchor #10 binding (bilingual explanation for difficult methodology
+concepts) at register-class match register parallel to §27 + §28 register
+precedent at register-class match register binding. Carry-forward B IS
+difficult methodology concept at register-precision register-class binding —
+analysis-vs-implementation distinction at meta-evaluation register-class +
+4-pattern enumeration without false-binary framing at register-precision
+register + 4-criteria evaluation methodology at empirical evidence basis
+register + 3-disposition outcome scope at adjudication register-class
+binding. The bilingual concept anchor below operationalizes discipline
+anchor #10 at canonical-artifact register where the discipline is codified
+for cross-cycle reading at register-precision register-class:
+
+**Bilingual concept anchor:**
+
+- **English:** §29 binds framework code architectural pattern sustainability
+  evaluation at meta-evaluation register-class. Carry-forward B operates at
+  analysis-only register at PHASE2C_13 cycle (NOT framework code modification
+  at implementation register); refactor implementation defers to a successor
+  consolidation cycle if disposition surfaces "refactor-needed" at register-
+  precision register-class binding. The discipline enumerates 4 alternative
+  architectural patterns at register-class-distinct content scope register
+  (status quo + config injection + cycle-state-machine + hybrid) without
+  false-binary framing at register-precision register; applies 4 evaluation
+  criteria (i)-(iv) at empirical evidence basis register binding (framework
+  code accretion rate per cycle + cross-cycle confusion frequency at framework
+  code site + per-cycle change surface area + cross-cycle implementation arc
+  § seal cumulative effort); ships disposition outcome at 3-option register-
+  class binding (refactor-needed / sustainable-through-next-cycle /
+  inconclusive). **Why analysis-only at first cycle:** Carry-forward B is
+  meta-evaluation about framework code architectural pattern, NOT a methodology
+  rule for application at workflow boundaries; pre-mature refactor
+  implementation at single-cycle empirical evidence basis register would risk
+  over-correction at register-class match register (if pattern is sustainable
+  cross-cycle, refactor implementation incurs unnecessary code churn cost;
+  if pattern is unsustainable but refactor target architectural pattern is
+  poorly chosen at single-cycle evidence basis, refactor implementation
+  surfaces a worse pattern at successor cycle register). Analysis-only
+  register at first cycle defers refactor implementation to a successor cycle
+  with sufficient cross-cycle evidence basis at register-class match register
+  binding. **Why 4-pattern enumeration without false-binary framing:** collapse
+  to refactor-vs-status-quo binary at evaluation register obscures
+  intermediate architectural patterns at register-precision register-class
+  binding (config injection + hybrid frequently-changed-vs-rarely-changed
+  patterns surface as substantive intermediate candidates at register-class
+  match register); 4-pattern enumeration preserves register-class precision
+  by construction at evaluation methodology register binding.
+
+- **中文:** §29 把 framework code (框架代码) 架构 pattern sustainability
+  (架构模式可持续性) 评估 bind 在 meta-evaluation register-class (元评估类别)
+  上。Carry-forward B 在 PHASE2C_13 cycle 上仅 operate 在 analysis-only
+  register (仅分析层) — 不在 implementation register (实施层) 上 modify
+  framework code; refactor 实施 defer (推迟) 到下一 consolidation cycle 如果
+  disposition surface 出 "refactor-needed" 在 register-precision register-
+  class binding 上。Discipline enumerate 4 个 alternative architectural
+  patterns 在 register-class-distinct content scope register 上 (status quo
+  + config injection + cycle-state-machine + hybrid) 不用 false-binary
+  framing (二元化框架) 在 register-precision register 上;apply 4 个 evaluation
+  criteria (i)-(iv) 在 empirical evidence basis register 上 (framework code
+  accretion rate per cycle + cross-cycle confusion frequency at framework
+  code site + per-cycle change surface area + cross-cycle implementation arc
+  § seal cumulative effort);ship disposition outcome 在 3-option register-
+  class binding 上 (refactor-needed / sustainable-through-next-cycle /
+  inconclusive)。**为什么 first cycle 仅 analysis-only:** Carry-forward B 是
+  关于 framework code 架构 pattern 的 meta-evaluation, 不是 workflow
+  boundary 上 application 的 methodology rule;在 single-cycle empirical
+  evidence basis register 上 pre-mature refactor 实施在 register-class match
+  register 会冒险 over-correction (过度纠正) — 如果 pattern 在 cross-cycle
+  上 sustainable, refactor 实施会 incur 不必要的 code churn cost;如果
+  pattern 在 single-cycle evidence basis 上 unsustainable 但 refactor target
+  架构 pattern 选择不好, refactor 实施会在 successor cycle register 上
+  surface 出更糟糕的 pattern。analysis-only register 在 first cycle defer
+  refactor 实施到有足够 cross-cycle evidence basis 的 successor cycle 在
+  register-class match register binding 上。**为什么 4-pattern enumeration
+  不用 false-binary framing:** collapse 到 refactor-vs-status-quo binary
+  在 evaluation register 上在 register-precision register-class binding
+  obscure 中间架构 patterns (config injection + hybrid frequently-changed-
+  vs-rarely-changed patterns 在 register-class match register 上 surface 为
+  substantive 中间 candidates);4-pattern enumeration 通过构造在 evaluation
+  methodology register 上保留 register-class precision (类别精度)。
+
+**Cycle-evaluation against criteria (i)-(iv) (PHASE2C_13 first-cycle binding):**
+
+This block codifies the PHASE2C_13 cycle's evaluation against criteria
+(i)-(iv) at empirical evidence basis register-precision register-class binding
+per Application checklist item 3 register binding (folded under Trigger
+context per evidence-basis register-class match register binding; preserves
+4+1-subsection register-class precedent at §21-§28 cluster). Disposition
+adjudication operates at § seal pre-fire register-event boundary (Q-S76)
+per Application checklist item 4 register binding parallel to §28 threshold
+value option (α) at Q-S71 register precedent at register-class match register
+binding.
+
+**Criterion (i) — Framework code accretion rate per cycle:** PHASE2C_8.1 /
+PHASE2C_9 / PHASE2C_10 / PHASE2C_11 / PHASE2C_12 / PHASE2C_13 (in-progress) =
+0 / 0 / 0 / +1179 (creation cycle) / +139 (patching cycle) / 0 (analysis
+register only per §4.2.1 binding) net lines at framework code site register
+per cycle. Pattern at register-class match register binding: bursty creation
++ patching cycle pairs at framework code site register-class, with
+methodology-consolidation cycles holding framework code site stable at
+register-class match register binding. Single empirical cycle of "cycle-
+specific patching" pattern (PHASE2C_12 alone with 4 commits + 4 named
+constants + 1 cycle-conditional helper); cross-cycle pattern recognition at
+register-precision register-class binding insufficient at single-cycle
+evidence basis register.
+
+**Criterion (ii) — Cross-cycle confusion frequency at framework code site:**
+PHASE2C_12 cycle-specific constants visible at same code site as PHASE2C_11
+constants at register-class match register binding (`EXPECTED_N_RAW` = 198
+PHASE2C_11 + `PHASE2C_12_N_RAW` = 197 PHASE2C_12 visible at same module-
+scope register; `EXPECTED_N_ELIGIBLE_AT_CANONICAL` = 154 PHASE2C_11 +
+`PHASE2C_12_N_ELIGIBLE_OBSERVED` = 139 PHASE2C_12 visible at same module-
+scope register; `ALLOWED_DUAL_GATE_PAIRS` 4-pair frozenset with 4 cycle-
+pairs at register-class match register). Concrete confusion frequency
+empirical surface at register-class match register: §19 Step 8 fire-prep
+instances #7-#10 at PHASE2C_12 cycle (4 instances of cycle-specific patching
+surface at framework code site register-class; cross-register confusion
+between sub-spec lockpoint register and framework code register at register-
+precision register-class binding); 4 §19 finding pattern instances at single
+cycle binding cross-cycle confusion frequency register at register-class
+match register. Cross-cycle confusion frequency register-precision register-
+class single-cycle evidence basis at register-class match register binding;
+cross-cycle pattern recognition at register-precision register-class binding
+insufficient at single-cycle evidence basis register.
+
+**Criterion (iii) — Per-cycle change surface area:** PHASE2C_12 cycle = 5
+framework code mutations at framework code site register-class (`PHASE2C_12_N_RAW`
+constant + `PHASE2C_12_N_ELIGIBLE_OBSERVED` constant + `ALLOWED_DUAL_GATE_PAIRS`
+extension + `_resolve_n_eff_set()` helper + sensitivity table N_eff
+parameterization at register-class match register binding); PHASE2C_13 cycle
+= 0 framework code mutations at framework code site register-class binding
+per §4.2.1 analysis-only binding. Cross-cycle change surface area projection
+at register-precision register-class binding insufficient at single-cycle
+patching evidence basis register (PHASE2C_13 = 0 surface added does NOT
+project successor cycle change surface area at register-class match register
+binding).
+
+**Criterion (iv) — Cross-cycle implementation arc § seal cumulative effort:**
+§28 canonical metric set 5-cycle backfill data feed at register-class match
+register binding (PHASE2C_8.1 / PHASE2C_9 / PHASE2C_10 / PHASE2C_11 /
+PHASE2C_12 commit count = 11 / 18 / 19 / 22 / 25-26 + auth boundary count =
+not enumerated / not enumerated / ~6 / ~10 / 16 + §19 instance count = n/a /
+3 / 3-4 / 6-10 / 10 + §9.0c instance count = n/a / n/a / n/a / n/a / 8 per
+§28 register binding). PHASE2C_12 cycle complexity step-change at multiple
+register-class-distinct measurement registers (auth = 16 / commits = 25-26 /
+§19 = 10 / §9.0c = 8); 4 of 25-26 PHASE2C_12 commits at framework code site
+register-class binding (≈ 16% of cycle commits at framework code register-
+class binding). PHASE2C_12 framework code register cycle effort
+register-class match register binding: 4 commits + 4 named constants + 1
+cycle-conditional helper + 5 framework code mutations register at register-
+class match register; cycle effort accretion at framework code register-
+class single-cycle evidence basis register. Cross-cycle implementation arc
+§ seal cumulative effort at register-precision register-class binding
+insufficient at single-cycle evidence basis register.
+
+**Cross-criterion synthesis at PHASE2C_13 evaluation register-precision
+register-class binding:** all 4 criteria at single-cycle evidence basis
+register binding (PHASE2C_12 alone for "cycle-specific patching" pattern;
+PHASE2C_13 = 0 framework patches at analysis-only binding). Cross-cycle
+pattern recognition at register-precision register-class binding insufficient
+at single-cycle evidence basis register; cycle-specific patching pattern is
+empirically observed at PHASE2C_12 register-class match register but
+cross-cycle sustainability assessment at register-precision register-class
+binding requires multi-cycle empirical fire register to surface either
+recurrent-pattern register (sustainability concern at register-class match
+register) or single-cycle-anomaly register (sustainability OK at register-
+class match register).
+
+**Disposition adjudication at Q-S76 § seal pre-fire register-event boundary
+per §4.2.1 binding (Charlie register adjudication required):** three options
+register-class binding per §4.2.1 disposition adjudication binding:
+
+- **Option (i) — refactor-needed** — evaluation surfaces architectural
+  refactor candidate at register-precision register-class binding; this
+  option requires cross-cycle pattern recognition at register-class match
+  register binding (single-cycle evidence basis insufficient); evidence
+  weighing at register-class match register binding: PHASE2C_12 single-cycle
+  patching pattern + 4 §19 instances at fire-prep register + framework code
+  site cycle-specific constants visible at same module-scope register +
+  step-change at PHASE2C_12 cycle complexity multi-axis register insufficient
+  at register-precision register-class binding for definitive refactor-needed
+  call at register-class match register binding.
+
+- **Option (ii) — sustainable-through-next-cycle** — evaluation does NOT
+  surface refactor candidate at this-cycle empirical evidence basis register;
+  evidence weighing at register-class match register binding: PHASE2C_12
+  patching pattern with 4 commits + 5 framework code mutations integrated at
+  register-class match register without surfacing definitive sustainability
+  concern at register-precision register-class binding; PHASE2C_13 =
+  0 framework patches at register-class match register binding (analysis-
+  only); pattern functioning at single-cycle evidence basis register at
+  register-class match register; sustainability through next consolidation
+  cycle not ruled out at this-cycle empirical evidence basis register but
+  not established as definitive disposition at single-cycle evidence basis
+  register at register-class match register binding.
+
+- **Option (iii) — inconclusive** — evidence basis at this-cycle register-
+  precision register insufficient for definitive refactor-needed / sustainable
+  disposition adjudication at register-class match register binding; carry-
+  forward observation to successor consolidation cycle for additional
+  evidence basis accumulation at register-class match register binding;
+  evidence weighing at register-class match register binding: single-cycle
+  evidence basis (PHASE2C_12 alone) insufficient for cross-cycle pattern
+  recognition at register-precision register-class binding; PHASE2C_13 =
+  analysis-only-cycle without framework code mutation register at register-
+  class match register binding does not contribute incremental cross-cycle
+  evidence at criterion (i) framework code accretion rate register or
+  criterion (iii) per-cycle change surface area register; cross-cycle
+  pattern register-precision register-class binding requires successor cycle
+  framework code activity register at register-class match register binding
+  for definitive disposition adjudication at register-class match register.
+
+**Locked disposition outcome at PHASE2C_13 implementation arc Step 8 § seal
+pre-fire register-event boundary (Q-S76 Charlie register adjudication; cross-
+reviewer convergence at advisor F4 + ChatGPT + Claude Code preliminary lean
+all converged at option (iii) per cross-criterion synthesis at register-class
+match register binding):** **option (iii) inconclusive** at register-precision
+register-class binding per §4.2.1 disposition adjudication binding.
+
+Locked disposition rationale at register-precision register-class binding:
+all 4 criteria (i)-(iv) at single-cycle evidence basis register binding
+converge on "single-cycle evidence basis insufficient for cross-cycle
+pattern recognition at register-precision register-class binding" per
+cross-criterion synthesis at register-class match register; PHASE2C_13
+analysis-only-cycle does not contribute incremental cross-cycle evidence at
+criterion (i) framework code accretion rate register or criterion (iii)
+per-cycle change surface area register per §4.2.1 anti-implementation
+guardrail binding; option (i) refactor-needed rejected per insufficient
+cross-cycle evidence basis at register-class match register binding (pre-
+mature refactor implementation risks over-correction at single-cycle evidence
+basis per Trigger context bilingual concept anchor framing register-class
+match register binding); option (ii) sustainable-through-next-cycle rejected
+per "not ruled out at this-cycle empirical evidence basis register but not
+established as definitive disposition at single-cycle evidence basis register
+at register-class match register binding" framing register at register-class
+match register (substantively NOT positively endorsed at single-cycle
+evidence basis register binding).
+
+**Forward-pointer at locked disposition register-class binding:** carry-
+forward observation to successor consolidation cycle for additional evidence
+basis accumulation at register-class match register binding per §4.2.1
+inconclusive disposition forward-binding register-class precedent + anti-pre-
+naming discipline binding ("successor consolidation cycle" framing register-
+class without specific future-cycle name pre-commitment at canonical-artifact
+register-precision register-class binding; "PHASE2C_14 sub-spec drafting
+cycle or later cycle" framing per scoping decision §6.5 verbatim register
+precedent at register-class match register binding). Successor consolidation
+cycle binding §29 framework architectural refactor evaluation discipline at
+register-precision register-class binding logs additional cycle disposition
+outcome at register-class match register binding; cross-cycle accumulation
+evidence at successor cycle empirical fire register binds future-cycle §29
+codification register at register-class match register binding (specific
+successor-cycle disposition NOT pre-committed at canonical-artifact register-
+precision register-class binding per anti-pre-naming discipline binding).
+
+Locked disposition register-class binding parallel to §28 threshold value
+option (α) at Q-S71 § seal pre-fire register-event boundary register precedent
+at register-class match register binding; Charlie register adjudication
+register-event boundary at Q-S76 register-class match register binding
+fires § seal commit at single-atomic per §0.4 binding (METHODOLOGY_NOTES.md
+§29 append + working draft rm; NO tag per §6.2 binding parallel to Steps
+1-7 register precedent at register-class match register binding).
+
+### Application checklist
+
+At each PHASE2C consolidation cycle binding §29 framework architectural
+refactor evaluation discipline at register-precision register-class:
+
+1. **Read framework code site at register-precision register-class binding.**
+   Cycle-specific patches at framework code site register (e.g.,
+   [`backtest/evaluate_dsr.py`](../../backtest/evaluate_dsr.py) at PHASE2C_12
+   cycle: `PHASE2C_12_N_RAW`, `PHASE2C_12_N_ELIGIBLE_OBSERVED`,
+   `ALLOWED_DUAL_GATE_PAIRS`, `_resolve_n_eff_set()`); line accretion empirical
+   fire register per cycle (canonical convention: `git log <prior-cycle-SEAL>..
+   <this-cycle-SEAL>` empirical fire range per §28 sub-rule 1 commit count
+   metric register-class binding); cross-cycle accretion pattern at framework
+   code site register-class binding (creation cycles vs patching cycles vs
+   methodology-consolidation-only cycles at register-class match register).
+   Empirical line numbers verified at canonical-artifact register against
+   sub-spec source artifact register per §22 description-drift discipline
+   binding; cross-register description-drift instances surfaced at
+   working-draft register per Q-S46 OPTION (a) precedent + §28 Step 7
+   backfill empirical fire register precedent at register-class match register.
+
+2. **Enumerate alternative architectural patterns at register-class-distinct
+   register-class binding.** Per sub-spec §4.2.3 4-pattern enumeration without
+   false-binary framing at register-precision register-class binding:
+   (1) **status quo** — per-cycle hardcoded constants at framework code site;
+   cycle-specific helper functions added per cycle at framework code site
+   register; (2) **config injection** — cycle parameters externalized to per-
+   cycle YAML / JSON config file register; framework code reads config at
+   runtime register-class; (3) **cycle-state-machine** — abstract base class
+   for cycle parameters with per-cycle subclass register; framework code
+   instantiates per-cycle subclass at runtime register-class; (4) **hybrid** —
+   frequently-changed parameters externalized to config + rarely-changed
+   structure stays inline at framework code site register-class. Each pattern
+   has substantive pros + cons at register-precision register-class binding
+   per sub-spec §4.2.3 enumeration register; collapse to refactor-vs-status-
+   quo binary at evaluation register would obscure intermediate patterns at
+   register-class match register binding.
+
+3. **Apply 4 evaluation criteria (i)-(iv) at empirical evidence basis register-
+   precision register-class binding.** The 4 criteria per sub-spec §4.2.3:
+   (i) framework code accretion rate at framework code site per cycle (lines
+   added per cycle for cycle-specific constants + helper functions; data
+   source = git log per-cycle range with `--numstat` flag at canonical-
+   artifact register-precision register binding); (ii) cross-cycle confusion
+   frequency at framework code site register-class binding (count of cycle-
+   specific constants visible at same code site as prior-cycle constants =
+   potential reviewer / implementer confusion register at register-class
+   match register); (iii) per-cycle change surface area register-class binding
+   (count of new framework code mutations at framework code site per cycle —
+   constants + helpers + sub-rules); (iv) cross-cycle implementation arc § seal
+   cumulative effort register-class binding (per §28 canonical metric set
+   data feed register: per-cycle commit count + auth boundary count + §19
+   instance count + §9.0c instance count register-class match register;
+   cross-cycle delta per metric register-precision register-class binding).
+   Each criterion at empirical evidence basis register binding cycle-cumulative
+   data at canonical-artifact register-precision register-class; criteria
+   evaluation operates at register-class-distinct level per criterion (NOT
+   collapsed to single-axis composite assessment register at register-class
+   match register binding by construction at register-precision register).
+
+4. **Ship disposition outcome at 3-option register-class binding.** Per sub-
+   spec §4.2.1 binding: (i) **refactor-needed** disposition register-class —
+   evaluation surfaces architectural refactor candidate at register-precision
+   register-class binding; forward-pointer to successor consolidation cycle
+   for refactor implementation per anti-pre-naming discipline binding;
+   (ii) **sustainable-through-next-cycle** disposition register-class —
+   evaluation does NOT surface refactor candidate at this-cycle empirical
+   evidence basis register; status quo pattern continues at framework code
+   site register-class binding; re-evaluation at successor consolidation
+   cycle register per §28 cross-cycle scaling diagnosis discipline binding;
+   (iii) **inconclusive** disposition register-class — evidence basis at
+   this-cycle register-precision register insufficient for definitive
+   refactor-needed / sustainable disposition adjudication at register-class
+   match register binding; carry-forward observation to successor consolidation
+   cycle for additional evidence basis accumulation at register-class match
+   register binding. Charlie register adjudication required at § seal pre-fire
+   register-event boundary per §4.2.1 disposition adjudication binding parallel
+   to §28 threshold value option (α) at Q-S71 § seal pre-fire precedent at
+   register-class match register binding.
+
+5. **Forward-pointer to successor consolidation cycle.** If disposition is
+   "refactor-needed" at register-class match register binding, forward-pointer
+   to successor consolidation cycle for refactor implementation at register-
+   class match register binding (anti-pre-naming discipline binding —
+   specific successor cycle name NOT pre-committed at canonical-artifact
+   register-precision register-class binding; "PHASE2C_14 sub-spec drafting
+   cycle or later cycle" framing per scoping decision §6.5 verbatim register
+   precedent at register-class match register). If disposition is
+   "inconclusive" at register-class match register binding, forward-pointer
+   to successor consolidation cycle for additional evidence basis
+   accumulation at register-class match register binding (anti-pre-naming
+   discipline preserved at register-precision register-class). If disposition
+   is "sustainable-through-next-cycle" at register-class match register
+   binding, no forward-pointer at successor cycle register-class binding;
+   re-evaluation at successor consolidation cycle per §28 cross-cycle scaling
+   diagnosis discipline binding fires next cycle's §29 codification at
+   register-class match register at register-class match register binding.
+
+### Failure-mode signal
+
+Watch for evaluation operating at false-binary framing (refactor-vs-status-
+quo binary) without 4-pattern enumeration at register-precision register-
+class binding per sub-spec §4.2.3 binding. If §29 evaluation collapses to
+refactor-vs-status-quo binary at register-precision register-class binding,
+intermediate architectural patterns (config injection + hybrid frequently-
+changed-vs-rarely-changed patterns) at register-class match register would
+be obscured by construction at evaluation methodology register binding;
+cross-cycle pattern recognition at register-precision register-class binding
+would suffer collapse at register-class match register. Per Application
+checklist item 2 register binding, 4-pattern enumeration at register-class-
+distinct register-class binding is mandatory at every cycle binding §29
+discipline at register-precision register-class.
+
+Watch for evaluation operating at implementation register (modifying
+framework code at analysis-cycle register-class) violating anti-implementation
+guardrail per §4.2.1 binding. If §29 codification fires framework code
+mutation at framework code site register-class binding (e.g., refactor
+implementation at analysis-cycle register binding by mistake), the discipline
+catch class collapses at register-class match register binding; analysis-
+only register at first cycle defers refactor implementation per §4.2.1
+binding by construction. Per Application checklist item 1 register binding +
+§4.2.1 anti-implementation guardrail register binding, framework code
+mutation at analysis-cycle register-class is forbidden at register-precision
+register-class binding; framework code mutation at successor consolidation
+cycle register-class only at register-class match register binding (if
+disposition is "refactor-needed" at register-class match register binding).
+
+Watch for criteria (i)-(iv) elided at empirical evidence basis register-
+precision register-class binding. If §29 evaluation reports disposition
+without enumerating evaluation against criteria (i)-(iv) at register-class
+match register binding, the discipline catch class collapses at register-
+class match register binding; criteria-grounded disposition register
+collapses to ungrounded-judgment register at register-precision register-
+class binding by construction. Per Application checklist item 3 register
+binding, criteria (i)-(iv) evaluation at empirical evidence basis register-
+precision register-class binding is mandatory at every cycle binding §29
+discipline at register-precision register-class binding; absence at any
+criterion register signals discipline failure at canonical 4-criteria
+register-precision register-class binding.
+
+Watch for disposition outcome elided at 3-option register-class binding. If
+§29 codification ships disposition without explicit reference to 3-option
+register-class binding (refactor-needed / sustainable-through-next-cycle /
+inconclusive), the discipline catch class collapses at register-class match
+register binding; disposition adjudication register collapses to ad-hoc-
+disposition register at register-precision register-class binding. Per
+Application checklist item 4 register binding, disposition outcome at 3-
+option register-class binding is mandatory at register-precision register-
+class; Charlie register adjudication required at § seal pre-fire register-
+event boundary per §4.2.1 disposition adjudication binding parallel to §28
+threshold value option (α) at Q-S71 § seal pre-fire precedent at register-
+class match register binding.
+
+Watch for description-drift between §29 cite of canonical evidence basis and
+PHASE2C_13 sub-spec §4.2.2 source artifact register per §22 Failure-mode
+item 7 description-drift register-class precedent. If §29 codification at
+canonical-artifact register cites canonical evidence basis (PHASE2C_12
+commit count + framework code site line numbers + cycle-specific constant
+names) at non-verbatim paraphrase register of sub-spec §4.2.2 source
+artifact descriptions or scoping decision §6.5 register, description-drift
+accumulates at register-class match register-precision register cross-cycle.
+Per §22 Failure-mode item 7 register-class precedent established at
+PHASE2C_13 implementation arc Step 2 + reinforced at Steps 3 / 4 / 5 / 6 / 7
+register precedent: cite verbatim from canonical source artifact at register-
+precision register-class binding to preserve cross-cycle source artifact
+authority at register-class match register; cross-register description-drift
+between sub-spec §4.2.2 source artifact register and framework code empirical
+fire register at register-precision register-class match register surfaces
+as §A2 §19 finding pattern instance at register-class match register
+binding (working-draft register per Q-S46 sub-question 2 OPTION (a) precedent
++ §28 Step 7 backfill empirical fire register precedent at register-class
+match register binding).
+
+Watch for forward-pointer pre-naming violation at successor consolidation
+cycle scope register-class binding. If §29 codification at register-precision
+register-class binding ships forward-pointer language with specific cycle
+name pre-commitment ("PHASE2C_14 will implement refactor" rather than
+"PHASE2C_14 sub-spec drafting cycle or later cycle if disposition indicates
+need" framing per scoping decision §6.5 verbatim register), anti-pre-naming
+discipline binding at canonical-artifact register-precision register-class
+binding collapses at register-class match register binding. Per §29
+Application checklist item 5 register binding, forward-pointer at successor
+consolidation cycle scope register-class binding operates at "successor
+consolidation cycle" framing register-class without specific future-cycle
+name pre-commitment at canonical-artifact register-precision register-class
+binding parallel to §28 anti-pre-naming framing register precedent at
+register-class match register binding.
+
+Watch for cross-§ register-class collision at §29 ↔ §28 / §27 / §26 / §18 /
+§19 framing at register-precision register-class binding. §29 register-class-
+orthogonal content scope from §28 + §27 + §26 + §18 + §19 cluster at meta-
+evaluation register-class binding (§28 = multi-metric cycle-complexity
+scaling at canonical metric set scope; §27 = anti-meta-pattern at cycle-
+class register; §26 = §9.0c-specific accumulation at instance-density
+register; §18 = §7 carry-forward density at interpretive arc closeout
+register; §19 = spec-vs-empirical-reality drift at single-pattern-class
+register; §29 = framework code architectural pattern sustainability evaluation
+at meta-evaluation register-class). If §29 codification framing at register-
+class collision with §28's canonical metric set scope register or with
+cross-cycle accumulation observation cluster register, cross-section
+consistency at §29 vs §28 + §27 + §26 + §18 + §19 framing register-precision
+register-class binding collapses at register-class match register binding.
+Per Principle ¶3 register binding, cross-§ register-class collision avoided
+by content-scope distinction at register-precision register-class binding;
+cross-section consistency check at §29 vs §28 + §27 + §26 + §18 + §19 framing
+mandatory at codification + reviewer pass cycle register-class binding.
+
+### Tier disposition
+
+§29 ships at **Medium tier with cross-cycle-pending status note** per sub-spec
+§4.3.3 re-check binding (Carry-forward B row final disposition = "Medium tier"
+per criterion 1 first-cycle codification ✓ + criterion 2 operating rule
+articulating ✓ at evaluation methodology + 4-pattern enumeration + 4-criteria
++ 3-disposition outcome + Application checklist 5-item structure + criterion
+3 cross-cycle register-class consistency pending + criterion 4 0 prior
+consolidation cycle FAILS C4 at first-cycle codification register-precision
+register). The criterion 4 maturation requirement fails by construction at
+PHASE2C_13 first-cycle codification register; Medium-tier disposition at
+cross-cycle-pending status preserves register-class precision by construction
+at first-cycle codification + future-cycle accumulation register-class
+binding.
+
+§29 register-class-precedent-coupling with §21 / §22 / §23 / §25 / §26 / §28
+Medium-tier register-class precedent at first-cycle Medium-tier codification
+register at tier disposition framing register-class match. §29 differs from
+§27 Weak-tier register-class precedent at tier disposition register at
+register-class-distinct register binding — §29 evidence basis is single-cycle
+empirical at PHASE2C_12 cycle 4 framework-code commits register + §28
+5-cycle backfill data feed at criteria (i)+(iv) register-class binding,
+register-class-distinct from §27 single-cycle Weak-tier basis at register-
+class match register at content scope register-precision register-class.
+
+Promotion path Medium → Strong at successor methodology consolidation cycles
+after sufficient cross-cycle accumulation evidence at register-class match
+register binding per §4.3 bar criteria codified at PHASE2C_13 implementation
+arc Step 9 per sub-spec §5.4 disposition (Carry-forward C fold-in to §20.2).
+The Strong-tier promotion bar register-class-distinct from §29 base
+codification register at register-class match register; specific bar criteria
+authored at Step 9 §20.2 codification register, NOT pre-committed at §29
+codification register per anti-pre-naming discipline binding. Future cycles
+binding §29 framework architectural refactor evaluation discipline log
+additional cycle disposition outcomes at register-precision register-class
+binding; cross-cycle accumulation evidence at 3+ cycles at register-class
+match register binding accumulates at promotion-eligible register-class
+binding for Strong-tier promotion adjudication at successor methodology
+consolidation cycle scoping cycle register-event boundary per §4.3
+codification register binding. Anti-pre-naming preserved at canonical-
+artifact register: specific future-cycle scope (cycle name + count from
+PHASE2C_13 forward) NOT pre-committed at promotion path register; "successor
+methodology consolidation cycles after sufficient accumulation" framing
+preserves anti-pre-naming discipline binding at register-class match register
+parallel to §28 promotion path framing register precedent at register-class
+match register binding.
+
+Forward-references to §20.2 (Carry-forward C Strong-tier promotion bar
+criteria sub-§ host-slot accommodation framing; codified at PHASE2C_13
+implementation arc Step 9 per sub-spec §5.4 disposition (Carry-forward C
+row §20 sub-§ fold-in)) cite sub-spec §5.4 disposition table as canonical
+binding source per Step 1 §21 F2 patch + Step 2 §22 + Step 3 §23 + Step 4
+§25 + Step 5 §26 + Step 6 §27 + Step 7 §28 register precedent at register-
+class match register binding. §20.2 is unsealed at PHASE2C_13 implementation
+arc Step 8 entry register-event boundary; forward-reference language at sub-
+spec §5.4 disposition canonical anchoring is appropriate at register-precision
+register-class binding parallel to Steps 1-7 register precedent at register-
+class match register.
+
+Backward-references at §29 register-precision register-class binding cite
+sealed §§ at register-class match register: §16 (anchor-prose-access discipline)
++ §17 (procedural-confirmation defect class with sub-rule 4 recursive
+operating rule register binding) + §18 (§7 carry-forward density at
+interpretive arc closeout register) + §19 (spec-vs-empirical-reality drift
+register) + §20 (Strong-tier register precedent; §20.2 unsealed at register-
+class match register) + §21 (fire-prep precondition checklist) + §22
+(framework parameter pre-lock at sub-spec terminus + Item 4 fold-in sub-rule
+4a/4b/4c) + §23 (inter-step contract standardization) + §25 (register-class
+explicit declaration at Step deliverable) + §26 (§9.0c instance density +
+register-class taxonomy preservation + §3 sub-rule fold-in items 2+3+4) +
+§27 (Item 7 anti-meta-pattern discipline at methodology consolidation cycles
+with boundary clause invariance) + §28 (multi-metric cycle-complexity scaling
+diagnosis at canonical metric set scope register + 5-cycle backfill data
+feed at §29 criteria (i)+(iv) register-class binding). Sealed §§ available
+at register-precision register-class binding at PHASE2C_13 implementation
+arc Step 8 entry register-event boundary; backward-reference language at
+register-class match register precedent at PHASE2C_13 implementation arc
+register-class binding.
+
+---
