@@ -3999,13 +3999,13 @@ codification at Medium tier per sub-spec §4.3.4 binding. Cross-cycle
 accumulation register at §23-relevant Step boundary class may
 accumulate sparse instances per cycle due to register-class-
 distinction from §19 finding pattern. The cross-cycle accumulation
-evidence threshold for §23 Strong-tier promotion at §20.2 register may
+evidence threshold for §23 Strong-tier promotion at §20.6 register may
 bind at lower cumulative instance count than disciplines accumulating
 at §19 finding register-class; the bar criteria specification at Step
-9 §20.2 register operates at register-precision per cross-cycle
+9 §20.6 register operates at register-precision per cross-cycle
 observation pattern, register-class-distinct from §19 finding pattern
 accumulation. Tier evaluation at successor cycle resolves the bar
-criteria interaction at register-precision once §20.2 sub-§ codifies
+criteria interaction at register-precision once §20.6 sub-§ codifies
 bar criteria 1-4.
 
 ---
@@ -5458,7 +5458,7 @@ Medium-tier criterion 1 threshold of ≥10 cross-cycle instances per current
 sub-spec §4.3.2 + §4.3.3 + §4.3.4 provisional tier check (final Strong-
 tier bar codification at METHODOLOGY_NOTES register pending PHASE2C_13
 implementation arc Step 9 per sub-spec §5.4 disposition, Carry-forward C
-fold-in to §20 appendix-style sub-§ at §20.2 register; the threshold values
+fold-in to §20 appendix-style sub-§ at §20.6 register; the threshold values
 at §4.3.2 are sub-spec-authored provisional values pending Charlie register
 adjudication at sub-spec SEAL boundary register-event); Weak-tier disposition
 register-class-distinct from Medium-tier register-class at tier register-
@@ -6000,10 +6000,10 @@ from §27 single-cycle Weak-tier basis at register-class match register.
 Promotion path Medium → Strong at successor methodology consolidation cycles
 after sufficient cross-cycle accumulation evidence at register-class match
 register binding per §4.3 bar criteria codified at PHASE2C_13 implementation
-arc Step 9 per sub-spec §5.4 disposition (Carry-forward C fold-in to §20.2).
+arc Step 9 per sub-spec §5.4 disposition (Carry-forward C fold-in to §20.6).
 The Strong-tier promotion bar register-class-distinct from §28 base
 codification register at register-class match register; the specific bar
-criteria authored at Step 9 §20.2 codification register, NOT pre-committed
+criteria authored at Step 9 §20.6 codification register, NOT pre-committed
 at §28 codification register per anti-pre-naming discipline binding. Future
 cycles binding §28 cross-cycle scaling diagnosis discipline log additional
 cycle rows at canonical metric set register at register-precision register-
@@ -6019,13 +6019,13 @@ discipline binding at register-class match register.
 
 Forward-references to §29 (Carry-forward B framework architectural refactor
 evaluation; codified at PHASE2C_13 implementation arc Step 8 per sub-spec
-§5.4 disposition (Carry-forward B row new-§ slot)) and §20.2 (Carry-forward C
+§5.4 disposition (Carry-forward B row new-§ slot)) and §20.6 (Carry-forward C
 Strong-tier promotion bar criteria sub-§ host-slot accommodation framing;
 codified at PHASE2C_13 implementation arc Step 9 per sub-spec §5.4 disposition
 (Carry-forward C row §20 sub-§ fold-in)) cite sub-spec §5.4 disposition table
 as canonical binding source per Step 1 §21 F2 patch + Step 2 §22 + Step 3
 §23 + Step 4 §25 + Step 5 §26 + Step 6 §27 register precedent at register-
-class match register binding. §29 + §20.2 are unsealed at PHASE2C_13
+class match register binding. §29 + §20.6 were unsealed at PHASE2C_13
 implementation arc Step 7 entry register-event boundary; forward-reference
 language at sub-spec §5.4 disposition canonical anchoring is appropriate
 at register-precision register-class binding parallel to Steps 1-6 register
@@ -6731,10 +6731,10 @@ class match register at content scope register-precision register-class.
 Promotion path Medium → Strong at successor methodology consolidation cycles
 after sufficient cross-cycle accumulation evidence at register-class match
 register binding per §4.3 bar criteria codified at PHASE2C_13 implementation
-arc Step 9 per sub-spec §5.4 disposition (Carry-forward C fold-in to §20.2).
+arc Step 9 per sub-spec §5.4 disposition (Carry-forward C fold-in to §20.6).
 The Strong-tier promotion bar register-class-distinct from §29 base
 codification register at register-class match register; specific bar criteria
-authored at Step 9 §20.2 codification register, NOT pre-committed at §29
+authored at Step 9 §20.6 codification register, NOT pre-committed at §29
 codification register per anti-pre-naming discipline binding. Future cycles
 binding §29 framework architectural refactor evaluation discipline log
 additional cycle disposition outcomes at register-precision register-class
@@ -6750,13 +6750,13 @@ preserves anti-pre-naming discipline binding at register-class match register
 parallel to §28 promotion path framing register precedent at register-class
 match register binding.
 
-Forward-references to §20.2 (Carry-forward C Strong-tier promotion bar
+Forward-references to §20.6 (Carry-forward C Strong-tier promotion bar
 criteria sub-§ host-slot accommodation framing; codified at PHASE2C_13
 implementation arc Step 9 per sub-spec §5.4 disposition (Carry-forward C
 row §20 sub-§ fold-in)) cite sub-spec §5.4 disposition table as canonical
 binding source per Step 1 §21 F2 patch + Step 2 §22 + Step 3 §23 + Step 4
 §25 + Step 5 §26 + Step 6 §27 + Step 7 §28 register precedent at register-
-class match register binding. §20.2 is unsealed at PHASE2C_13 implementation
+class match register binding. §20.6 was unsealed at PHASE2C_13 implementation
 arc Step 8 entry register-event boundary; forward-reference language at sub-
 spec §5.4 disposition canonical anchoring is appropriate at register-precision
 register-class binding parallel to Steps 1-7 register precedent at register-
@@ -6767,7 +6767,7 @@ sealed §§ at register-class match register: §16 (anchor-prose-access discipli
 + §17 (procedural-confirmation defect class with sub-rule 4 recursive
 operating rule register binding) + §18 (§7 carry-forward density at
 interpretive arc closeout register) + §19 (spec-vs-empirical-reality drift
-register) + §20 (Strong-tier register precedent; §20.2 unsealed at register-
+register) + §20 (Strong-tier register precedent; §20.6 was unsealed at register-
 class match register) + §21 (fire-prep precondition checklist) + §22
 (framework parameter pre-lock at sub-spec terminus + Item 4 fold-in sub-rule
 4a/4b/4c) + §23 (inter-step contract standardization) + §25 (register-class
