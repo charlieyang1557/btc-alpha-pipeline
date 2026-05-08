@@ -1,0 +1,39 @@
+{
+  "artifact_schema_version": "phase2c_7_1",
+  "current_git_sha": "a6b1c1aad3f00f930bbbcbe9203a290f1fc87e8f",
+  "engine_commit": "eb1c87f",
+  "engine_corrected_lineage": "wf-corrected-v1",
+  "error_message": null,
+  "evaluation_semantics": "single_run_holdout_v1",
+  "gate_pass_per_criterion": {
+    "drawdown_passed": false,
+    "return_passed": true,
+    "sharpe_passed": true,
+    "trades_passed": true
+  },
+  "holdout_metrics": {
+    "max_drawdown": 0.3491149913983625,
+    "sharpe_ratio": -0.19075693737270455,
+    "total_return": -0.08552237017284237,
+    "total_trades": 118
+  },
+  "holdout_passed": false,
+  "hypothesis_hash": "f0fe200133464fe8",
+  "lifecycle_state": "holdout_failed",
+  "lineage_check": "passed",
+  "name": "volume_divergence_momentum_fade",
+  "passing_criteria": {
+    "max_drawdown": 0.25,
+    "min_sharpe": -0.5,
+    "min_total_return": -0.15,
+    "min_total_trades": 5
+  },
+  "position": 46,
+  "regime_key": "v2.validation",
+  "regime_label": "validation_2024",
+  "run_id": "phase2c_12_audit_2024_v1",
+  "source_batch_id": "7f2f7d3e-df22-4ef7-9d7a-6f1733fe5c67",
+  "theme": "volume_divergence",
+  "wall_clock_seconds": 1.1635,
+  "wf_test_period_sharpe": -0.06928
+}
