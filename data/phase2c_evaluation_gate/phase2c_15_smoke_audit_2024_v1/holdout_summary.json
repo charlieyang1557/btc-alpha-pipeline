@@ -1,0 +1,48 @@
+{
+  "artifact_schema_version": "phase2c_7_1",
+  "audit_only_holdout_passed": 35,
+  "audit_only_total": 79,
+  "by_theme": {
+    "calendar_effect": {
+      "holdout_passed": 15,
+      "total": 20
+    },
+    "mean_reversion": {
+      "holdout_passed": 8,
+      "total": 20
+    },
+    "momentum": {
+      "holdout_passed": 10,
+      "total": 20
+    },
+    "volatility_regime": {
+      "holdout_passed": 5,
+      "total": 20
+    },
+    "volume_divergence": {
+      "holdout_passed": 9,
+      "total": 20
+    }
+  },
+  "counts": {
+    "holdout_error": 0,
+    "holdout_failed": 53,
+    "holdout_passed": 47,
+    "total": 100
+  },
+  "current_git_sha": "25380e2ab168ed816a335bd66d210ecf216fe475",
+  "engine_commit": "eb1c87f",
+  "engine_corrected_lineage": "wf-corrected-v1",
+  "evaluation_semantics": "single_run_holdout_v1",
+  "explicit_candidate_hashes": null,
+  "lineage_check": "passed",
+  "primary_universe_holdout_passed": 12,
+  "primary_universe_total": 21,
+  "regime_key": "v2.validation",
+  "regime_label": "validation_2024",
+  "run_finished_utc": "2026-05-08T09:18:23Z",
+  "run_id": "phase2c_15_smoke_audit_2024_v1",
+  "run_started_utc": "2026-05-08T09:16:27Z",
+  "source_batch_id": "phase2c_15_smoke_combined",
+  "universe": "audit"
+}

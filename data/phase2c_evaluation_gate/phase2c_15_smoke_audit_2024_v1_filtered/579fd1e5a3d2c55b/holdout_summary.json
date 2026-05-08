@@ -1,0 +1,39 @@
+{
+  "artifact_schema_version": "phase2c_7_1",
+  "current_git_sha": "25380e2ab168ed816a335bd66d210ecf216fe475",
+  "engine_commit": "eb1c87f",
+  "engine_corrected_lineage": "wf-corrected-v1",
+  "error_message": null,
+  "evaluation_semantics": "single_run_holdout_v1",
+  "gate_pass_per_criterion": {
+    "drawdown_passed": true,
+    "return_passed": true,
+    "sharpe_passed": true,
+    "trades_passed": true
+  },
+  "holdout_metrics": {
+    "max_drawdown": 0.24104970486333271,
+    "sharpe_ratio": 0.4758570731577465,
+    "total_return": 0.09591391959732865,
+    "total_trades": 112
+  },
+  "holdout_passed": true,
+  "hypothesis_hash": "579fd1e5a3d2c55b",
+  "lifecycle_state": "holdout_passed",
+  "lineage_check": "passed",
+  "name": "bb_mean_reversion_oversold",
+  "passing_criteria": {
+    "max_drawdown": 0.25,
+    "min_sharpe": -0.5,
+    "min_total_return": -0.15,
+    "min_total_trades": 5
+  },
+  "position": 12,
+  "regime_key": "v2.validation",
+  "regime_label": "validation_2024",
+  "run_id": "phase2c_15_smoke_audit_2024_v1",
+  "source_batch_id": "phase2c_15_smoke_combined",
+  "theme": "mean_reversion",
+  "wall_clock_seconds": 1.1518,
+  "wf_test_period_sharpe": 0.116715
+}

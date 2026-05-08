@@ -1,0 +1,43 @@
+{
+  "schema_version": "phase2c_15_smoke_partition_v1",
+  "produced_at_utc": "2026-05-08T09:58:34Z",
+  "synthetic_source_batch_id": "phase2c_15_smoke_combined",
+  "n_regimes": 4,
+  "batch_ids": [
+    "49682edb-9493-4c69-bf67-2f32c22d3864",
+    "4c9634cd-ef2b-4f5c-a78a-c558c24c0a7b"
+  ],
+  "per_batch_counts": {
+    "49682edb-9493-4c69-bf67-2f32c22d3864": {
+      "valid_N": 50,
+      "cohort_a_unfiltered": 1,
+      "cohort_a_filtered": 1
+    },
+    "4c9634cd-ef2b-4f5c-a78a-c558c24c0a7b": {
+      "valid_N": 50,
+      "cohort_a_unfiltered": 1,
+      "cohort_a_filtered": 1
+    }
+  },
+  "role2_kx2_contingency_unfiltered": {
+    "rows": [
+      {
+        "batch_id": "49682edb-9493-4c69-bf67-2f32c22d3864",
+        "cohort_a_count": 1,
+        "non_cohort_a_count": 49,
+        "valid_N": 50
+      },
+      {
+        "batch_id": "4c9634cd-ef2b-4f5c-a78a-c558c24c0a7b",
+        "cohort_a_count": 1,
+        "non_cohort_a_count": 49,
+        "valid_N": 50
+      }
+    ]
+  },
+  "totals": {
+    "cohort_a_unfiltered": 2,
+    "cohort_a_filtered": 2,
+    "valid_N": 100
+  }
+}

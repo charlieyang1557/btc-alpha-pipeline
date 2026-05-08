@@ -1,0 +1,81 @@
+{
+  "schema_version": "phase2c_15_smoke_statistical_v1",
+  "produced_at_utc": "2026-05-08T09:58:34Z",
+  "interpretation_register": "SMOKE / REHEARSAL \u2014 SUSPENDED INTERPRETATION",
+  "interpretation_note": "Smoke fire results are operational rehearsal of statistical machinery, NOT pre-registered measurement against PHASE2C_14 sub-spec \u00a73.2 Wilson CI 2.07% strict-exceedance threshold. The pre-registered Role 1 success criterion applies to main fire register-class only (K=5 \u00d7 N=200 = 1000). Smoke results do NOT inform main fire pre-registered claim per Q-S136 suspended interpretation discipline.",
+  "n_regimes": 4,
+  "n_total": 100,
+  "cohort_a_unfiltered": 2,
+  "cohort_a_filtered": 2,
+  "observed_rate_unfiltered": 0.02,
+  "observed_rate_filtered": 0.02,
+  "pre_registered_threshold": 0.0207,
+  "role1_strict_exceedance": {
+    "unfiltered": {
+      "observed_rate": 0.02,
+      "threshold": 0.0207,
+      "exceeds_threshold": false,
+      "interpretation": "rehearsal \u2014 not pre-registered"
+    },
+    "filtered": {
+      "observed_rate": 0.02,
+      "threshold": 0.0207,
+      "exceeds_threshold": false,
+      "interpretation": "rehearsal \u2014 not pre-registered"
+    }
+  },
+  "role1_auxiliary_fisher_exact_vs_phase2c_12": {
+    "phase2c_12_baseline": {
+      "cohort_a": 8,
+      "n": 197,
+      "rate": 0.04060913705583756
+    },
+    "phase2c_15_smoke": {
+      "cohort_a": 2,
+      "n": 100,
+      "rate": 0.02
+    },
+    "contingency_table": [
+      [
+        8,
+        189
+      ],
+      [
+        2,
+        98
+      ]
+    ],
+    "odds_ratio": 2.074074074074074,
+    "p_value_two_sided": 0.5038457262008569,
+    "interpretation": "descriptive only \u2014 smoke not pre-registered"
+  },
+  "role2_omnibus_ffh_kx2": {
+    "K": 2,
+    "contingency_table": [
+      [
+        1,
+        49
+      ],
+      [
+        1,
+        49
+      ]
+    ],
+    "table_dimensions_note": "K=2 collapses FFH omnibus to single 2x2 Fisher exact mathematically; this is by design at smoke register-class. At main fire K=5, FFH omnibus operates over 5x2 contingency with exact computation (small N tractable) per PLAN \u00a71.5.",
+    "odds_ratio": 1.0,
+    "p_value_two_sided": 1.0,
+    "interpretation": "rehearsal \u2014 not pre-registered"
+  },
+  "role2_supplementary_pairwise_at_k2": {
+    "n_pairs": 1,
+    "note": "At K=2 the single pair = the K\u00d72 omnibus mathematically. At main fire K=5, supplementary pairwise comparisons are 10 pair tests (K choose 2)."
+  },
+  "lineage": {
+    "comparison_summary": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/comparison_phase2c_15_smoke_v1/comparison_summary.json",
+    "comparison_matrix": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/phase2c_evaluation_gate/comparison_phase2c_15_smoke_v1/comparison_matrix.csv",
+    "stage2d_summary_sources": [
+      "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/raw_payloads/batch_phase2c_15_smoke_combined/source_stage2d_summary_49682edb.json",
+      "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/raw_payloads/batch_phase2c_15_smoke_combined/source_stage2d_summary_4c9634cd.json"
+    ]
+  }
+}

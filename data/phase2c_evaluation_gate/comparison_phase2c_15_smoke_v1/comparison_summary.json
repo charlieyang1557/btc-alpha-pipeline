@@ -1,0 +1,123 @@
+{
+  "cohort_a_cardinality_filtered": 2,
+  "cohort_a_cardinality_unfiltered": 2,
+  "cohort_a_filtered": [
+    "1a09fba35b3b48bb",
+    "5bc3697383b11d6c"
+  ],
+  "cohort_a_unfiltered": [
+    "1a09fba35b3b48bb",
+    "5bc3697383b11d6c"
+  ],
+  "cohort_c_cardinality_unfiltered": 28,
+  "cohort_c_unfiltered": [
+    "25e63378d44ee147",
+    "27643dcc6402d0a5",
+    "2a1a76e93cfdc545",
+    "3d5dbdc151103fe0",
+    "3f0e11dc51b28a55",
+    "4441c930bc20e95e",
+    "4fc995739337012a",
+    "5db67e1a11575b5e",
+    "60c605103472b08f",
+    "687553b3bd865266",
+    "6acd747b379c379c",
+    "6f29cca9d8a853d8",
+    "8b98cbf9c559d60f",
+    "99570ad037c65093",
+    "a72aed476613df45",
+    "af845dfbc628c5d9",
+    "b62754097570cbc2",
+    "bc255c3cdd4dd475",
+    "bcf0be31e2474bc7",
+    "be7e74402e11ac64",
+    "c54a53f7be9475fa",
+    "c826de3493e0c5cd",
+    "d13c62685553a1d1",
+    "dee5c80bc3544465",
+    "e1010fab991bab46",
+    "e4090b75560eb841",
+    "fae06203f75ff802",
+    "fe3d62245fbeff35"
+  ],
+  "comparison_schema_version": "comparison_schema_v2",
+  "in_sample_caveat_stratification": {
+    "fully_out_of_sample_regimes": [
+      "bear_2022",
+      "validation_2024"
+    ],
+    "n_passing_all_fully_out_of_sample": 8,
+    "n_passing_all_train_overlap": 11,
+    "train_overlap_regimes": [
+      "eval_2020_v1",
+      "eval_2021_v1"
+    ]
+  },
+  "pass_count_distribution": {
+    "filtered": {
+      "0": 33,
+      "1": 30,
+      "2": 24,
+      "3": 11,
+      "4": 2
+    },
+    "unfiltered": {
+      "0": 28,
+      "1": 33,
+      "2": 25,
+      "3": 12,
+      "4": 2
+    }
+  },
+  "produced_at_utc": "2026-05-08T09:47:12Z",
+  "regime_metadata": [
+    {
+      "filtered_path": "data/phase2c_evaluation_gate/phase2c_15_smoke_bear_2022_v1_filtered",
+      "in_sample_caveat_applies": false,
+      "label": "bear_2022",
+      "n_filtered": 83,
+      "n_unfiltered": 100,
+      "regime_key": "v2.regime_holdout",
+      "schema_version": "phase2c_7_1",
+      "schema_version_per_producer_mapping": "phase2c_7_1",
+      "unfiltered_path": "data/phase2c_evaluation_gate/phase2c_15_smoke_bear_2022_v1"
+    },
+    {
+      "filtered_path": "data/phase2c_evaluation_gate/phase2c_15_smoke_audit_2024_v1_filtered",
+      "in_sample_caveat_applies": false,
+      "label": "validation_2024",
+      "n_filtered": 81,
+      "n_unfiltered": 100,
+      "regime_key": "v2.validation",
+      "schema_version": "phase2c_7_1",
+      "schema_version_per_producer_mapping": "phase2c_7_1",
+      "unfiltered_path": "data/phase2c_evaluation_gate/phase2c_15_smoke_audit_2024_v1"
+    },
+    {
+      "filtered_path": "data/phase2c_evaluation_gate/phase2c_15_smoke_eval_2020_v1_filtered",
+      "in_sample_caveat_applies": true,
+      "label": "eval_2020_v1",
+      "n_filtered": 81,
+      "n_unfiltered": 100,
+      "regime_key": "evaluation_regimes.eval_2020_v1",
+      "schema_version": "phase2c_8_1",
+      "schema_version_per_producer_mapping": "phase2c_8_1",
+      "unfiltered_path": "data/phase2c_evaluation_gate/phase2c_15_smoke_eval_2020_v1"
+    },
+    {
+      "filtered_path": "data/phase2c_evaluation_gate/phase2c_15_smoke_eval_2021_v1_filtered",
+      "in_sample_caveat_applies": true,
+      "label": "eval_2021_v1",
+      "n_filtered": 85,
+      "n_unfiltered": 100,
+      "regime_key": "evaluation_regimes.eval_2021_v1",
+      "schema_version": "phase2c_8_1",
+      "schema_version_per_producer_mapping": "phase2c_8_1",
+      "unfiltered_path": "data/phase2c_evaluation_gate/phase2c_15_smoke_eval_2021_v1"
+    }
+  ],
+  "totals": {
+    "n_candidates": 100,
+    "n_regimes": 4
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "artifact_schema_version": "phase2c_8_1",
+  "current_git_sha": "25380e2ab168ed816a335bd66d210ecf216fe475",
+  "engine_commit": "eb1c87f",
+  "engine_corrected_lineage": "wf-corrected-v1",
+  "error_message": null,
+  "evaluation_semantics": "single_run_holdout_v1",
+  "gate_pass_per_criterion": {
+    "drawdown_passed": true,
+    "return_passed": true,
+    "sharpe_passed": true,
+    "trades_passed": true
+  },
+  "holdout_metrics": {
+    "max_drawdown": 0.21940576900768818,
+    "sharpe_ratio": 2.262461901849837,
+    "total_return": 1.840003164923357,
+    "total_trades": 153
+  },
+  "holdout_passed": true,
+  "hypothesis_hash": "889706976f88826b",
+  "lifecycle_state": "holdout_passed",
+  "lineage_check": "passed",
+  "name": "volatility_compression_breakout_entry",
+  "passing_criteria": {
+    "max_drawdown": 0.25,
+    "min_sharpe": -0.5,
+    "min_total_return": -0.15,
+    "min_total_trades": 5
+  },
+  "position": 93,
+  "regime_key": "evaluation_regimes.eval_2020_v1",
+  "regime_label": "eval_2020_v1",
+  "run_id": "phase2c_15_smoke_eval_2020_v1",
+  "source_batch_id": "phase2c_15_smoke_combined",
+  "theme": "volatility_regime",
+  "wall_clock_seconds": 1.241,
+  "wf_test_period_sharpe": 0.052887
+}
