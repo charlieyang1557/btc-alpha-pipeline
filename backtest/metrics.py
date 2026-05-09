@@ -226,14 +226,26 @@ def compute_all_metrics(
         **trade_stats,
     }
 
+    # PF guarded explicitly because compute_trade_stats returns
+    # profit_factor=None when gross_loss == 0 (all-winner edge case at
+    # short backtest windows; PHASE2C_15 closeout §4 #6 carry-forward
+    # surfaced this defect at K=5 universe size; bites harder at
+    # Phase 4 trade-count scale where ~3.5-month forward window
+    # produces ~4-5 trades per calendar candidate making all-winner
+    # edge case substantially more frequent). Other %.Nf values here
+    # (return, sharpe, maxDD, win_rate) are non-None per current
+    # trade_stats / metrics dict contract — fix when (if) any of them
+    # becomes nullable; don't expand scope defensively now.
+    pf_value = trade_stats["profit_factor"]
+    pf_str = f"{pf_value:.2f}" if pf_value is not None else "N/A"
     logger.info(
-        "Metrics: return=%.4f sharpe=%.3f maxDD=%.4f trades=%d win_rate=%.2f PF=%.2f",
+        "Metrics: return=%.4f sharpe=%.3f maxDD=%.4f trades=%d win_rate=%.2f PF=%s",
         total_return,
         sharpe,
         max_dd,
         trade_stats["total_trades"],
         trade_stats["win_rate"],
-        trade_stats["profit_factor"],
+        pf_str,
     )
 
     return metrics

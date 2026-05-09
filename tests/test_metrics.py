@@ -249,3 +249,80 @@ class TestComputeAllMetrics:
         assert metrics["total_trades"] == 1
         assert isinstance(metrics["sharpe_ratio"], float)
         assert isinstance(metrics["max_drawdown"], float)
+
+    def test_all_winners_logging_does_not_crash(self, caplog):
+        """compute_all_metrics must NOT raise a logging TypeError when
+        profit_factor is None (all-winner edge case).
+
+        Pre-fix: backtest/metrics.py:229 logger.info used %.2f for
+        profit_factor; format-string conversion crashed with
+        TypeError: must be real number, not NoneType when all trades
+        were winners (gross_loss=0 -> profit_factor=None).
+
+        Post-fix: PF is rendered as 'N/A' string when None.
+
+        This test exercises the REAL compute_all_metrics call path
+        (not mocked trade_stats) with synthetic 1-winner trade data —
+        the bug surfaces at the integration point between trade_stats
+        production and log emission, so mocking trade_stats only tests
+        the emission half. Catches the integration-point failure mode
+        the way it actually occurs.
+
+        Per Phase 4 implementation arc Task 3 Step A' fix authorization;
+        PHASE2C_15 closeout §4 #6 carry-forward observation. Bites
+        harder at Phase 4 forward-window scale (~3.5 months -> ~4-5
+        trades per calendar candidate vs PHASE2C_15 12-month windows
+        -> ~14.5 trades).
+        """
+        import logging
+
+        # Synthetic 1-winner all-winner equity curve + trades.
+        index = pd.date_range("2026-01-01", periods=24, freq="h")
+        # Equity rises from 10000 to 10100 (single +1% trade).
+        equity = pd.Series(
+            np.linspace(10000.0, 10100.0, 24),
+            index=index,
+        )
+        trades = [
+            {
+                "pnl": 100.0,
+                "pnl_pct": 0.01,
+                "entry_time_utc": "2026-01-01T00:00:00Z",
+                "exit_time_utc": "2026-01-01T23:00:00Z",
+            },
+        ]
+
+        with caplog.at_level(logging.INFO, logger="backtest.metrics"):
+            # Pre-fix this would emit a logging TypeError traceback (run
+            # would still succeed because logging emit catches errors,
+            # but stderr would be polluted). Post-fix: clean log line.
+            metrics = compute_all_metrics(
+                equity, trades, initial_capital=10000.0
+            )
+
+        # Computation must remain correct: profit_factor = None
+        # (semantically: gross_loss = 0 -> ratio undefined).
+        assert metrics["profit_factor"] is None
+        assert metrics["total_trades"] == 1
+        assert metrics["win_rate"] == 1.0
+
+        # Log message must contain "PF=N/A" (the post-fix sentinel).
+        # Locate the Metrics line in caplog.records.
+        metrics_log_lines = [
+            r.getMessage() for r in caplog.records
+            if r.getMessage().startswith("Metrics:")
+        ]
+        assert len(metrics_log_lines) == 1, (
+            f"Expected exactly one 'Metrics:' log line, got "
+            f"{len(metrics_log_lines)}: {metrics_log_lines}"
+        )
+        assert "PF=N/A" in metrics_log_lines[0], (
+            f"Post-fix log must contain 'PF=N/A' for None profit_factor; "
+            f"got: {metrics_log_lines[0]!r}"
+        )
+
+        # Pre-fix would also emit a separate "Logging error" / Traceback
+        # to stderr (Python logging emit catches the TypeError). We
+        # don't try to assert that didn't happen (caplog doesn't capture
+        # stderr); the post-fix's clean log line above is sufficient
+        # evidence the format-string conversion no longer raises.
