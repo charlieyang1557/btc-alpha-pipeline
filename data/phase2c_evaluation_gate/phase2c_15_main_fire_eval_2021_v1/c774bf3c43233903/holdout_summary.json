@@ -1,0 +1,39 @@
+{
+  "artifact_schema_version": "phase2c_8_1",
+  "current_git_sha": "0a7da758db360a35848d4d34be641f8462b9ed30",
+  "engine_commit": "eb1c87f",
+  "engine_corrected_lineage": "wf-corrected-v1",
+  "error_message": null,
+  "evaluation_semantics": "single_run_holdout_v1",
+  "gate_pass_per_criterion": {
+    "drawdown_passed": true,
+    "return_passed": true,
+    "sharpe_passed": true,
+    "trades_passed": true
+  },
+  "holdout_metrics": {
+    "max_drawdown": 0.11594097251427335,
+    "sharpe_ratio": 2.2570159854549163,
+    "total_return": 0.852281898832183,
+    "total_trades": 11
+  },
+  "holdout_passed": true,
+  "hypothesis_hash": "c774bf3c43233903",
+  "lifecycle_state": "holdout_passed",
+  "lineage_check": "passed",
+  "name": "bollinger_mean_reversion_oversold",
+  "passing_criteria": {
+    "max_drawdown": 0.25,
+    "min_sharpe": -0.5,
+    "min_total_return": -0.15,
+    "min_total_trades": 5
+  },
+  "position": 274,
+  "regime_key": "evaluation_regimes.eval_2021_v1",
+  "regime_label": "eval_2021_v1",
+  "run_id": "phase2c_15_main_fire_eval_2021_v1",
+  "source_batch_id": "phase2c_15_main_fire_combined",
+  "theme": "mean_reversion",
+  "wall_clock_seconds": 0.7065,
+  "wf_test_period_sharpe": 1.625885
+}

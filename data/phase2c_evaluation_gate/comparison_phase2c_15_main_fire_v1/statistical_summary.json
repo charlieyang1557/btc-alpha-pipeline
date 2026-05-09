@@ -1,0 +1,269 @@
+{
+  "schema_version": "phase2c_15_main_fire_statistical_v1",
+  "produced_at_utc": "2026-05-09T05:23:53Z",
+  "interpretation_register": "MAIN FIRE \u2014 MEASUREMENT-CLASS",
+  "interpretation_note": "Main fire results are pre-registered measurement against PHASE2C_14 sub-spec \u00a73.2 Wilson CI 2.07% strict-exceedance threshold. Pre-registered Role 1 success criterion: observed_rate > 0.0207 strict-exceedance binds. PHASE2C_15's own Wilson CI is NOT the success criterion. \u00a73.4 violation-index 4-pattern register operationally relevant at any post-fire framing.",
+  "K": 5,
+  "n_regimes": 4,
+  "n_total": 993,
+  "cohort_a_unfiltered": 39,
+  "cohort_a_filtered": 24,
+  "observed_rate_unfiltered": 0.03927492447129909,
+  "observed_rate_filtered": 0.02416918429003021,
+  "pre_registered_threshold": 0.0207,
+  "role1_strict_exceedance": {
+    "unfiltered": {
+      "observed_rate": 0.03927492447129909,
+      "threshold": 0.0207,
+      "exceeds_threshold": true,
+      "interpretation": "pre-registered; binding"
+    },
+    "filtered": {
+      "observed_rate": 0.02416918429003021,
+      "threshold": 0.0207,
+      "exceeds_threshold": true,
+      "interpretation": "pre-registered; binding"
+    }
+  },
+  "role1_auxiliary_fisher_exact_vs_phase2c_12": {
+    "phase2c_12_baseline": {
+      "cohort_a": 8,
+      "n": 197,
+      "rate": 0.04060913705583756
+    },
+    "phase2c_15_main_fire": {
+      "cohort_a": 39,
+      "n": 993,
+      "rate": 0.03927492447129909
+    },
+    "contingency_table": [
+      [
+        8,
+        189
+      ],
+      [
+        39,
+        954
+      ]
+    ],
+    "contingency_table_row_labels": [
+      "phase2c_12_baseline",
+      "phase2c_15_main_fire"
+    ],
+    "odds_ratio": 1.0354090354090355,
+    "odds_ratio_orientation": "table_row_0_over_table_row_1: PHASE2C_12 cohort odds relative to PHASE2C_15 main-fire cohort odds. OR > 1 indicates PHASE2C_12 baseline rate > PHASE2C_15 main-fire rate; OR < 1 indicates the reverse. Per Codex non-blocking observation #1 register-precedent.",
+    "p_value_two_sided": 0.8435742936439095,
+    "interpretation": "auxiliary descriptive \u2014 informative for effect size"
+  },
+  "role2_omnibus_ffh_kx2": {
+    "K": 5,
+    "contingency_table": [
+      [
+        6,
+        192
+      ],
+      [
+        12,
+        185
+      ],
+      [
+        5,
+        193
+      ],
+      [
+        7,
+        193
+      ],
+      [
+        9,
+        191
+      ]
+    ],
+    "computation_method": "monte_carlo",
+    "mc_iterations": 10000,
+    "mc_seed": 42,
+    "test_statistic": "G (log-likelihood ratio) per chi2_contingency",
+    "g_statistic_observed": 4.004544915849486,
+    "p_value_two_sided": 0.41615838416158385,
+    "alternative": "two-sided (any departure from independence)",
+    "interpretation": "FFH r\u00d7c omnibus: tests batch-level homogeneity (H0: all batches share same cohort_a rate)."
+  },
+  "role2_supplementary_pairwise": {
+    "n_pairs": 10,
+    "test": "Fisher exact 2-sided per pair",
+    "multiple_testing_correction": "none (descriptive supplementary; no family-wise correction applied per PLAN \u00a71.5 framework)",
+    "pairs": [
+      {
+        "batch_id_a": "355a8f9f-2a1f-435d-a1a8-c365b92e185b",
+        "batch_id_b": "4f894318-eb69-48b5-95ef-e22abe3ecdd1",
+        "contingency_table": [
+          [
+            6,
+            192
+          ],
+          [
+            12,
+            185
+          ]
+        ],
+        "odds_ratio": 0.4817708333333333,
+        "p_value_two_sided": 0.15674688839828277
+      },
+      {
+        "batch_id_a": "355a8f9f-2a1f-435d-a1a8-c365b92e185b",
+        "batch_id_b": "71d42a07-d88f-431a-a653-601010cf1921",
+        "contingency_table": [
+          [
+            6,
+            192
+          ],
+          [
+            5,
+            193
+          ]
+        ],
+        "odds_ratio": 1.20625,
+        "p_value_two_sided": 1.0
+      },
+      {
+        "batch_id_a": "355a8f9f-2a1f-435d-a1a8-c365b92e185b",
+        "batch_id_b": "91ad68ed-6470-45a7-8735-171c39ff25c3",
+        "contingency_table": [
+          [
+            6,
+            192
+          ],
+          [
+            7,
+            193
+          ]
+        ],
+        "odds_ratio": 0.8616071428571429,
+        "p_value_two_sided": 1.0
+      },
+      {
+        "batch_id_a": "355a8f9f-2a1f-435d-a1a8-c365b92e185b",
+        "batch_id_b": "a12c2a65-4314-4dde-be6e-968a0c70ee6e",
+        "contingency_table": [
+          [
+            6,
+            192
+          ],
+          [
+            9,
+            191
+          ]
+        ],
+        "odds_ratio": 0.6631944444444444,
+        "p_value_two_sided": 0.6002251868011319
+      },
+      {
+        "batch_id_a": "4f894318-eb69-48b5-95ef-e22abe3ecdd1",
+        "batch_id_b": "71d42a07-d88f-431a-a653-601010cf1921",
+        "contingency_table": [
+          [
+            12,
+            185
+          ],
+          [
+            5,
+            193
+          ]
+        ],
+        "odds_ratio": 2.503783783783784,
+        "p_value_two_sided": 0.08872565884160737
+      },
+      {
+        "batch_id_a": "4f894318-eb69-48b5-95ef-e22abe3ecdd1",
+        "batch_id_b": "91ad68ed-6470-45a7-8735-171c39ff25c3",
+        "contingency_table": [
+          [
+            12,
+            185
+          ],
+          [
+            7,
+            193
+          ]
+        ],
+        "odds_ratio": 1.7884169884169885,
+        "p_value_two_sided": 0.248553298689209
+      },
+      {
+        "batch_id_a": "4f894318-eb69-48b5-95ef-e22abe3ecdd1",
+        "batch_id_b": "a12c2a65-4314-4dde-be6e-968a0c70ee6e",
+        "contingency_table": [
+          [
+            12,
+            185
+          ],
+          [
+            9,
+            191
+          ]
+        ],
+        "odds_ratio": 1.3765765765765765,
+        "p_value_two_sided": 0.5093846356776875
+      },
+      {
+        "batch_id_a": "71d42a07-d88f-431a-a653-601010cf1921",
+        "batch_id_b": "91ad68ed-6470-45a7-8735-171c39ff25c3",
+        "contingency_table": [
+          [
+            5,
+            193
+          ],
+          [
+            7,
+            193
+          ]
+        ],
+        "odds_ratio": 0.7142857142857143,
+        "p_value_two_sided": 0.7709744553890284
+      },
+      {
+        "batch_id_a": "71d42a07-d88f-431a-a653-601010cf1921",
+        "batch_id_b": "a12c2a65-4314-4dde-be6e-968a0c70ee6e",
+        "contingency_table": [
+          [
+            5,
+            193
+          ],
+          [
+            9,
+            191
+          ]
+        ],
+        "odds_ratio": 0.5497985031663788,
+        "p_value_two_sided": 0.41557690529389
+      },
+      {
+        "batch_id_a": "91ad68ed-6470-45a7-8735-171c39ff25c3",
+        "batch_id_b": "a12c2a65-4314-4dde-be6e-968a0c70ee6e",
+        "contingency_table": [
+          [
+            7,
+            193
+          ],
+          [
+            9,
+            191
+          ]
+        ],
+        "odds_ratio": 0.7697179044329303,
+        "p_value_two_sided": 0.7995750933253846
+      }
+    ]
+  },
+  "lineage": {
+    "comparison_summary": "/Users/openclaw/btc-alpha-pipeline/data/phase2c_evaluation_gate/comparison_phase2c_15_main_fire_v1/comparison_summary.json",
+    "comparison_matrix": "/Users/openclaw/btc-alpha-pipeline/data/phase2c_evaluation_gate/comparison_phase2c_15_main_fire_v1/comparison_matrix.csv",
+    "stage2d_summary_sources": [
+      "/Users/openclaw/btc-alpha-pipeline/raw_payloads/batch_phase2c_15_main_fire_combined/source_stage2d_summary_355a8f9f-2a1f-435d-a1a8-c365b92e185b.json",
+      "/Users/openclaw/btc-alpha-pipeline/raw_payloads/batch_phase2c_15_main_fire_combined/source_stage2d_summary_4f894318-eb69-48b5-95ef-e22abe3ecdd1.json",
+      "/Users/openclaw/btc-alpha-pipeline/raw_payloads/batch_phase2c_15_main_fire_combined/source_stage2d_summary_71d42a07-d88f-431a-a653-601010cf1921.json",
+      "/Users/openclaw/btc-alpha-pipeline/raw_payloads/batch_phase2c_15_main_fire_combined/source_stage2d_summary_91ad68ed-6470-45a7-8735-171c39ff25c3.json",
+      "/Users/openclaw/btc-alpha-pipeline/raw_payloads/batch_phase2c_15_main_fire_combined/source_stage2d_summary_a12c2a65-4314-4dde-be6e-968a0c70ee6e.json"
+    ]
+  }
+}

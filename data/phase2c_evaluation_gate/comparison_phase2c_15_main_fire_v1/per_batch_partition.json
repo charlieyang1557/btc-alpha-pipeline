@@ -1,0 +1,80 @@
+{
+  "schema_version": "phase2c_15_main_fire_partition_v1",
+  "produced_at_utc": "2026-05-09T05:23:53Z",
+  "synthetic_source_batch_id": "phase2c_15_main_fire_combined",
+  "K": 5,
+  "n_regimes": 4,
+  "batch_ids": [
+    "355a8f9f-2a1f-435d-a1a8-c365b92e185b",
+    "4f894318-eb69-48b5-95ef-e22abe3ecdd1",
+    "71d42a07-d88f-431a-a653-601010cf1921",
+    "91ad68ed-6470-45a7-8735-171c39ff25c3",
+    "a12c2a65-4314-4dde-be6e-968a0c70ee6e"
+  ],
+  "per_batch_counts": {
+    "355a8f9f-2a1f-435d-a1a8-c365b92e185b": {
+      "valid_N": 198,
+      "cohort_a_unfiltered": 6,
+      "cohort_a_filtered": 3
+    },
+    "4f894318-eb69-48b5-95ef-e22abe3ecdd1": {
+      "valid_N": 197,
+      "cohort_a_unfiltered": 12,
+      "cohort_a_filtered": 9
+    },
+    "71d42a07-d88f-431a-a653-601010cf1921": {
+      "valid_N": 198,
+      "cohort_a_unfiltered": 5,
+      "cohort_a_filtered": 3
+    },
+    "91ad68ed-6470-45a7-8735-171c39ff25c3": {
+      "valid_N": 200,
+      "cohort_a_unfiltered": 7,
+      "cohort_a_filtered": 3
+    },
+    "a12c2a65-4314-4dde-be6e-968a0c70ee6e": {
+      "valid_N": 200,
+      "cohort_a_unfiltered": 9,
+      "cohort_a_filtered": 6
+    }
+  },
+  "role2_kx2_contingency_unfiltered": {
+    "rows": [
+      {
+        "batch_id": "355a8f9f-2a1f-435d-a1a8-c365b92e185b",
+        "cohort_a_count": 6,
+        "non_cohort_a_count": 192,
+        "valid_N": 198
+      },
+      {
+        "batch_id": "4f894318-eb69-48b5-95ef-e22abe3ecdd1",
+        "cohort_a_count": 12,
+        "non_cohort_a_count": 185,
+        "valid_N": 197
+      },
+      {
+        "batch_id": "71d42a07-d88f-431a-a653-601010cf1921",
+        "cohort_a_count": 5,
+        "non_cohort_a_count": 193,
+        "valid_N": 198
+      },
+      {
+        "batch_id": "91ad68ed-6470-45a7-8735-171c39ff25c3",
+        "cohort_a_count": 7,
+        "non_cohort_a_count": 193,
+        "valid_N": 200
+      },
+      {
+        "batch_id": "a12c2a65-4314-4dde-be6e-968a0c70ee6e",
+        "cohort_a_count": 9,
+        "non_cohort_a_count": 191,
+        "valid_N": 200
+      }
+    ]
+  },
+  "totals": {
+    "cohort_a_unfiltered": 39,
+    "cohort_a_filtered": 24,
+    "valid_N": 993
+  }
+}

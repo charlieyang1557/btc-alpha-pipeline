@@ -1,0 +1,36 @@
+{
+  "batch_id": "71d42a07-d88f-431a-a653-601010cf1921",
+  "compile_status_counts": {
+    "ok": 198
+  },
+  "corrected_wf_semantics_commit": "eb1c87f",
+  "current_git_sha": "ffc138e97b58d3f2a67fc20e9ff542710e1c6395",
+  "git_sha": "ffc138e",
+  "lineage_check": "passed",
+  "mean_elapsed_per_candidate_seconds": 3.246,
+  "phase1_binary_success_criterion_met": true,
+  "phase1_success_threshold": 0.5,
+  "run_finished_utc": "2026-05-09T02:58:02Z",
+  "run_started_utc": "2026-05-09T02:47:18Z",
+  "runtime_status_counts": {
+    "ok": 198
+  },
+  "total_candidates": 198,
+  "total_elapsed_seconds": 642.665,
+  "wf_semantics": "corrected_test_boundary_v1",
+  "wf_test_period_sharpe_distribution": {
+    "count_gt_0_0": 79,
+    "count_gt_0_5": 36,
+    "count_gt_neg_0_3": 132,
+    "max": 2.376542675815095,
+    "mean": -0.16891281150974852,
+    "median": 0.0,
+    "min": -3.2503402524545075,
+    "n": 198,
+    "p10": -1.319272710314239,
+    "p25": -0.7281951806056332,
+    "p75": 0.329367180753174,
+    "p90": 0.840422594289047,
+    "stdev": 0.8845580792212024
+  }
+}

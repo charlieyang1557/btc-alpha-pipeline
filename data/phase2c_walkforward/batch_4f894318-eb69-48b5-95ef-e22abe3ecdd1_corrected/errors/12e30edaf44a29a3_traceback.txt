@@ -1,0 +1,15 @@
+Traceback (most recent call last):
+  File "/Users/openclaw/btc-alpha-pipeline/scripts/run_phase2c_batch_walkforward.py", line 514, in run_one_candidate_wf
+    wf_result: WalkForwardResult = run_walk_forward(strategy_cls)
+                                   ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/Users/openclaw/btc-alpha-pipeline/backtest/engine.py", line 977, in run_walk_forward
+    result = run_backtest(
+        strategy_cls=gated_cls,
+    ...<5 lines>...
+        write_registry=False,
+    )
+  File "/Users/openclaw/btc-alpha-pipeline/backtest/engine.py", line 379, in run_backtest
+    feed = ParquetFeed.from_parquet(**feed_kwargs)
+  File "/Users/openclaw/btc-alpha-pipeline/backtest/bt_parquet_feed.py", line 94, in from_parquet
+    raise FileNotFoundError(f"Parquet file not found: {path}")
+FileNotFoundError: Parquet file not found: /Users/openclaw/btc-alpha-pipeline/data/raw/btcusdt_1h.parquet
