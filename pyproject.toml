@@ -36,6 +36,10 @@ dev = [
     "pytest-cov>=4.1.0",
     "ruff>=0.4.0",            # Linting + formatting
     "ipython>=8.0.0",         # Interactive exploration
+    "scipy>=1.12.0",          # Required at test register by Phase 4 closeout
+                              # machinery (binomial threshold sanity checks)
+                              # + Phase 2C statistical-significance machinery
+                              # consumers under tests/.
 ]
 
 phase1 = [

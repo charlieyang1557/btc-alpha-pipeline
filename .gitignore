@@ -50,3 +50,11 @@ Thumbs.db
 .idea/
 data/features/
 .Rhistory
+
+# Claude Code per-machine state (sessions, worktrees, plugins, shell snapshots).
+# Caught at Phase 4 Task 5 codex review P2: nested .git references inside
+# .claude/worktrees/ are per-machine artifacts that must not be committed.
+.claude/
+
+# Per-machine logs
+logs/

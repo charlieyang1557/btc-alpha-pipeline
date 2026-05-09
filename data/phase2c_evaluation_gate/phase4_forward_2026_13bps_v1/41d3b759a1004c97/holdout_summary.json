@@ -1,0 +1,39 @@
+{
+  "artifact_schema_version": "phase2c_7_1",
+  "current_git_sha": "d0b8101df61531ff3e055727e492295a1bb0591b",
+  "engine_commit": "eb1c87f",
+  "engine_corrected_lineage": "wf-corrected-v1",
+  "error_message": null,
+  "evaluation_semantics": "single_run_holdout_v1",
+  "gate_pass_per_criterion": {
+    "drawdown_passed": true,
+    "return_passed": true,
+    "sharpe_passed": true,
+    "trades_passed": true
+  },
+  "holdout_metrics": {
+    "max_drawdown": 0.022343451502435163,
+    "sharpe_ratio": 3.299262365874817,
+    "total_return": 0.10962103989882599,
+    "total_trades": 5
+  },
+  "holdout_passed": true,
+  "hypothesis_hash": "41d3b759a1004c97",
+  "lifecycle_state": "holdout_passed",
+  "lineage_check": "passed",
+  "name": "monday_morning_momentum_200",
+  "passing_criteria": {
+    "max_drawdown": 0.25,
+    "min_sharpe": -0.5,
+    "min_total_return": -0.15,
+    "min_total_trades": 5
+  },
+  "position": 197,
+  "regime_key": "evaluation_regimes.forward_2026",
+  "regime_label": "forward_2026",
+  "run_id": "phase4_forward_2026_13bps_v1",
+  "source_batch_id": "phase2c_15_main_fire_combined",
+  "theme": "calendar_effect",
+  "wall_clock_seconds": 0.2904,
+  "wf_test_period_sharpe": 0.075603
+}

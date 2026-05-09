@@ -1,0 +1,2 @@
+hypothesis_hash,position,theme,name,wf_test_period_sharpe,lifecycle_state,holdout_passed,holdout_sharpe,holdout_max_drawdown,holdout_total_return,holdout_total_trades,wall_clock_seconds,error_message
+bc5ea1beab19fcdd,70,calendar_effect,monday_momentum_continuation,-0.233385,holdout_failed,0,-0.891228,0.083321,-0.040349,24,0.3169,

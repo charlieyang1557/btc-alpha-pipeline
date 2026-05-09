@@ -1,0 +1,96 @@
+{
+  "artifact_schema_version": "phase2c_7_1",
+  "audit_only_holdout_passed": 16,
+  "audit_only_total": 24,
+  "by_theme": {
+    "calendar_effect": {
+      "holdout_passed": 11,
+      "total": 22
+    },
+    "mean_reversion": {
+      "holdout_passed": 0,
+      "total": 2
+    },
+    "momentum": {
+      "holdout_passed": 4,
+      "total": 6
+    },
+    "volatility_regime": {
+      "holdout_passed": 1,
+      "total": 2
+    },
+    "volume_divergence": {
+      "holdout_passed": 4,
+      "total": 7
+    }
+  },
+  "counts": {
+    "holdout_error": 0,
+    "holdout_failed": 19,
+    "holdout_passed": 20,
+    "total": 39
+  },
+  "current_git_sha": "d0b8101df61531ff3e055727e492295a1bb0591b",
+  "engine_commit": "eb1c87f",
+  "engine_corrected_lineage": "wf-corrected-v1",
+  "evaluation_semantics": "single_run_holdout_v1",
+  "execution_config_path": "config/execution_phase4_13bps.yaml",
+  "execution_config_sha256": "476541f34b508da901f8f4c574f40745876274e3d29fc62bc1d975752ec3d949",
+  "explicit_candidate_hashes": [
+    "18d92ce5d0b40cc7",
+    "22864f01a49e3452",
+    "2433a38b2f9a7211",
+    "2b1ca44778281d97",
+    "2c5e3cc08d407b73",
+    "2cc19d1b5e2c9024",
+    "34588c948b1ff12b",
+    "35dcfcfbee4cfafc",
+    "38a1bb228f103c26",
+    "3a2559fbeff71f94",
+    "3b013ac903ab047b",
+    "3c3ba9b95d2ea37c",
+    "3d3938aed6376f04",
+    "3ebec90d7be309ab",
+    "406d4f4dfb4d46de",
+    "41d3b759a1004c97",
+    "4a3c8e2fe04d72c1",
+    "4ce6e78ff9cff9b9",
+    "52b04f27b7ee565b",
+    "53e1b5030aefe836",
+    "54ae22768a3f78e9",
+    "5b4d89be0ccb9be1",
+    "5fcf29ab42c5f8b6",
+    "7240602b60cd7271",
+    "7abff29fc2f117a1",
+    "8a2a8f73f71a835e",
+    "8def2951c72f0961",
+    "95d5cfc1c0a9579a",
+    "9c90efe879157a5c",
+    "aa8c55c16db41ea7",
+    "b10f4563366481b3",
+    "b24ca51d477c2e96",
+    "bc5ea1beab19fcdd",
+    "c076cdad4ee7ca42",
+    "cfd24b8b72d6e429",
+    "d04e1b054fe4d69d",
+    "d3fe403c8b1c4130",
+    "dc7d6de5e71772ae",
+    "ec6a8a385c1a3e9a"
+  ],
+  "forward_window_metadata": {
+    "forward_bar_count": 2528,
+    "forward_window_end_utc": "2026-04-16T07:00:00Z",
+    "forward_window_start_utc": "2026-01-01T00:00:00Z",
+    "parquet_data_sha256": "db4ce1d2a2e5e7b556975837260f7aaa29ee4fd5ddc603690d1bc57912aa7035"
+  },
+  "lineage_check": "passed",
+  "primary_universe_holdout_passed": 4,
+  "primary_universe_total": 15,
+  "regime_key": "evaluation_regimes.forward_2026",
+  "regime_label": "forward_2026",
+  "run_finished_utc": "2026-05-09T12:20:55Z",
+  "run_id": "phase4_forward_2026_13bps_v1",
+  "run_started_utc": "2026-05-09T12:20:45Z",
+  "source_batch_id": "phase2c_15_main_fire_combined",
+  "universe": null
+}

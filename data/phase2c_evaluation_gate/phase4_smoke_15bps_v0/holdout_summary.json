@@ -1,0 +1,42 @@
+{
+  "artifact_schema_version": "phase2c_7_1",
+  "audit_only_holdout_passed": 0,
+  "audit_only_total": 1,
+  "by_theme": {
+    "calendar_effect": {
+      "holdout_passed": 0,
+      "total": 1
+    }
+  },
+  "counts": {
+    "holdout_error": 0,
+    "holdout_failed": 1,
+    "holdout_passed": 0,
+    "total": 1
+  },
+  "current_git_sha": "d0b8101df61531ff3e055727e492295a1bb0591b",
+  "engine_commit": "eb1c87f",
+  "engine_corrected_lineage": "wf-corrected-v1",
+  "evaluation_semantics": "single_run_holdout_v1",
+  "execution_config_path": "config/execution_phase4_15bps.yaml",
+  "execution_config_sha256": "bf84cb4aa203b740c161c28d4264e61731c0b7c232d71c383cbdbde1f279b70d",
+  "explicit_candidate_hashes": [
+    "bc5ea1beab19fcdd"
+  ],
+  "forward_window_metadata": {
+    "forward_bar_count": 2528,
+    "forward_window_end_utc": "2026-04-16T07:00:00Z",
+    "forward_window_start_utc": "2026-01-01T00:00:00Z",
+    "parquet_data_sha256": "db4ce1d2a2e5e7b556975837260f7aaa29ee4fd5ddc603690d1bc57912aa7035"
+  },
+  "lineage_check": "passed",
+  "primary_universe_holdout_passed": 0,
+  "primary_universe_total": 0,
+  "regime_key": "evaluation_regimes.forward_2026",
+  "regime_label": "forward_2026",
+  "run_finished_utc": "2026-05-09T11:59:48Z",
+  "run_id": "phase4_smoke_15bps_v0",
+  "run_started_utc": "2026-05-09T11:59:48Z",
+  "source_batch_id": "355a8f9f-2a1f-435d-a1a8-c365b92e185b",
+  "universe": null
+}
