@@ -34,13 +34,23 @@ PARTITIONING_STATS_SCRIPT = (
 
 K = 5
 N_PER_BATCH = 200
-N_TOTAL = K * N_PER_BATCH  # 1000
+N_PER_BATCH_NOMINAL = K * N_PER_BATCH  # 1000
 
 # Per-batch success counts chosen so totals exceed 2.07% Wilson threshold,
 # producing non-trivial contingency for FFH MC + pairwise tests.
-# 5 + 6 + 5 + 6 + 5 = 27 / 1000 = 2.7%
+# 5 + 6 + 5 + 6 + 5 = 27 / TOTAL_VALID = 2.7%
 PER_BATCH_SUCCESS = [5, 6, 5, 6, 5]
 TOTAL_SUCCESS = sum(PER_BATCH_SUCCESS)  # 27
+
+# Per-batch position gaps simulate stage2d rejected_complexity at those
+# positions (no WF row produced; original-position numbering retains gaps).
+# Positions chosen outside the per-batch success range so success counts
+# stay stable. Exercises the synthetic_batch script's non-contiguous
+# source position handling (real main fire saw 197/198/200/198/200 valid
+# from 200 attempted = 7 cumulative gaps).
+PER_BATCH_GAPS = [[50], [], [60, 130], [70], [40, 90, 180]]
+TOTAL_GAPS = sum(len(g) for g in PER_BATCH_GAPS)  # 7
+N_TOTAL = N_PER_BATCH_NOMINAL - TOTAL_GAPS  # 993
 
 WF_CSV_FIELDNAMES = [
     "batch_id", "position", "hypothesis_hash", "name", "theme", "factors_used",
@@ -84,14 +94,25 @@ def _hash_for(batch_idx: int, position: int) -> str:
 
 
 def _make_wf_artifact(
-    wf_root: Path, batch_id: str, batch_idx: int, success_count: int
+    wf_root: Path, batch_id: str, batch_idx: int,
+    success_count: int, gaps: list[int],
 ) -> None:
-    """Author walk_forward_results.csv + walk_forward_summary.json for one batch."""
+    """Author walk_forward_results.csv + walk_forward_summary.json for one batch.
+
+    Positions in CSV span 1..N_PER_BATCH but exclude `gaps` (simulating
+    stage2d rejected_complexity at those positions). Result: CSV has
+    N_PER_BATCH - len(gaps) rows with non-contiguous original positions.
+    """
     batch_dir = wf_root / f"batch_{batch_id}_corrected"
     batch_dir.mkdir(parents=True, exist_ok=True)
 
+    gap_set = set(gaps)
+    valid_count = N_PER_BATCH - len(gap_set)
+
     rows: list[dict[str, str]] = []
     for pos in range(1, N_PER_BATCH + 1):
+        if pos in gap_set:
+            continue
         sharpe = "1.0" if pos <= success_count else "-0.1"
         rows.append({
             "batch_id": batch_id,
@@ -120,10 +141,10 @@ def _make_wf_artifact(
 
     summary = {
         "batch_id": batch_id,
-        "compile_status_counts": {"ok": N_PER_BATCH},
-        "runtime_status_counts": {"ok": N_PER_BATCH},
-        "total_candidates": N_PER_BATCH,
-        "total_elapsed_seconds": 200.0,
+        "compile_status_counts": {"ok": valid_count},
+        "runtime_status_counts": {"ok": valid_count},
+        "total_candidates": valid_count,
+        "total_elapsed_seconds": float(valid_count),
         "mean_elapsed_per_candidate_seconds": 1.0,
         "run_started_utc": f"2026-05-08T00:0{batch_idx}:00Z",
         "run_finished_utc": f"2026-05-08T00:0{batch_idx}:30Z",
@@ -174,7 +195,10 @@ def _make_compare_matrix(compare_dir: Path) -> None:
     compare_dir.mkdir(parents=True, exist_ok=True)
     rows: list[dict[str, str]] = []
     for batch_idx, success_count in enumerate(PER_BATCH_SUCCESS):
+        gap_set = set(PER_BATCH_GAPS[batch_idx])
         for pos in range(1, N_PER_BATCH + 1):
+            if pos in gap_set:
+                continue  # gap positions absent from WF -> absent from comparison_matrix
             is_success = pos <= success_count
             pass_count = 4 if is_success else 1
             row: dict[str, str] = {
@@ -229,10 +253,10 @@ def k5_fixture(tmp_path: Path) -> dict[str, object]:
     batch_ids = [
         f"k5b{i:02d}-mock-aaaa-bbbb-cccccccccccc" for i in range(K)
     ]
-    for batch_idx, (batch_id, success_count) in enumerate(
-        zip(batch_ids, PER_BATCH_SUCCESS)
+    for batch_idx, (batch_id, success_count, gaps) in enumerate(
+        zip(batch_ids, PER_BATCH_SUCCESS, PER_BATCH_GAPS)
     ):
-        _make_wf_artifact(wf_root, batch_id, batch_idx, success_count)
+        _make_wf_artifact(wf_root, batch_id, batch_idx, success_count, gaps)
         _make_raw_payloads(raw_root, batch_id, batch_idx)
 
     return {
@@ -282,14 +306,18 @@ def test_synthetic_batch_script_at_k5(k5_fixture: dict[str, object]) -> None:
 
     positions = [int(r["position"]) for r in merged_rows]
     assert positions == list(range(1, N_TOTAL + 1)), (
-        "Position contiguity 1..1000 violated post-merge"
+        f"Post-merge position contiguity 1..{N_TOTAL} violated"
     )
 
     per_batch = {bid: 0 for bid in batch_ids}
     for r in merged_rows:
         per_batch[r["batch_id"]] += 1
-    assert all(c == N_PER_BATCH for c in per_batch.values()), (
-        f"Per-batch row counts: {per_batch}; expected {N_PER_BATCH} each"
+    expected_per_batch = {
+        bid: N_PER_BATCH - len(PER_BATCH_GAPS[idx])
+        for idx, bid in enumerate(batch_ids)
+    }
+    assert per_batch == expected_per_batch, (
+        f"Per-batch row counts: {per_batch}; expected {expected_per_batch}"
     )
 
     with open(synth_wf / "walk_forward_summary.json") as f:
@@ -360,9 +388,12 @@ def test_partitioning_stats_script_at_k5(k5_fixture: dict[str, object]) -> None:
     assert partition["totals"]["valid_N"] == N_TOTAL
 
     # Per-batch counts match expected per-batch successes
-    for batch_id, expected_success in zip(batch_ids, PER_BATCH_SUCCESS):
+    for batch_idx, (batch_id, expected_success) in enumerate(
+        zip(batch_ids, PER_BATCH_SUCCESS)
+    ):
         per = partition["per_batch_counts"][batch_id]
-        assert per["valid_N"] == N_PER_BATCH
+        expected_valid = N_PER_BATCH - len(PER_BATCH_GAPS[batch_idx])
+        assert per["valid_N"] == expected_valid
         assert per["cohort_a_unfiltered"] == expected_success
 
     # K x 2 contingency has 5 rows

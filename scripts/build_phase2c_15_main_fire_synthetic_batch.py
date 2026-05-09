@@ -133,14 +133,22 @@ def main() -> int:
     print(f"[main-fire setup] raw_payloads output dir: {synthetic_raw_dir}")
 
     # --- Step 1: Concatenate WF csvs with position renumbering ---
-    # Per Codex C5: validate CSV header equality across sources; per-source
-    # position contiguity 1..N; batch_id preservation per row.
-    # Per Codex C1: track per-source CSV positions for downstream symlink
-    # construction to avoid attempt-file-vs-CSV-row drift.
+    # Per Codex C5: validate CSV header equality across sources; per-row
+    # batch_id preservation.
+    # Per Codex C1: track explicit (orig, new) position mapping per source
+    # for downstream symlink construction (avoids attempt-file-vs-CSV-row
+    # drift via offset arithmetic; safe under non-contiguous source positions
+    # introduced by rejected_complexity gaps at stage2d).
+    #
+    # Source CSV positions are sorted ascending and unique within source but
+    # MAY have gaps (e.g., positions [1, 2, 4, 5, ..., 200] when position 3
+    # was rejected_complexity at stage2d and absent from WF results).
+    # Per-source contiguity 1..N is NOT required; gaps are valid input.
+    # New positions are global sequential 1..N (contiguous after merge).
     all_rows: list[dict[str, str]] = []
     csv_header: list[str] | None = None
-    position_offset = 0
-    src_csv_positions: dict[str, list[int]] = {}
+    new_position_counter = 0
+    src_orig_to_new: dict[str, list[tuple[int, int]]] = {}
 
     for src_batch_id in source_batch_ids:
         src_csv = (
@@ -163,38 +171,51 @@ def main() -> int:
             rows = list(reader)
 
         n_src = len(rows)
+        # Validate per-source positions are sorted ascending and unique.
+        # Gaps (e.g., from rejected_complexity at stage2d) are permitted.
         src_positions = [int(r["position"]) for r in rows]
-        expected_positions = list(range(1, n_src + 1))
-        if src_positions != expected_positions:
+        if src_positions != sorted(src_positions):
             raise ValueError(
-                f"Per-source position contiguity violated at "
-                f"batch_{src_batch_id}: expected 1..{n_src}, got "
-                f"first={src_positions[:5]}, last={src_positions[-5:]}."
+                f"Per-source positions not sorted ascending at "
+                f"batch_{src_batch_id}: first={src_positions[:5]}, "
+                f"last={src_positions[-5:]}."
+            )
+        if len(set(src_positions)) != len(src_positions):
+            raise ValueError(
+                f"Per-source positions contain duplicates at "
+                f"batch_{src_batch_id}: {n_src} rows, "
+                f"{len(set(src_positions))} unique positions."
             )
 
-        new_positions: list[int] = []
+        orig_to_new_for_src: list[tuple[int, int]] = []
         for row in rows:
             original_position = int(row["position"])
-            new_position = original_position + position_offset
+            new_position_counter += 1
+            new_position = new_position_counter
             row["position"] = str(new_position)
-            new_positions.append(new_position)
+            orig_to_new_for_src.append((original_position, new_position))
             if row["batch_id"] != src_batch_id:
                 raise ValueError(
-                    f"batch_id drift at row position={original_position} in "
-                    f"batch_{src_batch_id}: row carries "
+                    f"batch_id drift at row orig_position={original_position} "
+                    f"in batch_{src_batch_id}: row carries "
                     f"batch_id={row['batch_id']!r}, expected "
                     f"batch_id={src_batch_id!r}."
                 )
             all_rows.append(row)
 
-        src_csv_positions[src_batch_id] = new_positions
+        src_orig_to_new[src_batch_id] = orig_to_new_for_src
 
+        first_new = orig_to_new_for_src[0][1]
+        last_new = orig_to_new_for_src[-1][1]
+        first_orig = orig_to_new_for_src[0][0]
+        last_orig = orig_to_new_for_src[-1][0]
+        n_gaps = (last_orig - first_orig + 1) - n_src
+        gap_note = f" ({n_gaps} gaps in source positions)" if n_gaps > 0 else ""
         print(
             f"[main-fire setup] Concatenated {n_src} rows from "
-            f"batch_{src_batch_id[:8]}... (positions "
-            f"{position_offset + 1}-{position_offset + n_src})"
+            f"batch_{src_batch_id[:8]}... orig=[{first_orig}..{last_orig}]"
+            f"{gap_note} -> new=[{first_new}..{last_new}]"
         )
-        position_offset += n_src
 
     # Per Codex C3: assert global uniqueness of non-empty hypothesis_hash.
     # At K=5 × N=200 = 1000 universe, collision probability is higher than
@@ -243,7 +264,7 @@ def main() -> int:
                 f"Source summary batch_id mismatch: expected "
                 f"{src_batch_id!r}, got {summary.get('batch_id')!r}."
             )
-        n_csv_rows_for_src = len(src_csv_positions[src_batch_id])
+        n_csv_rows_for_src = len(src_orig_to_new[src_batch_id])
         if summary.get("total_candidates") != n_csv_rows_for_src:
             raise ValueError(
                 f"Source summary total_candidates mismatch at "
@@ -378,9 +399,11 @@ def main() -> int:
                 continue
             response_by_position[orig_position] = src_file
 
-        new_positions_for_src = src_csv_positions[src_batch_id]
-        src_offset = new_positions_for_src[0] - 1
-        original_positions = [p - src_offset for p in new_positions_for_src]
+        # Use explicit (orig, new) mapping captured at Step 1; safe under
+        # non-contiguous source positions (offset arithmetic would silently
+        # mis-map under rejected_complexity gaps).
+        orig_to_new_for_src = src_orig_to_new[src_batch_id]
+        original_positions = [orig for orig, _ in orig_to_new_for_src]
 
         missing = [p for p in original_positions if p not in response_by_position]
         if missing:
@@ -391,7 +414,8 @@ def main() -> int:
             )
 
         n_linked = 0
-        for orig_pos, new_pos in zip(original_positions, new_positions_for_src):
+        new_positions_for_src = [new for _, new in orig_to_new_for_src]
+        for orig_pos, new_pos in orig_to_new_for_src:
             src_file = response_by_position[orig_pos]
             new_filename = f"attempt_{new_pos:04d}_response.txt"
             symlink_path = synthetic_raw_dir / new_filename
@@ -418,7 +442,7 @@ def main() -> int:
     # survive python -O. K-agnostic on counts.
     print()
     print("[main-fire setup] === FORENSIC VERIFICATION ===")
-    expected_total = position_offset
+    expected_total = new_position_counter
 
     with open(synthetic_csv) as f:
         synth_rows = list(csv.DictReader(f))
@@ -444,7 +468,7 @@ def main() -> int:
         if r["batch_id"] in per_source_counts:
             per_source_counts[r["batch_id"]] += 1
     expected_per_source = {
-        b: len(src_csv_positions[b]) for b in source_batch_ids
+        b: len(src_orig_to_new[b]) for b in source_batch_ids
     }
     if per_source_counts != expected_per_source:
         raise RuntimeError(
