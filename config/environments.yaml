@@ -114,6 +114,21 @@ evaluation_regimes:
     macro_characterization: "parabolic_bull"
     arc_of_origin: "PHASE2C_8.1"
 
+  # 2026 forward-test window — fully out-of-sample post-test regime per
+  # PHASE4_PLAN §1.2 (sealed at commit 432b2bd). Single-contiguous
+  # evaluation [2026-01-01, T_end] of the 39 PHASE2C_15 cohort_a
+  # candidates. T_end is null at PLAN cycle and captured at fire-time
+  # via forward_window_metadata block embedded in holdout_summary.json
+  # (pre-fire data refresh permitted; post-fire frozen). NOT a
+  # train-overlap regime — fully-out-of-sample register parallel to
+  # bear_2022 / validation_2024 (schema discriminator phase2c_7_1).
+  forward_2026:
+    start: "2026-01-01"
+    end: null  # captured at fire-time per PHASE4_PLAN §1.2
+    label: "forward_2026"
+    macro_characterization: "post_test_forward"
+    arc_of_origin: "PHASE4"
+
 # ============================================================
 # WALK-FORWARD CONFIGURATION (Phase 1+)
 # ============================================================

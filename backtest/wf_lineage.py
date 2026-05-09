@@ -103,6 +103,7 @@ REGIME_KEY_LABEL_MAPPING: dict[str, str] = {
     "v2.validation": "validation_2024",
     "evaluation_regimes.eval_2020_v1": "eval_2020_v1",
     "evaluation_regimes.eval_2021_v1": "eval_2021_v1",
+    "evaluation_regimes.forward_2026": "forward_2026",  # PHASE4_PLAN §1.2
 }
 
 # regime_key -> producer-stamped schema_version mapping (PHASE2C_8.1
@@ -121,6 +122,7 @@ REGIME_KEY_TO_SCHEMA_VERSION_MAPPING: dict[str, str] = {
     "v2.validation": ARTIFACT_SCHEMA_VERSION_PHASE2C_7_1,
     "evaluation_regimes.eval_2020_v1": ARTIFACT_SCHEMA_VERSION_PHASE2C_8_1,
     "evaluation_regimes.eval_2021_v1": ARTIFACT_SCHEMA_VERSION_PHASE2C_8_1,
+    "evaluation_regimes.forward_2026": ARTIFACT_SCHEMA_VERSION_PHASE2C_7_1,  # PHASE4_PLAN §1.2 — fully-out-of-sample
 }
 
 

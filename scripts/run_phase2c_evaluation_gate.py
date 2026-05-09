@@ -652,14 +652,16 @@ def _build_argparser() -> argparse.ArgumentParser:
         default="v2.regime_holdout",
         help=(
             "Regime to evaluate against (PHASE2C_7.1 §6; PHASE2C_8.1 §6 "
-            "extended). Default: v2.regime_holdout (2022 bear regime, "
-            "PHASE2C_6 backward-compat). Use v2.validation for the "
-            "PHASE2C_7.1 2024 arc; evaluation_regimes.eval_2020_v1 or "
-            "evaluation_regimes.eval_2021_v1 for the PHASE2C_8.1 novel "
-            "regimes. --regime is the canonical PHASE2C_8.1 flag name; "
-            "--regime-key is preserved as an alias for backward-compat. "
-            "Must be a key in REGIME_KEY_LABEL_MAPPING; unknown values "
-            "are rejected at startup before any backtest spend."
+            "extended; PHASE4 forward-test §1.2). Default: v2.regime_holdout "
+            "(2022 bear regime, PHASE2C_6 backward-compat). Use v2.validation "
+            "for the PHASE2C_7.1 2024 arc; evaluation_regimes.eval_2020_v1 "
+            "or evaluation_regimes.eval_2021_v1 for the PHASE2C_8.1 novel "
+            "regimes; evaluation_regimes.forward_2026 for the PHASE4 forward-"
+            "test [2026-01-01, T_end] of PHASE2C_15 cohort_a candidates. "
+            "--regime is the canonical PHASE2C_8.1 flag name; --regime-key "
+            "is preserved as an alias for backward-compat. Must be a key in "
+            "REGIME_KEY_LABEL_MAPPING; unknown values are rejected at "
+            "startup before any backtest spend."
         ),
     )
     parser.add_argument(
