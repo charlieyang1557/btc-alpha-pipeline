@@ -6783,3 +6783,53 @@ register-class match register precedent at PHASE2C_13 implementation arc
 register-class binding.
 
 ---
+
+## §31 PHASE2C_8.1→15 arc lessons (light append)
+
+Six patterns from the PHASE2C_8.1 → PHASE2C_15 arc that demonstrably
+changed outcomes — captured here, not formalized into a tier register.
+
+**1. Convergence-after-divergence as correction mechanism.** ChatGPT,
+Claude advisor, and Claude Code each produced corrections the others
+missed by construction; PHASE2C_15 closeout caught status-line precision,
+scope-claim narrowing, and "indistinguishable" → "consistent with"
+epistemic precision this way. Application: when reviewers diverge, route
+per-finding rather than collapse to one reviewer viewpoint.
+
+**2. Smoke vs measurement register distinction.** Step 4 smoke (K=2 ×
+N=50) was rehearsal; main fire (K=5 × N=200) was measurement; these
+registers do not interchange and pre-registered thresholds bind only
+measurement. Application: never let smoke results pre-bias main-fire
+interpretation.
+
+**3. Empirical-before-prose discipline.** SEAL pre-fire byte-level
+verification of anchors (V#7 catch precedent) prevents arcs from sealing
+on remembered structure; PHASE2C_15 Step 3 HARD STOP on PHASE2C_12
+anchor counts validated this again. Application: when a number or
+filename appears in prose, verify against the artifact before sealing.
+
+**4. Report-order discipline (effect size before binary pass/fail).**
+Reporting Wilson CI [2.89%, 5.33%] alongside the 3.93% point estimate
+clarified that the headline is a confidence-interval claim, not a
+threshold-crossing claim. Application: binary verdicts come after the
+magnitude they're built on, not before.
+
+**5. Population-rate vs strategy-level alpha distinction.** A 3.93%
+AND-gate replication is a population-level rate finding, not a strategy-
+level alpha claim; conflating them produces false confidence about live-
+trading readiness. Application: name which register a rate belongs to
+before drawing a forward conclusion from it.
+
+**6. Trim governance language where it no longer adds safety.**
+PHASE2C_15 closeout adopted "consistent with" over "indistinguishable
+from" because the latter overstates what a high p-value licenses
+(failure to reject ≠ established equivalence). Application: when a phrase
+has hardened into ritual, check whether it still earns its keep or
+whether plain language is now safer.
+
+**Closing observation.** Lighter-touch worked at PHASE2C_15 closeout,
+and this section is itself an attempt to apply that lesson to its own
+codification. If a future cycle visibly suffers without §20.6-class
+promotion of these patterns, that is the signal to revisit.
+
+---
