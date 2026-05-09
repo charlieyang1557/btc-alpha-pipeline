@@ -336,6 +336,7 @@ def run_backtest(
     cash: float = 10_000.0,
     write_registry: bool = True,
     db_path: Path | None = None,
+    execution_config_path: Path | None = None,
 ) -> BacktestResult:
     """Execute a single-run backtest.
 
@@ -379,7 +380,15 @@ def run_backtest(
     feed = ParquetFeed.from_parquet(**feed_kwargs)
 
     # 2. Configure Cerebro
-    config = load_execution_config()
+    # PHASE4 cost-config override: if execution_config_path is provided
+    # (Phase 4 forward-test invokes with config/execution_phase4_*bps.yaml),
+    # load that override instead of the default config/execution.yaml.
+    # Default None preserves backward compat for all non-Phase-4 callers.
+    config = (
+        load_execution_config(execution_config_path)
+        if execution_config_path is not None
+        else load_execution_config()
+    )
     cerebro = bt.Cerebro()
     cerebro.adddata(feed)
     cost_model = configure_cerebro(cerebro, config=config, cash=cash)
@@ -1471,6 +1480,7 @@ def run_regime_holdout(
     env_config: dict[str, Any] | None = None,
     registry: "Any" = None,
     manifest_dir: Path | None = None,
+    execution_config_path: Path | None = None,
 ) -> RegimeHoldoutResult:
     """Run the 2022 regime holdout for a single hypothesis.
 
@@ -1610,6 +1620,7 @@ def run_regime_holdout(
         parquet_path=parquet_path,
         cash=cash,
         write_registry=False,
+        execution_config_path=execution_config_path,
     )
 
     passed = _evaluate_regime_holdout_pass(result.metrics, passing_criteria)
@@ -1620,7 +1631,17 @@ def run_regime_holdout(
     holdout_run_id = result.run_id
 
     from backtest.execution_model import ConstantSlippage
-    cost_model = ConstantSlippage.from_config(load_execution_config())
+    # PHASE4 cost-config override: registry-write cost_model must reflect
+    # the same config that run_backtest used for the actual fire (line 1605).
+    # Otherwise registry metadata would silently disagree with the realized
+    # cost model — register-class-distinct from the artifact register where
+    # holdout_summary.json embeds the override path + sha256.
+    _exec_cfg = (
+        load_execution_config(execution_config_path)
+        if execution_config_path is not None
+        else load_execution_config()
+    )
+    cost_model = ConstantSlippage.from_config(_exec_cfg)
 
     notes_payload = {
         "label": block.get("label"),

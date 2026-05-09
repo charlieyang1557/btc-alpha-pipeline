@@ -1,0 +1,32 @@
+# execution_phase4_17bps.yaml — Phase 4 sensitivity high cost
+# Per PHASE4_PLAN §1.4 (sealed at 432b2bd): sensitivity bound (slippage +2 from base).
+# Total per-side: 10bps fee + 7bps slippage = 17bps.
+# Auxiliary descriptive only — NOT the Phase 4 §1.5 success criterion basis.
+# Sealed at: Phase 4 implementation arc Task 3 (commit pending)
+# Last reviewed: 2026-05-09
+
+execution:
+  signal_timing: "bar_close"
+  fill_timing: "next_bar_open"
+  stop_limit_intrabar: "adverse_first"
+
+cost_model:
+  name: "phase4_sensitivity_high_17bps"
+  maker_fee_bps: 2.0
+  taker_fee_bps: 10.0
+  default_fee_bps: 10.0
+  slippage_bps: 7.0
+
+zero_volume:
+  treatment: "flag_only"
+
+position:
+  max_position_pct: 1.0
+  default_position_pct: 1.0
+  max_leverage: 1.0
+
+timezone:
+  canonical: "UTC"
+
+timeframe:
+  primary: "1h"

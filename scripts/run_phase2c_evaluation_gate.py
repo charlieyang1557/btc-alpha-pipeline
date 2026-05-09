@@ -365,12 +365,18 @@ def _evaluate_one_candidate(
     run_id: str,
     output_dir: Path,
     regime_key: str = "v2.regime_holdout",
+    execution_config_path: Path | None = None,
 ) -> dict[str, Any]:
     """Evaluate a single candidate through the regime holdout AND-gate.
 
     Resilient: any exception is caught at the candidate boundary, recorded
     as lifecycle_state='holdout_error' with a full traceback in the
     error_message field. Continues to the next candidate.
+
+    PHASE4 cost-config override: execution_config_path (when provided)
+    threads through to run_regime_holdout -> run_backtest's
+    load_execution_config(path) call. Default None preserves backward
+    compat for all non-Phase-4 callers.
     """
     started = datetime.now(timezone.utc)
     try:
@@ -382,6 +388,7 @@ def _evaluate_one_candidate(
             batch_id=source_batch_id,
             parent_run_id=f"phase2c_eval_gate_{run_id}",
             regime_key=regime_key,
+            execution_config_path=execution_config_path,
         )
         lifecycle_state = (
             "holdout_passed" if holdout_result.regime_holdout_passed
@@ -686,6 +693,20 @@ def _build_argparser() -> argparse.ArgumentParser:
             " directory. Without --force, the script refuses to overwrite."
         ),
     )
+    parser.add_argument(
+        "--execution-config",
+        type=Path,
+        default=None,
+        help=(
+            "Path to alternate execution.yaml (PHASE4 cost parameterization). "
+            "Default: config/execution.yaml. PHASE4 forward-test uses one of: "
+            "config/execution_phase4_07bps.yaml | _13bps | _15bps | _17bps. "
+            "When provided, the runner threads the path through "
+            "run_regime_holdout to override the cost model + logs "
+            "execution_config_path + execution_config_sha256 into the "
+            "aggregate holdout_summary.json for self-auditing artifacts."
+        ),
+    )
     return parser
 
 
@@ -811,6 +832,7 @@ def main() -> int:
             run_id=run_id,
             output_dir=run_dir,
             regime_key=args.regime_key,
+            execution_config_path=args.execution_config,
         )
         summaries.append(s)
 
@@ -831,6 +853,32 @@ def main() -> int:
         run_finished_utc=run_finished_utc,
         regime_key=args.regime_key,
     )
+
+    # PHASE4 self-auditing artifact metadata: log the execution config path
+    # + sha256 so artifacts are self-auditing (anyone reading the summary
+    # can verify which cost config produced this run without inferring
+    # from run-id naming). Per Q2 refinement at Phase 4 implementation
+    # arc Task 3 (sealed PHASE4_PLAN.md §1.4 cost configurations).
+    import hashlib
+    _exec_cfg_path = (
+        args.execution_config
+        if args.execution_config is not None
+        else PROJECT_ROOT / "config" / "execution.yaml"
+    )
+    _exec_cfg_path_resolved = _exec_cfg_path.resolve()
+    _exec_cfg_bytes = _exec_cfg_path_resolved.read_bytes()
+    try:
+        _exec_cfg_path_relative = str(
+            _exec_cfg_path_resolved.relative_to(PROJECT_ROOT)
+        )
+    except ValueError:
+        # Path outside project root — keep absolute for traceability.
+        _exec_cfg_path_relative = str(_exec_cfg_path_resolved)
+    aggregate["execution_config_path"] = _exec_cfg_path_relative
+    aggregate["execution_config_sha256"] = hashlib.sha256(
+        _exec_cfg_bytes
+    ).hexdigest()
+
     _write_aggregate_summary(aggregate, run_dir / "holdout_summary.json")
 
     # Final stdout summary
