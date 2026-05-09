@@ -113,6 +113,125 @@ DEFAULT_RAW_PAYLOADS_DIR = PROJECT_ROOT / "raw_payloads"
 
 PRIMARY_THRESHOLD = 0.5  # corrected wf_test_period_sharpe > this = primary winner
 
+# PHASE4 forward-test constants (PHASE4_PLAN §1.2 sealed at 432b2bd).
+PHASE4_FORWARD_2026_REGIME_KEY = "evaluation_regimes.forward_2026"
+PHASE4_FORWARD_WINDOW_START_UTC = "2026-01-01T00:00:00Z"
+PHASE4_FORWARD_WINDOW_START_DATE = "2026-01-01"  # date-only form for date.fromisoformat
+DEFAULT_PARQUET_PATH = PROJECT_ROOT / "data" / "raw" / "btcusdt_1h.parquet"
+
+
+def _capture_phase4_forward_window_metadata(
+    parquet_path: Path = DEFAULT_PARQUET_PATH,
+) -> dict[str, Any]:
+    """Capture PHASE4 forward-window metadata at fire-time.
+
+    Per PHASE4_PLAN §1.2: pre-fire data refresh permitted (extends
+    T_end forward); post-fire freezes T_end at fire register-event
+    boundary. This helper reads the parquet ONCE at fire-time and
+    returns the immutable metadata block embedded into the run's
+    holdout_summary.json. The same captured T_end is also injected
+    into the env_config override per R2 (the engine consumer at
+    backtest/engine.py:1564 calls date.fromisoformat(block["end"])
+    which crashes on None — this fix produces a YYYY-MM-DD string).
+
+    Returns dict with:
+        forward_window_start_utc: PLAN-locked "2026-01-01T00:00:00Z"
+        forward_window_end_utc: ISO timestamp of last forward bar
+            (e.g., "2026-04-16T07:00:00Z")
+        forward_bar_count: count of bars in [2026-01-01, T_end]
+        parquet_data_sha256: SHA256 of parquet file content (locks
+            input data state for reproducibility)
+        forward_end_date_iso: date-only form for engine consumer
+            (e.g., "2026-04-16"); engine widens to <date>T23:00:00Z
+            internally per backtest/engine.py:1571-1574
+    """
+    import hashlib
+
+    import pandas as pd
+    import pyarrow.parquet as pq
+
+    if not parquet_path.exists():
+        raise FileNotFoundError(
+            f"PHASE4 forward-window capture requires parquet at "
+            f"{parquet_path}; not found. Run "
+            f"`python -m ingestion.incremental_update` first."
+        )
+
+    df = pq.read_table(parquet_path).to_pandas()
+    forward = df[
+        df["open_time_utc"]
+        >= pd.Timestamp(PHASE4_FORWARD_WINDOW_START_UTC, tz="UTC")
+    ]
+    if forward.empty:
+        raise ValueError(
+            f"No forward bars at {parquet_path} after "
+            f"{PHASE4_FORWARD_WINDOW_START_UTC}; "
+            f"parquet must contain data >= 2026-01-01 UTC for "
+            f"PHASE4 forward-test. Run incremental_update."
+        )
+
+    last_bar_ts = forward["open_time_utc"].max()
+    parquet_sha256 = hashlib.sha256(parquet_path.read_bytes()).hexdigest()
+
+    return {
+        "forward_window_start_utc": PHASE4_FORWARD_WINDOW_START_UTC,
+        "forward_window_end_utc": last_bar_ts.isoformat().replace(
+            "+00:00", "Z"
+        ),
+        "forward_bar_count": int(len(forward)),
+        "parquet_data_sha256": parquet_sha256,
+        "forward_end_date_iso": str(last_bar_ts.date()),
+    }
+
+
+def _build_phase4_env_config_override(
+    forward_window_metadata: dict[str, Any],
+) -> dict[str, Any]:
+    """Build env_config override per R2 (PHASE4 implementation arc Task 4
+    pre-fire fix for null-end consumer crash).
+
+    The runner provides this override to run_regime_holdout(env_config=...)
+    so the engine sees forward_2026.end as a concrete YYYY-MM-DD date
+    string instead of YAML null. Engine consumer at
+    backtest/engine.py:1564 calls date.fromisoformat(block["end"])
+    which would crash on None; this fix injects the captured T_end
+    date pre-fire so the consumer receives a valid string.
+
+    Per advisor R2 lean: scope Phase-4-specific logic to runner;
+    leverage existing env_config override API at engine.py:1471
+    (consumer-side override pattern already supported); no engine
+    code change needed.
+    """
+    import yaml
+
+    env_config_path = PROJECT_ROOT / "config" / "environments.yaml"
+    env_config = yaml.safe_load(env_config_path.read_text())
+
+    # Defensive verify — environments.yaml must have forward_2026 block
+    # with end:null at this register (Task 2 SEAL invariant).
+    er = env_config.get("evaluation_regimes", {})
+    fwd = er.get("forward_2026")
+    if fwd is None:
+        raise RuntimeError(
+            "environments.yaml does NOT have evaluation_regimes.forward_2026 "
+            "block. PHASE4 forward-test requires Task 2 SEAL (commit a4bd82a "
+            "or descendant). Cannot proceed with R2 env_config override."
+        )
+    if fwd.get("end") is not None:
+        raise RuntimeError(
+            f"environments.yaml has evaluation_regimes.forward_2026.end="
+            f"{fwd.get('end')!r} (expected null per PHASE4_PLAN §1.2 + "
+            f"Task 2 SEAL). T_end is captured at fire-time, not config-time. "
+            f"Did someone write a date into the YAML file? That violates "
+            f"the immutable-imported-artifact invariant."
+        )
+
+    # Inject captured T_end as date-only string (engine consumer expects YYYY-MM-DD)
+    env_config["evaluation_regimes"]["forward_2026"]["end"] = (
+        forward_window_metadata["forward_end_date_iso"]
+    )
+    return env_config
+
 # Markdown fence regex matching scripts/run_phase2c_batch_walkforward.py
 _FENCE_RE = re.compile(
     r"```(?:\s*json)?\s*(.*?)\s*```",
@@ -366,6 +485,7 @@ def _evaluate_one_candidate(
     output_dir: Path,
     regime_key: str = "v2.regime_holdout",
     execution_config_path: Path | None = None,
+    env_config_override: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Evaluate a single candidate through the regime holdout AND-gate.
 
@@ -377,6 +497,12 @@ def _evaluate_one_candidate(
     threads through to run_regime_holdout -> run_backtest's
     load_execution_config(path) call. Default None preserves backward
     compat for all non-Phase-4 callers.
+
+    PHASE4 env_config override (R2): env_config_override (when provided)
+    is the runner's pre-built env_config dict with forward_2026.end
+    injected at fire-time. Threads through to run_regime_holdout(
+    env_config=...) bypassing the default load_environments_config()
+    call. Default None preserves backward compat for non-Phase-4 callers.
     """
     started = datetime.now(timezone.utc)
     try:
@@ -389,6 +515,7 @@ def _evaluate_one_candidate(
             parent_run_id=f"phase2c_eval_gate_{run_id}",
             regime_key=regime_key,
             execution_config_path=execution_config_path,
+            env_config=env_config_override,
         )
         lifecycle_state = (
             "holdout_passed" if holdout_result.regime_holdout_passed
@@ -819,6 +946,32 @@ def main() -> int:
     run_dir.mkdir(parents=True, exist_ok=True)
     run_started_utc = _utc_now_iso()
 
+    # PHASE4 R2: capture forward_window_metadata + build env_config override
+    # at fire-time when regime is forward_2026. Done ONCE before iterating
+    # candidates so the same captured T_end applies to all candidates in
+    # this run. Per PHASE4_PLAN §1.2 + Task 2 SEAL invariant + advisor R2
+    # adjudication 2026-05-09 (runner-side override; no engine code change).
+    forward_window_metadata: dict[str, Any] | None = None
+    env_config_override: dict[str, Any] | None = None
+    if args.regime_key == PHASE4_FORWARD_2026_REGIME_KEY:
+        forward_window_metadata = _capture_phase4_forward_window_metadata()
+        env_config_override = _build_phase4_env_config_override(
+            forward_window_metadata
+        )
+        logger.info(
+            "[Phase 4] forward_window_metadata captured: "
+            "start=%s end=%s bar_count=%d parquet_sha256=%s...",
+            forward_window_metadata["forward_window_start_utc"],
+            forward_window_metadata["forward_window_end_utc"],
+            forward_window_metadata["forward_bar_count"],
+            forward_window_metadata["parquet_data_sha256"][:12],
+        )
+        logger.info(
+            "[Phase 4] env_config override: "
+            "evaluation_regimes.forward_2026.end injected as %r",
+            forward_window_metadata["forward_end_date_iso"],
+        )
+
     summaries: list[dict[str, Any]] = []
     for i, candidate in enumerate(selected, start=1):
         logger.info(
@@ -833,6 +986,7 @@ def main() -> int:
             output_dir=run_dir,
             regime_key=args.regime_key,
             execution_config_path=args.execution_config,
+            env_config_override=env_config_override,
         )
         summaries.append(s)
 
@@ -878,6 +1032,23 @@ def main() -> int:
     aggregate["execution_config_sha256"] = hashlib.sha256(
         _exec_cfg_bytes
     ).hexdigest()
+
+    # PHASE4 forward_window_metadata block (per Q4 refinement at Task 3
+    # planning + advisor R2 implementation 2026-05-09). Embed the
+    # fire-time captured T_end + parquet sha256 + bar count so the
+    # artifact is self-auditing without inferring from run-id naming.
+    # Only emitted for forward_2026 regime; absent for all other regimes
+    # (preserves backward compat for PHASE2C_6/7.1/8.1/15 artifacts).
+    # Cross-artifact consistency tests at Task 4 Step 7 verify same
+    # window/bars/parquet hash across the 4 cost-run artifacts.
+    if forward_window_metadata is not None:
+        # Strip the date-only convenience field; that's a runner-internal
+        # helper for env_config injection, not artifact metadata.
+        artifact_fwm = {
+            k: v for k, v in forward_window_metadata.items()
+            if k != "forward_end_date_iso"
+        }
+        aggregate["forward_window_metadata"] = artifact_fwm
 
     _write_aggregate_summary(aggregate, run_dir / "holdout_summary.json")
 
