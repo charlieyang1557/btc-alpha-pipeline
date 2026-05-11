@@ -6,7 +6,7 @@
 
 **Maintained by:** Claude (advisor role) with Charlie's approval. New entries are inserted only after explicit discussion and scope fit.
 
-**Last updated:** 2026-04-22 (added entries from Article on dual-factor mining + Articles on minimum information entropy + Kakushadze 2015 "101 Formulaic Alphas")
+**Last updated:** 2026-05-11 (added §6.2 Kronos as OPEN QUESTION pending pretraining cutoff + transferability evidence)
 
 ---
 
@@ -410,6 +410,13 @@ Items discussed but not yet placed. These are either waiting for context or genu
 ### 6.1 Information-theoretic measures — pending future article(s)
 - **Status:** Flagged 2026-04-22. The minimum-entropy articles (parts 1-3) used "information entropy" as rhetoric, not as actual entropy computation. Several legitimate information-theoretic techniques exist for quant — Shannon entropy of return distribution as regime feature, mutual information for non-linear dependence detection, maximum-entropy distributions for tail modeling under constraints, transfer entropy as non-linear Granger-causality alternative.
 - **Why open:** Charlie indicated more entropy-related articles are coming. Evaluation deferred until specific concrete techniques surface. If future article presents one of the four directions above with concrete implementation, it will graduate to APPLICABLE / DEFER / PRINCIPLE-ONLY based on phase fit. If future articles continue using "entropy" as loose rhetoric, will be folded into existing rejection (§5.6) without re-litigating.
+
+### 6.2 Kronos foundation-model factors — pending pretraining cutoff verification + transferability evidence
+- **Status:** Flagged 2026-05-11 (source: external repos survey at `docs/discussion/2026-05-11_external_repos_survey.md` §B.7). Kronos (github.com/shiyu-coder/Kronos, AAAI 2026, arXiv 2508.02739) is a decoder-only Transformer pretrained on 12B K-line records across 45 exchanges; outputs autoregressive OHLCV forecasts at arbitrary horizon with `sample_count > 1` for probabilistic paths. Plausible factor family: `kronos_pred_ret_24h`, `kronos_path_dispersion`, `kronos_directional_prob`, `kronos_pred_hi_lo_range`. MIT license, four pretrained sizes on HuggingFace (mini 4.1M / small 24.7M / base 102.3M / large 499.2M).
+- **Why open — two preconditions, both hard:**
+  - **(1) Pretraining cutoff verification.** If cutoff < 2020-01-01 → factor usable on historical splits; graduate to APPLICABLE under §2.5 (vol modeling) or new sub-§ (foundation-model factors). If cutoff ∈ [2020-01-01, 2024-12-31] → historical splits contaminated; restrict to Phase 3 paper-trade forward window only. If cutoff ≥ 2025-01-01 → most OOS holdout windows contaminated; Phase 3+ live/forward only. Verify via HuggingFace model card, paper, or author contact.
+  - **(2) Transferability evidence.** Even with clean cutoff, Kronos training distribution (12B records × 45 exchanges, predominantly equity / cross-asset flows) does not guarantee zero-shot transferability to BTC/USDT 1h microstructure. Paper reports RankIC + MAE + gen-fidelity only — **no OOS Sharpe / trading metrics**. Pretrained foundation-model status does not constitute vetting credit; Kronos-derived factors must pass DSR / PBO / CPCV / regime holdout the same as any other factor (per §3.1 incremental-information screening principle).
+- **Unblock action:** (a) read paper + HF model card to verify cutoff; (b) if cutoff clean, register 1-2 Kronos factors via `factors/` registry on a smoke window, run through current DSR pipeline, check incremental-information contribution.
 
 ---
 
