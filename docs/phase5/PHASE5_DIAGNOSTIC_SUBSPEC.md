@@ -1,6 +1,6 @@
 # Phase 5 Diagnostic Sub-Spec
 
-> **Status:** WORKING DRAFT (session-3; §0–§2.c authoring; §2.d–§8 pending)
+> **Status:** WORKING DRAFT (session-4; §0–§2.d authoring; §2.e–§8 pending)
 > **Cycle:** Phase 5 sub-spec drafting cycle (Path 1 per scoping decision §6 successor cycle eligible-not-named slot)
 > **Meta-plan:** [`docs/superpowers/plans/2026-05-09-phase5-diagnostic-subspec.md`](../superpowers/plans/2026-05-09-phase5-diagnostic-subspec.md) (sealed at `0e305bc`)
 > **Spec source:** [`PHASE5_SCOPING_DECISION.md`](PHASE5_SCOPING_DECISION.md) (sealed at `697c26b` 2026-05-10T01:29:10Z)
@@ -126,3 +126,53 @@ Operationalizes scoping §2.1(c): "population-level economic weakness even when 
 **Register-class:** binding | quantitative (OOS-only primary score; 75th + 90th percentile-rank cutoffs; `kind='weak'` percentile convention; linear quantile interpolation) | irreversible-interpretation-constraint per §2.2.
 
 **Phase 4 verdict invariance (inherited from §2.a discipline).** §2.c output operates at the selection-time cohort-substrate register; combined with §2.a/§2.b outputs, it does NOT modify the Phase 4 closeout verdict at 15bps. §6 attribution-report wording is forward-bound to preserve this invariance.
+
+### §2.d Overfit AND-gate
+
+Operationalizes scoping §2.1(d): "gate-construction flaw causing unstable selection logic. The *gate criterion itself* overfits regime-pair statistical noise; the selection mechanism is the subject of the flaw." Diagnostic question: do broader-universe per-regime AND-gate sub-pass patterns exhibit structure consistent with per-regime independence (each regime's sub-gate firing on regime-specific statistical noise; AND-combination producing observed 39-candidate cohort as a near-product-of-independent-filters outcome) versus strong positive correlation (sub-gates identifying shared underlying signal that AND-combination amplifies)? Per D3'' lock at §2.c: §2.d tests AND-gate's own validity (gate may be flawed → cohort_a is illusory winners); §2.c assumed gate-validity. §2.d operates at gate-construction internal register; does NOT consume Phase 4 forward-test data.
+
+**Indicator construction (primary — Approach C).**
+
+- **Per-regime pass-rate** for r ∈ {bear_2022, audit_2024, eval_2020, eval_2021}: `pᵣ = count_pass_r / count_finite_r` where `count_pass_r` is the number of broader-universe candidates passing the AND-gate sub-criterion at regime r and `count_finite_r` is the number with all 4 AND-gate input fields finite/non-missing in regime r.
+- **AND-gate sub-criterion verbatim per CLAUDE.md PHASE2C v2 split definition:** `sharpe_ratio ≥ −0.5 ∧ max_drawdown ≤ 0.25 ∧ total_return ≥ −0.15 ∧ total_trades ≥ 5`, applied independently per regime to fields under `holdout_metrics`.
+- **Canonical source:** computed fresh from [`data/phase2c_evaluation_gate/phase2c_15_main_fire_<regime>_v1/<hash>/holdout_summary.json`](../../data/phase2c_evaluation_gate/) `holdout_metrics` fields + the AND-gate criterion as cited above. **Audit consistency field:** pre-computed top-level `holdout_passed` per candidate's `holdout_summary.json`. **Pre-execution verification gate:** cross-validate canonical-fresh ≡ pre-computed-audit across 993 × 4 = 3972 pass-pattern bits; mismatch at any bit → §2.d execution suspends; §6 enumerates discrepancy; Charlie register re-adjudicates. §7 V# anchor binds this gate (FB #16). **Following successful verification, all §2.d primary-statistic computations use the canonical-fresh recomputed pass indicators rather than the stored audit field.**
+- **Expected count under independence null:** `exp = Π_{r=1}^4 pᵣ × N` where `N = intersection_count = candidates finite in all 4 regimes` (empirically N = 993 per Path A probe; full broader-universe in current data state).
+- **Observed count:** `obs = 39` (= cohort_a cardinality per [`data/phase4_scoping/cohort_a_candidate_reference.csv`](../../data/phase4_scoping/cohort_a_candidate_reference.csv) sealed at `11b39f2`; equivalently the count of broader-universe candidates passing the AND-gate in ALL 4 regimes).
+
+**Indicator construction (second-angle supplementary — Approach A).**
+
+- **Perturbation:** simultaneously perturb all 4 AND-gate sub-criteria thresholds by ±1σ where σ is the per-sub-criterion × per-regime standard deviation of the broader-universe distribution of that input metric (16 σ values: 4 sub-criteria × 4 regimes; computed at execution time after D3''' lock).
+- **Stricter perturbation** (raise floor / lower ceiling per sub-criterion): `min_sharpe + σ_sharpe_r`, `max_drawdown − σ_dd_r`, `min_total_return + σ_return_r`, `min_total_trades + σ_trades_r`; produces a more-restrictive AND-gate.
+- **Looser perturbation** (opposite direction per sub-criterion): produces a less-restrictive AND-gate.
+- **Domain-validity clipping:** perturbed thresholds are clipped to domain-valid ranges where applicable (e.g., non-negative trade counts; drawdown bounds within [0, 1]). Prevents pathological perturbations from silently invalidating Approach A second-angle reporting.
+- **Perturbed cohorts:** `stricter_cohort` and `looser_cohort` = candidates passing the perturbed AND-gate in all 4 regimes.
+- **Stability metric:** `Jaccard(cohort_a, stricter_cohort)` and `Jaccard(cohort_a, looser_cohort)`, both bounded [0, 1]. **Substantive interpretation:** Jaccard near 1.0 = AND-gate calibration robust (perturbation produces near-identical cohort); Jaccard substantially below 1.0 = calibration brittle (small threshold movement substantially changes cohort membership). §6 attribution narrative scope handles concrete value-to-attribution mapping. Both reported as §6 attribution-narrative input only; do NOT fire binary judgment (no dual-gate composition with Approach C).
+
+**Judgment rule (Approach C TOST equivalence test on `|obs − exp|`).** Two One-Sided Tests (TOST) equivalence-test framework at α = 0.05 with Binomial-exact noise scale.
+
+- **Equivalence margin:** `ε = 2 · √(N · p · (1 − p))` where `N = intersection_count` and `p = Π_{r=1}^4 pᵣ`. ε is the standard deviation of the AND-gate pass count under `Binomial(N, p)` distribution scaled by k = 2 (i.e., ±2σ Binomial-exact noise scale under independence null).
+- **TOST framework:** H₀: `|obs − exp| ≥ ε` (non-equivalent / non-independent); H₁: `|obs − exp| < ε` (equivalent / independent). Detection event = reject H₀ at α = 0.05 = confirm observed AND-gate pass count statistically consistent with the independence-model expectation derived from the per-regime pass-rates within the Binomial-exact equivalence margin, indicating AND-gate fires on regime-specific statistical noise rather than requiring strong shared underlying signal to explain the observed cohort size.
+- **Canonical §2.d outcome is binary: overfit AND-gate detected** if TOST rejects H₀ at α = 0.05; **not detected** otherwise.
+
+*(NB on TOST polarity: detection-of-overfit corresponds to the* equivalence *outcome — observed consistent with the independence-model expectation — not the* non-equivalence *outcome; this inverts standard 'reject H₀ = positive finding' intuition. §6 narrative writers preserve this inversion explicitly.)*
+
+Approach A reports `Jaccard(cohort_a, stricter_cohort)` and `Jaccard(cohort_a, looser_cohort)` scalars to §6 attribution narrative; does NOT fire binary judgment. The §2.d binary outcome derives from Approach C TOST result alone.
+
+**Substantive prior justification for ε k = 2 (pre-registered per §2.2 freeze).** Under independence null with N = 993 and `Π pᵣ ≈ 0.04` (illustrative; actual `Π pᵣ` computed at execution), the AND-gate pass count follows `Binomial(N, p)` with standard deviation `√(N·p·(1−p))`. The k = 2 multiplier corresponds to ±2σ equivalence margin, which aligns with α = 0.05 normal-approximation TOST convention. Tighter (k = 1) would impose ≈ ±1σ ≈ 68% noise tolerance, making detection bar substantively strict; looser (k = 3) would impose ≈ ±3σ ≈ 99.7% noise tolerance, making detection bar substantively permissive. k = 2 is the standard statistical convention at the regime-class register; cutoffs are σ-family statistical priors at "Binomial-exact independence noise tolerance" register, locked at this §2.d register-event boundary per §2.2 freeze. **Note:** Approach A independently uses k = 1 for σ-of-distribution perturbation at a register-class-distinct purpose (calibration noise scale rather than detection bar); the k = 1 / k = 2 / k = 3 discussion in this paragraph applies to Approach C TOST ε only.
+
+**Descriptive supplements** (for §6 attribution-report nuance; not judgment inputs): 4 per-regime pass-rates `pᵣ` reported; pairwise Cramér's V 4×4 symmetric matrix (6 unique pairwise associations + 4 diagonal sanity = 1.0; regime-pair correlation structure); 2⁴ pass-pattern distribution OPTIONAL §6 descriptive material (16-cell counts; **NOT primary statistic input — D2''' Point 2 lock — AND NOT eligible for post-hoc reinterpretation into the canonical §2.d binary outcome**); Approach A `Jaccard(cohort_a, stricter_cohort)` and `Jaccard(cohort_a, looser_cohort)` scalars.
+
+**NaN-handling rule (defensive pre-registration; empirical no-fire per Path A probe).** Any broader-universe candidate with non-finite/missing value in any AND-gate input field in any regime drops from that regime's pass-rate computation `pᵣ`; per-regime denominator becomes `count_finite_r`. N for exp computation per above: intersection_count = candidates finite in all 4 regimes. §6 enumerates any drops with hypothesis_hash + regime + missing field name (§6 FB #18 forward-binding). Empirically per Path A probe: ZERO drops; N = 993 = full broader-universe = intersection_count.
+
+**Data source per §1:** on-disk (993-candidate broader-universe per-regime artifacts + AND-gate sub-criterion + sealed cohort_a CSV); per-regime pass-rate computation + Binomial-exact expected count + TOST inference + Approach A perturbation + Jaccard stability + Cramér's V matrix are §1-ALLOWED derived statistics on existing per-candidate AND-gate input metrics.
+
+**Register-class:** binding | quantitative (TOST equivalence-test framework; Binomial-exact noise scale `ε = 2·√(N·p·(1−p))`; α = 0.05; Approach A reports stability scalars, no binary judgment) | irreversible-interpretation-constraint per §2.2.
+
+**§2.c/§2.d framing-chain (upstream interpretive gate structure).** §2.d acts as upstream interpretive gate for §2.c output:
+
+- **§2.d not fires** (gate-validity assumption survives): §2.c output read at face value.
+- **§2.d fires** (gate-overfit detected): §2.c output reading suspended; §6 attribution narrative must surface multi-interpretation ambiguity. Specific 2×2 attribution combinations (§2.d × §2.c outcomes) enumerated at §6 attribution narrative scope (FB #17).
+
+**Anti-circularity caveat (brief; full narrative §6 forward-bound — FB #19).** Approach C tests broader-universe per-regime pass-patterns against the independence null. Strong positive correlation (large `|obs − exp|` with `obs > exp` exceeding the TOST equivalence margin) would suggest real shared signal underlying the AND-gate. However, correlation may alternatively reflect shared *unobserved* market-factor selection bias rather than real alpha. This disambiguation is §6 attribution narrative scope and does not affect §2.d primary judgment binary outcome.
+
+**Phase 4 verdict invariance (inherited from §2.a/b/c precedent).** §2.d output operates at the gate-construction internal register; combined with §2.a/§2.b/§2.c outputs, it does NOT modify the Phase 4 closeout verdict at 15bps (no forward persistence detected at PLAN §1.5 success criterion). §6 attribution-report wording is forward-bound to preserve this invariance.
