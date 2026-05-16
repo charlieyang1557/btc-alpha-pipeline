@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-05-16T05:01:06Z",
+  "sealed_subspec_commit": "49ae7e3",
+  "sealed_session_1_commit": "ad35915",
+  "session": "phase_5_diagnostic_execution_session_2",
+  "admissibility": {
+    "register": "\u00a75 substantive-vs-operational admissibility",
+    "substantive": {
+      "availability_type": "substantive",
+      "admissible": false,
+      "basis": "criteria not satisfied at canonical execution",
+      "propagation_state": "active"
+    },
+    "operational": {
+      "availability_type": "operational",
+      "admissible": false,
+      "basis": "criteria not satisfied at canonical execution",
+      "propagation_state": "active"
+    },
+    "mechanical_routing_provenance": {
+      "substantive_evaluated_case": "D2.1_case_a_canonical_5_condition_check",
+      "substantive_case_a_canonical_check_passed": false,
+      "operational_evaluated_case": "D2.2_CASE_1_residual_ambiguity_check",
+      "operational_case_1_silent_or_terminal_false": true,
+      "operational_distinct_assignment_count": 1,
+      "operational_case_1_threshold": 2
+    }
+  }
+}

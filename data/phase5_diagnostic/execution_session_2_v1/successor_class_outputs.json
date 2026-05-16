@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-05-16T05:01:06Z",
+  "sealed_subspec_commit": "49ae7e3",
+  "sealed_session_1_commit": "ad35915",
+  "session": "phase_5_diagnostic_execution_session_2",
+  "successor_class": {
+    "register": "\u00a74a successor-cycle-class mapping",
+    "execution_suspended": false,
+    "input_pattern": "single_mode",
+    "assignments": [
+      {
+        "class": "cost-model investigation",
+        "disposition": "eligible",
+        "qualifier": null,
+        "verbatim_label": "cost-model investigation eligible (gross-vs-realistic decomposition)",
+        "source_modes": [
+          "cost_drag"
+        ]
+      }
+    ],
+    "composition_order": "single-mode lookup \u2192 Line 1 qualifier (\u00a72.f) \u2192 \u00a72.d\u2192\u00a72.c elevation \u2192 de-duplication (surviving qualifier from \u00a72.d-direct)"
+  }
+}

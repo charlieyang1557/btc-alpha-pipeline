@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-05-16T05:01:06Z",
+  "sealed_subspec_commit": "49ae7e3",
+  "sealed_session_1_commit": "ad35915",
+  "session": "phase_5_diagnostic_execution_session_2",
+  "framing_pressure": {
+    "register": "\u00a74b framing-resolution-pressure assessment",
+    "execution_suspended": false,
+    "pressure_label_set": [
+      {
+        "pressure_label": "deferred",
+        "pivot_direction_dependency": "none",
+        "basis": "framing question can stay deferred under (4) indeterminate; empirically-conditioned continuation defensible under any framing",
+        "propagation_state": "active",
+        "context_qualifiers": [],
+        "finding_source": "\u00a72.b"
+      }
+    ],
+    "composition_order": "\u03b2 union-of-labels per active finding contribution; no \u00a74b-internal precedence among multi-finding composite outputs"
+  }
+}
