@@ -54,6 +54,19 @@ phase2 = [
     "pydantic~=2.0",           # DSL schema validation (D2)
 ]
 
+# Phase 2.5 — combined factor bandit + semantic dedup parked work
+# (parked branch phase2.5/bandit-dedup; activation gated by future
+# Charlie register-event boundary establishing batch cadence resumption).
+# Per sub-spec SEAL ab8e715 B-Lock-7: version-pinned + local CPU only +
+# no runtime network egress. Model + tokenizer artifact SHA pinning
+# happens at first install via Wave 0 W0.3 model-cache setup
+# (project-local cache directory; checksum recorded at calibration).
+phase2_5 = [
+    "sentence-transformers>=2.7.0,<5.0.0",  # short-text embedding model
+    "torch>=2.0.0",                          # CPU inference backend
+    "numpy>=1.24.0",                         # already-implicit via other deps
+]
+
 [tool.ruff]
 line-length = 100
 target-version = "py311"
