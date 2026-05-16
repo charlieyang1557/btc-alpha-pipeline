@@ -83,6 +83,7 @@ REJECTED_COMPLEXITY = "rejected_complexity"
 DUPLICATE = "duplicate"
 PENDING_BACKTEST = "pending_backtest"
 BACKEND_EMPTY_OUTPUT = "backend_empty_output"
+NEAR_DUPLICATE = "near_duplicate"  # Phase 2.5 Track B; sub-spec ab8e715 §2 X-2
 
 D6_STAGE1_LIFECYCLE_STATES: tuple[str, ...] = (
     INVALID_DSL,
@@ -90,6 +91,7 @@ D6_STAGE1_LIFECYCLE_STATES: tuple[str, ...] = (
     DUPLICATE,
     PENDING_BACKTEST,
     BACKEND_EMPTY_OUTPUT,
+    NEAR_DUPLICATE,
 )
 
 
@@ -181,6 +183,9 @@ class BatchIngestState:
         lifecycle_counts: Running terminal-state counts, keyed by
             lifecycle-state name.
         records: Per-hypothesis audit records in ingestion order.
+        embedding_cache: Phase 2.5 Track B per-batch embedding store
+            keyed by hypothesis_hash; cleared at finalize per
+            sub-spec ab8e715 B-Lock-5. Track A adds zero fields per X-1.
     """
 
     batch_id: str
@@ -190,6 +195,7 @@ class BatchIngestState:
         default_factory=lambda: defaultdict(int)
     )
     records: list[HypothesisRecord] = field(default_factory=list)
+    embedding_cache: dict[str, "np.ndarray"] = field(default_factory=dict)
 
 
 # ---------------------------------------------------------------------------
@@ -329,6 +335,7 @@ __all__ = [
     "DUPLICATE",
     "HypothesisRecord",
     "INVALID_DSL",
+    "NEAR_DUPLICATE",
     "PENDING_BACKTEST",
     "REJECTED_COMPLEXITY",
     "assert_lifecycle_invariant_at_batch_close",

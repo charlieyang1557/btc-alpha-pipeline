@@ -228,10 +228,17 @@ def test_invariant_holds_on_empty_batch(batch_id):
 
 
 def test_d6_stage1_lifecycle_states_is_closed_set():
-    """The Stage 1 lifecycle set is exactly the five expected values."""
+    """The Stage 1 lifecycle set is the five D6 values + NEAR_DUPLICATE.
+
+    NEAR_DUPLICATE added per Phase 2.5 sub-spec SEAL ab8e715 §2 X-2 (ii)
+    — joins ``D6_STAGE1_LIFECYCLE_STATES`` for Track B semantic dedup
+    quarantine state. Behavioral integration (ingest pipeline insertion)
+    is Wave B-2; this test asserts the shape extension only.
+    """
+    from agents.orchestrator.ingest import NEAR_DUPLICATE
     assert set(D6_STAGE1_LIFECYCLE_STATES) == {
         INVALID_DSL, REJECTED_COMPLEXITY, DUPLICATE, PENDING_BACKTEST,
-        BACKEND_EMPTY_OUTPUT,
+        BACKEND_EMPTY_OUTPUT, NEAR_DUPLICATE,
     }
 
 

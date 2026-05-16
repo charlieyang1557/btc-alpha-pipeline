@@ -90,14 +90,28 @@ class ProposerPrompt:
     ``system`` and ``user`` mirror the Anthropic SDK's message layout;
     ``factor_menu`` is separated so the Sonnet backend can decide
     whether to inline it or place it in a system-level cache breakpoint.
+
+    ``top_factors_block`` is the Phase 2.5 Track A A-Lock-4 SPLIT field
+    (sub-spec SEAL ab8e715 §6) — separately addressable so
+    ``audit_prompt_for_leakage()`` can apply a scoped scan with the
+    extended forbidden-language list. At Wave 0 W0.1 the field shape
+    is locked with default ``""``; Wave A-2 wires the extraction from
+    ``build_prompt()``'s inline ``top_factors_block`` local into this
+    field and updates ``all_text()`` semantics + audit accordingly.
     """
 
     system: str
     user: str
     factor_menu: str
+    top_factors_block: str = ""
 
     def all_text(self) -> str:
-        """Concatenate every prompt component for leakage auditing."""
+        """Concatenate every prompt component for leakage auditing.
+
+        Phase 2.5 Wave 0 W0.1: ``top_factors_block`` defaults to ``""``;
+        Wave A-2 will include it in the concatenation per A-Lock-4 SPLIT
+        contract once extraction is wired.
+        """
         return "\n".join((self.system, self.user, self.factor_menu))
 
 
