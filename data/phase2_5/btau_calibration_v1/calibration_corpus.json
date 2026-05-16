@@ -1,0 +1,385 @@
+[
+  {
+    "pair_id": "near_dup_sma_20_vs_21",
+    "label": "near_dup",
+    "description": "SMA(20) vs SMA(21) \u2014 parameter variation",
+    "dsl_a": {
+      "name": "sma_long",
+      "entry": [
+        {
+          "factor": "sma",
+          "param": 20,
+          "op": ">",
+          "value": "close"
+        }
+      ],
+      "exit": [
+        {
+          "bars": 10
+        }
+      ]
+    },
+    "dsl_b": {
+      "name": "sma_long",
+      "entry": [
+        {
+          "factor": "sma",
+          "param": 21,
+          "op": ">",
+          "value": "close"
+        }
+      ],
+      "exit": [
+        {
+          "bars": 10
+        }
+      ]
+    }
+  },
+  {
+    "pair_id": "near_dup_sma_20_vs_22",
+    "label": "near_dup",
+    "description": "SMA(20) vs SMA(22) \u2014 wider parameter variation",
+    "dsl_a": {
+      "name": "sma_long",
+      "entry": [
+        {
+          "factor": "sma",
+          "param": 20,
+          "op": ">",
+          "value": "close"
+        }
+      ],
+      "exit": [
+        {
+          "bars": 10
+        }
+      ]
+    },
+    "dsl_b": {
+      "name": "sma_long",
+      "entry": [
+        {
+          "factor": "sma",
+          "param": 22,
+          "op": ">",
+          "value": "close"
+        }
+      ],
+      "exit": [
+        {
+          "bars": 10
+        }
+      ]
+    }
+  },
+  {
+    "pair_id": "near_dup_rsi_14_30_vs_31",
+    "label": "near_dup",
+    "description": "RSI(14,30) vs RSI(14,31) \u2014 threshold value variation",
+    "dsl_a": {
+      "name": "rsi_oversold",
+      "entry": [
+        {
+          "factor": "rsi",
+          "param": 14,
+          "op": "<",
+          "value": 30
+        }
+      ],
+      "exit": [
+        {
+          "bars": 5
+        }
+      ]
+    },
+    "dsl_b": {
+      "name": "rsi_oversold",
+      "entry": [
+        {
+          "factor": "rsi",
+          "param": 14,
+          "op": "<",
+          "value": 31
+        }
+      ],
+      "exit": [
+        {
+          "bars": 5
+        }
+      ]
+    }
+  },
+  {
+    "pair_id": "near_dup_rsi_window_14_vs_15",
+    "label": "near_dup",
+    "description": "RSI(14,30) vs RSI(15,30) \u2014 window variation",
+    "dsl_a": {
+      "name": "rsi_oversold",
+      "entry": [
+        {
+          "factor": "rsi",
+          "param": 14,
+          "op": "<",
+          "value": 30
+        }
+      ],
+      "exit": [
+        {
+          "bars": 5
+        }
+      ]
+    },
+    "dsl_b": {
+      "name": "rsi_oversold",
+      "entry": [
+        {
+          "factor": "rsi",
+          "param": 15,
+          "op": "<",
+          "value": 30
+        }
+      ],
+      "exit": [
+        {
+          "bars": 5
+        }
+      ]
+    }
+  },
+  {
+    "pair_id": "near_dup_holdbars_10_vs_11",
+    "label": "near_dup",
+    "description": "Same entry, 10-bar vs 11-bar hold",
+    "dsl_a": {
+      "name": "sma_long",
+      "entry": [
+        {
+          "factor": "sma",
+          "param": 20,
+          "op": ">",
+          "value": "close"
+        }
+      ],
+      "exit": [
+        {
+          "bars": 10
+        }
+      ]
+    },
+    "dsl_b": {
+      "name": "sma_long",
+      "entry": [
+        {
+          "factor": "sma",
+          "param": 20,
+          "op": ">",
+          "value": "close"
+        }
+      ],
+      "exit": [
+        {
+          "bars": 11
+        }
+      ]
+    }
+  },
+  {
+    "pair_id": "distinct_sma_vs_rsi",
+    "label": "distinct",
+    "description": "SMA-based momentum vs RSI-based mean-reversion",
+    "dsl_a": {
+      "name": "sma_long",
+      "entry": [
+        {
+          "factor": "sma",
+          "param": 20,
+          "op": ">",
+          "value": "close"
+        }
+      ],
+      "exit": [
+        {
+          "bars": 10
+        }
+      ]
+    },
+    "dsl_b": {
+      "name": "rsi_oversold",
+      "entry": [
+        {
+          "factor": "rsi",
+          "param": 14,
+          "op": "<",
+          "value": 30
+        }
+      ],
+      "exit": [
+        {
+          "bars": 5
+        }
+      ]
+    }
+  },
+  {
+    "pair_id": "distinct_long_vs_short_bias",
+    "label": "distinct",
+    "description": "Long SMA crossover vs short SMA crossover (opposite direction)",
+    "dsl_a": {
+      "name": "sma_long",
+      "entry": [
+        {
+          "factor": "sma",
+          "param": 20,
+          "op": ">",
+          "value": "close"
+        }
+      ],
+      "exit": [
+        {
+          "bars": 10
+        }
+      ]
+    },
+    "dsl_b": {
+      "name": "sma_short",
+      "entry": [
+        {
+          "factor": "sma",
+          "param": 20,
+          "op": "<",
+          "value": "close"
+        }
+      ],
+      "exit": [
+        {
+          "bars": 10
+        }
+      ]
+    }
+  },
+  {
+    "pair_id": "distinct_single_vs_multi_factor",
+    "label": "distinct",
+    "description": "Single-factor SMA vs SMA + volume confirmation",
+    "dsl_a": {
+      "name": "sma_long",
+      "entry": [
+        {
+          "factor": "sma",
+          "param": 20,
+          "op": ">",
+          "value": "close"
+        }
+      ],
+      "exit": [
+        {
+          "bars": 10
+        }
+      ]
+    },
+    "dsl_b": {
+      "name": "sma_vol_long",
+      "entry": [
+        {
+          "factor": "sma",
+          "param": 20,
+          "op": ">",
+          "value": "close"
+        },
+        {
+          "factor": "volume",
+          "param": 50,
+          "op": ">",
+          "value": "avg"
+        }
+      ],
+      "exit": [
+        {
+          "bars": 10
+        }
+      ]
+    }
+  },
+  {
+    "pair_id": "distinct_macd_vs_bbands",
+    "label": "distinct",
+    "description": "MACD signal cross vs Bollinger Bands squeeze",
+    "dsl_a": {
+      "name": "macd_signal",
+      "entry": [
+        {
+          "factor": "macd",
+          "param": [
+            12,
+            26,
+            9
+          ],
+          "op": "cross_above",
+          "value": "signal"
+        }
+      ],
+      "exit": [
+        {
+          "bars": 8
+        }
+      ]
+    },
+    "dsl_b": {
+      "name": "bbands_squeeze",
+      "entry": [
+        {
+          "factor": "bbands",
+          "param": [
+            20,
+            2
+          ],
+          "op": "<",
+          "value": "lower"
+        }
+      ],
+      "exit": [
+        {
+          "bars": 5
+        }
+      ]
+    }
+  },
+  {
+    "pair_id": "distinct_short_vs_long_window",
+    "label": "distinct",
+    "description": "SMA(5) short-term vs SMA(200) long-term \u2014 same factor, drastically different timeframes",
+    "dsl_a": {
+      "name": "sma_fast",
+      "entry": [
+        {
+          "factor": "sma",
+          "param": 5,
+          "op": ">",
+          "value": "close"
+        }
+      ],
+      "exit": [
+        {
+          "bars": 3
+        }
+      ]
+    },
+    "dsl_b": {
+      "name": "sma_slow",
+      "entry": [
+        {
+          "factor": "sma",
+          "param": 200,
+          "op": ">",
+          "value": "close"
+        }
+      ],
+      "exit": [
+        {
+          "bars": 100
+        }
+      ]
+    }
+  }
+]

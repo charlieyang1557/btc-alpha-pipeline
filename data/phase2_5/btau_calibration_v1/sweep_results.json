@@ -1,0 +1,174 @@
+{
+  "model_name": "all-MiniLM-L6-v2",
+  "model_first_param_sha": "352d34a4ad725bb7",
+  "embedding_dim": 384,
+  "n_pairs": 10,
+  "n_near_dup": 5,
+  "n_distinct": 5,
+  "calibration_utc": "2026-05-16T15:42:33Z",
+  "sweep_taus": [
+    0.7,
+    0.75,
+    0.8,
+    0.82,
+    0.85,
+    0.88,
+    0.9
+  ],
+  "pair_cosines": [
+    {
+      "pair_id": "near_dup_sma_20_vs_21",
+      "label": "near_dup",
+      "description": "SMA(20) vs SMA(21) \u2014 parameter variation",
+      "cosine": 0.999523,
+      "text_a_len": 103,
+      "text_b_len": 103
+    },
+    {
+      "pair_id": "near_dup_sma_20_vs_22",
+      "label": "near_dup",
+      "description": "SMA(20) vs SMA(22) \u2014 wider parameter variation",
+      "cosine": 0.999207,
+      "text_a_len": 103,
+      "text_b_len": 103
+    },
+    {
+      "pair_id": "near_dup_rsi_14_30_vs_31",
+      "label": "near_dup",
+      "description": "RSI(14,30) vs RSI(14,31) \u2014 threshold value variation",
+      "cosine": 0.999046,
+      "text_a_len": 101,
+      "text_b_len": 101
+    },
+    {
+      "pair_id": "near_dup_rsi_window_14_vs_15",
+      "label": "near_dup",
+      "description": "RSI(14,30) vs RSI(15,30) \u2014 window variation",
+      "cosine": 0.999002,
+      "text_a_len": 101,
+      "text_b_len": 101
+    },
+    {
+      "pair_id": "near_dup_holdbars_10_vs_11",
+      "label": "near_dup",
+      "description": "Same entry, 10-bar vs 11-bar hold",
+      "cosine": 0.999688,
+      "text_a_len": 103,
+      "text_b_len": 103
+    },
+    {
+      "pair_id": "distinct_sma_vs_rsi",
+      "label": "distinct",
+      "description": "SMA-based momentum vs RSI-based mean-reversion",
+      "cosine": 0.893114,
+      "text_a_len": 103,
+      "text_b_len": 101
+    },
+    {
+      "pair_id": "distinct_long_vs_short_bias",
+      "label": "distinct",
+      "description": "Long SMA crossover vs short SMA crossover (opposite direction)",
+      "cosine": 0.995749,
+      "text_a_len": 103,
+      "text_b_len": 104
+    },
+    {
+      "pair_id": "distinct_single_vs_multi_factor",
+      "label": "distinct",
+      "description": "Single-factor SMA vs SMA + volume confirmation",
+      "cosine": 0.956952,
+      "text_a_len": 103,
+      "text_b_len": 161
+    },
+    {
+      "pair_id": "distinct_macd_vs_bbands",
+      "label": "distinct",
+      "description": "MACD signal cross vs Bollinger Bands squeeze",
+      "cosine": 0.869956,
+      "text_a_len": 124,
+      "text_b_len": 115
+    },
+    {
+      "pair_id": "distinct_short_vs_long_window",
+      "label": "distinct",
+      "description": "SMA(5) short-term vs SMA(200) long-term \u2014 same factor, drastically different timeframes",
+      "cosine": 0.989765,
+      "text_a_len": 101,
+      "text_b_len": 105
+    }
+  ],
+  "sweep": [
+    {
+      "tau": 0.7,
+      "tp": 5,
+      "fp": 5,
+      "fn": 0,
+      "tn": 0,
+      "precision": 0.5,
+      "recall": 1.0,
+      "f1": 0.6667
+    },
+    {
+      "tau": 0.75,
+      "tp": 5,
+      "fp": 5,
+      "fn": 0,
+      "tn": 0,
+      "precision": 0.5,
+      "recall": 1.0,
+      "f1": 0.6667
+    },
+    {
+      "tau": 0.8,
+      "tp": 5,
+      "fp": 5,
+      "fn": 0,
+      "tn": 0,
+      "precision": 0.5,
+      "recall": 1.0,
+      "f1": 0.6667
+    },
+    {
+      "tau": 0.82,
+      "tp": 5,
+      "fp": 5,
+      "fn": 0,
+      "tn": 0,
+      "precision": 0.5,
+      "recall": 1.0,
+      "f1": 0.6667
+    },
+    {
+      "tau": 0.85,
+      "tp": 5,
+      "fp": 5,
+      "fn": 0,
+      "tn": 0,
+      "precision": 0.5,
+      "recall": 1.0,
+      "f1": 0.6667
+    },
+    {
+      "tau": 0.88,
+      "tp": 5,
+      "fp": 4,
+      "fn": 0,
+      "tn": 1,
+      "precision": 0.5556,
+      "recall": 1.0,
+      "f1": 0.7143
+    },
+    {
+      "tau": 0.9,
+      "tp": 5,
+      "fp": 3,
+      "fn": 0,
+      "tn": 2,
+      "precision": 0.625,
+      "recall": 1.0,
+      "f1": 0.7692
+    }
+  ],
+  "chosen_tau": 0.9,
+  "selection_rule": "Highest F1 score across the \u03c4 sweep. Tie-break: prefer LOWER \u03c4 (more aggressive dedup; near-duplicates skip backtest and save compute; false-positives are Critic-overridable per B-3 quarantine semantics)."
+}

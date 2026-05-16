@@ -62,7 +62,7 @@ phase2 = [
 # happens at first install via Wave 0 W0.3 model-cache setup
 # (project-local cache directory; checksum recorded at calibration).
 phase2_5 = [
-    "sentence-transformers>=2.7.0,<5.0.0",  # short-text embedding model
+    "sentence-transformers>=2.7.0,<6.0.0",  # short-text embedding model
     "torch>=2.0.0",                          # CPU inference backend
     "numpy>=1.24.0",                         # already-implicit via other deps
 ]
