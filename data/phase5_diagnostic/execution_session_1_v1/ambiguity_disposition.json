@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-05-16T03:58:10Z",
+  "sealed_subspec_commit": "49ae7e3",
+  "register": "\u00a73.2 diagnostic ambiguity disposition",
+  "case_a_evaluation": {
+    "label": null,
+    "terminal_trigger": null,
+    "execution_suspended": false,
+    "silent_state": true,
+    "reason_silent": "\u22651 \u00a72.x at canonical detected register; \u00a73.1 emits labels per its register-class; \u00a73.2 emits no substantive output per XOR complementarity sealed property",
+    "firing_modes": [
+      "cost_drag"
+    ]
+  }
+}

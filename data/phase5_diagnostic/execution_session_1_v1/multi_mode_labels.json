@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-05-16T03:58:10Z",
+  "sealed_subspec_commit": "49ae7e3",
+  "register": "\u00a73.1 multi-mode coexistence rule-tree labels",
+  "multi_mode_labels": {
+    "emits_substantive": true,
+    "execution_suspended": false,
+    "firing_modes": [
+      "cost_drag"
+    ],
+    "not_detected_modes": [
+      "andgate_overfit",
+      "cohort_weakness",
+      "regime_change",
+      "signal_decay",
+      "success_metric_mismatch"
+    ],
+    "nan_modes": [],
+    "per_mode_labels": {
+      "cost_drag": "cost-drag reading"
+    },
+    "partition_table": [
+      {
+        "active_modes": [
+          "cost_drag"
+        ],
+        "mode": "cost_drag",
+        "categorical_label": "cost-drag reading",
+        "line1_regime_change_fires": false,
+        "line2_andgate_fires": false,
+        "tier_bilateral_applicable": false,
+        "downstream_consumer_note": "Resolved at \u00a76 narrative; specific successor-class mapping is \u00a74a scope; framing-resolution-pressure is \u00a74b scope; admissibility is \u00a75 scope."
+      }
+    ],
+    "indeterminate_labels": {},
+    "composition_order": "Line 1 (\u00a72.f) \u2192 Line 2 (\u00a72.d on \u00a72.c only) \u2192 Tier bilateral overlay \u2192 base label",
+    "register_class": "binding | rule-based primary + categorical interpretation outputs (no new thresholds)"
+  }
+}
