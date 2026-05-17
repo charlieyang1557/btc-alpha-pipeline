@@ -74,6 +74,15 @@ FORBIDDEN_PATTERNS: tuple[str, ...] = (
     r"\bshortlisted\b",
     r"\bpending[_\s]dsr\b",
 )
+# Phase 2.5 Wave A-3 security review (sec-F3 PUSHBACK): the words
+# "score" and "performance" were proposed for the global pattern list
+# but DO have legitimate appearances in proposer prompt text — e.g.,
+# the factor description for ``volume_zscore_24h`` reads "rolling 24-bar
+# z-score of volume"; ``zscore_48`` reads "48-bar z-score of close".
+# Adding them globally would false-positive on every legitimate prompt.
+# These words remain in FORBIDDEN_IN_TOP_FACTORS_BLOCK only — the scoped
+# scan exists precisely for this dual-meaning class (legitimate in
+# factor metadata, leakage signal in bandit menu annotations).
 
 _COMPILED_FORBIDDEN: tuple[re.Pattern[str], ...] = tuple(
     re.compile(p, re.IGNORECASE) for p in FORBIDDEN_PATTERNS
@@ -131,11 +140,18 @@ class ProposerPrompt:
     def all_text(self) -> str:
         """Concatenate every prompt component for leakage auditing.
 
-        Phase 2.5 Wave 0 W0.1: ``top_factors_block`` defaults to ``""``;
-        Wave A-2 will include it in the concatenation per A-Lock-4 SPLIT
-        contract once extraction is wired.
+        Phase 2.5 Wave A-3 fix: ``top_factors_block`` is now appended to
+        the global-scan text when non-empty (was previously omitted —
+        Wave A-3 review caught this as 4-way reviewer convergence;
+        scoped scan was dead code without the field being populated).
+        Empty default preserves backward compatibility for existing
+        callers / tests that construct ``ProposerPrompt`` with only the
+        first three positional fields.
         """
-        return "\n".join((self.system, self.user, self.factor_menu))
+        parts = [self.system, self.user, self.factor_menu]
+        if self.top_factors_block:
+            parts.append(self.top_factors_block)
+        return "\n".join(parts)
 
 
 def _theme_for_slot(slot: int | None) -> str:
@@ -274,7 +290,23 @@ def build_prompt(
     ]
     user = "\n".join(user_lines)
 
-    return ProposerPrompt(system=system, user=user, factor_menu=factor_menu)
+    # Phase 2.5 Wave A-3 fix per 4-way reviewer convergence: populate
+    # the dedicated ``top_factors_block`` field so the scoped scan in
+    # ``audit_prompt_for_leakage`` actually fires. The inline emission
+    # in ``user_lines`` remains as legacy text the LLM sees in-context;
+    # the dedicated field carries an identical copy for scoped audit.
+    # See A-Lock-4 SPLIT contract in sub-spec amendment v1 §6.
+    top_factors_block_field = (
+        f"top factors by frequency: {top_factors_block}"
+        if top_factors
+        else ""
+    )
+    return ProposerPrompt(
+        system=system,
+        user=user,
+        factor_menu=factor_menu,
+        top_factors_block=top_factors_block_field,
+    )
 
 
 def audit_prompt_for_leakage(
@@ -327,7 +359,6 @@ __all__ = [
     "FORBIDDEN_PATTERNS",
     "FORBIDDEN_SUBSTRINGS",
     "ProposerPrompt",
-    "THEMES",
     "audit_prompt_for_leakage",
     "build_prompt",
 ]

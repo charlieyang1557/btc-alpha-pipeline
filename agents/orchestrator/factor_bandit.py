@@ -39,7 +39,7 @@ import sqlite3
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, TypeAlias
 
 import numpy as np
 
@@ -96,8 +96,8 @@ def _seed_from_batch_id(batch_id: str) -> int:
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS factor_posterior (
     factor_id TEXT PRIMARY KEY,
-    alpha INTEGER NOT NULL,
-    beta INTEGER NOT NULL,
+    alpha INTEGER NOT NULL CHECK (alpha >= 1),
+    beta INTEGER NOT NULL CHECK (beta >= 1),
     last_updated_batch_id TEXT,
     last_updated_utc TEXT
 );
@@ -109,8 +109,8 @@ CREATE TABLE IF NOT EXISTS factor_bandit_observations (
     regime_holdout_passed INTEGER NOT NULL CHECK (regime_holdout_passed IN (0, 1)),
     observed_utc TEXT NOT NULL,
     hypothesis_hash TEXT NOT NULL,
-    posterior_alpha_pre INTEGER NOT NULL,
-    posterior_beta_pre INTEGER NOT NULL
+    posterior_alpha_pre INTEGER NOT NULL CHECK (posterior_alpha_pre >= 1),
+    posterior_beta_pre INTEGER NOT NULL CHECK (posterior_beta_pre >= 1)
 );
 
 CREATE INDEX IF NOT EXISTS idx_observations_batch
@@ -146,6 +146,18 @@ def get_posterior(factor_id: str, ledger_path: Path) -> tuple[int, int]:
     Per sub-spec A-1: cold-start prior is Beta(1, 1) uniform (uninformed).
     A factor never observed returns the cold-start prior; calling
     ``get_posterior`` does NOT mutate the database.
+
+    Args:
+        factor_id: The factor name (e.g. ``"sma_20"``) to look up.
+        ledger_path: Path to the SQLite DB.
+
+    Returns:
+        ``(alpha, beta)`` tuple. Beta(1, 1) if factor unobserved.
+
+    Raises:
+        sqlite3.OperationalError: if the database file exists but the
+            ``factor_posterior`` table is missing (i.e.,
+            ``init_factor_posterior_db`` was never called for this path).
     """
     with sqlite3.connect(ledger_path) as conn:
         row = conn.execute(
@@ -157,8 +169,9 @@ def get_posterior(factor_id: str, ledger_path: Path) -> tuple[int, int]:
     return (int(row[0]), int(row[1]))
 
 
-# Observation entry: (hypothesis_hash, factor set, regime_holdout_passed bool)
-Observation = tuple[str, Iterable[str], bool]
+# Phase 2.5 Wave A-3 review (py-F3): PEP 613 TypeAlias for the
+# Observation tuple keeps mypy from narrowing it to ``type[tuple[...]]``.
+Observation: TypeAlias = tuple[str, Iterable[str], bool]
 
 
 def observe_batch(
@@ -186,12 +199,38 @@ def observe_batch(
             regime_passed)`` tuples.
         ledger_path: Path to the SQLite database (initialized via
             ``init_factor_posterior_db``).
+
+    Raises:
+        TypeError: if any observation's ``regime_passed`` is not a
+            strict Python ``bool`` (rejects strings, integers, NaN —
+            see Wave A-3 codex-F3 hardening).
+        sqlite3.OperationalError: if the database has not been
+            initialized via ``init_factor_posterior_db``.
     """
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+    # Phase 2.5 Wave A-3 review (codex-F1): BEGIN IMMEDIATE acquires a
+    # RESERVED write lock at the start of the transaction. This makes the
+    # per-factor read-then-write atomic against other writers and
+    # prevents the lost-update bug where two concurrent ``observe_batch``
+    # callers both read the same pre-state and the later UPSERT silently
+    # overwrites the earlier increment.
     with sqlite3.connect(ledger_path) as conn:
+        conn.execute("BEGIN IMMEDIATE")
         for hypothesis_hash, factor_set, regime_passed in observations:
+            # Phase 2.5 Wave A-3 review (codex-F3): strict bool check
+            # prevents silent coercion of deserialized strings / NaN /
+            # numbers into truthy passes.
+            if not isinstance(regime_passed, bool):
+                raise TypeError(
+                    f"regime_passed must be bool; got "
+                    f"{type(regime_passed).__name__}({regime_passed!r})"
+                )
             outcome = 1 if regime_passed else 0
-            for factor_id in factor_set:
+            # Phase 2.5 Wave A-3 review (codex-F5): sort factor_set for
+            # PYTHONHASHSEED-independent ledger row order. Without sorting,
+            # the same logical replay can produce different row sequences
+            # across Python processes.
+            for factor_id in sorted(factor_set):
                 # Read current posterior (Beta(1, 1) cold-start if absent)
                 row = conn.execute(
                     "SELECT alpha, beta FROM factor_posterior "
@@ -278,6 +317,10 @@ def curate_top_k(
         ``BatchBanditSelection`` with up to K factors, sorted by Thompson
         sample descending. ``selection_seed`` records the deterministic
         seed for replay/audit.
+
+    Raises:
+        sqlite3.OperationalError: if the database has not been
+            initialized via ``init_factor_posterior_db``.
     """
     seed = _seed_from_batch_id(batch_id)
     rng = np.random.default_rng(seed)

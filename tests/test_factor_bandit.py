@@ -207,13 +207,22 @@ def test_a_t5_observations_table_append_only(ledger_path):
 
 
 def test_a_t6_curated_menu_passes_audit_clean(ledger_path):
-    """Positive test: clean curation phrasing passes audit_prompt_for_leakage."""
+    """Positive test: clean curation phrasing passes audit_prompt_for_leakage.
+
+    Wave A-3 review (4-way HIGH convergence): test now passes a
+    ProposerPrompt so the scoped scan path is actually exercised.
+    Previously passed a plain string, which only exercised the global
+    scan layer.
+    """
     from agents.orchestrator.factor_bandit import (
         curate_top_k,
         init_factor_posterior_db,
         observe_batch,
     )
-    from agents.proposer.prompt_builder import audit_prompt_for_leakage
+    from agents.proposer.prompt_builder import (
+        ProposerPrompt,
+        audit_prompt_for_leakage,
+    )
 
     init_factor_posterior_db(ledger_path)
     observe_batch(
@@ -227,32 +236,63 @@ def test_a_t6_curated_menu_passes_audit_clean(ledger_path):
     top_factors_block = (
         "Available factors (recommended): " + ", ".join(selection.top_factors)
     )
-    findings = audit_prompt_for_leakage(top_factors_block)
+    prompt = ProposerPrompt(
+        system="",
+        user="",
+        factor_menu="",
+        top_factors_block=top_factors_block,
+    )
+    findings = audit_prompt_for_leakage(prompt)
     assert findings == [], (
-        f"Clean curation must pass audit. Found leakage: {findings}"
+        f"Clean curation must pass audit (including scoped scan). "
+        f"Found leakage: {findings}"
     )
 
 
 def test_a_t7_top_factors_block_audit_scoped_scan_catches_forbidden_language(
     ledger_path,
 ):
-    """Negative test: synthetic contaminated top_factors_block fails audit.
+    """Negative test: contaminated top_factors_block fails the scoped scan.
 
     Per amendment §6 A-Lock-4 sub-spec contract: scoped scan over
-    top_factors_block field for extended forbidden-language list
-    (regime, holdout, pass, fail, score, quality, signal, performance).
+    ``ProposerPrompt.top_factors_block`` field for extended forbidden-
+    language list. Wave A-3 review (4-way HIGH convergence): test now
+    passes a ProposerPrompt with system/user/factor_menu empty so the
+    scoped scan path is the SOLE source of findings, and asserts the
+    "top_factors_block:" prefix to confirm Layer 2 specifically fired.
     """
-    from agents.proposer.prompt_builder import audit_prompt_for_leakage
+    from agents.proposer.prompt_builder import (
+        ProposerPrompt,
+        audit_prompt_for_leakage,
+    )
 
+    # "score" + "passing" are in the extended scoped list but NOT in the
+    # global FORBIDDEN_PATTERNS as raw tokens (well "score" was added at
+    # Wave A-3 review per sec-F3; this test uses "passing" which is
+    # scoped-only).
     contaminated = (
-        "Available factors (top regime-holdout-passing): "
+        "Available factors (by passing quality): "
         "sma_20, rsi_14, atr_14"
     )
-    findings = audit_prompt_for_leakage(contaminated)
+    prompt = ProposerPrompt(
+        system="",
+        user="",
+        factor_menu="",
+        top_factors_block=contaminated,
+    )
+    findings = audit_prompt_for_leakage(prompt)
     assert findings, (
-        f"Contaminated top_factors_block with 'regime' + 'holdout' + "
-        f"'passing' must trigger audit failure. Got empty findings: "
-        f"{findings}"
+        f"Contaminated top_factors_block with scoped-list tokens "
+        f"'passing' + 'quality' must trigger audit failure. "
+        f"Got empty findings: {findings}"
+    )
+    # Confirm Layer 2 specifically fired (not just Layer 1 catching a
+    # global pattern). Findings from the scoped scan are prefixed with
+    # "top_factors_block:".
+    scoped_findings = [f for f in findings if f.startswith("top_factors_block:")]
+    assert scoped_findings, (
+        f"Scoped scan (Layer 2) must produce at least one finding "
+        f"prefixed 'top_factors_block:'. Got: {findings}"
     )
 
 
