@@ -1,6 +1,6 @@
 # Phase 5.1 Cost-Model Investigation Note
 
-**Status:** WORKING DRAFT — Tasks 1 + 2 complete (sealed input survey + cost regime enumeration); Tasks 3-9 pending Charlie register at respective gates.
+**Status:** WORKING DRAFT — Tasks 1 + 2 + 3 + 4 complete (sealed input survey + cost regime enumeration + pre-declared interpretation rules with W4 contextual note + Charlie ratify gate per Z1 one-shot register; §3 LOCKED per anti-momentum-binding); Tasks 5-9 pending Charlie register at respective gates.
 
 **Cycle anchor:** Phase 5.1 cost-model investigation cycle (Bucket-1-style investigation note per Template B). Entry register-event boundary fired at 2026-05-17 via Charlie register "authorize on convergence" + "Option α" + "agree with your lean" + β-2 sequencing + "Cadence β authorized".
 
@@ -42,8 +42,9 @@ Disposition is `eligible`, NOT `authorized` — Phase 5.1 cycle shape was Charli
 | Task 1.7 mini-gate ratify | "Option 2 authorized" | Charlie register at 2026-05-17 | Input survey ratified; §4.4 disclosure note added explaining Step 1.5 empty grep is documented audit-trail (7bps canonical in `config/execution.yaml`; PHASE2C_15_PLAN inherits without restating); Task 2 grounding discipline binding (PHASE4_PLAN + execution.yaml canonical, not PHASE2C_15_PLAN) |
 | Audit-trail micro-fix (canonicalize plan) | "Option A authorized" | Charlie register at 2026-05-17 | Plan moved from /tmp/ to docs/phase5/PHASE5_1_INVESTIGATION_PLAN.md git-tracked location; committed at `9204932` with audit-trail-durability framing |
 | Audit-symmetry commit (track investigation note) | implicit per "Both agree close audit asymmetry first" | Charlie register at 2026-05-17 | Investigation note (this file) added to git tracking; co-coupled with plan; cycle artifact set audit-trail symmetric; Task 2 fire deferred to next session per "fire task 2 next session" Charlie register text |
-| Task 2 fire (cost regime enumeration; §1 + §2) | "then authorized path 1" (paired with prior Path 2 CLAUDE.md spend-fix authorization "let do path 2, it should be really quick fix") | Charlie register at 2026-05-17 (next-session entry) | Task 2 fire authorized; §1 scope text + §2 cost regime enumeration written with 3 regime buckets (R/RC/S) + per-regime execution-reality declaration + external-grounding declaration verbatim per plan §3 Task 2.3; PHASE4_PLAN + `config/execution.yaml` cited as canonical sources per Task 1.7 grounding-discipline binding; Task 3 fire awaits separate fresh Charlie register per anti-momentum-binding strict reading |
-| Pre-declared rules gate (Task 4) | PENDING | After Task 3 fire | Required before Task 5 (analytical pass) fire; narrowed-scope per Task 1.7 split (Tasks 2-3 only) |
+| Task 2 fire (cost regime enumeration; §1 + §2) | "then authorized path 1" (paired with prior Path 2 CLAUDE.md spend-fix authorization "let do path 2, it should be really quick fix") | Charlie register at 2026-05-17 (next-session entry) | Task 2 fire authorized; §1 scope text + §2 cost regime enumeration written with 3 regime buckets (R/RC/S) + per-regime execution-reality declaration + external-grounding declaration verbatim per plan §3 Task 2.3; PHASE4_PLAN + `config/execution.yaml` cited as canonical sources per Task 1.7 grounding-discipline binding; committed standalone at `7cb37c2` per Decision 1 B (Task 2 substantive design vs Task 3 mechanical transcription separated for audit-trail granularity) |
+| Task 3 fire (pre-declared interpretation rules + W4 contextual note) | "authorized on B + E + §3 加上下文, approve W4" | Charlie register at 2026-05-17 | Task 3 fire authorized after 2-reviewer convergence (ChatGPT + Claude advisor) on B + E + §3 contextual note routing + W4 wording choice (hybrid: ChatGPT short visible thesis sentence at top + advisor positive-framing "salvageable-under-the-research-time-cost-assumption-as-defined" articulation in body); §3 populated with W4 contextual note at top + plan §3 verbatim transcription (§3.1-§3.5) |
+| Task 4 ratify (pre-analytical-pass gate; Tasks 2-3) | "approve z1" | Charlie register at 2026-05-17 | Task 4 ratify fired per Z1 one-shot register bundle: (1) apply micro-fix in §3.1 — restore plan §3 verbatim `net_sharpe` per ChatGPT plan-verbatim-discipline routing + inline schema-mapping footnote linking to §4.2 `holdout_sharpe` CSV column; (2) ratify Tasks 2-3 at refined state (W4 D-II/D-III addendum skipped per advisor self-flagged polish-not-fix framing); (3) C1 Task 3 standalone commit; (4) P2 defer push to SEAL. §3 LOCKED per anti-momentum-binding strict reading; modifications require errata register-event per §3.4 violation declaration. Task 5 (analytical pass) fire awaits separate fresh Charlie register at next register-event boundary |
 | Pre-SEAL Codex routing decision | PENDING | After Task 7 | Required before Task 9 (Codex fire decision) |
 | SEAL register | PENDING | After Task 8 + 9 | Required for final commit + (conditional) Phase Marker advance |
 
@@ -123,7 +124,88 @@ Per plan §3 Task 2.1 (locked at plan ratify; mapping each grid point of the sea
 
 ## §3 — Pre-declared interpretation rules
 
-`[pending Task 3 — to be written with per-stratum disposition framework (D-IV-first sequencing + D-I/II/III/IV) + joint successor matrix + violation declaration + illustrative classification examples table; locked at Charlie ratify in Task 4 (Tasks 2-3 ratify)]`
+**§3 D-I is an operational cost-regime classification, not a deployable-alpha claim.** Specifically, D-I label uses "cost-conservatism" operationally per plan §3.2 binary criteria (meeting at 7bps research-time cost AND failing at 15bps realistic cost). The cross-source composition observation surfaced at §2.1 (research-time 7bps assumes 4bps taker per `config/execution.yaml`'s futures-fee-schedule label, while realistic 15bps assumes 10bps spot taker per PHASE4_PLAN §1.4 line 44) constrains D-I firing's interpretation to **"salvageable-under-the-research-time-cost-assumption-as-defined"** — NOT "salvageable under realistic spot execution". Whether the 7bps research-time baseline itself reflects deployable spot reality is a separate project-historical question reserved for §7 forward-only carry-forward. PHASE4_PLAN §1.4 line 50 already acknowledges this: "research-time 7 bps per side substantively below realistic floor."
+
+§3.1 – §3.5 below transcribed verbatim from plan §3 (Tasks 3.1 – 3.5) per plan-ratified state; locked at Task 4 Charlie ratify per anti-momentum-binding strict reading. Modifications after Task 4 require errata register-event at separate Charlie register-event boundary per §3.4 violation declaration.
+
+---
+
+### §3.1 — Metric of interest
+
+Computed for interpretation:
+
+- **Per-candidate:** net Sharpe at each cost regime *(operationalized in Task 5 using the `holdout_sharpe` CSV column from §4.2 schema, computed at each of 7/13/15/17 bps cost runs)*.
+- **Per-stratum aggregate:** count of candidates with `net_sharpe > 0` at each cost regime; binomial test result vs PHASE4_PLAN §1.5 threshold.
+
+Reference: PHASE4_PLAN §1.5 used `binomial test on positive-forward-Sharpe count` per stratum at 15bps as success criterion — **Stratum A ≥17/22** (achieved per-stratum α=0.0085), **Stratum B ≥13/17** (achieved per-stratum α=0.0245), Bonferroni-adjusted nominal α=0.025 per stratum (family-wise α=0.05 controlled).
+
+---
+
+### §3.2 — Per-stratum disposition framework with D-IV-first sequencing
+
+Each of Stratum A and Stratum B is classified INDEPENDENTLY using a two-step process; per-stratum dispositions then aggregate to joint pattern at §3.3.
+
+**Step A (D-IV sanity check, applied FIRST per stratum):**
+
+Is the binomial-test positive-count sequence at this stratum across [7, 13, 15, 17] bps **weakly monotonic non-increasing** (`count[i+1] ≤ count[i]` for all i; ties allowed)?
+
+- NO → **D-IV (non-categorical)**: methodology / sample-size issue on this stratum. STOP per-stratum classification at Step A.
+- YES → proceed to Step B.
+
+**Step B (binary classification, only if Step A passes):**
+
+With monotonicity verified, classify by binary (meets-at-7bps, meets-at-15bps) per Phase 4 §1.5 binomial threshold (Stratum A ≥17/22, Stratum B ≥13/17):
+
+- meets at 7 AND meets at 15 → **D-III (persistent alpha)**: alpha persists at realistic 15bps cost on this stratum
+- meets at 7 AND fails at 15 → **D-I (cost-conservatism)**: salvageable on this stratum at research-time 7bps cost; cost-conservatism is the proximate cause of Phase 4 null on this stratum
+- fails at 7 (which under monotonicity implies fails at 13, 15, 17) → **D-II (cost not the cause)**: cost is NOT the dominant failure mode on this stratum (lowest tested cost still produces null)
+
+Genuinely MECE per stratum under D-IV-first sequencing.
+
+---
+
+### §3.3 — Aggregate successor matrix (joint patterns → eligible-not-named paths)
+
+The investigation's overall disposition is the JOINT pattern across both strata. Per METHODOLOGY_NOTES §10 sub-§§ codified at Path 3 Pass 2, all successor paths surfaced as eligible-not-named — NOT recommendations, ordering, or pre-characterizations:
+
+| Joint (A, B) | Eligible-not-named successor paths |
+|---|---|
+| (D-III, D-III) | Persistent alpha on full cohort. Paper trading on full 39-candidate cohort at realistic 15bps cost is eligible. Extended real-cost-discovery to confirm realistic cost is eligible. |
+| (D-III, D-I), (D-III, D-II), (D-I, D-II) — **mixed disposition** | Paper trading on stronger-disposition stratum subset is eligible. Extended real-cost-discovery on the cost-conservatism hypothesis is eligible. Strategic reconsideration on weaker-disposition stratum is eligible. |
+| (D-I, D-I) | Both strata salvageable at research-time cost. Paper trading at research-time cost basis on full cohort is eligible. Extended real-cost-discovery to confirm realistic cost is eligible. |
+| (D-II, D-II) | Cost not the cause anywhere. Strategy / asset / timeframe reconsideration is eligible. Bandit-dedup activation is structurally relevant ONLY conditional on separate Charlie register for batch cadence resumption intent per [`PARKED_BRANCHES.md`](../parked/PARKED_BRANCHES.md) — joint pattern firing does NOT automatically constitute batch cadence resumption intent. Paradigm-exhaustion is eligible-not-named. |
+| Any D-IV | Methodology refinement at separate register-event eligible BEFORE further interpretation on the D-IV stratum. Investigation note's overall successor routing is deferred for the D-IV stratum until methodology is refined. |
+
+---
+
+### §3.4 — Violation declaration (HARD STOP triggers)
+
+The following would constitute post-hoc threshold fitting (anti-alpha-rescue violation):
+
+- Adjusting cost regime ranges in §2 after seeing §5 analytical results to make a more favorable disposition fire
+- Adding new dispositions or matrix rows in §3 after §5 results to capture a borderline result
+- Modifying the metric-of-interest in §3.1 after §5 to use a different threshold that produces a more favorable disposition
+- Re-running the analytical pass at additional non-pre-declared cost values to find a more favorable result
+- Relaxing the D-IV monotonicity requirement after §5 to push a non-monotonic stratum into D-I/D-II/D-III
+- Re-framing successor paths in §7 to inject ordering / recommendation / pre-characterization after §6 fires
+
+If any of these are tempted after §5, the correct action is HARD STOP + errata register-event at separate Charlie register-event boundary, not silent modification.
+
+---
+
+### §3.5 — Illustrative classification examples (Task 6 mechanical-application reference)
+
+The following table illustrates how the per-stratum disposition framework applies to hypothetical count sequences. **These are illustrative classification examples, NOT formal correctness validation tests** — they exist to make Task 6 mechanical application auditable, not to validate the rules themselves.
+
+| Hypothetical count sequence at [7, 13, 15, 17] bps | Stratum (threshold differs) | Step A: monotonic? | Step B: meets / fails | D-classification | Notes |
+|---|---|---|---|---|---|
+| [17, 12, 11, 10] | A (threshold ≥17/22) | yes (17≥12≥11≥10) | meets-7 (17=17) AND fails-15 (11<17) | **D-I** | matches observed Phase 4 §3 Stratum A pattern |
+| [9, 8, 7, 5] | B (threshold ≥13/17) | yes | fails-7 (9<13) | **D-II** | matches observed Phase 4 §3 Stratum B pattern |
+| [17, 15, 13, 17] | A | NO (13 < 17 at last step violates non-increasing) | n/a (Step A fails) | **D-IV** | non-monotonic; Task 6 mechanical application halts at Step A |
+| [22, 22, 22, 22] | A | yes (flat counts as weak non-increasing) | meets-7 (22≥17) AND meets-15 (22≥17) | **D-III** | hypothetical strong cohort; ties at boundary acceptable |
+| [17, 17, 17, 17] | A | yes (flat) | meets-7 AND meets-15 | **D-III** | hypothetical alpha at threshold edge; ties acceptable |
+
+These examples illustrate the mechanical application of Steps A + B. Task 6 fire applies the same logic to actual §5 results.
 
 ---
 
