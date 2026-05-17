@@ -136,11 +136,25 @@ Per METHODOLOGY_NOTES §1 + §2 user-question discipline. Charlie register-event
 
 3 e2e tests validating both tracks compose correctly via direct module calls.
 
-### `ingest_candidate()` production wiring — DEFERRED with explicit activation contract
+### Track B `ingest_candidate()` production wiring — DEFERRED with explicit activation contract
 
 The orchestrator-level glue that automatically routes near-duplicates to `NEAR_DUPLICATE` state inside `ingest_candidate()` is **NOT** in this arc. **Activation trigger**: this wiring lands as commit (2) inside the activation pre-merge checklist sequence at Appendix A; it is NOT a separate cycle-entry register-event and does NOT require fresh Charlie authorization beyond the merge fire register-event.
 
 **Honest scope estimate** (Wave-closeout architect F4 correction to prior "3-5 LOC" understatement): the wiring requires (i) model instantiation at orchestrator startup behind `check_embedding_stack_or_raise()`; (ii) `embed_dsl` + cache-write per candidate; (iii) compound-gate scan against existing `state.embedding_cache`; (iv) `tau_c` config plumbing (from `config/execution.yaml` or analogous); (v) `finalize_batch_embedding_cache(state)` call at batch close; (vi) test coverage extending `tests/test_orchestrator_ingest.py`. **Estimated diff: ~30-80 LOC at `agents/orchestrator/ingest.py::ingest_candidate()` before `PENDING_BACKTEST` routing, plus config + test extension.** The lock surface for B-Lock-3 is honored at module boundary today; runtime enforcement gates on this wiring.
+
+### Track A bandit production wiring — DEFERRED with explicit activation contract (added per post-SEAL Codex F2)
+
+Symmetric to Track B above: Codex adversarial review (post-SEAL, commit `5333b31` errata) F2 correctly observed that **`curate_top_k` and `observe_batch` are referenced only from tests/scripts on this branch, not from the production stage batch runners** (`agents/proposer/stage2b_batch.py`, `agents/proposer/stage2d_batch.py`, `agents/proposer/sonnet_backend.py`). The closeout originally enumerated Track B wiring deferral only; this addendum makes the Track A deferral symmetric.
+
+**Track A wiring tasks** (activation-time work, NOT this arc):
+
+- (T-A-1) **At batch open**: orchestrator reads `factor_posterior` DB via `init_factor_posterior_db(ledger_path)` (idempotent), calls `curate_top_k(batch_id=..., k=K, ledger_path=...)`, extracts `BatchBanditSelection.top_factors`, and passes the tuple into `build_prompt(..., top_factors=...)` via the existing parameter at [`prompt_builder.py:117`](../../agents/proposer/prompt_builder.py).
+- (T-A-2) **At batch close**: after `assert_lifecycle_invariant_at_batch_close(state)` passes, the orchestrator extracts each hypothesis's `regime_holdout_passed` outcome + factor set via `extract_factors(dsl)`, then calls `observe_batch(batch_id=..., observations=..., ledger_path=...)`. Per post-SEAL Codex F3 fix (commit `5333b31`), this call is now idempotent under retry/replay.
+- (T-A-3) **Stage batch runner integration**: `agents/proposer/stage2b_batch.py` + `agents/proposer/stage2d_batch.py` orchestration loop wiring; specifically the batch-open and batch-close hook points around the existing per-candidate `_build_prompt(...)` site at `sonnet_backend.py:180-201`.
+- (T-A-4) **Test coverage**: extend stage-batch integration tests beyond the existing module-only `tests/test_factor_bandit.py` + e2e `tests/test_bandit_dedup_e2e.py`. The current tests prove the modules compose; activation needs a stage-batch-runner integration test that proves the curated menu actually reaches the live Proposer call.
+- (T-A-5) **Bandit ledger path**: pick a stable path (e.g., `agents/factor_bandit.db` adjacent to `agents/spend_ledger.db`, OR a new column in spend_ledger DB) and wire `ledger_path` into orchestrator config; document in CLAUDE.md HARD CONSTRAINTS at merge time.
+
+**Estimated diff**: similar to Track B (~30-80 LOC + config + integration test), focused on `stage2*_batch.py` orchestration loops rather than `ingest_candidate()`. The lock surfaces for A-Lock-1/2/3/4/5/6/7 are honored at module boundary today; runtime enforcement gates on this wiring (same as Track B).
 
 ---
 
@@ -263,9 +277,11 @@ When Charlie register-event activates this work (per [`docs/parked/PARKED_BRANCH
 
 **Additional activation-time tasks (within or alongside the 10-item checklist)**:
 
-1. **`ingest_candidate()` wiring**: ~30-80 LOC at `agents/orchestrator/ingest.py::ingest_candidate()` adding the semantic_dedup hook + config + model handle + test extension. See §4 honest scope estimate.
-2. **HARD CONSTRAINT codification**: merge of the 14 + 1 extended discipline locks into main's CLAUDE.md as part of the merge atomic update.
-3. **Tag**: e.g., `phase2.5-bandit-dedup-v1` at merge commit (per project convention from `phase4-forward-test-v1` / `phase5-diagnostic-execution-v1`).
+1. **Track B `ingest_candidate()` wiring**: ~30-80 LOC at `agents/orchestrator/ingest.py::ingest_candidate()` adding the semantic_dedup hook + config + model handle + test extension. See §4 "Track B" honest scope estimate.
+2. **Track A bandit wiring** (added per post-SEAL Codex F2): ~30-80 LOC across `agents/proposer/stage2b_batch.py` + `stage2d_batch.py` adding `curate_top_k` call at batch open and `observe_batch` call at batch close. See §4 "Track A" T-A-1..T-A-5 enumeration.
+3. **Startup model-SHA verification** (added per post-SEAL Codex F4): extend `check_embedding_stack_or_raise` to ALSO load the configured sentence-transformers model in offline mode, compute `model_artifact_sha(model)`, compare against the recorded SHA at `data/phase2_5/btau_calibration_v2/sweep_results.json:model_first_param_sha` (currently `352d34a4ad725bb7`), and raise `RuntimeError` on mismatch. The Wave B-3 fix promoted the env-var offline mode but deferred the SHA assertion; Codex F4 escalated this to merge-blocking. Without this verification, a `pip install -U` could silently swap to a different model artifact that invalidates the calibrated τ_c=0.99.
+4. **HARD CONSTRAINT codification**: merge of the 14 + 1 extended discipline locks into main's CLAUDE.md as part of the merge atomic update.
+5. **Tag**: e.g., `phase2.5-bandit-dedup-v1` at merge commit (per project convention from `phase4-forward-test-v1` / `phase5-diagnostic-execution-v1`).
 
 ---
 
@@ -303,3 +319,26 @@ Per Charlie umbrella authorization: 2 parallel internal subagents (architect + p
 **Reviewer convergence at closeout**: zero direct convergences between architect (6 findings) and planner (6 findings); reviewers attacked different axes (architect = mechanical accounting + discipline lock spot-checks; planner = methodological discipline + structural precedent comparison). Both verdicts (needs fixes / BLOCK pending fixes) directionally agreed.
 
 **HIGH-severity fixes (3) all applied**: A-F2 test count truth (§6), P-F1 asymmetric confidence (§1 + §4), P-F4 Appendix C populated (this appendix). Medium-severity fixes (7) all applied. Low-severity fixes (2) all applied as ADOPT-LIGHT. No PASS, no PUSHBACK, no DEFER.
+
+---
+
+## §11 Post-SEAL errata register
+
+Per Charlie register-event 2026-05-16, after the arc-level closeout SEAL at `560c5b9`, an adversarial Codex review was fired against the branch (`/codex:adversarial-review` against `main`). Codex returned 4 HIGH findings; adjudication and dispositions recorded here as a post-SEAL errata register-event (analogous to Path 3 errata register-event precedent).
+
+| Codex finding | Severity | Disposition | Resolution |
+|---|---|---|---|
+| F1 — Semantic dedup state unreachable in `ingest_candidate()` | high | **PUSHBACK on severity framing; underlying observation correct but already disclosed** | No new action. Closeout §1 + §4 (Track B paragraph) + §5 B-Lock-3 row + V13 + Appendix A item 1 all already disclose this deferral. Codex's "operators believe Track B is active" overstates risk for any reader of the closeout. Codex's recommended wiring matches Appendix A item 1 verbatim. |
+| F2 — Factor bandit not on production batch path | high | **ADOPT (disclosure gap)** | §4 originally enumerated Track B `ingest_candidate()` wiring but did not symmetrically enumerate Track A's `stage2*_batch.py` wiring. §4 now has a parallel "Track A bandit production wiring" subsection with T-A-1..T-A-5 enumeration. Appendix A activation tasks now includes Track A bandit wiring as item 2 (was previously only Track B). |
+| F3 — `observe_batch` double-counts on retry | high | **ADOPT (genuine bug; not previously caught)** | Code fix committed as post-SEAL errata at `5333b31`: UNIQUE(batch_id, hypothesis_hash, factor_id) constraint on `factor_bandit_observations` + `INSERT OR IGNORE` + conditional posterior UPSERT (skip if duplicate). New regression test `test_a_t5_observe_batch_idempotent_on_replay`. Test count 115 → 116; zero regressions. Wave A-3 codex F1 caught the SQL-level concurrency race; Wave A-3 missed the replay-idempotency angle (closing both windows together). |
+| F4 — Embedding calibration drift from unpinned stack | high | **ADOPT-LIGHT (partially addressed; remainder disclosed as activation work)** | Wave B-3 sec-F2 added torch upper cap. Codex F4 escalates: also need startup model-SHA verification (compare loaded model against recorded `352d34a4ad725bb7`, raise on mismatch). Closeout Appendix A activation tasks now includes "Startup model-SHA verification" as item 3 with explicit failure mode (silent `pip install -U` swap invalidates calibration). No code change at this errata commit — fits naturally as activation-time work. |
+
+**Reviewer convergence with prior cycles**: Codex F3 was a NEW finding (not raised by any Wave A-3 reviewer; the closest prior was codex Wave A-3 F1 on concurrency, which is mechanically related but addresses lost-update via locks, not replay-duplication via uniqueness). Codex F4 is an ESCALATION of Wave B-3 sec-F2 (which was previously ADOPT-LIGHT with torch cap only). Codex F1 + F2 are NEW disclosure-symmetry findings on already-deferred work.
+
+**Discipline preserved at errata**:
+- Errata register-event is on parked branch only; main untouched
+- F3 code fix preserves A-Lock-5 (append-only — INSERT OR IGNORE is still INSERT at SQL level, no UPDATE/DELETE), A-Lock-6 (posterior mutates only in observe_batch), A-Lock-1/2/7 (no LLM-visible surface change)
+- F2 + F4 doc tightening adds disclosure scope without modifying any sub-spec decision or discipline lock
+- No new tag; no Phase Marker advance; pre-merge verification gate unchanged
+
+**Branch state post-errata**: `phase2.5/bandit-dedup` at `5333b31` (F3 code fix) + this commit (closeout errata doc tightening) — 2 commits past arc-closeout SEAL `560c5b9`. Final test count 116/116 pass.
