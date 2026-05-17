@@ -1,6 +1,6 @@
 # Phase 5.1 Cost-Model Investigation Note
 
-**Status:** WORKING DRAFT — Tasks 1 + 2 + 3 + 4 complete (sealed input survey + cost regime enumeration + pre-declared interpretation rules with W4 contextual note + Charlie ratify gate per Z1 one-shot register; §3 LOCKED per anti-momentum-binding); Tasks 5-9 pending Charlie register at respective gates.
+**Status:** WORKING DRAFT — Tasks 1 + 2 + 3 + 4 + 5 + 6 complete (sealed input survey + cost regime enumeration + pre-declared interpretation rules LOCKED + Tasks 2-3 ratify + analytical pass + mechanical rule application per Cadence β; joint pattern (D-I, D-II) → §3.3 mixed disposition row; NO §3.4 violation triggered); Task 7 (successor routing observation matrix + forward-only carry-forward) + Tasks 8-9 pending Charlie register at respective gates.
 
 **Cycle anchor:** Phase 5.1 cost-model investigation cycle (Bucket-1-style investigation note per Template B). Entry register-event boundary fired at 2026-05-17 via Charlie register "authorize on convergence" + "Option α" + "agree with your lean" + β-2 sequencing + "Cadence β authorized".
 
@@ -44,7 +44,8 @@ Disposition is `eligible`, NOT `authorized` — Phase 5.1 cycle shape was Charli
 | Audit-symmetry commit (track investigation note) | implicit per "Both agree close audit asymmetry first" | Charlie register at 2026-05-17 | Investigation note (this file) added to git tracking; co-coupled with plan; cycle artifact set audit-trail symmetric; Task 2 fire deferred to next session per "fire task 2 next session" Charlie register text |
 | Task 2 fire (cost regime enumeration; §1 + §2) | "then authorized path 1" (paired with prior Path 2 CLAUDE.md spend-fix authorization "let do path 2, it should be really quick fix") | Charlie register at 2026-05-17 (next-session entry) | Task 2 fire authorized; §1 scope text + §2 cost regime enumeration written with 3 regime buckets (R/RC/S) + per-regime execution-reality declaration + external-grounding declaration verbatim per plan §3 Task 2.3; PHASE4_PLAN + `config/execution.yaml` cited as canonical sources per Task 1.7 grounding-discipline binding; committed standalone at `7cb37c2` per Decision 1 B (Task 2 substantive design vs Task 3 mechanical transcription separated for audit-trail granularity) |
 | Task 3 fire (pre-declared interpretation rules + W4 contextual note) | "authorized on B + E + §3 加上下文, approve W4" | Charlie register at 2026-05-17 | Task 3 fire authorized after 2-reviewer convergence (ChatGPT + Claude advisor) on B + E + §3 contextual note routing + W4 wording choice (hybrid: ChatGPT short visible thesis sentence at top + advisor positive-framing "salvageable-under-the-research-time-cost-assumption-as-defined" articulation in body); §3 populated with W4 contextual note at top + plan §3 verbatim transcription (§3.1-§3.5) |
-| Task 4 ratify (pre-analytical-pass gate; Tasks 2-3) | "approve z1" | Charlie register at 2026-05-17 | Task 4 ratify fired per Z1 one-shot register bundle: (1) apply micro-fix in §3.1 — restore plan §3 verbatim `net_sharpe` per ChatGPT plan-verbatim-discipline routing + inline schema-mapping footnote linking to §4.2 `holdout_sharpe` CSV column; (2) ratify Tasks 2-3 at refined state (W4 D-II/D-III addendum skipped per advisor self-flagged polish-not-fix framing); (3) C1 Task 3 standalone commit; (4) P2 defer push to SEAL. §3 LOCKED per anti-momentum-binding strict reading; modifications require errata register-event per §3.4 violation declaration. Task 5 (analytical pass) fire awaits separate fresh Charlie register at next register-event boundary |
+| Task 4 ratify (pre-analytical-pass gate; Tasks 2-3) | "approve z1" | Charlie register at 2026-05-17 | Task 4 ratify fired per Z1 one-shot register bundle: (1) apply micro-fix in §3.1 — restore plan §3 verbatim `net_sharpe` per ChatGPT plan-verbatim-discipline routing + inline schema-mapping footnote linking to §4.2 `holdout_sharpe` CSV column; (2) ratify Tasks 2-3 at refined state (W4 D-II/D-III addendum skipped per advisor self-flagged polish-not-fix framing); (3) C1 Task 3 standalone commit; (4) P2 defer push to SEAL. §3 LOCKED per anti-momentum-binding strict reading; modifications require errata register-event per §3.4 violation declaration |
+| Tasks 5 + 6 fire (Cadence β batched: analytical pass + mechanical rule application; stop at Task 7 β-boundary) | "approve β" | Charlie register at 2026-05-17 | Cadence β authorized per 2-reviewer convergence + my recommended lean (Tasks 5+6 mechanical natural pair; substantive decisions = 0 except HARD STOP scenarios; β-stop at Task 7 substantive-read boundary). §5 populated as V14 pure-observation deliverable (data load + counts + binomial p + monotonicity + threshold comparison + Phase 4 §3 cross-reference). §6 populated as mechanical D-IV-first classification (Stratum A → D-I, Stratum B → D-II) + joint pattern (D-I, D-II) → §3.3 mixed disposition matrix row verbatim transcription + 6-item §3.4 HARD STOP check (NO violation triggered). W4 contextual note applied to D-I firing on Stratum A per §6.1. Cross-reference to §3.5 illustrative classification examples first two rows: byte-match on count sequences confirms mechanical application precedent. Task 7 fire awaits separate fresh Charlie register at β-stop boundary |
 | Pre-SEAL Codex routing decision | PENDING | After Task 7 | Required before Task 9 (Codex fire decision) |
 | SEAL register | PENDING | After Task 8 + 9 | Required for final commit + (conditional) Phase Marker advance |
 
@@ -289,13 +290,106 @@ Stratum split (A=22 calendar_effect / B=17 non-calendar; sealed at Phase 4 §1.3
 
 ## §5 — Analytical pass: per-candidate cost-regime sensitivity decomposition
 
-`[pending Task 5 — Charlie ratify of Task 4 required before fire]`
+### §5.1 — Data load + schema verification
+
+4 cost-run CSVs loaded from `data/phase2c_evaluation_gate/phase4_forward_2026_{07,13,15,17}bps_v1/holdout_results.csv`. Each contains 39 rows (cohort_a candidates). Schema uniform across all 4 cost-runs (13 columns: `hypothesis_hash`, `position`, `theme`, `name`, `wf_test_period_sharpe`, `lifecycle_state`, `holdout_passed`, `holdout_sharpe`, `holdout_max_drawdown`, `holdout_total_return`, `holdout_total_trades`, `wall_clock_seconds`, `error_message`).
+
+### §5.2 — Stratum derivation + split verification
+
+Stratum derived from `theme` column per §4.3 (`theme == "calendar_effect"` → A; else → B). Per-cost-run stratum split: **A=22, B=17** across all 4 cost-runs (consistent with sealed Phase 4 §1.3 stratification + §4 reference artifact).
+
+### §5.3 — Per-stratum positive-`holdout_sharpe` count by cost regime
+
+Count of candidates with `holdout_sharpe > 0` per (stratum, cost regime) cell:
+
+| Stratum | 7 bps | 13 bps | 15 bps | 17 bps |
+|---|---|---|---|---|
+| A (n=22) | 17 | 12 | 11 | 10 |
+| B (n=17) | 9 | 8 | 7 | 5 |
+
+### §5.4 — One-sided binomial test p-values
+
+Per §3.1 metric (H_0: fraction with positive Sharpe = 0.5; H_a: > 0.5; computed via `scipy.stats.binomtest(positive, total, p=0.5, alternative="greater")`):
+
+| Stratum | 7 bps | 13 bps | 15 bps | 17 bps |
+|---|---|---|---|---|
+| A | 0.0085 | 0.4159 | 0.5841 | 0.7383 |
+| B | 0.5000 | 0.6855 | 0.8338 | 0.9755 |
+
+### §5.5 — Count sequence + monotonicity descriptive observation
+
+- **Stratum A** count sequence at [7, 13, 15, 17] bps: **[17, 12, 11, 10]**. Weakly monotonic non-increasing (17 ≥ 12 ≥ 11 ≥ 10; verified `count[i+1] ≤ count[i]` for all i).
+- **Stratum B** count sequence at [7, 13, 15, 17] bps: **[9, 8, 7, 5]**. Weakly monotonic non-increasing (9 ≥ 8 ≥ 7 ≥ 5; verified `count[i+1] ≤ count[i]` for all i).
+
+### §5.6 — Threshold comparison (Phase 4 §1.5 binomial thresholds: A ≥17/22, B ≥13/17)
+
+Per-cell meets-threshold:
+
+| Stratum | 7 bps | 13 bps | 15 bps | 17 bps |
+|---|---|---|---|---|
+| A (≥17/22) | meets (17=17) | fails (12<17) | fails (11<17) | fails (10<17) |
+| B (≥13/17) | fails (9<13) | fails (8<13) | fails (7<13) | fails (5<13) |
+
+### §5.7 — Cross-reference to plan §3 Task 5.4 expected reproduction
+
+Stratum A 15bps p=0.5841 and Stratum B 15bps p=0.8338 match the values stated as expected reproduction targets in plan §3 Task 5.4 (sourced from Phase 4 §3 binomial-test results). Counts at 15bps (A=11/22, B=7/17) and corresponding p-values reproduce sealed Phase 4 §1.5 success-criterion-basis evaluation.
+
+§5 contains analytical output (data load metadata + counts + p-values + descriptive monotonicity observation + threshold comparison + cross-reference) only per V14 anchor. Interpretation via §3 rule application lives at §6.
 
 ---
 
 ## §6 — Pre-declared rule application
 
-`[pending Task 6]`
+### §6.1 — Per-stratum disposition classification (D-IV-first sequencing per §3.2)
+
+**Stratum A** (count sequence [17, 12, 11, 10] at [7, 13, 15, 17] bps per §5.5):
+
+- Step A (monotonicity check): **YES** — weakly monotonic non-increasing per §5.5; proceed to Step B
+- Step B (binary classification at Phase 4 §1.5 threshold ≥17/22):
+  - meets-at-7bps: **YES** (17 = 17 per §5.6)
+  - meets-at-15bps: **NO** (11 < 17 per §5.6)
+- **Classification: D-I (cost-conservatism)** — per §3.2 Step B "meets at 7 AND fails at 15 → D-I". Salvageable on Stratum A at research-time 7bps cost; cost-conservatism is the proximate cause of Phase 4 null on Stratum A.
+
+**Stratum B** (count sequence [9, 8, 7, 5] at [7, 13, 15, 17] bps per §5.5):
+
+- Step A (monotonicity check): **YES** — weakly monotonic non-increasing per §5.5; proceed to Step B
+- Step B (binary classification at Phase 4 §1.5 threshold ≥13/17):
+  - meets-at-7bps: **NO** (9 < 13 per §5.6) → fails-at-7 trigger (which under monotonicity implies fails at 13, 15, 17 per §3.2 Step B)
+- **Classification: D-II (cost not the cause)** — per §3.2 Step B "fails at 7 → D-II". Cost is NOT the dominant failure mode on Stratum B (lowest tested cost still produces null).
+
+**Cross-reference to §3.5 illustrative examples**: §5.5 count sequences for both strata byte-match the first two rows of §3.5 illustrative classification examples table ([17, 12, 11, 10] for A → D-I; [9, 8, 7, 5] for B → D-II). Mechanical classification result consistent with illustrative example precedent.
+
+**W4 contextual note application (per §3 top)**: D-I firing on Stratum A is an operational cost-regime classification, NOT a deployable-alpha claim. D-I firing's interpretation is constrained to "salvageable-under-the-research-time-cost-assumption-as-defined" (per W4 contextual note) — NOT "salvageable under realistic spot execution". The §2.1 cross-source composition observation (4bps futures-fee-schedule taker per `config/execution.yaml` line 42 vs 10bps spot-taker per PHASE4_PLAN §1.4 line 44) constrains Stratum A D-I firing per this scope.
+
+### §6.2 — Per-stratum disposition table
+
+| Stratum | Step A monotonic? | Step B meets-at-7 / meets-at-15 | D-classification |
+|---|---|---|---|
+| A | YES | meets-7 (17=17) AND fails-15 (11<17) | **D-I** |
+| B | YES | fails-7 (9<13) — fails at all higher costs by monotonicity | **D-II** |
+
+### §6.3 — Joint pattern + verbatim §3.3 matrix row application
+
+**Joint pattern: (D-I, D-II)** — falls under §3.3 row 2: **mixed disposition** containing (D-III, D-I), (D-III, D-II), (D-I, D-II).
+
+Verbatim §3.3 matrix row for mixed disposition (transcribed without re-framing per §3.4 violation declaration item 6):
+
+> Paper trading on stronger-disposition stratum subset is eligible. Extended real-cost-discovery on the cost-conservatism hypothesis is eligible. Strategic reconsideration on weaker-disposition stratum is eligible.
+
+Per anti-pre-naming + eligible-not-named successor framing (§3.3 + METHODOLOGY_NOTES §10 sub-§§ codified at Path 3 Pass 2): these are surfaced as eligible-not-named paths, NOT recommendations, ordering, or pre-characterizations. Each requires fresh Charlie register at separate register-event boundary per `feedback_authorization_routing.md` hard rule.
+
+### §6.4 — Violation declaration HARD STOP check (per §3.4 6-item enumeration)
+
+| # | §3.4 violation scenario | Status |
+|---|---|---|
+| 1 | Adjusting cost regime ranges in §2 after §5 results to fire more favorable disposition | NO modification ✓ |
+| 2 | Adding new dispositions or matrix rows in §3 after §5 results to capture borderline result | NO modification ✓ |
+| 3 | Modifying metric-of-interest in §3.1 after §5 to use different threshold | NO modification ✓ |
+| 4 | Re-running analytical pass at additional non-pre-declared cost values | NO additional runs ✓ |
+| 5 | Relaxing D-IV monotonicity requirement after §5 to push non-monotonic stratum into D-I/D-II/D-III | NOT NEEDED (both strata weakly monotonic non-increasing per §5.5; D-IV did not fire) ✓ |
+| 6 | Re-framing successor paths in §7 to inject ordering / recommendation / pre-characterization after §6 fires | NOT YET REACHED (Task 7 awaits separate fresh Charlie register per Cadence β β-stop boundary); discipline binds at Task 7 fire ✓ |
+
+**NO §3.4 violation triggered. Task 6 HARD STOP not fired.** Task 7 (successor routing observation matrix + forward-only carry-forward list) eligible at separate fresh Charlie register-event boundary per Cadence β β-stop binding.
 
 ---
 
