@@ -28,7 +28,8 @@ Phase 5.1 cost-model investigation cycle entry register-event fired at 2026-05-1
 | Cadence β | "Cadence β authorized" | Charlie register at 2026-05-17 | Steps 1.2-1.6 fire in sequence; stop at Task 1.7 mini-gate |
 | Task 1.7 mini-gate ratify | "Option 2 authorized" | Charlie register at 2026-05-17 | Input survey ratified; §4.4 disclosure note added to investigation note (Step 1.5 empty grep = documented audit-trail per execution.yaml inheritance); Task 2 grounding discipline binding (PHASE4_PLAN + execution.yaml canonical, not PHASE2C_15_PLAN) |
 | Audit-trail micro-fix (canonicalize plan) | "Option A authorized" | Charlie register at 2026-05-17 | Plan moved from /tmp/ ephemeral to docs/phase5/PHASE5_1_INVESTIGATION_PLAN.md git-tracked location per ChatGPT path recommendation; commit framing audit-trail-durability; Task 2 fire requires separate fresh register |
-| Pre-declared rules gate (Task 4) | PENDING | After Tasks 2-3 | Required before Task 5 (analytical pass) fire; Task 4 scope narrowed to Tasks 2-3 by Task 1.7 split |
+| Audit-symmetry commit (track investigation note) | implicit per "Both agree close audit asymmetry first" | Charlie register at 2026-05-17 | Investigation note added to git tracking via separate commit co-coupled with plan; cycle artifact set audit-trail symmetric; Task 2 fire deferred to next session per "fire task 2 next session" Charlie register text |
+| Pre-declared rules gate (Task 4) | PENDING | After Tasks 2-3 (NEXT SESSION) | Required before Task 5 (analytical pass) fire; Task 4 scope narrowed to Tasks 2-3 by Task 1.7 split |
 | Pre-SEAL Codex routing decision | PENDING | After Task 7 | Required before Task 9 (Codex fire decision) |
 | SEAL register | PENDING | After Task 8 + 9 | Required for final commit + Phase Marker advance |
 
