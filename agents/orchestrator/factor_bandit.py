@@ -110,7 +110,12 @@ CREATE TABLE IF NOT EXISTS factor_bandit_observations (
     observed_utc TEXT NOT NULL,
     hypothesis_hash TEXT NOT NULL,
     posterior_alpha_pre INTEGER NOT NULL CHECK (posterior_alpha_pre >= 1),
-    posterior_beta_pre INTEGER NOT NULL CHECK (posterior_beta_pre >= 1)
+    posterior_beta_pre INTEGER NOT NULL CHECK (posterior_beta_pre >= 1),
+    -- Post-SEAL errata (Codex adversarial review F3): uniqueness key
+    -- prevents replay/retry double-counting. observe_batch uses
+    -- INSERT OR IGNORE and only updates the posterior when this row
+    -- is actually new (cursor.rowcount == 1).
+    UNIQUE (batch_id, hypothesis_hash, factor_id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_observations_batch
@@ -200,6 +205,12 @@ def observe_batch(
         ledger_path: Path to the SQLite database (initialized via
             ``init_factor_posterior_db``).
 
+    Idempotency: per post-SEAL errata (Codex F3), repeated invocations
+    with the same ``(batch_id, hypothesis_hash, factor_id)`` observations
+    are no-ops at both ledger and posterior level. A retry after a
+    successful commit, a duplicated batch-close hook, or a re-entrant call
+    will NOT append duplicate ledger rows or skew the Beta posterior.
+
     Raises:
         TypeError: if any observation's ``regime_passed`` is not a
             strict Python ``bool`` (rejects strings, integers, NaN —
@@ -242,9 +253,16 @@ def observe_batch(
                 else:
                     alpha_pre, beta_pre = int(row[0]), int(row[1])
 
-                # Append observation row (PRE-update posterior snapshot)
-                conn.execute(
-                    "INSERT INTO factor_bandit_observations "
+                # Append observation row (PRE-update posterior snapshot).
+                # Post-SEAL errata (Codex F3 idempotency): INSERT OR IGNORE
+                # on the UNIQUE(batch_id, hypothesis_hash, factor_id) key.
+                # A retry / replay / re-entrant call with identical observation
+                # data is silently ignored at the row level, and the posterior
+                # UPSERT below is conditioned on a successful insert. This
+                # makes ``observe_batch`` idempotent under replay — repeated
+                # invocations cannot skew the Beta posterior.
+                cursor = conn.execute(
+                    "INSERT OR IGNORE INTO factor_bandit_observations "
                     "(batch_id, factor_id, regime_holdout_passed, "
                     "observed_utc, hypothesis_hash, "
                     "posterior_alpha_pre, posterior_beta_pre) "
@@ -259,6 +277,14 @@ def observe_batch(
                         beta_pre,
                     ),
                 )
+
+                # If the observation was a duplicate (cursor.rowcount == 0),
+                # skip the posterior update entirely. The pre-existing row
+                # already recorded the (batch_id, hypothesis_hash, factor_id)
+                # outcome and the posterior was incremented at its original
+                # insert; replaying must not double-count.
+                if cursor.rowcount == 0:
+                    continue
 
                 # Update posterior (Beta(α+pass, β+fail))
                 alpha_post = alpha_pre + outcome

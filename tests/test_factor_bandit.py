@@ -167,6 +167,68 @@ def test_a_t4_curation_returns_at_most_k_factors(ledger_path):
 # ---------------------------------------------------------------------------
 
 
+def test_a_t5_observe_batch_idempotent_on_replay(ledger_path):
+    """Replaying observe_batch with same data is a no-op on ledger + posterior.
+
+    Post-SEAL errata test (Codex adversarial review F3): without an
+    idempotency guard, a retry after a successful commit, a duplicated
+    batch-close hook, or a re-entrant call would append duplicate ledger
+    rows AND increment the posterior twice — permanently skewing
+    Thompson sampling.
+
+    The UNIQUE(batch_id, hypothesis_hash, factor_id) constraint on
+    factor_bandit_observations + INSERT OR IGNORE + conditional posterior
+    UPSERT make observe_batch idempotent under replay.
+    """
+    import sqlite3
+    from agents.orchestrator.factor_bandit import (
+        get_posterior,
+        init_factor_posterior_db,
+        observe_batch,
+    )
+
+    init_factor_posterior_db(ledger_path)
+    observations = [
+        ("h1", {"sma_20"}, True),
+        ("h2", {"sma_20"}, False),
+        ("h3", {"sma_20", "rsi_14"}, True),
+    ]
+
+    # First call: posterior updates as expected
+    observe_batch(batch_id="b1", observations=observations, ledger_path=ledger_path)
+    sma_a1, sma_b1 = get_posterior("sma_20", ledger_path)
+    rsi_a1, rsi_b1 = get_posterior("rsi_14", ledger_path)
+    with sqlite3.connect(ledger_path) as conn:
+        rows_first = conn.execute(
+            "SELECT COUNT(*) FROM factor_bandit_observations"
+        ).fetchone()[0]
+
+    # Replay: must be no-op
+    observe_batch(batch_id="b1", observations=observations, ledger_path=ledger_path)
+    sma_a2, sma_b2 = get_posterior("sma_20", ledger_path)
+    rsi_a2, rsi_b2 = get_posterior("rsi_14", ledger_path)
+    with sqlite3.connect(ledger_path) as conn:
+        rows_second = conn.execute(
+            "SELECT COUNT(*) FROM factor_bandit_observations"
+        ).fetchone()[0]
+
+    assert (sma_a1, sma_b1) == (sma_a2, sma_b2), (
+        f"Replay skewed sma_20 posterior: {(sma_a1, sma_b1)} → {(sma_a2, sma_b2)}"
+    )
+    assert (rsi_a1, rsi_b1) == (rsi_a2, rsi_b2), (
+        f"Replay skewed rsi_14 posterior: {(rsi_a1, rsi_b1)} → {(rsi_a2, rsi_b2)}"
+    )
+    assert rows_first == rows_second, (
+        f"Replay duplicated ledger rows: {rows_first} → {rows_second}"
+    )
+
+    # Sanity: posterior values match the SINGLE-batch expectation
+    # (sma_20 appears in 3 hypotheses with outcomes True/False/True → α=3, β=2;
+    #  rsi_14 appears in 1 hypothesis with True → α=2, β=1)
+    assert (sma_a1, sma_b1) == (3, 2)
+    assert (rsi_a1, rsi_b1) == (2, 1)
+
+
 def test_a_t5_observations_table_append_only(ledger_path):
     """Two batches → two sets of observation rows; no UPDATE/DELETE.
 
