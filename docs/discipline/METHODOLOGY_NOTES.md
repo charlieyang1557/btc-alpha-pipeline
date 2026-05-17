@@ -352,6 +352,10 @@ Watch for "we should acknowledge this discrepancy" reasoning when the discrepanc
 
 The complementary failure mode is silent correction of actual published-result discrepancies. If a prior closeout cited a number and the current closeout's empirical query produces a different number, that's an erratum case, not a silent-correction case.
 
+### Pass 2 cross-reference extension: Option 1A atomicity at Phase Marker advance commits
+
+The §6 commit-messages-as-supporting-history principle has a paired discipline at the Phase Marker advance commit register-class boundary, codified at `feedback_claude_md_freshness.md` (out-of-repo memory rule). Cross-reference to that memory rule for the Option 1A atomicity binding requiring every Phase Marker advance commit to atomically include `CLAUDE.md` + `docs/phase_marker_history.md` (3-instance empirical validation: `578df13` + `0835805` + `14a77c0`; 4th trigger forecast at Pass 2 SEAL Phase Marker advance commit).
+
 ---
 
 ## §7 Asymmetric confidence reporting on multi-sample claims
@@ -932,6 +936,67 @@ documents for specifics) for a structural benefit (forward-pointers
 do not constrain future scoping decisions before they're made).
 The clarity cost is bounded; the structural benefit compounds
 across arcs.
+
+### Anti-momentum-binding at cycle entry register-events (Pass 2 extension)
+
+#### Rule
+
+Prior cycle SEAL does NOT pre-authorize next cycle entry. Each cycle entry register-event boundary requires fresh Charlie register at a separate register-event boundary; "the previous cycle just sealed" is not authorization for the next cycle's entry, regardless of how natural the successor cycle appears.
+
+#### Why
+
+Anti-momentum-binding preserves Charlie strategic-decider authority across cycle boundaries. The discipline operates at every gate boundary throughout Phase 5 + Path 3 cycles: at each cycle entry (scoping cycle entry / sub-spec drafting cycle entry / execute cycle Pass-N entry), a fresh Charlie register fires distinct from prior-cycle SEAL register. Without this discipline, accumulated cycle momentum (recent SEAL + reviewer convergence on "natural next step" + work tempo) substitutes for Charlie strategic decision, eroding the register-class boundary between cycle SEAL and successor cycle entry. Codified at `feedback_authorization_routing.md` + Path 3 sub-spec §4 binding.
+
+#### When to apply
+
+Any cycle entry register-event boundary (scoping cycle / sub-spec drafting cycle / execute cycle / Pass-N entry). Even when successor cycle is the eligible-not-named default-recommended path per prior SEAL's §7 reservations, entry register fires fresh — not inherited from prior SEAL.
+
+#### Cross-references
+
+- `feedback_authorization_routing.md` (out-of-repo memory rule; primary register for authorization discipline)
+- §10 parent (anti-pre-naming as standing discipline; anti-momentum-binding extends to cycle entry boundary)
+- Pass 1 SEAL §7 reservations (Path 3 execute Pass 1 SEAL did NOT pre-authorize Pass 2 entry; Charlie register at Gate 8 fired separate register-event boundary)
+
+### Anti-pre-naming binding preservation as standing discipline (Pass 2 extension)
+
+#### Rule
+
+The anti-pre-naming discipline codified in §10's Principle is not bounded to forward-pointer prose at closeout drafting; it extends as standing discipline to SEAL handoffs, successor-cycle framing, and any forward-references at register-event boundaries. Eligible-not-named successor paths are NOT pre-bound at SEAL fire — handoff prompts and §7 reservations enumerate paths as eligible without ordering, recommendation, or pre-characterization that would substitute reviewer/agent forecast for Charlie strategic decision.
+
+#### Why
+
+Pre-naming at handoff or §7 reservation language creates implicit commitments to specific successor scoping decisions that have not been made — structurally identical to the forward-pointer pre-naming pattern §10 already governs. Cross-cycle saturation at Phase 5 + PHASE2C_10-15 + PHASE4 + Path 3 scoping/sub-spec/Pass-1 SEAL register-events (5+ instances) demonstrates the binding holds across cycle types. The primary operating rule is codified at `feedback_authorization_routing.md`; this in-repo extension binds the discipline at the canonical artifact register parallel to §10's existing anti-pre-naming-in-prose discipline.
+
+#### When to apply
+
+Every SEAL fire register-event boundary that includes handoff write and/or §7-style reservations enumeration. Forward-pointers in successor-path lists honor anti-pre-naming binding — list eligibility, not ordering or pre-characterization.
+
+#### Cross-references
+
+- `feedback_authorization_routing.md` (out-of-repo memory rule; bidirectional cross-reference fired this Pass 2 — see Path 3 execute Pass 2 SEAL doc §6 audit trail)
+- §10 parent (anti-pre-naming-in-prose at closeout drafting; this sub-§ extends to SEAL handoff register-class)
+- Anti-momentum-binding sub-§ above (paired discipline at cycle entry boundary)
+- Eligible-not-named successor cycle framing sub-§ below (paired discipline at handoff enumeration)
+
+### Eligible-not-named successor cycle framing (Pass 2 extension)
+
+#### Rule
+
+Handoff prompts at SEAL register-event boundaries list successor paths as "eligible-not-named" — paths enumerated as eligible options at separate Charlie register-event boundary, without implicit ordering (no "next path is X"), without recommendation (no "default-recommended successor is Y"), without pre-characterization (no "the bull-regime evaluation arc" / "the deployment-readiness phase" framing).
+
+#### Why
+
+Eligible-not-named framing preserves Charlie strategic-decider authority at register-event boundaries. ≥4 SEAL instances across Phase 5 (sub-spec → arc-level closeout) + Path 3 (scoping → sub-spec → Pass 1) demonstrate the pattern operationally. The framing differs from anti-pre-naming (§10 parent) which governs forward-pointer prose at closeout drafting; eligible-not-named governs successor enumeration at handoff register-class — same anti-pre-emption family, distinct register-class boundary.
+
+#### When to apply
+
+Every handoff write at SEAL register-event boundary. Successor path enumeration honors all three sub-§ disciplines together: anti-momentum-binding (entry requires fresh register) + anti-pre-naming binding preservation (no specific identifier pre-commitment) + eligible-not-named framing (no ordering or recommendation).
+
+#### Cross-references
+
+- Path 3 scoping §6 + sub-spec §6 + Pass 1 SEAL §7 (cross-cycle precedent for eligible-not-named framing)
+- Anti-momentum-binding sub-§ above (paired discipline at cycle entry boundary)
+- Anti-pre-naming binding preservation sub-§ above (paired discipline at binding scope)
 
 ---
 
@@ -6831,5 +6896,227 @@ whether plain language is now safer.
 and this section is itself an attempt to apply that lesson to its own
 codification. If a future cycle visibly suffers without §20.6-class
 promotion of these patterns, that is the signal to revisit.
+
+**Pass 2 codification additions (Path 3 methodology consolidation execute cycle Pass 2; 18 entries — first cross-arc extension of §31 register-class):**
+
+**7. Bilingual concept explanation at difficult-concept register (cross-reference).**
+For non-obvious project/phase/decision concepts, surface intuitive
+explanations in both Chinese and English at the point of discussion;
+operating rule codified at `feedback_bilingual_concept_explanation.md`
+(out-of-repo memory). Application: when introducing a technique or
+framework that touches user comprehension, default to bilingual
+intuitive framing rather than English-only.
+
+**8. Planning-skill invocation for long/complex tasks (cross-reference).**
+Before implementation on long/complex/multi-step tasks, invoke a
+planning skill (writing-plans / brainstorming / blueprint / plan /
+prp-plan) to produce explicit plan/todo; rule codified at
+`feedback_use_planning_skills_for_complex_tasks.md` (out-of-repo
+memory). Application: at task entry, classify scope; if multi-step,
+plan first.
+
+**9. Decision options as plain text in chat (cross-reference).**
+Present substantive decision-point options as numbered/bulleted plain
+text in chat so Charlie can route to ChatGPT + Claude advisor for
+cross-review; rule codified at `feedback_decision_options_plaintext.md`
+(out-of-repo memory). Application: at 2+ path decision points needing
+Charlie authorization, avoid AskUserQuestion multiple-choice; use plain
+text instead.
+
+**10. Intuitive Chinese explanation at decision points (cross-reference).**
+At decision points needing Charlie authorization, proactively include
+intuitive Chinese explanation with everyday analogies + per-path
+practical meaning + concrete self-questions; rule codified at
+`feedback_decision_point_intuitive_chinese.md` (out-of-repo memory).
+Application: complement plain-text decision options (#9) with
+intuitive Chinese framing at the same decision point.
+
+**11. Parallel subagent dispatch as default for independent work
+(cross-reference).** Default to parallel subagent execution (multiple
+Agent calls in one message) for independent work parts; this is a
+priority choice rather than fallback. Rule codified at
+`feedback_parallel_subagent_dispatch.md` (out-of-repo memory).
+Application: when task decomposes into independent sub-tasks, fan out
+in parallel rather than serialize.
+
+**12. PushNotification + Discord webhook on long-running task
+completion (cross-reference).** After background Codex reviews, long
+pytest/subagent runs, and deliverable seals, fire BOTH PushNotification
+(terminal) AND Discord webhook (phone) since Remote Control mobile
+push is often inactive. Rule codified at `feedback_long_task_pings.md`
+(out-of-repo memory). Application: at long-running task completion,
+default to dual notification for mobile reachability.
+
+**13. Path 2 SEAL discipline pattern (env hygiene as independent
+register-event before arc-level closeout).** Environment hygiene work
+(dependency patches, env separation, deprecation fixes) seals as an
+independent register-event boundary before arc-level closeout SEAL fire,
+rather than folding into the substantive closeout. The Phase 5 arc
+empirical precedent (Path 2 env hygiene register-event ordered before
+Path 1 arc-level closeout `4b9e2dc`) demonstrates the pattern.
+Application: when env hygiene + substantive work are pending at the
+same time, sequence env hygiene first as its own SEAL boundary.
+
+**14. Scope-extension procedural template at register-event boundaries.**
+When mid-cycle scope expansion is proposed (new work added beyond the
+ratified plan scope), require explicit Charlie register at the scope-
+extension register-event boundary rather than absorbing the expansion
+into the active session's work register. Application: at any "should we
+also do X" mid-cycle, surface as scope-extension question for explicit
+Charlie register, not implicit work absorption.
+
+**15. (a') three-session pacing template general adoption.**
+Cycle-internal work batches default to three-session pacing: session-1
+draft, session-2 reviewer routing + per-fix adjudication, session-3 V#
+verification + SEAL fire. 3-instance cross-cycle saturation at Phase 5
+closeout + Path 3 scoping + Path 3 sub-spec drafting (forecast extension
+at Path 3 execute Pass 1 + Pass 2). Application: when planning a cycle-
+internal batch, default to (a') pacing unless single-session work is
+justified.
+
+**16. Path 2 → Path 1 → Path 3 sequencing pattern at multi-path arc
+boundaries.** Env-precondition register-event boundary (Path 2) is
+sequenced before arc-level closeout SEAL (Path 1), which is sequenced
+before methodology consolidation cycle entry (Path 3). The Phase 5 arc
+empirically validated this ordering. Application: when an arc closes
+with multiple eligible follow-up paths (Path 2 env hygiene + Path 1
+arc closeout + Path 3 methodology consolidation), default to this
+sequence unless explicit Charlie register reorders.
+
+**17. Reviewer-suggestion-adjudication discipline at per-fix
+granularity (cross-reference).** When reviewers (ChatGPT + Claude
+advisor + Codex) surface multiple findings, adjudicate each individually
+with reasoned ADOPT/PUSHBACK + rationale recorded; never bulk-accept.
+Rule codified at `feedback_reviewer_suggestion_adjudication.md` (out-
+of-repo memory). Application: at every multi-finding reviewer routing
+return, per-fix adjudicate with cross-leg synthesis transparent.
+
+**18. Codex review scope at process/spec deliverable register-class
+(cross-reference).** Codex adversarial review fires on substantive
+code/work deliverables (closeouts with code-touching implementation);
+SKIP at process/spec deliberation docs (scoping decisions / sub-specs
+/ plan documents / cycle SEAL docs that articulate methodology rather
+than implement code). Rule codified at `feedback_codex_review_scope.md`
+(out-of-repo memory). Application: at reviewer routing planning,
+classify deliverable register-class; route Codex accordingly.
+
+**19. Advisor self-check vs Leg-D boundary (substantive verification
+register-class).** A Claude advisor "self-check" at the executing agent
+register-class (Leg-D-internal verification before responding) is
+distinct from the reviewer-recommendation register-class (Leg-D-as-
+reviewer producing findings for adjudication). The two register-classes
+do not interchange. Application: at reviewer routing, classify each
+Leg-D output by register-class — self-check ≠ reviewer finding.
+
+**20. Codex routing skip inheritance across process/spec cycle types.**
+The Codex SKIP pattern at scoping cycles + sub-spec drafting cycles +
+plan ratification cycles inherits across cycle types within a single
+project arc. Phase 5 scoping + Phase 5 sub-spec drafting + Path 3
+scoping + Path 3 sub-spec drafting + Path 3 execute Pass 1 + Pass 2 all
+inherited SKIP. Application: at reviewer routing planning, do not re-
+litigate Codex inclusion at each cycle entry unless code-touching scope
+explicitly enters; default-inherit SKIP for process/spec register-class.
+
+**21. Reviewer-convergence ≠ Charlie register (stress-test pattern;
+cross-reference).** Reviewer convergence (ChatGPT + Claude advisor +
+Leg-C all agreeing) does NOT constitute Charlie register authorization
+for operational fires; reviewer directive language ("Authorize",
+"Approve") remains advisory until Charlie register text explicitly
+fires. Rule codified at `feedback_authorization_routing.md` (out-of-
+repo memory; primary Class E per scoping, cross-class B+E). Application:
+at every operational fire boundary, verify authorization source is
+Charlie-register-explicit, not reviewer convergence.
+
+**22. Three-narration-authority discharge pattern at arc-level closeout
+SEAL.** When an arc-level closeout SEAL discharges multiple narration
+authorities (terminal-conclusion + framing-question resolution +
+admissibility-flag interpretive narration), subsequent cycles preserve
+the discharge as invariant rather than re-narrating the same conclusions;
+Phase 5 arc-level closeout `4b9e2dc` discharged three narration
+authorities and subsequent Path 3 cycles cross-reference rather than
+re-narrate. Application: at handoff and subsequent-cycle entry, treat
+discharged narrations as sealed invariant.
+
+**23. Sealed-evidence-grounding discipline at SEAL author register.**
+At the SEAL author register-class (closeout / scoping / sub-spec being
+assembled for SEAL fire), the artifact consumes sealed inputs and does
+NOT generate new empirical evidence at the author stage — new evidence
+requires its own register-event boundary upstream. Application: at SEAL
+fire pre-verify the evidence base is fully sealed-upstream; if a finding
+requires fresh evidence, fire a separate register-event boundary first.
+
+**24. Forward-only log register-class discipline.** Cycle-internal
+observations that surface during work but are out-of-Q5-scope for the
+current cycle are logged forward-only in conversation history and are
+eligible at separate Charlie register-event boundary at future cycles;
+Phase 5 §12 carry-forward register and Path 3 execute cycle (9+
+accumulated categories) operationalize this. Application: log forward-
+only when an out-of-scope observation surfaces mid-cycle; do not absorb
+into current cycle's canonical register.
+
+---
+
+## §32 SEAL bundle composition discipline at cycle SEAL register-event boundaries
+
+### Rule
+
+SEAL bundles at cycle register-event boundaries compose: (1) the canonical SEAL deliverable doc commit (substantive artifact: closeout / scoping decision / sub-spec / Pass-N decision doc); (2) the Phase Marker advance commit per Option 1A atomicity binding (atomic `CLAUDE.md` + `docs/phase_marker_history.md` inclusion); (3) push after both commits; and (4) optional tag per §32 sub-§ tag policy. Out-of-repo memory file fires (when present) execute pre-commit via Write tool and are recorded in the SEAL deliverable's audit trail rather than staged.
+
+### Why
+
+The pattern emerged across four cycles (Phase 5 sub-spec drafting cycle, Phase 5 diagnostic execution arc-level closeout, Path 3 methodology consolidation scoping cycle, Path 3 methodology consolidation sub-spec drafting cycle) and fired again at Path 3 execute Pass 1 + (forecast) Pass 2 SEALs (6+ cross-cycle instances). The composition preserves audit traceability: each SEAL register-event boundary leaves a substantive artifact + Phase Marker history advance + push as a coherent unit, rather than scattering the SEAL across disconnected commits that future readers must reassemble from `git log` archaeology.
+
+### When to apply
+
+Every cycle SEAL register-event boundary at this project, regardless of cycle type (scoping / sub-spec / arc-level closeout / cycle-internal Pass-N), unless a future Charlie register explicitly establishes a narrower SEAL subclass. Out-of-repo memory file fires inherit the audit-trail recording discipline regardless of whether the SEAL bundle's commit scope can stage them.
+
+### Cross-references
+
+- Sub-spec §4.5 Option 1A atomicity binding (Path 3 sub-spec drafting cycle sealed framework)
+- §31 #3 (empirical-before-prose discipline; pairs with SEAL pre-fire verification)
+- §33 (pre-fire micro-check pattern; V# anchor verification chain fires before SEAL bundle commits)
+
+### Tag policy at SEAL register-event boundaries
+
+#### Rule
+
+Cycle-internal SEAL register-event boundaries (sub-spec drafting cycle SEAL / scoping cycle SEAL / Pass-N SEAL within a multi-pass execute cycle) take NO tag by default. Arc-level closeout SEAL register-event boundaries take an explicit tag (e.g., `phase5-diagnostic-execution-v1`, `phase4-forward-test-v1`) per SEAL register text; cross-cycle precedent shows arc-level closeouts typically authorize tag inclusion explicitly at SEAL register text.
+
+#### Why
+
+Tag scarcity preserves the arc-level signal. Across Phase 5 + PHASE2C_10-15 + PHASE4 + Path 3 sealed register-events, cycle-internal SEALs were NO-tag (Phase 5 sub-spec drafting + Phase 5 scoping + Path 3 scoping + Path 3 sub-spec drafting + Path 3 execute Pass 1) while arc-level closeout SEALs typically received explicit tags (`phase5-diagnostic-execution-v1` at Phase 5 arc-level closeout `4b9e2dc`; `phase4-forward-test-v1` at PHASE4 Task 5 closeout `e8f62f1`; `phase2c-15-main-fire-v1` at PHASE2C_15 main fire `734570c`; `wf-corrected-v1` at corrected WF engine project arc; etc.). Promoting cycle-internal SEALs to tag status would dilute the arc-level closeout signal.
+
+#### When to apply
+
+Every SEAL register-event boundary. Tag decision is part of the SEAL register text (Charlie register at SEAL fire authorization); cycle-internal default is NO tag, while arc-level closeout typically authorizes tag explicitly. The decision belongs at the SEAL register-event boundary, not at plan-ratification or earlier.
+
+#### Cross-references
+
+- §32 parent (SEAL bundle composition; tag is component (4) of the bundle)
+- Phase 5 arc-level closeout sealed at `4b9e2dc` (`phase5-diagnostic-execution-v1`) — tag precedent
+- Path 3 scoping / sub-spec drafting / Pass 1 SEAL precedent — NO-tag for cycle-internal
+
+---
+
+## §33 Pre-fire micro-check pattern (V# anchor verification chain at SEAL pre-fire register-event boundaries)
+
+### Rule
+
+Before firing a SEAL register-event boundary at a substantive sealed canonical artifact (closeout / scoping decision / sub-spec / cycle deliverable doc), run the V# anchor verification chain pre-defined for that cycle. The chain's anchor set is finalized at session-N-1 pre-SEAL register-event boundary; the anchor set is cycle-local and may differ by register-class. The fire applies the chain to the working-draft state and produces a CLEAN / FAIL trace per anchor. SEAL fire HARD STOPS on any V# FAIL; resolution requires explicit errata register-event boundary before re-fire.
+
+### Why
+
+Pre-fire catch prevents SEAL drift. The empirical first-instance at Path 3 Pass 1 Gate 5 initial fire caught V5 FAIL on C24 + C12 against sub-spec §2.3 Class C eligibility list, triggering Gate 4-errata Path α-1 reassignment 3-leg convergent resolution; re-fire post-errata returned 14/14 CLEAN. Phase 5 sub-spec session-11 + session-15 errata are register-class-different cases (errata after seal, not pre-fire catch); the pre-fire micro-check pattern operates at the register-event boundary where catch is still pre-seal and resolvable without subsequent erratum overhead.
+
+### When to apply
+
+Any SEAL register-event boundary that produces a substantive sealed canonical artifact (closeout doc / scoping decision doc / sub-spec doc / Pass-N cycle deliverable doc). Cycle-internal commit-only SEALs (e.g., Phase Marker advance commits that do not themselves produce a new sealed canonical artifact) inherit upstream V# verification rather than firing fresh chain — they propagate the verified state of the parent SEAL deliverable, not re-verify it.
+
+### Cross-references
+
+- §31 #3 empirical-before-prose discipline (SEAL pre-fire byte-level verification; complementary to V# anchor chain at a different register-class)
+- Sub-spec §5 V# anchor framework (pre-staging discipline; chain design at session-N-1 boundary)
+- §32 SEAL bundle composition (V# verification fires before §32 bundle commits)
+- Pass 1 SEAL doc §0.2 Gate 5 register chain (V5 FAIL → errata → re-fire CLEAN precedent)
 
 ---
