@@ -1,6 +1,6 @@
 # Phase 5.1 Cost-Model Investigation Note
 
-**Status:** WORKING DRAFT — Task 1 (sealed input survey) complete; Tasks 2-9 pending Charlie register at respective gates.
+**Status:** WORKING DRAFT — Tasks 1 + 2 complete (sealed input survey + cost regime enumeration); Tasks 3-9 pending Charlie register at respective gates.
 
 **Cycle anchor:** Phase 5.1 cost-model investigation cycle (Bucket-1-style investigation note per Template B). Entry register-event boundary fired at 2026-05-17 via Charlie register "authorize on convergence" + "Option α" + "agree with your lean" + β-2 sequencing + "Cadence β authorized".
 
@@ -42,7 +42,8 @@ Disposition is `eligible`, NOT `authorized` — Phase 5.1 cycle shape was Charli
 | Task 1.7 mini-gate ratify | "Option 2 authorized" | Charlie register at 2026-05-17 | Input survey ratified; §4.4 disclosure note added explaining Step 1.5 empty grep is documented audit-trail (7bps canonical in `config/execution.yaml`; PHASE2C_15_PLAN inherits without restating); Task 2 grounding discipline binding (PHASE4_PLAN + execution.yaml canonical, not PHASE2C_15_PLAN) |
 | Audit-trail micro-fix (canonicalize plan) | "Option A authorized" | Charlie register at 2026-05-17 | Plan moved from /tmp/ to docs/phase5/PHASE5_1_INVESTIGATION_PLAN.md git-tracked location; committed at `9204932` with audit-trail-durability framing |
 | Audit-symmetry commit (track investigation note) | implicit per "Both agree close audit asymmetry first" | Charlie register at 2026-05-17 | Investigation note (this file) added to git tracking; co-coupled with plan; cycle artifact set audit-trail symmetric; Task 2 fire deferred to next session per "fire task 2 next session" Charlie register text |
-| Pre-declared rules gate (Task 4) | PENDING | After Tasks 2-3 (NEXT SESSION) | Required before Task 5 (analytical pass) fire; narrowed-scope per Task 1.7 split |
+| Task 2 fire (cost regime enumeration; §1 + §2) | "then authorized path 1" (paired with prior Path 2 CLAUDE.md spend-fix authorization "let do path 2, it should be really quick fix") | Charlie register at 2026-05-17 (next-session entry) | Task 2 fire authorized; §1 scope text + §2 cost regime enumeration written with 3 regime buckets (R/RC/S) + per-regime execution-reality declaration + external-grounding declaration verbatim per plan §3 Task 2.3; PHASE4_PLAN + `config/execution.yaml` cited as canonical sources per Task 1.7 grounding-discipline binding; Task 3 fire awaits separate fresh Charlie register per anti-momentum-binding strict reading |
+| Pre-declared rules gate (Task 4) | PENDING | After Task 3 fire | Required before Task 5 (analytical pass) fire; narrowed-scope per Task 1.7 split (Tasks 2-3 only) |
 | Pre-SEAL Codex routing decision | PENDING | After Task 7 | Required before Task 9 (Codex fire decision) |
 | SEAL register | PENDING | After Task 8 + 9 | Required for final commit + (conditional) Phase Marker advance |
 
@@ -82,13 +83,41 @@ This cycle MUST NOT:
 
 ## §1 — Scope text
 
-`[pending Task 2 — to be written with Q1 (a) sealed-artifact only scope binding + Q1 (b) extended deferral declaration]`
+Per Q1 disposition (plan §1.1; Charlie register "authorize on convergence" at Phase 5.1 cycle entry 2026-05-17):
+
+- **(a) In scope (this cycle):** Decomposition of Phase 4 null result — the 39 cohort_a candidates that failed the §1.5 binomial-stratum success criterion at realistic 15bps cost — using sealed Phase 4 cost-run artifacts at 7/13/15/17 bps. Pre-declared per-stratum interpretation rules (§3) applied mechanically to analytical pass output (§5) to surface fired classification (§6) and eligible-not-named successor paths (§7).
+
+- **(b) Deferred to separate register-event (NOT this cycle):** Extended real-cost-discovery — external Binance fee schedule reference, L2 order book replay, paper trading cost calibration, exchange microstructure analysis. Eligible at separate Charlie register-event per Q1 (b), conditional on this cycle's §6 findings revealing it as needed.
+
+Cycle-internal MUST NOT list per §0.3: no sealed-corpus modification; no new batch fires; no `phase2.5/bandit-dedup` activation; no Path 3 methodology consolidation continuation; no refire pre-commitment; no post-hoc interpretation-rule modification after §5 analytical output; no extension into real-cost-discovery (Q1 (b) deferral); no CLAUDE.md spend-freshness bundle into this deliverable; no re-narration of Phase 5 three discharged narration authorities. V12 anchor (Q1 scope binding) operates throughout.
 
 ---
 
 ## §2 — Cost regime enumeration with rationale
 
-`[pending Task 2]`
+### §2.1 — Bounded candidate cost regimes
+
+Per plan §3 Task 2.1 (locked at plan ratify; mapping each grid point of the sealed Phase 4 4-cost-run corpus to a project-rationale-grounded regime bucket):
+
+| Regime | Cost grid points (per side) | Composition | Sealed rationale source |
+|---|---|---|---|
+| **Research-time (R)** | 7 bps | 4 bps taker + 3 bps slippage | `config/execution.yaml` `cost_model` (lines 39-58); CLAUDE.md "Execution Convention" §4 `effective_7bps_per_side` — canonical for Phase 1-2 backtests including PHASE2C_15 |
+| **Realistic-conservative (RC)** | 13 bps, 15 bps | 10 bps spot taker (Binance VIP 0, no BNB discount) + 3 or 5 bps slippage | `docs/phase4/PHASE4_PLAN.md` §1.4 lines 44-48: 15 bps base case (Phase 4 §1.5 success-criterion basis); 13 bps = slippage-minus-2-bps lower-sensitivity band within RC |
+| **Stress (S)** | 17 bps | 10 bps spot taker + 7 bps slippage | `docs/phase4/PHASE4_PLAN.md` §1.4 line 47 — slippage-plus-2-bps sensitivity upper band (15+2) |
+
+**Cross-source composition observation**: Research-time (R) composition references `config/execution.yaml` line 42 cost_model (header "Fee structure (Binance perpetual futures, VIP 0)") with taker fee 4 bps. Realistic-conservative (RC) composition references PHASE4_PLAN §1.4 line 44 ("Binance VIP 0 spot taker") with taker fee 10 bps. The 6 bps taker delta between these two register sources reflects sealed project-historical layering across cycles (the project's market-data layer operates on BTC/USDT 1h Binance spot; the `execution.yaml` futures-fee label predates Phase 4's explicit spot-cost adoption). Phase 5.1 inherits without reconciliation per Q1 (a) sealed-artifact-only scope binding (V12 anchor). Forward-only carry-forward observation candidate — deferred to §7 enumeration.
+
+### §2.2 — Execution reality per regime
+
+**Research-time (R) — 7 bps.** Justifying execution conditions: all orders assumed taker at the canonical Phase 1-2 fee-schedule register; constant per-trade size; no liquidity / hour-of-day adjustment. Evidence: sealed `config/execution.yaml` `cost_model` aggregation `default_fee_bps + slippage_bps = 4 + 3 = 7`. Does NOT capture: spot vs perpetual-futures fee-schedule discrepancy with RC composition source; maker-fill rate uplift if limit orders are used; intra-day liquidity variation; size-dependent slippage scaling.
+
+**Realistic-conservative (RC) — 13 / 15 bps.** Justifying execution conditions: all orders taker at Binance VIP 0 spot retail fee schedule; nominal $1000 per trade (~0.002% of typical BTC 1h Binance spot volume ~$50M+ per PHASE4_PLAN §1.4 line 42; market impact negligible at this scale); slippage 5 bps base case with −2 bps lower-sensitivity band. Evidence: sealed PHASE4_PLAN §1.4 line 46 ("Per-side base case: 15 bps; round-trip: 30 bps") and line 47 ("Sensitivity: per-side {13 bps, 17 bps} (slippage ±2 bps)"). Does NOT capture: L2 order-book microstructure (deferred per PHASE4_PLAN §1.4 line 45 "no L2 order book modeling at MVD scope"); maker-fill rate if strategy uses limit orders (per `config/execution.yaml` cost_model comment "Strategies that use limit orders can override to maker_fee_bps, but must prove fill rates in paper trading"); VIP-tier or BNB-discount fee uplift; exchange-specific microstructure at trade-frequency cadence.
+
+**Stress (S) — 17 bps.** Justifying execution conditions: RC base composition plus 2 bps adverse-slippage adjustment (upper sensitivity band). Evidence: sealed PHASE4_PLAN §1.4 line 47 "Sensitivity: per-side {13 bps, 17 bps}" — 17 bps is the slippage-plus-2-bps boundary. Does NOT capture: more extreme adverse-execution regimes (multi-bp spread crossings during low-liquidity hours, partial-fill cascades, halt-window slippage); these are out of scope for the Phase 4 cost-run grid.
+
+### §2.3 — External-grounding declaration (per plan §3 Task 2.3 verbatim)
+
+> External grounding for "true realistic cost on Binance BTC/USDT spot at this trade frequency" is NOT done in this investigation cycle per Q1 scope-shape (a). All cost regime ranges and rationale are derived from sealed project artifacts. Extended real-cost-discovery (external Binance fee schedule reference, order book replay, paper trading calibration, exchange microstructure analysis) is eligible-not-named at separate Charlie register-event per Q1 (b), conditional on this cycle's findings revealing it as needed.
 
 ---
 
@@ -172,7 +201,7 @@ Stratum split (A=22 calendar_effect / B=17 non-calendar; sealed at Phase 4 §1.3
 
 ### §4.5 — Input survey overall status
 
-**All 5 verification steps RATIFIED at Task 1.7 mini-gate per Charlie register "Option 2 authorized"**. 4/5 PASS as expected; Step 1.5 empty grep documented as audit-trail per §4.4 disclosure note (not unresolved anomaly). PHASE4_PLAN + `config/execution.yaml` provide canonical grounding for Task 2 cost regime enumeration. Task 2 fire awaits separate fresh Charlie register per anti-momentum-binding strict reading.
+**All 5 verification steps RATIFIED at Task 1.7 mini-gate per Charlie register "Option 2 authorized"**. 4/5 PASS as expected; Step 1.5 empty grep documented as audit-trail per §4.4 disclosure note (not unresolved anomaly). PHASE4_PLAN + `config/execution.yaml` provide canonical grounding for Task 2 cost regime enumeration. (Task 2 subsequently fired at next-session entry per §0.2 register chain row "Task 2 fire"; §2 populated with R/RC/S regime buckets grounded in these canonical sources.)
 
 ---
 
