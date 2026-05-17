@@ -283,11 +283,12 @@ def test_b_t2_is_near_duplicate_compound_gate():
 
     # Two near-identical DSLs with same factor set (rsi_14)
     dsl_a = _make_dsl(
-        entry_=None, exit_=None,
         entry=[{"conditions": [{"factor": "rsi_14", "op": "<", "value": 30}]}],
+        exit_=[{"conditions": [{"factor": "rsi_14", "op": ">", "value": 50}]}],
     )
     dsl_b = _make_dsl(
         entry=[{"conditions": [{"factor": "rsi_14", "op": "<", "value": 31}]}],
+        exit_=[{"conditions": [{"factor": "rsi_14", "op": ">", "value": 50}]}],
     )
     # Different factor set (sma_20)
     dsl_c = _make_dsl(
