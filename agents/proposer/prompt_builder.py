@@ -79,6 +79,29 @@ _COMPILED_FORBIDDEN: tuple[re.Pattern[str], ...] = tuple(
     re.compile(p, re.IGNORECASE) for p in FORBIDDEN_PATTERNS
 )
 
+# Phase 2.5 A-Lock-4 SPLIT extended forbidden language for scoped scan over
+# ProposerPrompt.top_factors_block. These words MUST NOT appear in the
+# top_factors_block field because their presence implies the bandit menu is
+# being annotated with the *reason* factors were ranked (which would leak
+# regime-holdout-pass-rate information). Per sub-spec amendment v1 §4
+# A-Lock-4 extended sub-spec contract.
+FORBIDDEN_IN_TOP_FACTORS_BLOCK: tuple[str, ...] = (
+    r"\bregime\b",
+    r"\bholdout\b",
+    r"\bpass\b",
+    r"\bpassing\b",
+    r"\bfail\b",
+    r"\bfailing\b",
+    r"\bscore\b",
+    r"\bquality\b",
+    r"\bsignal\b",
+    r"\bperformance\b",
+)
+
+_COMPILED_FORBIDDEN_TFB: tuple[re.Pattern[str], ...] = tuple(
+    re.compile(p, re.IGNORECASE) for p in FORBIDDEN_IN_TOP_FACTORS_BLOCK
+)
+
 # Legacy alias kept for any downstream code that referenced the old name.
 FORBIDDEN_SUBSTRINGS = FORBIDDEN_PATTERNS
 
@@ -261,22 +284,46 @@ def audit_prompt_for_leakage(
 ) -> list[str]:
     """Return forbidden patterns that match anywhere in the prompt text.
 
-    An empty list means the prompt is clean. Each entry is the regex
-    pattern string that fired. The check is case-insensitive and scans
-    the full concatenated prompt text (``system + user + factor_menu``).
+    Two-layer audit per Phase 2.5 sub-spec amendment v1 SEAL ``850aa1d``
+    §4 A-Lock-4 extended SPLIT contract:
 
-    If ``forbidden`` is overridden by the caller (e.g. with additional
-    patterns), those strings are compiled on the fly.
+    (1) **Global scan** — case-insensitive regex match across the full
+        concatenated prompt text (``system + user + factor_menu``).
+        Uses ``FORBIDDEN_PATTERNS`` (or the caller-supplied override).
+    (2) **Scoped scan over ``top_factors_block``** — additional regex
+        check using the ``FORBIDDEN_IN_TOP_FACTORS_BLOCK`` extended list
+        (``regime``, ``holdout``, ``pass``, ``fail``, ``score``,
+        ``quality``, ``signal``, ``performance``). Only runs when
+        ``prompt`` is a ``ProposerPrompt`` instance with a non-empty
+        ``top_factors_block``. A string input bypasses the scoped scan.
+
+    An empty return list means the prompt is clean. Each entry is the
+    regex pattern string that fired; layer-2 findings are prefixed with
+    ``"top_factors_block:"`` so callers can distinguish.
     """
     text = prompt.all_text() if isinstance(prompt, ProposerPrompt) else prompt
     if forbidden is FORBIDDEN_PATTERNS:
         compiled = _COMPILED_FORBIDDEN
     else:
         compiled = tuple(re.compile(p, re.IGNORECASE) for p in forbidden)
-    return [p.pattern for p in compiled if p.search(text)]
+
+    findings: list[str] = [p.pattern for p in compiled if p.search(text)]
+
+    # Scoped scan: A-Lock-4 SPLIT extension. Operates ONLY on
+    # ProposerPrompt.top_factors_block when present and non-empty.
+    if (
+        isinstance(prompt, ProposerPrompt)
+        and prompt.top_factors_block
+    ):
+        for pattern in _COMPILED_FORBIDDEN_TFB:
+            if pattern.search(prompt.top_factors_block):
+                findings.append(f"top_factors_block:{pattern.pattern}")
+
+    return findings
 
 
 __all__ = [
+    "FORBIDDEN_IN_TOP_FACTORS_BLOCK",
     "FORBIDDEN_PATTERNS",
     "FORBIDDEN_SUBSTRINGS",
     "ProposerPrompt",
