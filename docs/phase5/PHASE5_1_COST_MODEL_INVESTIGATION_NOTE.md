@@ -1,6 +1,6 @@
 # Phase 5.1 Cost-Model Investigation Note
 
-**Status:** WORKING DRAFT — Tasks 1 + 2 + 3 + 4 + 5 + 6 complete (sealed input survey + cost regime enumeration + pre-declared interpretation rules LOCKED + Tasks 2-3 ratify + analytical pass + mechanical rule application per Cadence β; joint pattern (D-I, D-II) → §3.3 mixed disposition row; NO §3.4 violation triggered); Task 7 (successor routing observation matrix + forward-only carry-forward) + Tasks 8-9 pending Charlie register at respective gates.
+**Status:** WORKING DRAFT — Tasks 1 + 2 + 3 + 4 + 5 + 6 + 7 + 8.1 complete (sealed input survey + cost regime enumeration + pre-declared interpretation rules LOCKED + Tasks 2-3 ratify + analytical pass + mechanical rule application + successor routing observation matrix + reserved decisions + final assembly check; joint pattern (D-I, D-II) → §3.3 mixed disposition row; NO §3.4 violation triggered; §0-§7 + §9 populated, §8 V# anchor chain pending Task 9 pre-SEAL fire); Task 8.2 (Codex routing decision) + Task 9 (V# anchor chain + SEAL) pending Charlie register.
 
 **Cycle anchor:** Phase 5.1 cost-model investigation cycle (Bucket-1-style investigation note per Template B). Entry register-event boundary fired at 2026-05-17 via Charlie register "authorize on convergence" + "Option α" + "agree with your lean" + β-2 sequencing + "Cadence β authorized".
 
@@ -45,8 +45,9 @@ Disposition is `eligible`, NOT `authorized` — Phase 5.1 cycle shape was Charli
 | Task 2 fire (cost regime enumeration; §1 + §2) | "then authorized path 1" (paired with prior Path 2 CLAUDE.md spend-fix authorization "let do path 2, it should be really quick fix") | Charlie register at 2026-05-17 (next-session entry) | Task 2 fire authorized; §1 scope text + §2 cost regime enumeration written with 3 regime buckets (R/RC/S) + per-regime execution-reality declaration + external-grounding declaration verbatim per plan §3 Task 2.3; PHASE4_PLAN + `config/execution.yaml` cited as canonical sources per Task 1.7 grounding-discipline binding; committed standalone at `7cb37c2` per Decision 1 B (Task 2 substantive design vs Task 3 mechanical transcription separated for audit-trail granularity) |
 | Task 3 fire (pre-declared interpretation rules + W4 contextual note) | "authorized on B + E + §3 加上下文, approve W4" | Charlie register at 2026-05-17 | Task 3 fire authorized after 2-reviewer convergence (ChatGPT + Claude advisor) on B + E + §3 contextual note routing + W4 wording choice (hybrid: ChatGPT short visible thesis sentence at top + advisor positive-framing "salvageable-under-the-research-time-cost-assumption-as-defined" articulation in body); §3 populated with W4 contextual note at top + plan §3 verbatim transcription (§3.1-§3.5) |
 | Task 4 ratify (pre-analytical-pass gate; Tasks 2-3) | "approve z1" | Charlie register at 2026-05-17 | Task 4 ratify fired per Z1 one-shot register bundle: (1) apply micro-fix in §3.1 — restore plan §3 verbatim `net_sharpe` per ChatGPT plan-verbatim-discipline routing + inline schema-mapping footnote linking to §4.2 `holdout_sharpe` CSV column; (2) ratify Tasks 2-3 at refined state (W4 D-II/D-III addendum skipped per advisor self-flagged polish-not-fix framing); (3) C1 Task 3 standalone commit; (4) P2 defer push to SEAL. §3 LOCKED per anti-momentum-binding strict reading; modifications require errata register-event per §3.4 violation declaration |
-| Tasks 5 + 6 fire (Cadence β batched: analytical pass + mechanical rule application; stop at Task 7 β-boundary) | "approve β" | Charlie register at 2026-05-17 | Cadence β authorized per 2-reviewer convergence + my recommended lean (Tasks 5+6 mechanical natural pair; substantive decisions = 0 except HARD STOP scenarios; β-stop at Task 7 substantive-read boundary). §5 populated as V14 pure-observation deliverable (data load + counts + binomial p + monotonicity + threshold comparison + Phase 4 §3 cross-reference). §6 populated as mechanical D-IV-first classification (Stratum A → D-I, Stratum B → D-II) + joint pattern (D-I, D-II) → §3.3 mixed disposition matrix row verbatim transcription + 6-item §3.4 HARD STOP check (NO violation triggered). W4 contextual note applied to D-I firing on Stratum A per §6.1. Cross-reference to §3.5 illustrative classification examples first two rows: byte-match on count sequences confirms mechanical application precedent. Task 7 fire awaits separate fresh Charlie register at β-stop boundary |
-| Pre-SEAL Codex routing decision | PENDING | After Task 7 | Required before Task 9 (Codex fire decision) |
+| Tasks 5 + 6 fire (Cadence β batched: analytical pass + mechanical rule application; stop at Task 7 β-boundary) | "approve β" | Charlie register at 2026-05-17 | Cadence β authorized per 2-reviewer convergence + my recommended lean (Tasks 5+6 mechanical natural pair; substantive decisions = 0 except HARD STOP scenarios; β-stop at Task 7 substantive-read boundary). §5 populated as V14 pure-observation deliverable (data load + counts + binomial p + monotonicity + threshold comparison + Phase 4 §3 cross-reference). §6 populated as mechanical D-IV-first classification (Stratum A → D-I, Stratum B → D-II) + joint pattern (D-I, D-II) → §3.3 mixed disposition matrix row verbatim transcription + 6-item §3.4 HARD STOP check (NO violation triggered). W4 contextual note applied to D-I firing on Stratum A per §6.1. Cross-reference to §3.5 illustrative classification examples first two rows: byte-match on count sequences confirms mechanical application precedent |
+| Tasks 7 + 8.1 fire (Cadence β batched: successor routing observation matrix + reserved decisions + final assembly check; stop at Task 8.2 Codex routing decision substantive-surface boundary) | "β authorized" | Charlie register at 2026-05-17 | Cadence β second iteration authorized per my recommended lean (Tasks 7 + 8.1 mechanical pair: §7 transcribes §3.3 matrix row verbatim + enumerates forward-only carry-forward observations; §9 enumerates reserved decisions sourced from §7 + plan §5; §8.1 verifies §0-§7 + §9 populated). §7.1 surfaces 3 eligible-not-named successor paths conditional on (D-I, D-II) joint pattern: paper trading on Stratum A subset / extended real-cost-discovery / strategic reconsideration on Stratum B — all per §3.3 mixed disposition matrix row + anti-pre-naming + §3.4 violation declaration item 6 framing. §7.2 enumerates 3 forward-only carry-forward observations (§2.1 cross-source composition load-bearing + §3.5 illustrative example precedent + §5.7 Phase 4 §3 numerical reproduction). §9 enumerates 11 reserved decisions per anti-pre-emption invariant. §8.1 assembly check PASS: §0-§7 + §9 populated (verified via section line-range scan); only §8 carries `[pending Task 9]` placeholder per V# anchor chain pre-SEAL fire schedule. Task 8.2 (Codex routing decision substantive surface) awaits separate fresh Charlie register at β-stop boundary |
+| Pre-SEAL Codex routing decision (Task 8.2) | PENDING | At fresh Charlie register-event boundary | Charlie-register-required substantive decision (FIRE Codex / SKIP Codex per plan §3 Task 8.2 "surface decision for Charlie, do not auto-fire"); required before Task 9 (V# anchor chain + SEAL register) |
 | SEAL register | PENDING | After Task 8 + 9 | Required for final commit + (conditional) Phase Marker advance |
 
 ### §0.3 — ChatGPT precision rule scope at Phase 5.1
@@ -395,7 +396,27 @@ Per anti-pre-naming + eligible-not-named successor framing (§3.3 + METHODOLOGY_
 
 ## §7 — Successor routing observation matrix
 
-`[pending Task 7]`
+### §7.1 — Eligible-not-named successor paths conditional on (D-I, D-II) joint pattern
+
+Per §6.3 joint pattern (D-I, D-II) → §3.3 row 2 mixed disposition matrix-row verbatim transcription:
+
+- **Paper trading on stronger-disposition stratum subset** is eligible. Operationally: Stratum A 22-candidate subset under research-time 7bps cost basis (D-I region of validity per §6.1 + W4 contextual note constraint "salvageable-under-the-research-time-cost-assumption-as-defined"). Per W4 anchoring: this is NOT "deployable alpha at realistic spot execution" — it is operational paper-trading exposure at the research-time cost regime within which D-I fired.
+- **Extended real-cost-discovery on the cost-conservatism hypothesis** is eligible. Per Q1 (b) deferred declaration in §1 + §2.3: external Binance fee schedule reference, L2 order book replay, paper trading cost calibration, exchange microstructure analysis.
+- **Strategic reconsideration on weaker-disposition stratum** is eligible. Operationally: Stratum B 17-candidate subset strategic-class re-examination per D-II classification (§6.1) — strategy / asset / timeframe re-examination consistent with "cost is NOT the dominant failure mode" finding.
+
+Per `feedback_authorization_routing.md` hard rule + METHODOLOGY_NOTES §10 sub-§§ codified at Path 3 Pass 2 (anti-pre-naming preservation + eligible-not-named successor cycle framing) + §3.4 violation declaration item 6: each path requires fresh Charlie register at separate register-event boundary. **§7.1 surfaces eligibility, NOT recommendation, NOT ordering, NOT pre-characterization.**
+
+### §7.2 — Forward-only carry-forward observations
+
+Per METHODOLOGY_NOTES §31 #1 + Path 3 sub-spec §4.1 in-scope-refinement vs out-of-scope distinction. Cycle-internal observations surfaced during Tasks 1-6 execution that are out-of-scope for this cycle but eligible for separate register-event consideration:
+
+1. **§2.1 cross-source composition observation (load-bearing)**: 6bps taker delta between sealed sources — `config/execution.yaml` cost_model header "Binance perpetual futures, VIP 0" (4bps taker; line 42) vs PHASE4_PLAN §1.4 line 44 "Binance VIP 0 spot taker" (10bps taker). Project market-data layer operates on BTC/USDT 1h Binance spot per data-layer state; the execution.yaml futures-fee-schedule label predates Phase 4's explicit spot-cost adoption. W4 contextual note at §3 top documents this observation's constraint on D-I firing interpretation. Eligible-not-named for separate reconciliation / errata register-event at Charlie register boundary (NOT this cycle per Q1 (a) sealed-only scope binding, V12 anchor).
+
+2. **§3.5 illustrative example precedent observation**: §5.5 count sequences for both strata byte-match the first two rows of §3.5 illustrative classification examples table — same sequences that were explicitly noted in plan §3 Task 3.5 as "matches observed Phase 4 §3 Stratum {A,B} pattern". This consistency reflects that plan §3.5 illustrative examples were calibrated against expected Phase 4 §3 reproduction at plan-ratify time. Forward-only observation for methodology-precedent codification consideration.
+
+3. **§5.7 Phase 4 §3 numerical reproduction confirmation**: Stratum A 15bps p=0.5841 and Stratum B 15bps p=0.8338 byte-match plan §3 Task 5.4 expected-output target values (sourced from sealed Phase 4 §3 binomial-test results). Cross-sealed-deliverable numerical reproduction observation eligible for methodology-confidence codification.
+
+Per anti-pre-naming + eligible-not-named successor cycle framing: forward-only observations enumerated as observations, NOT recommendations or pre-bound commitments. Each eligible at separate Charlie register-event boundary.
 
 ---
 
@@ -407,7 +428,21 @@ Per anti-pre-naming + eligible-not-named successor framing (§3.3 + METHODOLOGY_
 
 ## §9 — Reserved decisions
 
-`[pending Task 7/9 — eligible-not-named successor paths per anti-pre-emption invariant]`
+Reserved at Phase 5.1 SEAL register-event boundary; eligible at separate Charlie register-event boundary. Sourced from §7 successor paths + §7.2 forward-only carry-forward observations + cycle plan §5 reserved decisions enumeration:
+
+- **Q1 (b) extended real-cost-discovery cycle entry** — eligible per Q1 (b) deferral declaration (§1 + §2.3); §3.3 mixed disposition matrix row (applied at §6.3) explicitly enumerates "extended real-cost-discovery on the cost-conservatism hypothesis is eligible". Cycle shape (scoping / Bucket-1 / other) at Charlie register.
+- **Phase 6+ paper trading on stronger-disposition stratum subset cycle entry** — eligible per §3.3 mixed disposition matrix row first eligible-not-named path applied at §7.1: Stratum A 22-candidate subset under research-time 7bps cost basis (D-I region of validity per §6.1 + W4 contextual note constraint). Cycle shape at Charlie register.
+- **Strategic reconsideration on Stratum B (weaker-disposition stratum) cycle entry** — eligible per §3.3 mixed disposition matrix row third eligible-not-named path applied at §7.1: Stratum B 17-candidate subset strategic-class re-examination per D-II classification. Cycle shape at Charlie register.
+- **§2.1 cross-source composition observation reconciliation / errata register-event** — eligible per §7.2 forward-only carry-forward observation #1 (4bps futures-label vs 10bps spot-taker delta). Reconciliation cycle shape at Charlie register (sealed corpus modification gate or methodology consolidation cycle).
+- **Phase 2.5 bandit-dedup activation** — eligible-not-named ONLY conditional on TWO INDEPENDENT triggers per [`PARKED_BRANCHES.md`](../parked/PARKED_BRANCHES.md): (i) §3.3 joint pattern (D-II, D-II) firing AND (ii) separate Charlie register-event for batch cadence resumption intent. Phase 5.1 fired (D-I, D-II) — does NOT trigger (i). Activation remains parked.
+- **Path 3.x methodology consolidation continuation** — eligible per Path 3 9 DEFER candidates (C3/C4/C6/C10/C13/C19/C21/C38/C39); §7.2 forward-only observations #2 + #3 are candidate additions to methodology-precedent / methodology-confidence codification register.
+- **Path 3 arc-level closeout cycle entry** — Framing C reserved at Path 3 Pass 2 Gate 12; still available.
+- **CLAUDE.md spend freshness fix** — addressed this session at commit `287b949` (April $8.65 → May $19.66); no longer outstanding as reserved decision.
+- **Pre-existing noise cleanup (.DS_Store + docs/d7_stage2c/*)** — independent register-event still eligible (9+ session carry-forward).
+- **Project pause / strategic-absorption register-event** — eligible at any boundary.
+- **Other Charlie-specified** — eligible.
+
+Three Phase 5 narration authorities at `4b9e2dc` remain discharged — Phase 5.1 cycle does NOT re-narrate (per inherited discipline).
 
 ---
 
