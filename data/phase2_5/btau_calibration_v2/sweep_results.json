@@ -1,0 +1,476 @@
+{
+  "model_name": "all-MiniLM-L6-v2",
+  "model_first_param_sha": "352d34a4ad725bb7",
+  "embedding_dim": 384,
+  "n_pairs": 32,
+  "n_near_dup": 14,
+  "n_distinct": 18,
+  "calibration_utc": "2026-05-17T01:20:41Z",
+  "sweep_taus": [
+    0.8,
+    0.82,
+    0.85,
+    0.88,
+    0.9,
+    0.92,
+    0.95,
+    0.97,
+    0.99
+  ],
+  "compound_gate": "cosine \u2265 \u03c4_c AND factor_set_equal",
+  "tau_s": 1.0,
+  "tau_s_status": "DEFINITIONAL (immune from sweep per amendment \u00a72 B-1)",
+  "pair_records": [
+    {
+      "pair_id": "C2_rsi_30_vs_31",
+      "label": "near_dup",
+      "distribution_class": "C2_threshold_variation_same_factor_set",
+      "description": "RSI threshold 30 vs 31 \u2014 same factor set, threshold differs",
+      "cosine": 0.994865,
+      "factor_set_equal": true,
+      "nl_a": "entry when rsi_14 is less than 30; exit when rsi_14 is greater than 50; max-hold 10 bars; position-size full_equity",
+      "nl_b": "entry when rsi_14 is less than 31; exit when rsi_14 is greater than 50; max-hold 10 bars; position-size full_equity"
+    },
+    {
+      "pair_id": "C2_rsi_30_vs_32",
+      "label": "near_dup",
+      "distribution_class": "C2_threshold_variation_same_factor_set",
+      "description": "RSI threshold 30 vs 32 \u2014 same factor set, wider threshold gap",
+      "cosine": 0.990538,
+      "factor_set_equal": true,
+      "nl_a": "entry when rsi_14 is less than 30; exit when rsi_14 is greater than 50; max-hold 10 bars; position-size full_equity",
+      "nl_b": "entry when rsi_14 is less than 32; exit when rsi_14 is greater than 50; max-hold 10 bars; position-size full_equity"
+    },
+    {
+      "pair_id": "C2_rsi_exit_50_vs_55",
+      "label": "near_dup",
+      "distribution_class": "C2_threshold_variation_same_factor_set",
+      "description": "RSI exit threshold 50 vs 55 \u2014 same factor set, exit threshold differs",
+      "cosine": 0.994847,
+      "factor_set_equal": true,
+      "nl_a": "entry when rsi_14 is less than 30; exit when rsi_14 is greater than 50; max-hold 10 bars; position-size full_equity",
+      "nl_b": "entry when rsi_14 is less than 30; exit when rsi_14 is greater than 55; max-hold 10 bars; position-size full_equity"
+    },
+    {
+      "pair_id": "C2_atr_threshold_var",
+      "label": "near_dup",
+      "distribution_class": "C2_threshold_variation_same_factor_set",
+      "description": "ATR threshold 100 vs 110 \u2014 same factor set, threshold differs",
+      "cosine": 0.991009,
+      "factor_set_equal": true,
+      "nl_a": "entry when atr_14 is greater than 100; exit when atr_14 is less than 80; max-hold 10 bars; position-size full_equity",
+      "nl_b": "entry when atr_14 is greater than 110; exit when atr_14 is less than 80; max-hold 10 bars; position-size full_equity"
+    },
+    {
+      "pair_id": "C2_zscore_threshold_var",
+      "label": "near_dup",
+      "distribution_class": "C2_threshold_variation_same_factor_set",
+      "description": "Z-score threshold 2.0 vs 2.5 \u2014 same factor set, threshold differs",
+      "cosine": 0.994904,
+      "factor_set_equal": true,
+      "nl_a": "entry when zscore_48 is greater than 2; exit when zscore_48 is less than 0.5; max-hold 10 bars; position-size full_equity",
+      "nl_b": "entry when zscore_48 is greater than 2.5; exit when zscore_48 is less than 0.5; max-hold 10 bars; position-size full_equity"
+    },
+    {
+      "pair_id": "C2_volume_threshold_var",
+      "label": "near_dup",
+      "distribution_class": "C2_threshold_variation_same_factor_set",
+      "description": "Volume z-score threshold 1.5 vs 1.8 \u2014 same factor set",
+      "cosine": 0.996132,
+      "factor_set_equal": true,
+      "nl_a": "entry when volume_zscore_24h is greater than 1.5; exit when volume_zscore_24h is less than 0.5; max-hold 10 bars; position-size full_equity",
+      "nl_b": "entry when volume_zscore_24h is greater than 1.8; exit when volume_zscore_24h is less than 0.5; max-hold 10 bars; position-size full_equity"
+    },
+    {
+      "pair_id": "C2_hold_bars_var",
+      "label": "near_dup",
+      "distribution_class": "C2_threshold_variation_same_factor_set",
+      "description": "Same factor set + same conditions, only max_hold_bars differs",
+      "cosine": 0.996785,
+      "factor_set_equal": true,
+      "nl_a": "entry when rsi_14 is less than 30; exit when rsi_14 is greater than 50; max-hold 10 bars; position-size full_equity",
+      "nl_b": "entry when rsi_14 is less than 30; exit when rsi_14 is greater than 50; max-hold 12 bars; position-size full_equity"
+    },
+    {
+      "pair_id": "C3_rsi_long_vs_short",
+      "label": "distinct",
+      "distribution_class": "C3_direction_flip_same_factor_set",
+      "description": "RSI oversold long vs overbought short \u2014 same factor, opposite direction",
+      "cosine": 0.98775,
+      "factor_set_equal": true,
+      "nl_a": "entry when rsi_14 is less than 30; exit when rsi_14 is greater than 50; max-hold 10 bars; position-size full_equity",
+      "nl_b": "entry when rsi_14 is greater than 70; exit when rsi_14 is less than 50; max-hold 10 bars; position-size full_equity"
+    },
+    {
+      "pair_id": "C3_sma_above_vs_below",
+      "label": "distinct",
+      "distribution_class": "C3_direction_flip_same_factor_set",
+      "description": "SMA above close vs SMA below close \u2014 opposite direction",
+      "cosine": 0.999732,
+      "factor_set_equal": true,
+      "nl_a": "entry when sma_20 is greater than close; exit when sma_20 is less than close; max-hold 10 bars; position-size full_equity",
+      "nl_b": "entry when sma_20 is less than close; exit when sma_20 is greater than close; max-hold 10 bars; position-size full_equity"
+    },
+    {
+      "pair_id": "C3_volume_high_vs_low",
+      "label": "distinct",
+      "distribution_class": "C3_direction_flip_same_factor_set",
+      "description": "Volume z-score high vs low \u2014 opposite direction",
+      "cosine": 0.988644,
+      "factor_set_equal": true,
+      "nl_a": "entry when volume_zscore_24h is greater than 1.5; exit when volume_zscore_24h is less than 0.5; max-hold 10 bars; position-size full_equity",
+      "nl_b": "entry when volume_zscore_24h is less than -1.5; exit when volume_zscore_24h is greater than -0.5; max-hold 10 bars; position-size full_equity"
+    },
+    {
+      "pair_id": "C3_zscore_above_vs_below",
+      "label": "distinct",
+      "distribution_class": "C3_direction_flip_same_factor_set",
+      "description": "Z-score extreme high vs extreme low \u2014 opposite direction",
+      "cosine": 0.987376,
+      "factor_set_equal": true,
+      "nl_a": "entry when zscore_48 is greater than 2; exit when zscore_48 is less than 0.5; max-hold 10 bars; position-size full_equity",
+      "nl_b": "entry when zscore_48 is less than -2; exit when zscore_48 is greater than -0.5; max-hold 10 bars; position-size full_equity"
+    },
+    {
+      "pair_id": "C3_macd_pos_vs_neg",
+      "label": "distinct",
+      "distribution_class": "C3_direction_flip_same_factor_set",
+      "description": "MACD histogram positive vs negative \u2014 opposite direction",
+      "cosine": 0.99973,
+      "factor_set_equal": true,
+      "nl_a": "entry when macd_hist is greater than 0; exit when macd_hist is less than 0; max-hold 10 bars; position-size full_equity",
+      "nl_b": "entry when macd_hist is less than 0; exit when macd_hist is greater than 0; max-hold 10 bars; position-size full_equity"
+    },
+    {
+      "pair_id": "C1_sma_20_vs_24",
+      "label": "distinct",
+      "distribution_class": "C1_param_variation_diff_factor_set",
+      "description": "SMA(20) vs SMA(24) \u2014 different factor names; structural gate filters",
+      "cosine": 0.975626,
+      "factor_set_equal": false,
+      "nl_a": "entry when sma_20 is greater than close; exit when sma_20 is less than close; max-hold 10 bars; position-size full_equity",
+      "nl_b": "entry when sma_24 is greater than close; exit when sma_24 is less than close; max-hold 10 bars; position-size full_equity"
+    },
+    {
+      "pair_id": "C1_sma_20_vs_50",
+      "label": "distinct",
+      "distribution_class": "C1_param_variation_diff_factor_set",
+      "description": "SMA(20) vs SMA(50) \u2014 different factor names",
+      "cosine": 0.968281,
+      "factor_set_equal": false,
+      "nl_a": "entry when sma_20 is greater than close; exit when sma_20 is less than close; max-hold 10 bars; position-size full_equity",
+      "nl_b": "entry when sma_50 is greater than close; exit when sma_50 is less than close; max-hold 10 bars; position-size full_equity"
+    },
+    {
+      "pair_id": "C1_ema_12_vs_26",
+      "label": "distinct",
+      "distribution_class": "C1_param_variation_diff_factor_set",
+      "description": "EMA(12) vs EMA(26) \u2014 different factor names",
+      "cosine": 0.959157,
+      "factor_set_equal": false,
+      "nl_a": "entry when ema_12 is greater than close; exit when ema_12 is less than close; max-hold 10 bars; position-size full_equity",
+      "nl_b": "entry when ema_26 is greater than close; exit when ema_26 is less than close; max-hold 10 bars; position-size full_equity"
+    },
+    {
+      "pair_id": "C1_return_1h_vs_24h",
+      "label": "distinct",
+      "distribution_class": "C1_param_variation_diff_factor_set",
+      "description": "return_1h vs return_24h \u2014 different factor names",
+      "cosine": 0.9434,
+      "factor_set_equal": false,
+      "nl_a": "entry when return_1h is greater than 0.01; exit when return_1h is less than 0; max-hold 10 bars; position-size full_equity",
+      "nl_b": "entry when return_24h is greater than 0.01; exit when return_24h is less than 0; max-hold 10 bars; position-size full_equity"
+    },
+    {
+      "pair_id": "C4_sma_vs_rsi",
+      "label": "distinct",
+      "distribution_class": "C4_factor_swap_diff_factor_set",
+      "description": "SMA momentum vs RSI mean-reversion \u2014 different families",
+      "cosine": 0.802194,
+      "factor_set_equal": false,
+      "nl_a": "entry when sma_20 is greater than close; exit when sma_20 is less than close; max-hold 10 bars; position-size full_equity",
+      "nl_b": "entry when rsi_14 is less than 30; exit when rsi_14 is greater than 50; max-hold 10 bars; position-size full_equity"
+    },
+    {
+      "pair_id": "C4_macd_vs_bb",
+      "label": "distinct",
+      "distribution_class": "C4_factor_swap_diff_factor_set",
+      "description": "MACD vs Bollinger Bands \u2014 different families",
+      "cosine": 0.73582,
+      "factor_set_equal": false,
+      "nl_a": "entry when macd_hist is greater than 0; exit when macd_hist is less than 0; max-hold 10 bars; position-size full_equity",
+      "nl_b": "entry when bb_upper_24_2 is less than close; exit when bb_upper_24_2 is greater than close; max-hold 10 bars; position-size full_equity"
+    },
+    {
+      "pair_id": "C4_volume_vs_volatility",
+      "label": "distinct",
+      "distribution_class": "C4_factor_swap_diff_factor_set",
+      "description": "Volume z-score vs realized vol \u2014 different factor families",
+      "cosine": 0.741187,
+      "factor_set_equal": false,
+      "nl_a": "entry when volume_zscore_24h is greater than 1.5; exit when volume_zscore_24h is less than 0.5; max-hold 10 bars; position-size full_equity",
+      "nl_b": "entry when realized_vol_24h is greater than 0.02; exit when realized_vol_24h is less than 0.01; max-hold 10 bars; position-size full_equity"
+    },
+    {
+      "pair_id": "C4_atr_vs_zscore",
+      "label": "distinct",
+      "distribution_class": "C4_factor_swap_diff_factor_set",
+      "description": "ATR vs Z-score \u2014 different volatility measures",
+      "cosine": 0.799273,
+      "factor_set_equal": false,
+      "nl_a": "entry when atr_14 is greater than 100; exit when atr_14 is less than 80; max-hold 10 bars; position-size full_equity",
+      "nl_b": "entry when zscore_48 is greater than 2; exit when zscore_48 is less than 0.5; max-hold 10 bars; position-size full_equity"
+    },
+    {
+      "pair_id": "C4_time_vs_price",
+      "label": "distinct",
+      "distribution_class": "C4_factor_swap_diff_factor_set",
+      "description": "Time-of-day vs price momentum \u2014 totally different concepts",
+      "cosine": 0.738497,
+      "factor_set_equal": false,
+      "nl_a": "entry when hour_of_day equals 9; exit when hour_of_day equals 16; max-hold 10 bars; position-size full_equity",
+      "nl_b": "entry when sma_20 is greater than close; exit when sma_20 is less than close; max-hold 10 bars; position-size full_equity"
+    },
+    {
+      "pair_id": "C5_return_1h_vs_168h",
+      "label": "distinct",
+      "distribution_class": "C5_scale_shift_diff_factor_set",
+      "description": "Return 1h vs 168h \u2014 different timescales (168x scale shift)",
+      "cosine": 0.932149,
+      "factor_set_equal": false,
+      "nl_a": "entry when return_1h is greater than 0.01; exit when return_1h is less than 0; max-hold 10 bars; position-size full_equity",
+      "nl_b": "entry when return_168h is greater than 0.01; exit when return_168h is less than 0; max-hold 10 bars; position-size full_equity"
+    },
+    {
+      "pair_id": "C5_sma_20_vs_sma_50_short",
+      "label": "distinct",
+      "distribution_class": "C5_scale_shift_diff_factor_set",
+      "description": "SMA(20) fast 5-bar hold vs SMA(50) slow 100-bar hold",
+      "cosine": 0.954917,
+      "factor_set_equal": false,
+      "nl_a": "entry when sma_20 is greater than close; exit when sma_20 is less than close; max-hold 5 bars; position-size full_equity",
+      "nl_b": "entry when sma_50 is greater than close; exit when sma_50 is less than close; max-hold 100 bars; position-size full_equity"
+    },
+    {
+      "pair_id": "C2_sma_close_v_threshold_var",
+      "label": "near_dup",
+      "distribution_class": "C2_threshold_variation_same_factor_set",
+      "description": "Return 24h threshold 0.02 vs 0.025 \u2014 same factor set",
+      "cosine": 0.998069,
+      "factor_set_equal": true,
+      "nl_a": "entry when return_24h is greater than 0.02; exit when return_24h is less than 0; max-hold 10 bars; position-size full_equity",
+      "nl_b": "entry when return_24h is greater than 0.025; exit when return_24h is less than 0; max-hold 10 bars; position-size full_equity"
+    },
+    {
+      "pair_id": "C2_ema_threshold_var",
+      "label": "near_dup",
+      "distribution_class": "C2_threshold_variation_same_factor_set",
+      "description": "EMA(12) breakout, max_hold 8 vs 12 \u2014 same factor set, only hold differs",
+      "cosine": 0.995516,
+      "factor_set_equal": true,
+      "nl_a": "entry when ema_12 is greater than close; exit when ema_12 is less than close; max-hold 8 bars; position-size full_equity",
+      "nl_b": "entry when ema_12 is greater than close; exit when ema_12 is less than close; max-hold 12 bars; position-size full_equity"
+    },
+    {
+      "pair_id": "C2_multi_cond_threshold",
+      "label": "near_dup",
+      "distribution_class": "C2_threshold_variation_same_factor_set",
+      "description": "RSI<30+vol vs RSI<31+vol \u2014 same factor set {rsi_14, volume_zscore_24h}, RSI threshold differs",
+      "cosine": 0.997025,
+      "factor_set_equal": true,
+      "nl_a": "entry when rsi_14 is less than 30 and volume_zscore_24h is greater than 1.5; exit when rsi_14 is greater than 50; max-hold 10 bars; position-size full_equity",
+      "nl_b": "entry when rsi_14 is less than 31 and volume_zscore_24h is greater than 1.5; exit when rsi_14 is greater than 50; max-hold 10 bars; position-size full_equity"
+    },
+    {
+      "pair_id": "C2_zscore_exit_var",
+      "label": "near_dup",
+      "distribution_class": "C2_threshold_variation_same_factor_set",
+      "description": "Z-score same entry, exit threshold 0.5 vs 1.0 \u2014 same factor set",
+      "cosine": 0.992128,
+      "factor_set_equal": true,
+      "nl_a": "entry when zscore_48 is greater than 2; exit when zscore_48 is less than 0.5; max-hold 10 bars; position-size full_equity",
+      "nl_b": "entry when zscore_48 is greater than 2; exit when zscore_48 is less than 1; max-hold 10 bars; position-size full_equity"
+    },
+    {
+      "pair_id": "C2_atr_op_var",
+      "label": "near_dup",
+      "distribution_class": "C2_threshold_variation_same_factor_set",
+      "description": "ATR > 100 vs ATR >= 100 \u2014 same factor set, edge case for operator boundary",
+      "cosine": 0.99244,
+      "factor_set_equal": true,
+      "nl_a": "entry when atr_14 is greater than 100; exit when atr_14 is at most 80; max-hold 10 bars; position-size full_equity",
+      "nl_b": "entry when atr_14 is at least 100; exit when atr_14 is at most 80; max-hold 10 bars; position-size full_equity"
+    },
+    {
+      "pair_id": "C2_volume_exit_var",
+      "label": "near_dup",
+      "distribution_class": "C2_threshold_variation_same_factor_set",
+      "description": "Volume z-score same entry, exit 0.5 vs 0.8 \u2014 same factor set",
+      "cosine": 0.998644,
+      "factor_set_equal": true,
+      "nl_a": "entry when volume_zscore_24h is greater than 1.5; exit when volume_zscore_24h is less than 0.5; max-hold 10 bars; position-size full_equity",
+      "nl_b": "entry when volume_zscore_24h is greater than 1.5; exit when volume_zscore_24h is less than 0.8; max-hold 10 bars; position-size full_equity"
+    },
+    {
+      "pair_id": "C2_returns_threshold_var",
+      "label": "near_dup",
+      "distribution_class": "C2_threshold_variation_same_factor_set",
+      "description": "Return 168h threshold 0.05 vs 0.06 \u2014 same factor set",
+      "cosine": 0.995776,
+      "factor_set_equal": true,
+      "nl_a": "entry when return_168h is greater than 0.05; exit when return_168h is less than 0; max-hold 10 bars; position-size full_equity",
+      "nl_b": "entry when return_168h is greater than 0.06; exit when return_168h is less than 0; max-hold 10 bars; position-size full_equity"
+    },
+    {
+      "pair_id": "C4_volatility_vs_return",
+      "label": "distinct",
+      "distribution_class": "C4_factor_swap_diff_factor_set",
+      "description": "Realized vol low-filter vs return momentum \u2014 different families",
+      "cosine": 0.79187,
+      "factor_set_equal": false,
+      "nl_a": "entry when realized_vol_24h is less than 0.01; exit when realized_vol_24h is greater than 0.02; max-hold 10 bars; position-size full_equity",
+      "nl_b": "entry when return_24h is greater than 0.01; exit when return_24h is less than 0; max-hold 10 bars; position-size full_equity"
+    },
+    {
+      "pair_id": "C4_dayofweek_vs_macd",
+      "label": "distinct",
+      "distribution_class": "C4_factor_swap_diff_factor_set",
+      "description": "Day-of-week filter vs MACD histogram \u2014 different factor families",
+      "cosine": 0.701155,
+      "factor_set_equal": false,
+      "nl_a": "entry when day_of_week equals 1; exit when day_of_week equals 5; max-hold 10 bars; position-size full_equity",
+      "nl_b": "entry when macd_hist is greater than 0; exit when macd_hist is less than 0; max-hold 10 bars; position-size full_equity"
+    }
+  ],
+  "sweep": [
+    {
+      "tau_c": 0.8,
+      "tp": 14,
+      "fp": 5,
+      "fn": 0,
+      "tn": 13,
+      "precision": 0.7368,
+      "recall": 1.0,
+      "f1": 0.8485
+    },
+    {
+      "tau_c": 0.82,
+      "tp": 14,
+      "fp": 5,
+      "fn": 0,
+      "tn": 13,
+      "precision": 0.7368,
+      "recall": 1.0,
+      "f1": 0.8485
+    },
+    {
+      "tau_c": 0.85,
+      "tp": 14,
+      "fp": 5,
+      "fn": 0,
+      "tn": 13,
+      "precision": 0.7368,
+      "recall": 1.0,
+      "f1": 0.8485
+    },
+    {
+      "tau_c": 0.88,
+      "tp": 14,
+      "fp": 5,
+      "fn": 0,
+      "tn": 13,
+      "precision": 0.7368,
+      "recall": 1.0,
+      "f1": 0.8485
+    },
+    {
+      "tau_c": 0.9,
+      "tp": 14,
+      "fp": 5,
+      "fn": 0,
+      "tn": 13,
+      "precision": 0.7368,
+      "recall": 1.0,
+      "f1": 0.8485
+    },
+    {
+      "tau_c": 0.92,
+      "tp": 14,
+      "fp": 5,
+      "fn": 0,
+      "tn": 13,
+      "precision": 0.7368,
+      "recall": 1.0,
+      "f1": 0.8485
+    },
+    {
+      "tau_c": 0.95,
+      "tp": 14,
+      "fp": 5,
+      "fn": 0,
+      "tn": 13,
+      "precision": 0.7368,
+      "recall": 1.0,
+      "f1": 0.8485
+    },
+    {
+      "tau_c": 0.97,
+      "tp": 14,
+      "fp": 5,
+      "fn": 0,
+      "tn": 13,
+      "precision": 0.7368,
+      "recall": 1.0,
+      "f1": 0.8485
+    },
+    {
+      "tau_c": 0.99,
+      "tp": 14,
+      "fp": 2,
+      "fn": 0,
+      "tn": 16,
+      "precision": 0.875,
+      "recall": 1.0,
+      "f1": 0.9333
+    }
+  ],
+  "chosen_tau_c": 0.99,
+  "trigger_amendment_v2": false,
+  "no_further_amendment_criteria": {
+    "tau_c_in_range": true,
+    "f1_floor": true
+  },
+  "per_class_breakdown": {
+    "C2_threshold_variation_same_factor_set": {
+      "near_dup": 14,
+      "distinct": 0,
+      "fs_eq": 14,
+      "fs_neq": 0
+    },
+    "C3_direction_flip_same_factor_set": {
+      "near_dup": 0,
+      "distinct": 5,
+      "fs_eq": 5,
+      "fs_neq": 0
+    },
+    "C1_param_variation_diff_factor_set": {
+      "near_dup": 0,
+      "distinct": 4,
+      "fs_eq": 0,
+      "fs_neq": 4
+    },
+    "C4_factor_swap_diff_factor_set": {
+      "near_dup": 0,
+      "distinct": 7,
+      "fs_eq": 0,
+      "fs_neq": 7
+    },
+    "C5_scale_shift_diff_factor_set": {
+      "near_dup": 0,
+      "distinct": 2,
+      "fs_eq": 0,
+      "fs_neq": 2
+    }
+  },
+  "selection_rule": "Highest F1 across compound-gate sweep (cosine + factor-set equality). Tie-break: LOWER \u03c4_c (more aggressive dedup; FPs are Critic-overridable per B-3 quarantine). Conjunctive no-further-amendment trigger: \u03c4_c \u2208 [0.85, 0.99] AND F1 \u2265 0.85."
+}

@@ -1,0 +1,1996 @@
+[
+  {
+    "pair_id": "C2_rsi_30_vs_31",
+    "label": "near_dup",
+    "distribution_class": "C2_threshold_variation_same_factor_set",
+    "description": "RSI threshold 30 vs 31 \u2014 same factor set, threshold differs",
+    "dsl_a": {
+      "name": "rsi_oversold_a",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "rsi_14",
+              "op": "<",
+              "value": 30
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "rsi_14",
+              "op": ">",
+              "value": 50
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    },
+    "dsl_b": {
+      "name": "rsi_oversold_b",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "rsi_14",
+              "op": "<",
+              "value": 31
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "rsi_14",
+              "op": ">",
+              "value": 50
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    }
+  },
+  {
+    "pair_id": "C2_rsi_30_vs_32",
+    "label": "near_dup",
+    "distribution_class": "C2_threshold_variation_same_factor_set",
+    "description": "RSI threshold 30 vs 32 \u2014 same factor set, wider threshold gap",
+    "dsl_a": {
+      "name": "rsi_oversold_a",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "rsi_14",
+              "op": "<",
+              "value": 30
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "rsi_14",
+              "op": ">",
+              "value": 50
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    },
+    "dsl_b": {
+      "name": "rsi_oversold_c",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "rsi_14",
+              "op": "<",
+              "value": 32
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "rsi_14",
+              "op": ">",
+              "value": 50
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    }
+  },
+  {
+    "pair_id": "C2_rsi_exit_50_vs_55",
+    "label": "near_dup",
+    "distribution_class": "C2_threshold_variation_same_factor_set",
+    "description": "RSI exit threshold 50 vs 55 \u2014 same factor set, exit threshold differs",
+    "dsl_a": {
+      "name": "rsi_oversold_a",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "rsi_14",
+              "op": "<",
+              "value": 30
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "rsi_14",
+              "op": ">",
+              "value": 50
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    },
+    "dsl_b": {
+      "name": "rsi_oversold_d",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "rsi_14",
+              "op": "<",
+              "value": 30
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "rsi_14",
+              "op": ">",
+              "value": 55
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    }
+  },
+  {
+    "pair_id": "C2_atr_threshold_var",
+    "label": "near_dup",
+    "distribution_class": "C2_threshold_variation_same_factor_set",
+    "description": "ATR threshold 100 vs 110 \u2014 same factor set, threshold differs",
+    "dsl_a": {
+      "name": "atr_high_vol_a",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "atr_14",
+              "op": ">",
+              "value": 100
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "atr_14",
+              "op": "<",
+              "value": 80
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    },
+    "dsl_b": {
+      "name": "atr_high_vol_b",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "atr_14",
+              "op": ">",
+              "value": 110
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "atr_14",
+              "op": "<",
+              "value": 80
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    }
+  },
+  {
+    "pair_id": "C2_zscore_threshold_var",
+    "label": "near_dup",
+    "distribution_class": "C2_threshold_variation_same_factor_set",
+    "description": "Z-score threshold 2.0 vs 2.5 \u2014 same factor set, threshold differs",
+    "dsl_a": {
+      "name": "zscore_extreme_a",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "zscore_48",
+              "op": ">",
+              "value": 2.0
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "zscore_48",
+              "op": "<",
+              "value": 0.5
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    },
+    "dsl_b": {
+      "name": "zscore_extreme_b",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "zscore_48",
+              "op": ">",
+              "value": 2.5
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "zscore_48",
+              "op": "<",
+              "value": 0.5
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    }
+  },
+  {
+    "pair_id": "C2_volume_threshold_var",
+    "label": "near_dup",
+    "distribution_class": "C2_threshold_variation_same_factor_set",
+    "description": "Volume z-score threshold 1.5 vs 1.8 \u2014 same factor set",
+    "dsl_a": {
+      "name": "vol_surge_a",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "volume_zscore_24h",
+              "op": ">",
+              "value": 1.5
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "volume_zscore_24h",
+              "op": "<",
+              "value": 0.5
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    },
+    "dsl_b": {
+      "name": "vol_surge_b",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "volume_zscore_24h",
+              "op": ">",
+              "value": 1.8
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "volume_zscore_24h",
+              "op": "<",
+              "value": 0.5
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    }
+  },
+  {
+    "pair_id": "C2_hold_bars_var",
+    "label": "near_dup",
+    "distribution_class": "C2_threshold_variation_same_factor_set",
+    "description": "Same factor set + same conditions, only max_hold_bars differs",
+    "dsl_a": {
+      "name": "rsi_a_10bar",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "rsi_14",
+              "op": "<",
+              "value": 30
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "rsi_14",
+              "op": ">",
+              "value": 50
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    },
+    "dsl_b": {
+      "name": "rsi_b_12bar",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "rsi_14",
+              "op": "<",
+              "value": 30
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "rsi_14",
+              "op": ">",
+              "value": 50
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 12
+    }
+  },
+  {
+    "pair_id": "C3_rsi_long_vs_short",
+    "label": "distinct",
+    "distribution_class": "C3_direction_flip_same_factor_set",
+    "description": "RSI oversold long vs overbought short \u2014 same factor, opposite direction",
+    "dsl_a": {
+      "name": "rsi_oversold",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "rsi_14",
+              "op": "<",
+              "value": 30
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "rsi_14",
+              "op": ">",
+              "value": 50
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    },
+    "dsl_b": {
+      "name": "rsi_overbought",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "rsi_14",
+              "op": ">",
+              "value": 70
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "rsi_14",
+              "op": "<",
+              "value": 50
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    }
+  },
+  {
+    "pair_id": "C3_sma_above_vs_below",
+    "label": "distinct",
+    "distribution_class": "C3_direction_flip_same_factor_set",
+    "description": "SMA above close vs SMA below close \u2014 opposite direction",
+    "dsl_a": {
+      "name": "sma_above",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "sma_20",
+              "op": ">",
+              "value": "close"
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "sma_20",
+              "op": "<",
+              "value": "close"
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    },
+    "dsl_b": {
+      "name": "sma_below",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "sma_20",
+              "op": "<",
+              "value": "close"
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "sma_20",
+              "op": ">",
+              "value": "close"
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    }
+  },
+  {
+    "pair_id": "C3_volume_high_vs_low",
+    "label": "distinct",
+    "distribution_class": "C3_direction_flip_same_factor_set",
+    "description": "Volume z-score high vs low \u2014 opposite direction",
+    "dsl_a": {
+      "name": "vol_high",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "volume_zscore_24h",
+              "op": ">",
+              "value": 1.5
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "volume_zscore_24h",
+              "op": "<",
+              "value": 0.5
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    },
+    "dsl_b": {
+      "name": "vol_low",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "volume_zscore_24h",
+              "op": "<",
+              "value": -1.5
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "volume_zscore_24h",
+              "op": ">",
+              "value": -0.5
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    }
+  },
+  {
+    "pair_id": "C3_zscore_above_vs_below",
+    "label": "distinct",
+    "distribution_class": "C3_direction_flip_same_factor_set",
+    "description": "Z-score extreme high vs extreme low \u2014 opposite direction",
+    "dsl_a": {
+      "name": "zscore_extreme_high",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "zscore_48",
+              "op": ">",
+              "value": 2.0
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "zscore_48",
+              "op": "<",
+              "value": 0.5
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    },
+    "dsl_b": {
+      "name": "zscore_extreme_low",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "zscore_48",
+              "op": "<",
+              "value": -2.0
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "zscore_48",
+              "op": ">",
+              "value": -0.5
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    }
+  },
+  {
+    "pair_id": "C3_macd_pos_vs_neg",
+    "label": "distinct",
+    "distribution_class": "C3_direction_flip_same_factor_set",
+    "description": "MACD histogram positive vs negative \u2014 opposite direction",
+    "dsl_a": {
+      "name": "macd_pos",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "macd_hist",
+              "op": ">",
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "macd_hist",
+              "op": "<",
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    },
+    "dsl_b": {
+      "name": "macd_neg",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "macd_hist",
+              "op": "<",
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "macd_hist",
+              "op": ">",
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    }
+  },
+  {
+    "pair_id": "C1_sma_20_vs_24",
+    "label": "distinct",
+    "distribution_class": "C1_param_variation_diff_factor_set",
+    "description": "SMA(20) vs SMA(24) \u2014 different factor names; structural gate filters",
+    "dsl_a": {
+      "name": "sma_20_long",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "sma_20",
+              "op": ">",
+              "value": "close"
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "sma_20",
+              "op": "<",
+              "value": "close"
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    },
+    "dsl_b": {
+      "name": "sma_24_long",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "sma_24",
+              "op": ">",
+              "value": "close"
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "sma_24",
+              "op": "<",
+              "value": "close"
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    }
+  },
+  {
+    "pair_id": "C1_sma_20_vs_50",
+    "label": "distinct",
+    "distribution_class": "C1_param_variation_diff_factor_set",
+    "description": "SMA(20) vs SMA(50) \u2014 different factor names",
+    "dsl_a": {
+      "name": "sma_20_long",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "sma_20",
+              "op": ">",
+              "value": "close"
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "sma_20",
+              "op": "<",
+              "value": "close"
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    },
+    "dsl_b": {
+      "name": "sma_50_long",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "sma_50",
+              "op": ">",
+              "value": "close"
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "sma_50",
+              "op": "<",
+              "value": "close"
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    }
+  },
+  {
+    "pair_id": "C1_ema_12_vs_26",
+    "label": "distinct",
+    "distribution_class": "C1_param_variation_diff_factor_set",
+    "description": "EMA(12) vs EMA(26) \u2014 different factor names",
+    "dsl_a": {
+      "name": "ema_12_long",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "ema_12",
+              "op": ">",
+              "value": "close"
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "ema_12",
+              "op": "<",
+              "value": "close"
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    },
+    "dsl_b": {
+      "name": "ema_26_long",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "ema_26",
+              "op": ">",
+              "value": "close"
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "ema_26",
+              "op": "<",
+              "value": "close"
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    }
+  },
+  {
+    "pair_id": "C1_return_1h_vs_24h",
+    "label": "distinct",
+    "distribution_class": "C1_param_variation_diff_factor_set",
+    "description": "return_1h vs return_24h \u2014 different factor names",
+    "dsl_a": {
+      "name": "ret_1h_pos",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "return_1h",
+              "op": ">",
+              "value": 0.01
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "return_1h",
+              "op": "<",
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    },
+    "dsl_b": {
+      "name": "ret_24h_pos",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "return_24h",
+              "op": ">",
+              "value": 0.01
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "return_24h",
+              "op": "<",
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    }
+  },
+  {
+    "pair_id": "C4_sma_vs_rsi",
+    "label": "distinct",
+    "distribution_class": "C4_factor_swap_diff_factor_set",
+    "description": "SMA momentum vs RSI mean-reversion \u2014 different families",
+    "dsl_a": {
+      "name": "sma_long",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "sma_20",
+              "op": ">",
+              "value": "close"
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "sma_20",
+              "op": "<",
+              "value": "close"
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    },
+    "dsl_b": {
+      "name": "rsi_oversold",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "rsi_14",
+              "op": "<",
+              "value": 30
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "rsi_14",
+              "op": ">",
+              "value": 50
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    }
+  },
+  {
+    "pair_id": "C4_macd_vs_bb",
+    "label": "distinct",
+    "distribution_class": "C4_factor_swap_diff_factor_set",
+    "description": "MACD vs Bollinger Bands \u2014 different families",
+    "dsl_a": {
+      "name": "macd_signal",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "macd_hist",
+              "op": ">",
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "macd_hist",
+              "op": "<",
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    },
+    "dsl_b": {
+      "name": "bb_squeeze",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "bb_upper_24_2",
+              "op": "<",
+              "value": "close"
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "bb_upper_24_2",
+              "op": ">",
+              "value": "close"
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    }
+  },
+  {
+    "pair_id": "C4_volume_vs_volatility",
+    "label": "distinct",
+    "distribution_class": "C4_factor_swap_diff_factor_set",
+    "description": "Volume z-score vs realized vol \u2014 different factor families",
+    "dsl_a": {
+      "name": "vol_surge",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "volume_zscore_24h",
+              "op": ">",
+              "value": 1.5
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "volume_zscore_24h",
+              "op": "<",
+              "value": 0.5
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    },
+    "dsl_b": {
+      "name": "vol_spike",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "realized_vol_24h",
+              "op": ">",
+              "value": 0.02
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "realized_vol_24h",
+              "op": "<",
+              "value": 0.01
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    }
+  },
+  {
+    "pair_id": "C4_atr_vs_zscore",
+    "label": "distinct",
+    "distribution_class": "C4_factor_swap_diff_factor_set",
+    "description": "ATR vs Z-score \u2014 different volatility measures",
+    "dsl_a": {
+      "name": "atr_high",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "atr_14",
+              "op": ">",
+              "value": 100
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "atr_14",
+              "op": "<",
+              "value": 80
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    },
+    "dsl_b": {
+      "name": "zscore_extreme",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "zscore_48",
+              "op": ">",
+              "value": 2.0
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "zscore_48",
+              "op": "<",
+              "value": 0.5
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    }
+  },
+  {
+    "pair_id": "C4_time_vs_price",
+    "label": "distinct",
+    "distribution_class": "C4_factor_swap_diff_factor_set",
+    "description": "Time-of-day vs price momentum \u2014 totally different concepts",
+    "dsl_a": {
+      "name": "time_feature",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "hour_of_day",
+              "op": "==",
+              "value": 9
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "hour_of_day",
+              "op": "==",
+              "value": 16
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    },
+    "dsl_b": {
+      "name": "price_momentum",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "sma_20",
+              "op": ">",
+              "value": "close"
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "sma_20",
+              "op": "<",
+              "value": "close"
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    }
+  },
+  {
+    "pair_id": "C5_return_1h_vs_168h",
+    "label": "distinct",
+    "distribution_class": "C5_scale_shift_diff_factor_set",
+    "description": "Return 1h vs 168h \u2014 different timescales (168x scale shift)",
+    "dsl_a": {
+      "name": "ret_1h_pos",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "return_1h",
+              "op": ">",
+              "value": 0.01
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "return_1h",
+              "op": "<",
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    },
+    "dsl_b": {
+      "name": "ret_168h_pos",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "return_168h",
+              "op": ">",
+              "value": 0.01
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "return_168h",
+              "op": "<",
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    }
+  },
+  {
+    "pair_id": "C5_sma_20_vs_sma_50_short",
+    "label": "distinct",
+    "distribution_class": "C5_scale_shift_diff_factor_set",
+    "description": "SMA(20) fast 5-bar hold vs SMA(50) slow 100-bar hold",
+    "dsl_a": {
+      "name": "sma_20_fast",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "sma_20",
+              "op": ">",
+              "value": "close"
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "sma_20",
+              "op": "<",
+              "value": "close"
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 5
+    },
+    "dsl_b": {
+      "name": "sma_50_slow",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "sma_50",
+              "op": ">",
+              "value": "close"
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "sma_50",
+              "op": "<",
+              "value": "close"
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 100
+    }
+  },
+  {
+    "pair_id": "C2_sma_close_v_threshold_var",
+    "label": "near_dup",
+    "distribution_class": "C2_threshold_variation_same_factor_set",
+    "description": "Return 24h threshold 0.02 vs 0.025 \u2014 same factor set",
+    "dsl_a": {
+      "name": "ret_var_a",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "return_24h",
+              "op": ">",
+              "value": 0.02
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "return_24h",
+              "op": "<",
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    },
+    "dsl_b": {
+      "name": "ret_var_b",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "return_24h",
+              "op": ">",
+              "value": 0.025
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "return_24h",
+              "op": "<",
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    }
+  },
+  {
+    "pair_id": "C2_ema_threshold_var",
+    "label": "near_dup",
+    "distribution_class": "C2_threshold_variation_same_factor_set",
+    "description": "EMA(12) breakout, max_hold 8 vs 12 \u2014 same factor set, only hold differs",
+    "dsl_a": {
+      "name": "ema_12_breakout_a",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "ema_12",
+              "op": ">",
+              "value": "close"
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "ema_12",
+              "op": "<",
+              "value": "close"
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 8
+    },
+    "dsl_b": {
+      "name": "ema_12_breakout_b",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "ema_12",
+              "op": ">",
+              "value": "close"
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "ema_12",
+              "op": "<",
+              "value": "close"
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 12
+    }
+  },
+  {
+    "pair_id": "C2_multi_cond_threshold",
+    "label": "near_dup",
+    "distribution_class": "C2_threshold_variation_same_factor_set",
+    "description": "RSI<30+vol vs RSI<31+vol \u2014 same factor set {rsi_14, volume_zscore_24h}, RSI threshold differs",
+    "dsl_a": {
+      "name": "rsi_vol_a",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "rsi_14",
+              "op": "<",
+              "value": 30
+            },
+            {
+              "factor": "volume_zscore_24h",
+              "op": ">",
+              "value": 1.5
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "rsi_14",
+              "op": ">",
+              "value": 50
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    },
+    "dsl_b": {
+      "name": "rsi_vol_b",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "rsi_14",
+              "op": "<",
+              "value": 31
+            },
+            {
+              "factor": "volume_zscore_24h",
+              "op": ">",
+              "value": 1.5
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "rsi_14",
+              "op": ">",
+              "value": 50
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    }
+  },
+  {
+    "pair_id": "C2_zscore_exit_var",
+    "label": "near_dup",
+    "distribution_class": "C2_threshold_variation_same_factor_set",
+    "description": "Z-score same entry, exit threshold 0.5 vs 1.0 \u2014 same factor set",
+    "dsl_a": {
+      "name": "zscore_a",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "zscore_48",
+              "op": ">",
+              "value": 2.0
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "zscore_48",
+              "op": "<",
+              "value": 0.5
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    },
+    "dsl_b": {
+      "name": "zscore_b",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "zscore_48",
+              "op": ">",
+              "value": 2.0
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "zscore_48",
+              "op": "<",
+              "value": 1.0
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    }
+  },
+  {
+    "pair_id": "C2_atr_op_var",
+    "label": "near_dup",
+    "distribution_class": "C2_threshold_variation_same_factor_set",
+    "description": "ATR > 100 vs ATR >= 100 \u2014 same factor set, edge case for operator boundary",
+    "dsl_a": {
+      "name": "atr_a",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "atr_14",
+              "op": ">",
+              "value": 100
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "atr_14",
+              "op": "<=",
+              "value": 80
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    },
+    "dsl_b": {
+      "name": "atr_b",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "atr_14",
+              "op": ">=",
+              "value": 100
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "atr_14",
+              "op": "<=",
+              "value": 80
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    }
+  },
+  {
+    "pair_id": "C2_volume_exit_var",
+    "label": "near_dup",
+    "distribution_class": "C2_threshold_variation_same_factor_set",
+    "description": "Volume z-score same entry, exit 0.5 vs 0.8 \u2014 same factor set",
+    "dsl_a": {
+      "name": "vol_a",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "volume_zscore_24h",
+              "op": ">",
+              "value": 1.5
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "volume_zscore_24h",
+              "op": "<",
+              "value": 0.5
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    },
+    "dsl_b": {
+      "name": "vol_b",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "volume_zscore_24h",
+              "op": ">",
+              "value": 1.5
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "volume_zscore_24h",
+              "op": "<",
+              "value": 0.8
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    }
+  },
+  {
+    "pair_id": "C2_returns_threshold_var",
+    "label": "near_dup",
+    "distribution_class": "C2_threshold_variation_same_factor_set",
+    "description": "Return 168h threshold 0.05 vs 0.06 \u2014 same factor set",
+    "dsl_a": {
+      "name": "ret168_a",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "return_168h",
+              "op": ">",
+              "value": 0.05
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "return_168h",
+              "op": "<",
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    },
+    "dsl_b": {
+      "name": "ret168_b",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "return_168h",
+              "op": ">",
+              "value": 0.06
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "return_168h",
+              "op": "<",
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    }
+  },
+  {
+    "pair_id": "C4_volatility_vs_return",
+    "label": "distinct",
+    "distribution_class": "C4_factor_swap_diff_factor_set",
+    "description": "Realized vol low-filter vs return momentum \u2014 different families",
+    "dsl_a": {
+      "name": "vol_filter",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "realized_vol_24h",
+              "op": "<",
+              "value": 0.01
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "realized_vol_24h",
+              "op": ">",
+              "value": 0.02
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    },
+    "dsl_b": {
+      "name": "ret_filter",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "return_24h",
+              "op": ">",
+              "value": 0.01
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "return_24h",
+              "op": "<",
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    }
+  },
+  {
+    "pair_id": "C4_dayofweek_vs_macd",
+    "label": "distinct",
+    "distribution_class": "C4_factor_swap_diff_factor_set",
+    "description": "Day-of-week filter vs MACD histogram \u2014 different factor families",
+    "dsl_a": {
+      "name": "dow_filter",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "day_of_week",
+              "op": "==",
+              "value": 1
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "day_of_week",
+              "op": "==",
+              "value": 5
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    },
+    "dsl_b": {
+      "name": "macd_signal",
+      "description": "calibration fixture",
+      "entry": [
+        {
+          "conditions": [
+            {
+              "factor": "macd_hist",
+              "op": ">",
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "exit": [
+        {
+          "conditions": [
+            {
+              "factor": "macd_hist",
+              "op": "<",
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "position_sizing": "full_equity",
+      "max_hold_bars": 10
+    }
+  }
+]
