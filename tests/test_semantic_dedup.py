@@ -189,7 +189,13 @@ def test_nl_serializer_edge_case_e_multiple_or_groups(serialize):
 
 
 def test_nl_serializer_edge_case_f_and_conjunction_within_group(serialize):
-    """Edge case (f): AND-conjunction within a group renders with 'and' separator."""
+    """Edge case (f): AND-conjunction within a group renders with 'and' separator.
+
+    Wave B-3 review (code-F5): tightened assertion to check the exact
+    conjunction pattern (' and ' between two sorted conditions) rather
+    than a bare 'and' substring that could false-pass on factor names
+    like 'bands' or 'standard'.
+    """
     dsl = _make_dsl(
         entry=[
             {"conditions": [
@@ -199,8 +205,10 @@ def test_nl_serializer_edge_case_f_and_conjunction_within_group(serialize):
         ],
     )
     nl = serialize(dsl)
-    assert "and" in nl.lower(), (
-        f"AND-conjunction must include 'and' separator. Got: {nl!r}"
+    # Within-group AND-conjunction renders as ' and ' (space-padded)
+    # between deterministically-sorted condition strings.
+    assert " and " in nl, (
+        f"AND-conjunction must render exactly as ' and '. Got: {nl!r}"
     )
 
 
@@ -366,19 +374,40 @@ def test_b_t7_calibration_v2_artifact_present():
     assert sweep_data["trigger_amendment_v2"] is False
 
 
-def test_b_t8_model_load_failure_hard_fails_orchestrator():
-    """Per amendment §4 B-7: missing sentence-transformers → hard-fail.
+def test_b_t8_check_embedding_stack_healthy_path():
+    """Healthy path: check_embedding_stack_or_raise returns None.
 
-    Mocks the import-failure path and verifies the orchestrator startup
-    refuses to begin batch.
+    Per amendment §4 B-7: sentence-transformers must be importable at
+    orchestrator startup. The healthy environment for this test has
+    sentence-transformers installed (per pyproject.toml phase2_5 extra).
     """
     from agents.orchestrator.semantic_dedup import check_embedding_stack_or_raise
 
     # Healthy: should not raise
-    check_embedding_stack_or_raise()  # raises if anything wrong
+    check_embedding_stack_or_raise()
 
-    # Simulated failure via stubbed environment: test the failure path's
-    # exception type contract — Wave B-2 implements this with the actual
-    # check; for now we just confirm the function exists and accepts
-    # the contract surface
-    assert callable(check_embedding_stack_or_raise)
+
+def test_b_t8_check_embedding_stack_import_failure_raises():
+    """Failure path: missing sentence-transformers → ImportError hard-fail.
+
+    Per amendment §4 B-7 hard-fail discipline lock. Wave B-3 review
+    (py-F4 + code-F2 2-way): previously this path was untested. Now
+    we patch sys.modules to simulate the import failure and verify the
+    contract.
+    """
+    import sys
+    from unittest.mock import patch
+
+    # Capture original module so we can clean up
+    saved_st = sys.modules.get("sentence_transformers")
+    try:
+        with patch.dict(sys.modules, {"sentence_transformers": None}):
+            from agents.orchestrator.semantic_dedup import (
+                check_embedding_stack_or_raise,
+            )
+
+            with pytest.raises(ImportError, match="phase2_5"):
+                check_embedding_stack_or_raise()
+    finally:
+        if saved_st is not None:
+            sys.modules["sentence_transformers"] = saved_st

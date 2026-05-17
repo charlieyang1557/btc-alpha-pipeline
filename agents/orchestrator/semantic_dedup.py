@@ -30,9 +30,17 @@ DISCIPLINE LOCKS (parked-branch-internal until merge):
 """
 from __future__ import annotations
 
+import os
 from typing import TYPE_CHECKING
 
+import numpy as np
+
+from agents.critic.d7a_feature_extraction import extract_factors
+
 if TYPE_CHECKING:
+    from sentence_transformers import SentenceTransformer
+
+    from agents.orchestrator.ingest import BatchIngestState
     from strategies.dsl import Condition, ConditionGroup, StrategyDSL
 
 
@@ -150,17 +158,27 @@ def check_embedding_stack_or_raise() -> None:
 
     Per sub-spec amendment v1 SEAL ``850aa1d`` §4 B-7 hard-fail policy:
     at orchestrator startup the embedding stack MUST be reachable. Silent
-    degradation to D3-only dedup is forbidden (would let a batch proceed
-    without near-duplicate flagging without operator awareness).
+    degradation to D3-only dedup is forbidden.
+
+    Phase 2.5 Wave B-3 fix (sec-F1 HIGH): this function now ALSO enforces
+    B-Lock-6 "no remote embedding API" + B-Lock-7 "runtime embedding MUST
+    NOT touch the network" by setting the HuggingFace / transformers
+    offline env vars BEFORE any model instantiation downstream. Previously
+    this was documentation-only; the lock is now executable code.
 
     Raises:
         ImportError: if ``sentence_transformers`` cannot be imported
             (extras not installed).
-        RuntimeError: if model instantiation fails for any other reason
-            (network error mid-install, file corruption, etc.).
 
     Returns ``None`` when the stack is healthy.
     """
+    # Enforce B-Lock-6/B-Lock-7 at runtime: any future SentenceTransformer
+    # or HuggingFace-hub call must operate in offline mode. install-time
+    # downloads are permitted (B-Lock-7 wording); runtime downloads are
+    # forbidden. Setting these env vars before model load makes the lock
+    # executable rather than documented-only.
+    os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
+    os.environ.setdefault("HF_HUB_OFFLINE", "1")
     try:
         # Local import so callers that never invoke this don't pay the
         # sentence-transformers import cost (~1s).
@@ -174,7 +192,7 @@ def check_embedding_stack_or_raise() -> None:
         ) from exc
 
 
-def embed_dsl(dsl: "StrategyDSL", model) -> "np.ndarray":  # type: ignore[no-any-unimported]
+def embed_dsl(dsl: "StrategyDSL", model: "SentenceTransformer") -> np.ndarray:
     """Embed a ``StrategyDSL`` via the NL serializer + sentence-transformer.
 
     Per sub-spec amendment v1 §2 B-4: input is the NL-serialized DSL
@@ -191,8 +209,6 @@ def embed_dsl(dsl: "StrategyDSL", model) -> "np.ndarray":  # type: ignore[no-any
         ``np.ndarray`` of shape ``(model.get_sentence_embedding_dimension(),)``
         — the NL serializer output's mean-pooled token embedding.
     """
-    import numpy as np  # local import per import-isolation discipline
-
     nl_text = nl_serialize_dsl(dsl)
     embedding = model.encode(nl_text, convert_to_numpy=True, show_progress_bar=False)
     return np.asarray(embedding)
@@ -203,7 +219,7 @@ def is_near_duplicate(
     dsl_b: "StrategyDSL",
     *,
     tau_c: float,
-    model,
+    model: "SentenceTransformer",
 ) -> bool:
     """Compound AND-gate near-duplicate detection.
 
@@ -230,22 +246,30 @@ def is_near_duplicate(
     Returns:
         ``True`` if both gates pass; ``False`` otherwise.
     """
-    import numpy as np
-
     # Structural gate first (cheap short-circuit)
     fa = frozenset(extract_factors(dsl_a))
     fb = frozenset(extract_factors(dsl_b))
     if fa != fb:
         return False
 
-    # Cosine gate
+    # Cosine gate with zero-norm guard per Wave B-3 review py-F2 HIGH:
+    # a degenerate zero-norm embedding would silently produce NaN here
+    # (NaN >= τ_c evaluates to False, masking the degenerate case with
+    # no diagnostic). Hard-fail instead, matching the B-Lock-7 philosophy.
     emb_a = embed_dsl(dsl_a, model)
     emb_b = embed_dsl(dsl_b, model)
-    cosine = float(np.dot(emb_a, emb_b) / (np.linalg.norm(emb_a) * np.linalg.norm(emb_b)))
+    norm_product = float(np.linalg.norm(emb_a) * np.linalg.norm(emb_b))
+    if norm_product == 0.0:
+        raise ValueError(
+            "is_near_duplicate received a degenerate zero-norm embedding; "
+            "model may have produced an invalid output for the NL-serialized "
+            "DSL text. Hard-fail to surface rather than silently masking."
+        )
+    cosine = float(np.dot(emb_a, emb_b) / norm_product)
     return cosine >= tau_c
 
 
-def finalize_batch_embedding_cache(state) -> None:
+def finalize_batch_embedding_cache(state: "BatchIngestState") -> None:
     """Clear ``BatchIngestState.embedding_cache`` per B-Lock-5.
 
     Per sub-spec amendment v1 §4 B-Lock-5: embedding cache is strictly
@@ -259,14 +283,6 @@ def finalize_batch_embedding_cache(state) -> None:
             dict will be cleared in place.
     """
     state.embedding_cache.clear()
-
-
-# Lazy import for factor extraction — kept local to is_near_duplicate's call
-# site logic but exposed here for re-use by orchestrator integration code.
-# This import sits at module bottom (not top) to keep import-time cost low
-# for callers that never call ``is_near_duplicate`` (e.g., test fixtures
-# that only use ``nl_serialize_dsl``).
-from agents.critic.d7a_feature_extraction import extract_factors  # noqa: E402
 
 
 __all__ = [

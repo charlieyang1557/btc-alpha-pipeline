@@ -687,8 +687,15 @@ def run_calibration() -> None:
             "description": p.description,
             "cosine": round(cos, 6),
             "factor_set_equal": fs_equal,
-            "nl_a": nl_a,
-            "nl_b": nl_b,
+            # Phase 2.5 Wave B-3 review (sec-F3): NL strings nl_a/nl_b
+            # are NOT included in pair_records. B-Lock-4 forbids writing
+            # embedding/derived artifacts to surfaces that could feed
+            # back into LLM context. sweep_results.json may be read by
+            # agent-side code paths (test_b_t7 already does); keeping NL
+            # strategy descriptions out of it forecloses a latent leak.
+            # The CALIBRATION_NOTE_V2.md report can render NL pair-by-
+            # pair using the live in-memory records without persisting
+            # them to JSON.
         })
         gate_status = "PASS_FS" if fs_equal else "FAIL_FS"
         print(

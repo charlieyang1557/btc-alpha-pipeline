@@ -63,7 +63,10 @@ phase2 = [
 # (project-local cache directory; checksum recorded at calibration).
 phase2_5 = [
     "sentence-transformers>=2.7.0,<6.0.0",  # short-text embedding model
-    "torch>=2.0.0",                          # CPU inference backend
+    # Phase 2.5 Wave B-3 review (sec-F2): torch upper cap added. Major
+    # version bumps can introduce silent numerical differences in
+    # embeddings that would invalidate the W0.3.v2 calibration.
+    "torch>=2.0.0,<3.0.0",                   # CPU inference backend
     "numpy>=1.24.0",                         # already-implicit via other deps
 ]
 
