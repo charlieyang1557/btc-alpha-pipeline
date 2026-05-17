@@ -411,3 +411,61 @@ def test_b_t8_check_embedding_stack_import_failure_raises():
     finally:
         if saved_st is not None:
             sys.modules["sentence_transformers"] = saved_st
+
+
+def test_b_t8_check_embedding_stack_forces_offline_when_unset(monkeypatch):
+    """check_embedding_stack_or_raise unconditionally sets offline vars to '1'.
+
+    Post-SEAL rerun errata (Codex rerun F2): the prior os.environ.setdefault
+    only set if unset, preserving an inherited TRANSFORMERS_OFFLINE=0 and
+    silently breaking the runtime no-network lock. The stricter pattern
+    forces "1" unconditionally when the var was unset.
+    """
+    import os
+
+    monkeypatch.delenv("TRANSFORMERS_OFFLINE", raising=False)
+    monkeypatch.delenv("HF_HUB_OFFLINE", raising=False)
+
+    from agents.orchestrator.semantic_dedup import (
+        check_embedding_stack_or_raise,
+    )
+
+    check_embedding_stack_or_raise()
+
+    assert os.environ.get("TRANSFORMERS_OFFLINE") == "1", (
+        "check_embedding_stack_or_raise must force TRANSFORMERS_OFFLINE='1' "
+        "when previously unset (was os.environ.setdefault leaving it unset?)"
+    )
+    assert os.environ.get("HF_HUB_OFFLINE") == "1"
+
+
+def test_b_t8_check_embedding_stack_raises_on_offline_bypass(monkeypatch):
+    """If TRANSFORMERS_OFFLINE=0 was deliberately set, refuse to proceed.
+
+    Post-SEAL rerun errata (Codex rerun F2): a user who exports
+    TRANSFORMERS_OFFLINE=0 (e.g., to bypass the lock for testing) MUST
+    be refused service rather than silently allowed through. The check
+    surfaces the bypass attempt explicitly.
+    """
+    monkeypatch.setenv("TRANSFORMERS_OFFLINE", "0")
+    monkeypatch.setenv("HF_HUB_OFFLINE", "1")
+
+    from agents.orchestrator.semantic_dedup import (
+        check_embedding_stack_or_raise,
+    )
+
+    with pytest.raises(RuntimeError, match="TRANSFORMERS_OFFLINE"):
+        check_embedding_stack_or_raise()
+
+
+def test_b_t8_check_embedding_stack_raises_on_hf_hub_bypass(monkeypatch):
+    """Symmetric to above for HF_HUB_OFFLINE bypass attempts."""
+    monkeypatch.setenv("TRANSFORMERS_OFFLINE", "1")
+    monkeypatch.setenv("HF_HUB_OFFLINE", "0")
+
+    from agents.orchestrator.semantic_dedup import (
+        check_embedding_stack_or_raise,
+    )
+
+    with pytest.raises(RuntimeError, match="HF_HUB_OFFLINE"):
+        check_embedding_stack_or_raise()

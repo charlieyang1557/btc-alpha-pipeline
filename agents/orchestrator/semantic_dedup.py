@@ -175,10 +175,27 @@ def check_embedding_stack_or_raise() -> None:
     # Enforce B-Lock-6/B-Lock-7 at runtime: any future SentenceTransformer
     # or HuggingFace-hub call must operate in offline mode. install-time
     # downloads are permitted (B-Lock-7 wording); runtime downloads are
-    # forbidden. Setting these env vars before model load makes the lock
-    # executable rather than documented-only.
-    os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
-    os.environ.setdefault("HF_HUB_OFFLINE", "1")
+    # forbidden.
+    #
+    # Post-SEAL errata (Codex rerun F2): the prior implementation used
+    # ``os.environ.setdefault``, which silently preserves an inherited
+    # ``TRANSFORMERS_OFFLINE=0`` (or ``HF_HUB_OFFLINE=0``) from the user's
+    # shell — defeating the lock. The stricter pattern below RAISES if
+    # either var was previously set to a non-``"1"`` value (signals a
+    # bypass attempt), and unconditionally forces ``"1"`` otherwise.
+    for _offline_var in ("TRANSFORMERS_OFFLINE", "HF_HUB_OFFLINE"):
+        _existing = os.environ.get(_offline_var)
+        if _existing is not None and _existing != "1":
+            raise RuntimeError(
+                f"{_offline_var}={_existing!r} was set before "
+                "check_embedding_stack_or_raise() ran. Phase 2.5 sub-spec "
+                "amendment v1 B-Lock-6/B-Lock-7 forbid runtime network "
+                "egress to the HuggingFace hub; the orchestrator refuses "
+                f"to proceed when {_offline_var} is set to anything other "
+                f"than '1'. Unset {_offline_var} (or set it to '1') "
+                "before starting the orchestrator."
+            )
+        os.environ[_offline_var] = "1"
     try:
         # Local import so callers that never invoke this don't pay the
         # sentence-transformers import cost (~1s).

@@ -341,4 +341,19 @@ Per Charlie register-event 2026-05-16, after the arc-level closeout SEAL at `560
 - F2 + F4 doc tightening adds disclosure scope without modifying any sub-spec decision or discipline lock
 - No new tag; no Phase Marker advance; pre-merge verification gate unchanged
 
-**Branch state post-errata**: `phase2.5/bandit-dedup` at `5333b31` (F3 code fix) + this commit (closeout errata doc tightening) — 2 commits past arc-closeout SEAL `560c5b9`. Final test count 116/116 pass.
+**Branch state post-errata**: `phase2.5/bandit-dedup` at `5333b31` (F3 code fix) + `92b0209` (closeout errata doc tightening) — 2 commits past arc-closeout SEAL `560c5b9`. Test count after F3 fix: 116/116 pass.
+
+### §11.1 Codex adversarial review rerun — bugs in the first-round errata fixes
+
+Charlie register-event 2026-05-16: a second `/codex:adversarial-review` was fired against the branch after the first errata round. Codex correctly identified that two of my first-round fixes had subtle correctness defects. This sub-section records the rerun findings + dispositions as a follow-up errata register-event.
+
+| Codex rerun finding | Severity | Disposition | Resolution |
+|---|---|---|---|
+| Rerun-F1 — Idempotency fix doesn't migrate existing ledgers | high | **ADOPT (genuine bug in my first-round fix)** | `CREATE TABLE IF NOT EXISTS` with inline `UNIQUE` constraint silently no-ops on pre-existing tables; pre-5333b31 ledgers would not get the constraint and `INSERT OR IGNORE` would have nothing to ignore. Fixed: replaced inline UNIQUE with separate `CREATE UNIQUE INDEX IF NOT EXISTS idx_observations_unique_replay_guard` (works on pre-existing tables) + duplicate-row preflight in `init_factor_posterior_db` that raises with explicit remediation if pre-existing duplicates are present. New tests: `test_a_t5_init_raises_on_pre_existing_duplicate_rows` + `test_a_t5_init_migrates_old_schema_clean`. |
+| Rerun-F2 — Offline enforcement bypassable via inherited environment | high | **ADOPT (genuine bug in my first-round fix)** | `os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")` silently preserves an inherited `TRANSFORMERS_OFFLINE=0` from the user's shell, defeating B-Lock-6/B-Lock-7. Fixed: replaced `setdefault` with explicit check that **raises** on any non-`"1"` prior value (surfacing bypass attempts) + unconditional `os.environ[var] = "1"` when previously unset. New tests: `test_b_t8_check_embedding_stack_forces_offline_when_unset` + `test_b_t8_check_embedding_stack_raises_on_offline_bypass` + `test_b_t8_check_embedding_stack_raises_on_hf_hub_bypass`. |
+
+**Both fixes are CORRECTNESS bugs in MY first-round errata commits**: the original Codex review (round 1) caught real bugs; my fixes had subtle defects that round 2 caught. Iterated adversarial review is doing exactly what it's supposed to — each round surfaces a layer the prior round missed.
+
+**Test count progression**: arc-closeout SEAL 115 → first-round errata 116 (+1 idempotency test) → rerun errata 121 (+5 tests covering migration safety and offline bypass).
+
+**Branch state post-rerun-errata**: `phase2.5/bandit-dedup` at this commit — 3 commits past arc-closeout SEAL `560c5b9`. All 121 tests pass; zero regressions.

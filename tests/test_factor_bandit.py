@@ -167,6 +167,119 @@ def test_a_t4_curation_returns_at_most_k_factors(ledger_path):
 # ---------------------------------------------------------------------------
 
 
+def test_a_t5_init_raises_on_pre_existing_duplicate_rows(ledger_path):
+    """init_factor_posterior_db raises on pre-existing (batch, hyp, factor) duplicates.
+
+    Post-SEAL rerun errata (Codex rerun F1): a pre-5333b31 ledger may
+    contain duplicate observation rows that were already double-counted.
+    init MUST detect this and refuse to proceed rather than letting the
+    unique-index creation fail with a confusing SQLite error.
+    """
+    import sqlite3
+
+    # Manually create the OLD schema (no UNIQUE) and insert duplicates
+    with sqlite3.connect(ledger_path) as conn:
+        conn.executescript(
+            """
+            CREATE TABLE factor_bandit_observations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                batch_id TEXT NOT NULL,
+                factor_id TEXT NOT NULL,
+                regime_holdout_passed INTEGER NOT NULL,
+                observed_utc TEXT NOT NULL,
+                hypothesis_hash TEXT NOT NULL,
+                posterior_alpha_pre INTEGER NOT NULL,
+                posterior_beta_pre INTEGER NOT NULL
+            );
+            INSERT INTO factor_bandit_observations
+                (batch_id, factor_id, regime_holdout_passed,
+                 observed_utc, hypothesis_hash,
+                 posterior_alpha_pre, posterior_beta_pre)
+            VALUES ('b1', 'sma_20', 1, '2026-05-16T00:00:00Z', 'h1', 1, 1);
+            INSERT INTO factor_bandit_observations
+                (batch_id, factor_id, regime_holdout_passed,
+                 observed_utc, hypothesis_hash,
+                 posterior_alpha_pre, posterior_beta_pre)
+            VALUES ('b1', 'sma_20', 1, '2026-05-16T00:00:01Z', 'h1', 1, 1);
+            """
+        )
+        conn.commit()
+
+    from agents.orchestrator.factor_bandit import init_factor_posterior_db
+
+    with pytest.raises(RuntimeError, match="duplicate"):
+        init_factor_posterior_db(ledger_path)
+
+
+def test_a_t5_init_migrates_old_schema_clean(ledger_path):
+    """init_factor_posterior_db migrates a pre-existing old-schema clean DB.
+
+    Post-SEAL rerun errata (Codex rerun F1): if a pre-5333b31 ledger
+    exists with the old schema (no UNIQUE constraint) AND no duplicate
+    rows, init must add the unique index and observe_batch must remain
+    idempotent. CREATE UNIQUE INDEX IF NOT EXISTS works on pre-existing
+    tables; CREATE TABLE IF NOT EXISTS with an inline UNIQUE constraint
+    would NOT work on a pre-existing table.
+    """
+    import sqlite3
+
+    # Old schema, NO duplicate rows yet (clean migration case)
+    with sqlite3.connect(ledger_path) as conn:
+        conn.executescript(
+            """
+            CREATE TABLE factor_posterior (
+                factor_id TEXT PRIMARY KEY,
+                alpha INTEGER NOT NULL,
+                beta INTEGER NOT NULL,
+                last_updated_batch_id TEXT,
+                last_updated_utc TEXT
+            );
+            CREATE TABLE factor_bandit_observations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                batch_id TEXT NOT NULL,
+                factor_id TEXT NOT NULL,
+                regime_holdout_passed INTEGER NOT NULL,
+                observed_utc TEXT NOT NULL,
+                hypothesis_hash TEXT NOT NULL,
+                posterior_alpha_pre INTEGER NOT NULL,
+                posterior_beta_pre INTEGER NOT NULL
+            );
+            """
+        )
+        conn.commit()
+
+    from agents.orchestrator.factor_bandit import (
+        get_posterior,
+        init_factor_posterior_db,
+        observe_batch,
+    )
+
+    # Migrate via init (should succeed and add the unique index)
+    init_factor_posterior_db(ledger_path)
+
+    # Verify the unique index now exists on the pre-existing table
+    with sqlite3.connect(ledger_path) as conn:
+        indexes = conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='index' "
+            "AND name LIKE 'idx_observations_unique%'"
+        ).fetchall()
+    assert indexes, (
+        "Unique index must be added by init on pre-existing tables; "
+        "without it, INSERT OR IGNORE has no conflict to trigger and "
+        "replay-idempotency is silently broken on old-schema DBs"
+    )
+
+    # Verify idempotency works on the migrated DB
+    observations = [("h1", {"sma_20"}, True)]
+    observe_batch(batch_id="b1", observations=observations, ledger_path=ledger_path)
+    alpha1, beta1 = get_posterior("sma_20", ledger_path)
+    observe_batch(batch_id="b1", observations=observations, ledger_path=ledger_path)
+    alpha2, beta2 = get_posterior("sma_20", ledger_path)
+    assert (alpha1, beta1) == (alpha2, beta2), (
+        "Migrated old-schema DB must support replay-idempotency after init"
+    )
+
+
 def test_a_t5_observe_batch_idempotent_on_replay(ledger_path):
     """Replaying observe_batch with same data is a no-op on ledger + posterior.
 

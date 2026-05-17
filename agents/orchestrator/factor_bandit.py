@@ -110,12 +110,7 @@ CREATE TABLE IF NOT EXISTS factor_bandit_observations (
     observed_utc TEXT NOT NULL,
     hypothesis_hash TEXT NOT NULL,
     posterior_alpha_pre INTEGER NOT NULL CHECK (posterior_alpha_pre >= 1),
-    posterior_beta_pre INTEGER NOT NULL CHECK (posterior_beta_pre >= 1),
-    -- Post-SEAL errata (Codex adversarial review F3): uniqueness key
-    -- prevents replay/retry double-counting. observe_batch uses
-    -- INSERT OR IGNORE and only updates the posterior when this row
-    -- is actually new (cursor.rowcount == 1).
-    UNIQUE (batch_id, hypothesis_hash, factor_id)
+    posterior_beta_pre INTEGER NOT NULL CHECK (posterior_beta_pre >= 1)
 );
 
 CREATE INDEX IF NOT EXISTS idx_observations_batch
@@ -123,19 +118,78 @@ CREATE INDEX IF NOT EXISTS idx_observations_batch
 
 CREATE INDEX IF NOT EXISTS idx_observations_factor
     ON factor_bandit_observations (factor_id);
+
+-- Post-SEAL errata (Codex adversarial review F3 + rerun F1): replay-
+-- idempotency relies on this unique key. Using ``CREATE UNIQUE INDEX
+-- IF NOT EXISTS`` (separate from ``CREATE TABLE``) means the constraint
+-- is also added when migrating a pre-existing table that was created
+-- before the F3 fix landed — a UNIQUE constraint inside the original
+-- CREATE TABLE would silently no-op because ``CREATE TABLE IF NOT
+-- EXISTS`` skips the entire statement on pre-existing tables. The
+-- preflight in ``init_factor_posterior_db`` detects pre-existing
+-- duplicate rows and raises with a remediation hint before this
+-- index would fail with a less actionable SQLite error.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_observations_unique_replay_guard
+    ON factor_bandit_observations (batch_id, hypothesis_hash, factor_id);
 """
 
 
 def init_factor_posterior_db(ledger_path: Path) -> None:
     """Create the ``factor_posterior`` + ``factor_bandit_observations`` tables.
 
-    Idempotent (``CREATE TABLE IF NOT EXISTS``). Per A-Lock-5 the
+    Idempotent on fresh and pre-existing databases. Per A-Lock-5 the
     observations table is append-only by convention; SQLite does not
     enforce this at schema level, but ``observe_batch`` is the only
     INSERT call site in this module, and there are no UPDATE/DELETE
     statements anywhere in this file.
+
+    Migration safety (post-SEAL errata, Codex rerun F1): if a pre-
+    existing ``factor_bandit_observations`` table is present (created
+    by an older revision before the F3 unique-index fix), this function
+    preflights for duplicate ``(batch_id, hypothesis_hash, factor_id)``
+    rows. If any exist, it raises ``RuntimeError`` with a remediation
+    hint instead of letting ``CREATE UNIQUE INDEX`` fail with a
+    confusing ``UNIQUE constraint failed`` error. Adding the unique
+    index AFTER the preflight is safe — SQLite will accept the index
+    on a clean table.
+
+    Raises:
+        RuntimeError: if a pre-existing ``factor_bandit_observations``
+            table contains duplicate ``(batch_id, hypothesis_hash,
+            factor_id)`` rows from before the F3 idempotency fix.
     """
     with sqlite3.connect(ledger_path) as conn:
+        # Preflight: detect pre-existing duplicates that would block the
+        # unique-index migration. We try to query the table; if it does
+        # not exist yet (fresh DB), we catch OperationalError and skip.
+        try:
+            duplicates = conn.execute(
+                "SELECT batch_id, hypothesis_hash, factor_id, COUNT(*) "
+                "AS dup_count FROM factor_bandit_observations "
+                "GROUP BY batch_id, hypothesis_hash, factor_id "
+                "HAVING dup_count > 1 LIMIT 5"
+            ).fetchall()
+        except sqlite3.OperationalError:
+            # Table does not exist yet — fresh DB, no duplicates possible.
+            duplicates = []
+        if duplicates:
+            sample = "; ".join(
+                f"({batch_id!r}, {hash_!r}, {factor!r}) x{count}"
+                for batch_id, hash_, factor, count in duplicates
+            )
+            raise RuntimeError(
+                "factor_bandit_observations contains "
+                f"{len(duplicates)} duplicate (batch_id, hypothesis_hash, "
+                "factor_id) key(s) from a pre-F3-fix ledger; up to 5 "
+                f"shown: {sample}. The bandit posterior was already "
+                "double-counted on these rows. Remediation: deduplicate "
+                "the ledger (e.g., DELETE FROM factor_bandit_observations "
+                "WHERE id NOT IN (SELECT MIN(id) FROM factor_bandit_"
+                "observations GROUP BY batch_id, hypothesis_hash, "
+                "factor_id)) AND reconcile factor_posterior by replaying "
+                "from the deduplicated ledger. Refusing to initialize "
+                "until duplicates are removed."
+            )
         conn.executescript(_SCHEMA)
         conn.commit()
 
