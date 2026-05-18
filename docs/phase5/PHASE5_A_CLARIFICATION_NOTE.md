@@ -392,3 +392,24 @@ V# anchor chain for Phase A follows Phase 5.2 precedent structure (V1 DRAFT → 
 **End of V4 SEAL.** Phase A clarification cycle SEALED at this register-event boundary (Charlie register 2026-05-18 "SEAL fire"). Cycle resolved Charlie's statistical-significance question on Phase 5.1's 17/22 binomial pass as **technically significant by pre-registration (p≈0.0085) but methodologically thin** (3-vote thin; below-cost-threshold near-zero positives drive the pass). Below the binomial summary: 8 Stratum A robust candidates (Sharpe > 0.5 at all 4 tested costs) + 3 Stratum B robust candidates (analogous criterion despite stratum-level binomial failure) = 11-candidate cross-stratum robust subset surfaced for eligible-not-named Phase B framing. 10 §6 OBSERVATIONS named anti-pre-naming + eligible-not-named for separate Charlie register-event boundaries. §7 Phase B decision surface inventory enumerated without directional claims (4 axes: venue commitment / candidate-subset / promotion-class / prerequisite). 11 §8 reserved decisions. **NO git tag at SEAL** per Bucket-1 investigation note ≠ arc-level closeout per CLAUDE.md Tag policy + Phase 5.1 + Phase 5.2 precedent.
 
 **Reviewer routing empirical observations from this cycle**: 4 reviewer rounds fired (A.1 dispatch + A.2 dispatch + V1 DRAFT dispatch + PFR rule-Y) with 2-leg subagent default each (Advisor + Codex parallel). Zero Codex stalls across 8 dispatches. Zero verified advisor hallucinations across 8 dispatches (citation verification discipline operationally enforced per Option II codification). Cross-model diversity routine continues to validate per [[feedback_reviewer_routing_subagent_default.md]] B2 pilot sample. Codex caught critical V1 BLOCKING (§7 directional language) + V2→V3 carry-forward defects (§6 directional language) that Advisor did not surface; Advisor caught critical V1 SUBSTANTIVE (selection-inflation guard + Bonferroni framing + multi-confound isolation) that Codex did not surface. Bilateral cross-model diversity validated again on this 4-round Phase A pilot extension.
+
+---
+
+## §11 Errata (appended post-SEAL per sealed-content invariance discipline)
+
+**Errata E1 (2026-05-18; R1.1 register-event within Phase B Pre-Sequence Roadmap V3 path-3 parallel authorization):**
+
+§6 OBSERVATION 8 estimate "**approximately Jan-Apr 2026 ≈ 2900 hourly bars**" is superseded by R1.1 verification of `data/phase2c_evaluation_gate/phase4_forward_2026_07bps_v1/holdout_summary.json` `forward_window_metadata` block (sha256-locked execution_config + parquet_data):
+
+| Field | Verified value |
+|---|---|
+| Forward window start (UTC) | **2026-01-01T00:00:00Z** |
+| Forward window end (UTC) | **2026-04-16T07:00:00Z** |
+| Forward bar count | **2528** hourly bars (NOT ~2900; Phase A estimate was high by ~14.7%) |
+| Parquet data sha256 | `db4ce1d2a2e5e7b556975837260f7aaa29ee4fd5ddc603690d1bc57912aa7035` |
+
+**Errata scope**: estimate-correction only. The corrected 2528-bar value tightens Phase A per-strategy power claims slightly (e.g., max possible Monday triggers ≈ 15 not ~17; ~4 months instead of "Jan-Apr" implied length). All Phase A factual findings (Stratum count sequences, robust subset definitions, Sharpe distributions, cost-slope decomposition) remain unchanged because they were computed on the actual 2528-bar `holdout_results.csv` data, not on the estimate. The estimate appeared in interpretive prose only.
+
+**Canonical reference for the corrected value**: [`docs/phase5/R1_2_IS_OOS_RANK_CORRELATION_NOTE.md`](R1_2_IS_OOS_RANK_CORRELATION_NOTE.md) §7 OBSERVATION 8 + §3.1 IS-OOS data source metadata (R1.2 V4 SEAL'd at commit `de158e8` + Phase Marker advance `5b7fd7e`).
+
+**Sealed-content invariance preserved**: §6 OBSERVATION 8 main text remains as originally sealed; this errata note is the canonical correction reference. Future readers encountering "~2900 hourly bars" in §6 OBS 8 should consult this errata note + the canonical R1.2 SEAL reference.
