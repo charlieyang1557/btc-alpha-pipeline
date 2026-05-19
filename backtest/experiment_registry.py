@@ -83,6 +83,7 @@ CREATE TABLE IF NOT EXISTS runs (
     avg_trade_return REAL,
     profit_factor REAL,
     fee_model TEXT,
+    cost_anchor_id TEXT,
     notes TEXT,
     review_status TEXT DEFAULT 'pending',
     review_reason TEXT,
@@ -128,6 +129,14 @@ MIGRATION_COLUMNS = [
     # encoding. NULL means "regime holdout did not run for this row".
     ("regime_holdout_passed", "INTEGER"),
     ("lifecycle_state", "TEXT"),
+    # --- Phase B (R3.1d V_SEAL 2026-05-19) ---
+    # cost_anchor_id: path-based forensic discriminator for Phase B Tier 5/6
+    # evaluation under SPOT venue (Branch.A formal commitment per R4.1).
+    # Populated by engine via execution_config_path → cost_anchor_id mapping
+    # per R3.1d §5.2. Existing Phase 1-2 runs backfilled as
+    # 'legacy_perp_inspired_7bps_v0'; Phase 4 forward-holdout runs backfilled
+    # per execution_config_path field. See R3.1d §5.2 mapping table.
+    ("cost_anchor_id", "TEXT"),
 ]
 
 # ---------------------------------------------------------------------------

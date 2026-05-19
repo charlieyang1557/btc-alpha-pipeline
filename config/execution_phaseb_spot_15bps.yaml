@@ -1,0 +1,41 @@
+# execution_phaseb_spot_15bps.yaml — Phase B conservative anchor for Tier 5/6 evaluation
+# Per R3.1d V_SEAL 2026-05-19: 15 bps/side = 30 bps round trip
+# Sourced from Phase 5.2 §6.4 Branch.A "upper end of heuristic range" + Phase 4 PLAN §1.4
+# Anchor id: spot_realistic_15bps_v1 (logged in experiment_registry.runs.cost_anchor_id
+# via execution_config_path discriminator — see R3.1d §5.2 mapping table)
+#
+# *** THIS CONFIG IS THE CONSERVATIVE-ANCHOR PASS CRITERION BASIS FOR ***
+# *** Phase B Tier 5/6 evaluation per CLAUDE.md HARD CONSTRAINT (R3.1d SD3-D + SD9). ***
+#
+# Cost-model body + execution semantics identical to config/execution_phase4_15bps.yaml.
+# Separate file for forensic clarity: Phase 4 vs Phase B usage context.
+# Distinct from phase4_15bps.yaml only via: header comment + cost_model.name field
+# (produces distinct SHA256 by design; path-based cost_anchor_id discriminator handles
+# the Phase 4 15bps vs Phase B 15bps distinction injectively).
+# Sealed at: R3.1d V_SEAL bundle commit 2026-05-19
+
+execution:
+  signal_timing: "bar_close"
+  fill_timing: "next_bar_open"
+  stop_limit_intrabar: "adverse_first"
+
+cost_model:
+  name: "phaseb_spot_realistic_15bps"
+  maker_fee_bps: 2.0
+  taker_fee_bps: 10.0
+  default_fee_bps: 10.0
+  slippage_bps: 5.0
+
+zero_volume:
+  treatment: "flag_only"
+
+position:
+  max_position_pct: 1.0
+  default_position_pct: 1.0
+  max_leverage: 1.0
+
+timezone:
+  canonical: "UTC"
+
+timeframe:
+  primary: "1h"
