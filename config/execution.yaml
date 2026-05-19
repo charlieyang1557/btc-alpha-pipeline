@@ -39,7 +39,7 @@ execution:
 cost_model:
   name: "constant_pessimistic"
 
-  # Fee structure (Binance perpetual futures, VIP 0)
+  # Effective SPOT execution cost model (7 bps/side simplification; not venue-accurate; see CLAUDE.md Execution Convention §4)
   maker_fee_bps: 2.0    # 0.02% per side
   taker_fee_bps: 4.0    # 0.04% per side
 

@@ -354,3 +354,131 @@ Per anti-pre-emption invariant — no decision pre-named in this cycle. Reserved
 ---
 
 **End of V4 SEAL.** R3.1a Bucket-1 investigation cycle SEALED at this register-event boundary. Cycle resolved Phase 5.2 §2.1-reconciliation-lite parked venue-infrastructure formalization decision as: **Option E.2 (methodology note only; no `config/execution.yaml` modification) under Branch.A working assumption per corrected Phase 5.2 §6.4 semantics**. Surface tension between Branch.A SPOT working assumption and futures-attribution comment is intentionally preserved per §5.5 disposition rationale (4 items mapped to §6.1 Pillar 1 + §6.2 Pillar 2 + §7.2 forward-treatment). Upgrade trigger to E.3 eligible at separate Charlie register IFF R4.1 formally commits Branch.A (SPOT execution) per §7.2 inverted trigger logic; Branch.B formal commitment does NOT trigger (comment matches operational venue at that point); Branch.C/D per Charlie determination. 7 OBSERVATIONS named anti-pre-naming + 11 reserved decisions eligible-not-named for separate Charlie register-event boundaries. Cumulative R3.1a cycle reviewer reliability across 3 rounds: 0/6 Codex stalls + 3/6 verified Advisor hallucinations — cross-model diversity load-bearing this cycle. **NO git tag at SEAL** per CLAUDE.md "Bucket-1 investigation note ≠ arc-level closeout" Tag policy + Phase 5.1 + Phase 5.2 + Phase A + R1.2 precedent. Phase Marker + atomic `docs/phase_marker_history.md` update follow at SEAL bundle commit per Option 1A binding 9th empirical trigger.
+
+---
+
+## §12 Errata (appended post-SEAL per sealed-content invariance discipline)
+
+**Errata E.3 (2026-05-18; R4.1 Phase B formal Branch.A commitment register-event):**
+
+R3.1a V4 SEAL §7.2 inverted trigger logic table named E.3 errata as eligible IFF R4.1 formally commits Branch.A (SPOT execution). Charlie register chain fire 2026-05-18 ("fire, authorized R3.1a E.3 upgrade trigger and Tier 4 R4.1" + sub-decision Round 1 dispatch + PFR cross-validation dispatch + "ratify all") formally commits Branch.A per companion R4.1 SEAL artifact at [`docs/phase5/R4_1_PHASE_B_VENUE_COMMITMENT_NOTE.md`](R4_1_PHASE_B_VENUE_COMMITMENT_NOTE.md). E.3 errata fires under this register chain per R3.1a §7.2 inverted trigger logic table row 1 (Branch.A formal commitment → comment "becomes operationally misleading" → E.3 errata eligible).
+
+**Post-SEAL append protocol:** §12 is appended via separate post-SEAL commit per Phase A `9c00f59` precedent (`git log --oneline -- docs/phase5/PHASE5_A_CLARIFICATION_NOTE.md` shows `ab62b2e` Phase A SEAL fire + `9c00f59` post-SEAL §11 errata append, 21 insertions). R3.1a V4 SEAL §§0-11 remain **byte-identical** post-E.3; only §12 is appended. Sealed-content invariance preserved.
+
+**§12.1 E.3 patch to `config/execution.yaml` line 42 (locked per SD4 + PFR ratification):**
+
+Old (pre-E.3, sealed in `config/execution.yaml` line 42):
+```yaml
+  # Fee structure (Binance perpetual futures, VIP 0)
+```
+
+New (post-E.3, atomic with SEAL bundle commit):
+```yaml
+  # Effective SPOT execution cost model (7 bps/side simplification; not venue-accurate; see CLAUDE.md Execution Convention §4)
+```
+
+**§12.2 Wording rationale (per Codex Round 1 PUSHBACK + PFR ratification):**
+
+- Removes false "perpetual futures" attribution under Branch.A formal commitment (R4.1 SEAL elevates working-assumption to formal commitment per Phase 5.2 §6.4)
+- Avoids false "Spot VIP 0 basis" attribution that calling agent Round 1 SD4 options (a) and (b) would have introduced (per Phase 5.2 §3 fee table: Binance Spot VIP 0 taker ≈ 10bps, not 4bps; the config retains 4bps fee + 3bps slippage = 7bps effective which traces to perp VIP 0 derivation per R3.1a §4.1, not Spot VIP 0)
+- "Effective" + "simplification" + "not venue-accurate" framing makes documentary-not-operational claim explicit per CLAUDE.md Execution Convention §4
+- "see CLAUDE.md Execution Convention §4" anchors to the authoritative source for the simplification framing (preserves R3.1a §6.1 Pillar 1 invariance)
+
+**§12.3 `config_hash` impact (per X3' technical scope verification):**
+
+`compute_config_hash()` at [`backtest/experiment_registry.py:188`](../../backtest/experiment_registry.py#L188) hashes the byte content of three config files defined at [`backtest/experiment_registry.py:48`](../../backtest/experiment_registry.py#L48) (`CONFIG_FILES`):
+- `config/execution.yaml`
+- `config/environments.yaml`
+- `config/schemas.yaml`
+
+The hash uses `hasher.update(path.read_bytes())` per file and returns `f"sha256:{hasher.hexdigest()[:16]}"` (sha256 prefix + 16 hex chars truncation; 18 chars total returned). Byte content includes YAML comments. Modifying the line-42 comment changes the `execution.yaml` byte content and therefore changes the returned hash for all future runs.
+
+**§12.4 Pre-E.3 + Post-E.3 canonical hash state (per X4' + A4 V3 update):**
+
+- Parent commit at V1 DRAFT time: `46615cf` (recompute at SEAL bundle landing in case of intervening commits)
+- **Pre-E.3** `config_hash` (computed on current `execution.yaml` with line 42 = "Binance perpetual futures, VIP 0"; independently verified via Python `hashlib.sha256` reproduction of `compute_config_hash()` 2026-05-18): `sha256:3850424a0ef2d292` — Codex Round 1 LBR + PFR Codex both independently corroborated
+- **Post-E.3** `config_hash` (computed on proposed post-patch `execution.yaml` with line 42 = "Effective SPOT execution cost model (7 bps/side simplification; not venue-accurate; see CLAUDE.md Execution Convention §4)"; Codex PFR independent computation via byte-level reproduction): `sha256:db2ce75bd41e8513`
+- Both hashes use `hasher.update(path.read_bytes())` per file in `CONFIG_FILES` (3-file scope: `execution.yaml` + `environments.yaml` + `schemas.yaml`); both are 16-hex-char truncations of full SHA-256
+- Pre-E.3 byte content of `execution.yaml` is recoverable post-E.3 via `git show <pre-E.3-parent-commit-SHA>:config/execution.yaml` for any auditor who needs to verify historical `config_hash` values
+
+**§12.5 Pillar 1 preservation (per R3.1a §6.1 invariance; per X8):**
+
+Research validity of all sealed Phase 1-5 backtests is **unaffected** by E.3 fire. The `effective_7bps_per_side` cost computation uses structured numeric keys (`default_fee_bps`, `slippage_bps`) per [`backtest/slippage.py:135-136`](../../backtest/slippage.py#L135-L136) + [`backtest/execution_model.py:137-138`](../../backtest/execution_model.py#L137-L138), NOT the line-42 comment. Per R3.1a §6.1 (sealed; preserved):
+
+> The cost computation in Phase 1-5 backtests is a single-parameter simplification (`fee_bps + slippage_bps = effective_cost_bps`), explicitly agnostic to whether the underlying venue would have been perpetual or SPOT at live execution.
+
+E.3 changes only the documentary comment; the numeric keys and computation are byte-identical post-E.3. **No backtest result requires retroactive recomputation.**
+
+**§12.6 Pillar 2 cost (per R3.1a §6.3 classification):**
+
+E.3 invalidates byte-identity between historical `experiments.db` entries (which logged `config_hash` values computed against pre-E.3 byte content) and the post-E.3 `execution.yaml` content. A future inspector re-hashing `execution.yaml` after E.3 will get a different hash than the registry entries. This is the Pillar 2 cost being spent at R4.1 SEAL. Per R3.1a §6.3 (sealed):
+
+> Pillar 2 (`config_hash` forensic traceability) is an additional benefit specific to E.2 vs E.1/E.3. ... pillar 2 establishes that E.2 specifically preserves an additional forensic-audit-trail property.
+
+Under E.3 fire, Pillar 2 is no longer preserved for entries that hashed against pre-E.3 byte content. Reconstruction remains possible via `git show <pre-E.3-commit>:config/execution.yaml` per §12.4. Pillar 1 invariance is not affected.
+
+**§12.7 Historical `experiments.db` entries retain pre-E.3 hash intentionally (per X7):**
+
+All Phase 1-5 walk-forward and Phase 2C experiment_registry entries that logged `config_hash` retain their **pre-E.3 hash value** (`sha256:3850424a0ef2d292` for entries logged against the pre-E.3 byte content with current `environments.yaml` + `schemas.yaml`) in the SQLite database. These entries are **NOT** retroactively updated to post-E.3 hash values. **This is intentional and expected post-E.3.** A future reader encountering hash mismatches between registry entries and current `execution.yaml` content should understand this as documented expected state, not a data-integrity failure.
+
+**§12.7.1 No read-time `config_hash` recomputation guard (per V1 reviewer round Advisor LBR1; verified):**
+
+`compute_config_hash()` is called at write-time only. Verified via two grep commands:
+
+Narrow grep `grep -n "compute_config_hash" backtest/experiment_registry.py` returns exactly 2 lines:
+- Line 188: `def compute_config_hash() -> str:` (function definition)
+- Line 265: `run_data.setdefault("config_hash", compute_config_hash())` — **sole call site**, inside `insert_run()` insert/create path
+
+Broader grep `grep -n "config_hash" backtest/experiment_registry.py` returns 4 lines (above 2 plus):
+- Line 62: `config_hash TEXT,` (schema declaration only)
+- Line 243: docstring mention only
+
+No read-time integrity guard exists in `experiment_registry.py`. Post-E.3, historical `experiments.db` entries are queried without automated mismatch warnings. Behavior is consistent with §12.7 intentional-retention framing.
+
+**§12.8 Phase 4 forward-window artifact independence carve-out (per X5; per R3.1a §8 OBS 4):**
+
+Phase 4 forward-window holdout artifacts (sealed at `data/phase2c_evaluation_gate/phase4_forward_2026_*bps_v1/`) use a SEPARATE execution config FAMILY: `config/execution_phase4_{07,13,15,17}bps.yaml` (4 files for 4 cost bands per Phase 5.1 §3.2 D-classification framework). Phase 4 holdout artifacts integrity-lock against these specific per-band files via `execution_config_path` + `execution_config_sha256` fields, NOT against `config/execution.yaml`. **E.3 does NOT affect Phase 4 forward-window holdout artifact integrity.** Phase 4 `execution_config_sha256` values remain byte-identical to their per-band config files post-E.3.
+
+**§12.9 Numeric semantics + R3.1d non-resolution explicit (per X8):**
+
+E.3 is **comment-level documentary alignment only**. It does NOT:
+- Change any numeric value in the `cost_model` block of `execution.yaml` (`default_fee_bps`, `slippage_bps`, `maker_fee_bps`, `taker_fee_bps`, derived `effective_cost_bps` all byte-identical post-E.3)
+- Imply or resolve R3.1d (post-venue cost-grid re-anchor — remains eligible-not-named for separate Charlie register-event)
+- Claim spot fee-schedule accuracy (the replacement comment explicitly frames the 7bps as "not venue-accurate" + "simplification")
+- Re-open Phase 1-2 cost-model semantics (locked at `effective_7bps_per_side` per CLAUDE.md Execution Convention §4)
+- Re-open Phase 5.1 cost-model investigation findings
+- Pre-name any Phase 5.2 §6.4 Branch.A sub-question (Path 1 paper trading basis, Path 2 L2 replay, Stratum A D-I classification — all eligible-not-named per R4.1 SEAL §6 + R4.1 §10)
+
+**Errata scope:** comment-level documentary alignment only. The wording change reflects Branch.A formal commitment (R4.1 SEAL operationalizes SPOT as the venue) without claiming venue-accuracy of the cost model and without resolving R3.1d. All Phase 1-5 factual findings remain unchanged because they were computed on actual SPOT data under venue-agnostic `effective_7bps_per_side` semantics; the line-42 comment is documentary attribution only. Pillar 1 invariance preserved (research validity unaffected); Pillar 2 cost spent (forensic byte-identity traceability degraded post-E.3 fire date; reconstruction via git history remains possible).
+
+**§12.10 SEAL bundle commit scope (per SD6 + X6'):**
+
+R4.1 SEAL bundle commit (atomic) lands:
+1. R4.1 SEAL artifact at `docs/phase5/R4_1_PHASE_B_VENUE_COMMITMENT_NOTE.md`
+2. R3.1a §12 Errata appendix (this content; appended to existing sealed R3.1a artifact post-SEAL per Phase A `9c00f59` precedent)
+3. `config/execution.yaml` line 42 patch per §12.1
+4. CLAUDE.md Phase Marker advance + `docs/phase_marker_history.md` atomic update (per Option 1A atomicity binding 10th empirical trigger)
+
+Reviewer dispatch on combined R4.1 V1 + §12 Errata V1 + `execution.yaml` diff V1 precedes V_SEAL fire per X6'.
+
+**§12.10.1 Operational discipline for Phase Marker advance (per V1 reviewer round Advisor LBR2):**
+
+CLAUDE.md Phase Marker entry for R4.1 SEAL is drafted **pre-commit** with placeholder `PENDING` for SEAL commit SHA + push-commit SHA (since these are not yet known at draft time). Placeholders are filled at commit-landing time before the atomic SEAL bundle commit fires. Established discipline per R3.1a precedent (commit `46615cf` = R3.1a Phase Marker advance; placeholders filled in commit message at landing).
+
+**§12.11 Cross-reference:**
+
+For full context on R4.1 formal Branch.A commitment, see companion sealed artifact at [`docs/phase5/R4_1_PHASE_B_VENUE_COMMITMENT_NOTE.md`](R4_1_PHASE_B_VENUE_COMMITMENT_NOTE.md). For R3.1a §§0-11 sealed content (byte-identical post-E.3), see §§0-11 above.
+
+**§12.12 Verification method — code path, NOT parsed-YAML form (per V1 reviewer round Codex LBR):**
+
+Canonical verification of `config_hash` MUST use the [`compute_config_hash()`](../../backtest/experiment_registry.py#L188) code path at [`backtest/experiment_registry.py:188`](../../backtest/experiment_registry.py#L188), which performs `hasher.update(path.read_bytes())` per file in `CONFIG_FILES` (byte-level hash including YAML comments). Verification MUST NOT use a parsed-YAML form (e.g., `yaml.safe_load(path) → json.dumps → sha256`) because parsed-YAML **strips comments** during parsing and would silently report a stable hash even after the line-42 comment is replaced. Any SEAL checklist item or future audit script that uses parsed-YAML form would produce a **false-negative invariance check** post-E.3, masking the expected hash change.
+
+Verified by Codex V1 + PFR round LBRs via independent reproductions. Parsed-YAML form is NON-CANONICAL by definition — different serialization choices (e.g., `yaml.safe_load + json.dumps(sort_keys=True)` vs `yaml.safe_load + json.dumps(sort_keys=False)` vs `yaml.dump` round-trip) produce DIFFERENT non-canonical hash values for the same source file. Empirically Codex PFR computed `aa265c14a4760d80` for one parsed-YAML form; another reproduction yielded a different value. The canonical `compute_config_hash()` byte-level hash is well-defined:
+- Pre-E.3: `sha256:3850424a0ef2d292` (current line 42 = "Binance perpetual futures, VIP 0")
+- Post-E.3: `sha256:db2ce75bd41e8513` (Codex PFR independent computation via byte-level reproduction of the proposed line-42 patch)
+
+Critical asymmetry: any parsed-YAML form silently produces the SAME hash before and after the comment change (because comments are stripped during parse); the canonical form changes deterministically. SEAL verification correctness requires the code path. Operational tooling must use `compute_config_hash()` at [`backtest/experiment_registry.py:188`](../../backtest/experiment_registry.py#L188), NOT a parsed-YAML round-trip.
+
+---
+
+**End of §12 Errata E.3 appendix.** R3.1a V4 SEAL §§0-11 byte-identical preserved. §12 appended via separate post-SEAL commit per Phase A `9c00f59` precedent. Pillar 1 research validity invariant; Pillar 2 forensic byte-identity cost spent + documented (Pillar 2 transitions from pre-E.3 hash `sha256:3850424a0ef2d292` as forensic anchor to post-E.3 hash as new canonical identifier for subsequent runs). Companion artifact R4.1 SEAL at [`docs/phase5/R4_1_PHASE_B_VENUE_COMMITMENT_NOTE.md`](R4_1_PHASE_B_VENUE_COMMITMENT_NOTE.md) formally commits Branch.A; this §12 fires E.3 errata under that formal commitment.
