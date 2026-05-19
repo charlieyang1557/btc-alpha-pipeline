@@ -526,7 +526,7 @@ R3.1d's conservative 15 bps/side anchor is a **governance anchor at upper end of
 1. **SD9 exact criterion** — locked at V_SEAL register from §7 numbered options menu
 2. **R2.1 audit criterion** (volume_divergence DSL audit) — separate register-event after R3.1d SEAL (per SD5-B)
 3. **R2.2** (Monday-pattern mechanism investigation) — separate register; informed by R1.2 OBS 4
-4. **R2.3** (OBSERVATION 10 theme provenance verification) — separate register
+4. **R2.3** (Phase A V4 SEAL OBSERVATION 10 theme provenance verification) — separate register [MP1 citation-clarity inline patch applied at R2.0 V_SEAL 2026-05-19 per V2-P8 sub-class precedent: citation-label disambiguation, no substantive content change, Pillar 2 invariance preserved]
 5. **R3.1b/c** (empirical small-lot cost measurement) — eligible-not-named when Phase 4 paper-trading infrastructure deploys (per §8)
 6. **R5.1** (Phase B candidate-subset commitment under SPOT venue) — gated behind R3.1d + Tier 2 SEAL per sequencing 1→3→4
 7. **R5.2** (selection-inflation handling cycle) — gated behind R5.1
