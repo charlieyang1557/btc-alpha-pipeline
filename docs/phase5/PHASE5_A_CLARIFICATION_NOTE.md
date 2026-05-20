@@ -413,3 +413,21 @@ V# anchor chain for Phase A follows Phase 5.2 precedent structure (V1 DRAFT → 
 **Canonical reference for the corrected value**: [`docs/phase5/R1_2_IS_OOS_RANK_CORRELATION_NOTE.md`](R1_2_IS_OOS_RANK_CORRELATION_NOTE.md) §7 OBSERVATION 8 + §3.1 IS-OOS data source metadata (R1.2 V4 SEAL'd at commit `de158e8` + Phase Marker advance `5b7fd7e`).
 
 **Sealed-content invariance preserved**: §6 OBSERVATION 8 main text remains as originally sealed; this errata note is the canonical correction reference. Future readers encountering "~2900 hourly bars" in §6 OBS 8 should consult this errata note + the canonical R1.2 SEAL reference.
+
+---
+
+**Errata E2 (2026-05-20; R2.3 register-event within Phase B Pre-Sequence Roadmap V3 Tier 2 substantive cycle pair):**
+
+§6 OBSERVATION 10 theme tag provenance binary question ("AI-proposer at hypothesis generation OR post-hoc by reviewers") is RESOLVED via R2.3 V_SEAL substantive cycle. The verified mechanism is a three-layer characterization (NOT binary):
+
+- **Layer 1 (timing):** themes assigned at GENERATION TIME at BatchContext construction, BEFORE Proposer LLM call — closer to OBS 10's option (a) than (b)
+- **Layer 2 (authorship):** programmatic ROTATION LOGIC in `agents/proposer/stage2c_batch.py:213` (formula `THEMES[(k - 1) % THEME_CYCLE_LEN]`) — NOT Proposer-LLM-chosen
+- **Layer 3 (constraint):** Proposer LLM receives theme as prompt directive (`agents/proposer/prompt_builder.py:227`); LLM constrained to assigned theme, NOT choosing
+
+**OBS 10 caveat scope refinement:** theme-level patterns in §6 OBSERVATIONS 4 + 7 are legitimate family-boundary evidence for the PRE-REGISTERED family labels (Layer 1+2) but NOT for content-aware family clustering (Layer 3 + R2.3 §8.2 telemetry caveat: theme tags are prompt-rotation provenance labels, not validated content-aware classifications). Calendar-concentration in cohort_a (22/39) reflects SELECTION pattern at AND-gate-passing terminus, NOT generation-time family-boundary signal.
+
+**Canonical reference for resolution**: [`docs/phase5/R2_3_THEME_TAG_PROVENANCE_NOTE.md`](R2_3_THEME_TAG_PROVENANCE_NOTE.md) §2.2 three-layer reshape + §3-§5 4-dimensional audit + §6 dim (d) INDETERMINATE-DSL-UNAVAILABLE per Sub-1 η1-C + §7 §34 first-empirical-test codification + §8 surfaced observations (R2.3 V_SEAL'd at register-event boundary 2026-05-20).
+
+**Sealed-content invariance preserved**: §6 OBSERVATION 10 main text remains as originally sealed; this errata note + R2.3 V_SEAL canonical artifact provide the resolution reference. Future readers encountering OBS 10 "unverified" + "exploratory, not strong family-boundary evidence" language should consult this errata + R2.3 V_SEAL.
+
+**Tier 2 SEAL completion**: R2.3 V_SEAL completes Tier 2 SEAL per R2.0 SD-B B2 lock (R2.1 ✓ + R2.3 ✓). R5.1 cycle entry now unlocked at separate Charlie register-event boundary per anti-pre-emption.
