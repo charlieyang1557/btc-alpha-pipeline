@@ -7120,3 +7120,41 @@ Any SEAL register-event boundary that produces a substantive sealed canonical ar
 - Pass 1 SEAL doc §0.2 Gate 5 register chain (V5 FAIL → errata → re-fire CLEAN precedent)
 
 ---
+
+## §34 Data accessibility pre-verification for pre-commit audit-criterion locks
+
+### Rule
+
+Pre-commit cycles must verify data accessibility for committed audit dimensions before lock. When pre-commit cycles specify audit dimensions or audit-criterion components citing source rules (HARD CONSTRAINTS / spec / framework axioms), the pre-commit step must include a sub-task verifying that the source data each dimension's audit operates on is accessible (with the audit population identified, and source-data location verified — repo state, parquet, SQLite tables, artifact directories, raw_payloads — for each named candidate or population member). Absent this sub-task, audit-criterion locks may be partially unexecutable at substantive-cycle time, yielding INDETERMINATE per-candidate verdicts that block scope-bounded resolution.
+
+### Why
+
+R2.0 SD-A A1 specified 4 audit dimensions citing CLAUDE.md HARD CONSTRAINTS as source rules without verifying that source-data (DSL `entry`/`exit`/`max_hold_bars`/`position_sizing` specifications for the 4 named candidates) was accessible on this execution environment. At R2.1 substantive cycle, the DSL persistence gap was discovered via 5 independent verification paths (compiled_strategies/ 0/4 D3-hash matches gitignored-as-regenerable; raw_payloads/ 0/4 PHASE2C_15-source-batches-absent-locally; experiments.db 0 rows; walk-forward metadata-only; cohort_a reference + worktree backups metadata-only) plus a P6 forensic-precheck NEGATIVE on this machine. 2 of 4 audit dimensions (dim a + dim d) were classified INDETERMINATE-DSL-UNAVAILABLE per the cycle's verdict vocabulary extension (Sub-1 η1-C). R2.0 V1/V2/V3 reviewer rounds (Codex + Advisor) did not surface the gap — verifying current-state filesystem data accessibility was outside their reading scope.
+
+Structurally an instance of §5 "Precondition verification for structural and organizational principles" failure-mode: applying a principle ("specify falsifiable audit dimensions per HARD CONSTRAINTS") without verifying preconditions ("source data accessible for those dimensions for the named audit population on this execution environment"). §5 governs broader precondition discipline at the structural-recommendation layer; §34 specifies the failure-mode at the pre-commit audit-criterion lock boundary with explicit data-accessibility framing for executable empirical audits.
+
+### When to apply
+
+At every pre-commit cycle that specifies audit dimensions or audit-criterion components requiring source-data access at the substantive cycle execution step. Pre-commit sub-task checklist before lock:
+
+1. **Enumerate** audit dimensions or audit-criterion components individually.
+2. **Identify the audit population** (named candidates, named cohort, named dataset; explicit named list, OR executable manifest/query/filter with row count and source location; no purely implicit shorthand).
+3. **Map each (dimension × population member) to the source-data artifact required** (filesystem path, SQLite table+filter, parquet file, batch artifact directory, raw_payloads sub-tree, API endpoint).
+4. **Verify accessibility on the canonical execution environment** for each mapping: file exists at path; SQLite query returns rows; parquet readable; API endpoint reachable. Filesystem-level check, not "the artifact class exists in principle."
+5. **If accessibility cannot be verified** (artifact missing, gitignored without regenerable lineage, network endpoint unreachable, registry record pruned), classify the (dimension × population member) as data-access risk and disclose at lock time. Choices at lock: (a) scope-narrow the audit population to data-accessible subset, (b) add a recovery sub-task as a separate Charlie register-event prerequisite, or (c) lock with INDETERMINATE-on-data-unavailability classification disclosed in the pre-commit artifact's residual-risk section.
+
+The verification operates against actual filesystem / database / API state, not against the canonical specification of what artifacts should exist. Gitignored-regenerable artifacts (e.g., `data/compiled_strategies/*.json`, batch raw_payloads that may be local-only and absent across machines) require explicit existence checks at pre-commit time rather than presumed availability.
+
+### Anti-rescue framing
+
+§34 codification does NOT retroactively invalidate prior pre-commit cycles that omitted this verification step. R2.0 SD-A A1 remains the authoritative pre-commitment for R2.1 audit-criterion (V3-P1 anti-rescue binding preserved). §34 documents discipline for future pre-commit cycles. Discovery of unexecutable audit-criterion components at substantive cycle time is resolved via the cycle's INDETERMINATE classification per its verdict vocabulary, NOT via same-cycle audit-criterion override or post-hoc threshold mutation. Anti-rescue binding (no same-cycle threshold mutation; no post-observation criterion adjustment) governs the substantive cycle response when §34 verification fails late.
+
+### Cross-references
+
+- §5 Precondition verification for structural and organizational principles — parent discipline; §34 specifies failure-mode at pre-commit audit-criterion boundary
+- §32 SEAL bundle composition discipline — pre-commit deliverables carrying §34 verification evidence enter the cycle's SEAL bundle per §32 composition rules
+- R2.0 SD-A A1 + R2.1 §8.1-§8.5 (`docs/phase5/R2_1_STRATUM_B_DSL_AUDIT_NOTE.md`) — empirical surface point for this finding-class
+- R2.1 Sub-1 η1-C lock (INDETERMINATE-DSL-UNAVAILABLE verdict extension; same artifact §6 vocabulary section) — resolution discipline when §34 verification fails at substantive cycle time
+- V3-P1 anti-rescue binding (R2.0 lock; preserved at R2.1) — governs same-cycle-vs-separate-register handling of late discoveries
+
+---
