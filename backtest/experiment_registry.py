@@ -91,6 +91,14 @@ CREATE TABLE IF NOT EXISTS runs (
     hypothesis_hash TEXT,
     regime_holdout_passed INTEGER,
     lifecycle_state TEXT,
+    returns_per_bar_path TEXT,
+    returns_per_bar_sha256 TEXT,
+    T_obs INTEGER,
+    regime_key TEXT,
+    current_git_sha TEXT,
+    execution_config_path TEXT,
+    execution_config_sha256 TEXT,
+    parquet_data_sha256 TEXT,
     created_at_utc TEXT NOT NULL
 )
 """
@@ -137,6 +145,29 @@ MIGRATION_COLUMNS = [
     # 'legacy_perp_inspired_7bps_v0'; Phase 4 forward-holdout runs backfilled
     # per execution_config_path field. See R3.1d §5.2 mapping table.
     ("cost_anchor_id", "TEXT"),
+    # --- B-C-extended Scope-B (T1.1 FIX-B1 2026-05-22) ---
+    # Per-bar artifact linkage fields: Contract 2.0.5 persistence obligation.
+    # Populated by engine._write_to_registry() when lineage_context is provided.
+    # NULL for all pre-T1.1 runs and for runs without lineage_context (backward compat).
+    # returns_per_bar_path: relative path to per-bar returns parquet artifact.
+    # returns_per_bar_sha256: SHA256 hex digest of that artifact (integrity).
+    # T_obs: count of finite per-bar return observations stored in the artifact.
+    ("returns_per_bar_path", "TEXT"),
+    ("returns_per_bar_sha256", "TEXT"),
+    ("T_obs", "INTEGER"),
+    # --- B-C-extended Scope-B SYS-fix-1 (B3/B4 2026-05-23) ---
+    # 5 new LineageContext fields persisted from LC when lineage_context is provided.
+    # NULL for all pre-SYS-fix-1 runs and for runs without lineage_context (backward compat).
+    # regime_key: Regime identity key (e.g. "v2.regime_holdout").
+    # current_git_sha: Full-repo git SHA at run time.
+    # execution_config_path: Canonicalized repo-relative POSIX path to execution config YAML.
+    # execution_config_sha256: Content-addressable hash of execution config file.
+    # parquet_data_sha256: Content-addressable hash of source data parquet.
+    ("regime_key", "TEXT"),
+    ("current_git_sha", "TEXT"),
+    ("execution_config_path", "TEXT"),
+    ("execution_config_sha256", "TEXT"),
+    ("parquet_data_sha256", "TEXT"),
 ]
 
 # ---------------------------------------------------------------------------

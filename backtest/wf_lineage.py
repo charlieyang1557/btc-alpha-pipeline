@@ -29,6 +29,26 @@ The producer-side helper (enforce_corrected_engine_lineage) refuses
 to run on a HEAD that does not contain the corrected engine commit.
 It is shared by both attestation domains because the engine fix is a
 prerequisite for either kind of corrected artifact.
+
+B-C-extended Scope-B additions (T1.2 deliverable):
+- ARTIFACT_SCHEMA_VERSION_B_C_EXTENDED_V1 constant ("b_c_extended_v1")
+- Per-domain tuple split: ACCEPTED_EVALUATION_SCHEMA_VERSIONS /
+  ACCEPTED_WF_SCHEMA_VERSIONS / ACCEPTED_B_C_EXTENDED_SCHEMA_VERSIONS;
+  each helper accepts only its own domain's tuple (constant-level domain fence)
+- COST_ANCHOR_ID_MAPPING: 6-row R3.1d §5.2 execution_config_path → cost_anchor_id
+- BCExtendedSchemaValidationError: ValueError subclass with structured errors list
+  (B3-b lock; LSP: existing 'except ValueError' consumers unaffected)
+- check_b_c_extended_semantics_or_raise: B1-c hybrid validation helper
+
+Heavy-private-impl extraction (T1.2 SEAL ratify, C1-extract-pre-SEAL Charlie register
+2026-05-22): B-C-extended block extracted to backtest/artifact_schema.py. Public
+symbols re-exported below via shim for consumer backward compatibility.
+
+CONTRACT BOUNDARY: ACCEPTED_EVALUATION_SCHEMA_VERSIONS and
+ACCEPTED_WF_SCHEMA_VERSIONS are the existing-domain tuples; they MUST NOT
+include b_c_extended_v1. ACCEPTED_B_C_EXTENDED_SCHEMA_VERSIONS is the
+B-C-extended-domain tuple; it MUST NOT include phase2c_7_1 or phase2c_8_1.
+Each check_*_semantics_or_raise helper accepts ONLY its own domain's tuple.
 """
 from __future__ import annotations
 
@@ -70,10 +90,30 @@ ARTIFACT_SCHEMA_VERSION_PHASE2C_7_1 = "phase2c_7_1"
 # agnostic to schema discriminator.
 ARTIFACT_SCHEMA_VERSION_PHASE2C_8_1 = "phase2c_8_1"
 
-# Tuple of accepted artifact_schema_version values. Single source of
-# truth for the consumer guard's discriminator branching. Future arcs
-# extending the chain append to this tuple at the same time as adding
-# the new constant.
+# Per-domain accepted-version tuples (B-C-extended T1.2 Sub-decision A lock).
+# Each check_*_semantics_or_raise helper accepts ONLY its own domain's tuple.
+# CONTRACT BOUNDARY: no tuple may contain another domain's schema version.
+# See module-level docstring for CONTRACT BOUNDARY declaration.
+#
+# Evaluation attestation domain (single-run holdout artifacts):
+ACCEPTED_EVALUATION_SCHEMA_VERSIONS: tuple[str, ...] = (
+    ARTIFACT_SCHEMA_VERSION_PHASE2C_7_1,
+    ARTIFACT_SCHEMA_VERSION_PHASE2C_8_1,
+)
+
+# Walk-forward attestation domain (WF summary artifacts):
+# CONTRACT GAP: if a new WF-specific schema version is introduced,
+# add it here and update check_wf_semantics_or_raise's branching.
+ACCEPTED_WF_SCHEMA_VERSIONS: tuple[str, ...] = (
+    ARTIFACT_SCHEMA_VERSION_PHASE2C_7_1,
+    ARTIFACT_SCHEMA_VERSION_PHASE2C_8_1,
+)
+
+# Backward-compat union: existing code that imported ACCEPTED_ARTIFACT_SCHEMA_VERSIONS
+# continues to work. New code should use the per-domain tuples above.
+# CONTRACT GAP: consumers that imported ACCEPTED_ARTIFACT_SCHEMA_VERSIONS and
+# perform per-version branching should migrate to the per-domain tuple that matches
+# their attestation domain. Audit via: rg "ACCEPTED_ARTIFACT_SCHEMA_VERSIONS"
 ACCEPTED_ARTIFACT_SCHEMA_VERSIONS: tuple[str, ...] = (
     ARTIFACT_SCHEMA_VERSION_PHASE2C_7_1,
     ARTIFACT_SCHEMA_VERSION_PHASE2C_8_1,
@@ -220,6 +260,18 @@ def check_wf_semantics_or_raise(
     Does NOT gate on `lineage_check` (auditor breadcrumb only, not
     load-bearing).
 
+    FIX-B2 (domain fence): when artifact_schema_version is present,
+    rejects any value not in ACCEPTED_WF_SCHEMA_VERSIONS. Mirrors the
+    parallel pattern in check_evaluation_semantics_or_raise lines 491-499.
+    Absence of artifact_schema_version preserves legacy behavior (pre-
+    PHASE2C_7.1 WF artifacts do not carry the field).
+
+    CONTRACT GAP: regime_key validation against REGIME_KEY_LABEL_MAPPING
+    is deferred to a separate Charlie register-event per anti-pre-emption
+    discipline. The new schema-version domain fence (FIX-B2) is the only
+    per-version branching added here; regime_key is accepted as any non-empty
+    string at this time.
+
     Raises ValueError (not SystemExit) so consumers in notebooks /
     test harnesses / batch processors can decide how to handle the
     violation.
@@ -233,7 +285,9 @@ def check_wf_semantics_or_raise(
 
     Raises:
         ValueError: If wf_semantics is missing, wrong, or if
-            corrected_wf_semantics_commit is missing or wrong.
+            corrected_wf_semantics_commit is missing or wrong, or if
+            artifact_schema_version is present but not in
+            ACCEPTED_WF_SCHEMA_VERSIONS.
     """
     where = f" at {artifact_path}" if artifact_path else ""
     actual_tag = summary.get("wf_semantics")
@@ -260,6 +314,27 @@ def check_wf_semantics_or_raise(
             f"Refusing per docs/decisions/WF_TEST_BOUNDARY_SEMANTICS.md "
             f"Section RS."
         )
+
+    # FIX-B2: domain fence via ACCEPTED_WF_SCHEMA_VERSIONS.
+    # Absence of artifact_schema_version = legacy path (no check).
+    # Presence of an unrecognized or wrong-domain value = reject.
+    # Parallel to check_evaluation_semantics_or_raise lines 491-499.
+    schema_version = summary.get("artifact_schema_version")
+    if schema_version is not None:
+        if schema_version not in ACCEPTED_WF_SCHEMA_VERSIONS:
+            accepted_str = ", ".join(
+                repr(v) for v in ACCEPTED_WF_SCHEMA_VERSIONS
+            )
+            raise ValueError(
+                f"Unsafe WF artifact{where}: unrecognized or wrong-domain "
+                f"artifact_schema_version={schema_version!r}. "
+                f"Expected absent (legacy pre-PHASE2C_7.1) or one of "
+                f"({accepted_str}). b_c_extended_v1 artifacts must use "
+                f"check_b_c_extended_semantics_or_raise; evaluation-domain "
+                f"artifacts must use check_evaluation_semantics_or_raise. "
+                f"Refusing per docs/decisions/WF_TEST_BOUNDARY_SEMANTICS.md "
+                f"Section RS."
+            )
 
 
 def check_evaluation_semantics_or_raise(
@@ -400,9 +475,9 @@ def check_evaluation_semantics_or_raise(
     if schema_version is None:
         return  # Legacy path complete; PHASE2C_6 backward-compat contract.
 
-    if schema_version not in ACCEPTED_ARTIFACT_SCHEMA_VERSIONS:
+    if schema_version not in ACCEPTED_EVALUATION_SCHEMA_VERSIONS:
         accepted_str = ", ".join(
-            repr(v) for v in ACCEPTED_ARTIFACT_SCHEMA_VERSIONS
+            repr(v) for v in ACCEPTED_EVALUATION_SCHEMA_VERSIONS
         )
         raise ValueError(
             f"Unsafe single-run holdout artifact{where}: "
@@ -451,3 +526,23 @@ def check_evaluation_semantics_or_raise(
             f"Refusing per "
             f"docs/decisions/WF_TEST_BOUNDARY_SEMANTICS.md Section RS."
         )
+
+
+# ---------------------------------------------------------------------------
+# Public re-exports from backtest.artifact_schema (heavy-private-impl per
+# B-C-extended Sub-decision A C1-extract-pre-SEAL Charlie register 2026-05-22)
+#
+# CONTRACT BOUNDARY: backtest.artifact_schema houses B-C-extended schema
+# validation; backtest.wf_lineage public surface preserved via re-exports
+# for consumer backward compat per C1-extract-pre-SEAL Charlie register.
+# ---------------------------------------------------------------------------
+from backtest.artifact_schema import (  # noqa: E402
+    ARTIFACT_SCHEMA_VERSION_B_C_EXTENDED_V1,
+    ACCEPTED_B_C_EXTENDED_SCHEMA_VERSIONS,
+    COST_ANCHOR_ID_MAPPING,
+    BCExtendedSchemaValidationError,
+    check_b_c_extended_semantics_or_raise,
+    # T1.3 additions: path canonicalization + LineageContext dataclass
+    canonicalize_execution_config_path,
+    LineageContext,
+)

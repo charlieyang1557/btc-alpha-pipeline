@@ -26,8 +26,10 @@ from __future__ import annotations
 
 import argparse
 import calendar
+import hashlib
 import json
 import logging
+import os
 import sys
 import uuid
 from dataclasses import dataclass, field
@@ -38,6 +40,8 @@ from typing import Any
 import backtrader as bt
 import numpy as np
 import pandas as pd
+import pyarrow as pa
+import pyarrow.parquet as pq
 
 from backtest.bt_parquet_feed import ParquetFeed
 from backtest.execution_model import configure_cerebro
@@ -48,6 +52,25 @@ logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 RESULTS_DIR = PROJECT_ROOT / "data" / "results"
+
+# ---------------------------------------------------------------------------
+# T1.1: scipy version precondition (Contract 2.0.1)
+# ---------------------------------------------------------------------------
+# scipy >= 1.9 is required for the nan_policy kwarg on kurtosis/skew.
+# We verify at module import time so failures surface immediately.
+try:
+    import scipy.stats as _scipy_stats
+    _scipy_version = tuple(int(x) for x in __import__("scipy").__version__.split(".")[:2])
+    if _scipy_version < (1, 9):
+        raise ImportError(
+            f"backtest.engine requires scipy >= 1.9 for nan_policy support "
+            f"(Contract 2.0.1). Found scipy {__import__('scipy').__version__}."
+        )
+except ImportError as _exc:
+    raise ImportError(
+        f"backtest.engine: scipy >= 1.9 is required (Contract 2.0.1 precondition). "
+        f"Install with: pip install 'scipy>=1.9'. Original error: {_exc}"
+    ) from _exc
 
 # ---------------------------------------------------------------------------
 # Strategy registry — maps names to classes
@@ -301,6 +324,310 @@ class EquityCurveCollector(bt.Analyzer):
 
 
 # ---------------------------------------------------------------------------
+# T1.1: Per-bar returns + moments (Contract 2.0.1)
+# ---------------------------------------------------------------------------
+
+
+def compute_per_bar_returns(equity_curve: pd.Series) -> pd.Series:
+    """Compute per-bar portfolio returns from an equity curve.
+
+    Returns the pct-change Series aligned to the equity_curve index.
+    The first element is NaN (no prior bar); downstream consumers should
+    call the finite-filter before moment computation.
+
+    Inputs:
+        equity_curve: datetime-indexed Series of portfolio values
+            (post-warmup only; passed verbatim from the test-period slice).
+
+    Computation method:
+        returns[t] = equity[t] / equity[t-1] - 1  (pct_change)
+
+    Warmup period:
+        Callers are responsible for slicing the equity curve to the
+        post-warmup test period before calling this function.
+        This function does NOT trim any warmup bars — it processes
+        the full input Series.
+
+    Output schema:
+        pd.Series with the same index as equity_curve; dtype float64.
+        First element is NaN. Subsequent elements are finite unless the
+        equity curve contains zeros (division by zero).
+
+    Null policy:
+        NaN propagates from the pct_change operation (first bar is NaN).
+        Downstream T_obs computation uses np.isfinite to count valid bars.
+    """
+    if len(equity_curve) == 0:
+        return pd.Series([], dtype=float)
+    return equity_curve.pct_change().astype(float)
+
+
+def compute_moments(returns_array: "np.ndarray | list[float]") -> dict[str, Any]:
+    """Compute γ3 (skew), γ4 (raw kurtosis), and T_obs from per-bar returns.
+
+    Inputs:
+        returns_array: 1-D array-like of per-bar returns. May contain NaN
+            or ±inf values; these are excluded from all moment computations
+            via nan_policy='omit' and the finite-filter.
+
+    Computation method:
+        - T_obs = count(finite(returns_array))  [NaN + ±inf excluded]
+        - γ3 = scipy.stats.skew(finite_arr, bias=True, nan_policy='omit')
+        - γ4 = scipy.stats.kurtosis(finite_arr, fisher=False, bias=True,
+                                    nan_policy='omit')
+
+    LOCKED implementations per Contract 2.0.1:
+        γ4 via scipy.stats.kurtosis(fisher=False, bias=True, nan_policy='omit')
+        — raw standardized kurtosis (population formula; Gaussian limit = 3).
+        PROHIBITED: pandas .kurt() (excess bias-corrected = 2.5 for fixture);
+        pandas .kurt()+3 (raw bias-corrected = 5.5 for fixture);
+        scipy kurtosis(fisher=True) any combination (excess conventions).
+
+    Warmup period:
+        Input must already be post-warmup (callers slice before passing).
+        This function does not trim warmup bars.
+
+    Output schema:
+        dict with keys:
+            gamma3: float or None — sample skew (None if T_obs < 2)
+            gamma4: float or None — raw standardized kurtosis (None if T_obs < 2)
+            T_obs:  int — count of finite per-bar return observations
+
+    Null policy:
+        NaN/inf inputs are excluded before moment computation.
+        If T_obs == 0 or T_obs == 1, gamma3 and gamma4 are None
+        (insufficient observations for moment estimation).
+
+    scipy >= 1.9 precondition:
+        Verified at module import time. If scipy < 1.9, module import raises.
+
+    Downstream consumer note (BLdP DSR):
+        The DSR computation layer applies excess conversion (γ4 - 3) if
+        its formula expects excess kurtosis. This function returns raw γ4.
+    """
+    arr = np.asarray(returns_array, dtype=float)
+
+    # T_obs: count of finite values (excludes NaN, +inf, -inf).
+    finite_mask = np.isfinite(arr)
+    t_obs = int(np.sum(finite_mask))
+
+    if t_obs < 2:
+        return {"gamma3": None, "gamma4": None, "T_obs": t_obs}
+
+    finite_arr = arr[finite_mask]
+
+    # FIX-T1.1-M2: Zero-variance guard — when variance is zero (all values identical),
+    # skew and kurtosis are numerically undefined (0/0 division). scipy emits a
+    # RuntimeWarning("Precision loss...catastrophic cancellation") and returns NaN.
+    # Return None for both moments (symmetric with insufficient-data convention T_obs < 2).
+    # This preserves the caller's contract: None means "undefined", not "measured bad".
+    if np.var(finite_arr) == 0.0:
+        return {"gamma3": None, "gamma4": None, "T_obs": t_obs}
+
+    # γ3: population skew (bias=True) with NaN-omit policy.
+    # CONTRACT 2.0.1 LOCKED: scipy.stats.skew(bias=True, nan_policy='omit').
+    gamma3 = float(_scipy_stats.skew(finite_arr, bias=True, nan_policy="omit"))
+
+    # γ4: raw standardized kurtosis (population formula; Gaussian limit = 3).
+    # CONTRACT 2.0.1 LOCKED: scipy.stats.kurtosis(fisher=False, bias=True, nan_policy='omit').
+    # PROHIBITED: fisher=True (excess convention; Gaussian limit = 0).
+    # PROHIBITED: bias=False (bias-corrected; gives 5.5 not 3.0 for fixture).
+    # PROHIBITED: pandas .kurt() or .kurt()+3 (both bias-corrected).
+    gamma4 = float(
+        _scipy_stats.kurtosis(finite_arr, fisher=False, bias=True, nan_policy="omit")
+    )
+
+    return {"gamma3": gamma3, "gamma4": gamma4, "T_obs": t_obs}
+
+
+def write_per_bar_artifact(
+    equity_curve: pd.Series,
+    artifact_dir: "Path | str",
+    run_id: str,
+) -> dict[str, Any]:
+    """Write per-bar return series to returns_per_bar.parquet and return linkage dict.
+
+    This is the T1.1 slice-aware artifact writer. The caller provides the
+    explicit equity_curve (test-period slice only — NOT BacktestResult.equity_curve
+    in a walk-forward context) and the artifact_dir. The writer:
+
+    1. Computes per-bar returns from equity_curve via compute_per_bar_returns().
+    2. Keeps only finite rows (NaN from first bar + any ±inf excluded).
+    3. Writes a parquet file with columns [timestamp, portfolio_value, return]
+       at artifact_dir / returns_per_bar.parquet.
+    4. Computes SHA256 of the written file via 64KB chunked streaming (FIX-H1).
+    5. Computes γ3, γ4, T_obs via compute_moments() on finite returns.
+    6. Returns a dict with all T1.1 linkage fields for LineageContext population.
+
+    Inputs:
+        equity_curve: datetime-indexed pd.Series of portfolio values.
+            Must be the test-period slice (NOT the full run curve in WF context).
+        artifact_dir: Directory where returns_per_bar.parquet will be written.
+            Created if it does not exist (parents=True).
+        run_id: UUID string for this engine run (for logging only).
+
+    Output schema (dict):
+        returns_per_bar_path: str — relative filename ("returns_per_bar.parquet")
+        returns_per_bar_sha256: str — 64-char hex SHA256 of written file
+        T_obs: int — count of finite per-bar return observations
+        gamma3: float | None — sample skew of finite returns
+        gamma4: float | None — raw standardized kurtosis of finite returns
+
+    Null policy (post-SYS2-H1):
+        If equity_curve is empty or produces 0 finite returns, raises ValueError.
+        Callers must provide a non-empty equity curve with at least 1 finite return.
+        Empty/T_obs=0 writes were removed by FIX-T1.1-SYS2-H1 to prevent silent
+        data integrity issues.
+
+    Warmup period:
+        equity_curve is treated as post-warmup by construction (caller
+        provides the test-period slice).
+
+    CONTRACT 2.0.5 file: returns_per_bar.parquet (working assumption per
+    plan v5 §2 T1.1; surface for Charlie register if substantive alternative).
+    """
+    artifact_dir = Path(artifact_dir)
+    artifact_dir.mkdir(parents=True, exist_ok=True)
+
+    parquet_filename = "returns_per_bar.parquet"
+    parquet_path = artifact_dir / parquet_filename
+
+    # Compute per-bar returns
+    returns_series = compute_per_bar_returns(equity_curve)
+
+    # Build aligned DataFrame (timestamp, portfolio_value, return)
+    if len(equity_curve) > 0:
+        df = pd.DataFrame(
+            {
+                "timestamp": equity_curve.index,
+                "portfolio_value": equity_curve.values,
+                "return": returns_series.values,
+            }
+        )
+    else:
+        df = pd.DataFrame(
+            {"timestamp": pd.DatetimeIndex([]), "portfolio_value": [], "return": []}
+        )
+
+    # FIX-T1.1-H2: Timezone semantics for the timestamp column.
+    # HARD CONSTRAINT (CLAUDE.md): ALL timestamps in parquet must be UTC-aware.
+    # Three cases per FIX-T1.1-H2 spec:
+    #   1. tz-naive index: Backtrader produces naive datetimes; assume UTC and
+    #      explicitly localize. Preserve wall-clock values (no shift).
+    #   2. tz-aware UTC: pass through unchanged.
+    #   3. tz-aware non-UTC: FAIL CLOSED with ValueError. Caller must pre-convert
+    #      to UTC; engine does not silently transform timezones (fail-closed-is-default).
+    ts_col = df["timestamp"]
+    if hasattr(ts_col, "dt"):
+        if ts_col.dt.tz is None:
+            # Case 1: tz-naive → localize to UTC (no value shift; Backtrader convention).
+            pa_ts = pa.array(
+                ts_col.dt.tz_localize("UTC").values,
+                type=pa.timestamp("us", tz="UTC"),
+            )
+        elif str(ts_col.dt.tz) == "UTC":
+            # Case 2: tz-aware UTC → pass through.
+            pa_ts = pa.array(ts_col.values, type=pa.timestamp("us", tz="UTC"))
+        else:
+            # Case 3: tz-aware non-UTC → FAIL CLOSED.
+            raise ValueError(
+                f"write_per_bar_artifact: equity_curve has tz-aware non-UTC index "
+                f"(tz={ts_col.dt.tz!r}). All timestamps must be UTC per CLAUDE.md "
+                f"HARD CONSTRAINT. Pre-convert to UTC before calling this function "
+                f"(e.g., equity_curve.index = equity_curve.index.tz_convert('UTC')). "
+                f"(FIX-T1.1-H2: fail-closed on non-UTC tz-aware input.)"
+            )
+    else:
+        # Index is not datetime-typed (e.g., RangeIndex on empty series).
+        pa_ts = pa.array(ts_col.values, type=pa.timestamp("us", tz="UTC"))
+
+    pa_table = pa.table(
+        {
+            "timestamp": pa_ts,
+            "portfolio_value": pa.array(df["portfolio_value"].values, type=pa.float64()),
+            "return": pa.array(df["return"].values, type=pa.float64()),
+        }
+    )
+
+    # FIX-T1.1-SYS2-H1: Compute moments BEFORE writing parquet.
+    # SYS-fix-1 B5 (original) checked T_obs AFTER os.replace() wrote the file,
+    # leaving a partial artifact on disk when T_obs==0. Fix: compute moments
+    # first; raise ValueError BEFORE any file I/O if T_obs==0.
+    # This ensures a clean artifact directory state on failure — no partial files.
+    if len(returns_series) > 0:
+        moments = compute_moments(returns_series.values)
+    else:
+        moments = {"gamma3": None, "gamma4": None, "T_obs": 0}
+
+    # SYS-fix-1 B5 + FIX-T1.1-SYS2-H1: T_obs > 0 producer guard (now BEFORE write).
+    # Raise BEFORE writing to disk to keep artifact_dir clean on failure.
+    # Producer fail-fast surfaces errors at the source rather than at consumption time
+    # (symmetric with FIX-T1.1-H1 for LineageContext + FIX-T1.1-SYS2-B1 for T_obs=None).
+    _t_obs = moments["T_obs"]
+    if _t_obs == 0:
+        raise ValueError(
+            f"write_per_bar_artifact B5: T_obs=0 for run_id={run_id!r}. "
+            f"The equity curve produced no finite per-bar return observations "
+            f"(empty curve, all-NaN values, or single-bar curve with no "
+            f"computable pct_change). "
+            f"Provide an equity curve with at least 2 bars of finite values "
+            f"(FIX-T1.1-SYS2-H1: T_obs guard now BEFORE parquet write; "
+            f"no partial artifact left on disk. SYS-fix-1 B5 producer fail-fast guard; "
+            f"symmetric with check_b_c_extended_semantics_or_raise T_obs > 0 requirement)."
+        )
+
+    # FIX-T1.1-B2: Atomic write via temp file + os.replace() + cleanup on failure.
+    # Write to a temp file first so that concurrent readers never observe a partial
+    # file at the final path. os.replace() is atomic on POSIX (same filesystem).
+    # On any exception during write, clean up the temp file and re-raise.
+    # FIX-T1.1-SYS2-H1: Only reached when T_obs > 0 (guard above ensures clean exit).
+    temp_filename = f"returns_per_bar.parquet.tmp.{uuid.uuid4().hex[:8]}"
+    temp_path = artifact_dir / temp_filename
+    try:
+        pq.write_table(
+            pa_table,
+            str(temp_path),
+            compression="snappy",
+            write_statistics=True,
+        )
+        os.replace(str(temp_path), str(parquet_path))
+    except Exception:
+        # Cleanup temp file on any write failure; suppress cleanup errors.
+        try:
+            if temp_path.exists():
+                temp_path.unlink()
+        except OSError:
+            pass
+        raise
+
+    # SHA256 of written file (64KB chunked streaming per FIX-H1).
+    h = hashlib.sha256()
+    with parquet_path.open("rb") as fh:
+        while True:
+            chunk = fh.read(65536)
+            if not chunk:
+                break
+            h.update(chunk)
+    sha256_hex = h.hexdigest()
+
+    logger.debug(
+        "write_per_bar_artifact: run_id=%s path=%s T_obs=%d sha256=%s...",
+        run_id,
+        parquet_path,
+        _t_obs,
+        sha256_hex[:8],
+    )
+
+    return {
+        "returns_per_bar_path": parquet_filename,
+        "returns_per_bar_sha256": sha256_hex,
+        "T_obs": _t_obs,
+        "gamma3": moments["gamma3"],
+        "gamma4": moments["gamma4"],
+    }
+
+
+# ---------------------------------------------------------------------------
 # Result dataclass
 # ---------------------------------------------------------------------------
 
@@ -337,6 +664,7 @@ def run_backtest(
     write_registry: bool = True,
     db_path: Path | None = None,
     execution_config_path: Path | None = None,
+    lineage_context: "Any | None" = None,
 ) -> BacktestResult:
     """Execute a single-run backtest.
 
@@ -384,9 +712,26 @@ def run_backtest(
     # (Phase 4 forward-test invokes with config/execution_phase4_*bps.yaml),
     # load that override instead of the default config/execution.yaml.
     # Default None preserves backward compat for all non-Phase-4 callers.
+    #
+    # FIX-H2: derive scalar execution_config_path from lineage_context when
+    # scalar is None. Prevents cost-config runtime vs registry divergence:
+    # without this, run_backtest(lc=phaseb_lc, execution_config_path=None)
+    # would fire the backtest at legacy 7bps while the registry records
+    # lc.cost_anchor_id=spot_realistic_15bps_v1 — a HARD CONSTRAINT violation
+    # per CLAUDE.md Conservative-Anchor Gate Integrity (Codex v2 PFR BLOCKING).
+    # lineage_context.execution_config_path is already a canonicalized POSIX
+    # repo-relative key (e.g., "config/execution_phaseb_spot_15bps.yaml");
+    # convert to absolute Path for load_execution_config() consumption.
+    _effective_exec_config_path = execution_config_path
+    if _effective_exec_config_path is None and lineage_context is not None:
+        # lineage_context.execution_config_path is the canonicalized POSIX key;
+        # anchor to repo root (two parents up from this file) to form absolute path.
+        _lc_repo_root = Path(__file__).resolve().parent.parent
+        _effective_exec_config_path = _lc_repo_root / lineage_context.execution_config_path
+
     config = (
-        load_execution_config(execution_config_path)
-        if execution_config_path is not None
+        load_execution_config(_effective_exec_config_path)
+        if _effective_exec_config_path is not None
         else load_execution_config()
     )
     cerebro = bt.Cerebro()
@@ -434,6 +779,8 @@ def run_backtest(
             cost_model=cost_model,
             metrics=metrics,
             db_path=db_path,
+            execution_config_path=execution_config_path,
+            lineage_context=lineage_context,
         )
 
     result = BacktestResult(
@@ -512,6 +859,9 @@ def _write_to_registry(
     lifecycle_state: str | None = None,
     strategy_source: str = "manual",
     feature_version: str | None = None,
+    execution_config_path: Path | None = None,
+    lineage_context: "Any | None" = None,
+    artifact_dir: "Path | None" = None,
 ) -> None:
     """Write run results to the experiment registry.
 
@@ -561,7 +911,68 @@ def _write_to_registry(
             ``"dsl"`` for DSL-compiled strategies.
         feature_version: FactorRegistry version hash for DSL-compiled
             runs. None preserves the default 'none' sentinel.
+        execution_config_path: Optional path to execution config YAML.
+            When provided (and lineage_context is None), canonicalized
+            and resolved to cost_anchor_id via COST_ANCHOR_ID_MAPPING.
+            None applies interpretation (b) default normalization:
+            config/execution.yaml → legacy_perp_inspired_7bps_v0.
+        lineage_context: Optional LineageContext instance carrying all 14
+            Contract 2.0.5 fields. Must be a real LineageContext (or None);
+            duck-typed objects raise TypeError (FIX-B1).
+
+            When provided:
+            - cost_anchor_id and parent_run_id are sourced from it.
+            - HYBRID T1.3-C conflict-check (parent_run_id): if both scalar
+              parent_run_id and lineage_context.parent_run_id are non-None
+              and disagree, raises ValueError (fail closed).
+            - HYBRID T1.3-C-parallel conflict-check (execution_config_path):
+              if both scalar execution_config_path and lineage_context are
+              provided and their canonical paths disagree, raises ValueError
+              (FIX-H1).
+            - FIX-B1 defensive re-verification: cost_anchor_id is re-checked
+              against COST_ANCHOR_ID_MAPPING at write boundary (defense-in-depth
+              against LineageContext instances whose __post_init__ was bypassed).
+            - SYS-fix-1 B2 conflict-checks: run_id, hypothesis_hash, and
+              source_batch_id/batch_id must agree between scalar and LC values
+              when both are provided (fail closed on disagreement).
+              FIX-T1.1-SYS2-H2: conflict-check gates use explicit `is not None`
+              (not truthiness) so empty scalar values (e.g. run_id="") also
+              trigger conflict detection instead of silently bypassing.
+            - SYS-fix-1 B2 engine_commit OVERRIDE (FIX-T1.1-SYS2-B3): lc.engine_commit
+              overrides insert_run setdefault git_commit when LC is present.
+              This is an OVERRIDE-not-conflict-check pattern — there is no `git_commit`
+              scalar parameter to conflict against. CONTRACT GAP: if/when a `git_commit`
+              scalar parameter is added to _write_to_registry, convert to conflict-check
+              (see engine_commit block comment below).
+            - SYS-fix-1 B3 population: regime_key, current_git_sha,
+              execution_config_path, execution_config_sha256, parquet_data_sha256
+              are populated from LC into run_data.
+            - FIX-T1.1-SYS2-B2 B6 artifact_dir requirement: if LATE_FILL fields
+              (returns_per_bar_path or returns_per_bar_sha256) are non-empty,
+              artifact_dir must be provided (not None) for the B6 recheck to complete.
+
+            Scalar wins when lineage_context is None: when
+            ``lineage_context.parent_run_id is None``, the scalar
+            ``parent_run_id`` parameter is used (no conflict raised).
+            This allows wrappers to pass scalar without requiring
+            LineageContext construction.
+        artifact_dir: Optional path to the directory containing the
+            per-bar returns parquet artifact. Required for B6 write-boundary
+            recheck when LATE_FILL fields are non-empty (post-SYS2-B2 fix).
+            LATE_FILL state machine (post-SYS3-B1 pair-completeness fix):
+              DEFERRED: both returns_per_bar_path="" and returns_per_bar_sha256=""
+                        → artifact_dir may be None; B6 recheck skipped.
+              FILLED:   both path≠"" and sha≠"" → artifact_dir MUST be provided;
+                        B6 path-confinement + SHA256 recheck runs.
+              ASYMMETRIC (one set, other empty) → raises ValueError at write-boundary
+                        regardless of artifact_dir (pair-completeness violation).
+            Pass artifact_dir=None only when BOTH LATE_FILL fields are empty.
     """
+    from backtest.artifact_schema import (
+        LineageContext,
+        canonicalize_execution_config_path,
+        COST_ANCHOR_ID_MAPPING,
+    )
     from backtest.experiment_registry import (
         create_table,
         get_connection,
@@ -570,13 +981,244 @@ def _write_to_registry(
 
     strategy_name = getattr(strategy_cls, "STRATEGY_NAME", strategy_cls.__name__)
 
+    # ---------------------------------------------------------------------------
+    # FIX-B1: isinstance guard — reject duck-typed fake lineage_context objects.
+    #
+    # The type annotation "Any | None" was used to avoid a circular-import at
+    # module load time (LineageContext is imported inside this function body).
+    # A runtime isinstance check is independent of the annotation and correctly
+    # validates the object at call time.
+    #
+    # Callers passing anything other than a LineageContext instance (or None)
+    # are programming errors that must FAIL CLOSED with TypeError BEFORE any
+    # write attempt. This prevents duck-typed objects with arbitrary
+    # cost_anchor_id or parent_run_id values from bypassing __post_init__
+    # validation and being silently written to the registry.
+    # ---------------------------------------------------------------------------
+    if lineage_context is not None and not isinstance(lineage_context, LineageContext):
+        raise TypeError(
+            f"_write_to_registry: lineage_context must be a LineageContext instance "
+            f"or None, got {type(lineage_context).__name__!r}. "
+            f"Duck-typed objects are rejected — construct a LineageContext via "
+            f"backtest.artifact_schema.LineageContext(...) to pass lineage context. "
+            f"This check prevents invalid cost_anchor_id or parent_run_id values "
+            f"from bypassing __post_init__ validation (FIX-B1)."
+        )
+
+    # ---------------------------------------------------------------------------
+    # T1.3-C HYBRID: resolve parent_run_id and cost_anchor_id.
+    #
+    # Precedence + conflict-check:
+    # 1. If lineage_context is provided:
+    #    a. FIX-B1 isinstance check (above) ensures it is a real LineageContext.
+    #    b. Extract lineage_context.parent_run_id.
+    #    c. CONFLICT CHECK: if scalar parent_run_id is ALSO non-None and
+    #       disagrees with lineage_context.parent_run_id, FAIL CLOSED.
+    #    d. FIX-H1 CONFLICT CHECK: if scalar execution_config_path is ALSO
+    #       provided and canonicalizes to a different key than
+    #       lineage_context.execution_config_path, FAIL CLOSED.
+    #    e. cost_anchor_id = lineage_context.cost_anchor_id (already resolved
+    #       at LineageContext construction via COST_ANCHOR_ID_MAPPING).
+    #    f. FIX-B1 DEFENSIVE: re-verify cost_anchor_id at write boundary
+    #       against COST_ANCHOR_ID_MAPPING (defense-in-depth against future
+    #       LineageContext bugs where __post_init__ is bypassed via
+    #       object.__setattr__ on a frozen instance).
+    # 2. If lineage_context is None:
+    #    a. parent_run_id = scalar (may be None).
+    #    b. If execution_config_path is provided, canonicalize + map to anchor.
+    #    c. If execution_config_path is None, apply interpretation (b) default:
+    #       "config/execution.yaml" → "legacy_perp_inspired_7bps_v0".
+    # ---------------------------------------------------------------------------
+    resolved_parent_run_id = parent_run_id
+    resolved_cost_anchor_id: str
+
+    if lineage_context is not None:
+        # T1.3-C conflict-check: scalar vs lineage_context parent_run_id.
+        lc_parent = lineage_context.parent_run_id
+        if parent_run_id is not None and lc_parent is not None and parent_run_id != lc_parent:
+            raise ValueError(
+                f"_write_to_registry HYBRID T1.3-C conflict: scalar parent_run_id="
+                f"{parent_run_id!r} disagrees with "
+                f"lineage_context.parent_run_id={lc_parent!r}. "
+                f"Callers must provide consistent parent_run_id or leave the "
+                f"scalar as None when threading lineage_context. "
+                f"Fail closed per T1.3-C spec."
+            )
+        # Use lineage_context.parent_run_id (may be None; None is valid per B2-b).
+        resolved_parent_run_id = lc_parent if lc_parent is not None else parent_run_id
+
+        # SYS-fix-1 B2 + FIX-T1.1-SYS2-H2: run_id conflict-check.
+        # The scalar run_id parameter is the authoritative run_id for the registry
+        # row. When lineage_context.run_id is also provided, they must agree.
+        # Disagreement indicates a caller threading LC from a different run — FAIL CLOSED.
+        # FIX-T1.1-SYS2-H2: changed truthiness gate (lc_run_id and run_id) to explicit
+        # `is not None` checks. Empty string "" is falsy — the old truthiness gate silently
+        # bypassed conflict-check when scalar run_id="" (empty). Explicit `is not None`
+        # catches empty scalars and requires them to match the LC value.
+        lc_run_id = lineage_context.run_id
+        if lc_run_id is not None and run_id is not None and lc_run_id != run_id:
+            raise ValueError(
+                f"_write_to_registry SYS-fix-1 B2 + FIX-T1.1-SYS2-H2 conflict: "
+                f"scalar run_id={run_id!r} disagrees with lineage_context.run_id={lc_run_id!r}. "
+                f"Callers must provide consistent run_id or leave scalar as the "
+                f"lineage_context.run_id value. Fail closed per B2 spec. "
+                f"(FIX-T1.1-SYS2-H2: empty scalar run_id='' no longer bypasses conflict-check.)"
+            )
+
+        # SYS-fix-1 B2 + FIX-T1.1-SYS2-H2: hypothesis_hash conflict-check.
+        # When both scalar hypothesis_hash AND lineage_context.hypothesis_hash are
+        # provided and non-None, they must agree. Disagreement FAIL CLOSED.
+        # FIX-T1.1-SYS2-H2: apply same `is not None` fix as run_id dimension.
+        # Old gate `hypothesis_hash is not None and lc_hypothesis_hash and ...` was
+        # also vulnerable: empty lc_hypothesis_hash="" (falsy) would bypass check.
+        # LineageContext.__post_init__ now rejects empty lc_hypothesis_hash via STRICT
+        # validation, so this scenario cannot arise in practice. But for defense-in-depth
+        # the explicit `is not None` gate is more rigorous for the scalar side.
+        lc_hypothesis_hash = lineage_context.hypothesis_hash
+        if (
+            hypothesis_hash is not None
+            and lc_hypothesis_hash is not None
+            and hypothesis_hash != lc_hypothesis_hash
+        ):
+            raise ValueError(
+                f"_write_to_registry SYS-fix-1 B2 + FIX-T1.1-SYS2-H2 conflict: "
+                f"scalar hypothesis_hash={hypothesis_hash!r} disagrees with "
+                f"lineage_context.hypothesis_hash={lc_hypothesis_hash!r}. "
+                f"Callers must provide consistent hypothesis_hash or leave scalar as "
+                f"None when threading lineage_context. Fail closed per B2 spec."
+            )
+        # If scalar hypothesis_hash is None, use LC value (LC-only path).
+        if hypothesis_hash is None and lc_hypothesis_hash:
+            hypothesis_hash = lc_hypothesis_hash
+
+        # SYS-fix-1 B2 + FIX-T1.1-SYS2-H2: source_batch_id/batch_id conflict-check.
+        # LC.source_batch_id aliases registry column batch_id. When both scalar
+        # batch_id AND lc.source_batch_id are provided and non-None, they must agree.
+        # FIX-T1.1-SYS2-H2: apply same `is not None` fix as run_id/hypothesis_hash.
+        lc_source_batch_id = lineage_context.source_batch_id
+        if (
+            batch_id is not None
+            and lc_source_batch_id is not None
+            and batch_id != lc_source_batch_id
+        ):
+            raise ValueError(
+                f"_write_to_registry SYS-fix-1 B2 + FIX-T1.1-SYS2-H2 conflict: "
+                f"scalar batch_id={batch_id!r} disagrees with "
+                f"lineage_context.source_batch_id={lc_source_batch_id!r}. "
+                f"Callers must provide consistent batch_id or leave scalar as "
+                f"None when threading lineage_context. Fail closed per B2 spec."
+            )
+        # If scalar batch_id is None, use LC value (LC-only path).
+        if batch_id is None and lc_source_batch_id:
+            batch_id = lc_source_batch_id
+
+        # FIX-H1: parallel conflict-check for execution_config_path dimension.
+        # T1.3-C HYBRID provides this for parent_run_id but not for
+        # execution_config_path. When both scalar execution_config_path AND
+        # lineage_context are provided and they disagree on the canonicalized
+        # path, FAIL CLOSED with ValueError.
+        if execution_config_path is not None:
+            canonical_scalar = canonicalize_execution_config_path(execution_config_path)
+            lc_canonical = lineage_context.execution_config_path  # already canonicalized
+            if canonical_scalar != lc_canonical:
+                raise ValueError(
+                    f"_write_to_registry HYBRID T1.3-C-parallel conflict: scalar "
+                    f"execution_config_path canonicalizes to {canonical_scalar!r} "
+                    f"disagrees with "
+                    f"lineage_context.execution_config_path={lc_canonical!r}. "
+                    f"Callers must provide consistent execution_config_path or leave "
+                    f"scalar as None when threading lineage_context."
+                )
+
+        # DESIGN INVARIANT: revalidate_for_write() call below (FIX-T1.1-SYS5)
+        # is the primary post-construction tampering closure for ALL 14 Contract
+        # 2.0.5 fields. The 4 mirror sites below (cost_anchor_id, parent_run_id,
+        # T_obs SYS3-B2, LATE_FILL SYS3-B1) remain as belt-and-suspenders per
+        # project defense-in-depth doctrine. Do NOT remove the mirrors — they
+        # provide narrower error messages + earlier failure detection for the
+        # 4 specific field classes; revalidate_for_write provides the broad
+        # closure for the other 10 fields.
+        # FIX-T1.1-SYS5-REVALIDATE: revalidate ALL 14 Contract 2.0.5 fields
+        # against post-construction tampering. Closes the 5th asymmetry class
+        # (Codex v8 BLOCKING): direct STRICT field tamper via object.__setattr__
+        # bypassing frozen-dataclass guard + registry nullable TEXT silently
+        # accepting empty/None values. revalidate_for_write() is the primary
+        # closure; 4 existing mirror sites below (cost_anchor_id at :1148,
+        # parent_run_id at :1168, T_obs at :1281, LATE_FILL at :1332) remain
+        # as belt-and-suspenders per project defense-in-depth doctrine.
+        lineage_context.revalidate_for_write()
+
+        # cost_anchor_id already resolved at LineageContext construction.
+        # FIX-B1 DEFENSIVE: re-verify at write boundary against COST_ANCHOR_ID_MAPPING
+        # to catch future LineageContext bugs (e.g., frozen field bypassed via
+        # object.__setattr__ after construction). This is defense-in-depth and
+        # does NOT replace __post_init__ validation — it supplements it.
+        lc_exec_path = lineage_context.execution_config_path
+        expected_anchor = COST_ANCHOR_ID_MAPPING.get(lc_exec_path)
+        if expected_anchor is None or lineage_context.cost_anchor_id != expected_anchor:
+            raise ValueError(
+                f"_write_to_registry FIX-B1 defensive re-verification failed: "
+                f"lineage_context.cost_anchor_id={lineage_context.cost_anchor_id!r} "
+                f"does not match COST_ANCHOR_ID_MAPPING[{lc_exec_path!r}]="
+                f"{expected_anchor!r}. "
+                f"This indicates a LineageContext instance whose __post_init__ "
+                f"was bypassed (e.g., via object.__setattr__ on a frozen instance). "
+                f"Construct LineageContext normally to resolve (FIX-B1 defense-in-depth)."
+            )
+        resolved_cost_anchor_id = lineage_context.cost_anchor_id
+
+        # FIX-B1-extension DEFENSIVE: re-verify parent_run_id at write boundary.
+        # Mirrors the cost_anchor_id defensive check above. If a caller bypasses
+        # LineageContext.__post_init__ via object.__setattr__(lc, "parent_run_id", "")
+        # (e.g., accidentally or in a test harness), the isinstance check at line ~624
+        # passes (it is still a LineageContext), but the empty/whitespace value reaches
+        # the registry unchecked — silently writing an invalid parent_run_id row.
+        # This defensive check catches that case at the write boundary.
+        lc_parent_raw = lineage_context.parent_run_id
+        if lc_parent_raw is not None:
+            if not isinstance(lc_parent_raw, str) or not lc_parent_raw.strip():
+                raise ValueError(
+                    f"_write_to_registry FIX-B1-extension defensive re-verification "
+                    f"failed: lineage_context.parent_run_id={lc_parent_raw!r} is "
+                    f"empty, whitespace-only, or non-string. "
+                    f"Valid values: None (no parent) or a non-empty non-whitespace "
+                    f"string (B2-b: empty/whitespace FAIL CLOSED). "
+                    f"This indicates a LineageContext whose __post_init__ was bypassed "
+                    f"(e.g., via object.__setattr__ on a frozen instance). "
+                    f"Construct LineageContext normally to resolve "
+                    f"(FIX-B1-extension defense-in-depth)."
+                )
+    else:
+        # No lineage_context: use execution_config_path or default normalization.
+        if execution_config_path is not None:
+            canonical_key = canonicalize_execution_config_path(execution_config_path)
+            anchor = COST_ANCHOR_ID_MAPPING.get(canonical_key)
+            if anchor is None:
+                mapping_table = "; ".join(
+                    f"{k!r} → {v!r}" for k, v in COST_ANCHOR_ID_MAPPING.items()
+                )
+                raise ValueError(
+                    f"_write_to_registry: execution_config_path={str(execution_config_path)!r} "
+                    f"canonicalizes to {canonical_key!r}, which is not in "
+                    f"COST_ANCHOR_ID_MAPPING (R3.1d §5.2). "
+                    f"Known paths: {mapping_table}. "
+                    f"Update R3.1d §5.2 mapping for new anchor or contact human "
+                    f"approval before extending mapping."
+                )
+            resolved_cost_anchor_id = anchor
+        else:
+            # Interpretation (b) default: None → config/execution.yaml →
+            # legacy_perp_inspired_7bps_v0. Preserves backward compat for all
+            # legacy Phase 1-2 callers not threading lineage context.
+            resolved_cost_anchor_id = COST_ANCHOR_ID_MAPPING["config/execution.yaml"]
+
     if notes is None:
         notes = json.dumps(strategy_params) if strategy_params else None
 
     run_data = {
         "run_id": run_id,
         "run_type": run_type,
-        "parent_run_id": parent_run_id,
+        "parent_run_id": resolved_parent_run_id,
         "strategy_name": strategy_name,
         "strategy_source": strategy_source,
         "test_start": start_date.strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -600,6 +1242,7 @@ def _write_to_registry(
         "validation_start": None,
         "validation_end": None,
         "fee_model": cost_model.fee_model_label,
+        "cost_anchor_id": resolved_cost_anchor_id,
         "initial_capital": metrics.get("initial_capital"),
         "final_capital": metrics.get("final_capital"),
         "total_return": metrics.get("total_return"),
@@ -622,6 +1265,151 @@ def _write_to_registry(
     }
     if feature_version is not None:
         run_data["feature_version"] = feature_version
+
+    # FIX-T1.1-B1: Persist per-bar artifact fields (Contract 2.0.5 obligation).
+    # When lineage_context is provided, populate the 3 new columns introduced by
+    # the T1.1 fix iteration schema migration. These are NULL for all runs without
+    # lineage_context (backward-compatible with all pre-T1.1 callers).
+    if lineage_context is not None:
+        run_data["returns_per_bar_path"] = lineage_context.returns_per_bar_path
+        run_data["returns_per_bar_sha256"] = lineage_context.returns_per_bar_sha256
+
+        # SYS3-B2: Defensive T_obs revalidation at write-boundary.
+        # LineageContext.__post_init__ rejects T_obs=None/0/-1/bool at construction
+        # (FIX-T1.1-SYS2-B1). However, object.__setattr__(lc, "T_obs", None) bypasses
+        # the frozen-dataclass guard. Re-check T_obs here so tampered values never
+        # reach the registry column (which is nullable, accepting NULL silently).
+        # Mirror FIX-B1-extension pattern used for cost_anchor_id/parent_run_id.
+        _lc_t_obs = lineage_context.T_obs
+        if isinstance(_lc_t_obs, bool) or not isinstance(_lc_t_obs, int) or _lc_t_obs <= 0:
+            raise ValueError(
+                f"_write_to_registry SYS3-B2 write-boundary revalidation: "
+                f"lineage_context.T_obs={_lc_t_obs!r} is invalid (must be a positive "
+                f"integer, not None, not bool, not <= 0). Construction guard may have "
+                f"been bypassed via object.__setattr__ tampering. "
+                f"T_obs={_lc_t_obs!r} type={type(_lc_t_obs).__name__!r}."
+            )
+        run_data["T_obs"] = _lc_t_obs
+
+        # SYS-fix-1 B2 + FIX-T1.1-SYS2-B3: engine_commit → git_commit OVERRIDE.
+        # When LC is present, lc.engine_commit is the authoritative git_commit
+        # (set at engine invocation time, not auto-derived from subprocess HEAD
+        # which may differ in CI environments). Override insert_run's setdefault
+        # by setting git_commit explicitly so setdefault is a no-op.
+        #
+        # OVERRIDE-not-conflict-check pattern (FIX-T1.1-SYS2-B3 B2 brief clarification):
+        # The B2 brief described a "4-dimension conflict-check" but engine_commit/git_commit
+        # uses OVERRIDE semantics, NOT conflict-check. There is no `git_commit` scalar
+        # parameter in _write_to_registry's public API — lineage_context.engine_commit
+        # directly displaces the auto-derived value (get_git_commit() via insert_run
+        # setdefault). The other 3 B2 dimensions (run_id, hypothesis_hash, batch_id) DO
+        # have scalar parameters and use genuine conflict-check semantics.
+        #
+        # CONTRACT GAP: If a future engine API revision exposes a `git_commit` scalar
+        # parameter, parallel conflict-check logic from the run_id/hypothesis_hash/batch_id
+        # dimensions should be applied here instead of the OVERRIDE pattern.
+        # Trigger condition: when `git_commit` is added as an explicit _write_to_registry
+        # parameter, add conflict-check (compare scalar vs lc.engine_commit) and update
+        # the B2 test class TestSys2B3EngineCommitOverrideDocumented in test_t1_1_sys_fix.py.
+        run_data["git_commit"] = lineage_context.engine_commit
+
+        # SYS-fix-1 B3: Populate 5 new LineageContext fields into run_data.
+        # These are NULL for runs without lineage_context (backward compat).
+        run_data["regime_key"] = lineage_context.regime_key
+        run_data["current_git_sha"] = lineage_context.current_git_sha
+        run_data["execution_config_path"] = lineage_context.execution_config_path
+        run_data["execution_config_sha256"] = lineage_context.execution_config_sha256
+        run_data["parquet_data_sha256"] = lineage_context.parquet_data_sha256
+
+        # SYS-fix-1 B6 + FIX-T1.1-SYS2-B2 + SYS3-B1: Write-boundary path-confinement
+        # + SHA256 recheck with strict LATE_FILL pair-completeness gate.
+        #
+        # LATE_FILL state machine (D1-b):
+        #   DEFERRED (canonical OK): both path="" and sha="" → skip B6 recheck.
+        #   FILLED (canonical OK):   both path≠"" and sha≠"" → run B6 recheck.
+        #   ASYMMETRIC (BUG):        one non-empty, other empty → FAIL CLOSED.
+        #
+        # SYS3-B1 fix: the prior OR-gate (_late_fill_nonempty = bool(path) OR bool(sha))
+        # passed asymmetric half-fills into the SYS2-B2 artifact_dir=None check but then
+        # fell through the AND-gate recheck (if path AND sha AND artifact_dir is not None).
+        # Half-fill + artifact_dir provided → require-gate passed → recheck skipped →
+        # row inserted with one field empty (data integrity violation).
+        # Replace OR-gate with strict pair-completeness check that rejects asymmetric state.
+        _lc_bar_path = lineage_context.returns_per_bar_path
+        _lc_bar_sha = lineage_context.returns_per_bar_sha256
+        _path_set = bool(_lc_bar_path)
+        _sha_set = bool(_lc_bar_sha)
+        if _path_set != _sha_set:
+            # Asymmetric LATE_FILL: one field populated, other empty. FAIL CLOSED.
+            raise ValueError(
+                f"_write_to_registry SYS3-B1: asymmetric LATE_FILL state detected. "
+                f"returns_per_bar_path and returns_per_bar_sha256 must either both be "
+                f"empty (deferred state) or both be non-empty (filled state). "
+                f"Got: returns_per_bar_path={_lc_bar_path!r}, "
+                f"returns_per_bar_sha256={_lc_bar_sha!r}. "
+                f"Rejecting insert to protect registry data integrity (FAIL CLOSED)."
+            )
+        _late_fill_nonempty = _path_set  # equivalent to _sha_set after pair-check
+        if _late_fill_nonempty and artifact_dir is None:
+            raise ValueError(
+                f"_write_to_registry FIX-T1.1-SYS2-B2: lineage_context has non-empty "
+                f"LATE_FILL field(s) (returns_per_bar_path={_lc_bar_path!r}, "
+                f"returns_per_bar_sha256={_lc_bar_sha!r}) but artifact_dir=None. "
+                f"Provide artifact_dir so the B6 write-boundary path-confinement + SHA256 "
+                f"recheck can complete. Pass artifact_dir=None only when BOTH LATE_FILL "
+                f"fields are empty (deferred state before T1.1 writer fills them)."
+            )
+        if _late_fill_nonempty and artifact_dir is not None:
+            _artifact_dir = Path(artifact_dir)
+            # B6 path confinement check.
+            import os as _os
+            _base_resolved = str(_artifact_dir.resolve())
+            _bar_resolved_path = (_artifact_dir / _lc_bar_path).resolve()
+            if _os.path.isabs(_lc_bar_path):
+                raise ValueError(
+                    f"_write_to_registry B6: returns_per_bar_path={_lc_bar_path!r} "
+                    f"is an absolute path; only relative paths confined to "
+                    f"artifact_dir are allowed (path-confinement violation)."
+                )
+            try:
+                _common = _os.path.commonpath([_base_resolved, str(_bar_resolved_path)])
+            except ValueError:
+                raise ValueError(
+                    f"_write_to_registry B6: returns_per_bar_path={_lc_bar_path!r} "
+                    f"is outside artifact_dir={_artifact_dir!r} "
+                    f"(path-confinement violation, B6 write-boundary recheck)."
+                )
+            if _common != _base_resolved:
+                raise ValueError(
+                    f"_write_to_registry B6: returns_per_bar_path={_lc_bar_path!r} "
+                    f"resolves outside artifact_dir={_artifact_dir!r} "
+                    f"(path-confinement violation — potential '../' escape attack; "
+                    f"B6 write-boundary recheck)."
+                )
+            # B6 SHA256 integrity recheck (64KB chunked streaming).
+            if not _bar_resolved_path.is_file():
+                raise ValueError(
+                    f"_write_to_registry B6: returns_per_bar_path={_lc_bar_path!r} "
+                    f"resolved to {_bar_resolved_path!r} which is not a regular file "
+                    f"(B6 write-boundary recheck, file-exists check failed)."
+                )
+            import hashlib as _hashlib
+            _h = _hashlib.sha256()
+            with _bar_resolved_path.open("rb") as _fh:
+                while True:
+                    _chunk = _fh.read(65536)
+                    if not _chunk:
+                        break
+                    _h.update(_chunk)
+            _actual_sha = _h.hexdigest()
+            if _actual_sha != _lc_bar_sha:
+                raise ValueError(
+                    f"_write_to_registry B6: SHA256 mismatch for "
+                    f"returns_per_bar_path={_lc_bar_path!r}: "
+                    f"stored={_lc_bar_sha!r}, recomputed={_actual_sha!r}. "
+                    f"SHA256 integrity check failed (B6 write-boundary recheck; "
+                    f"artifact may have been tampered or path is stale)."
+                )
 
     conn = get_connection(db_path)
     try:
@@ -836,6 +1624,7 @@ def run_walk_forward(
     overall_start: date | None = None,
     overall_end: date | None = None,
     train_ranges: list[tuple[date, date]] | None = None,
+    execution_config_path: Path | None = None,
 ) -> WalkForwardResult:
     """Execute walk-forward backtesting across rolling windows.
 
@@ -941,9 +1730,16 @@ def run_walk_forward(
     # Pre-generate summary run_id — windows point to this
     summary_run_id = str(uuid.uuid4())
 
-    # Load cost model once for registry writes
-    config = load_execution_config()
+    # Load cost model once for registry writes.
+    # T1.3: if execution_config_path is provided, load that config instead of
+    # the default. This ensures the WF summary registry row's cost_anchor_id
+    # reflects the actual cost model used during the run.
     from backtest.execution_model import ConstantSlippage
+    config = (
+        load_execution_config(execution_config_path)
+        if execution_config_path is not None
+        else load_execution_config()
+    )
     cost_model = ConstantSlippage.from_config(config)
 
     window_results: list[BacktestResult] = []
@@ -983,6 +1779,12 @@ def run_walk_forward(
         # the wrapper enforces test-period-only semantics via explicit
         # timestamp comparison in next/prenext/nextstart, not via
         # data-range manipulation.
+        # T1.3 slice-aware emission discipline: inner run_backtest uses
+        # write_registry=False (WF outer wrapper is the only legitimate WF
+        # writer) and lineage_context=None (opt-in=False per T1.3-D spec;
+        # T1.1 per-bar artifact writer is a separate future deliverable).
+        # execution_config_path is threaded through for cost model loading
+        # (already used by run_backtest/configure_cerebro via execution_model).
         result = run_backtest(
             strategy_cls=gated_cls,
             start_date=data_start_dt,
@@ -991,6 +1793,8 @@ def run_walk_forward(
             parquet_path=parquet_path,
             cash=cash,
             write_registry=False,
+            execution_config_path=execution_config_path,
+            lineage_context=None,  # opt-in=False: T1.1 slice-aware boundary
         )
 
         # Canonical-metric slice: equity from test_start onward.
@@ -1052,6 +1856,7 @@ def run_walk_forward(
                 w_train_end.year, w_train_end.month, w_train_end.day,
                 hour=23, tzinfo=timezone.utc,
             ),
+            execution_config_path=execution_config_path,
         )
 
         window_results.append(result)
@@ -1117,6 +1922,7 @@ def run_walk_forward(
             ],
             "params": strategy_params or {},
         }),
+        execution_config_path=execution_config_path,
     )
 
     logger.info(
@@ -1481,6 +2287,7 @@ def run_regime_holdout(
     registry: "Any" = None,
     manifest_dir: Path | None = None,
     execution_config_path: Path | None = None,
+    lineage_context: "Any | None" = None,
 ) -> RegimeHoldoutResult:
     """Run the 2022 regime holdout for a single hypothesis.
 
@@ -1612,6 +2419,19 @@ def run_regime_holdout(
         except Exception:
             hypothesis_hash = None
 
+    # FIX-H2: derive effective execution_config_path from lineage_context when
+    # scalar is None. Same structural fix as run_backtest (Codex v2 PFR BLOCKING).
+    # Without this, run_regime_holdout(lc=phaseb_lc, execution_config_path=None)
+    # fires both the inner run_backtest and the cost_model load at legacy 7bps
+    # while the registry records lc.cost_anchor_id=spot_realistic_15bps_v1 —
+    # a HARD CONSTRAINT violation per CLAUDE.md Conservative-Anchor Gate Integrity.
+    _rh_effective_exec_path = execution_config_path
+    if _rh_effective_exec_path is None and lineage_context is not None:
+        _lc_repo_root_rh = Path(__file__).resolve().parent.parent
+        _rh_effective_exec_path = (
+            _lc_repo_root_rh / lineage_context.execution_config_path
+        )
+
     result = run_backtest(
         strategy_cls=strategy_cls,
         start_date=start_dt,
@@ -1620,7 +2440,7 @@ def run_regime_holdout(
         parquet_path=parquet_path,
         cash=cash,
         write_registry=False,
-        execution_config_path=execution_config_path,
+        execution_config_path=_rh_effective_exec_path,
     )
 
     passed = _evaluate_regime_holdout_pass(result.metrics, passing_criteria)
@@ -1632,13 +2452,12 @@ def run_regime_holdout(
 
     from backtest.execution_model import ConstantSlippage
     # PHASE4 cost-config override: registry-write cost_model must reflect
-    # the same config that run_backtest used for the actual fire (line 1605).
-    # Otherwise registry metadata would silently disagree with the realized
-    # cost model — register-class-distinct from the artifact register where
-    # holdout_summary.json embeds the override path + sha256.
+    # the same config that run_backtest used for the actual fire.
+    # FIX-H2: use _rh_effective_exec_path (derived from LC if scalar was None)
+    # so registry cost_model matches the actual runtime config in both paths.
     _exec_cfg = (
-        load_execution_config(execution_config_path)
-        if execution_config_path is not None
+        load_execution_config(_rh_effective_exec_path)
+        if _rh_effective_exec_path is not None
         else load_execution_config()
     )
     cost_model = ConstantSlippage.from_config(_exec_cfg)
@@ -1676,6 +2495,8 @@ def run_regime_holdout(
         lifecycle_state=None,
         strategy_source=strategy_source,
         feature_version=feature_version,
+        execution_config_path=execution_config_path,
+        lineage_context=lineage_context,
     )
 
     logger.info(

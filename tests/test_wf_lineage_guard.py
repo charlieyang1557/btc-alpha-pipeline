@@ -754,3 +754,113 @@ def test_regime_key_mapping_keys_match_label_mapping_keys():
     assert set(REGIME_KEY_LABEL_MAPPING) == set(
         REGIME_KEY_TO_SCHEMA_VERSION_MAPPING
     )
+
+
+# ---------------------------------------------------------------------------
+# FIX-B2: WF domain fence — check_wf_semantics_or_raise ACCEPTED_WF_SCHEMA_VERSIONS
+# ---------------------------------------------------------------------------
+# RED tests: the WF helper currently does NOT reference ACCEPTED_WF_SCHEMA_VERSIONS.
+# After fix, it must reject b_c_extended_v1 and accept only its own domain's tuple.
+
+
+def test_wf_helper_rejects_b_c_extended_v1_when_wf_fields_also_present():
+    """check_wf_semantics_or_raise must reject b_c_extended_v1 artifacts.
+
+    FIX-B2 RED test. Current: ACCEPTED_WF_SCHEMA_VERSIONS is defined but
+    check_wf_semantics_or_raise does NOT reference it. A b_c_extended_v1
+    artifact with valid wf_semantics + corrected_wf_semantics_commit slips
+    through. After fix: artifact_schema_version='b_c_extended_v1' must be
+    rejected with a ValueError mentioning the domain fence.
+    """
+    from backtest.wf_lineage import (
+        check_wf_semantics_or_raise,
+        WF_SEMANTICS_TAG,
+        CORRECTED_WF_ENGINE_COMMIT,
+    )
+    summary = {
+        "wf_semantics": WF_SEMANTICS_TAG,
+        "corrected_wf_semantics_commit": CORRECTED_WF_ENGINE_COMMIT,
+        "artifact_schema_version": "b_c_extended_v1",
+    }
+    with pytest.raises(ValueError) as exc_info:
+        check_wf_semantics_or_raise(summary)
+    msg = str(exc_info.value)
+    assert "b_c_extended_v1" in msg or "artifact_schema_version" in msg
+
+
+def test_wf_helper_accepts_phase2c_7_1_schema_version():
+    """check_wf_semantics_or_raise must accept artifact_schema_version='phase2c_7_1'.
+
+    FIX-B2 regression guard. After fix, phase2c_7_1 must still pass
+    (it is in ACCEPTED_WF_SCHEMA_VERSIONS).
+    """
+    from backtest.wf_lineage import (
+        check_wf_semantics_or_raise,
+        WF_SEMANTICS_TAG,
+        CORRECTED_WF_ENGINE_COMMIT,
+    )
+    summary = {
+        "wf_semantics": WF_SEMANTICS_TAG,
+        "corrected_wf_semantics_commit": CORRECTED_WF_ENGINE_COMMIT,
+        "artifact_schema_version": "phase2c_7_1",
+    }
+    check_wf_semantics_or_raise(summary)  # must not raise
+
+
+def test_wf_helper_accepts_phase2c_8_1_schema_version():
+    """check_wf_semantics_or_raise must accept artifact_schema_version='phase2c_8_1'.
+
+    FIX-B2 regression guard. phase2c_8_1 is in ACCEPTED_WF_SCHEMA_VERSIONS.
+    """
+    from backtest.wf_lineage import (
+        check_wf_semantics_or_raise,
+        WF_SEMANTICS_TAG,
+        CORRECTED_WF_ENGINE_COMMIT,
+    )
+    summary = {
+        "wf_semantics": WF_SEMANTICS_TAG,
+        "corrected_wf_semantics_commit": CORRECTED_WF_ENGINE_COMMIT,
+        "artifact_schema_version": "phase2c_8_1",
+    }
+    check_wf_semantics_or_raise(summary)  # must not raise
+
+
+def test_wf_helper_accepts_artifact_without_schema_version_legacy_path():
+    """check_wf_semantics_or_raise passes legacy artifacts (no artifact_schema_version).
+
+    FIX-B2 backward-compat guard. Pre-PHASE2C_7.1 WF artifacts do not carry
+    artifact_schema_version. The helper must preserve existing behavior
+    (absence = legacy path, no version check performed).
+    """
+    from backtest.wf_lineage import (
+        check_wf_semantics_or_raise,
+        WF_SEMANTICS_TAG,
+        CORRECTED_WF_ENGINE_COMMIT,
+    )
+    summary = {
+        "wf_semantics": WF_SEMANTICS_TAG,
+        "corrected_wf_semantics_commit": CORRECTED_WF_ENGINE_COMMIT,
+    }
+    check_wf_semantics_or_raise(summary)  # must not raise
+
+
+def test_wf_helper_rejects_unrecognized_schema_version():
+    """check_wf_semantics_or_raise must reject unrecognized artifact_schema_version.
+
+    FIX-B2 defensive reject. Any schema version not in ACCEPTED_WF_SCHEMA_VERSIONS
+    must be rejected, not silently passed through.
+    """
+    from backtest.wf_lineage import (
+        check_wf_semantics_or_raise,
+        WF_SEMANTICS_TAG,
+        CORRECTED_WF_ENGINE_COMMIT,
+    )
+    summary = {
+        "wf_semantics": WF_SEMANTICS_TAG,
+        "corrected_wf_semantics_commit": CORRECTED_WF_ENGINE_COMMIT,
+        "artifact_schema_version": "future_unknown_v99",
+    }
+    with pytest.raises(ValueError) as exc_info:
+        check_wf_semantics_or_raise(summary)
+    msg = str(exc_info.value)
+    assert "artifact_schema_version" in msg or "future_unknown_v99" in msg
