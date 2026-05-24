@@ -939,9 +939,11 @@ class TestT1_4_B3_LegitimateFlowsAndOptOutSemantic:
         )
 
         # v4-1 substantive verification: chain propagation
-        assert len(captured_calls) >= 1, (
-            "B3.1 v4-1: run_backtest must invoke _write_to_registry at least once "
-            "(write_registry=True default)"
+        # Post-SEAL polish per Advisor F1 v4 PFR LOW: tightened `>= 1` to `== 1`
+        # (single-writer-per-entry-point invariant per engine.py:770 + 2476).
+        assert len(captured_calls) == 1, (
+            f"B3.1 v4-1 + post-SEAL F1 polish: run_backtest must invoke _write_to_registry "
+            f"EXACTLY once (single-writer-per-entry invariant); got {len(captured_calls)} calls"
         )
 
         # Identity check (not equality) — proves the SAME LC object reached the writer
@@ -990,10 +992,10 @@ class TestT1_4_B3_LegitimateFlowsAndOptOutSemantic:
 
         db_path = self._make_db(tmp_path, "b3_2_lc_chain.db")
 
-        # Predictable UUID for LC.run_id matches engine's auto-generated uuid (avoid conflict-check)
+        # Post-SEAL polish per Advisor F3 v4 PFR LOW: uuid monkeypatch was dead code
+        # (stub returns pre-built BacktestResult; never calls uuid.uuid4). Use bare
+        # predictable UUID without monkeypatch; stub_result.run_id directly aligned below.
         predictable_uuid_b3_2 = "abcdef01-2345-6789-abcd-ef0123456789"
-        import uuid as uuid_mod
-        monkeypatch.setattr(uuid_mod, "uuid4", lambda: uuid_mod.UUID(predictable_uuid_b3_2))
 
         lc = self._make_canonical_lineage_context(run_id=predictable_uuid_b3_2)
 
@@ -1073,8 +1075,11 @@ class TestT1_4_B3_LegitimateFlowsAndOptOutSemantic:
         )
 
         # v4-1 substantive verification: chain propagation
-        assert len(captured_calls) >= 1, (
-            "B3.2 v4-1: run_regime_holdout must invoke _write_to_registry at least once"
+        # Post-SEAL polish per Advisor F1 v4 PFR LOW: tightened `>= 1` to `== 1`
+        # (single-writer-per-entry-point invariant; inner run_backtest write_registry=False).
+        assert len(captured_calls) == 1, (
+            f"B3.2 v4-1 + post-SEAL F1 polish: run_regime_holdout must invoke _write_to_registry "
+            f"EXACTLY once (single-writer-per-entry invariant); got {len(captured_calls)} calls"
         )
 
         writer_lc = captured_calls[0]["kwargs"].get("lineage_context")
@@ -1477,35 +1482,42 @@ class TestT1_4_Pc9BaselineGate:
         Uses subprocess to re-invoke pytest collect-only safely (no recursion).
         """
         import subprocess
-        # v4-SEAL-eve inline-fix per Codex F2 + Advisor F1 convergent LOW: use sys.executable
-        # (interpreter-hermetic) rather than hardcoded "python" — guarantees subprocess uses
-        # the same interpreter as the test runner regardless of PATH resolution.
-        result = subprocess.run(
-            [sys.executable, "-m", "pytest", "--collect-only", "-q"],
-            capture_output=True, text=True, cwd=_REPO_ROOT, timeout=120,
-        )
-        assert result.returncode == 0, (
-            f"pc9 gate: pytest --collect-only failed: {result.stderr[-500:]}"
-        )
-
-        # Last line of stdout contains "N tests collected in ...s"
-        lines = [l for l in result.stdout.strip().splitlines() if l.strip()]
-        last_line = lines[-1] if lines else ""
-
-        # Extract collected count
         import re
-        match = re.search(r"(\d+)\s+tests?\s+collected", last_line)
-        assert match, (
-            f"pc9 gate: failed to parse pytest collect-only output last line: {last_line!r}"
-        )
-        collected = int(match.group(1))
+        # v4-SEAL-eve inline-fix per Codex F2 + Advisor F1 convergent LOW: use sys.executable
+        # (interpreter-hermetic) rather than hardcoded "python".
+        # Post-SEAL polish per Advisor F2 v4 PFR LOW: tighten "(collected >= BASELINE)" check
+        # which could mask pre-T1.4 regression masked by T1.4 growth. Count T1.4 tests
+        # separately + compute pre-T1.4 baseline = total - T1.4 count + assert == 2191 (locked).
 
-        # v4-6: pc9 requires baseline 2191 + T1.4 test count (T1.4 count locked at ratify; current 104+)
-        # Allow growth (T1.4 tests can be added in cycle iterations) but require ≥ baseline
-        BASELINE = 2191  # per CLAUDE.md Phase Marker + §3.1 pc 9 ratify-time lock
-        assert collected >= BASELINE, (
-            f"pc9 gate (Codex F6 v4-6 SEAL-eve LOW fix): pytest --collect-only count {collected} "
-            f"< baseline {BASELINE}. Zero pre-T1.4 regression invariant violated."
+        def _collect_count(args: list[str]) -> int:
+            result = subprocess.run(
+                [sys.executable, "-m", "pytest", "--collect-only", "-q"] + args,
+                capture_output=True, text=True, cwd=_REPO_ROOT, timeout=120,
+            )
+            assert result.returncode == 0, (
+                f"pc9 gate: pytest --collect-only failed: {result.stderr[-500:]}"
+            )
+            lines = [l for l in result.stdout.strip().splitlines() if l.strip()]
+            last_line = lines[-1] if lines else ""
+            match = re.search(r"(\d+)\s+tests?\s+collected", last_line)
+            assert match, (
+                f"pc9 gate: failed to parse pytest collect-only output last line: {last_line!r}"
+            )
+            return int(match.group(1))
+
+        total_collected = _collect_count([])
+        t1_4_collected = _collect_count(["tests/test_t1_4_backward_compat.py"])
+        pre_t1_4_baseline = total_collected - t1_4_collected
+
+        # v4-6 + Advisor F2 post-SEAL polish: strict baseline lock at 2191 (per CLAUDE.md
+        # Phase Marker + §3.1 pc 9 ratify-time lock); decouples T1.4 growth from baseline
+        # regression detection.
+        BASELINE = 2191
+        assert pre_t1_4_baseline == BASELINE, (
+            f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish): "
+            f"pre-T1.4 baseline (total {total_collected} - T1.4 {t1_4_collected} = "
+            f"{pre_t1_4_baseline}) != locked baseline {BASELINE}. "
+            f"Pre-T1.4 regression detected — investigate before proceeding."
         )
 
 
