@@ -82,9 +82,9 @@ assert len(_T1X_NEW_COLUMNS) == 9, "§2.5 9 columns count invariant"
 # §8.1 amendment to reflect AST-correct numbers per §2.4 spec.
 _B1_LOCKED_4TUPLE = {
     "prod_count": 4,    # AST-correct (was grep=9 at sub-plan ratify; §8.1 amendment needed)
-    "test_count": 43,   # AST-correct excluding T1.4 test file (was grep=46)
+    "test_count": 49,   # AST-correct excluding T1.4 test file (was 43 at T1.4 SEAL HEAD `12dffde`; +6 T1.5 additions per Charlie B1 register 2026-05-24 baseline-maintenance update for T1.5 cohort: test_t1_5_registry_integrity.py contributes 6 calls)
     "scripts_count": 0, # both methods agree
-    "dynamic_count": 17,  # both methods agree (all in tests/test_t1_3_registry_api.py)
+    "dynamic_count": 23,  # T1.4 SEAL locked 17; +6 T1.5 additions per Charlie B1 register 2026-05-24 (all 6 in test_t1_5_registry_integrity.py; uniform _write_to_registry(**args) pattern; single-pattern adjudication scope extended per below test_dynamic_count_all_in_uniform_pattern_file update)
 }
 
 
@@ -394,11 +394,20 @@ class TestT1_4_A3_A4_A5_HashByteIdentity:
 
 
 class TestT1_4_B1_SignatureBackwardCompat:
-    """B1: AST-based call-site classifier verifies (prod=9, test=46, scripts=0, dynamic=17).
+    """B1: AST-based call-site classifier verifies (prod=4, test=49, scripts=0, dynamic=23).
 
-    Per sub-plan v6 §2.4 (locked at ratify per empirical at HEAD 12dffde) + §8.1.
-    Single-pattern adjudication: all 17 dynamic_count instances use
-    _make_minimal_write_args() helper-return + **args unpack pattern;
+    Per sub-plan v6 §2.4 (locked at ratify per empirical at HEAD 12dffde) + §8.1
+    + Charlie B1 register 2026-05-24 baseline-maintenance update for T1.5 cohort
+    (test=43→49, dynamic=17→23; AST-correct numbers per §8.1 methodology divergence
+    note above).
+
+    Per SEAL-eve LOW D fix 2026-05-24 (Codex): docstring stale tuple updated
+    from grep-era (9,46,0,17) at T1.4 SEAL to AST-correct T1.5-extended
+    (4,49,0,23). Functional lock at `_B1_LOCKED_4TUPLE` constant unchanged.
+
+    Single-pattern adjudication: all 23 dynamic_count instances use
+    _make_minimal_write_args() helper-return + **args unpack pattern (17 in
+    tests/test_t1_3_registry_api.py + 6 in tests/test_t1_5_registry_integrity.py);
     all backward-compat-safe per T1.3-C HYBRID extension.
     """
 
@@ -511,21 +520,32 @@ class TestT1_4_B1_SignatureBackwardCompat:
         )
 
     def test_dynamic_count_all_in_uniform_pattern_file(self) -> None:
-        """§8.1 dynamic_count adjudication: all 17 dynamic instances in tests/test_t1_3_registry_api.py.
+        """§8.1 dynamic_count adjudication: all 23 dynamic instances in approved files (T1.3 + T1.5).
 
         Per single-pattern-class adjudication: uniform helper-return + mutation + **args unpack
         pattern; backward-compat-safe per T1.3-C HYBRID extension.
+
+        T1.4 SEAL HEAD `12dffde` locked 17 dynamic instances all in tests/test_t1_3_registry_api.py.
+        T1.5 added 6 dynamic instances all in tests/test_t1_5_registry_integrity.py per
+        Charlie B1 register 2026-05-24 baseline-maintenance update; same uniform
+        helper-return + **args unpack pattern preserved → single-pattern adjudication
+        scope extends from 1-file to 2-file allowlist.
         """
         call_sites = self._enumerate_call_sites()
         dynamic_sites = [(p, line) for (p, line, _, dyn, _) in call_sites if dyn]
 
-        expected_file = _REPO_ROOT / "tests" / "test_t1_3_registry_api.py"
+        approved_files = {
+            _REPO_ROOT / "tests" / "test_t1_3_registry_api.py",  # T1.4 SEAL locked
+            _REPO_ROOT / "tests" / "test_t1_5_registry_integrity.py",  # T1.5 Charlie B1 2026-05-24
+        }
         for (file_path, line) in dynamic_sites:
-            assert file_path == expected_file, (
+            assert file_path in approved_files, (
                 f"Dynamic _write_to_registry(**args) call at unexpected file: "
-                f"{file_path}:{line}. Sub-plan v6 §8.1 adjudication: all 17 dynamic instances "
-                f"must be in {expected_file} (single-pattern adjudication scope). "
-                f"New dynamic caller elsewhere requires fresh Charlie register + sub-plan v7."
+                f"{file_path}:{line}. Sub-plan v6 §8.1 adjudication (extended per Charlie "
+                f"B1 register 2026-05-24): all 23 dynamic instances must be in "
+                f"approved_files={sorted(str(p) for p in approved_files)} (single-pattern "
+                f"adjudication scope). New dynamic caller elsewhere requires fresh Charlie "
+                f"register-event + baseline extension."
             )
 
     def test_no_positional_dependency_breakage(self) -> None:
@@ -1507,17 +1527,27 @@ class TestT1_4_Pc9BaselineGate:
 
         total_collected = _collect_count([])
         t1_4_collected = _collect_count(["tests/test_t1_4_backward_compat.py"])
-        pre_t1_4_baseline = total_collected - t1_4_collected
+        # Per Charlie B1 register 2026-05-24 baseline-maintenance update for T1.5
+        # cohort: extend baseline subtraction to include T1.5 test files so the gate
+        # detects unexpected pre-T1.x regression vs T1.5 expected additions.
+        t1_5_collected = _collect_count([
+            "tests/test_t1_5_fixture_moments.py",
+            "tests/test_t1_5_registry_integrity.py",
+            "tests/test_t1_5_smoke_end_to_end.py",
+        ])
+        pre_t1_x_baseline = total_collected - t1_4_collected - t1_5_collected
 
         # v4-6 + Advisor F2 post-SEAL polish: strict baseline lock at 2191 (per CLAUDE.md
-        # Phase Marker + §3.1 pc 9 ratify-time lock); decouples T1.4 growth from baseline
-        # regression detection.
+        # Phase Marker + §3.1 pc 9 ratify-time lock); decouples T1.x growth from baseline
+        # regression detection. T1.5 cohort added 2026-05-24 per Charlie B1 register;
+        # baseline 2191 preserved (semantic: pre-T1.x baseline at T1.4 SEAL HEAD `12dffde`).
         BASELINE = 2191
-        assert pre_t1_4_baseline == BASELINE, (
-            f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish): "
-            f"pre-T1.4 baseline (total {total_collected} - T1.4 {t1_4_collected} = "
-            f"{pre_t1_4_baseline}) != locked baseline {BASELINE}. "
-            f"Pre-T1.4 regression detected — investigate before proceeding."
+        assert pre_t1_x_baseline == BASELINE, (
+            f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
+            f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "
+            f"(total {total_collected} - T1.4 {t1_4_collected} - T1.5 {t1_5_collected} = "
+            f"{pre_t1_x_baseline}) != locked baseline {BASELINE}. "
+            f"Pre-T1.x regression detected — investigate before proceeding."
         )
 
 
