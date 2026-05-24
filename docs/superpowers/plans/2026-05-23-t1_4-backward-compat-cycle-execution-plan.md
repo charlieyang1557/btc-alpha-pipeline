@@ -1,10 +1,10 @@
-# T1.4 Backward-Compatibility Verification Cycle Execution Plan (v6 — RATIFIED 2026-05-23)
+# T1.4 Backward-Compatibility Verification Cycle Execution Plan (v7 — AMENDMENT pending Charlie re-ratify)
 
-**Status:** v6 RATIFIED 2026-05-23 per Charlie register "ratify" + §2.2 (i) git-plumbing LOCK. All §8.1 named sub-decisions resolved (empirical locks at HEAD applied). Next register-event boundary: T1.4 implementation start.
+**Status:** v7 DRAFT — §8.1 B1 4-tuple methodology amendment (grep→AST correction per §2.4 spec; discovered at T1.4 implementation start); awaiting Charlie re-ratify register
 **Cycle entry:** R3a-bounded; Charlie register β authorized 2026-05-23 ("Plan-v5-§2.4 + handoff item-4 3 sub-bullets")
-**Iteration:** v1 → v2 → v3 → v4 → v5 → v6 (revision logs at §11 v1→v2→v3; §12 v3→v4; §13 v4→v5; §14 v5→v6)
-**v6 trigger:** Charlie register 2026-05-23 "Path A (apply 3 mechanical fixes inline; skip v6 PFR re-review per PFR-rule-Y SKIP criterion + both-legs no-v6-finding-predicted cycle-final convergence)"
-**Ratify register:** Charlie 2026-05-23 "ratify" + §2.2 lock register "(i) git-plumbing"
+**Iteration:** v1 → v2 → v3 → v4 → v5 → v6 → v7 (revision logs at §11 v1→v2→v3; §12 v3→v4; §13 v4→v5; §14 v5→v6; §15 v6→v7)
+**v7 trigger:** Charlie register 2026-05-23 "(β) — Amend sub-plan v6 §8.1 in a v7 patch + commit + re-ratify before T1.4 SEAL" per T1.4 implementation §8.1 methodology divergence finding
+**v6 ratify register (preserved historical):** Charlie 2026-05-23 "ratify" + §2.2 lock "(i) git-plumbing"
 **Parent plan:** [`docs/superpowers/plans/2026-05-22-b_c_extended-scope_b-cycle-execution-plan.md`](2026-05-22-b_c_extended-scope_b-cycle-execution-plan.md) v5 RATIFIED
 **Parent cycle precedents:** T1.2 SEAL + T1.3 SEAL + T1.1 SEAL bundled at commit `12dffde` (pushed origin/main 2026-05-23); pre-T1.x parent `7c8f4a7` (R6.1 V_SEAL)
 **Default posture:** non-execution awaiting Charlie register at each register-event boundary
@@ -154,7 +154,9 @@ dynamic_count = sum across all files of has_dynamic_kwargs=True calls
 
 **Failure mode handling:** if any caller has unmigrated positional dependency that breaks, classify as defect requiring T1.3 corrective register-event (NOT T1.4 in-scope fix).
 
-**Empirical baseline at v3 drafting (2026-05-23) — SCOPED grep:** 55 total `_write_to_registry(` text occurrences across 6 files: `tests/test_t1_1_sys_fix.py:24` + `tests/test_t1_3_registry_api.py:20` + `tests/test_t1_1_artifact_writer.py:2` + `backtest/engine.py:5` + `backtest/artifact_schema.py:3` + `backtest/experiment_registry.py:1`. AST Phase 2 + Phase 3 classification at ratify-time may yield different 4-tuple per dynamic-kwargs identification. (Worktree-contaminated count if `.claude/worktrees/` included would be substantially higher per Codex F2; scoped grep avoids this contamination.)
+**Empirical baseline at v3 drafting (2026-05-23) — SCOPED grep Phase 1 enumeration:** 55 total `_write_to_registry(` text occurrences across 6 files: `tests/test_t1_1_sys_fix.py:24` + `tests/test_t1_3_registry_api.py:20` + `tests/test_t1_1_artifact_writer.py:2` + `backtest/engine.py:5` + `backtest/artifact_schema.py:3` + `backtest/experiment_registry.py:1`. (Worktree-contaminated count if `.claude/worktrees/` included would be substantially higher per Codex F2; scoped grep avoids this contamination.)
+
+**§2.4 METHODOLOGY CLARIFICATION (added v7 per amendment trigger):** Phase 1 grep is the file-enumeration step (which `.py` files contain references); Phase 2-3 is AST-based classification (which counts `ast.Call` nodes — strictly call sites, NOT definition + comment + docstring mentions). The 4-tuple `(prod_count, test_count, scripts_count, dynamic_count)` is derived from Phase 3 AST classification, NOT raw Phase 1 grep occurrence counts. Grep counts include `def _write_to_registry(...)` (1 instance) + docstring/comment mentions; AST counts only ast.Call sites. At v6 sub-plan ratify (2026-05-23 pre-amendment), the §8.1 RESOLVED entry locked the 4-tuple using grep-counts (orchestrator methodology error); v7 amendment corrects to AST-correct values per §2.4 spec.
 
 ### §2.5 B2 default-normalization coverage (revised per Codex F2/F3 + Advisor F5/F6)
 
@@ -354,7 +356,13 @@ This sub-plan v6 is **advisory and pre-ratify**. Cycle-final convergence achieve
 - ~~**§2.2 hash-fixture approach:** (i) git-plumbing vs (iii) inline-asserted~~ **RESOLVED 2026-05-23 Charlie register "(i) git-plumbing":** (i) git-plumbing LOCKED — `subprocess.run(["git", "show", "7c8f4a7:<path>"])` at test runtime + SHA256-compute "before" hashes; provenance ties hashes to git commit `7c8f4a7` (pre-T1.x parent); brittleness LOW vs (iii); runtime cost negligible (single subprocess per fixture)
 - ~~§2.3 consumer degradation behavior~~ **RESOLVED 2026-05-23 Charlie register "A2-α" + "F1 exception class ADOPT":** A2-α LOCKED with strict-validator domain-fence test raising `ValueError` (per F1; not subclass on structural failure); 3 pre-committed message-keyword classes (corrected per F-NEW-3); A2 excludes per-bar content validation paths
 - ~~§2.6 B3 scope: 4 entry points all LC-threading~~ **RESOLVED 2026-05-23 Charlie register "γ-1":** B3.3 + B3.4 rewritten as γ-1 opt-out-verification (verify T1.3-D opt-out preserves Contract 2.0.4 backward-compat); B3.1 + B3.2 remain LC-positive; γ-4 T1.3 plan-vs-impl corrective eligible-not-named per anti-pre-emption
-- ~~**§2.4 B1 4-tuple empirical lock**~~ **RESOLVED 2026-05-23 at ratify (empirical lock at HEAD `12dffde`):** `(prod_count=9, test_count=46, scripts_count=0, dynamic_count=17)`. **Dynamic_count adjudication (per §2.4 pass criterion (d)):** all 17 dynamic_count instances classified backward-compat-safe via single-pattern-class adjudication — all are in `tests/test_t1_3_registry_api.py` using uniform `_make_minimal_write_args() → dict + optional mutation + _write_to_registry(**args)` pattern; helper returns named kwargs (positional binding NOT relied on); mutations add named keys (not positional args); `**` expansion as named kwargs preserves T1.3-C HYBRID extension semantics. Single adjudication entry covers all 17 instances. Per-file dynamic counts: test_t1_3_registry_api.py:520 + :562 + :601 + :650 + :675 + :916 + :933 + :954 + :1020 + :1108 + :1141 + :1173 + :1334 + :1354 + :2070 + :2089 + :2109 = 17 instances. (Line :1440 `def fake_write_to_registry(**kwargs):` is a stub def for monkeypatch, NOT a `_write_to_registry(**)` call — excluded from dynamic_count.)
+- ~~**§2.4 B1 4-tuple empirical lock**~~ **AMENDED v7 2026-05-23 per Charlie (β) register: AST-correct values per §2.4 spec (replaces v6 grep-counts orchestrator methodology error):**
+  - v7 AST-correct lock at HEAD `12dffde` (excludes self-reference `tests/test_t1_4_backward_compat.py`): `(prod_count=4, test_count=43, scripts_count=0, dynamic_count=17)`
+  - v6 grep-counts (now SUPERSEDED): `(prod_count=9, test_count=46, scripts_count=0, dynamic_count=17)` — grep-counts overcounted prod by 5 (def + docstring mentions) + overcounted test by 3 (comments mentioning `_write_to_registry(`); scripts + dynamic identical across both methods
+  - Methodology gap details at §2.4 "METHODOLOGY CLARIFICATION" paragraph
+  - Self-reference exclusion: `tests/test_t1_4_backward_compat.py` (T1.4 test module ITSELF) excluded from B1 scope per implementation discovery — T1.4 test file contains test-fixture exercises of `_write_to_registry(**args)` pattern (7 instances) which are NOT pre-existing callers being verified for backward-compat; self-reference would be incoherent
+  - **Dynamic_count adjudication (per §2.4 pass criterion (d)) preserved unchanged:** all 17 dynamic_count instances classified backward-compat-safe via single-pattern-class adjudication — all are in `tests/test_t1_3_registry_api.py` using uniform `_make_minimal_write_args() → dict + optional mutation + _write_to_registry(**args)` pattern; helper returns named kwargs (positional binding NOT relied on); mutations add named keys (not positional args); `**` expansion as named kwargs preserves T1.3-C HYBRID extension semantics. Single adjudication entry covers all 17 instances. Per-file dynamic counts: test_t1_3_registry_api.py:520 + :562 + :601 + :650 + :675 + :916 + :933 + :954 + :1020 + :1108 + :1141 + :1173 + :1334 + :1354 + :2070 + :2089 + :2109 = 17 instances. (Line :1440 `def fake_write_to_registry(**kwargs):` is a stub def for monkeypatch, NOT a `_write_to_registry(**)` call — excluded from dynamic_count.)
+  - **T1.4 implementation test enforces AST-correct lock** (`_B1_LOCKED_4TUPLE` in `tests/test_t1_4_backward_compat.py` matches v7 AST values)
 - ~~**§2.5 9-column enumeration**~~ **RESOLVED 2026-05-23 at ratify (empirical verify against MIGRATION_COLUMNS at HEAD `12dffde`):** all 9 columns verified present + ordered: `cost_anchor_id` (line 147) + `returns_per_bar_path` (155) + `returns_per_bar_sha256` (156) + `T_obs` (157) + `regime_key` (166) + `current_git_sha` (167) + `execution_config_path` (168) + `execution_config_sha256` (169) + `parquet_data_sha256` (170). §2.5 table column enumeration matches MIGRATION_COLUMNS at HEAD; no drift.
 - ~~**§3.1 pass criterion 9 baseline test count**~~ **RESOLVED 2026-05-23 at ratify (empirical `pytest --collect-only` at HEAD `12dffde`):** **2191 tests collected** (matches v1 Codex empirical verification + CLAUDE.md Phase Marker T1.1 SEAL boundary). T1.4 implementation expected to grow this to 2191 + (T1.4 test count); zero pre-T1.4 regression per §3.1 pc 9.
 - ~~**§2.6 B3.4 test isolation mechanism**~~ **RESOLVED at v3 PFR per Codex F1 fix spec:** `DEFAULT_DB_PATH` monkeypatch (preferred) OR `run_regime_holdout` wrapper (alternate); test-write-time discretion within these 2 named options. (No additional Charlie register required at ratify — locked at v3 via 2-named-options spec.)
@@ -586,4 +594,65 @@ T1.4 sub-plan v6 CYCLE-FINAL RATIFY-READY: pending Charlie sub-plan ratify regis
 
 ---
 
-**End of T1.4 sub-plan v6 (CYCLE-FINAL).** Awaiting Charlie sub-plan ratify register.
+**End of T1.4 sub-plan v6 (historical — superseded by v7 amendment).** v6 RATIFIED 2026-05-23 + committed at `ba982da` + pushed to origin/main; v7 amendment supersedes §8.1 B1 4-tuple entry only; all other v6 content preserved.
+
+---
+
+## §15 v6 → v7 revision log (AMENDMENT)
+
+**v7 trigger (2026-05-23 — T1.4 implementation start discovery):**
+
+During T1.4 implementation (writing `tests/test_t1_4_backward_compat.py`), B1 AST-based call-site classifier test failed against the v6 §8.1 RESOLVED locked 4-tuple `(prod=9, test=46, scripts=0, dynamic=17)`. Investigation revealed that v6 §8.1 lock values were derived from grep-counts (Phase 1 enumeration step), NOT from §2.4 spec-correct AST-based classification (Phase 2-3 strict `ast.Call` node counting). The grep-vs-AST methodology gap is the orchestrator's empirical-lock methodology error at v6 ratify; v7 amendment corrects to AST-correct values per §2.4 spec.
+
+**Methodology gap breakdown:**
+
+| Counter | grep (v6 lock) | AST (v7 spec-correct) | Gap source |
+|---|---|---|---|
+| prod_count | 9 | 4 | grep includes `def _write_to_registry(...)` + docstring/comment mentions of `_write_to_registry(`; AST counts strictly call sites |
+| test_count | 46 | 43 (pre-T1.4) | grep includes comments mentioning `_write_to_registry(`; AST counts strictly call sites |
+| scripts_count | 0 | 0 | both methods agree |
+| dynamic_count | 17 | 17 | grep `_write_to_registry(\*\*` ≡ AST `keyword(arg=None)` for this caller class |
+
+**Self-reference exclusion added v7:** `tests/test_t1_4_backward_compat.py` (T1.4 test module ITSELF) excluded from B1 AST scope. T1.4 test file's `_write_to_registry(**args)` calls (7 instances across B2 + B3 tests) are test-fixture exercises — NOT pre-existing callers being verified for backward-compat. Self-reference would be incoherent (test verifying its own existence).
+
+**Charlie disposition register 2026-05-23: (β)** — "Amend sub-plan v6 §8.1 in a v7 patch + commit + re-ratify before T1.4 SEAL". Path (α) inline-in-SEAL-commit + (γ) cycle-SEAL-deferred not elected; (β) preserves sub-plan canonical artifact integrity + explicit re-ratify register.
+
+**v6 → v7 amendments (3 sections modified; 1 section added; substance preservation):**
+
+| Amendment | Section | Change |
+|---|---|---|
+| v7-1 | Header (lines 1-5) | Status: v6 RATIFIED → v7 DRAFT pending re-ratify; iteration v1→...→v7; v7 trigger documented; v6 ratify register preserved as historical |
+| v7-2 | §2.4 (last paragraph) | Added "METHODOLOGY CLARIFICATION" paragraph distinguishing Phase 1 grep enumeration from Phase 2-3 AST classification; documented v6 grep-counts methodology error |
+| v7-3 | §8.1 B1 4-tuple RESOLVED entry | Updated lock values to AST-correct `(prod=4, test=43, scripts=0, dynamic=17)`; v6 grep-counts marked SUPERSEDED; self-reference exclusion documented; dynamic_count adjudication preserved unchanged; T1.4 implementation test cross-reference added |
+| v7-4 (NEW) | §15 (this section) | v6 → v7 revision log |
+
+**v7 does NOT change (substance preservation per amendment scope):**
+- β-scope register (Charlie register β unchanged through 7 iterations)
+- §2.1-§2.7 all other test design content (A2-α + γ-1 + B2.a/b/c/d + B3.1-B3.4 + DB migration idempotency all preserved)
+- §3.1 9 pass criteria (preserved)
+- §4 exclusions (preserved)
+- §5.2 risks (preserved)
+- §6.1 + §6.2 reviewer dispatch plans (preserved)
+- §7 SEAL gate criteria (preserved)
+- §8.2 anti-pre-emption preserve (preserved)
+- §9 cycle-pattern observations (preserved)
+- §11 + §12 + §13 + §14 prior revision logs (preserved as historical traces; immutability discipline)
+- §2.2 (i) git-plumbing LOCK + §2.3 A2-α + §2.6 γ-1 + §2.5 9 columns + §3.1 pc 9 baseline + §2.6 B3.4 isolation — all sub-decision locks from v6 ratify register preserved unchanged
+
+**v7 PFR-rule-Y SKIP-eligibility analysis:**
+
+Per [`feedback_reviewer_routing_subagent_default.md`](../../../.claude/projects/-Users-yutianyang-Documents-GitHub-btc-alpha-pipeline/memory/feedback_reviewer_routing_subagent_default.md) PFR-rule-Y SKIP criterion ("All adjudication outcomes were mechanical literal application of reviewer-stated fixes; Only deletions / mechanical fixes"):
+
+v7 amendments are mechanical literal correction (grep→AST numerical substitution + methodology-clarification paragraph + self-reference exclusion documentation). No substantive design change; no new test class; no new pass criterion; preserves all v6 sub-decisions intact. **v7 PFR re-review SKIP-eligible.**
+
+Charlie disposition: v7 PFR re-review skipped per PFR-rule-Y SKIP + amendment-mechanical scope + cycle-final convergence already established at v5 PFR. v7 amendment goes directly to Charlie re-ratify register.
+
+**v7 cycle-final reaffirmation:**
+
+v6 cycle-final convergence (achieved at v5 PFR with both legs "no v6 finding predicted") remains valid for substantive content. v7 amendment is an empirical-lock methodology correction discovered at implementation time, NOT a substantive content revision. Cycle-final substantive convergence preserved; v7 amends only the §8.1 RESOLVED entry methodology + corresponding §2.4 clarification.
+
+T1.4 sub-plan v7 amendment AWAITING Charlie re-ratify register. After re-ratify: commit v7 + push origin/main + surface T1.4 implementation 2-leg reviewer round register.
+
+---
+
+**End of T1.4 sub-plan v7 (AMENDMENT).** Awaiting Charlie re-ratify register.
