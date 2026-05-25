@@ -49,6 +49,18 @@ ACCEPTED_WF_SCHEMA_VERSIONS are the existing-domain tuples; they MUST NOT
 include b_c_extended_v1. ACCEPTED_B_C_EXTENDED_SCHEMA_VERSIONS is the
 B-C-extended-domain tuple; it MUST NOT include phase2c_7_1 or phase2c_8_1.
 Each check_*_semantics_or_raise helper accepts ONLY its own domain's tuple.
+
+Canonical documentation:
+
+- docs/decisions/B_C_EXTENDED_V1_SCHEMA_SPEC.md — full b_c_extended_v1
+  schema spec (Contracts 2.0.1-2.0.5 including γ3/γ4 convention, 14-field
+  header table, T_obs, registry linkage, migration notes).
+- docs/decisions/SCHEMA_VERSION_EXTENSION_PROTOCOL.md — full protocol for
+  adding new schema versions (4-step protocol + CONTRACT BOUNDARY discipline
+  + 6 CONTRACT GAPs + heavy-private-impl extraction). Future arcs MUST
+  follow this protocol when extending the per-domain tuples or helpers.
+- docs/decisions/WF_TEST_BOUNDARY_SEMANTICS.md — WF + evaluation domain
+  semantics (Section RS) referenced from the helpers below.
 """
 from __future__ import annotations
 
@@ -371,9 +383,12 @@ def check_evaluation_semantics_or_raise(
        to schema discriminator; comparison logic operates on metric
        values, not discriminator values).
     4. **Any other value** — defensive reject. Future arcs extend the
-       branching by appending to ACCEPTED_ARTIFACT_SCHEMA_VERSIONS;
-       until then any unrecognized value raises rather than silently
-       falling through.
+       branching by appending to the domain-appropriate per-domain tuple
+       per T1.2 Sub-decision A; see CONTRACT BOUNDARY at lines 47-51 +
+       107-108; full protocol at
+       docs/decisions/SCHEMA_VERSION_EXTENSION_PROTOCOL.md. Until then
+       any unrecognized value raises rather than silently falling
+       through.
 
     Legacy / shared five-field validation:
 

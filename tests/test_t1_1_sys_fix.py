@@ -1355,7 +1355,7 @@ class TestD2bLineageContextStays14Fields:
 
         n_fields = len(dataclasses.fields(LineageContext))
         assert n_fields == 14, (
-            f"LineageContext must have exactly 14 fields per Contract 2.0.5 + D2-b; "
+            f"LineageContext must have exactly 14 dataclass fields (13 Contract 2.0.5 + T_obs per D2-b); "
             f"got {n_fields}. D2-b: artifact_schema_version is producer-stamped onto "
             f"artifact JSON header, NOT added as a 15th LC field."
         )
@@ -2849,7 +2849,7 @@ class TestSys5RevalidateForWriteValidLCPasses:
     """SYS5: Untampered valid LC must pass revalidate_for_write (regression guard)."""
 
     def test_all_valid_fields_pass(self) -> None:
-        """Untampered valid LC with all 14 Contract 2.0.5 fields passes revalidate_for_write."""
+        """Untampered valid LC with all 14 dataclass fields (13 Contract 2.0.5 + T_obs) passes revalidate_for_write."""
         lc = _make_valid_lc()
         lc.revalidate_for_write()  # must not raise
 

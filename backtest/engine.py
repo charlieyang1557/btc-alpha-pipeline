@@ -1138,7 +1138,7 @@ def _write_to_registry(
         # provide narrower error messages + earlier failure detection for the
         # 4 specific field classes; revalidate_for_write provides the broad
         # closure for the other 10 fields.
-        # FIX-T1.1-SYS5-REVALIDATE: revalidate ALL 14 Contract 2.0.5 fields
+        # FIX-T1.1-SYS5-REVALIDATE: revalidate ALL 14 dataclass fields (13 Contract 2.0.5 + T_obs)
         # against post-construction tampering. Closes the 5th asymmetry class
         # (Codex v8 BLOCKING): direct STRICT field tamper via object.__setattr__
         # bypassing frozen-dataclass guard + registry nullable TEXT silently

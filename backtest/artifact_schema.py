@@ -8,7 +8,7 @@ for consumer backward compatibility (no consumer code changes required at this c
 T1.3 additions (B-C-extended Scope-B Registry + API extension):
 - canonicalize_execution_config_path(): pure function for path canonicalization
   per Contract 2.0.4 + plan v5 T1.3-B spec.
-- LineageContext: frozen dataclass with 14 Contract 2.0.5 fields per T1.3-D spec.
+- LineageContext: frozen dataclass with 14 dataclass fields (13 Contract 2.0.5 + T_obs) per T1.3-D spec.
   Both symbols are co-located with COST_ANCHOR_ID_MAPPING for atomic-maintenance SSOT.
 
 Contract references:
@@ -20,7 +20,7 @@ Contract references:
 - T1.3-A: registry migration (MIGRATION_COLUMNS entry already present)
 - T1.3-B: canonicalize_execution_config_path() pure function spec
 - T1.3-C: HYBRID parent_run_id conflict-check at write boundary
-- T1.3-D: LineageContext frozen dataclass with 14 Contract 2.0.5 fields
+- T1.3-D: LineageContext frozen dataclass with 14 dataclass fields (13 Contract 2.0.5 + T_obs)
 
 CONTRACT BOUNDARY: backtest.artifact_schema houses B-C-extended schema validation;
 backtest.wf_lineage public surface preserved via re-exports for consumer backward
@@ -36,9 +36,14 @@ from pathlib import Path
 from typing import Any
 
 # B-C-extended Scope-B (T1.2): schema version for per-bar return series
-# preservation artifacts (Contract 2.0.2 lock). Producer stamps this value
-# on every artifact carrying returns_per_bar_path + moment summary fields
-# (γ3, γ4, T_obs) per Contract 2.0.5.
+# preservation artifacts (Contract 2.0.2 lock).
+# CONTRACT GAP: future producer code (per B-C-narrow successor cycle binding per
+# CLAUDE.md Phase Marker) will stamp this value on every artifact carrying
+# returns_per_bar_path + moment summary fields (γ3, γ4, T_obs) per Contract 2.0.5.
+# At T1.6 (infrastructure-only), no production code currently stamps this; see
+# docs/decisions/B_C_EXTENDED_V1_SCHEMA_SPEC.md §1.5 for the full producer-chain
+# status (validator/dataclass/constants/migration columns shipped; producer-stamp
+# obligation deferred to B-C-narrow successor cycle).
 ARTIFACT_SCHEMA_VERSION_B_C_EXTENDED_V1 = "b_c_extended_v1"
 
 # B-C-extended analytical-methodology domain (per-bar artifact headers):
@@ -194,25 +199,33 @@ def canonicalize_execution_config_path(
 
 
 # ---------------------------------------------------------------------------
-# T1.3-D: LineageContext frozen dataclass (14 Contract 2.0.5 fields)
+# T1.3-D: LineageContext frozen dataclass (14 dataclass fields (13 Contract 2.0.5 + T_obs))
 # ---------------------------------------------------------------------------
 
 @dataclass(frozen=True, kw_only=True)
 class LineageContext:
-    """Frozen dataclass carrying all 14 Contract 2.0.5 artifact header fields.
+    """Frozen dataclass carrying 13 header/linkage fields plus T_obs (14 total).
 
     Encapsulates the per-artifact lineage context for new Phase B / Tier 5 /
     Tier 6 public callers. Passed as an opt-in kwarg to run_backtest(),
     run_regime_holdout(), and (indirectly) to _write_to_registry().
 
-    Field count: exactly 14 per Contract 2.0.5 enumeration (locked at T1.3).
+    Field count: exactly 14 dataclass fields. **The 14 dataclass fields comprise
+    13 of the 14 Contract 2.0.5 header fields (artifact_schema_version is excluded
+    per D2-b below) PLUS T_obs (a required-adjacent per-bar-content-shape attribute
+    outside the Contract 2.0.5 14-field header table per
+    `docs/decisions/B_C_EXTENDED_V1_SCHEMA_SPEC.md` §1.5b).**
     Verified by: ``len(dataclasses.fields(LineageContext)) == 14``.
 
     D2-b provenance asymmetry (accepted design): ``artifact_schema_version`` is
-    NOT a LineageContext field (stays 14 fields). Writer scripts stamp
-    ``artifact_schema_version`` onto the artifact JSON header from the module-level
-    constant ``ARTIFACT_SCHEMA_VERSION_B_C_EXTENDED_V1``. The validator
-    ``check_b_c_extended_semantics_or_raise`` reads it from the artifact header dict.
+    NOT a LineageContext field (stays 14 fields). Future writer scripts will
+    stamp ``artifact_schema_version`` onto the artifact JSON header from the
+    module-level constant ``ARTIFACT_SCHEMA_VERSION_B_C_EXTENDED_V1`` (deferred
+    to B-C-narrow successor cycle per CLAUDE.md Phase Marker binding condition;
+    T1.6 ships infrastructure-only). The validator
+    ``check_b_c_extended_semantics_or_raise`` is ready to read it from the
+    artifact header dict at consumer time (T1.6 consumer-side validation fully
+    operational; producer-side stamping deferred to B-C-narrow).
     This asymmetry is intentional: LineageContext carries lineage metadata, not
     schema discriminator; schema version is a producer-stamped header field.
 
@@ -447,7 +460,7 @@ class LineageContext:
         object.__setattr__(self, "cost_anchor_id", expected_anchor)
 
     def revalidate_for_write(self) -> None:
-        """Re-validate ALL 14 Contract 2.0.5 fields against post-construction tampering.
+        """Re-validate ALL 14 dataclass fields (13 Contract 2.0.5 + T_obs) against post-construction tampering.
 
         Called by _write_to_registry before copying LC fields into run_data.
         Closes the asymmetry where object.__setattr__(lc, field, bad_value) bypasses

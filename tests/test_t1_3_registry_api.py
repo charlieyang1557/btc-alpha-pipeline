@@ -18,7 +18,7 @@ Contract references:
 - T1.3-A: migration approach (MIGRATION_COLUMNS entry at experiment_registry.py:139)
 - T1.3-B: canonicalize_execution_config_path() pure function spec
 - T1.3-C: HYBRID parent_run_id conflict-check at write boundary
-- T1.3-D: LineageContext frozen dataclass with 14 Contract 2.0.5 fields
+- T1.3-D: LineageContext frozen dataclass with 14 dataclass fields (13 Contract 2.0.5 + T_obs)
 - Contract 2.0.4: cost_anchor_id mapping (6-row R3.1d §5.2)
 - Contract 2.0.5: 14 header fields per artifact
 """
@@ -233,7 +233,7 @@ class TestCanonicalizeExecutionConfigPath:
 
 
 class TestLineageContextFieldCount:
-    """T1.3-D: LineageContext must have exactly 14 Contract 2.0.5 fields."""
+    """T1.3-D: LineageContext must have exactly 14 dataclass fields (13 Contract 2.0.5 + T_obs)."""
 
     def test_field_count_is_14(self) -> None:
         """len(dataclasses.fields(LineageContext)) == 14 (contract lock)."""
@@ -241,7 +241,7 @@ class TestLineageContextFieldCount:
 
         n = len(dataclasses.fields(LineageContext))
         assert n == 14, (
-            f"LineageContext must have exactly 14 fields per Contract 2.0.5, "
+            f"LineageContext must have exactly 14 dataclass fields (13 Contract 2.0.5 + T_obs), "
             f"got {n}. If fields were added/removed, update Contract 2.0.5 and "
             f"the plan v5 §2.0.5 enumeration table."
         )
@@ -268,7 +268,7 @@ class TestLineageContextFieldNames:
     }
 
     def test_all_expected_fields_present(self) -> None:
-        """All 14 Contract 2.0.5 field names are present in LineageContext."""
+        """All 14 LineageContext field names are present in LineageContext."""
         from backtest.artifact_schema import LineageContext
 
         actual = {f.name for f in dataclasses.fields(LineageContext)}

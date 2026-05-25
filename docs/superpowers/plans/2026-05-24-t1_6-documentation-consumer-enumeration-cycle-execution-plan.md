@@ -109,14 +109,14 @@ Out-of-scope for §2.1: γ3/γ4 convention (§2.2 scope); registry linkage detai
    - `artifact_schema_version` / `run_id` / `hypothesis_hash` / `source_batch_id` / `parent_run_id` / `regime_key` / `engine_commit` / `current_git_sha` / `execution_config_path` / `execution_config_sha256` / `parquet_data_sha256` / `cost_anchor_id` / `returns_per_bar_path` / `returns_per_bar_sha256`
    - Per-field semantic + type + Optional-ness + cross-references to other Contracts where applicable
 
-5b. **`T_obs` — required-adjacent 15th field (per sub-plan SEAL-eve Round 1 Codex F1 MEDIUM catch; sealed at `backtest/artifact_schema.py:294-296,802-807`):**
-   - **Sealed declaration text at `artifact_schema.py:294-296`** (verbatim): `# T_obs is not in the 14-field header table but is required for artifact validation; included here as field 13-equivalent for moment + T_obs linkage.`
-   - **Sealed validation at `artifact_schema.py:802-814`** (per v6 SEAL-eve Round 1b Codex F1 + Advisor F1 CONVERGED LOW extension — range covers full T_obs validation block including positivity branch): presence at `:803-804` (`if "T_obs" not in summary: errors.append("T_obs: missing key (required for b_c_extended_v1)")`) + type at `:806-807` (`t_obs = summary["T_obs"]; if not isinstance(t_obs, int) or isinstance(t_obs, bool):`) + positivity at `:811-814` (`elif t_obs <= 0:` raising `"T_obs: must be positive (> 0)"`)
+5b. **`T_obs` — required-adjacent 15th field (per sub-plan SEAL-eve Round 1 Codex F1 MEDIUM catch; sealed at `backtest/artifact_schema.py:307-309,815-820`):**
+   - **Sealed declaration text at `artifact_schema.py:307-309`** (verbatim): `# T_obs is not in the 14-field header table but is required for artifact validation; included here as field 13-equivalent for moment + T_obs linkage.`
+   - **Sealed validation at `artifact_schema.py:815-827`** (per v6 SEAL-eve Round 1b Codex F1 + Advisor F1 CONVERGED LOW extension — range covers full T_obs validation block including positivity branch): presence at `:816-817` (`if "T_obs" not in summary: errors.append("T_obs: missing key (required for b_c_extended_v1)")`) + type at `:819-820` (`t_obs = summary["T_obs"]; if not isinstance(t_obs, int) or isinstance(t_obs, bool):`) + positivity at `:824-827` (`elif t_obs <= 0:` raising `"T_obs: must be positive (> 0)"`)
    - **Type:** `int` (positive integer; `bool` explicitly rejected — `isinstance(t_obs, int)` returns True for `bool` in Python so the negative check `or isinstance(t_obs, bool)` is required)
    - **Semantic:** count of finite per-bar return observations stored in the artifact's `returns_per_bar.parquet`; per-bar artifact validation discipline requires T_obs == finite-row-count of read parquet (T_obs-alignment check per §2.1.2 item 6 step 4)
-   - **Why required-adjacent vs in-14-field-table:** T_obs is NOT a header metadata field per Contract 2.0.5 (which enumerates 14 fields covering identity + linkage + path + content-hash); T_obs is a per-bar-artifact-content-shape attribute. Sealed `LineageContext` dataclass at `artifact_schema.py:294-296` includes T_obs as field-13-equivalent (alongside `returns_per_bar_path` field 13 + `returns_per_bar_sha256` field 14) but explicitly comments it as outside the 14-field header table — different semantic class
+   - **Why required-adjacent vs in-14-field-table:** T_obs is NOT a header metadata field per Contract 2.0.5 (which enumerates 14 fields covering identity + linkage + path + content-hash); T_obs is a per-bar-artifact-content-shape attribute. Sealed `LineageContext` dataclass at `artifact_schema.py:307-309` includes T_obs as field-13-equivalent (alongside `returns_per_bar_path` field 13 + `returns_per_bar_sha256` field 14) but explicitly comments it as outside the 14-field header table — different semantic class
    - **Registry linkage:** T_obs is one of 3 T1.1 FIX-B1 per-bar artifact linkage fields at `MIGRATION_COLUMNS:155-157` per §2.4.2 item 3 (alongside `returns_per_bar_path` + `returns_per_bar_sha256`); persisted via `engine._write_to_registry()` when lineage_context provided
-   - **Validation contract:** consumer-side `check_b_c_extended_semantics_or_raise()` at `artifact_schema.py:654+` enforces T_obs presence + type + positivity at lines 802-807; producer-side `engine._write_to_registry()` populates T_obs from `LineageContext.T_obs` at write-time
+   - **Validation contract:** consumer-side `check_b_c_extended_semantics_or_raise()` at `artifact_schema.py:654+` enforces T_obs presence + type + positivity at lines 815-820; producer-side `engine._write_to_registry()` populates T_obs from `LineageContext.T_obs` at write-time
    - **Cross-reference:** §2.4.2 item 3 (registry layer) + §2.1.2 item 6 (validation discipline 4-step protocol step 4 T_obs-alignment) + Contract 2.0.5 explicit framing (T_obs NOT in 14-field table — Contract 2.0.5 enumerates header fields only)
 
 6. **Per-bar artifact validation discipline:** 4-step protocol (file-exists + path-confinement + SHA256-recompute + T_obs-alignment) per Contract 2.0.5 + Codex v4 Fv4-4 MEDIUM
@@ -124,7 +124,7 @@ Out-of-scope for §2.1: γ3/γ4 convention (§2.2 scope); registry linkage detai
 7. **Backward compatibility statement:** legacy `phase2c_7_1` + `phase2c_8_1` consumers continue to validate via existing per-domain helpers; `b_c_extended_v1` is additive via new domain + new helper; CONTRACT BOUNDARY prevents cross-domain pollution
 
 8. **Producer/consumer responsibility split:**
-   - Producer (`backtest/engine.py` writer chain via `write_per_bar_artifact()`) emits all 14 fields + per-bar parquet + stamps `artifact_schema_version = "b_c_extended_v1"`
+   - Producer (`backtest/engine.py` writer chain via `write_per_bar_artifact()`) emits all 14 fields + per-bar parquet + stamps `artifact_schema_version = "b_c_extended_v1"` **[SUB-PLAN-DRAFTING-TIME INTENT; scope refined at Implementation 2026-05-25: T1.6 ships infrastructure-only — registry-write + per-bar parquet (3 columns) only; b_c_extended_v1 JSON header stamping deferred to B-C-narrow successor cycle per CLAUDE.md Phase Marker binding condition; see `docs/decisions/B_C_EXTENDED_V1_SCHEMA_SPEC.md` §1.5 + §1.8 for the corrected forward-looking framing + CONTRACT GAP marker at `backtest/artifact_schema.py:40-46`]**
    - Consumer (`backtest/artifact_schema.py:check_b_c_extended_semantics_or_raise()` via shim) validates all 14 + per-bar SHA256 on read
    - Domain selection: consumer code calls the domain-appropriate helper (NOT the legacy alias); per-domain helper rejects mismatched schema version
 
@@ -450,7 +450,7 @@ Out-of-scope for §2.6: specific Contract 2.0.x detail (§2.1-§2.4 scope; §2.6
 9. Mode A spot-verification PASS on file:line citations (all 6 GAPs + 3 helper def lines + CONTRACT BOUNDARY locations)
 10. **Stale docstring update at `backtest/wf_lineage.py:373-375` to per-domain tuple wording (per v3 PFR Codex F1)** — replace "appending to ACCEPTED_ARTIFACT_SCHEMA_VERSIONS" with "appending to the domain-appropriate per-domain tuple per T1.2 Sub-decision A; see CONTRACT BOUNDARY at lines 47-51 + 95-96"; documentation-only docstring update within T1.6 scope per [`feedback_claude_md_freshness.md`](file:///Users/yutianyang/.claude/projects/-Users-yutianyang-Documents-GitHub-btc-alpha-pipeline/memory/feedback_claude_md_freshness.md)-analog discipline (sealed code docstrings are documentation surface; updates within doc-only scope)
 11. **Parent plan v5 §2.0.2 line 76 cross-reference qualified at canonical doc** (per v3 PFR Codex F1) — note "tuple-extension line at parent plan §2.0.2:76 superseded by T1.2 per-domain split per Sub-decision A lock; cite preserved for historical context but DO NOT follow as live instruction"
-12. **T_obs required-adjacent 15th field documented per sub-plan SEAL-eve Round 1 Codex F1 MEDIUM (per §2.1.2 item 5b expansion)** — explicit declaration of T_obs as required field outside the Contract 2.0.5 14-field header table; sealed implementation at `artifact_schema.py:294-296` (declaration) + `:802-814` (validation enforcement including positivity branch — extended from `:802-807` per v6 SEAL-eve Round 1b Codex F1 + Advisor F1 CONVERGED LOW) cross-referenced; §2.4.2 cross-reference to registry layer where T_obs IS enumerated as 3rd T1.1 FIX-B1 per-bar field at `MIGRATION_COLUMNS:155-157`; semantic + type + positivity + producer/consumer contract documented in canonical doc
+12. **T_obs required-adjacent 15th field documented per sub-plan SEAL-eve Round 1 Codex F1 MEDIUM (per §2.1.2 item 5b expansion)** — explicit declaration of T_obs as required field outside the Contract 2.0.5 14-field header table; sealed implementation at `artifact_schema.py:307-309` (declaration) + `:815-827` (validation enforcement including positivity branch — full block per v6 SEAL-eve Round 1b Codex F1 + Advisor F1 CONVERGED LOW) cross-referenced; §2.4.2 cross-reference to registry layer where T_obs IS enumerated as 3rd T1.1 FIX-B1 per-bar field at `MIGRATION_COLUMNS:155-157`; semantic + type + positivity + producer/consumer contract documented in canonical doc
 
 #### 2.6.5 Explicit exclusions
 
@@ -553,15 +553,15 @@ T1.6 SEAL gate requires **all 7 deliverables** complete with per-deliverable PAS
 4. Full suite delta: zero regression on T1.5 baseline (2317 collected: 2315 PASS + 2 xfail + 0 FAIL)
 5. Consumer enumeration disposition table complete (§2.7); any NEEDS-EXTENSION rows have explicit successor-cycle deferral disposition (firm; no in-cycle scope expansion per v1 PFR Codex F2)
 6. SEAL-eve adversarial review PASS per Rule 2 (OPERATIONALLY REQUIRED post-PFR convergent APPROVE) at BOTH sub-plan SEAL-eve + T1.6 SEAL-eve (per §6.2 dual-SEAL-eve discipline)
-7. **Cross-leg discipline maintained per §6.4 with verifiable instance tracking at §11 revision log — 8-instance scheme expanded across §3.1 + §6.4 + §10 (per v2 PFR Codex F1 + Advisor F2 CONVERGED MEDIUM 6-instance + v4 PFR 7-instance expansion + v6 SEAL-eve Round 1b 8-instance expansion):**
+7. **Cross-leg discipline maintained per §6.4 with verifiable instance tracking at §11 revision log — 8-instance scheme expanded across §3.1 + §6.4 + §10 (per v2 PFR Codex F1 + Advisor F2 CONVERGED MEDIUM 6-instance + v4 PFR 7-instance expansion + v6 SEAL-eve Round 1b 8-instance expansion):** [NOTE: this ledger frozen at sub-plan v_final ratify 2026-05-24; **for live #N7+#N8+#N9 outcomes from Implementation cycle 2026-05-25 see §10 task SEAL chain** + §10 phase-entry tracking block; this §3.1 ledger preserves the sub-plan-ratify-gate snapshot]
    - **#N1** — v1 PFR Advisor opus instance (COMPLETED)
    - **#N2** — v2 PFR Advisor opus instance (COMPLETED)
    - **#N3** — v3 PFR Advisor opus instance (COMPLETED)
    - **#N4** — v4 PFR Advisor opus instance (5 findings + 1 INFO; COMPLETED; cycle saturation REAFFIRMED)
    - **#N5** — Sub-plan SEAL-eve Round 1 Advisor opus instance (1 LOW finding; COMPLETED; Rule 2 VINDICATED — Codex caught MEDIUM F1 T_obs gap at same round)
    - **#N6** — Sub-plan SEAL-eve Round 1b Advisor opus instance (current dispatch per Path B''''' authorization; verifies T_obs substantive new content + 3 mechanical fixes)
-   - **#N7** — Implementation PFR Advisor opus instance (pending)
-   - **#N8** — T1.6 SEAL-eve Round 2 Advisor opus instance (pending; per §6.2 dual-SEAL-eve)
+   - **#N7** — Implementation PFR Advisor opus instance (pending) [now COMPLETED 2026-05-25 per §10]
+   - **#N8** — T1.6 SEAL-eve Round 2 Advisor opus instance (pending; per §6.2 dual-SEAL-eve) [now COMPLETED 2026-05-25 per §10]
    - All distinct per §6.4 cross-leg discipline; γ Hybrid `general-purpose` subagent instances (§2.5/§2.6/§2.7) are separate category (do NOT count against Advisor opus instance ledger)
    - Instance separation tracked at §11 revision log per phase entry
    - **8-instance scheme expanded at v6 per sub-plan SEAL-eve Round 1b addition (Path B''''' bundled authorization)**
@@ -670,9 +670,13 @@ Per T1.5 sub-plan §6.4 precedent + B-C-extended cycle empirical + v1 PFR Adviso
   - **#N3** — v3 PFR Advisor opus instance (7 findings; v3 PFR-rule-Y; COMPLETED)
   - **#N4** — v4 PFR Advisor opus instance (5 findings + 1 INFO; v4 PFR-rule-Y; COMPLETED)
   - **#N5** — Sub-plan SEAL-eve Round 1 Advisor opus instance (1 LOW; per §6.2; COMPLETED; Rule 2 VINDICATED)
-  - **#N6** — Sub-plan SEAL-eve Round 1b Advisor opus instance (current dispatch per Path B'''''; verifies T_obs substantive new content + 3 mechanical fixes)
-  - **#N7** — Implementation PFR Advisor opus instance (pending)
-  - **#N8** — T1.6 SEAL-eve Round 2 adversarial Advisor opus instance (pending; per §6.2 dual-SEAL-eve)
+  - **#N6** — Sub-plan SEAL-eve Round 1b Advisor opus instance (3 LOW + 1 INFO; v6→v7 cycle saturation reaffirmed; COMPLETED 2026-05-24; outcome at §11 v7 entry lines :1097-1104)
+  - **#N7** — Implementation PFR Advisor opus instance (4 findings = 1 MEDIUM + 3 LOW; verdict ADDITIONAL-V_IMPL_POLISH-NEEDED; COMPLETED 2026-05-25; Codex parallel leg returned 8 findings = 1 BLOCKING-reframed + 3 MEDIUM + 2 LOW + 2 CONVERGENT; Rule 3 reaffirmed: Codex DIVERGED catches load-bearing — Codex caught LineageContext field-count error + consumer enum scope gap + #N6 status stale that Advisor missed; v_impl_polish ADOPTed 6 fixes per per-fix adjudication)
+  - **#N8** — T1.6 SEAL-eve Round 2 adversarial Advisor opus instance (3 findings = 1 MEDIUM + 2 LOW; verdict ADDITIONAL-V_IMPL_POLISH-NEEDED; COMPLETED 2026-05-25; Codex parallel leg returned 3 findings; Rule 3 reaffirmed BOTH legs DIVERGED catches — Advisor F1 MEDIUM caught P2 fix doc-vs-code drift; Codex F1/F2 MEDIUM caught LineageContext docstring + sub-plan ledger staleness; v_impl_polish v2 ADOPTed 5 fixes P7-P11)
+  - **#N9** — PFR Round 2 Advisor opus instance (5 findings = 4 LOW + 1 MEDIUM-converged; verdict ADDITIONAL-V_IMPL_POLISH-NEEDED; COMPLETED 2026-05-25; Codex parallel leg returned 8 findings = 4 actionable + 4 PASS; recursive own-finding-anchoring at v_impl_polish v2 patches caught — orchestrator P10 scope under-swept; v_impl_polish v3 ADOPTed 5 fixes Q1-Q5)
+  - **#N10** — PFR Round 3 Advisor opus instance (2 LOW + 1 INFO; verdict APPROVE-FOR-T1.6-SEAL-RATIFY per recursive-pattern severity damping MEDIUM→MEDIUM→LOW; COMPLETED 2026-05-25; Codex parallel returned ADDITIONAL + 3 MEDIUM + 1 LOW DIVERGENT; per Charlie's "both APPROVE" rule → v_impl_polish v4 ADOPTed 3 MEDIUM R1+R2+R3 + R4 DEFER)
+  - **#N11** — PFR Round 4 Advisor opus instance (1 MEDIUM-R1-drift + 1 LOW + 1 INFO; verdict ADDITIONAL-V_IMPL_POLISH-NEEDED; COMPLETED 2026-05-25; Codex parallel returned ADDITIONAL + 1 MEDIUM R3-ledger-sweep-incomplete DIVERGENT; recursive own-finding-anchoring pattern empirically robust at 4-iteration scale — R1 +13-line shift propagated to 7+ stale T_obs cites; v_impl_polish v5 ADOPTed 3 fixes S1+S2+S3)
+  - **#N12** — PFR Round 5 Advisor opus instance (pending per Charlie register; APPROVE required before T1.6 SEAL ratify)
 - **γ Hybrid subagent-fill legs**: `general-purpose` instances for §2.5 + §2.6 + §2.7 (3 distinct); per DS3 lean revision, `general-purpose` (NOT `quant-research-advisor`) avoids category violation + §6.4 cross-leg overlap with PFR reviewer leg; γ Hybrid subagent instances are SEPARATE CATEGORY from Advisor opus instance ledger above
 - **Codex cross-model leg** is LOAD-BEARING per B2 standing rule + 5+ cycle cumulative empirical (R2.0 + R3.1d + §34 + R2.3 + B2 + T1.1 + T1.4 + T1.5 + T1.6 v1 + v2 + v3 + v4 PFR — extended per v4 PFR Advisor F5 ADOPT)
 - **Instance separation tracked at §11 revision log per phase entry** (per v1 PFR Advisor F9 verifiability fix; per v2 PFR convergent 6-instance reconciliation)
@@ -841,27 +845,36 @@ Codification to standing rule deferred to B-C-extended cycle SEAL boundary per C
 | Sub-plan SEAL-eve Round 1b adjudication | COMPLETED 2026-05-24 | "Path A'''''''" 2026-05-24 | — | 4 ADOPT + 1 PUSHBACK (Advisor F3 §9.8 bounded-claim deferred to B-C-extended cycle SEAL §35 codification per Advisor's own framing) |
 | Sub-plan v7 inline cleanup | COMPLETED 2026-05-24 (this doc) | bundled in "Path A'''''''" | this doc | M1 orchestrator-direct via targeted Edits; 4 ADOPT mechanical fixes integrated; skip-Round-1c per cycle saturation criterion + Rule 2 satisfied (Round 1+1b both ran) |
 | **Sub-plan v_seal ratify (v7 = v_final)** | **COMPLETED 2026-05-24 (this commit)** | **"Authorize sub-plan v_seal ratify" 2026-05-24** | (this commit at SEAL bundle) | sub-plan LOCKED per §8.1 anti-pre-emption; all substantive risks at sub-plan layer closed across 4 PFR + 2 SEAL-eve rounds; ~50 unique ADOPT items integrated; cycle saturation empirically validated at 2-cycle scale; Rule 2 SEAL-eve catch class empirically validated at 2-cycle scale |
-| Sub-plan v_final ratify | PENDING — Charlie register required | — | — | post-SEAL-eve Round 1 |
-| Implementation work fire | PENDING — Charlie register required | — | — | post-sub-plan-ratify |
-| γ Hybrid §2.5 subagent dispatch (`general-purpose`) | PENDING — Charlie register required | — | — | DS3 (revised lean) + §2.5.3 Phase 2 |
-| γ Hybrid §2.6 subagent dispatch (`general-purpose`) | PENDING — Charlie register required | — | — | DS3 (revised lean) + §2.6.3 Phase 2 |
-| γ Hybrid §2.7 subagent dispatch (`general-purpose`) | PENDING — Charlie register required | — | — | DS3 (revised lean) + §2.7.3 Phase 2 |
-| Implementation PFR 2-leg dispatch (Advisor #N7) | PENDING — Charlie register required | — | — | per §6.3 |
-| **T1.6 SEAL-eve adversarial 2-leg dispatch** (Round 2 per §6.2 dual-SEAL-eve discipline; Advisor #N8) | PENDING — Charlie register required | — | — | per Rule 2 OPERATIONALLY REQUIRED post-PFR convergent APPROVE |
-| **T1.6 SEAL-eve adjudication** | PENDING — Charlie register required | — | — | per per-fix adjudication discipline |
-| T1.6 SEAL ratify | PENDING — Charlie register required | — | — | per §7 |
+| Sub-plan v_final ratify | COMPLETED 2026-05-24 | "Authorize sub-plan v_seal ratify" | `b6da611` | post-SEAL-eve Round 1; pushed to origin/main |
+| Implementation work fire | AUTHORIZED + EXECUTED 2026-05-24 to 2026-05-25 | Option A authorization | (worktree; SEAL bundle pending) | sub-plan-ratify gate cleared |
+| γ Hybrid §2.5 subagent dispatch (`general-purpose` sonnet) | COMPLETED 2026-05-24 | parallel dispatch authorization | (worktree) | 9 + 14 + T_obs + 3 parquet columns filled; 0 Mode A flags |
+| γ Hybrid §2.6 subagent dispatch (`general-purpose` sonnet) | COMPLETED 2026-05-24 | parallel dispatch authorization | (worktree) | 10 placeholders + 6 GAP verbatim extractions; 0 Mode A flags |
+| γ Hybrid §2.7 subagent dispatch (`general-purpose` opus per Charlie register) | COMPLETED 2026-05-24 | parallel dispatch authorization | (worktree) | 212 rows classified; HANDLES=181/NO-OP=31/NEEDS-EXTENSION=0; 0 Mode A flags |
+| Implementation PFR 2-leg dispatch (Advisor #N7 + Codex #N7) | COMPLETED 2026-05-25 | "N1 fire PFR" 2026-05-25 | — | 12 findings total (Adv 4 + Codex 8); Rule 3 reaffirmed (Codex DIVERGED catches LineageContext field-count + scope gap + #N6 status that Advisor missed) |
+| Implementation PFR adjudication + v_impl_polish v1 | COMPLETED 2026-05-25 | "authorized" 2026-05-25 | (worktree) | 6 ADOPT fixes (P1-P6) per per-fix adjudication; 110 pytest passed + 0 regressions |
+| **T1.6 SEAL-eve adversarial 2-leg dispatch** (Round 2 per §6.2; Advisor #N8 + Codex #N8) | COMPLETED 2026-05-25 | "#N8 SEAL-eve Round 2 authorized" 2026-05-25 | — | 6 findings total (Adv 3 + Codex 3); Rule 3 reaffirmed (Advisor F1 caught P2 fix doc-vs-code drift via own-finding-anchoring at v_impl_polish empirical) |
+| **T1.6 SEAL-eve adjudication + v_impl_polish v2** | COMPLETED 2026-05-25 | "adopt, pfr round 2 after" 2026-05-25 | (worktree) | 5 ADOPT fixes (P7-P11) per per-fix adjudication |
+| **PFR Round 2 (post v_impl_polish v2; Advisor #N9 + Codex)** | COMPLETED 2026-05-25 | "adopt, pfr round 2 after" 2026-05-25 | — | Both legs ADDITIONAL-V_IMPL_POLISH-NEEDED; v_impl_polish v3 ADOPTed 5 fixes (Q1-Q5) per per-fix adjudication; recursive own-finding-anchoring pattern empirically demonstrated |
+| **PFR Round 3 (post v_impl_polish v3; Advisor #N10 + Codex #N10)** | COMPLETED 2026-05-25 | (parallel dispatch under "adopt, pfr round 2 after" + Path A "strict-iterate per APPROVE rule") | — | DIVERGENT verdicts: Advisor APPROVE-with-LOW (2 LOW polish + 1 INFO; severity damping MEDIUM→MEDIUM→LOW); Codex ADDITIONAL-V_IMPL_POLISH-NEEDED (3 MEDIUM + 1 LOW); per Charlie's "both APPROVE" rule → v_impl_polish v4 ADOPTed 3 MEDIUM fixes (R1+R2+R3); R4 LOW DEFER per Codex's own caveat (D2-b semantic ownership, not direct stamp claim) + test keyword expectation risk |
+| **PFR Round 4 (post v_impl_polish v4; Advisor #N11 + Codex #N11)** | COMPLETED 2026-05-25 | (parallel dispatch under "Path A") | — | DIVERGENT: Advisor ADDITIONAL (1 MED R1-drift + 1 LOW + 1 INFO); Codex ADDITIONAL (1 MED R3-ledger-incomplete); recursive own-finding-anchoring pattern empirically robust at 4-iteration scale; v_impl_polish v5 ADOPTed 3 fixes S1+S2+S3 |
+| **PFR Round 5 (post v_impl_polish v5; Advisor #N12 + Codex #N12)** | PENDING — Charlie register required | — | — | per Charlie "Path A" strict-iterate; APPROVE both legs required before T1.6 SEAL ratify; v_impl_polish v5 fixes are mechanical (MD-only cite shifts) so per Advisor #N11 analysis "no new line shifts can be introduced" + expected APPROVE convergence |
+| T1.6 SEAL ratify | PENDING — Charlie register required | — | — | per §7; post-PFR-Round-5 (or later if recursive ratchet continues) |
 | B-C-extended cycle SEAL bundle | PENDING — Charlie register required (post-T1.6 SEAL) | — | — | arc-level closeout per Charlie pre-authorization 2026-05-23 |
 
-**Cross-leg instance tracking per phase entry (8-instance scheme expanded at v6 per sub-plan SEAL-eve Round 1b addition):**
+**Cross-leg instance tracking per phase entry (8-instance scheme + post-sub-plan-ratify extensions):**
 - #N1 — v1 PFR Advisor opus instance (12 findings; COMPLETED)
 - #N2 — v2 PFR Advisor opus instance (8 findings; COMPLETED)
 - #N3 — v3 PFR Advisor opus instance (7 findings; COMPLETED)
 - #N4 — v4 PFR Advisor opus instance (5 findings + 1 INFO; COMPLETED; cycle saturation REAFFIRMED)
 - #N5 — Sub-plan SEAL-eve Round 1 Advisor opus instance (1 LOW; COMPLETED; Rule 2 VINDICATED — Codex caught MEDIUM at same round)
-- #N6 — Sub-plan SEAL-eve Round 1b Advisor opus instance (current dispatch; in flight per Path B''''' authorization)
-- #N7 — Implementation PFR Advisor opus instance (pending)
-- #N8 — T1.6 SEAL-eve Round 2 adversarial Advisor opus instance (pending)
-- All distinct per §6.4 cross-leg discipline
+- #N6 — Sub-plan SEAL-eve Round 1b Advisor opus instance (3 LOW + 1 INFO; COMPLETED 2026-05-24; cycle saturation reaffirmed at v6→v7)
+- #N7 — Implementation PFR Advisor opus instance (4 findings = 1 MEDIUM + 3 LOW; COMPLETED 2026-05-25; verdict ADDITIONAL-V_IMPL_POLISH-NEEDED; Codex parallel returned 8 findings; Rule 3 reaffirmed)
+- #N8 — T1.6 SEAL-eve Round 2 Advisor opus instance (3 findings = 1 MEDIUM + 2 LOW; COMPLETED 2026-05-25; verdict ADDITIONAL-V_IMPL_POLISH-NEEDED; Codex parallel returned 3 findings; Rule 3 reaffirmed BOTH legs DIVERGED catches)
+- #N9 — PFR Round 2 Advisor opus instance (5 findings; ADDITIONAL-V_IMPL_POLISH-NEEDED; COMPLETED 2026-05-25; v_impl_polish v3 ADOPTed 5 fixes Q1-Q5; recursive own-finding-anchoring at v_impl_polish v2 patches empirically demonstrated)
+- #N10 — PFR Round 3 Advisor opus instance (2 LOW + 1 INFO; APPROVE-FOR-T1.6-SEAL-RATIFY per severity damping; COMPLETED 2026-05-25; Codex DIVERGENT 3 MEDIUM → v_impl_polish v4 ADOPTed R1+R2+R3 per Charlie "both APPROVE" rule)
+- #N11 — PFR Round 4 Advisor opus instance (1 MEDIUM-R1-drift + 1 LOW + 1 INFO; ADDITIONAL; COMPLETED 2026-05-25; Codex DIVERGENT 1 MEDIUM R3-ledger-incomplete; v_impl_polish v5 ADOPTed S1+S2+S3; recursive own-finding-anchoring pattern empirically robust at 4-iteration scale)
+- #N12 — PFR Round 5 Advisor opus instance (pending per Charlie register Path A; APPROVE both legs required before T1.6 SEAL ratify)
+- All distinct per §6.4 cross-leg discipline (8-instance scheme expanded at v6 + #N9-#N12 added post-v_impl_polish per Charlie Path A strict-iterate register)
 
 ---
 
@@ -1061,7 +1074,7 @@ Codification to standing rule deferred to B-C-extended cycle SEAL boundary per C
 
 | # | Source | Severity | Substantive change |
 |---|---|---|---|
-| 1 | Codex F1 | MEDIUM | §2.1.2 added item 5b: T_obs as required-adjacent 15th field; sealed declaration text at `artifact_schema.py:294-296` verbatim + sealed validation at `:802-807` verbatim + type (int positive, bool explicitly rejected) + semantic (per-bar return count) + why-required-adjacent-vs-in-14-table reasoning (T_obs is per-bar-artifact-content-shape attribute, not header metadata) + registry linkage cross-ref to `MIGRATION_COLUMNS:155-157` + producer/consumer validation contract; §2.1.3 added PASS criterion 12 for T_obs documentation requirement |
+| 1 | Codex F1 | MEDIUM | §2.1.2 added item 5b: T_obs as required-adjacent 15th field; sealed declaration text at `artifact_schema.py:307-309` verbatim + sealed validation at `:802-807` verbatim + type (int positive, bool explicitly rejected) + semantic (per-bar return count) + why-required-adjacent-vs-in-14-table reasoning (T_obs is per-bar-artifact-content-shape attribute, not header metadata) + registry linkage cross-ref to `MIGRATION_COLUMNS:155-157` + producer/consumer validation contract; §2.1.3 added PASS criterion 12 for T_obs documentation requirement |
 | 2 | Codex F2 | LOW | §3.1 PASS criterion 7 + §6.4 instance scheme: #N4 status updated to "COMPLETED" + #N5 status updated to "Sub-plan SEAL-eve Round 1 (1 LOW; COMPLETED)" + #N6 added as "Sub-plan SEAL-eve Round 1b (current dispatch per Path B''''')"; consistent with §10 |
 | 3 | Codex F3 | LOW | §2.6.2 + §2.6.4 + §9.7 "6 CONTRACT GAPs total" scope-qualified to "6 §2.6 extension-protocol/code-surface CONTRACT GAPs total"; explicit note that T1.5 test-side CONTRACT GAP markers at `tests/test_t1_5_smoke_end_to_end.py:21/95/126/179/379/392` are OUT-OF-SCOPE for §2.6 extension protocol (T1.5 SEAL artifact authoritative) |
 | 4 | Advisor F1 | LOW | §2.4.2 item 3 + §11 v5 row 3: "at line 1622" → "at line 1621" at 2 sites; `def test_partial_migration_state_adds_remaining_columns` at line 1621 (line 1622 = docstring) per Mode A grep |
@@ -1070,8 +1083,8 @@ Codification to standing rule deferred to B-C-extended cycle SEAL boundary per C
 - Drafted by orchestrator (M1) at session 2026-05-24 post-sub-plan SEAL-eve Round 1 adjudication via targeted Edit calls
 - Source materials: v5 sub-plan + SEAL-eve Round 1 Codex + Advisor #N5 outputs + Mode A Layer-3 grep verifications + Charlie register chain
 - Mode A Layer-3 spot-verification at SEAL-eve Round 1 adjudication (all VERIFIED):
-  - `backtest/artifact_schema.py:294-296` T_obs declaration "not in 14-field header table but is required" [VERIFIED via Read]
-  - `backtest/artifact_schema.py:802-807` T_obs validation enforcement [VERIFIED via Read]
+  - `backtest/artifact_schema.py:307-309` T_obs declaration "not in 14-field header table but is required" [VERIFIED via Read]
+  - `backtest/artifact_schema.py:815-820` T_obs validation enforcement [VERIFIED via Read]
   - `tests/test_t1_4_backward_compat.py:1621` `def test_partial_migration_state_adds_remaining_columns` [VERIFIED via grep]
   - `tests/test_t1_5_smoke_end_to_end.py:21/95/126/179/379/392` 6 CONTRACT GAP markers (test-side; out-of-scope) [VERIFIED via grep]
 - All v1-v5 [VERIFIED] items preserved
@@ -1108,7 +1121,7 @@ Codification to standing rule deferred to B-C-extended cycle SEAL boundary per C
 
 | # | Source | Severity | Substantive change |
 |---|---|---|---|
-| 1 | Codex F1 + Advisor F1 (CONVERGED) | LOW | §2.1.2 item 5b T_obs sealed validation cite extended from `artifact_schema.py:802-807` to `:802-814` (covers full T_obs validation block: presence at :803-804 + type at :806-807 + positivity at :811-814); §2.6.4 PASS criterion 12 same extension |
+| 1 | Codex F1 + Advisor F1 (CONVERGED) | LOW | §2.1.2 item 5b T_obs sealed validation cite extended from `artifact_schema.py:815-820` to `:802-814` (covers full T_obs validation block: presence at :803-804 + type at :806-807 + positivity at :811-814); §2.6.4 PASS criterion 12 same extension |
 | 2 | Codex F2 | LOW | §3.1 PASS criterion 7 + §6.4 body text count "7-instance scheme" → "8-instance scheme" (instance scheme expanded at v6 per Round 1b addition; ledger entries #N1-#N8 were correct but count claim text lagged) |
 | 3 | Codex F3 | LOW | §2.6.2 heading "SIX CONTRACT GAPs total documented" → "6 §2.6 extension-protocol/code-surface CONTRACT GAPs total documented" + explicit out-of-scope T1.5 test-side markers note (matches §2.6.4 + §9.7 scope-qualification applied at v6 via replace-all that missed §2.6.2 heading's spelled-out "SIX") |
 | 4 | Codex F4 + Advisor F2 (CONVERGED) | LOW | §11 historical v4 PFR Mode A Layer-3 verification block at lines 1000 + 1024 stale "1622" → "1621 [v6 SEAL-eve Round 1b correction: original v4 verification cited :1622 docstring line; corrected to :1621 def line]"; inline footnote per Advisor F2 option (b) preserves historical record + corrects factual cite |
@@ -1160,6 +1173,8 @@ Codification to standing rule deferred to B-C-extended cycle SEAL boundary per C
 - Empirical contributions queued for B-C-extended cycle SEAL boundary memory codification per Charlie R4' caveat (7+ items: γ Hybrid + M1 N=4 + Rule 2 vindication + cross-model leg LOAD-BEARING + 3-layer safety architecture Layer 3 + upstream propagation chain pattern + cycle saturation criterion + Edit-call modality leak pattern + §35 codification candidates at §9.8 including T_obs header-table framing + others)
 
 **Next register-event:** Implementation work fire per Charlie register at separate boundary (per anti-pre-emption). After Implementation work + Implementation PFR + T1.6 SEAL-eve Round 2 + T1.6 SEAL ratify → cycle progresses to B-C-extended cycle SEAL bundle (arc-level closeout per Charlie pre-authorization 2026-05-23).
+
+**Addendum (post-sub-plan-ratify Implementation cycle; updated 2026-05-25):** The §11 v_seal entry above records reviewer ledger and cumulative empirical through sub-plan v_final ratify gate (#N1-#N6 completed; #N7-#N8 enumerated as pending). Post-sub-plan-ratify Implementation cycle outcomes (#N7 Implementation PFR + #N8 T1.6 SEAL-eve Round 2 + #N9 PFR Round 2 + #N10 PFR Round 3 + #N11 PFR Round 4 if dispatched) are recorded live at **§10 task SEAL chain** above. §11 is intentionally frozen at sub-plan ratify gate per `feedback_claude_md_freshness.md`-analog discipline; cross-cycle empirical contributions from #N7+#N8+#N9+#N10+#N11 + the recursive own-finding-anchoring at v_impl_polish iterations pattern (now empirically robust at 3-cycle scale v1→v2→v3→v4) will be batch-codified at T1.6 SEAL artifact (separate cycle SEAL commit) + B-C-extended cycle SEAL boundary memory codification per Charlie R4' caveat.
 
 ---
 
