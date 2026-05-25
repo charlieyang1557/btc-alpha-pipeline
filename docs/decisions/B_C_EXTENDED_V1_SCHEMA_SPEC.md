@@ -120,7 +120,7 @@ determines the domain and calls the appropriate helper).
 |---|---|---|---|
 | `check_wf_semantics_or_raise()` | [`backtest/wf_lineage.py:262`](../../backtest/wf_lineage.py#L262) | `ACCEPTED_WF_SCHEMA_VERSIONS` | [`:334-349`](../../backtest/wf_lineage.py#L334-L349) (executable block; rejects `b_c_extended_v1` and all other non-WF) |
 | `check_evaluation_semantics_or_raise()` | [`backtest/wf_lineage.py:352`](../../backtest/wf_lineage.py#L352) | `ACCEPTED_EVALUATION_SCHEMA_VERSIONS` | [`:489-503`](../../backtest/wf_lineage.py#L489-L503) (executable block; rejects `b_c_extended_v1` and all other non-evaluation; comment header at `:486-488` excluded per stated convention) |
-| `check_b_c_extended_semantics_or_raise()` | [`backtest/artifact_schema.py:654`](../../backtest/artifact_schema.py#L654) (canonical impl; re-exported via shim at [`backtest/wf_lineage.py:559`](../../backtest/wf_lineage.py#L559)) | `ACCEPTED_B_C_EXTENDED_SCHEMA_VERSIONS` | Enforces all 14 Contract 2.0.5 header fields + per-bar linkage validation discipline (§1.6) + T_obs (§1.5b) |
+| `check_b_c_extended_semantics_or_raise()` | [`backtest/artifact_schema.py:667`](../../backtest/artifact_schema.py#L667) (canonical impl; re-exported via shim at [`backtest/wf_lineage.py:559`](../../backtest/wf_lineage.py#L559)) | `ACCEPTED_B_C_EXTENDED_SCHEMA_VERSIONS` | Enforces all 14 Contract 2.0.5 header fields + per-bar linkage validation discipline (§1.6) + T_obs (§1.5b) |
 
 **Inner-branch line ranges (per v2 PFR Advisor F1 correction):** the `def` lines
 above point at the function definitions; the inner schema_version validation
@@ -187,13 +187,13 @@ data-recovery successor cycle binding condition per CLAUDE.md Phase Marker)
 will need to stamp `artifact_schema_version = "b_c_extended_v1"` onto the
 per-bar artifact JSON header alongside the 13 LineageContext-derived header
 fields + T_obs. The validator
-`check_b_c_extended_semantics_or_raise()` at [`backtest/artifact_schema.py:654`](../../backtest/artifact_schema.py#L654)
+`check_b_c_extended_semantics_or_raise()` at [`backtest/artifact_schema.py:667`](../../backtest/artifact_schema.py#L667)
 is the consumer-side enforcement that future producer code must satisfy. Trigger
 condition: B-C-narrow successor cycle authorization for per-bar artifact emission;
 producer-stamp obligation lands at that cycle, not T1.6.
 
 **Consumer-side field validation:** `check_b_c_extended_semantics_or_raise()`
-at [`backtest/artifact_schema.py:654`](../../backtest/artifact_schema.py#L654)
+at [`backtest/artifact_schema.py:667`](../../backtest/artifact_schema.py#L667)
 enforces presence + type + cross-field consistency for all 14 fields + T_obs.
 
 ### §1.5b T_obs — required-adjacent 15th field (per sub-plan SEAL-eve Round 1 Codex F1 MEDIUM)
@@ -265,7 +265,7 @@ in sequence, all fail-closed:
 
 **Source:** parent plan v5 §2.0.5 lines 161-165 (verbatim discipline) +
 sealed implementation in `check_b_c_extended_semantics_or_raise()` at
-[`backtest/artifact_schema.py:654+`](../../backtest/artifact_schema.py#L654).
+[`backtest/artifact_schema.py:667+`](../../backtest/artifact_schema.py#L667).
 
 ### §1.7 Backward compatibility statement
 
@@ -308,7 +308,7 @@ sealed implementation in `check_b_c_extended_semantics_or_raise()` at
   see §1.5 production producer chain status note for the verified-current-state
   details.
 - **Consumer side** (`check_b_c_extended_semantics_or_raise()` at
-  [`backtest/artifact_schema.py:654`](../../backtest/artifact_schema.py#L654)
+  [`backtest/artifact_schema.py:667`](../../backtest/artifact_schema.py#L667)
   via shim re-export): validates all 14 header fields + T_obs + per-bar
   SHA256 + T_obs-alignment on read. Consumer-side validation is fully
   operational at T1.6 (eagerly ready for the future producer chain).
@@ -469,10 +469,10 @@ the mapping table + addition of a new config file.
 ### §3.5 Path canonicalization rule (per v1 PFR Codex F5; v2 PFR Advisor F6 range correction)
 
 **Sealed implementation:** `canonicalize_execution_config_path()` at
-[`backtest/artifact_schema.py:91-193`](../../backtest/artifact_schema.py#L91-L193)
+[`backtest/artifact_schema.py:96-198`](../../backtest/artifact_schema.py#L96-L198)
 (T1.3 SEAL bundle `12dffde`; Mode A grep-verified — function spans from
-the `def` at line 91 through the `return rel.replace(os.sep, "/")` at
-line 193).
+the `def` at line 96 through the `return rel.replace(os.sep, "/")` at
+line 198).
 
 **Rule (canonical form):**
 
