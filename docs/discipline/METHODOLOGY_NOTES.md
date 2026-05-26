@@ -7158,3 +7158,391 @@ The verification operates against actual filesystem / database / API state, not 
 - V3-P1 anti-rescue binding (R2.0 lock; preserved at R2.1) — governs same-cycle-vs-separate-register handling of late discoveries
 
 ---
+
+## §35 Cross-cycle findings codified at B-C-extended cycle SEAL boundary
+
+The following 11 standing rules are codified from cross-cycle empirical observations queued at the B-C-extended Scope-B structural artifact-preservation refactor cycle SEAL artifact §12 NAME-only enumeration. Codification proceeds per Charlie sequential register chain "(δ) → (α) → (γ) → (β)" 2026-05-25 as B-C-extended cycle SEAL bundle component 2 (register chain interpretation per commit messages `72a4fae` Phase Marker advance + `6444922` 3 LOW residual cleanup; cycle SEAL `docs/phase5/B_C_EXTENDED_SCOPE_B_NOTE.md` §13.4 documents the bundle component framework). Per B2 standing rule LOCKED 2026-05-19, this §35 addition is processed as SEAL-class artifact discipline with 2-leg reviewer dispatch + per-candidate adjudication.
+
+Sub-sections are presented in as-listed order per cycle SEAL artifact [`docs/phase5/B_C_EXTENDED_SCOPE_B_NOTE.md`](../phase5/B_C_EXTENDED_SCOPE_B_NOTE.md) §12 enumeration. Each §35.x sub-section follows §34 precedent structure (`Rule` / `Why` / `When to apply` / `Cross-references`).
+
+---
+
+## §35.1 Atomic single-pass remap discipline
+
+### Rule
+
+When applying a bulk-content remap across multiple sites within a file or files, use an atomic single-pass mechanism (Python script with substitution dict, awk, or single Edit with replace_all on a unique string) — NOT a chain of sequential sed substitutions or multiple Edit calls applying overlapping transformations. Sequential substitutions can collide: an earlier substitution can produce text that matches a later substitution's source pattern, leading to over-replacement or under-replacement that is not detectable by reading the intent description alone.
+
+### Why
+
+T1.6 SEAL cycle v_impl_polish iterations applied bulk-content remaps where sequential sed/Edit chains produced incorrect results. The empirical failure mode: a substitution pattern intended to apply at N specific sites produced N+k matches due to a prior substitution creating new pattern instances, OR produced N−k matches due to a prior substitution destroying source patterns. The orchestrator's intent ("rename X to Y across all sites") is unverifiable from the chain itself; only post-substitution grep verification surfaces the error.
+
+Atomic single-pass mechanisms (e.g., Python script reading the file once, applying all substitutions from a `{pattern: replacement}` dict in a single pass) prevent chain-collision because each source-character is touched exactly once. The substitution dict is auditable as a flat enumeration of pattern-to-replacement mappings.
+
+### When to apply
+
+1. Whenever a bulk remap operation targets >1 distinct source pattern within the same scope (file, set of files, section).
+2. When applying replace_all with a pattern that could overlap with already-applied transformations (e.g., partial-string substitutions where "X" and "X+suffix" both appear in source).
+3. At v_impl_polish patch iterations where prior-round substitutions may have shifted text patterns the current round needs to match.
+
+**Operational mechanics**:
+1. Enumerate all (source → replacement) mappings as a flat dict before any substitution applies.
+2. Apply substitutions in single pass: Python script using `re.sub` with callback, or awk with associative array.
+3. Post-application: grep for any remaining source patterns AND grep for unexpected replacement-pattern occurrences (over-replacement).
+4. If grep surfaces discrepancies, diagnose at substitution-dict level (not chain-history level).
+
+**Anti-pattern**: chained sed commands `sed -i 's/A/B/g; s/C/D/g'` where B contains a substring matching C, or D contains a substring matching A. Symptoms: post-substitution grep shows surprising count.
+
+### Cross-references
+
+- §32 SEAL bundle composition discipline — bulk remap operations at SEAL gates carry highest correctness stakes
+- B-C-extended cycle SEAL artifact `docs/phase5/B_C_EXTENDED_SCOPE_B_NOTE.md` §12 §35 candidate #1 — empirical surface point
+- T1.6 SEAL commit `ec647dc` body cumulative cycle empirical contribution #1 — explicit statement: "atomic single-pass remap discipline (sequential sed chain-collides when OLD values match NEW values; Python/awk with single substitution dict required)"
+- [[feedback_reviewer_routing_subagent_default]] B-C-extended cycle SEAL empirical section — orchestrator-action layer codification
+
+---
+
+## §35.2 Mode A applies to root-cause diagnoses
+
+### Rule
+
+Mode A independent verification discipline applies not only to surface factual claims (file:line citations, exact quotes, numerical values, file existence) but also to root-cause diagnoses — statements of the form "X is broken because Y" or "the reason for symptom Z is mechanism W". A root-cause claim is itself a factual claim asserting a causal chain, and is subject to the same Mode A trust-NEVER-verify-ALWAYS discipline as citation-level claims.
+
+### Why
+
+T1.6 SEAL commit `ec647dc` body lists this as cumulative cycle empirical contribution #2 queued for B-C-extended cycle SEAL boundary memory codification: "Mode A applies to root-cause diagnoses not just symptom claims". The empirical surface point is queued as a candidate from cycle SEAL artifact §12 NAME-only enumeration rather than a specific T1.6 narrative — codification of this candidate elevates the framing principle to standing rule.
+
+The Mode A discipline at citation-level (file:line / exact quote / numerical value) generalizes naturally to causal-chain claims: the reviewer's statement "Y causes X" is a factual claim about the mechanism, distinct from the citation-level claim "X is at line N". Independent verification of the causal chain requires reading the source code or sealed artifacts at the proposed mechanism site, not just confirming the symptom site. This generalization is supported by §1 (Empirical verification for factual claims) parent discipline applied to root-cause-class claims.
+
+### When to apply
+
+1. At every reviewer-finding adjudication boundary where the finding includes a root-cause diagnosis (not just a symptom-site citation).
+2. When orchestrator drafting describes "the reason X is wrong" or "the root cause of symptom Y" — treat the causal statement as a factual claim requiring Mode A verification.
+3. When orchestrator-applied bulk fixes target a mechanism rather than enumerated sites — verify the mechanism diagnosis BEFORE applying the bulk fix.
+
+**Operational mechanics**:
+1. Identify root-cause statements explicitly (statements asserting causation, not just correlation or co-occurrence).
+2. For each root-cause statement, locate the proposed mechanism site in code/artifacts.
+3. Independently verify (grep, Read, trace execution path) that the mechanism site produces the symptom described.
+4. If mechanism verification fails OR is INDETERMINATE, flag the root-cause claim as unverified-mechanism and adjudicate the finding at symptom-level only (apply fix at symptom site without committing to mechanism claim).
+
+### Cross-references
+
+- §1 Empirical verification for factual claims — parent discipline; §35.2 specifies extension to causal-chain claims
+- §2 Meta-claim verification discipline — adjacent discipline at meta-claim level
+- [[feedback_reviewer_suggestion_adjudication]] — per-fix adjudication discipline with citation verification
+- T1.6 SEAL commit `ec647dc` body cumulative cycle empirical contribution #2 — empirical surface point (candidate from cycle SEAL artifact §12 enumeration; this §35.2 elevates the candidate to standing rule)
+
+---
+
+## §35.3 Bulk-fix tooling Layer 3 propagation
+
+### Rule
+
+The 3-layer safety architecture (Advisor self-discount + Codex cross-model + orchestrator Mode A independent verification) applies to the orchestrator's OWN mitigation actions — bulk fixes, automated remaps, multi-site Edits, scripted substitutions — not just to reviewer-leg outputs. The orchestrator's bulk-fix actions are themselves subject to Layer 3 independent verification (post-action grep + Mode A spot-check) before the next register-event boundary.
+
+### Why
+
+T1.6 SEAL cycle multiple instances showed orchestrator-applied bulk fixes (replace_all, sequential sed chains, automated remaps) introducing new defects that the original reviewer findings did not surface. The 3-layer architecture was originally codified as protection against reviewer-leg failures (Mode A hallucinations + own-finding-anchoring); the empirical pattern extends to orchestrator-action failures (bulk-fix collisions + spelled-out-variant leaks + overlapping-pattern under-replacement).
+
+Without Layer 3 propagation to orchestrator actions, the safety architecture has a gap: reviewer findings are vetted but the orchestrator's response to those findings is not. The propagation rule closes that gap by requiring post-action verification (grep + Mode A) as a precondition for the next register-event boundary.
+
+### When to apply
+
+1. After any orchestrator-applied bulk fix or multi-site Edit (replace_all, scripted substitution, automated remap).
+2. Before declaring the bulk-fix complete and proceeding to the next register-event.
+3. Especially after fixes targeting reviewer-flagged sites — verify ALL claimed sites are fixed AND no new defects introduced.
+
+**Operational mechanics**:
+1. Enumerate the intended-fix sites BEFORE applying the bulk action.
+2. Apply the bulk action.
+3. Post-action grep: search for stale source patterns (should return 0) AND search for unintended replacement-pattern occurrences (should return only intended sites).
+4. Mode A spot-check 2-3 representative sites by reading the actual content post-fix.
+5. If verification surfaces discrepancies, adjudicate before next register-event.
+
+### Cross-references
+
+- §35.1 Atomic single-pass remap discipline — adjacent tooling discipline
+- §35.6 Multi-site Edit operations must be grep-verified post-Edit — direct extension of this principle to Edit operations
+- [[feedback_reviewer_routing_subagent_default]] 3-layer safety architecture — parent framework
+- T1.6 SEAL commit `ec647dc` body cumulative cycle empirical contribution #3 — explicit statement: "bulk-fix tooling Layer 3 propagation (3-layer safety architecture extends to orchestrator's OWN mitigation actions)"
+
+---
+
+## §35.4 Recursive own-finding-anchoring at v_impl_polish patches
+
+### Rule
+
+At iterative v_impl_polish rounds applying ADOPT fixes from prior reviewer round, both orchestrator and Advisor systematically anchor on "the fixes already applied are correct" framing. Successive PFR rounds then under-detect new errors INTRODUCED by the fix application itself. The discipline: at every v_impl_polish patch iteration, treat the iteration as a fresh adversarial review opportunity — do NOT anchor on prior round's fixes being clean; apply MAX anti-anchoring framing to reviewer briefs at each v_impl_polish PFR class.
+
+### Why
+
+T1.6 SEAL cycle 6-iteration v_impl_polish empirical demonstrated the pattern: v_impl_polish v1 → 6 ADOPT (P1-P6 from #N7 Implementation PFR) → v2 → 5 ADOPT (P7-P11 from #N8 T1.6 SEAL-eve Round 2, own-finding-anchoring caught P2 doc-vs-code drift) → v3 → 5 ADOPT (Q1-Q5 from #N9 PFR Round 2 recursive ADDITIONAL) → v4 (from #N10 PFR Round 3 DIVERGED) → 3 ADOPT (R1-R3) → v5 → 3 ADOPT (S1-S3 from #N11 PFR Round 4) → v6 (from #N12 PFR Round 5 DIVERGED DISCIPLINE DISAGREEMENT) → 4 ADOPT (V1-V4) → v7 → PFR Round 6 #N13 FINAL ROUND framing per §35.7 → convergent at LOW-only (3 LOW carry-forward). Each iteration caught NEW defects that prior-rounds-anchoring missed. B-C-extended cycle SEAL drafting reaffirmed the pattern at 4 PFR-rule-Y rounds + 3 SEAL-eve rounds = 7 reviewer rounds total across v1→v7 revision arc (per cycle SEAL artifact §13.5 artifact signature).
+
+This pattern is DISTINCT from Rule 1 (Advisor APPROVE-as-signal at PFR class) and Rule 2 (SEAL-eve OPERATIONALLY REQUIRED post-PFR-convergent-APPROVE). Recursive own-finding-anchoring is the iteration-class analog operating at v_impl_polish patch-cycles BETWEEN reviewer rounds — orchestrator + Advisor jointly anchor on "fixes I/we applied are correct" framing, blunting adversarial reading at the next iteration.
+
+### When to apply
+
+1. At every v_impl_polish patch iteration following an ADOPT batch from prior reviewer round.
+2. Before declaring v_n+1 ready for next PFR or SEAL-eve dispatch.
+3. When dispatching reviewers on v_n+1 — apply explicit MAX anti-anchoring framing in brief including "do not anchor on prior round's fixes being clean".
+
+**Operational mechanics**:
+1. After applying ADOPT batch → v_n+1, run orchestrator self-review pass (Mode A independent verification of each fix landing).
+2. Dispatch reviewers on v_n+1 with MAX anti-anchoring brief noting prior round was ADOPT-only (not APPROVE-only); emphasize fresh-eye adversarial reading.
+3. Adjudicate reviewer findings on v_n+1 fixes ADOPTed at v_n — treat them as patches subject to own-finding-anchoring risk.
+4. If v_n+1 PFR returns LOW-only-floor for k consecutive iterations, cycle saturation criterion may apply; but Rule 2 SEAL-eve adversarial cannot be skipped.
+
+### Cross-references
+
+- §35.7 FINAL ROUND framing operationalizes cycle saturation criterion — terminating discipline for recursive own-finding-anchoring iterations
+- [[feedback_advisor_own_anchoring_implementation_review]] Cross-cycle extension section — codification source + 26+ instance cumulative empirical
+- T1.6 SEAL commit `ec647dc` body cumulative cycle empirical contribution #4 — explicit statement: "recursive own-finding-anchoring at v_impl_polish patches empirically robust at 6-iteration scale (NEW pattern class beyond original Rule 1 implementation-review-anchoring)"
+- T1.6 SEAL cycle 6-iteration v_impl_polish arc — empirical surface point at 6-iteration scale
+- B-C-extended cycle SEAL drafting v1→v7 7-reviewer-round arc (4 PFR-rule-Y + 3 SEAL-eve) — empirical reaffirmation
+
+---
+
+## §35.5 Historical-ledger preservation vs all-current discipline
+
+### Rule
+
+Historical-ledger entries (verbatim revision logs, sealed-content blocks, prior register-event archives) MUST preserve their original framing per sealed-content invariance, even when subsequent corrections or refinements update the canonical framing elsewhere in the document. The discipline distinguishes between (a) updating CURRENT-state content to reflect latest verified state and (b) updating HISTORICAL-record content to reflect latest framing. Only (a) is permitted; (b) violates historical-ledger integrity and obscures the cycle-pattern empirical that the historical record captures.
+
+### Why
+
+T1.6 SEAL cycle #N12 PFR Round 5 surfaced the DISCIPLINE DISAGREEMENT per T1.6 SEAL commit `ec647dc` body: "#N12 PFR Round 5 (DIVERGED Advisor APPROVE-with-4-LOW / Codex ADDITIONAL 2 MEDIUM on DISCIPLINE DISAGREEMENT historical-ledger preservation vs all-current)". The disagreement was whether stale citations in historical revision-log entries should be updated to corrected values (all-current discipline) or preserved with original framing + inline correction footnote (historical-ledger preservation discipline). The discipline lock resolved at v_impl_polish v6 4 ADOPT (V1-V4 active-spec sites) + PUSHBACK on historical ledger sites per discipline preservation. Resolution rationale: per Advisor F5 framing + CLAUDE.md sealed-content invariance principle + §11 v6 SEAL-eve preservation precedent — historical records preserve original framing + inline corrections via footnote/bracketed-note marker, NOT direct overwrite.
+
+This preserves the cycle-pattern empirical: future readers can see HOW the orchestrator made the original error (e.g., propagated `:1622` docstring cite vs `:1621` def-line cite) AND see the correction trail. Direct overwrite would erase the propagation pattern from the ledger.
+
+### When to apply
+
+1. When updating any document section that contains historical revision logs, prior-version comparison tables, or verbatim sealed-content blocks.
+2. When applying corrections to citation cites that appear in BOTH current-state sections AND historical revision-log entries.
+3. When CLAUDE.md Phase Marker advances — Prior phase entries in `docs/phase_marker_history.md` follow this discipline strictly.
+
+**Operational mechanics**:
+1. Distinguish current-state content from historical-record content by structural markers (section type, header prefix like "Prior phase", revision log table format).
+2. For current-state corrections, apply direct update with corrected value.
+3. For historical-record corrections, apply inline footnote/bracketed-note marker `[corrected at v_n: original X → corrected Y per Mode A grep]` preserving original X in surrounding context.
+4. Do NOT replace_all across both class boundaries indiscriminately.
+
+### Cross-references
+
+- §6 Commit messages are not canonical result layers — adjacent principle (commit messages = ephemeral; sealed content = preserved-as-historical-record)
+- [[feedback_claude_md_freshness]] — Phase Marker freshness rule + atomic update binding
+- T1.6 SEAL commit `ec647dc` body cumulative cycle empirical contribution #5 — explicit statement: "historical-ledger preservation vs all-current discipline (Codex/Advisor DISCIPLINE DISAGREEMENT resolved per CLAUDE.md sealed-content invariance + §11 v6 SEAL-eve preservation precedent)"
+- T1.6 sub-plan §11 v_final block — empirical surface point for inline-correction-footnote pattern (sub-plan-internal example of the discipline application)
+- B-C-extended cycle SEAL artifact §0 register chain table — UTC date convention footnote applies historical-ledger preservation analogously
+
+---
+
+## §35.6 Multi-site Edit operations must be grep-verified post-Edit
+
+### Rule
+
+Any Edit operation (single Edit with `replace_all`, multiple Edit calls applying overlapping transformations, scripted substitution affecting >1 site) MUST be grep-verified post-Edit before the next register-event boundary. The orchestrator's brief-time enumeration of intended sites is NOT evidence that the Edit landed correctly — only post-Edit grep is evidence. This applies even when the Edit appears successful at the tool-result layer.
+
+### Why
+
+T1.6 sub-plan v6→v7 transition: replace_all of "6 CONTRACT GAPs total" applied at v6 missed the §2.6.2 heading "SIX CONTRACT GAPs total documented" spelled-out variant. The orchestrator's intent (replace all "6 CONTRACT GAPs" references with the scope-qualified phrasing) was correctly enumerated at brief time but the spelled-out variant ("SIX") was not in the replace_all source pattern. Codex F3 LOW caught at v6 SEAL-eve Round 1b; v7 inline-fix landed the correction.
+
+The pattern generalizes: any pattern-based substitution can fail at variant boundaries (spelled-out vs digit, capitalization, alternate spellings, abbreviations). Post-Edit grep on BOTH the source pattern (should return 0 occurrences) AND the replacement pattern (should return only intended-site count) is the only reliable verification.
+
+### When to apply
+
+1. After every Edit operation with `replace_all=true`.
+2. After multiple sequential Edit calls applying transformations to the same content area.
+3. After scripted substitutions or automated remaps that touch >1 site.
+4. Before declaring the orchestrator action complete and proceeding to next register-event.
+
+**Operational mechanics**:
+1. Pre-Edit: enumerate intended-fix sites; identify potential variant patterns (spelled-out, capitalization, abbreviations).
+2. Apply Edit.
+3. Post-Edit grep:
+   - `grep -c "<source pattern>"` (should return 0 if intent was full replacement)
+   - `grep -c "<replacement pattern>"` (should return expected intended-site count)
+   - `grep -i "<source pattern>"` (case-insensitive; surfaces capitalization variants)
+   - For numeric patterns: also `grep "<spelled-out variant>"` (e.g., "SIX" + "six" + "Six" when source was "6")
+4. If grep surfaces residual source patterns or unintended replacement occurrences, apply additional targeted Edits before next register-event.
+
+### Cross-references
+
+- §35.1 Atomic single-pass remap discipline — handles substitution-mechanism class
+- §35.3 Bulk-fix tooling Layer 3 propagation — handles orchestrator-action layer
+- T1.6 SEAL commit `ec647dc` body cumulative cycle empirical contribution #6 — explicit statement: "multi-site Edit operations announced as 'atomic single-pass N replacements' must be grep-verified post-Edit over ALL planned target patterns not spot-checked at canonical surface (Advisor #N12 F5 surfaced)"
+- T1.6 sub-plan v6 replace_all empirical — concrete instance of spelled-out variant leak
+- [[feedback_reviewer_routing_subagent_default]] B-C-extended cycle SEAL empirical section — codification source
+
+---
+
+## §35.7 FINAL ROUND framing operationalizes cycle saturation criterion
+
+### Rule
+
+When v_impl_polish iterations show severity damping trajectory toward LOW-only convergence (MEDIUM persisting into late iterations is acceptable — the trajectory matters, not strict no-MEDIUM precondition) + Charlie register chain authorizes strict-iterate discipline + post-ADOPT final reviewer dispatch returns remaining findings at LOW-only floor, an explicit "FINAL ROUND" framing at the dispatch enables convergence at recursive ratchet. The FINAL ROUND framing commits to "this is the last iteration; either APPROVE-with-LOW or iterate further at higher Charlie register-event boundary" — preventing indefinite micro-iteration at LOW-only floor.
+
+### Why
+
+T1.6 SEAL cycle PFR Round 6 (#N13) was the FINAL ROUND framing instance. Per T1.6 SEAL commit `ec647dc` body, the severity damping trajectory was: Advisor leg MED→MED→MED→APPROVE→MED→APPROVE→APPROVE (across 7 instances #N7-#N13) + Codex leg MED→MED→MED→MED→MED→MED-DISCIPLINE→APPROVE-with-LOW. Note that Codex MEDIUM persisted through #N12 PFR Round 5 immediately before FINAL ROUND — the FINAL ROUND framing was applied at #N13 dispatch (after #N12 ADOPT + Path A strict-iterate per Charlie register), NOT after a k-iteration no-MEDIUM precondition. The actual empirical trigger is: Charlie register chain through Path A strict-iterate + post-ADOPT final dispatch + reviewers returning APPROVE-with-LOW at the FINAL ROUND.
+
+Charlie register chain through Path A strict-iterate enabled orchestrator FINAL ROUND framing dispatch per cumulative cycle saturation criterion. Both Codex + Advisor returned APPROVE-with-LOW at PFR Round 6 (#N13) with explicit acknowledgment of FINAL ROUND framing convergent at recursive ratchet. The 3 LOW residuals (L1+L2+L3) were carried forward to cycle SEAL bundle component 5 separate register-event rather than triggering yet another v_n+1 iteration.
+
+### When to apply
+
+1. When v_impl_polish iteration trajectory shows severity damping toward LOW (not necessarily through strict no-MEDIUM pre-condition).
+2. When Charlie register chain authorizes strict-iterate discipline + commit-to-terminate framing.
+3. When Charlie register-event explicitly authorizes FINAL ROUND framing as cycle-termination point + post-ADOPT reviewer dispatch is queued (NEVER orchestrator-elective at LOW-floor convergence without prior Charlie register-event).
+
+**Operational mechanics**:
+1. Dispatch reviewers on v_n+1 with explicit FINAL ROUND framing in brief: "this is the last v_impl_polish iteration before cycle SEAL ratify; APPROVE / APPROVE-WITH-LOW / BLOCKING-CONCERNS at this round; LOW residuals carry to separate cycle SEAL bundle component register-event boundary if applicable".
+2. Reviewer adjudication at FINAL ROUND: ADOPT BLOCKING/HIGH/MEDIUM immediately; carry LOW residuals to separate register-event (per Charlie register).
+3. If reviewers return BLOCKING/HIGH/MEDIUM, FINAL ROUND framing is overridden — apply ADOPT + dispatch v_n+2 with fresh framing.
+4. If reviewers return APPROVE/APPROVE-WITH-LOW, cycle converges; LOW residuals queue for separate register-event.
+
+### Cross-references
+
+- §35.4 Recursive own-finding-anchoring at v_impl_polish patches — terminating discipline for the recursive pattern
+- §32 SEAL bundle composition discipline — LOW residual cleanup as separate bundle component
+- T1.6 SEAL commit `ec647dc` body cumulative cycle empirical contribution #7 — explicit statement: "FINAL ROUND framing operationalizes cycle saturation criterion (Charlie hybrid Path A + commit-to-terminate enables convergence at recursive ratchet)"
+- T1.6 SEAL cycle PFR Round 6 — empirical surface point
+- B-C-extended cycle SEAL drafting Path A strict-iterate at v6 SEAL-eve Round 3 — analog empirical instance
+
+---
+
+## §35.8 T_obs header-field-table framing inheritance gap
+
+### Rule
+
+When reproducing a header-field-table framing inherited from an upstream source (parent plan, prior cycle SEAL artifact, sealed code constant), the reproduction MUST explicitly enumerate required-adjacent fields outside the table. Do NOT default to assuming all required fields are present in the header table. The discipline closes a class of structural coverage gaps where required-adjacent fields (positional-shape attributes, content-shape metadata, validation-discipline parameters) get structurally hidden by inheritance of header-table framing that excludes them by design.
+
+### Why
+
+T1.6 sub-plan SEAL-eve Round 1 Codex F1 MEDIUM catch surfaced this framing-inheritance pattern. T_obs (per-bar-content-shape attribute; count of finite per-bar return observations) was structurally hidden by inheritance of parent plan v5 §2.0.5 "14 header fields" framing. v1 BLOCKING F1 restructure (sub-plan v1 → v2) preserved the 14-field framing without explicit T_obs-as-required-adjacent acknowledgment. 4 PFR rounds + cycle saturation framing missed it; SEAL-eve Round 1 adversarial caught the gap.
+
+The pattern is structural: header-table framings group related fields by a convention (e.g., "14 header fields covering identity + linkage + path + content-hash"). Required-adjacent fields that don't fit the grouping convention (e.g., T_obs as per-bar-content-shape attribute, not header metadata) get filtered out of the table at codification time. Subsequent reproductions inherit the filtering without re-evaluating whether the excluded field is still required.
+
+### When to apply
+
+1. When drafting documentation that reproduces a header-field-table framing from upstream source.
+2. When applying BLOCKING-restructure fixes at sub-plan or cycle SEAL artifact drafting (re-anchoring canonical site preserves framing-inheritance gaps unless explicitly audited).
+3. At every header-table reproduction site: explicitly enumerate required-adjacent fields outside the table.
+
+**Operational mechanics**:
+1. At each header-table reproduction, list the table's grouping convention.
+2. Audit upstream source (sealed code, prior cycle artifact) for required fields OUTSIDE the table convention.
+3. Document required-adjacent fields with explicit reasoning: why outside the table + why still required + cross-reference to validation site.
+4. Apply scope-qualified framing: "14 header fields per Contract X.Y.Z + N required-adjacent fields outside the table (T_obs at field-position-equivalent location, etc.)".
+
+### Cross-references
+
+- §5 Precondition verification for structural and organizational principles — parent discipline; §35.8 specifies failure-mode at header-table-framing inheritance boundary
+- §35.10 Anti-recurrence requires invariant-level constraints — adjacent discipline at structural-recurrence layer
+- T1.6 sub-plan SEAL-eve Round 1 Codex F1 MEDIUM catch — empirical surface point
+- [[feedback_advisor_own_anchoring_implementation_review]] T_obs framing-inheritance pattern observation — memory codification
+
+---
+
+## §35.9 Data-preservation as pre-commit audit criterion at artifact-design boundary
+
+### Rule
+
+Data-preservation requirements for analytical methodology must be specified at the artifact-design boundary (engine → writer → registry), not discovered at the consumption boundary (analyst → audit → evaluation gate). When an analytical methodology framework requires per-candidate input data (returns series, moments, intermediate computations), the artifact-design phase must verify that the data the framework will consume is preserved at the artifact-write boundary — including per-bar granularity preservation, moment computability from preserved inputs, and registry linkage to the per-bar artifact paths. Note: direct moment-statistic storage (e.g. γ3, γ4 as standalone registry columns) is a separable decision from per-bar return preservation; recomputability from preserved per-bar returns may suffice depending on framework discipline.
+
+### Why
+
+R6.1 V_SEAL §34 lock-choice (c) 4-of-7 INDETERMINATE classification (SD-A-α BLdP closed-form + N*-ε scalar + SD-B-α + SD-F Path 1 cascade) traces to a single common cause: per-bar return series are NOT preserved at the engine → writer artifact boundary. The R6.1 V_SEAL methodology lock specified DSR-family analytical computations requiring per-candidate return series + moments as inputs; at consumption-boundary discovery time, the required data was not in the artifact registry. R6.1 V_SEAL was forced to classify INDETERMINATE-on-data-unavailability per §34 lock-choice (c) framing.
+
+B-C-extended Scope-B cycle was authorized as the structural infrastructure precondition cycle to address this gap. T1.1 per-bar artifact writer + T1.5 moment-computability test discipline + T1.3 registry linkage (3 columns persisted by `_write_to_registry` at `engine.py:1269-1292`: `returns_per_bar_path` + `returns_per_bar_sha256` + `T_obs`) shipped at the cycle SEAL ratify 2026-05-25. Note: direct γ3/γ4 storage as registry columns is NOT persisted by the T1.x infrastructure — moments are computable from preserved per-bar returns via the T1.5 fixture-locked convention. Producer-side artifact stamping of `b_c_extended_v1` schema header + moment-summary fields is a remaining gap deferred to B-C-narrow successor cycle per [`docs/decisions/B_C_EXTENDED_V1_SCHEMA_SPEC.md`](../decisions/B_C_EXTENDED_V1_SCHEMA_SPEC.md) §1.5 producer-chain status documentation. The discipline rule codifies the lesson: at every analytical methodology framework specification (pre-commit cycle), the framework's data requirements must be verified at the engine → writer → registry boundary at framework-design time, not deferred to consumption-boundary discovery.
+
+### When to apply
+
+1. At every analytical methodology pre-commit cycle that specifies per-candidate or per-population data requirements.
+2. When framework requirements include statistical computations on per-bar / per-trade / per-candidate input data.
+3. Before locking a methodology framework: verify that all input-data classes the framework will consume are preserved at the artifact-write boundary OR scope-narrow to data-accessible subset OR add data-preservation infrastructure as separate precondition cycle.
+
+**Operational mechanics**:
+1. Enumerate framework data requirements (per-candidate / per-bar / per-trade / aggregated).
+2. Map each data requirement to the artifact-write site that produces it.
+3. Verify the artifact-write site preserves the data at the required granularity (per-bar parquet, moment computability from preserved returns or direct moment storage if explicitly required, registry linkage).
+4. If preservation gap surfaces: (a) scope-narrow framework to use only data-preserved subset, (b) add precondition infrastructure cycle (analog to B-C-extended) BEFORE framework commit, OR (c) classify INDETERMINATE-on-data-unavailability per §34 lock-choice (c).
+5. Anti-pattern: locking framework first + discovering data gap at consumption — produces INDETERMINATE classifications + cycle-pattern recurrence.
+
+### Cross-references
+
+- §34 Data accessibility pre-verification for pre-commit audit-criterion locks — sibling discipline at the audit-dimension granularity (§34) vs framework granularity (§35.9)
+- §5 Precondition verification for structural and organizational principles — parent discipline
+- R6.1 V_SEAL §34 lock-choice (c) 4-of-7 INDETERMINATE — empirical surface point
+- B-C-extended Scope-B cycle SEAL artifact `docs/phase5/B_C_EXTENDED_SCOPE_B_NOTE.md` §1 substantive scope — concrete instance of precondition infrastructure cycle response
+
+---
+
+## §35.10 Anti-recurrence requires invariant-level constraints
+
+### Rule
+
+When fix iterations show producer-consumer asymmetry recurrence at the same boundary class (a sequence of narrow fixes each closing a BLOCKING but each spawning a next-narrowest asymmetry within the same boundary class), the structural pattern-breaker is centralized invariant-level closure at the producer layer — NOT continued enumeration of named consumer-side cases. Consumer-side mirrors retained as belt-and-suspenders defense-in-depth; the producer-side invariant is the load-bearing closure mechanism. **Boundary**: this rule applies to ENUMERATION of consumer-side named cases as closure mechanism — it does NOT prohibit canonical-site CONTRACT GAP marker enumeration per §35.11 (which is metadata/gap documentation discipline at extraction sites, distinct from consumer-side closure mechanism).
+
+### Why
+
+T1.1 9-iteration arc empirically demonstrated the pattern: 5 asymmetry classes empirically discovered across v1-v8 (T_obs finite-return + Registry persistence + 3 third-level asymmetries + OR-vs-AND pair-completeness + direct STRICT field tamper). Each named-case mirror closed one specific asymmetry but spawned the next narrowest. SYS4 (LATE_FILL `__post_init__` invariant on one field group) produced first convergent APPROVE but pattern continued at v8 with different field group. SYS5 (`LineageContext.revalidate_for_write()` centralized 14-field tamper closure) closed all 5 asymmetry classes at producer layer + produced cycle-final convergent APPROVE with Codex explicit "no v10 finding predicted".
+
+T1.5 SEAL-eve cycle reaffirmed the pattern at separate cycle scale: artifact-writer + schema-validator chain coverage gap was the analog producer-consumer asymmetry; SEAL-eve v1+v2 caught HIGH-coverage; resolution via invariant-level approach.
+
+### When to apply
+
+1. At every 3rd+ fix iteration on the same boundary class — ask: "Is this producer-consumer asymmetry recurrence pattern?"
+2. When iterations show monotone narrowing severity but spawn next-narrowest cases at the same boundary class.
+3. Before committing to v_n+1 named-case mirror — evaluate whether producer-layer invariant would close all classes structurally.
+
+**Operational mechanics**:
+1. At 3rd+ iteration on same boundary class, surface invariant-level closure option as decision path.
+2. Identify the producer layer (data class, frozen dataclass, validator function, registry write boundary).
+3. Add centralized invariant validation at producer (e.g., `__post_init__` on frozen dataclass + `revalidate_for_write()` method called from write boundary).
+4. Retain existing consumer-side mirrors as belt-and-suspenders + document with `DESIGN INVARIANT` marker.
+5. Mode A grep-verify: all known asymmetry classes covered by the invariant; do NOT remove mirrors even if redundant.
+
+### Cross-references
+
+- §35.4 Recursive own-finding-anchoring at v_impl_polish patches — adjacent iteration-class discipline
+- §35.11 Heavy-private-impl extraction CONTRACT GAP enumeration — adjacent extraction-class discipline; boundary clarified at §35.11 Rule
+- [[feedback_invariant_level_vs_enumeration]] — memory codification with concrete reference implementation
+- T1.1 9-iteration arc + T1.5 SEAL-eve cycle — empirical surface points
+- Canonical implementation: `LineageContext.revalidate_for_write()` at [`backtest/artifact_schema.py:462-553`](../../backtest/artifact_schema.py#L462-L553) per cycle SEAL artifact §9 (T1.1 SEAL bundle `12dffde`); 4 retained mirror sites at `backtest/engine.py` write-boundary following DESIGN INVARIANT marker at `backtest/engine.py:1133-1148`
+
+---
+
+## §35.11 Heavy-private-impl extraction CONTRACT GAP enumeration
+
+### Rule
+
+When extracting heavy-private-implementation logic from one module to another (e.g., shim re-export pattern where public API stays at original module but heavy logic moves to canonical-impl module per CONTRACT BOUNDARY discipline), the extraction MUST be accompanied by enumeration of canonical-site CONTRACT GAP markers at the new canonical module. Do NOT default to relying on the original module's CONTRACT GAP markers alone after extraction — the canonical module has its own gap class (per its new architectural role) that requires explicit documentation. **Boundary**: this CONTRACT GAP enumeration is metadata/gap documentation discipline at extraction sites — it does NOT substitute for producer-layer invariant closure per §35.10 when the producer-consumer asymmetry recurrence trigger fires (the two disciplines are complementary at extraction-class architecture: §35.10 handles structural closure mechanism; §35.11 handles metadata documentation at the new canonical site).
+
+### Why
+
+T1.6 sub-plan v2 PFR Advisor F3 caught the fix-substantive-leak instance: v1 BLOCKING F1 restructure moved the canonical site of `b_c_extended_v1` validation from `wf_lineage.py` to `artifact_schema.py` (per CONTRACT BOUNDARY heavy-private-impl extraction lock), but the v1 restructure preserved only the `wf_lineage.py` CONTRACT GAP markers. The new canonical site at `artifact_schema.py` (3 §2.6 extension-protocol/code-surface CONTRACT GAPs — current sealed code at `:697` regime_key validation + `:705` execution_config_path canonicalization deferral + `:985` sibling helper canonicalization; sub-plan-era cites were `:684/:692/:972` per pre-T1.6-SEAL state, shifted +13 lines at post-T1.6-SEAL state) had its own CONTRACT GAP class not enumerated by the v1 restructure. Note: a separate-class schema-version producer-stamp CONTRACT GAP exists at `backtest/artifact_schema.py:40-46` (deferred to B-C-narrow successor cycle per [`docs/decisions/B_C_EXTENDED_V1_SCHEMA_SPEC.md`](../decisions/B_C_EXTENDED_V1_SCHEMA_SPEC.md) §1.5 producer-chain status documentation). This producer-stamp GAP is a different class from the §35.11 extension-protocol GAP enumeration discipline; scope-qualification of the §2.6 extension-protocol/test-side marker boundary per T1.6 sub-plan §11 v_final lock per SEAL-eve Round 1b Codex F3 LOW does NOT directly govern the producer-stamp GAP — both are out-of-scope for the §35.11 enumeration discipline but for distinct reasons.
+
+The extraction pattern generalizes: any module extraction that moves logic + responsibility carries with it the gap-enumeration responsibility. The original module's GAPs were specific to its original role; the new canonical module has GAPs specific to its new role (e.g., heavy-private-impl extraction site has GAPs around future extension protocol; original public-shim site has GAPs around forwarding-discipline integrity).
+
+### When to apply
+
+1. At every heavy-private-impl extraction operation (refactor moving logic between modules with CONTRACT BOUNDARY documentation).
+2. When applying BLOCKING-restructure fixes that re-anchor a canonical site.
+3. Before sealing the extraction at cycle SEAL gate — audit canonical-site GAPs at the new module + cross-reference original module's GAPs.
+
+**Operational mechanics**:
+1. At extraction: enumerate GAPs at ORIGINAL module pre-extraction.
+2. Identify the new canonical module's architectural role (extension protocol, validation discipline, atomic-maintenance SSOT).
+3. Audit canonical-site for new GAPs specific to the new role (e.g., extension-protocol GAPs at sibling helper sites).
+4. Add CONTRACT GAP markers at canonical site with explicit role + extension-trigger condition.
+5. Cross-reference: shim site at original module retains its GAPs; canonical site at new module has its own GAPs; both required.
+
+### Cross-references
+
+- §32 SEAL bundle composition discipline — extraction operations + GAP enumeration as SEAL bundle deliverables
+- §35.10 Anti-recurrence requires invariant-level constraints — adjacent discipline at structural-recurrence boundary; boundary clarified at §35.10 Rule
+- T1.6 sub-plan v2 PFR Advisor F3 fix-substantive-leak — empirical surface point
+- [[feedback_invariant_level_vs_enumeration]] — adjacent memory codification (invariant-level closure at producer layer)
+- B-C-extended Scope-B cycle T1.2 SEAL (bundled within `12dffde` T1.1 SEAL bundle per R3.1d sequencing 1→3→4) — concrete extraction instance (validation logic moved from `wf_lineage.py` to `artifact_schema.py`)
+
+---
