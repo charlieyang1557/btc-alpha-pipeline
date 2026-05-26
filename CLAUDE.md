@@ -10,6 +10,7 @@
   - Sealed phase history: [docs/phase_marker_history.md](docs/phase_marker_history.md)
   - Phase-specific execution rules (Backtrader, Factor parquet, Phase 2 DSL/Agent/Budget, Raw payload, Library policy): [docs/rules/phase_execution_rules.md](docs/rules/phase_execution_rules.md)
   - Methodology discipline: [docs/discipline/METHODOLOGY_NOTES.md](docs/discipline/METHODOLOGY_NOTES.md)
+  - Off-repo cold-storage data registry (consult when any cycle reports `raw_payloads` gap / `INDETERMINATE-DSL-UNAVAILABLE` / missing batch dirs): [docs/operations/MAC_MINI_DATA_REFERENCE.md](docs/operations/MAC_MINI_DATA_REFERENCE.md)
 
 ## What This Project Is
 
