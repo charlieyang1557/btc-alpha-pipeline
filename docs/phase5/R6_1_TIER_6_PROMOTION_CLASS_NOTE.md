@@ -499,3 +499,287 @@ Prior version: V1 draft per Charlie register #12 fire authorization. Awaiting PF
 **Cycle dispatch count through V3 patch batch + PFR-rule-Y2** (per V4-P2 patch ADOPT; Codex PFR-rule-Y2 F2 HIGH — footer dispatch-count metadata update): ~32 reviewer dispatches (cycle-plan-stage 6 + Task 1 scoping 4 + Task 2 + PFR-Rounds-2/3/4/5 + Task 4 blind-lean Phase 1 + Task 8 V1 review 2 + PFR-rule-Y 2 + PFR-rule-Y2 2 = ~32; PFR-rule-Y3 dispatch pending per Charlie register #16 Path γ-strictest-3 = +2 → 34).
 
 **Cycle register-event count through V3 patch batch**: 15 primary register-events (cycle entry #1 with sub-events #1b/c/d + plan ratify #2 + Path B #3 + Task 2 dispatch #4 + 13-ADOPT #5 + Path 1 P-patches #6 + Path α-resolved Q-patches #7 + Path A-strictest R-patches #8 + Path I blind-lean #9 + Task 4 lock #10 + Task 6 §34 gate #11 + Task 7 V1 fire #12 + V1 reviewer dispatch #13 + V2 ADOPT batch + PFR-rule-Y + R6.1-C 5th-instance #14 + Path α-strictest-2 V3 batch + PFR-rule-Y2 staged + R6.1-C 6th-instance #15).
+
+---
+
+## §12 Errata (appended post-V_SEAL per sealed-content invariance discipline; extends Phase A §11 + R3.1a §12 + R2.3 β3 hybrid precedent with provenance + anti-pre-emption + anti-recurrence meta-errata entries)
+
+The following corrections are documented per project sealed-content invariance discipline. **ENTIRE pre-existing artifact (lines 1-501, including §0-§11 sealed body + post-§11 footer V4/V5-P1 signature block) remains byte-identical at character level**. R6.1 §12 errata is the canonical reference layer for downstream Tier 6 evaluation application + cross-artifact citation. §12.1-§12.4 follow Phase A §11 + R3.1a §12 + R2.3 β3 hybrid substantive errata precedent; §12.5-§12.7 extend precedent with meta-errata entries (provenance trail + anti-pre-emption preservation + anti-recurrence finding class reference) per SF-23-i Charlie register #4c.
+
+### §12.1 — Errata E1: §2.2 line 95 (rationale point #6) monotonicity-direction inversion correction
+
+**Errata E1 (2026-05-25; R6.1 §2.2 narrow patch cycle V_SEAL register-event)**:
+
+§2.2 line 95 rationale point #6 ("Conservative direction at first-time Tier 6 fire") contains a monotonicity-direction inversion error in the claim relating `N*-ε` scalar value to the DSR haircut magnitude + false-positive risk direction. Sealed text remains as originally sealed at character level per Architecture B sealed-content invariance discipline (entire pre-existing artifact lines 1-501 byte-identical at character level per SF-20-i lock); this errata note + §12.2 E2 (load-bearing monotonicity derivation) + §12.4 E4 (propagation supersession reference table) are the canonical correction reference layer.
+
+**Sealed text reference (text-content verbatim from §2.2 line 95; sealed markdown bold markup stripped for fenced quote reproduction per character-level disclosure)**: "6. Conservative direction at first-time Tier 6 fire — under inferred-positive cross-candidate correlation per shared BTC market exposure + theme-axis bundling structural assumption (NOT empirically verified at R6.1 V_SEAL; per §8 INDETERMINATE; per V3-P2 patch ADOPT; Codex PFR-rule-Y F2 HIGH partial-landing fix), conservative N* (smaller value) makes the DSR haircut larger, reducing false-positive risk; appropriate at first-time fire where false-positive cost > false-negative cost"
+
+**Correction**:
+
+Under standard Bailey-López de Prado 2014 DSR closed-form analytical formula (per §2.1 PSR formula reproduction + Mertens 2002 asymptotic variance pairing), the expected maximum SR under null SR* is **monotonically INCREASING in N*** (see §12.2 E2 for derivation + numerical comparison). Therefore:
+
+- **LARGER N\* → LARGER SR\*** (expected null max-Sharpe threshold) → HARDER threshold to clear → FEWER false positives (FP-conservative direction under §6.1 framing axis; see §12.3 E3 for §6.1 vs §2.2 reconciliation)
+- **SMALLER N\* → SMALLER SR\*** → EASIER threshold to clear → MORE false positives (ANTI-conservative direction for FP control under §6.1 framing axis)
+
+The original §2.2 line 95 claim that "conservative N* (smaller value) makes the DSR haircut larger, reducing false-positive risk" is **mathematically inverted** under standard BLdP 2014 DSR. Smaller N* via positive ρ̄ adjustment in the N*-ε scalar `1 + (N−1)·(1−ρ̄)` REDUCES the SR* threshold (FN-conservative direction under §2.2 N*-ε framing axis); it does NOT increase the haircut OR reduce false-positive risk.
+
+**5-leg triple-verify chain-trust disclosure**:
+
+The monotonicity-direction inversion claim was caught at this cycle entry via Codex BLOCKING finding (cross-model leg). The mathematical claim was subsequently verified across 5 independent legs (Codex + ChatGPT external + Gemini external + Claude external + orchestrator Layer 3 math) per Charlie register #2 ChatGPT triple-verify report. The mathematical claim of monotonicity is independently verifiable (see §12.2 E2 derivation); the leg-count + external-system convergent-report fidelity carries chain-trust dependency on Charlie's register-event report of the external dispatches.
+
+**PSD-2 prescription value canonical reference** (LOCKED at Charlie register #7 2026-05-25):
+
+**PSD-2 LOCKED**: **(a1) Full flip to i.i.d. — ρ̄ = 0 / N* = N = 18** per CONVERGED B2 2-leg reviewer recommendation at PSD-2 dispatch (advisor + Codex independent (a1) lean; F4 fix lean-hidden discipline applied; MAX anti-anchoring at Advisor produced within-advisor lean shift from prior SF-15 (a4) → fresh PSD-2 (a1) first-principles reasoning).
+
+Application-layer canonical prescription value: ρ̄ = 0, N* = N = 18. Largest SR* threshold (Form A asymptotic ≈ 2.40·√Var(SR_null); Form B closed-form ≈ 1.85·√Var(SR_null); see §12.2 E2 for dual-form derivation). FP-conservative literal reading under §6.1 framing axis (see §12.3 E3 for framing-axis disambiguation). Zero-pass first-fire risk acceptable per §11.4 zero-capital-implication at R6.1 V_SEAL; FN-protection deferred to B-C-narrow data-recovery successor cycle + post-V_SEAL Tier 6 evaluation application register-event per Path α invariant.
+
+**Alternatives considered but not locked** (preserved for transparency + reviewer adjudication trail):
+
+- **(a2-i/ii/iii) Partial flip intermediate**: ρ̄ ∈ {0.1, 0.2, 0.3} / N* ∈ {16.3, 14.6, 12.9}. FP-leaning intermediate but tunable-without-empirical-anchor concern (ρ̄ INDETERMINATE per §8); both reviewer legs flagged as methodology-over-engineering at this register class.
+- **(a3) Preserve ρ̄ ≤ 0.5 + reframe rationale as FN-conservative**: sealed ρ̄ ≤ 0.5 preserved at application; FN-conservative under §6.1 framework + successor-cycle conditional FP-protection via RW/WY/HAC eligibility. Both reviewer legs flagged as structurally weak (defers FP-protection to uncommitted successor cycle per R5.2 framework family reopen not currently scoped).
+- **(a4) Preserve ρ̄ ≤ 0.5 + UPDATE artifact priority statement**: same prescription as (a3); §5.1 SD-D-α rationale #4 line 166 + sealed "FP > FN at first fire" priority would require reconciliation per §12.4 E4 supersession reference table. Both reviewer legs flagged as NARROW scope expansion concern (re-litigates sealed priority statement beyond §2.2 monotonicity correction).
+- **(a-η) Other Charlie-specified**: not invoked.
+
+**Locked rationale**: Charlie register #3 option (a) FP-conservative DIRECTION lock most naturally maps to §6.1 framing axis (selection-of-maximum boundary) → (a1) is the structurally direct prescription. Sealed §5.1 line 166 "false-positive cost dominates at capital-commitment-adjacent register" priority + sealed §2.2 V_SEAL "first-time Tier 6 fire where false-positive cost > false-negative cost" priority + §11.4 zero-capital-implication framing all preserved intact under (a1) lock. §5.1 line 166 (a4)-conditional reconciliation requirement NOT triggered: (a4) not locked; sealed line 166 framing preserved verbatim at character level per Architecture B sealed-content invariance discipline.
+
+§2.2 rationale point #5 (line 94 — N*-ε formula choice rationale citing "inferred-positive ρ̄ structural assumption") consistency-preservation under (a1) LOCKED prescription (per §12.4 E4 propagation supersession + PSD-3 Step 6.5b internal-consistency check):
+
+Under PSD-2 = (a1) LOCK at Charlie register #7: ρ̄=0 prescription does NOT claim structural correlation is zero; it claims that USING ρ̄=0 in the N*-ε formula yields the FP-conservative threshold (largest SR* value); structural-correlation acknowledgment continues at §6.1 line 190 framing intact (sealed; preserved verbatim at character level per Architecture B sealed-content invariance discipline); empirical ρ̄ refinement deferred to B-C-narrow data-recovery successor + post-V_SEAL Tier 6 evaluation application register-event per Path α invariant.
+
+**Sealed-content invariance preserved at character level**: §2.2 main text remains as originally sealed including no inline marker additions per SF-20-i lock at Charlie register #4c; this errata note + the canonical R6.1 §12 errata layer (§12.1 + §12.2 + §12.3 + §12.4) provide the correction reference. Future readers encountering §2.2 line 95 should consult this errata + §12 supersession table at §12.4. Per Phase A §11 + R3.1a §12 + R2.3 β3 hybrid precedent pattern at strictest reading (entire pre-existing artifact lines 1-501 byte-identical at character level per v3 PFR-rule-Y Codex MEDIUM append-locus fix at Charlie register #4d), no markers added to sealed surfaces.
+
+### §12.2 — Errata E2: Monotonicity derivation (load-bearing for §12.1 correction)
+
+**Errata E2 (2026-05-25; R6.1 §2.2 narrow patch cycle V_SEAL register-event)**:
+
+Mathematical derivation establishing SR* monotonicity in N*, load-bearing for §12.1 E1 direction-of-conservatism correction. Two formula forms are presented for transparency:
+
+**Form A — Asymptotic (large N\*; primary for numerical comparison table; Gaussian extreme-value / Gumbel asymptotic regime per Embrechts-Klüppelberg-Mikosch 1997)**:
+
+`SR* ≈ √Var(SR_null) × √(2·ln(N*))`
+
+This asymptotic approximation aligns with CLAUDE.md HARD CONSTRAINT line 268 reference to "heuristic DSR `sqrt(2*ln(N))`" and is the project-discipline canonical form for cohort-scale threshold magnitude comparison.
+
+**Form B — Closed-form Euler-Mascheroni (standard BLdP 2014 closed-form expected-max approximation per JPM 40:5 reference; derived from Gaussian extreme-value asymptotic via Euler-Mascheroni constant correction; specific theorem-number attribution not paper-verified in this errata cycle — recommend post-cycle citation-precision audit)**:
+
+`SR* ≈ √Var(SR_null) × [(1−γ)·Φ⁻¹(1 − 1/N*) + γ·Φ⁻¹(1 − 1/(N*·e))]`
+
+where:
+- `γ ≈ 0.5772` is the Euler-Mascheroni constant
+- `Φ⁻¹` is the inverse cumulative normal distribution quantile function (strictly monotonically increasing on (0, 1) interval; range (−∞, +∞))
+- `e ≈ 2.7183` is the base of natural logarithm
+- `Var(SR_null)` is the asymptotic variance of the Sharpe estimator under null per Mertens 2002 non-normality correction = `(1 − γ₃·SR + ((γ₄ − 1)/4)·SR²) / (T − 1)`
+- Domain: N* > 1 (closed-form requires N*>1 to avoid `Φ⁻¹(0) = −∞`; degenerate at N*=1 reduces to per-candidate threshold)
+
+The asymptotic Form A and closed-form Form B converge at large N*; at small-to-moderate N* (e.g., N* ∈ [9, 18] which is the regime at R6.1 V_SEAL cohort), the two forms produce different numerical values (asymptotic ≈ 2.40 at N*=18 vs closed-form ≈ 1.85 at N*=18). The numerical comparison table below uses **Form A asymptotic** as primary for project-discipline alignment with HARD CONSTRAINT line 268; Form B closed-form is referenced for BLdP 2014 derivation continuity.
+
+**Monotonicity proof sketch** (Form A; Form B monotonicity follows analogously via inverse-quantile + positive-weighted-sum reasoning):
+
+For Form A: `SR*(N*) = √Var(SR_null) × √(2·ln(N*))` for N* > 1.
+
+`d/dN* [SR*(N*)] = √Var(SR_null) × (1 / (N* × √(2·ln(N*))))` for N* > 1.
+
+Since `Var(SR_null) > 0`, `N* > 1`, and `ln(N*) > 0` for N* > 1, the derivative is strictly positive for all N* > 1. Therefore **SR*(N*) is strictly monotonically increasing in N*** for N* > 1.
+
+For Form B (Gumbel/Gaussian extreme-value asymptotic regime; Euler-Mascheroni correction): both quantile arguments `(1 − 1/N*)` and `(1 − 1/(N*·e))` are strictly monotonically increasing functions of N* (derivatives `1/N*²` and `1/(N*²·e)` both positive). Since `Φ⁻¹` is strictly monotonically increasing on (0,1), both quantile terms are increasing in N*. The expected-max formula is a positive-weighted linear combination (weights `(1−γ) ≈ 0.4228` and `γ ≈ 0.5772` both positive); positive-weighted sum of strictly monotone-increasing functions is itself strictly monotone-increasing.
+
+Therefore: **SR*(N*) is strictly monotonically increasing in N*** under both Form A asymptotic and Form B closed-form for N* > 1.
+
+**Numerical comparison at R6.1 cohort regime (N=18); Form A asymptotic primary**:
+
+| N\* value | SR\* / √Var(SR_null) (Form A asymptotic) | Interpretation |
+|---|---|---|
+| N\* = 18 (i.i.d. assumption; ρ̄ = 0; (a1) LOCKED at Charlie register #7) | ≈ 2.40 | Largest threshold; FP-conservative direction (under §6.1 framing axis); harder for any candidate to clear DSR ≥ 0 |
+| N\* ≈ 16.3 ((a2-i) ρ̄ = 0.1) | ≈ 2.36 | Slightly smaller threshold; FP-leaning intermediate |
+| N\* ≈ 14.6 ((a2-ii) ρ̄ = 0.2) | ≈ 2.32 | Smaller threshold; FP-leaning intermediate |
+| N\* ≈ 12.9 ((a2-iii) ρ̄ = 0.3) | ≈ 2.26 | Smaller threshold; FP-leaning intermediate |
+| N\* = 9.5 (sealed ρ̄ ≤ 0.5; (a3)/(a4) preservation class) | ≈ 2.12 | Smaller threshold; FN-conservative direction (under §2.2 N\*-ε framing axis; per §6.1 reasoning, matches model-implied effective N more accurately) |
+| N\* = 1 (degenerate; no multiplicity; reduces to per-candidate threshold) | 0 (degenerate; per-candidate z=1.645 at α=0.05 one-sided) | Asymptotic degenerate at N\*=1; closed-form undefined; reduces to single-candidate Sharpe test |
+
+(Form A asymptotic values computed via `√(2·ln(N*))`; table column is normalized SR\*/√Var(SR_null) **ratio** which does NOT depend on per-candidate `Var(SR_null)` realization — the Var(SR_null) factor cancels in the ratio. At application-layer SR\* computation, actual SR\* magnitude = ratio × √Var(SR_null) where Var(SR_null) is candidate-specific at Tier 6 evaluation application register-event time per Mertens 2002 non-normality correction. Path α invariant preserved at this errata: no candidate-specific computation here; only symbolic normalized threshold ratio comparison. For Form B closed-form numerical values at the same N\* points respectively (N\*=18 / 16.3 / 14.6 / 12.9 / 9.5), the corresponding normalized ratios are SR\*/√Var(SR_null) ≈ 1.85 / 1.81 / 1.76 / 1.70 / 1.55; Form B values are SMALLER than Form A values at small N\* due to Euler-Mascheroni correction tightening the upper-tail extreme-value approximation; both forms agree on the monotonicity direction conclusion. **Form A vs Form B at small-N\* regime is itself a methodological framing tension** (Form B closed-form is SD-A-α V_SEAL lock per artifact §11.3 line 445; Form A asymptotic is project HARD CONSTRAINT line 268 heuristic-DSR `sqrt(2*ln(N))` reference); this errata uses Form A as primary for project-discipline alignment but flags the framing tension for post-V_SEAL Tier 6 evaluation application register-event resolution per advisor F2 LOW catch.)
+
+**Direction of conservatism (operational implication)**:
+
+SMALLER N* → SMALLER SR* (threshold) → EASIER to clear DSR ≥ 0 → MORE candidates pass under null → HIGHER false-positive rate. Under standard BLdP 2014 DSR semantics, smaller N* is the **ANTI-conservative direction** for false-positive control, NOT the conservative direction as the original §2.2 line 95 claim stated. The N*-ε downward adjustment matches **model-implied** (not empirical; ρ̄ is INDETERMINATE per §8) effective number of independent trials under positive cross-candidate correlation assumption; whether this matches "true effective N" depends on whether the inferred-positive correlation structural assumption holds empirically (deferred to B-C-narrow successor + Tier 6 evaluation application register-event).
+
+### §12.3 — Errata E3: §6.1 line 190 vs §2.2 line 95 statistical-object disambiguation + framing-axis clarification
+
+**Errata E3 (2026-05-25; R6.1 §2.2 narrow patch cycle V_SEAL register-event)**:
+
+§6.1 line 190 + §2.2 N*-ε formula reference THE SAME underlying statistical object (the expected maximum SR under null SR* across N* effective trials per Bailey-López de Prado 2014; see §12.2 E2 for formula). The two sections frame conservatism direction along DIFFERENT framing axes; both framings are mathematically self-consistent but prescribe **DIFFERENT error-type-priority targets (FP vs FN) for the same underlying statistic**.
+
+**§6.1 line 190 framing (cross-candidate null-distribution variance axis)**:
+
+Sealed text (text-content verbatim from §6.1 line 190; full bullet quote; sealed markdown bold/bullet markup stripped for fenced quote reproduction per character-level disclosure): "Cross-candidate positive correlation direction: For DSR-style selection-of-maximum statistics, positive cross-candidate correlation REDUCES the effective dispersion of the maximum statistic; i.i.d.-assumption-derived null distribution OVER-states true null variance of the maximum → true Type-I error ≤ nominal (CONSERVATIVE direction for selection-of-maximum). Cross-candidate correlation in 18 cohort is inferred-positive under shared BTC market exposure + theme-axis bundling structural assumption (NOT empirically verified at R6.1 V_SEAL per §8 INDETERMINATE classification)."
+
+§6.1 frames the i.i.d.-assumption-derived null distribution of the MAXIMUM statistic. Under positive cross-candidate correlation (inferred-positive at R6.1 V_SEAL; NOT empirically verified per §8 INDETERMINATE), the true distribution of max(SR_1, ..., SR_N) has LESS dispersion than under i.i.d. (because correlated candidates move together, reducing the spread of the max). Using i.i.d.-derived critical values (treating N=18 effective trials as independent) yields MORE EXTREME critical values than necessary under true correlated null — hence Type-I error ≤ nominal, which is the CONSERVATIVE direction for FP control of the selection-of-maximum test.
+
+**§2.2 N\*-ε formula framing (per-candidate threshold computation axis)**:
+
+§2.2 N*-ε scalar `1 + (N−1)·(1−ρ̄)` feeds the SR* expected-max formula directly (see §12.2 E2). Under positive cross-candidate correlation assumption (ρ̄ > 0; inferred-positive at R6.1 V_SEAL per §8 INDETERMINATE), N* < N, which → smaller SR* threshold (per §12.2 monotonicity). The N*-ε downward adjustment matches the **model-implied effective number of independent trials** ("model-implied" not "true" per §8 INDETERMINATE: ρ̄ is INFERRED/ASSUMED not empirically verified at R6.1 V_SEAL); this is the FN-CONSERVATIVE direction for the test (easier to clear; more candidates pass; protects genuine discoveries from over-deflation under the structural assumption that ρ̄ > 0 model-implication holds).
+
+**Disambiguation summary**:
+
+| Axis | Framing | Prescription | Direction (error-type priority) |
+|---|---|---|---|
+| §6.1 line 190 | i.i.d.-null-distribution-of-max OVER-states variance under positive correlation | Use i.i.d. critical value (N = 18) | **FP-conservative** for selection-of-max test |
+| §2.2 N\*-ε formula | N\*-ε corrects effective N downward under inferred-positive correlation (model-implied) | Use N\* = 1+(N−1)·(1−ρ̄) < N in expected-max formula | **FN-conservative** (model-implied true-null calibration; over-deflation reduced under structural assumption) |
+
+**Reconciliation**:
+
+The two framings are NOT mathematically contradictory. They prescribe DIFFERENT error-type-priority targets (FP vs FN) for the SAME statistic because they optimize different error-type priorities:
+
+- §6.1 framing ENDORSES i.i.d. assumption as FP-conservative (because the i.i.d.-derived critical value is MORE extreme than necessary under inferred-positive correlated null → test is TOO STRICT → fewer FPs)
+- §2.2 N*-ε framing matches the test to model-implied effective N → more accurate calibration to model-implied null distribution → more discoveries (FN-conservative under model-implication assumption that ρ̄ > 0)
+
+Both framings are conditioned on the inferred-positive cross-candidate correlation structural assumption (NOT empirically verified per §8 INDETERMINATE); empirical ρ̄ refinement deferred to B-C-narrow successor + Tier 6 evaluation application register-event.
+
+Under R6.1 V_SEAL §11.4 explicit B-Lang ("no capital implication at V_SEAL register-event"), the choice between these framings is a methodology-direction question with no immediate capital consequence; it informs the post-V_SEAL Tier 6 evaluation application register-event under separate Charlie register-event.
+
+**PSD-2 prescription value LOCKED at Charlie register #7 2026-05-25 = (a1)**:
+
+PSD-2 lock selects §6.1 framing axis as governing for application. **(a1)** ρ̄=0/N*=18 aligns with §6.1 framing axis (i.i.d. as FP-conservative for selection-of-maximum boundary). Alternative axes (§2.2 N*-ε FN-conservative direction) considered but not locked per Charlie register #7 + CONVERGED B2 2-leg reviewer recommendation at PSD-2 dispatch (advisor + Codex independent first-principles (a1) lean; both legs flagged (a2) tunable-without-empirical-anchor + (a3) successor-deferred-FP-protection + (a4) NARROW scope expansion concerns).
+
+Application-layer canonical: ρ̄ = 0, N* = N = 18; SR* threshold ≈ 2.40·√Var(SR_null) (Form A asymptotic) ≈ 1.85·√Var(SR_null) (Form B closed-form); empirical ρ̄ refinement + Form A vs Form B framing tension resolution deferred to B-C-narrow data-recovery successor + post-V_SEAL Tier 6 evaluation application register-event per Path α invariant.
+
+**Sealed-content invariance preserved at character level**: §6.1 line 190 + §2.2 line 85 + line 94 (rationale point #5) + line 95 (rationale point #6) + line 97 + §2.2 line 72 (Cross-candidate correlation framing subsection) + §2.2 line 99 (Anti-pre-emption preservation) + §4.1 line 144 + §6.1 line 182 + §6.1 line 191 (Within-candidate serial correlation direction) + §8 line 260 + §11.3 line 445 + §11.4 line 454 + §11.6 line 465 + §5.1 line 166 (SD-D-α rationale #4 first-time Tier 6 fire FP-cost framing; under (a4) lock would have required reconciliation per §12.4 E4; (a1) lock preserves verbatim no reconciliation) + §6.1 line 197 (Anti-pre-emption SD-E-γ + RW/WY framework family reopening + actual ρ̄ value bounds) + post-§11 footer lines 467-501 all remain as originally sealed; this errata note + §12.4 E4 supersession reference table provide the application-layer canonical reference under Architecture B strictest reading per Charlie register #4b + #4c + #4d.
+
+### §12.4 — Errata E4: Propagation supersession reference table
+
+**Errata E4 (2026-05-25; R6.1 §2.2 narrow patch cycle V_SEAL register-event; PSD-2 (a1) locked)**:
+
+Under PSD-2 LOCK at Charlie register #7 = **(a1) Full flip to i.i.d.: ρ̄ = 0 / N* = N = 18**, the following table enumerates **17 R6.1 V_SEAL direction-of-conservatism propagation sites** (supersession-relevant). Additional neutral N*/formula occurrences exist at sealed lines 62, 70, 83, 87, 89, 92, 93, 103, 111, 113, 115, 117, 165, 167, 317, 321, 388, 430 (per independent grep audit at PSD-3 v1 + R6.1 V_SEAL v1-patched PFR Codex Q4(a) catch); these neutral hits reference N*/formula in structural-binding / threshold-meaning / cascade-doublecount / accounting-rationale / α-stringency-vs-power contexts — NOT direction-of-conservatism — and carry **NO (a1)-impacted prescription change**, hence not enumerated per-line in this table. Each sealed site (enumerated + neutral) remains byte-identical at character level per Architecture B; this errata is the canonical application-layer reference layer for the 17 supersession-relevant sites.
+
+**R6.1 V_SEAL internal propagation sites (17 sites)**:
+
+| Site | Sealed text class | (a1) Application-layer canonical disposition |
+|---|---|---|
+| §2.2 line 72 | "Cross-candidate correlation framing" subsection; V3-P2 patch ADOPT context; inferred-positive ρ̄ structural assumption | Sealed text preserved; structural-correlation acknowledgment continues; application-layer prescription = ρ̄=0 per Charlie register #7 (a1) lock |
+| §2.2 line 85 | SD-A-α §2.2 Locked option N\*-ε scalar formula `N* = 1 + (N−1)·(1−ρ̄)` + ρ̄ ≤ 0.5 upper-bound assumption | Sealed text preserved; application-layer: USE ρ̄=0 in formula → N\*=18 effective trials |
+| §2.2 line 94 (rationale point #5) | N\*-ε formula choice rationale citing inferred-positive ρ̄ structural assumption | Sealed text preserved; (a1) supersession per §12.1 E1: ρ̄=0 prescription does NOT claim structural correlation is zero; USING ρ̄=0 yields FP-conservative threshold (largest SR\* value); structural acknowledgment continues at §6.1 line 190 framing |
+| §2.2 line 95 (rationale point #6) | **PRIMARY CATCH SITE**: "conservative N\* (smaller value) makes the DSR haircut larger, reducing false-positive risk" monotonicity-direction inversion | Sealed text preserved; §12.1 E1 corrects direction (larger N\* → larger SR\* → fewer FP); §6.1 framing axis governs per (a1) lock |
+| §2.2 line 97 | §34 data requirement framing for empirical ρ̄ INDETERMINATE | Sealed text preserved; empirical ρ̄ refinement deferred to B-C-narrow data-recovery successor + post-V_SEAL Tier 6 evaluation application register-event per Path α invariant |
+| §2.2 line 99 | Anti-pre-emption preservation: actual ρ̄ + N\* refinement + alternative estimators = post-V_SEAL decisions | Sealed text preserved; (a1) lock preserves anti-pre-emption discipline at successor-cycle boundary |
+| §4.1 line 144 | "effective N\* ≈ 8-12 under prior/inference ρ̄ ≈ 0.3-0.5" | Sealed text preserved; application-layer effective N\* = 18 (i.i.d. under (a1) lock); prior/inference ρ̄ framing addressed by §12.3 E3 disambiguation (§6.1 framing axis governs per (a1)) |
+| §5.1 line 166 | SD-D-α rationale #4: "SD-D-β 0.10 too permissive for first-time Tier 6 fire (false-positive cost dominates at capital-commitment-adjacent register)" | Sealed text preserved verbatim; (a4) NOT locked per Charlie register #7; (a1) lock preserves sealed priority framing at line 166 intact (no reconciliation needed) |
+| §6.1 line 182 | "Cross-candidate dependence partially absorbed via N\*-ε scalar with conservative ρ̄ assumption (per §2.2)" | Sealed text preserved; application-layer ρ̄=0 per (a1); cross-candidate dependence handling = §6.1 framing axis (i.i.d.-as-FP-conservative per §12.3 E3) |
+| §6.1 line 190 | Cross-candidate positive correlation direction framing (CONSERVATIVE direction for selection-of-maximum) + epistemic caveat "inferred-positive... NOT empirically verified per §8 INDETERMINATE" | Sealed text preserved verbatim (text-content + epistemic caveat); (a1) selects §6.1 framing axis as governing per §12.3 E3 |
+| §6.1 line 191 | Within-candidate serial correlation direction (Mertens variance + ARCH effects ANTI-CONSERVATIVE) | Sealed text preserved; OUT OF SCOPE for this errata (§2.2 line 95 monotonicity correction addresses cross-candidate framing only); within-candidate serial correlation handling deferred to SD-E-γ stationary bootstrap upgrade post-data-recovery successor cycle eligibility |
+| §6.1 line 197 | Anti-pre-emption: SD-E-γ stationary bootstrap + RW/WY framework family reopening + actual ρ̄ value bounds = post-V_SEAL Tier 6 evaluation application or successor-cycle decisions | Sealed text preserved; (a1) lock preserves anti-pre-emption discipline at successor-cycle boundary |
+| §8 line 260 | §34 data-accessibility table N\*-ε row | Sealed text preserved; application-layer ρ̄=0 per (a1); INDETERMINATE empirical ρ̄ per §8 carry-forward to B-C-narrow successor |
+| §11.3 line 445 | SD-A-α sub-dimension N\*-ε bullet (scalar approximation `N* = 1 + (N−1)·(1−ρ̄)` + ρ̄ ≤ 0.5 conservative bound) | Sealed text preserved; application-layer prescription = ρ̄=0/N\*=18 per (a1) |
+| §11.4 line 454 | B-Lang capital-implication-zero framing | Sealed text preserved verbatim ("No capital implication attaches to R6.1 V_SEAL; capital-commitment-relevant promotion decisions occur at post-V_SEAL Tier 6 evaluation application register-event"); orchestrator inference (NOT verbatim sealed claim) from this framing: a zero-pass first-fire outcome under (a1) is structurally informative not capital-impacting at R6.1 V_SEAL itself per Path α invariant |
+| §11.6 line 465 | Final state signature "V4 + V5-P1 inline (450 lines / 32 sections)" | Sealed signature preserved verbatim per Architecture B character-level discipline |
+| Post-§11 footer lines 467-501 | V4/V5-P1 signature block (V3-P1 + V2-P3 + V2-P2 + V2-P8 + V3-P2 + V4-P1 + V5-P1 patches) | Preserved verbatim per Architecture B character-level discipline; §12 errata appended post-line-501 |
+
+**Cross-document supersession references** (deferred to separate Charlie register-event for in-place edits per Architecture B preference; cross-references preferred over in-place edits):
+
+| Site | Sealed text class | (a1) Application-layer disposition |
+|---|---|---|
+| `docs/phase5/R5_2_PHASE_B_SELECTION_INFLATION_HANDLING_NOTE.md` §2.1 PSR formula reference + §2.3 framework family lock + RW/WY Path X exclusion | R5.2 SD-A-α framework family extension authority; R6.1 instrument variant + N\*-ε / ρ̄ sub-dimension carried forward | Cross-reference to R6.1 §12 errata at R5.2 §2.X note appendix at separate Charlie register-event if substantive consumer reliance surfaces; under Architecture B preference, cross-reference preferred over in-place edit; (a1) lock preserves R5.2 SD-A-α framework family lock |
+| `docs/discipline/METHODOLOGY_NOTES.md` §35.9 | References R6.1 N\*-ε in data-preservation discipline context (per advisor PFR-rule-Y verification: NOT direction-of-conservatism context) | §35.9 cites N\*-ε ONLY as §34 INDETERMINATE-classification example, NOT as methodology-prescription anchor; (a1) ρ̄=0/N\*=18 prescription doesn't change the §34 INDETERMINATE classification (data unavailability is independent of which value ρ̄ is set to); cross-reference supersession marker NOT REQUIRED at this register class (eligible-not-named at separate METHODOLOGY_NOTES register-event if §35.X codification cycle fires per anti-pre-emption discipline) |
+| `docs/phase5/B_C_EXTENDED_SCOPE_B_NOTE.md` | B-C-extended cycle SEAL artifact data-preservation framing references R6.1 | **No cross-reference needed (verified at PSD-3 v1 B2 2-leg advisor F3 INFO + Codex Q2 dispatches + R6.1 V_SEAL v1-patched PFR Codex Q4(b) + Advisor Defect 1 line-list completion: 14 R6.1 references in B-C-extended artifact all data-preservation context (lines 8/10/11/53/59/72/73/125/291/304/305/306/307/311); NONE cite §2.2 monotonicity prescription)** |
+| `docs/phase5/R5_1_PHASE_B_CANDIDATE_SUBSET_COMMITMENT_NOTE.md` | R5.1 cohort commitment | No direct R6.1 §2.2 prescription citation found; no cross-reference needed |
+| `docs/phase5/PHASE5_A_CLARIFICATION_NOTE.md` | β3 hybrid Phase A §11 cross-reference | No direct R6.1 §2.2 prescription citation found; no cross-reference needed |
+| `CLAUDE.md` HARD CONSTRAINT lines 267-273 | Conservative-Anchor Gate Integrity 7 HARD CONSTRAINTs | Sealed text preserved; HARD CONSTRAINT lines 267-273 + R5.2 §2.2 extension (5-parameter lock authority) all preserved independently per (a1) lock; no in-place edit at CLAUDE.md required |
+| `blueprint/PHASE2_BLUEPRINT.md` + `docs/parked/PARKED_BRANCHES.md` + `docs/decisions/WF_TEST_BOUNDARY_SEMANTICS.md` | Phase 2 blueprint / parked branches / WF test boundary semantics | No direct R6.1 §2.2 prescription citation found; no cross-reference needed |
+
+**§12.4 E4 Step 6.5b Internal-Consistency Check under (a1) lock**:
+
+Step 6.5b internal-consistency check (per Advisor BLOCKING-1 v1 PFR catch + PSD-1 v4 §12.1 E1 outcome-conditional language collapse):
+
+Under PSD-2 = **(a1) LOCKED** at Charlie register #7:
+
+**§2.2 rationale point #5 (line 94) consistency check**: rationale point #5 ("N*-ε scalar is the conservative finite-sample-defensible choice — carries one explicit and inspectable assumption (ρ̄)") asserts the N*-ε formula is chosen BECAUSE we infer positive ρ̄ structural assumption. Under (a1) lock setting ρ̄=0 in the formula, the formula degenerates to N*=N=18 (no adjustment).
+
+**Resolution language** (per §12.1 E1 + §12.4 E4 supersession): "ρ̄=0 prescription does NOT claim structural correlation is zero; the inferred-positive cross-candidate correlation structural assumption continues to be acknowledged at §6.1 line 190 (sealed; preserved verbatim including epistemic caveat 'NOT empirically verified per §8 INDETERMINATE'); ρ̄=0 prescription claims that USING ρ̄=0 in the N*-ε formula yields the FP-conservative threshold (largest SR* value under §6.1 framing axis = i.i.d.-null-distribution-of-max conservative direction). Empirical ρ̄ refinement deferred to B-C-narrow data-recovery successor cycle + post-V_SEAL Tier 6 evaluation application register-event per Path α invariant. Path α invariant preserved: no per-candidate statistics computation at this errata layer."
+
+**§5.1 line 166 (a4)-conditional reconciliation**: NOT TRIGGERED. (a4) was considered but not locked per Charlie register #7; sealed §5.1 line 166 framing ("SD-D-β 0.10 too permissive for first-time Tier 6 fire (false-positive cost dominates at capital-commitment-adjacent register)") preserved verbatim at character level per Architecture B sealed-content invariance discipline. No priority-statement re-litigation under (a1) lock.
+
+**§4.1 line 144 effective-N\* estimate consistency check**: sealed text "effective N\* ≈ 8-12 under prior/inference ρ̄ ≈ 0.3-0.5" preserved. Under (a1) lock, application-layer effective N\* = 18 (i.i.d.); the sealed prior/inference framing at line 144 is acknowledged as **prior-inference context** (not empirical) under §6.1 framing axis governance per §12.3 E3; no in-place modification.
+
+**§2.2 line 95 rationale point #6 monotonicity-direction**: corrected per §12.1 E1 + §12.2 E2 monotonicity derivation. Under (a1) lock, the corrected direction (larger N\* → larger SR\* → fewer FP) is the operative direction; sealed text preserved as record of original V_SEAL state.
+
+**Form A vs Form B framing tension** (advisor F2 LOW v2 PFR catch): §11.3 line 445 SD-A-α V_SEAL lock = Bailey-López de Prado 2014 closed-form analytical (Form B). §12.2 E2 uses Form A asymptotic √(2·ln(N*)) as primary for numerical comparison table per HARD CONSTRAINT line 268 alignment; Form B closed-form numerical values disclosed in parenthetical. Under (a1) lock, application-layer Form choice = Form B per §11.3 SD-A-α V_SEAL canonical lock; Form A asymptotic remains illustrative. **Framing-tension resolution deferred to post-V_SEAL Tier 6 evaluation application register-event** per Path α invariant; no in-place modification at §11.3.
+
+**Consistency check verdict**:
+
+Under PSD-2 (a1) LOCKED at Charlie register #7, all sealed R6.1 V_SEAL surfaces at lines 72, 85, 94, 95, 97, 99, 144, 166, 182, 190, 191, 197, 260, 445, 454, 465, 467-501 are byte-identical at character level preserved; application-layer canonical references at §12.1 E1 + §12.2 E2 + §12.3 E3 + this §12.4 E4 supersession reference table. No in-place modifications to sealed body; §12 errata is the canonical correction reference layer. Path α invariant preserved (no engine runs; no per-candidate statistics computation at this errata layer).
+
+**Axis-governance map under (a1) lock** (per advisor F7 LOW PSD-3 v1 dispatch senior-quant integrated-narrative addition): (a1) FP-conservatism direction governs **CROSS-candidate axis only** (selection-of-maximum boundary via §6.1 framing axis per §12.3 E3). **Within-candidate serial-correlation axis remains anti-conservative under (a1) lock** by carry-forward from sealed §6.1 line 191 ("Positive within-candidate autocorrelation (BTC hourly vol clustering, ARCH effects) INFLATES Sharpe-estimator variance vs i.i.d. baseline; i.i.d.-assumed-variance via Mertens 2002 formula UNDER-states true variance → true Type-I error ≥ nominal (ANTI-CONSERVATIVE direction)"). SD-E-γ stationary bootstrap variance overlay upgrade (Politis-Romano 1994) is the eligible-not-named mitigation path per sealed §6.1 line 197 anti-pre-emption preservation; eligible at separate Charlie register-event boundary at post-B-C-narrow data-recovery successor cycle. Tier 6 evaluation application register-event reader should understand (a1) FP-conservatism is cross-candidate-axis-bounded; within-candidate axis mitigation deferred to successor-cycle eligibility.
+
+### §12.5 — Errata E5: Patch cycle provenance + reviewer adjudication trail
+
+**Errata E5 (2026-05-25; R6.1 §2.2 narrow patch cycle V_SEAL register-event)**:
+
+Patch cycle provenance + reviewer adjudication trail per SF-23-i meta-errata extension at Charlie register #4c.
+
+**Note on register-event numbering convention** (per Advisor Defect 2 R6.1 V_SEAL v1-patched PFR catch): this Charlie register chain uses **chronological numbering** (cycle entry = #1; plan v1 dispatch = #4; etc.) as primary narrative anchor for natural conversation reference. The plan v5 register-event boundaries table uses **task-chain canonical numbering** per SF-22-i realignment (e.g., task-chain #1 = cycle entry = Charlie register #3 chronologically; task-chain #2 = plan v1 dispatch = Charlie register #4; etc.). Both conventions reference the same register-events; cross-reference between the two conventions is straightforward via the chronological-to-task-chain mapping at plan v5 register-event boundaries table.
+
+**Charlie register chain** (cycle entry through SEAL; chronological convention):
+- **#1** (2026-05-25): cycle entry — Path β strategic direction (NARROW §2.2 patch cycle → 1 (B-C-narrow data-recovery successor) → 2 (post-V_SEAL Tier 6 evaluation application) with conditional RW/WY reopen)
+- **#2** (2026-05-25): option (i) triple-verify first
+- **#3** (2026-05-25): Path β-1 + option (a) FP-conservative direction lock; parent plan v1 drafting fire authorized
+- **#4** (2026-05-25): plan v1 B2 2-leg reviewer dispatch
+- **#4b** (2026-05-25): (III) ADOPT 8 substantive v1 PFR findings + SF-13 Architecture B + SF-15 (a1) early lean
+- **#4c** (2026-05-25): (I) v3 PFR-rule-Y dispatch + (α) blanket ADOPT on SF-20/21/22/23 (PSD-1-β deletion + commit template outcome-conditional + register table realign + §12 precedent qualifier)
+- **#4d** (2026-05-25): (II) v4 PFR-rule-Y dispatch + 8 v3 PFR-rule-Y findings blanket apply
+- **#4e** (2026-05-25): (I) Path α inline-fix-and-ratify; plan v5 = v_final-eligible
+- **#5** (2026-05-25): (I) Ratify plan v5 as v_final + authorize PSD-1/PSD-2/PSD-3 fire
+- **#6** (2026-05-25): (I) Direct ratify PSD-1 §12.1+§12.2+§12.3 errata v3 (post-inline-fix; 8 v2 PFR-rule-Y ADOPT findings applied; Form A primary table + Form B closed-form referenced + §6.1 line 190 full epistemic caveat + 17-site propagation enumeration)
+- **#7** (2026-05-25): (I) Lock (a1) Full flip to i.i.d. ρ̄=0/N*=N=18 per CONVERGED B2 2-leg reviewer recommendation (Codex + Advisor independent first-principles (a1) lean; F4 fix lean-hidden discipline; MAX anti-anchoring at Advisor produced within-advisor lean shift SF-15 (a4) → fresh PSD-2 (a1))
+- **#8** (2026-05-25): (I) Direct ratify PSD-3 §12.4 E4 supersession reference table v2 (post-inline-fix; 6 v1 PFR ADOPT findings applied; 17 R6.1 internal sites + cross-document dispositions + Step 6.5b internal-consistency check + axis-governance map footnote)
+- **#9** (pending): SEAL bundle fire (Charlie register at Task 9)
+- **#10** (pending): cycle close acknowledgment (Charlie register at Task 10)
+
+**Verification chain across two scopes** (per advisor F3 PFR-rule-Y v2 fix: 8-leg conflation → two-scope reframe):
+
+(i) **Math claim verification = 5-leg convergence** (Codex BLOCKING catch on monotonicity-direction inversion + ChatGPT external triple-verify + Gemini external triple-verify + Claude external triple-verify + orchestrator Layer 3 math; per Charlie register #2 report). Math claim independently verifiable from §12.2 E2 derivation; leg-count + external-system convergent-report fidelity carries chain-trust dependency on Charlie's register-event report.
+
+(ii) **Patch plan reviewer adjudication = B2 2-leg dispatch sets** (10+ B2 dispatch sets across plan v1 PFR + SF-13/SF-15 BL-Y + plan v2/v3/v4 PFR-rule-Y + PSD-1 v1/v2 PFR-rule-Y + PSD-2 menu + PSD-3 v1 B2 2-leg + outcome-conditional cycles).
+
+### §12.6 — Errata E6: Anti-pre-emption preservation
+
+**Errata E6 (2026-05-25; R6.1 §2.2 narrow patch cycle V_SEAL register-event)**:
+
+Anti-pre-emption preservation per SF-23-i meta-errata extension.
+
+This §12 errata layer does NOT reopen R5.2 SD-A-α framework family lock. Does NOT reopen R6.1 V_SEAL lock authority scope: **5 total locked parameters preserved** (3 per HARD CONSTRAINT line 273 literal: instrument variant + threshold + N value; + 2 per R5.2 §2.2 extension: α budget value + dependence-structure handling). CLAUDE.md HARD CONSTRAINT lines 267-273 all 7 preserved independently (line 267: Tier 5 conservative-anchor gate `holdout_sharpe > 0` strict pass at `spot_realistic_15bps_v1` anchor; line 268: FWER multiplicity correction REQUIRED at Tier 6; line 269: BH-FDR NOT eligible; line 270: 7bps NOT eligible at Tier 5/6; line 271: SPOT 15bps anchor preservation [NEVER modify `config/execution_phaseb_spot_15bps.yaml` without approval]; line 272: cost_anchor_id requirement; line 273: multiplicity instrument variant + threshold + N pre-commit at R6.1 V_SEAL).
+
+Only ρ̄ upper-bound CHOICE within `N*-ε` sub-dimension changed per option (a) re-derivation + Charlie register #7 (a1) lock: ρ̄ = 0 / N* = N = 18. Entire pre-existing artifact (lines 1-501, including §0-§11 sealed body + post-§11 footer V4/V5-P1 signature block) remains byte-identical at character level per Architecture B sealed-content invariance discipline.
+
+**Successor cycles eligible-not-named per anti-pre-emption** (each requires fresh Charlie register-event):
+- **B-C-narrow data-recovery successor cycle** (R6.1 binding precondition; engine re-run reproducing `phase4_forward_2026_15bps_v1` with per-bar return series preservation + γ3/γ4 moments + registry linkage)
+- **Post-V_SEAL Tier 6 evaluation application** (gated by B-C-narrow; R6.1 methodology applied to candidate cohort under (a1) prescription)
+- **RW/WY framework family reopen** (advisory trigger candidates surfaced from this cycle: DSR borderline / empirical ρ̄ / HAC inflation indicators; NO automatic fire; NO pre-locked numeric thresholds at this cycle; adjudicated at separate Charlie register-event at post-Tier-6-first-fire boundary per anti-pre-emption discipline)
+- **SD-E-γ stationary bootstrap variance overlay upgrade** (within-candidate serial-correlation mitigation per Politis-Romano 1994; eligible-not-named per sealed §6.1 line 197; eligible at post-B-C-narrow data-recovery successor cycle)
+- **R5.2 SD-A-α framework family reopening cycle** (substantive methodology decision class)
+- **R5.2 cycle empirical memory codification** (R5.2-A through R5.2-G)
+- **R6.1-A/B/C codification cycle** (orchestrator-adjudication-error + BL-Y Phase 1 fresh-dispatch leak + path-lock-incomplete-document-propagation finding-class memory codification)
+- **§35 codification candidate** (anti-recurrence finding class observation surfaced this cycle at §12.7 E7 as class-reference only; specific subsection number NOT pre-bound; codification at separate METHODOLOGY_NOTES register-event)
+- **Cross-document supersession markers** at R5.2 / METHODOLOGY_NOTES / B-C-extended (deferred to separate register-event; no in-place edit at source documents per Architecture B preference)
+- **Form A asymptotic vs Form B closed-form framing tension resolution** (deferred to post-V_SEAL Tier 6 evaluation application register-event per Path α invariant)
+- **Within-candidate serial-correlation axis mitigation** (per §12.4 E4 axis-governance map footnote; SD-E-γ upgrade path)
+- Other Charlie-specifiable
+
+### §12.7 — Errata E7: Anti-recurrence finding (class reference)
+
+**Errata E7 (2026-05-25; R6.1 §2.2 narrow patch cycle V_SEAL register-event)**:
+
+Anti-recurrence finding (class reference) per SF-23-i + SF-18 meta-errata extension.
+
+**Pattern observation**: SEAL-class methodology-text claims about parameter monotonicity (e.g., "smaller N\* makes haircut larger" direction claim at R6.1 V_SEAL §2.2 line 95 rationale point #6) require **explicit derivation + cross-model adversarial verification at SEAL-eve gate** to catch direction-of-conservatism inversion errors. This cycle's catch + 5-leg triple-verify (Codex BLOCKING + ChatGPT + Gemini + Claude + orchestrator Layer 3) empirically demonstrate the pattern at one cross-cycle instance.
+
+**Class-reference framing**: existing METHODOLOGY_NOTES §35 standing body at lines 7162+ contains §35.1-§35.11 codified at B-C-extended cycle SEAL bundle component 2 (commit `86790a5`); whether this anti-recurrence finding rises to standing-rule status is a separate methodology decision; **eligible-not-named at separate Charlie register-event boundary at future METHODOLOGY_NOTES codification cycle per anti-pre-emption discipline; specific subsection number NOT pre-bound**.
+
+**Pattern characteristics for future codification consideration**:
+1. SEAL-class methodology-text monotonicity-direction claims (e.g., parameter X smaller → outcome Y larger / smaller) require explicit formula derivation reference at SEAL-class artifact body
+2. Cross-model adversarial leg at SEAL-eve is load-bearing for direction-of-conservatism inversion catches (advisor own-anchoring at framing-inheritance from upstream sources / cycle saturation framing → Codex cross-model fresh-read catches monotonicity inversion)
+3. Triple-verify across external systems (math claim independently verifiable; leg-count chain-trust-dependent) provides quadruple- to quintuple-confirmation at low marginal cost (~10-30 min round-trip)
+4. Architecture B errata structure (sealed-content invariance at character level + canonical-reference layer for downstream application-layer consumers) provides correction without re-litigating SEAL-class artifact body
+
+**Related memory codification candidates** (also eligible-not-named at separate register-event):
+- [[feedback_advisor_own_anchoring_implementation_review]] Rule 1 + Rule 4 extension to plan-stage + PSD-stage substantive content review iterations (this cycle empirically demonstrated Rule 4 vindication across v_n → v_{n+1} transitions at multiple class boundaries)
+- [[feedback_reviewer_routing_subagent_default]] B2 standing rule reaffirmation at 13+ cycle cumulative scale
+- [[feedback_invariant_level_vs_enumeration]] producer-consumer asymmetry recurrence pattern at framing layer (not just code layer)
+- Architecture B sealed-content invariance discipline at strictest reading codification candidate
