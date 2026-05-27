@@ -117,7 +117,7 @@ Per Charlie register #N+5 (Path 1: full AMEND-RE-PFR-R4) 2026-05-27. PFR R3 fire
 |---|---|---|---|
 | CR3-B1 | BLOCKING | Codex PFR R3 BLOCKING-1 | Inline-rewrite Tests 1/2/3/7/14 in Step 9.2 main code block to use `_make_fake_engine_with_registry(...)` helper via `side_effect=self._make_fake_engine_with_registry(...)` + add `db_path=db_path` kwarg to `_evaluate_one_candidate` calls. REPLACES the stale v2 inline `fake_run_regime_holdout` patterns at plan lines 458 / 523 / 784 / 1133 / 1409. The v3 CR2-B1 detailed application instructions section is preserved as design rationale but the test bodies are now the actual source-of-truth (not templates). |
 | MR3-1 | MEDIUM | Advisor PFR R3 MEDIUM-1 (empirically verified via Python execution) | Test 15 monkeypatch target changed from `"backtest.experiment_registry.DEFAULT_DB_PATH"` → `"scripts.run_phase2c_evaluation_gate.DEFAULT_DB_PATH"`. Per `from X import Y` binding semantics: when producer does `from backtest.experiment_registry import DEFAULT_DB_PATH`, it creates a LOCAL binding in `scripts.run_phase2c_evaluation_gate`; monkeypatching the experiment_registry module's attribute does NOT redirect the producer's local binding. Without this fix, Test 15 silently passes against real DB (3.8MB at backtest/experiments.db) rather than tmp_path → CB1 dry-run no-mutation invariant not actually verified. |
-| MR3-2 | MEDIUM | Codex PFR R3 MEDIUM-1 | Remove stale prose at 4 sites (lines 168, 2045, 2664, 2848) that still claim preflight calls `create_table`. Replace with explicit "preflight is TRULY read-only per CR2-B2 v3; create_table runs ONLY in POST-fire `_finalize_batch_registry` (which runs AFTER dry-run exit per CB1 wiring)". |
+| MR3-2 | MEDIUM | Codex PFR R3 MEDIUM-1 | Remove stale prose claiming preflight calls `create_table`. v4 attempt INCOMPLETE — cited line numbers (168/2045/2664/2848) were inaccurate per Advisor PFR R4 MEDIUM-1; updated 4 OTHER sites instead. v5 CR4-B1 + MR4-1 fix: actual stale docstring at lines 2090-2091 corrected (per PFR R4 ADOPT below); change-log citations updated to factually correct sites. |
 | MR3-3 | MEDIUM | Advisor PFR R3 MEDIUM-2 | Strengthen Test 24 docstring to ALSO explicitly lock `current_git_sha = head_sha` interpretation under NAMED-eligible-for-separate-spec-amend framework (parallel to MR2-3's git_commit tension). Spec literal `current_git_sha (=506285b)` reflects spec drafting staleness; plan uses head_sha (operationally correct per registry convention). Test 24 now explicitly asserts BOTH parent-child engine-consistency on git_commit AND head_sha derivation for current_git_sha. |
 | MR3-4 | MEDIUM | Codex PFR R3 LOW-1 (elevated for consistency with MR2-1) | Inline-update Tests 19+21 from `with get_connection(db_path) as conn:` → explicit `conn = get_connection(db_path); try: ...; finally: conn.close()` pattern. Matches MR2-1 producer CB6 read pattern + M3 _finalize_batch_registry* pattern. Consistency across all sqlite conn usage in test code. |
 | LR3-1 | LOW | Advisor PFR R3 LOW-1 | Step 9.4 commit message refreshed: headline "22 tests" → "24 tests"; final line "All 14 tests FAIL" → "All 24 tests FAIL"; 10 missing bullet categories appended for Tests 15-24. |
@@ -132,9 +132,37 @@ Per Charlie register #N+5 (Path 1: full AMEND-RE-PFR-R4) 2026-05-27. PFR R3 fire
 
 ---
 
+## PFR R4 ADOPT findings applied (Plan v5 amendments)
+
+Per Charlie register #N+6 (Path 1: full AMEND-RE-PFR-R5) 2026-05-27. PFR R4 fired as B2 2-leg dispatch on v4 (`1ee1a26`); Codex returned APPROVE-WITH-FINDINGS (1 MEDIUM + 1 LOW); Advisor returned APPROVE-WITH-FINDINGS (1 BLOCKING + 1 MEDIUM + 2 LOW). **CONVERGENT BLOCKING**: both legs surfaced the SAME doc-vs-implementation contradiction at plan lines 2090-2091 (preflight docstring still claims `create_table` despite v3 CR2-B2 fix removing it from body) — Codex tier MEDIUM-1; Advisor tier BLOCKING-1. **Adopted Advisor's BLOCKING tier per risk assessment** (implementer reading docstring may re-add create_table → CB1 dry-run regression returns).
+
+7/8 R3 ADOPT verified correctly applied at v4 per both legs. Only MR3-2 incomplete (my v4 edit updated 4 sites that were NOT stale create_table claims; missed the actual preflight function docstring at lines 2090-2091). Root cause: Codex R3 cited wrong line numbers (168/2045/2664/2848); I copied citations into v4 amend without re-grep verification.
+
+**Meta-lesson surfaced by Advisor R4 senior-quant perspective**: "At PFR adoption time, line-number citations should be re-grep-verified by the implementer when applying the fix (not just by the reviewer when surfacing it)." Recurring pattern across reviews: reviewer cites line X → implementer applies fix at line X → line numbers shifted in intervening edits → fix lands at wrong place. NAMED-eligible-for-feedback-memory-codification at separate Charlie register-event (anti-pre-emption: not in Phase 2 plan scope).
+
+**Both legs RE-VERIFIED PUSHBACK on Advisor R1 HIGH-5 SOUND at R4** — spec §3.2.3 line 117 lock; Test 23 anti-fragility guard.
+
+| # | Severity | Origin | Fix in v5 |
+|---|---|---|---|
+| CR4-B1 | BLOCKING | Convergent — Codex PFR R4 MEDIUM-1 + Advisor PFR R4 BLOCKING-1 | Fix preflight docstring at plan lines 2090-2091. Replace "Open db via get_connection(db_path); ensure runs table exists (create_table is idempotent per BLOCKING-3 fix)" with explicit "TRULY read-only on read path — does NOT call create_table" + 3-path early-exit logic explanation in docstring (matches body comment block at lines 2110-2174). Eliminates doc-vs-implementation contradiction; prevents future implementer from re-adding create_table (which would reintroduce CB1 dry-run mutation regression). |
+| MR4-1 | MEDIUM | Advisor PFR R4 MEDIUM-1 | Update MR3-2 change-log table row (line 120) — replace inaccurate citations (168/2045/2664/2848) with explicit acknowledgment that v4 attempt was INCOMPLETE; mark that CR4-B1 v5 fix corrects the actual stale site at lines 2090-2091. Audit-trail integrity per recurring re-grep-at-adoption discipline. |
+| LR4-1 | LOW | Codex PFR R4 LOW-1a | Plan line 137 (CR2-B1 detailed application instructions section preamble) "currently use" → past tense / design-rationale framing. Implementer reading after v4 CR3-B1 inline rewrite should not see contradicting "currently use" claim. |
+| LR4-2 | LOW | Codex PFR R4 LOW-1b | Plan line 200 (File Structure table) "22 test methods" → "24 test methods". Stale count from before R2 added Tests 23+24. |
+| LR4-3 | LOW | Codex PFR R4 LOW-1c | Plan line 2852 (Step 12.1 confirm step) "14 tests GREEN" → "24 tests GREEN". Stale count from v1 enumeration. |
+| LR4-4 | LOW | Advisor PFR R4 LOW-1 | LR3-3 defensive note citation `experiment_registry.py:167` → either drop (since :58 + :124 already cover parent_run_id column) or replace with `:56` (run_id TEXT PRIMARY KEY which COUNT WHERE run_id = ? query depends on). Lean: replace with `:56` for completeness. |
+| LR4-5 | LOW | Advisor PFR R4 LOW-2 | POST-fire `_finalize_batch_registry` docstring (plan lines 2196-2210) updated to explicitly contrast vs preflight: "DISTINCT FROM PREFLIGHT: POST-fire DOES call create_table... Twin functions; opposite create_table behavior; differentiated docstrings." Eliminates twin-function-trap risk for future implementers reading near-identical docstrings. |
+
+**Total v5 amendments: 7 ADOPT inline (1 BLOCKING + 1 MEDIUM + 5 LOW).**
+
+**Test count v4 → v5: 24 unchanged (no new tests at R4; only textual/citation polish + 1 docstring contradiction fix).**
+
+**Cycle status updated**: PFR R1 17 → R2 9 → R3 8 → R4 7. Steady saturation trajectory; all v5 fixes are TEXTUAL (no implementation churn). Predicted R5 → LOW-only or APPROVE → Rule 2 SEAL-eve adversarial dispatch (OPERATIONALLY REQUIRED per cumulative 26+ instance empirical pattern) → Plan SEAL.
+
+---
+
 ### CR2-B1 detailed application instructions (Tests 1/2/3/7/14 → use shared helper)
 
-The 5 LC-b active mock-engine tests (Tests 1/2/3/7/14) MUST be updated to use the new `_make_fake_engine_with_registry` helper method (defined in v3 at the top of TestBCNarrowPhase2ProducerEdits class). Each test currently uses an inline `def fake_run_regime_holdout(**kwargs): ...; return stub_holdout_result` pattern that does NOT insert the child registry row. Without the helper, the producer's v2 CB6 path raises `RuntimeError("child registry row missing for run_id=...")` at GREEN phase.
+The 5 LC-b active mock-engine tests (Tests 1/2/3/7/14) WERE updated in v4 per CR3-B1 to use the new `_make_fake_engine_with_registry` helper method (defined in v3 at the top of TestBCNarrowPhase2ProducerEdits class). v3 ADOPT design rationale: each test in v2 used an inline `def fake_run_regime_holdout(**kwargs): ...; return stub_holdout_result` pattern that did NOT insert the child registry row; without the helper, the producer's CB6 path would have raised `RuntimeError("child registry row missing for run_id=...")` at GREEN phase. v4 inline-rewrite (per CR3-B1 PFR R3 meta-discipline learning — "add helper + template + detailed instructions" is fragile when test bodies remain stale; inline-rewrite affected code directly).
 
 **Update template per affected test**:
 
@@ -197,7 +225,7 @@ Per-test artifact_dir mkdir + parquet write code that was inline in v2 (e.g., `a
 | File | Action | Scope |
 |---|---|---|
 | `scripts/run_phase2c_evaluation_gate.py` | MODIFY | 9 modify-zones (per Task 10; v2 expanded per PFR R1 ADOPT):<br>• **Imports** (Step 10.1): add `create_table`, `get_connection`, `insert_run`, `get_run`, `DEFAULT_DB_PATH` from `backtest.experiment_registry` (H2); `compute_moments`, `compute_per_bar_returns`, `CORRECTED_WF_ENGINE_COMMIT` from `backtest.engine` (CB4) and `backtest.wf_lineage` (already imported); `load_execution_config`, `ConstantSlippage` from `backtest.execution_model` (CB3 fee_model derivation); `shutil` for archive `move`<br>• **NEW module-level constants** (Step 10.1b; near scripts:117 PHASE4_FORWARD_2026_REGIME_KEY): `BCNARROW_PARENT_RUN_ID = "phase4_forward_2026_15bps_v1_b_c_narrow"` + `BCNARROW_ARCHIVE_BASENAME = "phase4_forward_2026_15bps_v1_d0b8101"` + `BCNARROW_SOURCE_BATCH_ID = "phase2c_15_main_fire_combined"` + `BCNARROW_REGIME_KEY = "evaluation_regimes.forward_2026"` + `BCNARROW_EXECUTION_CONFIG_PATH = "config/execution_phase4_15bps.yaml"` (M5)<br>• **`_build_argparser`** (Step 10.2): add `--enable-b-c-narrow-recovery` + `--force-rerun-existing` boolean flags<br>• **NEW `_validate_b_c_narrow_recovery_identity_or_raise()`** (Step 10.3a; CB2): 4-field cohort identity guard called BEFORE any mutation<br>• **NEW `_archive_canonical_pre_flight()`** (Step 10.3b): destructive archive of canonical → archive_root / BCNARROW_ARCHIVE_BASENAME (refuse-if-exists)<br>• **NEW `_finalize_batch_registry_preflight_or_raise()`** (Step 10.4a): R9 PRE-flight idempotency guard (TRULY read-only per CR2-B2 v3 — 3-path early-exit logic via sqlite_master; refuse-if-exists; `--force-rerun-existing` DELETE WHERE parent_run_id) + explicit `try/finally conn.close()` (M3). NOTE: `create_table` REMOVED from preflight per CR2-B2 v3 (was violating CB1 read-only invariant on dry-run path); create_table runs ONLY in POST-fire `_finalize_batch_registry`.<br>• **NEW `_finalize_batch_registry()`** (Step 10.4b): POST-fire parent row write via `insert_run`; cohort_metadata derived (CB3); parent.git_commit = CORRECTED_WF_ENGINE_COMMIT (CB4 OVERRIDE pattern); engine_commit also in notes JSON; explicit `try/finally conn.close()` (M3)<br>• **`_evaluate_one_candidate`** signature + body (Step 10.5; lines 480-573): add 4 LC-b kwargs (2 NEW); compute moments from equity_curve; query engine-written child registry row for returns_per_bar_path + returns_per_bar_sha256 (CB5 bare filename + CB6 single-source); merge into inline JSON write at lines 550-556<br>• **`_CSV_FIELDS`** (Step 10.6; lines 581-595): add 5 new fields (gamma3, gamma4, T_obs, returns_per_bar_path, returns_per_bar_sha256)<br>• **`_write_aggregate_csv`** (Step 10.7; lines 598-637): emit 5 new fields per row<br>• **`main()`** (Step 10.8; lines 864-1072): REORDERED wiring per CB1 — (0) identity guard (CB2) → (1) idempotency PRE-check (read-only) → (2) existing `_check_overwrite_protection` + dry-run exit (preserved verbatim) → (3) archive PRE-flight (destructive; AFTER dry-run) → (4) existing forward_window_metadata capture → (5) candidate loop with LC-b kwargs threaded → (6) finalize POST-fire parent row (after candidate loop + existing CSV write at line 996; before aggregate JSON write at line 1053) |
-| `tests/test_phase2c_evaluation_gate_runner.py` | EXTEND | NEW `TestBCNarrowPhase2ProducerEdits` class (22 test methods in v2; 14 from v1 enumeration + 8 NEW per PFR R1 ADOPT for CB1/CB2/CB3/CB5/H2/M1/M4; all bodies full runnable code per Charlie no敷衍 + Phase 0 precedent) |
+| `tests/test_phase2c_evaluation_gate_runner.py` | EXTEND | NEW `TestBCNarrowPhase2ProducerEdits` class (24 test methods in v4; 14 from v1 enumeration + 8 NEW per PFR R1 ADOPT for CB1/CB2/CB3/CB5/H2/M1/M4 + 2 NEW per PFR R2 ADOPT for MR2-3/MR2-4; all bodies full runnable code per Charlie no敷衍 + Phase 0 precedent) |
 | `tests/test_t1_4_backward_compat.py` | MODIFY | `_B1_LOCKED_4TUPLE` update at lines 84-89 per AST classifier dry-run output post-Phase-2-implementation commits + (if any new dynamic-pattern test) extend `approved_files` at lines 538-541 with rationale |
 
 **Data layer (Phase 2):** none. Phase 2 touches NO data files; archive step + parent-row DB write are exercised in tests via tmp_path isolation. The actual recovery fire is Phase 3 (separate sub-plan + Charlie register-event #N+3).
@@ -2086,15 +2114,29 @@ def _finalize_batch_registry_preflight_or_raise(
 ) -> None:
     """B-C-narrow Phase 2: PRE-flight idempotency guard for parent_run_id (R9-B-guarded).
 
-    Per spec §3.2.3 + BLOCKING-1 R9 PRE-flight split:
-    - Open db via get_connection(db_path); ensure runs table exists (create_table
-      is idempotent per BLOCKING-3 fix).
-    - Count rows WHERE run_id = parent_run_id (parent itself) AND rows WHERE
-      parent_run_id = parent_run_id (children from prior attempt).
-    - If any rows present:
-      - If force_rerun_existing=False → raise RuntimeError (refuse).
-      - If force_rerun_existing=True → DELETE all matching rows (children + parent).
-        Commit transaction.
+    Per spec §3.2.3 + BLOCKING-1 R9 PRE-flight split + CR2-B2 v3 + CR4-B1 v5 fix:
+
+    TRULY read-only on read path — does NOT call create_table. The function is
+    expected to fire BEFORE the existing dry-run exit (per CB1 ordering); a
+    create_table call here would commit DDL (CREATE TABLE IF NOT EXISTS + ALTER
+    TABLE migrations per experiment_registry.py:207-219), violating the
+    "read-only PRE-flight check before dry-run exit" invariant. The 3-path
+    early-exit logic uses sqlite_master read-only detection:
+
+    - Path 1 (DB file absent): treat as clean state; return immediately (no I/O).
+    - Path 2 (DB present but runs table absent): treat as clean state; return
+      (sqlite_master SELECT is purely read-only).
+    - Path 3 (runs table present): query parent + child row counts WITHOUT
+      calling create_table.
+      - If no rows present: clean state; return.
+      - If rows present AND force_rerun_existing=False: raise RuntimeError (refuse).
+      - If rows present AND force_rerun_existing=True: DELETE all matching rows
+        (children + parent) inside a `with conn:` transaction (commits on success;
+        rolls back on exception).
+
+    create_table runs ONLY in POST-fire _finalize_batch_registry (which runs AFTER
+    dry-run exit per CB1 wiring), so production write path still ensures table
+    existence — just not on the preflight read path.
 
     Args:
         parent_run_id: cohort parent run_id (e.g., "phase4_forward_2026_15bps_v1_b_c_narrow").
@@ -2124,7 +2166,9 @@ def _finalize_batch_registry_preflight_or_raise(
     #
     # LR3-3 PFR R3 ADOPT (v4) DEFENSIVE NOTE: Path 3 assumes runs table has parent_run_id
     # + run_id columns. True for any DB created via create_table (see CREATE_TABLE_SQL
-    # at experiment_registry.py:58 + MIGRATION_COLUMNS at :124 + :167). Theoretical
+    # at experiment_registry.py:58 + MIGRATION_COLUMNS at :124 + run_id PRIMARY KEY
+    # at :56 — LR4-4 PFR R4 ADOPT v5 fix replaced stale :167 citation which actually
+    # points to current_git_sha column NOT parent_run_id). Theoretical
     # edge case: pre-Phase-1A legacy DB without parent_run_id column would raise
     # OperationalError on COUNT query — NO such DB exists in this project (no
     # pre-Phase-1A schema preserved); defensive note only. If a future cycle introduces
@@ -2181,9 +2225,18 @@ def _finalize_batch_registry(
 ) -> None:
     """B-C-narrow Phase 2: POST-fire parent batch_summary row write (R9 POST-fire half).
 
-    Per spec §3.2.3 + PFR R1 v2 ADOPT (CB3 + CB4 + L3):
-    - Open db via get_connection(db_path); ensure runs table exists (create_table
-      BLOCKING-3 fix).
+    Per spec §3.2.3 + PFR R1 v2 ADOPT (CB3 + CB4 + L3) + LR4-5 v5 contrast:
+
+    DISTINCT FROM PREFLIGHT: POST-fire DOES call create_table(conn) before insert
+    (BLOCKING-3 fix), guaranteeing the runs table exists. The companion preflight
+    function `_finalize_batch_registry_preflight_or_raise` is TRULY read-only and
+    does NOT call create_table (per CR2-B2 v3) — POST-fire runs AFTER dry-run
+    exit so create_table mutation here is acceptable. Twin functions; opposite
+    create_table behavior; differentiated docstrings.
+
+    - Open db via get_connection(db_path); call create_table(conn) — ensures
+      runs table exists (BLOCKING-3 fix); committed DDL is fine here because
+      POST-fire path is past the dry-run gate per CB1 wiring.
     - Build parent row dict with cohort-level fields populated + per-candidate
       metric fields NULL.
     - CB4: parent.git_commit = CORRECTED_WF_ENGINE_COMMIT ("eb1c87f") matching
@@ -2849,7 +2902,7 @@ methodological error)."
 
 ### Task 12: Phase 2 final ratify packet
 
-- [ ] **Step 12.1: Confirm 14 tests GREEN + full suite zero regression + T1.4 baseline updated (or unchanged)**
+- [ ] **Step 12.1: Confirm 24 tests GREEN + full suite zero regression + T1.4 baseline updated (or unchanged)**
 
 ```bash
 python -m pytest tests/test_phase2c_evaluation_gate_runner.py::TestBCNarrowPhase2ProducerEdits -v
