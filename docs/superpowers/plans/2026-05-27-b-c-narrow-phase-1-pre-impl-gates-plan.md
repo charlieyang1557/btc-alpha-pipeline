@@ -18,6 +18,7 @@
 |---|---|---|
 | `docs/superpowers/plans/2026-05-27-b-c-narrow-phase-1-pre-impl-gates-plan.md` | CREATE | this plan |
 | `docs/superpowers/phase-1-gate-results/g1-engine-diff-audit.md` | CREATE at T5 | G1 commit classification table + adjudication rationale |
+| `docs/superpowers/phase-1-gate-results/g2-validate.py` | CREATE at T6 | G2 ephemeral validation script (PFR R2 LOW-4 fix v3 — was omitted in v2 File Structure) |
 | `docs/superpowers/phase-1-gate-results/g2-dsl-backward-compat-sample.json` | CREATE at T6 | G2 per-candidate validation results (≥39 samples) |
 | `docs/superpowers/phase-1-gate-results/g3-raw-payloads-inventory.md` | CREATE at T7 | G3 symlink inventory + resolution check |
 | `docs/superpowers/phase-1-gate-results/phase-1-ratify-summary.md` | CREATE at T9 | comprehensive Phase 1 ratify packet for Charlie register-event |
@@ -51,13 +52,15 @@ Plan v3-Phase1 drafting authorized 2026-05-27 per Charlie register `PLAN-V3-PHAS
 
 Before any T5-T8 execution, verify:
 
-- [ ] **Precondition 1: Clean working tree (PFR R1 LOW NEW-2 fix v2)**
+- [ ] **Precondition 1: Clean working tree (PFR R1 LOW NEW-2 fix v2 + PFR R2 HIGH-2/NEW-2 fix v3)**
 
-V4 reproducibility claims reference HEAD `f112599`. If `backtest/engine.py` has unstaged modifications mid-Phase-1 execution, the gates execute against a modified file but report results as-of `f112599` — silent breach. Verify clean state:
+V4 reproducibility claims reference HEAD `f112599`. If any code module touched by a Phase 1 gate has unstaged modifications mid-execution, the gates execute against modified files but report results as-of `f112599` — silent breach. Verify clean state:
 
 ```bash
-git status --porcelain backtest/ tests/ config/
+git status --porcelain backtest/ tests/ config/ scripts/ strategies/ factors/
 ```
+
+PFR R2 HIGH-2 fix v3 scope extensions: g2-validate.py imports from `scripts/run_phase2c_evaluation_gate` (`_strip_markdown_fence`) + `strategies/dsl` (`StrategyDSL`) + optionally `strategies/dsl_compiler` (`compile_dsl_to_strategy`) which in turn uses `factors/registry` (`FactorRegistry`). Unstaged modifications in any of these would silently affect Phase 1 gate results while claims reference HEAD `f112599`.
 
 Expected: empty output. Any output → STOP and surface to Charlie (uncommitted changes must be either committed or stashed before Phase 1 gates run).
 
@@ -117,8 +120,11 @@ git show <commit> -- backtest/ | less    # OR write to file for offline inspecti
 git show <commit> -- backtest/ > /tmp/g1-<commit>.diff
 
 # Step C: targeted symbol grep over numerical-path identifiers
+# PFR R2 LOW-3 / NEW-1 fix v3: extended symbol list with compute_all_metrics
+# (metrics aggregator at engine.py:758) + compute_moments (γ3/γ4 introduced
+# in 12dffde; sibling of compute_per_bar_returns).
 git show <commit> -- backtest/ | rg -nC2 \
-    'run_backtest|run_regime_holdout|single_run|_evaluate_regime_holdout_pass|slippage|fee_model|cost_model|sharpe_ratio|max_drawdown|equity_curve|_save_trade_csv|compute_per_bar_returns'
+    'run_backtest|run_regime_holdout|single_run|_evaluate_regime_holdout_pass|slippage|fee_model|cost_model|sharpe_ratio|max_drawdown|equity_curve|_save_trade_csv|compute_per_bar_returns|compute_all_metrics|compute_moments'
 
 # Step D: schema-only delta — verify no V4-chain function signature changes
 git show <commit> -- backtest/ | rg '^\s*def (run_backtest|run_regime_holdout|single_run|_evaluate_regime_holdout_pass)'
@@ -210,7 +216,12 @@ from scripts.run_phase2c_evaluation_gate import _strip_markdown_fence  # noqa: E
 
 
 def _ts() -> str:
-    """ISO 8601 UTC timestamp prefix for log lines."""
+    """ISO 8601 UTC timestamp prefix for log lines.
+
+    PFR R1 LOW L2 fix v2: this helper applies CLAUDE.md Coding Standards
+    "All scripts log to stdout with ISO 8601 UTC timestamps" requirement.
+    Used in all print() calls below.
+    """
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
@@ -396,16 +407,20 @@ This optional step extends coverage by spot-checking 3 cohort_a candidates throu
 
 ```python
 # Append to g2-validate.py OR run as separate g2-compile-spot.py at execution time
-from strategies.dsl_compiler import compile_dsl  # noqa: E402
+# PFR R2 HIGH-1 fix v3: function name is `compile_dsl_to_strategy` (not `compile_dsl`);
+# pass `write_manifest=False` to respect Phase 1's NO-data-writes scope (default is
+# True which writes data/compiled_strategies/<dsl_hash>.json per dsl_compiler.py:762-765).
+from strategies.dsl_compiler import compile_dsl_to_strategy  # noqa: E402
 
 def spot_check_compile(hsh: str, response_path: Path) -> dict:
-    """Compile DSL → Backtrader strategy class (no backtest run). Surfaces
-    semantic drift that schema validation misses."""
+    """Compile DSL → Backtrader strategy class (no backtest run; NO manifest write).
+    Surfaces semantic drift that schema validation misses."""
     raw = response_path.read_text(encoding="utf-8")
     payload = json.loads(_strip_markdown_fence(raw))
     dsl = StrategyDSL.model_validate(payload)
     try:
-        compile_dsl(dsl)
+        # write_manifest=False per Phase 1 NO-data-writes scope (PFR R2 HIGH-1 fix v3).
+        compile_dsl_to_strategy(dsl, write_manifest=False)
         return {"hypothesis_hash": hsh, "compile_pass": True, "error": None}
     except Exception as e:
         return {"hypothesis_hash": hsh, "compile_pass": False, "error": f"{type(e).__name__}: {e}"}
@@ -638,7 +653,7 @@ Each sub-plan requires separate Charlie register-event for drafting authorizatio
 
 ## Execution Handoff
 
-Plan v3-Phase1 v1 saved to `docs/superpowers/plans/2026-05-27-b-c-narrow-phase-1-pre-impl-gates-plan.md`.
+Plan v3-Phase1 v3 saved to `docs/superpowers/plans/2026-05-27-b-c-narrow-phase-1-pre-impl-gates-plan.md` (PFR R2 LOW-5 fix v3 — version label updated from v1 stale text).
 
 After Plan v3-Phase1 B2 2-leg PFR returns APPROVE (or APPROVE-WITH-FINDINGS at LOW-only floor) → use **superpowers:subagent-driven-development** per Charlie register PV3-SPLIT-BY-PHASE: dispatch fresh subagent per task with two-stage review OR orchestrator-manual execution per Charlie register-event-by-register-event.
 
