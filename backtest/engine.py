@@ -2294,6 +2294,14 @@ def run_regime_holdout(
     manifest_dir: Path | None = None,
     execution_config_path: Path | None = None,
     lineage_context: "Any | None" = None,
+    # B-C-narrow Phase 0 LC-b 4-kwarg lock (default None preserves backward compat):
+    # NOTE: cost_anchor_id is INTENTIONALLY OMITTED — derived in LineageContext
+    # __post_init__ from execution_config_path via COST_ANCHOR_ID_MAPPING per
+    # artifact_schema.py:298-302. Callers MUST NOT pass cost_anchor_id.
+    run_id_override: str | None = None,
+    source_batch_id: str | None = None,
+    parent_run_id_override: str | None = None,
+    artifact_dir: Path | None = None,
 ) -> RegimeHoldoutResult:
     """Run the 2022 regime holdout for a single hypothesis.
 
