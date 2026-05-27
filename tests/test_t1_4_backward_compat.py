@@ -35,6 +35,7 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
 
+import pandas as pd
 import pytest
 
 
@@ -1403,6 +1404,7 @@ class TestT1_4_B3_LegitimateFlowsAndOptOutSemantic:
                     "total_return": 0.10,
                     "total_trades": 10,
                 },
+                equity_curve=pd.Series(dtype=float),
             )
 
         # Mock _load_dsl_from_response to return stub (eval-gate doesn't validate DSL content)

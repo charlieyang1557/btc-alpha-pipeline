@@ -1824,3 +1824,583 @@ class TestComputeMomentsZeroVariance:
         assert result["gamma4"] is not None, (
             "gamma4 for non-zero variance input must not be None"
         )
+
+
+# tests/test_t1_1_artifact_writer.py — APPEND at end (before any trailing teardowns)
+
+import inspect
+from dataclasses import fields
+
+
+class TestBCNarrowPhase0EngineExtension:
+    """Phase 0 engine extension tests per Approach D' + LC-b 4-kwarg lock.
+
+    Locked decisions (per spec §3.1-§3.4 + plan v3-Phase0):
+    - RegimeHoldoutResult extends with equity_curve: pd.Series field (12 total)
+    - run_regime_holdout signature adds 4 LC-b kwargs (NOT 5;cost_anchor_id
+      DERIVED in LC __post_init__ per artifact_schema.py:298-302)
+    - lcb_active = (artifact_dir is not None) — single-gate precondition
+    - Engine constructs LineageContext internally + relies on _write_to_registry
+      at engine.py:1149 for SYS5 revalidate_for_write invariant (no
+      double-invocation at engine-side)
+    - Engine resolves canonical parquet path when parquet_path is None
+    - Engine raises informative error if get_git_commit() returns None or
+      hypothesis_hash is None at LC-b path
+    """
+
+    @pytest.fixture(autouse=True)
+    def _isolate_results_dir(self, tmp_path, monkeypatch):
+        """PFR R3 HIGH H1-C fix (v3.3): hermetic isolation from canonical
+        data/results/.
+
+        run_regime_holdout → run_backtest → _save_trade_csv writes
+        trade CSVs to backtest.engine.RESULTS_DIR at engine.py:830
+        (`RESULTS_DIR.mkdir(...); csv_path = RESULTS_DIR / f"trades_{run_id}.csv"`).
+        Without isolation, every successful Phase 0 test pollutes the repo's
+        canonical data/results/ directory.
+
+        Established precedent: tests/test_t1_4_backward_compat.py:921 +
+        tests/test_t1_5_smoke_end_to_end.py:403 + tests/test_t1_5_smoke_end_to_end.py:570
+        all monkeypatch this exact attribute for hermetic isolation. Reusing the
+        pattern with `autouse=True` so every test in this class gets isolation
+        by default.
+
+        Note on pytest scoping: pytest's `tmp_path` fixture is FUNCTION-scoped
+        (one fresh path per test). This autouse fixture inherits the default
+        function scope, so the `tmp_path` here is the SAME per-test instance
+        passed to each test method's `tmp_path` parameter. `results_dir` lives
+        as a sibling of the per-test `db_path` / `artifact_dir` under one
+        common tmp_path root — pytest auto-cleans the whole tree post-test.
+        """
+        results_dir = tmp_path / "results"
+        results_dir.mkdir(exist_ok=True)
+        monkeypatch.setattr("backtest.engine.RESULTS_DIR", results_dir)
+
+    # ----- Dataclass shape test (1) — merged per PFR R3 MEDIUM M2-A + LOW L1 -----
+
+    def test_regime_holdout_result_dataclass_exact_field_set(self):
+        """PFR R3 MEDIUM M2-A + LOW L1 fix (v3.3): replaces two prior tests
+        (`_exposes_equity_curve_field` + `_dataclass_field_count_12`) with a
+        single set-equality assertion.
+
+        Prior approach (count==12 + presence-of-equity_curve) was silent on
+        field-set regressions (e.g., remove field 11, add unrelated field 12 →
+        count stays 12; advisor M2-A). Set-equality catches both add AND remove
+        regressions at the exact 12-field contract per spec §3.1.1 + B-C-narrow
+        Phase 0 extension."""
+        from backtest.engine import RegimeHoldoutResult
+        expected = {
+            "run_id",
+            "parent_run_id",
+            "batch_id",
+            "hypothesis_hash",
+            "regime_holdout_passed",
+            "sharpe_ratio",
+            "max_drawdown",
+            "total_return",
+            "total_trades",
+            "passing_criteria",
+            "metrics",
+            "equity_curve",  # B-C-narrow Phase 0 12th field
+        }
+        actual = {f.name for f in fields(RegimeHoldoutResult)}
+        assert actual == expected, (
+            f"RegimeHoldoutResult field set drift:\n"
+            f"  Missing: {sorted(expected - actual)}\n"
+            f"  Extra:   {sorted(actual - expected)}\n"
+            f"  Actual:  {sorted(actual)}\n"
+            f"  Expected (12 fields): {sorted(expected)}"
+        )
+
+    # ----- Signature tests (2) -----
+
+    def test_run_regime_holdout_signature_includes_4_lcb_kwargs(self):
+        """4 LC-b kwargs (NOT 5) — cost_anchor_id derived in LC __post_init__."""
+        from backtest.engine import run_regime_holdout
+        sig = inspect.signature(run_regime_holdout)
+        params = sig.parameters
+        required = {
+            "run_id_override",
+            "source_batch_id",
+            "parent_run_id_override",
+            "artifact_dir",
+        }
+        missing = required - set(params.keys())
+        assert not missing, f"missing LC-b kwargs: {missing}"
+        for kw in required:
+            assert params[kw].default is None, (
+                f"LC-b kwarg '{kw}' must default to None (backward-compat);"
+                f" got default={params[kw].default!r}"
+            )
+
+    def test_run_regime_holdout_signature_does_not_include_cost_anchor_id(self):
+        """cost_anchor_id MUST NOT be a kwarg per artifact_schema.py:298-302 invariant."""
+        from backtest.engine import run_regime_holdout
+        sig = inspect.signature(run_regime_holdout)
+        assert "cost_anchor_id" not in sig.parameters, (
+            "cost_anchor_id MUST NOT be a run_regime_holdout kwarg per spec §3.4 "
+            "LC-b 4-kwarg lock. LC __post_init__ derives via COST_ANCHOR_ID_MAPPING."
+        )
+
+    # ----- Equity curve population test (1) -----
+
+    def test_run_regime_holdout_returns_result_with_equity_curve_populated(
+        self, dsl_bollinger_zscore_reversion, btc_parquet_path, tmp_path,
+        env_config_override_forward_2026,
+    ):
+        """result.equity_curve must be non-empty pd.Series (naive index — Backtrader-native;
+        UTC localization deferred to consumer per engine.py:514-518)."""
+        from backtest.engine import run_regime_holdout
+        result = run_regime_holdout(
+            dsl=dsl_bollinger_zscore_reversion,
+            batch_id="test-bc",
+            parent_run_id="test-parent",
+            regime_key="evaluation_regimes.forward_2026",
+            parquet_path=str(btc_parquet_path),
+            db_path=tmp_path / "test_eq_curve.db",
+            execution_config_path=Path("config/execution_phase4_15bps.yaml"),
+            env_config=env_config_override_forward_2026,
+        )
+        assert isinstance(result.equity_curve, pd.Series)
+        assert len(result.equity_curve) > 0, (
+            "equity_curve must be non-empty (forward_2026 = ~2528 hourly bars)"
+        )
+        # F7: BacktestResult.equity_curve produced by Backtrader has NAIVE index
+        # (Backtrader's data.datetime.datetime(0) returns naive datetime per engine.py:312).
+        # UTC localization happens in write_per_bar_artifact at engine.py:514-518.
+        # Therefore tz-aware verification belongs at the parquet-file level (covered by
+        # G4 in Plan v3-Phase3-4), NOT at result.equity_curve level. Just verify the
+        # series is datetime-indexed here.
+        assert pd.api.types.is_datetime64_any_dtype(result.equity_curve.index), (
+            "equity_curve must have datetime-typed index "
+            "(tz-awareness validated downstream at parquet write per engine.py:514-518)"
+        )
+        # PFR R3 MEDIUM M3-A fix (v3.3): semantic check on equity_curve content.
+        # The prior assertions catch shape/type but are silent on garbage data
+        # (e.g., engine populates equity_curve with raw closes, returns, or NaNs
+        # instead of portfolio values). Portfolio value is monetary and must be
+        # strictly positive at every bar (default initial cash = 100000; bankruptcy
+        # to <=0 would have other engine-level guards). This catches the
+        # "tests pass for the wrong reason" failure mode where engine returns a
+        # populated-but-semantically-wrong equity_curve.
+        assert (result.equity_curve > 0).all(), (
+            f"equity_curve must be strictly positive at every bar (portfolio value); "
+            f"got min={result.equity_curve.min()}, "
+            f"first_value={result.equity_curve.iloc[0]}, "
+            f"last_value={result.equity_curve.iloc[-1]}. Likely engine populated "
+            f"with returns/closes instead of values, or strategy collapsed below "
+            f"zero (which should fail the regime_holdout pass criteria upstream)."
+        )
+
+    # ----- LC-b internal construction test (all 14 LC fields asserted) -----
+
+    def test_run_regime_holdout_lcb_constructs_lineage_context_with_all_14_fields(
+        self, dsl_bollinger_zscore_reversion, btc_parquet_path, tmp_path,
+        env_config_override_forward_2026,
+    ):
+        """When LC-b path active (artifact_dir provided), engine constructs LC
+        internally with all 14 fields populated correctly + stamps registry row."""
+        from backtest.engine import run_regime_holdout
+        from backtest.experiment_registry import get_connection
+
+        db_path = tmp_path / "test_lcb_14_fields.db"
+        artifact_dir = tmp_path / "test_lcb_artifact"
+        run_id = "test_lcb_14fields_001"
+
+        result = run_regime_holdout(
+            dsl=dsl_bollinger_zscore_reversion,
+            batch_id="test-source-batch-lcb",
+            parent_run_id="test-parent-positional",
+            regime_key="evaluation_regimes.forward_2026",
+            parquet_path=str(btc_parquet_path),
+            db_path=db_path,
+            execution_config_path=Path("config/execution_phase4_15bps.yaml"),
+            env_config=env_config_override_forward_2026,
+            # 4 LC-b kwargs (cost_anchor_id NOT passed):
+            run_id_override=run_id,
+            source_batch_id="test-source-batch-lcb",
+            parent_run_id_override="test-parent-override",
+            artifact_dir=artifact_dir,
+        )
+
+        # Read registry row + assert all relevant LC fields populated
+        with get_connection(db_path) as conn:
+            row = conn.execute(
+                "SELECT run_id, hypothesis_hash, batch_id, parent_run_id, "
+                "regime_key, current_git_sha, execution_config_path, "
+                "execution_config_sha256, parquet_data_sha256, cost_anchor_id, "
+                "returns_per_bar_path, returns_per_bar_sha256, T_obs "
+                "FROM runs WHERE run_id = ?",
+                (run_id,),
+            ).fetchone()
+        assert row is not None, f"Registry row missing for run_id={run_id}"
+
+        (rid, hh, bid, prid, rkey, csha, ecp, ecsha, psha, cai,
+         rpbp, rpbsha, tobs) = row
+
+        # Per-field assertions (all 14 LC fields — Charlie no敷衍 requirement)
+        assert rid == run_id, f"run_id mismatch: {rid}"
+        # CONTRACT BOUNDARY (per PFR R2 LOW F2): the engine's hypothesis_hash
+        # field stores the full 64-char SHA256 hex from strategies.dsl.compute_dsl_hash
+        # (D2 compilation-manifest contract per strategies/dsl.py:280). This is
+        # DISTINCT from agents.hypothesis_hash.hash_dsl, which returns the first 16
+        # chars and is the D3 orchestrator dedup key written to batch_summary
+        # (contract documented at agents/hypothesis_hash.py:154-173 +
+        # tests/test_hypothesis_hash.py:325). The two hashes serve independent
+        # purposes by design — D2 (compilation) vs D3 (dedup) — and both contracts
+        # remain in force. This assertion is the 64-char compute_dsl_hash; the
+        # 16-char hash_dsl is exercised by tests/test_hypothesis_hash.py and is
+        # NOT in scope for Phase 0 engine extension.
+        assert hh is not None and len(hh) == 64, f"hypothesis_hash invalid: {hh!r}"
+        # PFR R4 LOW N4 (v3.4) + PFR R4 LOW L1 (v3.5): hex-shape + lowercase
+        # strictness. int(..., 16) catches non-hex characters; .lower() check
+        # catches uppercase regressions (hashlib.sha256.hexdigest() contract
+        # is lowercase per strategies/dsl.py:280 compute_dsl_hash).
+        int(hh, 16)
+        assert hh == hh.lower(), f"hypothesis_hash must be lowercase hex: {hh!r}"
+        # batch_id column at registry = LC.source_batch_id field per
+        # artifact_schema.py:261 ("aliases registry runs.batch_id")
+        assert bid == "test-source-batch-lcb"
+        assert prid == "test-parent-override"
+        assert rkey == "evaluation_regimes.forward_2026"
+        # F4 (Codex P0-LC14 + advisor HIGH-γ): explicit engine_commit field assertion.
+        # Per engine.py:1314, lc.engine_commit OVERRIDE-writes to runs.git_commit column.
+        # Use explicit field equality instead of brittle substring containment.
+        from backtest.experiment_registry import get_run
+        with get_connection(db_path) as conn:
+            run_dict = get_run(conn, run_id)
+        assert run_dict is not None, f"get_run returned None for run_id={run_id}"
+        assert run_dict.get("git_commit") == "eb1c87f", (
+            f"engine_commit=CORRECTED_WF_ENGINE_COMMIT='eb1c87f' (wf_lineage.py:71) "
+            f"must be stamped into registry.git_commit column via lc.engine_commit "
+            f"OVERRIDE at engine.py:1314; got {run_dict.get('git_commit')!r}"
+        )
+        assert csha is not None and len(csha) >= 7, "current_git_sha empty"
+        assert "execution_phase4_15bps.yaml" in (ecp or ""), (
+            f"execution_config_path missing: {ecp!r}"
+        )
+        # PFR R4 LOW N4 (v3.4) + PFR R4 LOW L1 (v3.5): hex-shape + lowercase
+        # strictness checks alongside length-64. SHA256 contract per
+        # hashlib.sha256.hexdigest() is 64 lowercase hex digits.
+        assert ecsha is not None and len(ecsha) == 64
+        int(ecsha, 16)  # ValueError on non-hex char
+        assert ecsha == ecsha.lower(), f"execution_config_sha256 must be lowercase: {ecsha!r}"
+        assert psha is not None and len(psha) == 64
+        int(psha, 16)
+        assert psha == psha.lower(), f"parquet_data_sha256 must be lowercase: {psha!r}"
+        # cost_anchor_id DERIVED by LC __post_init__ (NOT passed)
+        assert cai == "phase4_forward_15bps_v1", (
+            f"cost_anchor_id derivation failed: {cai!r}"
+        )
+        assert rpbp is not None and rpbp != "", f"returns_per_bar_path empty: {rpbp!r}"
+        assert rpbsha is not None and len(rpbsha) == 64
+        int(rpbsha, 16)
+        assert rpbsha == rpbsha.lower(), f"returns_per_bar_sha256 must be lowercase: {rpbsha!r}"
+        assert tobs is not None and tobs > 0, f"T_obs invalid: {tobs!r}"
+
+        # Verify per-bar parquet file exists
+        parquet_file = artifact_dir / "returns_per_bar.parquet"
+        assert parquet_file.exists(), f"per-bar parquet missing at {parquet_file}"
+
+    # ----- Call-order test (write_per_bar_artifact BEFORE _write_to_registry) -----
+
+    def test_run_regime_holdout_writes_artifact_before_registry(
+        self, dsl_bollinger_zscore_reversion, btc_parquet_path, tmp_path, monkeypatch,
+        env_config_override_forward_2026,
+    ):
+        """Verify atomicity invariant per spec §3.1.2 — write_per_bar_artifact
+        MUST be called before _write_to_registry (so registry row references
+        the just-written artifact path + SHA atomically).
+
+        PFR R3 LOW L4 note (v3.3): this test verifies call-ORDER given both
+        wrapped functions succeed. If either raises (e.g., disk write fails,
+        registry write conflict fires), the exception propagates uncaught and
+        the test errors out — acceptable secondary failure mode (the registered
+        order-violation is impossible without both calls running)."""
+        from backtest import engine
+        call_order = []
+
+        original_write_artifact = engine.write_per_bar_artifact
+        original_write_registry = engine._write_to_registry
+
+        def tracking_write_artifact(*args, **kwargs):
+            call_order.append("write_per_bar_artifact")
+            return original_write_artifact(*args, **kwargs)
+
+        def tracking_write_registry(*args, **kwargs):
+            call_order.append("_write_to_registry")
+            return original_write_registry(*args, **kwargs)
+
+        monkeypatch.setattr(engine, "write_per_bar_artifact", tracking_write_artifact)
+        monkeypatch.setattr(engine, "_write_to_registry", tracking_write_registry)
+
+        engine.run_regime_holdout(
+            dsl=dsl_bollinger_zscore_reversion,
+            # PFR R3 BLOCKING B1 fix (v3.3): batch_id and source_batch_id MUST match
+            # when both are non-None per _write_to_registry conflict guard at
+            # backtest/engine.py:1094-1108 (raise ValueError if disagree). LC.source_batch_id
+            # aliases registry runs.batch_id; values must be consistent.
+            batch_id="test-co-bsi",
+            parent_run_id="test-parent-co",
+            regime_key="evaluation_regimes.forward_2026",
+            parquet_path=str(btc_parquet_path),
+            db_path=tmp_path / "test_call_order.db",
+            execution_config_path=Path("config/execution_phase4_15bps.yaml"),
+            env_config=env_config_override_forward_2026,
+            run_id_override="test_co_001",
+            source_batch_id="test-co-bsi",
+            parent_run_id_override="test-parent-override",
+            artifact_dir=tmp_path / "artifact_co",
+        )
+
+        assert "write_per_bar_artifact" in call_order
+        assert "_write_to_registry" in call_order
+        artifact_idx = call_order.index("write_per_bar_artifact")
+        registry_idx = call_order.index("_write_to_registry")
+        assert artifact_idx < registry_idx, (
+            f"BLOCKING: write_per_bar_artifact must be BEFORE _write_to_registry. "
+            f"Actual order: {call_order}"
+        )
+
+    # ----- Backward-compat test -----
+
+    def test_run_regime_holdout_backward_compat_no_lcb_kwargs(
+        self, dsl_bollinger_zscore_reversion, btc_parquet_path, tmp_path,
+        env_config_override_forward_2026,
+    ):
+        """Legacy callers (no LC-b kwargs) get unchanged behavior; equity_curve
+        always populated (regardless of LC-b path).
+
+        NOTE on env_config kwarg: env_config is an existing pre-Phase-0 engine kwarg
+        (engine.py:2286), NOT one of the 4 new LC-b kwargs. Passing it preserves
+        legacy semantics — the override is required because environments.yaml
+        has forward_2026.end:null at this register (fire-time captured); without
+        the override the engine TypeErrors on date.fromisoformat(None). The "no
+        LC-b kwargs" assertion of this test refers to run_id_override /
+        source_batch_id / parent_run_id_override / artifact_dir — none passed."""
+        from backtest.engine import run_regime_holdout
+        result = run_regime_holdout(
+            dsl=dsl_bollinger_zscore_reversion,
+            batch_id="test-legacy",
+            parent_run_id="test-parent-legacy",
+            regime_key="evaluation_regimes.forward_2026",
+            parquet_path=str(btc_parquet_path),
+            db_path=tmp_path / "test_legacy.db",
+            env_config=env_config_override_forward_2026,
+        )
+        assert result.run_id is not None
+        assert result.hypothesis_hash is not None and len(result.hypothesis_hash) == 64
+        int(result.hypothesis_hash, 16)
+        assert result.hypothesis_hash == result.hypothesis_hash.lower(), (
+            f"hypothesis_hash must be lowercase: {result.hypothesis_hash!r}"
+        )
+        assert result.total_trades >= 0
+        assert result.equity_curve is not None
+        assert len(result.equity_curve) > 0
+
+    # ----- Boundary case tests -----
+
+    def test_run_regime_holdout_lcb_empty_run_id_override_fails_closed(
+        self, dsl_bollinger_zscore_reversion, btc_parquet_path, tmp_path,
+        env_config_override_forward_2026,
+    ):
+        """LC.run_id is STRICT non-empty; empty run_id_override FAILS CLOSED in
+        preflight per N1 v3.4 hoist (BEFORE run_backtest).
+
+        PFR R4 MEDIUM M1 fix (v3.5): use `match=` parameter to pin the raise
+        to PREFLIGHT specifically. Without match=, a broad `(ValueError,
+        RuntimeError)` would pass even if a future implementation regression
+        moved the empty-string check post-run_backtest (e.g., back to LC
+        __post_init__). The match string is the unique substring of the
+        preflight error message — see engine body N1 fix at line ~1014."""
+        from backtest.engine import run_regime_holdout
+        with pytest.raises(
+            ValueError,
+            match=r"run_id_override must be non-empty if provided at LC-b path",
+        ):
+            run_regime_holdout(
+                dsl=dsl_bollinger_zscore_reversion,
+                batch_id="test-bc", parent_run_id="test-parent",
+                regime_key="evaluation_regimes.forward_2026",
+                parquet_path=str(btc_parquet_path),
+                db_path=tmp_path / "test_empty_rid.db",
+                execution_config_path=Path("config/execution_phase4_15bps.yaml"),
+                env_config=env_config_override_forward_2026,
+                run_id_override="",  # invalid empty
+                source_batch_id="test-bsi",
+                parent_run_id_override="test-prio",
+                artifact_dir=tmp_path / "artifact_empty",
+            )
+
+    def test_run_regime_holdout_lcb_empty_source_batch_id_fails_closed(
+        self, dsl_bollinger_zscore_reversion, btc_parquet_path, tmp_path,
+        env_config_override_forward_2026,
+    ):
+        """LC.source_batch_id STRICT; empty FAIL CLOSED in preflight per N1 v3.4.
+
+        PFR R4 MEDIUM M1 fix (v3.5): pin to preflight via match= parameter
+        (same rationale as test_lcb_empty_run_id_override). See N1 hoist at
+        engine body line ~1020."""
+        from backtest.engine import run_regime_holdout
+        with pytest.raises(
+            ValueError,
+            match=r"source_batch_id must be non-empty if provided at LC-b path",
+        ):
+            run_regime_holdout(
+                dsl=dsl_bollinger_zscore_reversion,
+                batch_id="test-bc", parent_run_id="test-parent",
+                regime_key="evaluation_regimes.forward_2026",
+                parquet_path=str(btc_parquet_path),
+                db_path=tmp_path / "test_empty_sbi.db",
+                execution_config_path=Path("config/execution_phase4_15bps.yaml"),
+                env_config=env_config_override_forward_2026,
+                run_id_override="test-rid-valid",
+                source_batch_id="",
+                parent_run_id_override="test-prio",
+                artifact_dir=tmp_path / "artifact_empty_sbi",
+            )
+
+    def test_run_regime_holdout_lcb_invalid_artifact_dir_propagates(
+        self, dsl_bollinger_zscore_reversion, btc_parquet_path, tmp_path,
+        env_config_override_forward_2026,
+    ):
+        """Invalid/unwritable artifact_dir propagates error cleanly."""
+        from backtest.engine import run_regime_holdout
+        with pytest.raises((OSError, PermissionError, RuntimeError)):
+            run_regime_holdout(
+                dsl=dsl_bollinger_zscore_reversion,
+                batch_id="test-bc", parent_run_id="test-parent",
+                regime_key="evaluation_regimes.forward_2026",
+                parquet_path=str(btc_parquet_path),
+                db_path=tmp_path / "test_bad_dir.db",
+                execution_config_path=Path("config/execution_phase4_15bps.yaml"),
+                env_config=env_config_override_forward_2026,
+                run_id_override="test-rid", source_batch_id="test-bsi",
+                parent_run_id_override="test-prio",
+                artifact_dir=Path("/nonexistent/no_permission/dir"),
+            )
+
+    def test_run_regime_holdout_lcb_missing_execution_config_path_fails(
+        self, dsl_bollinger_zscore_reversion, btc_parquet_path, tmp_path,
+        env_config_override_forward_2026,
+    ):
+        """LC-b path requires execution_config_path for cost_anchor_id derivation;
+        None → LC __post_init__ COST_ANCHOR_ID_MAPPING lookup fails closed."""
+        from backtest.engine import run_regime_holdout
+        with pytest.raises((ValueError, KeyError, RuntimeError)):
+            run_regime_holdout(
+                dsl=dsl_bollinger_zscore_reversion,
+                batch_id="test-bc", parent_run_id="test-parent",
+                regime_key="evaluation_regimes.forward_2026",
+                parquet_path=str(btc_parquet_path),
+                db_path=tmp_path / "test_no_cfg.db",
+                execution_config_path=None,  # missing required
+                env_config=env_config_override_forward_2026,
+                run_id_override="test-rid", source_batch_id="test-bsi",
+                parent_run_id_override="test-prio",
+                artifact_dir=tmp_path / "artifact_no_cfg",
+            )
+
+    def test_run_regime_holdout_lcb_artifact_dir_none_disables_lcb_path(
+        self, dsl_bollinger_zscore_reversion, btc_parquet_path, tmp_path,
+        env_config_override_forward_2026,
+    ):
+        """Per D-N2 fix: lcb_active = (artifact_dir is not None) — single gate.
+        Other LC-b kwargs set but artifact_dir=None → LC-b path NOT activated;
+        legacy path taken; no error.
+
+        PFR R3 HIGH H1-A fix (v3.3): this test originally checked only
+        `result.run_id != "test-rid"` — a weak gate silent on source_batch_id
+        and parent_run_id_override leaking in the legacy path. Hardened to
+        ALSO assert registry row uses the POSITIONAL batch_id + parent_run_id
+        (not the LC-b override values). Per advisor: a v1.x regression that
+        re-introduced unconditional honoring of source_batch_id or
+        parent_run_id_override in legacy path would have slipped through
+        the original 1-assertion gate."""
+        from backtest.engine import run_regime_holdout
+        from backtest.experiment_registry import get_connection
+
+        db_path = tmp_path / "test_artifact_none.db"
+        result = run_regime_holdout(
+            dsl=dsl_bollinger_zscore_reversion,
+            batch_id="test-bc", parent_run_id="test-parent",
+            regime_key="evaluation_regimes.forward_2026",
+            parquet_path=str(btc_parquet_path),
+            db_path=db_path,
+            env_config=env_config_override_forward_2026,
+            run_id_override="test-rid",  # set but ignored without artifact_dir
+            source_batch_id="test-bsi",  # set but ignored without artifact_dir
+            parent_run_id_override="test-prio",  # set but ignored without artifact_dir
+            artifact_dir=None,  # primary gate — LC-b NOT activated
+        )
+        # Legacy path taken — result.run_id is the engine-minted UUID, NOT override
+        assert result.run_id != "test-rid", (
+            f"Without artifact_dir, run_id_override must NOT be honored "
+            f"(legacy path); got result.run_id={result.run_id}"
+        )
+        assert result.equity_curve is not None  # always populated regardless
+
+        # H1-A hardening: verify registry row reflects POSITIONAL values, NOT overrides.
+        # This catches sibling-leak regressions where source_batch_id or
+        # parent_run_id_override would inadvertently be honored in legacy path.
+        with get_connection(db_path) as conn:
+            row = conn.execute(
+                "SELECT batch_id, parent_run_id FROM runs WHERE run_id = ?",
+                (result.run_id,),
+            ).fetchone()
+        assert row is not None, (
+            f"Registry row missing for run_id={result.run_id!r}"
+        )
+        assert row[0] == "test-bc", (
+            f"Legacy path must use POSITIONAL batch_id 'test-bc', NOT the "
+            f"source_batch_id override 'test-bsi'; got row.batch_id={row[0]!r}"
+        )
+        assert row[1] == "test-parent", (
+            f"Legacy path must use POSITIONAL parent_run_id 'test-parent', NOT "
+            f"the parent_run_id_override 'test-prio'; got row.parent_run_id={row[1]!r}"
+        )
+
+    def test_run_regime_holdout_lcb_resolves_canonical_parquet_when_none(
+        self, dsl_bollinger_zscore_reversion, tmp_path,
+        env_config_override_forward_2026,
+    ):
+        """Per BLOCKING-2 fix: when parquet_path=None in LC-b path, engine
+        resolves canonical default (data/raw/btcusdt_1h.parquet) for
+        parquet_data_sha256 LC field."""
+        from backtest.engine import run_regime_holdout
+        from backtest.experiment_registry import get_connection
+
+        db_path = tmp_path / "test_canonical_parquet.db"
+        artifact_dir = tmp_path / "artifact_canonical"
+        run_id = "test_canonical_001"
+
+        result = run_regime_holdout(
+            dsl=dsl_bollinger_zscore_reversion,
+            # PFR R3 BLOCKING B1 fix (v3.3): batch_id matches source_batch_id per
+            # _write_to_registry conflict guard at backtest/engine.py:1094-1108.
+            batch_id="test-canon-bsi", parent_run_id="test-parent",
+            regime_key="evaluation_regimes.forward_2026",
+            parquet_path=None,  # NOT passed — engine resolves canonical
+            db_path=db_path,
+            execution_config_path=Path("config/execution_phase4_15bps.yaml"),
+            env_config=env_config_override_forward_2026,
+            run_id_override=run_id, source_batch_id="test-canon-bsi",
+            parent_run_id_override="test-prio", artifact_dir=artifact_dir,
+        )
+
+        # Verify registry row has non-empty parquet_data_sha256
+        with get_connection(db_path) as conn:
+            row = conn.execute(
+                "SELECT parquet_data_sha256 FROM runs WHERE run_id = ?",
+                (run_id,),
+            ).fetchone()
+        assert row is not None
+        assert row[0] is not None and len(row[0]) == 64, (
+            f"parquet_data_sha256 must be populated from canonical default "
+            f"(data/raw/btcusdt_1h.parquet) when parquet_path=None; "
+            f"got {row[0]!r}"
+        )
+        int(row[0], 16)  # PFR R4 LOW N4 (v3.4): hex-shape check on parquet_data_sha256
+        assert row[0] == row[0].lower(), (
+            f"parquet_data_sha256 must be lowercase: {row[0]!r}"
+        )

@@ -22,6 +22,7 @@ import sys
 from pathlib import Path
 from unittest.mock import patch
 
+import pandas as pd
 import pytest
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -97,6 +98,7 @@ def _stub_regime_holdout_result(passed: bool) -> RegimeHoldoutResult:
             "min_total_trades": 5,
         },
         metrics={"sharpe_ratio": sharpe},
+        equity_curve=pd.Series(dtype=float),
     )
 
 
