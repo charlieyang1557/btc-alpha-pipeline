@@ -36,7 +36,7 @@
 | PFR R1 returns_per_bar_path semantics lock (NEW v2 lock per CB5) | Producer stores `"returns_per_bar.parquet"` (bare filename — matches engine's child registry row stamp at engine.py:526+656); resolution context implicit per per-candidate JSON location | Charlie register #N+3 + Advisor BLOCKING-2 |
 | PFR R1 SHA single-source lock (NEW v2 lock per CB6) | Producer queries engine-written child registry row via `get_run(conn, child_run_id)` post-engine-return and copies `returns_per_bar_path` + `returns_per_bar_sha256` directly — NO recomputation | Charlie register #N+3 + Advisor BLOCKING-3 |
 | PFR R1 cohort_metadata derivation lock (NEW v2 lock per CB3) | `initial_capital = 10_000.0` (engine.run_regime_holdout cash default at engine.py:2324); `fee_model = ConstantSlippage.from_config(execution_config).fee_model_label` (= "effective_15bps_per_side" for 15bps anchor per slippage.py:94-100) — derived NOT hardcoded; matches children's fee_model | Charlie register #N+3 + Codex BLOCKING-3 |
-| PFR R1 engine_commit registry stamping (NEW v2 lock per CB4) | Parent row `git_commit` = CORRECTED_WF_ENGINE_COMMIT ("eb1c87f") via engine's OVERRIDE pattern at engine.py:1314; `current_git_sha` = fire-time head_sha (separate column); engine_commit ALSO written to notes JSON for explicit forensic recoverability (registry has no engine_commit column per experiment_registry.py:54-103) | Charlie register #N+3 + Codex BLOCKING-4 |
+| PFR R1 engine_commit registry stamping (NEW v2 lock per CB4) | Parent row `git_commit` = CORRECTED_WF_ENGINE_COMMIT ("eb1c87f") via engine's OVERRIDE pattern at engine.py:1328-1348; `current_git_sha` = fire-time head_sha (separate column); engine_commit ALSO written to notes JSON for explicit forensic recoverability (registry has no engine_commit column per experiment_registry.py:54-103) | Charlie register #N+3 + Codex BLOCKING-4 |
 
 ---
 
@@ -56,7 +56,7 @@ Per Charlie register #N+3 (Path 1: full AMEND + PFR R2) 2026-05-27. PFR R1 fired
 | CB1 | BLOCKING | Codex BLOCKING-1 + Advisor HIGH-1 | Reorder Step 10.8 main() wiring: (0) identity guard → (1) idempotency PRE-check (read-only) → (2) existing dry-run exit → (3) archive (destructive) → (4) candidate loop → (5) finalize POST. Added Tests 15+16 for dry-run + duplicate-rows no-mutation invariants. |
 | CB2 | BLOCKING | Codex BLOCKING-2 | NEW `_validate_b_c_narrow_recovery_identity_or_raise()` validates 4 cohort identity fields (run_id, regime_key, execution_config_path, source_batch_id) BEFORE any mutation. Added Test 17 parametrized over wrong-value-per-field. |
 | CB3 | BLOCKING | Codex BLOCKING-3 + Advisor HIGH-6 | cohort_metadata derives `initial_capital = 10_000.0` (engine cash default per engine.py:2324) + `fee_model = ConstantSlippage.from_config(execution_config).fee_model_label` (= "effective_15bps_per_side" per slippage.py:94-100); NO hardcoded "phase4_15bps_v1"; NO hardcoded 100000.0. Updated test_finalize_batch_registry_parent_cohort_metadata_complete + added Test 18 for parent-vs-child consistency. |
-| CB4 | BLOCKING | Codex BLOCKING-4 | parent_row["git_commit"] = CORRECTED_WF_ENGINE_COMMIT ("eb1c87f") matching engine's OVERRIDE pattern at engine.py:1314; parent_row["current_git_sha"] = head_sha (separate column); engine_commit ALSO written to notes JSON for explicit forensic recoverability. Updated test_finalize_batch_registry_parent_cohort_metadata_complete. |
+| CB4 | BLOCKING | Codex BLOCKING-4 | parent_row["git_commit"] = CORRECTED_WF_ENGINE_COMMIT ("eb1c87f") matching engine's OVERRIDE pattern at engine.py:1328-1348; parent_row["current_git_sha"] = head_sha (separate column); engine_commit ALSO written to notes JSON for explicit forensic recoverability. Updated test_finalize_batch_registry_parent_cohort_metadata_complete. |
 | CB5 | BLOCKING | Advisor BLOCKING-2 | Producer stores `"returns_per_bar.parquet"` (bare filename) in summary JSON + CSV; matches engine's child registry row stamp (engine.py:526 + 656). Added Test 19 asserting producer summary.returns_per_bar_path == engine-written child row's returns_per_bar_path. |
 | CB6 | BLOCKING | Advisor BLOCKING-3 | Producer queries engine-written child registry row via `get_run(conn, child_run_id)` post-engine-return and copies returns_per_bar_path + returns_per_bar_sha256 directly. No recomputation; engine's atomic write is single source. Updated Test 4 to verify producer SHA == registry child row SHA. |
 | H1 | HIGH | Advisor BLOCKING-1 (downgraded post-verification) | Test mocks for `compute_per_bar_returns` updated to `pd.Series([float('nan')] + [0.01] * 2527)` (length 2528, first NaN — matches production at engine.py:394-396); compute_moments mock T_obs=2527 (post-NaN-filter count). 5 test stubs updated. |
@@ -74,6 +74,90 @@ Per Charlie register #N+3 (Path 1: full AMEND + PFR R2) 2026-05-27. PFR R1 fired
 **Total v2 amendments: 17 ADOPT inline + 1 PUSHBACK (advisor HIGH-5) noted for separate spec adjudication.**
 
 **Test count v1 → v2: 14 → 22 (+ 8 new tests for CB1+CB2+CB3+CB5+H2+M1+M4 + parametrized Test 17 covers all 4 identity-guard fields).**
+
+---
+
+## PFR R2 ADOPT findings applied (Plan v3 amendments)
+
+Per Charlie register #N+4 (Path 1: full AMEND-RE-PFR-R3) 2026-05-27. PFR R2 fired as B2 2-leg dispatch on v2 (`1119a29`); Codex returned NOT-APPROVE (2 BLOCKING + 1 MEDIUM + 2 LOW); Advisor returned APPROVE-WITH-FINDINGS (4 MEDIUM + 2 LOW); B2 reverse-direction confirmed at this iteration (Codex's structural-contract dimension caught 2 BLOCKING that Advisor's empirical-code-verification dimension missed; Advisor caught 3 MEDIUM + 1 LOW that Codex missed). All cited file:line claims orchestrator-verified.
+
+**16 of 17 R1 ADOPT fixes verified correctly applied** in v2. Only CB6 had a secondary-order issue (retained Tests 1/2/3/7/14 not updated to insert child registry row → producer's `get_run` raises). Both legs CONFIRMED **PUSHBACK on Advisor R1 HIGH-5 is SOUND** after independent re-read of spec §3.2.3 line 117 lock.
+
+| # | Severity | Origin | Fix in v3 |
+|---|---|---|---|
+| CR2-B1 | BLOCKING | Codex PFR R2 BLOCKING-1 | Tests 1/2/3/7/14 (LC-b active mock-engine tests) updated to use shared `_make_fake_engine_with_registry` helper which mirrors Phase 0 engine behavior — creates parquet AND inserts child registry row with LC-stamped fields. Without this, producer's CB6 `get_run(conn, child_run_id)` query raises RuntimeError at GREEN phase. |
+| CR2-B2 | BLOCKING | Codex PFR R2 BLOCKING-2 | `_finalize_batch_registry_preflight_or_raise` refactored to be TRULY read-only: (Path 1) DB file absent → treat clean state; (Path 2) DB present but runs table absent → treat clean state; (Path 3) runs table present → query counts WITHOUT calling create_table. The destructive create_table call REMOVED from preflight (was committing DDL even on --dry-run path → violated CB1 read-only invariant). create_table call PRESERVED in POST-fire `_finalize_batch_registry` (which runs after dry-run exit). Test 15 strengthened to assert DB file is unchanged on dry-run path. |
+| MR2-1 | MEDIUM | Codex PFR R2 MEDIUM-1 + Advisor PFR R2 MEDIUM-2 (CONVERGENT) | Producer's CB6 read at Step 10.5 refactored from `with get_connection(...) as conn:` → explicit `conn = get_connection(...); try: child_row = get_run(conn, child_run_id); finally: conn.close()` pattern. Matches M3 discipline applied to `_finalize_batch_registry*` in v2. Tests 19+21 cross-validation `with get_connection(...)` blocks also updated to same pattern. |
+| MR2-2 | MEDIUM | Advisor PFR R2 MEDIUM-1 | Test 20 hardcoded absolute path `/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline` replaced with `from backtest.experiment_registry import PROJECT_ROOT; expected = PROJECT_ROOT / "backtest" / "experiments.db"`. Test now portable across environments while preserving H2 regression-guard goal. |
+| MR2-3 | MEDIUM | Advisor PFR R2 MEDIUM-3 | NEW Test 24 `test_parent_git_commit_matches_child_git_commit_engine_consistency` asserts parent.git_commit == child.git_commit (both = "eb1c87f" via CB4 OVERRIDE pattern). Locks the engine-consistency interpretation of spec §3.2.3 line 117 against future "fixes" that would silently re-align parent.git_commit to literal spec value (506285b). The spec-literal-vs-OVERRIDE tension itself is NAMED-eligible-for-separate-spec-amend-cycle (not in Phase 2 scope per anti-pre-emption). |
+| MR2-4 | MEDIUM | Advisor PFR R2 MEDIUM-4 | NEW Test 23 `test_parent_batch_id_diverges_from_child_batch_id_per_spec_lock` asserts parent.batch_id (= BCNARROW_PARENT_RUN_ID) != child.batch_id (= BCNARROW_SOURCE_BATCH_ID). Anti-fragility test locks spec §3.2.3 line 117 PUSHBACK-SOUND invariant against future PRs that would silently align the two via "consistency cleanup". |
+| LR2-1 | LOW | Codex PFR R2 LOW-1 + Advisor PFR R2 LOW-1 (CONVERGENT) | Re-add `# noqa: E402` to all new imports in Step 10.1. v2's L2 rationale ("no non-import code precedes") was FACTUALLY WRONG — verified: scripts:89-90 contain `PROJECT_ROOT = ...` + `sys.path.insert(...)` BEFORE the imports block at scripts:92-103; existing imports use noqa for this reason; Ruff at pyproject.toml:61-62 selects E rules so new imports without noqa would fail lint. |
+| LR2-2 | LOW | Codex PFR R2 LOW-2 | All CB4 references to engine OVERRIDE pattern citation updated from stale `engine.py:1314` → actual `engine.py:1328-1348`. Codex Mode A verified: line 1314 is inside T_obs revalidation comment; actual OVERRIDE `run_data["git_commit"] = lineage_context.engine_commit` is at engine.py:1348. Affects ~5 plan sites (header table + Step 10.4 docstring + Step 10.5 docstring + Test 6 assertion comment). |
+| LR2-3 | LOW (optional) | Advisor PFR R2 LOW-2 | Test 15 dry-run added defensive `if db_path.exists():` check after main() to verify preflight executed against the patched db (catches silent db_path bypass bugs). Not strictly required but inexpensive to add. |
+
+**Total v3 amendments: 9 ADOPT inline (2 BLOCKING + 4 MEDIUM + 3 LOW).**
+
+**Test count v2 → v3: 22 → 24 (+ 2 new tests for MR2-3 git_commit consistency + MR2-4 batch_id asymmetry locks; Tests 1/2/3/7/14 fake_run_regime_holdout uses NEW shared helper but test count unchanged).**
+
+**Convergence/divergence summary**: B2 reverse-direction value reaffirmed at PFR R2 — Codex's structural-contract dimension caught the 2 BLOCKING (CB6 retained-tests break + dry-run create_table mutation) that Advisor's empirical-code-verification dimension missed; Advisor caught the 4 MEDIUM (Test 20 portability + CB4 spec tension + batch_id asymmetry test + CB6 conn leak) that Codex missed. Both legs operationally load-bearing per [feedback_reviewer_routing_subagent_default.md] B2 LOCKED 2026-05-19. Cycle approaching but not at saturation; expected v3 → PFR R3 → cycle saturation (R3 should produce only LOW findings per Phase 0 R3-R5 pattern).
+
+### CR2-B1 detailed application instructions (Tests 1/2/3/7/14 → use shared helper)
+
+The 5 LC-b active mock-engine tests (Tests 1/2/3/7/14) MUST be updated to use the new `_make_fake_engine_with_registry` helper method (defined in v3 at the top of TestBCNarrowPhase2ProducerEdits class). Each test currently uses an inline `def fake_run_regime_holdout(**kwargs): ...; return stub_holdout_result` pattern that does NOT insert the child registry row. Without the helper, the producer's v2 CB6 path raises `RuntimeError("child registry row missing for run_id=...")` at GREEN phase.
+
+**Update template per affected test**:
+
+```python
+    def test_<name>(self, stub_holdout_result, stub_candidate, tmp_path):
+        """..."""
+        _require_b_c_narrow_symbols()
+        output_dir = tmp_path / "output"
+        output_dir.mkdir()
+        artifact_dir_root = output_dir
+        db_path = tmp_path / "test_<name>.db"  # NEW: explicit db_path for LC-b path
+
+        # Test 1 only: capture kwargs to assert LC-b kwarg threading
+        captured_kwargs: dict = {}  # only for Test 1; omit for Tests 2/3/7/14
+
+        with patch(
+            "scripts.run_phase2c_evaluation_gate.run_regime_holdout",
+            side_effect=self._make_fake_engine_with_registry(
+                stub_result=stub_holdout_result,
+                db_path=db_path,
+                captured_kwargs=captured_kwargs,  # Test 1 only; omit kwarg otherwise
+            ),
+        ), patch(
+            "scripts.run_phase2c_evaluation_gate.compute_per_bar_returns",
+            return_value=pd.Series([float('nan')] + [0.01] * 2527),  # H1
+        ), patch(
+            "scripts.run_phase2c_evaluation_gate.compute_moments",
+            return_value={"gamma3": 0.5, "gamma4": 3.2, "T_obs": 2527},  # M1
+        ):
+            _evaluate_one_candidate(
+                candidate=stub_candidate,
+                head_sha=self.HEAD_SHA,
+                source_batch_id=self.SOURCE_BATCH_ID,
+                run_id=self.PARENT_RUN_ID,
+                output_dir=output_dir,
+                regime_key="evaluation_regimes.forward_2026",
+                execution_config_path=Path("config/execution_phase4_15bps.yaml"),
+                env_config_override={"evaluation_regimes": {"forward_2026": {"end": "2026-04-16"}}},
+                artifact_dir_root=artifact_dir_root,
+                parent_run_id_override=self.PARENT_RUN_ID,
+                db_path=db_path,  # NEW: explicit db_path for hermetic test
+            )
+
+        # ... test-specific assertions ...
+```
+
+**Per-test specifics**:
+- **Test 1** (`test_evaluate_one_candidate_threads_4_lcb_kwargs_to_run_regime_holdout`): pass `captured_kwargs={}` to helper; assert 4 LC-b kwargs in captured. Skip the inline `def fake_run_regime_holdout` (use helper instead).
+- **Test 2** (`test_evaluate_one_candidate_uses_equity_curve_from_extended_result`): use helper; assert producer fed stub `holdout_result.equity_curve` to `compute_per_bar_returns` via mock.assert_called_once_with check.
+- **Test 3** (`test_evaluate_one_candidate_merges_moments_into_summary`): use helper; assert summary dict has gamma3/gamma4/T_obs.
+- **Test 7** (`test_finalize_batch_registry_child_run_id_deterministic_scheme`): use helper; assert child run_id_override follows `f"{parent_run_id}_{hypothesis_hash}"` scheme via captured_kwargs.
+- **Test 14** (`test_schema_domain_routing_evaluation_for_summary_b_c_extended_for_parquet`): use helper; assert summary has additive B-C-narrow fields + passes check_evaluation_semantics_or_raise.
+
+Per-test artifact_dir mkdir + parquet write code that was inline in v2 (e.g., `artifact_dir = artifact_dir_root / stub_candidate["hypothesis_hash"]; artifact_dir.mkdir(parents=True); (artifact_dir / "returns_per_bar.parquet").write_bytes(b"x")`) is now handled by the helper — REMOVE the inline mkdir/write_bytes from each test body since the helper does it.
 
 ---
 
@@ -278,6 +362,70 @@ class TestBCNarrowPhase2ProducerEdits:
             metrics={"sharpe_ratio": 1.5, "max_drawdown": -0.10, "total_return": 0.25, "total_trades": 50},
             equity_curve=ec,
         )
+
+    # CR2-B1 PFR R2 ADOPT (v3) — shared helper for LC-b active tests that mock engine.
+    # Mirrors Phase 0 engine behavior: writes parquet at artifact_dir AND inserts a
+    # child registry row with LC-stamped fields at db_path. Without this, the producer's
+    # CB6 `get_run(conn, child_run_id)` query raises RuntimeError on the LC-b active
+    # path, causing Tests 1/2/3/7/14 to fail at GREEN phase. v2 amend only updated
+    # Test 4 (rewrite) — v3 extends the pattern to ALL LC-b active tests via this helper.
+    def _make_fake_engine_with_registry(
+        self,
+        stub_result: RegimeHoldoutResult,
+        db_path: Path,
+        captured_kwargs: dict | None = None,
+        expected_path: str = "returns_per_bar.parquet",
+        expected_sha: str = "9" * 64,
+        expected_t_obs: int = 2527,
+    ):
+        """Build a fake_run_regime_holdout side_effect that mirrors Phase 0 engine SEAL
+        behavior. When the test invokes `_evaluate_one_candidate` with `artifact_dir_root`
+        set (LC-b active), the producer threads `artifact_dir` + `db_path` to engine; the
+        fake here writes the parquet file AND inserts the child registry row that the
+        producer's post-engine `get_run(conn, child_run_id)` query depends on.
+
+        If `captured_kwargs` is a dict, it is updated with every call's kwargs (used by
+        Test 1 for LC-b kwarg threading assertions).
+
+        For non-LC-b path (artifact_dir is None in kwargs), this helper falls through to
+        just returning stub_result — matches engine's legacy path semantics.
+        """
+        def _fake(**kwargs):
+            if captured_kwargs is not None:
+                captured_kwargs.update(kwargs)
+            # LC-b path: kwargs["artifact_dir"] is set when producer activates LC-b
+            artifact_dir = kwargs.get("artifact_dir")
+            if artifact_dir is not None:
+                artifact_dir.mkdir(parents=True, exist_ok=True)
+                (artifact_dir / "returns_per_bar.parquet").write_bytes(b"x")
+                # Producer also threads db_path through (None in main()'s default;
+                # tests pass explicit tmp_path). Mirror engine's _write_to_registry
+                # behavior — insert child row with LC-stamped fields.
+                engine_db_path = kwargs.get("db_path") or db_path
+                conn = get_connection(engine_db_path)
+                try:
+                    with conn:
+                        create_table(conn)
+                        insert_run(conn, {
+                            "run_id": kwargs["run_id_override"],
+                            "run_type": "regime_holdout",
+                            "parent_run_id": kwargs["parent_run_id_override"],
+                            "strategy_name": "test_strat",
+                            "strategy_source": "b_c_narrow_recovery",
+                            "git_commit": "eb1c87f",  # engine OVERRIDE per engine.py:1328-1348
+                            "created_at_utc": "2026-05-27T00:00:00Z",
+                            "fee_model": "effective_15bps_per_side",
+                            "initial_capital": 10_000.0,
+                            "returns_per_bar_path": expected_path,
+                            "returns_per_bar_sha256": expected_sha,
+                            "T_obs": expected_t_obs,
+                            "regime_key": kwargs.get("regime_key", "evaluation_regimes.forward_2026"),
+                            "batch_id": kwargs.get("source_batch_id"),  # child.batch_id = source_batch_id (per Phase 0)
+                        })
+                finally:
+                    conn.close()
+            return stub_result
+        return _fake
 
     @pytest.fixture
     def stub_candidate(self) -> dict:
@@ -1056,7 +1204,7 @@ Update cohort_metadata fixture per CB3 (derived initial_capital + fee_model) + C
         # CB3 PFR R1 ADOPT: derived values match engine defaults
         assert row.get("initial_capital") == 10_000.0    # engine cash default per engine.py:2324
         assert row.get("fee_model") == "effective_15bps_per_side"  # cost_model.fee_model_label
-        # CB4 PFR R1 ADOPT: git_commit = engine_commit (OVERRIDE pattern per engine.py:1314)
+        # CB4 PFR R1 ADOPT: git_commit = engine_commit (OVERRIDE pattern per engine.py:1328-1348)
         assert row.get("git_commit") == "eb1c87f"        # CORRECTED_WF_ENGINE_COMMIT
         assert row.get("current_git_sha") == "f112599"   # fire-time HEAD (separate column)
         # CB4 PFR R1 ADOPT: engine_commit in notes JSON for forensic recoverability
@@ -1319,12 +1467,19 @@ docstring note per M2:
     # ----- Test 20 (H2): DEFAULT_DB_PATH co-location regression guard -----
 
     def test_default_db_path_constant_regression_guard(self):
-        """H2 PFR R1 fix: lock DEFAULT_DB_PATH value to its canonical location so
-        a future refactor cannot silently split parent (producer-written) from
-        children (engine-written) into different DBs."""
+        """H2 PFR R1 fix + MR2-2 PFR R2 ADOPT: lock DEFAULT_DB_PATH value to its
+        canonical location so a future refactor cannot silently split parent
+        (producer-written) from children (engine-written) into different DBs.
+
+        MR2-2 PFR R2 ADOPT (v3): use REGISTRY_PROJECT_ROOT (imported from
+        backtest.experiment_registry via `PROJECT_ROOT as REGISTRY_PROJECT_ROOT`)
+        instead of hardcoded absolute path /Users/yutianyang/... — test is now
+        portable across environments (CI, code-review clones, machine renames)
+        while preserving H2 regression-guard goal."""
         _require_b_c_narrow_symbols()
-        repo_root = Path("/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline")
-        expected = repo_root / "backtest" / "experiments.db"
+        # MR2-2 v3: portable path via REGISTRY_PROJECT_ROOT (not hardcoded absolute)
+        from backtest.experiment_registry import PROJECT_ROOT as _REGISTRY_PROJECT_ROOT
+        expected = _REGISTRY_PROJECT_ROOT / "backtest" / "experiments.db"
         assert DEFAULT_DB_PATH == expected, (
             f"H2: DEFAULT_DB_PATH drift. Expected {expected!r}; got {DEFAULT_DB_PATH!r}. "
             f"Parent + engine-written children rely on this constant for co-location."
@@ -1403,20 +1558,182 @@ docstring note per M2:
         import numpy as np
         result = compute_moments(np.array([0.01, 0.02, -0.01, 0.005, -0.003]))
         assert set(result.keys()) == {"gamma3", "gamma4", "T_obs"}
+
+    # ----- Test 23 (MR2-4): parent.batch_id ≠ child.batch_id asymmetry lock -----
+
+    def test_parent_batch_id_diverges_from_child_batch_id_per_spec_lock(self, tmp_path):
+        """MR2-4 PFR R2 ADOPT (v3): anti-fragility test locking spec §3.2.3 line 117
+        PUSHBACK-SOUND invariant.
+
+        Spec §3.2.3 line 117 EXPLICIT LOCK: parent.batch_id = parent_run_id
+        (= BCNARROW_PARENT_RUN_ID = 'phase4_forward_2026_15bps_v1_b_c_narrow').
+        Engine writes child.batch_id = source_batch_id (= BCNARROW_SOURCE_BATCH_ID
+        = 'phase2c_15_main_fire_combined' for cohort_a) via run_regime_holdout's
+        batch_id positional kwarg per engine.py.
+
+        Parent.batch_id ≠ child.batch_id by spec design. This test asserts the
+        asymmetry explicitly so a future "consistency cleanup" PR cannot silently
+        align them (which would deviate from spec §3.2.3 + break downstream Tier 6
+        enumeration queries that depend on the asymmetric semantics)."""
+        _require_b_c_narrow_symbols()
+        db_path = tmp_path / "test_batch_id_asymmetry.db"
+
+        # Setup: write parent row (via _finalize_batch_registry) + 1 child row
+        # (hand-rolled per Test 9 M2 pattern; field-agnostic verification).
+        cohort_metadata = {
+            "execution_config_path": BCNARROW_EXECUTION_CONFIG_PATH,
+            "execution_config_sha256": "a" * 64,
+            "parquet_data_sha256": "b" * 64,
+            "regime_key": BCNARROW_REGIME_KEY,
+            "cost_anchor_id": "phase4_forward_15bps_v1",
+            "current_git_sha": "f112599",
+            "effective_start": "2026-01-01T00:00:00Z",
+            "initial_capital": 10_000.0,
+            "fee_model": "effective_15bps_per_side",
+        }
+        _finalize_batch_registry(
+            parent_run_id=BCNARROW_PARENT_RUN_ID,
+            cohort_metadata=cohort_metadata,
+            db_path=db_path,
+        )
+        # Hand-rolled child row matching engine's child write pattern (batch_id =
+        # source_batch_id per Phase 0 + spec §3.2.1).
+        conn = get_connection(db_path)
+        try:
+            with conn:
+                insert_run(conn, {
+                    "run_id": f"{BCNARROW_PARENT_RUN_ID}_test_child_hash",
+                    "run_type": "regime_holdout",
+                    "parent_run_id": BCNARROW_PARENT_RUN_ID,
+                    "strategy_name": "test_strat",
+                    "strategy_source": "b_c_narrow_recovery",
+                    "git_commit": "eb1c87f",
+                    "created_at_utc": "2026-05-27T00:00:00Z",
+                    "fee_model": "effective_15bps_per_side",
+                    "initial_capital": 10_000.0,
+                    "batch_id": BCNARROW_SOURCE_BATCH_ID,  # ← child.batch_id per spec
+                })
+        finally:
+            conn.close()
+
+        # Verify the asymmetry
+        with get_connection(db_path) as conn:
+            parent_row = get_run(conn, BCNARROW_PARENT_RUN_ID)
+            child_row = get_run(conn, f"{BCNARROW_PARENT_RUN_ID}_test_child_hash")
+
+        assert parent_row["batch_id"] == BCNARROW_PARENT_RUN_ID, (
+            f"MR2-4: spec §3.2.3 line 117 locks parent.batch_id = parent_run_id; "
+            f"got parent.batch_id={parent_row['batch_id']!r}"
+        )
+        assert child_row["batch_id"] == BCNARROW_SOURCE_BATCH_ID, (
+            f"MR2-4: per Phase 0 spec §3.2.1, child.batch_id = source_batch_id; "
+            f"got child.batch_id={child_row['batch_id']!r}"
+        )
+        assert parent_row["batch_id"] != child_row["batch_id"], (
+            f"MR2-4: parent.batch_id ≠ child.batch_id is spec §3.2.3 invariant. "
+            f"If you see this assertion fail, someone aligned the two — that "
+            f"deviates from spec (advisor R1 HIGH-5 PUSHBACK SOUND per spec re-read; "
+            f"spec amend required at separate Charlie register before changing this lock)."
+        )
+
+    # ----- Test 24 (MR2-3): parent.git_commit == child.git_commit engine-consistency lock -----
+
+    def test_parent_git_commit_matches_child_git_commit_engine_consistency(self, tmp_path):
+        """MR2-3 PFR R2 ADOPT (v3): defensive test locking CB4 engine-consistency
+        interpretation of spec §3.2.3 line 117.
+
+        Spec §3.2.3 line 117 literal text says 'git_commit (=506285b)' which is
+        ambiguous between (a) the registry git_commit COLUMN value (where engine
+        OVERRIDE writes engine_commit per engine.py:1328-1348) vs (b) the
+        conceptual git_commit field per spec §2 disambiguation table (where
+        506285b is the B-C-narrow code state value). v2 chose interpretation (a):
+        parent.git_commit = CORRECTED_WF_ENGINE_COMMIT ('eb1c87f') matching
+        children's OVERRIDE stamp for parent-child consistency on git_commit.
+
+        This test asserts the engine-consistency interpretation explicitly so a
+        future PR cannot silently flip parent.git_commit to spec-literal '506285b'
+        (which would break parent-child join consistency)."""
+        _require_b_c_narrow_symbols()
+        db_path = tmp_path / "test_git_commit_consistency.db"
+
+        # Setup: parent row via _finalize_batch_registry + 1 child row
+        cohort_metadata = {
+            "execution_config_path": BCNARROW_EXECUTION_CONFIG_PATH,
+            "execution_config_sha256": "c" * 64,
+            "parquet_data_sha256": "d" * 64,
+            "regime_key": BCNARROW_REGIME_KEY,
+            "cost_anchor_id": "phase4_forward_15bps_v1",
+            "current_git_sha": "f112599",  # fire-time HEAD (separate column)
+            "effective_start": "2026-01-01T00:00:00Z",
+            "initial_capital": 10_000.0,
+            "fee_model": "effective_15bps_per_side",
+        }
+        _finalize_batch_registry(
+            parent_run_id=BCNARROW_PARENT_RUN_ID,
+            cohort_metadata=cohort_metadata,
+            db_path=db_path,
+        )
+        # Child row with engine's OVERRIDE pattern: git_commit = engine_commit = "eb1c87f"
+        conn = get_connection(db_path)
+        try:
+            with conn:
+                insert_run(conn, {
+                    "run_id": f"{BCNARROW_PARENT_RUN_ID}_test_child_consistency",
+                    "run_type": "regime_holdout",
+                    "parent_run_id": BCNARROW_PARENT_RUN_ID,
+                    "strategy_name": "test_strat",
+                    "strategy_source": "b_c_narrow_recovery",
+                    "git_commit": "eb1c87f",  # engine OVERRIDE per engine.py:1328-1348
+                    "created_at_utc": "2026-05-27T00:00:00Z",
+                    "fee_model": "effective_15bps_per_side",
+                    "initial_capital": 10_000.0,
+                    "current_git_sha": "f112599",
+                })
+        finally:
+            conn.close()
+
+        # Verify engine-consistency: both rows have git_commit = "eb1c87f"
+        with get_connection(db_path) as conn:
+            parent_row = get_run(conn, BCNARROW_PARENT_RUN_ID)
+            child_row = get_run(conn, f"{BCNARROW_PARENT_RUN_ID}_test_child_consistency")
+
+        assert parent_row["git_commit"] == "eb1c87f", (
+            f"MR2-3: parent.git_commit must equal CORRECTED_WF_ENGINE_COMMIT 'eb1c87f' "
+            f"(CB4 engine-consistency interpretation of spec §3.2.3 line 117); "
+            f"got {parent_row['git_commit']!r}"
+        )
+        assert child_row["git_commit"] == "eb1c87f", (
+            f"MR2-3: child.git_commit must equal 'eb1c87f' (engine OVERRIDE per "
+            f"engine.py:1328-1348); got {child_row['git_commit']!r}"
+        )
+        assert parent_row["git_commit"] == child_row["git_commit"], (
+            f"MR2-3: parent.git_commit MUST equal child.git_commit for parent-child "
+            f"join consistency. If this assertion fails, someone flipped parent.git_commit "
+            f"to spec-literal '506285b' — that breaks join consistency. Spec literal "
+            f"reading vs OVERRIDE interpretation is NAMED-eligible-for-separate-spec-amend "
+            f"cycle (anti-pre-emption); plan locks engine-consistency interpretation here."
+        )
+        # current_git_sha is the separate column — should NOT equal git_commit
+        assert parent_row["current_git_sha"] == "f112599"
+        assert parent_row["current_git_sha"] != parent_row["git_commit"], (
+            "MR2-3: parent.current_git_sha (fire-time HEAD) and parent.git_commit "
+            "(engine_commit OVERRIDE) are DISTINCT fields per spec §2 disambiguation "
+            "table. Aligning them silently is a regression."
+        )
 ```
 
 ---
 
-- [ ] **Step 9.3: Run all 22 new tests — they MUST FAIL (RED)** (L1 PFR R1 fix: wording)
+- [ ] **Step 9.3: Run all 24 new tests — they MUST FAIL (RED)** (L1 PFR R1 fix: wording)
 
 ```bash
 cd /Users/yutianyang/Documents/GitHub/btc-alpha-pipeline
 python -m pytest tests/test_phase2c_evaluation_gate_runner.py::TestBCNarrowPhase2ProducerEdits -v
 ```
 
-Expected: Per H3 PFR R1 fix, the test file STILL COLLECTS even when NEW symbols are absent (the `try/except ImportError` wrapper in Step 9.1 prevents collection-time failure). Each of the 22 tests fails with explicit AssertionError from `_require_b_c_narrow_symbols()` showing the underlying `ImportError on import` (L1 PFR R1 — wording fixed from "NameError" since Python's missing-symbol error class is `ImportError`, not `NameError`). Some tests may also FAIL with `TypeError: _evaluate_one_candidate() got an unexpected keyword argument 'artifact_dir_root'` or `AttributeError` on missing `_CSV_FIELDS` entries.
+Expected: Per H3 PFR R1 fix, the test file STILL COLLECTS even when NEW symbols are absent (the `try/except ImportError` wrapper in Step 9.1 prevents collection-time failure). Each of the 24 tests fails with explicit AssertionError from `_require_b_c_narrow_symbols()` showing the underlying `ImportError on import` (L1 PFR R1 — wording fixed from "NameError" since Python's missing-symbol error class is `ImportError`, not `NameError`). Some tests may also FAIL with `TypeError: _evaluate_one_candidate() got an unexpected keyword argument 'artifact_dir_root'` or `AttributeError` on missing `_CSV_FIELDS` entries.
 
-If ALL 22 tests pass at this point → SOMETHING WRONG (Task 10 already implemented OR tests are no-ops). Halt and inspect.
+If ALL 24 tests pass at this point → SOMETHING WRONG (Task 10 already implemented OR tests are no-ops). Halt and inspect.
 
 - [ ] **Step 9.4: Commit failing tests**
 
@@ -1425,7 +1742,7 @@ git add tests/test_phase2c_evaluation_gate_runner.py
 git commit -m "test(b-c-narrow/phase-2): add 22 failing producer-edit tests (T9; v2 PFR R1 amend)
 
 Per Plan v3-Phase2 v2 Task 9 (Charlie register #N+3 Path 1 — full AMEND).
-22 RED-phase tests = 14 v1 enumeration + 8 NEW per PFR R1 ADOPT:
+24 RED-phase tests = 14 v1 enumeration + 8 NEW per PFR R1 ADOPT + 2 NEW per PFR R2 ADOPT (Tests 23+24 for MR2-3/MR2-4):
 - LC-b kwarg threading from producer to engine (1 test)
 - equity_curve consumption from extended RegimeHoldoutResult (1 test)
 - γ3/γ4/T_obs merge into inline per-candidate JSON write (1 test)
@@ -1460,25 +1777,30 @@ Edit `scripts/run_phase2c_evaluation_gate.py` near top of file (after existing i
 ```python
 import shutil  # B-C-narrow Phase 2: archive PRE-flight uses shutil.move
 
-# B-C-narrow Phase 2 v2: producer-side moments compute helpers (Phase 0 SEAL chain f112599).
+# B-C-narrow Phase 2 v3: producer-side moments compute helpers (Phase 0 SEAL chain f112599).
 # v2 per CB6 PFR R1: REMOVED _compute_sha256_file import — producer no longer recomputes
 # SHA; queries engine-written child registry row via get_run instead.
-from backtest.engine import (
+# v3 per LR2-1 PFR R2 ADOPT: re-added `# noqa: E402` (lines 89-90 contain non-import code
+# `PROJECT_ROOT` + `sys.path.insert` per scripts:89-90; existing imports lines 92-103 use noqa
+# for this reason; Ruff at pyproject.toml:61-62 selects E rules).
+from backtest.engine import (  # noqa: E402
     compute_moments,
     compute_per_bar_returns,
 )
 # CB3 PFR R1: fee_model derivation from execution_config — producer reads cost_model.fee_model_label
 # (matches engine's children-row stamp at engine.py:1278). NO hardcoded fee_model literal.
-from backtest.execution_model import ConstantSlippage, load_execution_config
-# CB4 PFR R1: engine_commit OVERRIDE constant for parent row git_commit stamping
-# (mirror engine.py:1314 OVERRIDE pattern).
-from backtest.wf_lineage import CORRECTED_WF_ENGINE_COMMIT
+from backtest.execution_model import ConstantSlippage, load_execution_config  # noqa: E402
+# CB4 PFR R1 + LR2-2 PFR R2: engine_commit OVERRIDE constant for parent row git_commit stamping
+# (mirror engine.py:1328-1348 OVERRIDE pattern — `run_data["git_commit"] = lineage_context.engine_commit`
+# at engine.py:1348).
+from backtest.wf_lineage import CORRECTED_WF_ENGINE_COMMIT  # noqa: E402
 # H2 PFR R1: DEFAULT_DB_PATH explicit import for parent-child co-location regression guard
 # (Test 20). Producer's `db_path: Path | None = None` kwarg defaults to None → get_connection's
 # default → DEFAULT_DB_PATH; engine's run_regime_holdout's db_path defaults likewise. Importing
 # the constant explicitly makes the contract visible to the reader.
-from backtest.experiment_registry import (
+from backtest.experiment_registry import (  # noqa: E402
     DEFAULT_DB_PATH,
+    PROJECT_ROOT as REGISTRY_PROJECT_ROOT,  # MR2-2 PFR R2 ADOPT: Test 20 portability
     create_table,
     get_connection,
     get_run,
@@ -1486,7 +1808,9 @@ from backtest.experiment_registry import (
 )
 ```
 
-**L2 PFR R1 ADOPT:** removed `# noqa: E402` from all new imports — E402 doesn't apply (no non-import code precedes the imports block per scripts:75-103).
+**LR2-1 PFR R2 ADOPT (v3 correction):** v2 incorrectly removed `# noqa: E402` claiming "no non-import code precedes the imports block" — that claim was FACTUALLY WRONG. Verified at HEAD `9b52754`: scripts:89-90 contain `PROJECT_ROOT = Path(__file__).resolve().parent.parent` and `sys.path.insert(0, str(PROJECT_ROOT))` BEFORE the imports block at scripts:92-103. Existing imports at lines 92-103 carry `# noqa: E402` because of this preceding non-import code. Ruff at `pyproject.toml:61-62` selects E rules; new imports without noqa would fail lint. v3 re-adds noqa to all new imports.
+
+**LR2-2 PFR R2 ADOPT (v3 correction):** Codex Mode A verified actual engine OVERRIDE location: `run_data["git_commit"] = lineage_context.engine_commit` is at `backtest/engine.py:1348`; the citation `engine.py:1328-1348` in v2 was inside an unrelated T_obs revalidation comment. v3 updates all CB4 plan sites (5 locations) to cite `engine.py:1328-1348` (the OVERRIDE block) — see Step 10.4 docstring, Step 10.5 producer body docstring, Test 6 assertion comment.
 
 **Placement:** AFTER the existing `from backtest.engine import run_regime_holdout, RegimeHoldoutResult` block at line 92, AFTER the existing `from backtest.wf_lineage import (...)` block at lines 93-102, and AFTER the existing `from strategies.dsl import StrategyDSL` at line 103. The new imports are additive; existing imports preserved verbatim.
 
@@ -1739,12 +2063,41 @@ def _finalize_batch_registry_preflight_or_raise(
     Raises:
         RuntimeError: if pre-existing rows found AND force_rerun_existing=False.
     """
+    # CR2-B2 PFR R2 ADOPT (v3): TRULY read-only preflight on the read path.
+    # v2 called create_table(conn) here unconditionally; that function commits DDL
+    # (CREATE TABLE IF NOT EXISTS + ALTER TABLE migrations per experiment_registry.py:207-219)
+    # — violates CB1 "read-only PRE-flight check before dry-run exit" invariant when
+    # --dry-run --enable-b-c-narrow-recovery would silently CREATE the runs table on
+    # an empty / absent DB. v3 fix: 3-path early-exit logic.
+    #
+    # Path 1 (DB file absent): treat as clean state; return immediately (no I/O).
+    # Path 2 (DB present but runs table absent): treat as clean state; return.
+    # Path 3 (runs table present): query counts; raise OR DELETE (DELETE is destructive
+    #     and runs only on --force-rerun-existing opt-in; not on dry-run path).
+    #
+    # The create_table call is PRESERVED in POST-fire _finalize_batch_registry (which
+    # runs AFTER dry-run exit), so production write path still ensures the table.
+    effective_db_path = db_path if db_path is not None else DEFAULT_DB_PATH
+
+    # Path 1: DB file absent → clean state (no file I/O at all).
+    if not effective_db_path.exists():
+        return
+
     # M3 PFR R1 fix: explicit try/finally conn.close() pattern; `with conn:` commits
     # on success / rolls back on exception but does NOT close the file handle.
-    conn = get_connection(db_path)
+    conn = get_connection(effective_db_path)
     try:
+        # Path 2: DB present but runs table absent → clean state.
+        # Use sqlite_master read-only query to detect — does NOT trigger CREATE TABLE.
+        cursor = conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='runs'"
+        )
+        if cursor.fetchone() is None:
+            # runs table does not exist; no prior rows possible → clean state.
+            return
+
+        # Path 3: runs table present → query counts (read-only) + raise/DELETE.
         with conn:
-            create_table(conn)  # BLOCKING-3: ensure runs table exists before query
             n_children = conn.execute(
                 "SELECT COUNT(*) FROM runs WHERE parent_run_id = ?", (parent_run_id,)
             ).fetchone()[0]
@@ -1782,7 +2135,7 @@ def _finalize_batch_registry(
     - Build parent row dict with cohort-level fields populated + per-candidate
       metric fields NULL.
     - CB4: parent.git_commit = CORRECTED_WF_ENGINE_COMMIT ("eb1c87f") matching
-      engine's OVERRIDE pattern at engine.py:1314 (lc.engine_commit OVERRIDE-writes
+      engine's OVERRIDE pattern at engine.py:1328-1348 (lc.engine_commit OVERRIDE-writes
       to runs.git_commit column). cohort_metadata["current_git_sha"] populates the
       separate current_git_sha column (fire-time HEAD).
     - CB4 forensic: engine_commit ALSO written to `notes` JSON for explicit
@@ -1838,7 +2191,7 @@ def _finalize_batch_registry(
         "parent_run_id": None,
         "strategy_name": "cohort_summary",
         "strategy_source": "b_c_narrow_recovery",
-        # CB4 PFR R1: git_commit = engine_commit (matches engine OVERRIDE at engine.py:1314).
+        # CB4 PFR R1: git_commit = engine_commit (matches engine OVERRIDE at engine.py:1328-1348).
         # current_git_sha is the separate fire-time HEAD per spec §2 disambiguation table.
         "git_commit": CORRECTED_WF_ENGINE_COMMIT,
         "created_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -1965,8 +2318,17 @@ def _evaluate_one_candidate(
         # surface where producer-recomputed SHA could differ from engine-stamped SHA on any
         # filesystem race. Same column NAME, same VALUE everywhere (registry / JSON / CSV).
         child_run_id = child_run_id_override
-        with get_connection(db_path) as conn:
-            child_row = get_run(conn, child_run_id)
+        # MR2-1 PFR R2 ADOPT (v3): explicit try/finally conn.close() pattern.
+        # v2 used `with get_connection(...) as conn:` which commits/rolls back on
+        # exception but does NOT close the file handle (matches M3 PFR R1 ADOPT
+        # discipline applied to _finalize_batch_registry*). Per-candidate read
+        # path runs N times for cohort_a (39 calls); without explicit close()
+        # this would leak 39 file handles per cohort fire.
+        _conn = get_connection(db_path)
+        try:
+            child_row = get_run(_conn, child_run_id)
+        finally:
+            _conn.close()
         if child_row is None:
             raise RuntimeError(
                 f"B-C-narrow CB5+CB6: child registry row missing for "
@@ -2266,13 +2628,13 @@ grep -n "_exec_cfg_bytes\|aggregate\[\"forward_window_metadata\"\]\|_write_aggre
 
 Expected: `_exec_cfg_bytes` defined around line 1023; `aggregate["forward_window_metadata"]` around 1051; `_write_aggregate_summary` call around 1053. Place W6 block between lines 1051 and 1053.
 
-- [ ] **Step 10.9: Run all 22 Phase 2 tests — must PASS (GREEN)**
+- [ ] **Step 10.9: Run all 24 Phase 2 tests — must PASS (GREEN)**
 
 ```bash
 python -m pytest tests/test_phase2c_evaluation_gate_runner.py::TestBCNarrowPhase2ProducerEdits -v
 ```
 
-Expected: 22/22 PASS.
+Expected: 24/24 PASS.
 
 If any test FAILS, inspect — likely culprits:
 - import error in producer (Step 10.1 missed an import)
@@ -2286,7 +2648,7 @@ If any test FAILS, inspect — likely culprits:
 python -m pytest -q
 ```
 
-Expected: zero regression vs pre-Phase-2 baseline (HEAD `b10ffb2`: 2328 pass / 0 failed / 2 xfailed per Phase 0 SEAL note) + 22 net new passing Phase 2 tests. Total expected: 2350 pass / 0 failed / 2 xfailed (binding contract is zero regression + 22 new passing; the 2350 integer is informational).
+Expected: zero regression vs pre-Phase-2 baseline (HEAD `b10ffb2`: 2328 pass / 0 failed / 2 xfailed per Phase 0 SEAL note) + 24 net new passing Phase 2 tests. Total expected: 2352 pass / 0 failed / 2 xfailed (binding contract is zero regression + 24 new passing; the 2352 integer is informational).
 
 The T1.4 `test_4_tuple_matches_locked_values` test (at `tests/test_t1_4_backward_compat.py:490`) may FAIL at this step because the AST classifier now sees additional test/scripts-side `_write_to_registry` callers (if any added). Task 11 handles T1.4 baseline maintenance — if T1.4 fails at Step 10.10, proceed to Step 10.11 (commit Task 10) WITHOUT fixing T1.4 here. Task 11 commit closes the T1.4 baseline gap atomically.
 
@@ -2310,7 +2672,7 @@ Per Plan v3-Phase2 Task 10 + spec §3.2 + 4 Codex BLOCKING-carry fixes from Phas
 - _write_aggregate_csv: emits 5 new fields with backward-compat None→empty-string pattern
 - main(): wires archive PRE-flight + finalize PRE-flight guard + LC-b kwargs threading + finalize POST-fire (all gated by --enable-b-c-narrow-recovery for backward-compat)
 
-Tests: 22/22 Phase 2 tests GREEN. T1.4 baseline maintenance pending Task 11. Full suite zero regression except for expected T1.4 4-tuple drift (Task 11 closes)."
+Tests: 24/24 Phase 2 tests GREEN. T1.4 baseline maintenance pending Task 11. Full suite zero regression except for expected T1.4 4-tuple drift (Task 11 closes)."
 ```
 
 ---
@@ -2406,7 +2768,7 @@ Expected: all tests in the class PASS.
 python -m pytest -q
 ```
 
-Expected: 2350 pass / 0 failed / 2 xfailed (22 net new passing vs pre-Phase-2 baseline). Zero regression.
+Expected: 2352 pass / 0 failed / 2 xfailed (24 net new passing vs pre-Phase-2 baseline). Zero regression.
 
 - [ ] **Step 11.6: Commit T1.4 baseline maintenance (skip if no drift)**
 
@@ -2444,9 +2806,9 @@ python -m pytest -q
 ```
 
 Expected:
-- 22/22 Phase 2 tests PASS
+- 24/24 Phase 2 tests PASS
 - T1.4 B1 class PASSES (4-tuple verified)
-- Full suite: 2350 pass / 0 failed / 2 xfailed (zero regression vs `b10ffb2` baseline + 22 net new passing)
+- Full suite: 2352 pass / 0 failed / 2 xfailed (zero regression vs `b10ffb2` baseline + 24 net new passing)
 
 - [ ] **Step 12.2: Write Phase 2 ratify packet artifact**
 
@@ -2474,9 +2836,9 @@ Create `docs/superpowers/phase-2-impl-results/phase-2-ratify-summary.md`:
 
 | Test class | Methods | PASS | FAIL | Status |
 |---|---|---|---|---|
-| TestBCNarrowPhase2ProducerEdits | 22 | 22 | 0 | GREEN |
+| TestBCNarrowPhase2ProducerEdits | 24 | 24 | 0 | GREEN |
 | TestT1_4_B1_SignatureBackwardCompat | (existing) | (all) | 0 | GREEN |
-| Full suite (b10ffb2 baseline + 22 new) | 2350 | 2350 | 0 (+ 2 xfailed) | zero regression |
+| Full suite (b10ffb2 baseline + 24 new) | 2352 | 2352 | 0 (+ 2 xfailed) | zero regression |
 
 ## 4 BLOCKING-carry fixes verified
 
@@ -2511,8 +2873,8 @@ git commit -m "evidence(b-c-narrow/phase-2): Phase 2 ratify packet (T12)
 
 Per Plan v3-Phase2 Task 12.
 
-Phase 2 deliverables: 22/22 TestBCNarrowPhase2ProducerEdits PASS; full suite
-zero regression vs b10ffb2 baseline + 22 net new passing. T1.4 baseline
+Phase 2 deliverables: 24/24 TestBCNarrowPhase2ProducerEdits PASS; full suite
+zero regression vs b10ffb2 baseline + 24 net new passing. T1.4 baseline
 maintained per BLOCKING-6 AST classifier output.
 
 4 BLOCKING-carry fixes from Phase 0 plan v2 PFR R2 all verified:
@@ -2529,9 +2891,9 @@ is a SEPARATE register-event #N+3 per anti-pre-emption discipline."
 - [ ] **Step 12.4: STOP HERE — Surface to Charlie register-event #N+2**
 
 **STOP.** Surface to Charlie:
-- 22 Phase 2 producer-edit tests GREEN
+- 24 Phase 2 producer-edit tests GREEN
 - T1.4 B1 4-tuple unchanged (or updated per AST classifier; whichever applies)
-- Full test suite zero regression vs pre-Phase-2 baseline + 22 net new passing
+- Full test suite zero regression vs pre-Phase-2 baseline + 24 net new passing
 - Producer modifications confined to `scripts/run_phase2c_evaluation_gate.py` (7 modify-zones + 3 NEW functions) + 1 test file extension
 - All 4 BLOCKING-carry items from Phase 0 plan v2 PFR R2 verified fixed (BLOCKING-1 + BLOCKING-3 + BLOCKING-4 + BLOCKING-6)
 
