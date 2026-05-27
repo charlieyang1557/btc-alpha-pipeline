@@ -35,7 +35,7 @@
 
 | File | Action | Scope |
 |---|---|---|
-| `backtest/engine.py` | MODIFY | Lines 2044-2063 (RegimeHoldoutResult dataclass +equity_curve field) + 2270-2291 (run_regime_holdout signature +4 LC-b kwargs) + 2435-2523 (body sequencing fix + LC-b internal construction) |
+| `backtest/engine.py` | MODIFY | Imports section near top of file (add `from backtest.wf_lineage import CORRECTED_WF_ENGINE_COMMIT` + `from backtest.artifact_schema import LineageContext` + add `get_git_commit` to existing `from backtest.experiment_registry import ...`; see Step 4.1) + post-engine.py:53 constants block (add `_compute_sha256_file` + `_resolve_canonical_parquet_path` helpers) + Lines 2044-2063 (RegimeHoldoutResult dataclass +equity_curve field) + 2270-2291 (run_regime_holdout signature +4 LC-b kwargs) + 2435-2523 (body sequencing fix + LC-b internal construction including PFR R4 v3.4 preflight extension) |
 | `tests/conftest.py` | CREATE OR EXTEND | NEW shared fixtures (`btc_parquet_path`, `dsl_bollinger_zscore_reversion`, `dsl_monday_dip_buy`) for engine tests |
 | `tests/test_t1_1_artifact_writer.py` | EXTEND | NEW `TestBCNarrowPhase0EngineExtension` class (13 test methods post-PFR-R3-v3.3 merger; all bodies in full per Charlie no敷衍) |
 | `tests/test_phase2c_evaluation_gate_runner.py` | MODIFY | Line 83 existing `RegimeHoldoutResult(...)` stub +`equity_curve=pd.Series(dtype=float)` arg |
@@ -45,19 +45,24 @@
 
 ---
 
-## Pre-Phase-0 Charlie register-event boundary
+## Pre-Phase-0 Charlie register-event boundary (HISTORICAL — Charlie register PUSH-AFTER-V3.2 fulfilled)
 
-**STOP-HERE — Charlie must register one of:**
+**Historical STOP-HERE record at v3-Phase0 drafting time:**
 
-1. Push `506285b` + `53090a0` + `d6c7fc0` + `ca427b9` to origin/main BEFORE Phase 0 dispatch (recommended per spec §10.5: ahead 4 of origin/main)
-2. OR explicitly authorize Phase 0 dispatch with commits still local
+The original STOP-HERE asked Charlie to register either (1) push pre-Phase-0
+commits to origin/main, OR (2) authorize Phase 0 dispatch with commits local.
 
-**Deliverables Charlie should review:**
-- `git status` shows main ahead 4 of origin/main
-- This sub-plan itself (about to commit)
-- Plan v2 (ca427b9) historical reference for context
+**Resolution per Charlie register chain (2026-05-26):**
+- PUSH-AFTER-V3.2 register (2026-05-26): Charlie authorized push after v3.2
+  commit; subsequently v3.2 (`3f2babe`) → v3.3 (`cff08e0`) → v3.4 (this commit)
+  all pushed to origin/main as the v3.x amend cycle progressed.
+- AMEND-RE-PFR-R4 register (2026-05-26): authorized PFR R3 → v3.3 amend cycle.
+- Option 2 (AMEND-NOW-THEN-WAIT-CODEX, 2026-05-26): authorized v3.4 polish
+  during Codex usage-limit window + post-reset Codex R4 leg verification.
 
-Do NOT proceed to Task 1 without Charlie register on this push decision.
+This section is preserved as a historical record. Phase 0 dispatch (Task 1)
+remains gated by a separate Charlie register-event (EXEC-SUBAGENT) after
+PFR R4 returns convergent APPROVE on v3.4.
 
 ---
 
@@ -83,12 +88,15 @@ import pandas as pd
 import pytest
 
 # DEFECT-N2 fix per PFR R2: single source of truth — import from producer.
-# Producer at scripts/run_phase2c_evaluation_gate.py:242 uses regex-based fence
-# match (_FENCE_RE); conftest must NOT diverge with a parallel implementation.
-# PFR R3 LOW L2 fix (v3.3): module import is safe — scripts/run_phase2c_evaluation_gate.py
-# is purely a defs+constants module with no top-level side effects (no main() call,
-# no sys.exit, no network/disk I/O at import time; only `import` statements +
-# top-level constant assignments + function/class defs, verified at lines 75-130).
+# Producer's `_strip_markdown_fence` at scripts/run_phase2c_evaluation_gate.py:242
+# uses regex-based fence match (_FENCE_RE); conftest must NOT diverge with a
+# parallel implementation.
+# PFR R3 LOW L2 + PFR R4 MEDIUM N2b fix (v3.4): module import is safe —
+# scripts/run_phase2c_evaluation_gate.py top-of-module (lines 75-130) contains
+# only `import` statements + top-level constant assignments. No top-level
+# function calls, no `if __name__ == "__main__":` block at module load, no
+# network/disk I/O at import time. Importing `_strip_markdown_fence` triggers
+# only side-effect-free module initialization.
 from scripts.run_phase2c_evaluation_gate import _strip_markdown_fence
 
 
@@ -139,9 +147,9 @@ def env_config_override_forward_2026() -> dict:
     PHASE4_PLAN §1.2). Engine at backtest/engine.py:2371 calls
     `date.fromisoformat(block["end"])` which crashes with TypeError when None.
 
-    Producer at scripts/run_phase2c_evaluation_gate.py:204-230 uses identical
-    workaround pattern: pre-fills `forward_2026.end` with captured fire-time
-    value before calling run_regime_holdout(..., env_config=<override>, ...).
+    Producer at scripts/run_phase2c_evaluation_gate.py:187-233 (_build_phase4_env_config_override)
+    uses identical workaround pattern: pre-fills `forward_2026.end` with
+    captured fire-time value before calling run_regime_holdout(..., env_config=<override>, ...).
 
     Tests adopt same pattern: pass `env_config=env_config_override_forward_2026`
     to every run_regime_holdout(regime_key="evaluation_regimes.forward_2026", ...)
@@ -207,9 +215,10 @@ class TestBCNarrowPhase0EngineExtension:
         canonical data/results/ directory.
 
         Established precedent: tests/test_t1_4_backward_compat.py:921 +
-        tests/test_t1_5_smoke_end_to_end.py:540 both monkeypatch this exact
-        attribute for hermetic isolation. Reusing the pattern with `autouse=True`
-        so every test in this class gets isolation by default.
+        tests/test_t1_5_smoke_end_to_end.py:403 + tests/test_t1_5_smoke_end_to_end.py:570
+        all monkeypatch this exact attribute for hermetic isolation. Reusing the
+        pattern with `autouse=True` so every test in this class gets isolation
+        by default.
 
         Note on pytest scoping: pytest's `tmp_path` fixture is FUNCTION-scoped
         (one fresh path per test). This autouse fixture inherits the default
@@ -398,6 +407,7 @@ class TestBCNarrowPhase0EngineExtension:
         # 16-char hash_dsl is exercised by tests/test_hypothesis_hash.py and is
         # NOT in scope for Phase 0 engine extension.
         assert hh is not None and len(hh) == 64, f"hypothesis_hash invalid: {hh!r}"
+        int(hh, 16)  # PFR R4 LOW N4 (v3.4): hex-shape check; ValueError on non-hex
         # batch_id column at registry = LC.source_batch_id field per
         # artifact_schema.py:261 ("aliases registry runs.batch_id")
         assert bid == "test-source-batch-lcb"
@@ -419,14 +429,21 @@ class TestBCNarrowPhase0EngineExtension:
         assert "execution_phase4_15bps.yaml" in (ecp or ""), (
             f"execution_config_path missing: {ecp!r}"
         )
+        # PFR R4 LOW N4 fix (v3.4): hex-shape check alongside length.
+        # `len == 64` alone permits 64-char non-hex strings; SHA256 contract
+        # is 64 lowercase hex digits. Use int(..., 16) parse as the hex shape
+        # check — raises ValueError if any character is non-hex.
         assert ecsha is not None and len(ecsha) == 64
+        int(ecsha, 16)  # ValueError on non-hex char
         assert psha is not None and len(psha) == 64
+        int(psha, 16)  # ValueError on non-hex char
         # cost_anchor_id DERIVED by LC __post_init__ (NOT passed)
         assert cai == "phase4_forward_15bps_v1", (
             f"cost_anchor_id derivation failed: {cai!r}"
         )
         assert rpbp is not None and rpbp != "", f"returns_per_bar_path empty: {rpbp!r}"
         assert rpbsha is not None and len(rpbsha) == 64
+        int(rpbsha, 16)  # PFR R4 LOW N4 (v3.4): ValueError on non-hex char
         assert tobs is not None and tobs > 0, f"T_obs invalid: {tobs!r}"
 
         # Verify per-bar parquet file exists
@@ -521,6 +538,7 @@ class TestBCNarrowPhase0EngineExtension:
         )
         assert result.run_id is not None
         assert result.hypothesis_hash is not None and len(result.hypothesis_hash) == 64
+        int(result.hypothesis_hash, 16)  # PFR R4 LOW N4 (v3.4): hex-shape check
         assert result.total_trades >= 0
         assert result.equity_curve is not None
         assert len(result.equity_curve) > 0
@@ -709,6 +727,7 @@ class TestBCNarrowPhase0EngineExtension:
             f"(data/raw/btcusdt_1h.parquet) when parquet_path=None; "
             f"got {row[0]!r}"
         )
+        int(row[0], 16)  # PFR R4 LOW N4 (v3.4): hex-shape check on parquet_data_sha256
 ```
 
 - [ ] **Step 1.3: Update existing RegimeHoldoutResult test stubs**
@@ -955,14 +974,15 @@ If `get_git_commit` not imported, add to the existing import line.
 Read current body at engine.py lines 2435-2523. Replace the section from line 2435 (the `result = run_backtest(...)` call) through line 2523 (the closing `return RegimeHoldoutResult(...)`) with the corrected sequence:
 
 ```python
-    # ---- B-C-narrow Phase 0 LC-b PREFLIGHT (PFR R3 MEDIUM M1-C fix v3.3) ----
-    # Scalar LC-b precondition checks moved BEFORE run_backtest per advisor M1-C:
+    # ---- B-C-narrow Phase 0 LC-b PREFLIGHT (PFR R3 MEDIUM M1-C + PFR R4 MEDIUM N1 fix v3.4) ----
+    # Scalar LC-b precondition checks moved BEFORE run_backtest per advisor M1-C +
+    # extended to ALSO cover empty-string ID overrides per advisor R4 MEDIUM-N1:
     # validating cheap scalars before launching expensive backtest prevents
     # full backtest runs + trade CSV writes on bad LC-b setups (e.g.,
-    # hypothesis_hash=None, missing execution_config_path, get_git_commit() None).
-    # D-N3 + D-N4 + BLOCKING-2 preconditions are now hoisted; empty-string ID
-    # checks (run_id_override="" / source_batch_id="") still happen later at
-    # LineageContext __post_init__ because they require LC construction context.
+    # hypothesis_hash=None, missing execution_config_path, get_git_commit() None,
+    # empty-string run_id_override / source_batch_id).
+    # D-N3 + D-N4 + BLOCKING-2 preconditions are hoisted; empty-string ID checks
+    # are now ALSO hoisted (M1-C complete coverage; v3.3 had partial coverage).
     lcb_active = artifact_dir is not None
     git_sha: str | None = None
     if lcb_active:
@@ -984,6 +1004,24 @@ Read current body at engine.py lines 2435-2523. Replace the section from line 24
                 "B-C-narrow LC-b precondition: execution_config_path must not be None "
                 "at LC-b path (required for cost_anchor_id derivation via "
                 "COST_ANCHOR_ID_MAPPING per artifact_schema.py:298-302)."
+            )
+        # PFR R4 MEDIUM N1 fix (v3.4): hoist empty-string checks. Without these,
+        # boundary tests with run_id_override="" / source_batch_id="" run full
+        # backtest (~2528 bars) before LC.__post_init__ raises. Same fail-closed
+        # semantics (ValueError raised either way), but ~2 minutes saved per
+        # affected test at ratify time. Semantically equivalent to LC __post_init__'s
+        # STRICT non-empty contract — just hoisted to preflight for efficiency.
+        if run_id_override is not None and run_id_override == "":
+            raise ValueError(
+                "B-C-narrow LC-b precondition: run_id_override must be non-empty "
+                "if provided at LC-b path (LC.run_id STRICT non-empty field). "
+                "Pass None to use engine-minted UUID, or pass a non-empty string."
+            )
+        if source_batch_id is not None and source_batch_id == "":
+            raise ValueError(
+                "B-C-narrow LC-b precondition: source_batch_id must be non-empty "
+                "if provided at LC-b path (LC.source_batch_id STRICT non-empty field). "
+                "Pass None to inherit positional batch_id, or pass a non-empty string."
             )
 
     # ---- Existing: run backtest + evaluate pass (lines 2435-2446 unchanged) ----
@@ -1210,7 +1248,7 @@ python -m pytest -q
 - 13 Phase 0 engine-extension tests GREEN
 - Full test suite zero regression vs pre-Phase-0 baseline + 13 net new passing
 - Engine modifications confined to RegimeHoldoutResult dataclass + run_regime_holdout signature + run_regime_holdout body + helper functions (_compute_sha256_file + _resolve_canonical_parquet_path)
-- All 7 Codex R2 BLOCKING/HIGH/MEDIUM fixes within Phase 0 scope applied (D-N1 through D-N4 + BLOCKING-2 + canonical parquet resolution + engine_commit assertion + db_path tmp isolation)
+- All 7 Codex R2 BLOCKING/HIGH/MEDIUM fixes within Phase 0 scope applied: D-N1 (revalidate_for_write double-invocation drop) + D-N2 (lcb_active single-gate) + D-N3 (get_git_commit None handling) + D-N4 (hypothesis_hash None handling) + BLOCKING-2 (canonical parquet resolution for parquet_data_sha256) + HIGH (engine_commit explicit assertion) + HIGH (db_path tmp isolation)
 
 Phase 0 sealed (at task level). Plan v3-Phase1 sub-plan drafting may start (separate Charlie register-event for that drafting authorization).
 
