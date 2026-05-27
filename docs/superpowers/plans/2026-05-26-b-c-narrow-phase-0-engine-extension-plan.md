@@ -37,7 +37,7 @@
 |---|---|---|
 | `backtest/engine.py` | MODIFY | Lines 2044-2063 (RegimeHoldoutResult dataclass +equity_curve field) + 2270-2291 (run_regime_holdout signature +4 LC-b kwargs) + 2435-2523 (body sequencing fix + LC-b internal construction) |
 | `tests/conftest.py` | CREATE OR EXTEND | NEW shared fixtures (`btc_parquet_path`, `dsl_bollinger_zscore_reversion`, `dsl_monday_dip_buy`) for engine tests |
-| `tests/test_t1_1_artifact_writer.py` | EXTEND | NEW `TestBCNarrowPhase0EngineExtension` class (~14 test methods, all bodies in full per Charlie no敷衍) |
+| `tests/test_t1_1_artifact_writer.py` | EXTEND | NEW `TestBCNarrowPhase0EngineExtension` class (13 test methods post-PFR-R3-v3.3 merger; all bodies in full per Charlie no敷衍) |
 | `tests/test_phase2c_evaluation_gate_runner.py` | MODIFY | Line 83 existing `RegimeHoldoutResult(...)` stub +`equity_curve=pd.Series(dtype=float)` arg |
 | `tests/test_t1_4_backward_compat.py` | MODIFY | Line 1384 existing `RegimeHoldoutResult(...)` stub +`equity_curve=` arg |
 
@@ -85,8 +85,10 @@ import pytest
 # DEFECT-N2 fix per PFR R2: single source of truth — import from producer.
 # Producer at scripts/run_phase2c_evaluation_gate.py:242 uses regex-based fence
 # match (_FENCE_RE); conftest must NOT diverge with a parallel implementation.
-# Import precedent: tests/test_t1_4_backward_compat.py:1323 already imports from
-# this module — top-of-module import is safe (no module-load side effects).
+# PFR R3 LOW L2 fix (v3.3): module import is safe — scripts/run_phase2c_evaluation_gate.py
+# is purely a defs+constants module with no top-level side effects (no main() call,
+# no sys.exit, no network/disk I/O at import time; only `import` statements +
+# top-level constant assignments + function/class defs, verified at lines 75-130).
 from scripts.run_phase2c_evaluation_gate import _strip_markdown_fence
 
 
@@ -193,24 +195,67 @@ class TestBCNarrowPhase0EngineExtension:
       hypothesis_hash is None at LC-b path
     """
 
-    # ----- Dataclass shape tests (2) -----
+    @pytest.fixture(autouse=True)
+    def _isolate_results_dir(self, tmp_path, monkeypatch):
+        """PFR R3 HIGH H1-C fix (v3.3): hermetic isolation from canonical
+        data/results/.
 
-    def test_regime_holdout_result_exposes_equity_curve_field(self):
-        """RegimeHoldoutResult dataclass must include equity_curve: pd.Series field."""
-        from backtest.engine import RegimeHoldoutResult
-        field_names = {f.name for f in fields(RegimeHoldoutResult)}
-        assert "equity_curve" in field_names, (
-            f"RegimeHoldoutResult must include 'equity_curve' field per spec §3.1.1; "
-            f"current fields: {sorted(field_names)}"
-        )
+        run_regime_holdout → run_backtest → _save_trade_csv writes
+        trade CSVs to backtest.engine.RESULTS_DIR at engine.py:830
+        (`RESULTS_DIR.mkdir(...); csv_path = RESULTS_DIR / f"trades_{run_id}.csv"`).
+        Without isolation, every successful Phase 0 test pollutes the repo's
+        canonical data/results/ directory.
 
-    def test_regime_holdout_result_dataclass_field_count_12(self):
-        """RegimeHoldoutResult must have exactly 12 fields (11 existing + equity_curve)."""
+        Established precedent: tests/test_t1_4_backward_compat.py:921 +
+        tests/test_t1_5_smoke_end_to_end.py:540 both monkeypatch this exact
+        attribute for hermetic isolation. Reusing the pattern with `autouse=True`
+        so every test in this class gets isolation by default.
+
+        Note on pytest scoping: pytest's `tmp_path` fixture is FUNCTION-scoped
+        (one fresh path per test). This autouse fixture inherits the default
+        function scope, so the `tmp_path` here is the SAME per-test instance
+        passed to each test method's `tmp_path` parameter. `results_dir` lives
+        as a sibling of the per-test `db_path` / `artifact_dir` under one
+        common tmp_path root — pytest auto-cleans the whole tree post-test.
+        """
+        results_dir = tmp_path / "results"
+        results_dir.mkdir(exist_ok=True)
+        monkeypatch.setattr("backtest.engine.RESULTS_DIR", results_dir)
+
+    # ----- Dataclass shape test (1) — merged per PFR R3 MEDIUM M2-A + LOW L1 -----
+
+    def test_regime_holdout_result_dataclass_exact_field_set(self):
+        """PFR R3 MEDIUM M2-A + LOW L1 fix (v3.3): replaces two prior tests
+        (`_exposes_equity_curve_field` + `_dataclass_field_count_12`) with a
+        single set-equality assertion.
+
+        Prior approach (count==12 + presence-of-equity_curve) was silent on
+        field-set regressions (e.g., remove field 11, add unrelated field 12 →
+        count stays 12; advisor M2-A). Set-equality catches both add AND remove
+        regressions at the exact 12-field contract per spec §3.1.1 + B-C-narrow
+        Phase 0 extension."""
         from backtest.engine import RegimeHoldoutResult
-        all_fields = [f.name for f in fields(RegimeHoldoutResult)]
-        assert len(all_fields) == 12, (
-            f"RegimeHoldoutResult must have 12 fields; "
-            f"got {len(all_fields)}: {all_fields}"
+        expected = {
+            "run_id",
+            "parent_run_id",
+            "batch_id",
+            "hypothesis_hash",
+            "regime_holdout_passed",
+            "sharpe_ratio",
+            "max_drawdown",
+            "total_return",
+            "total_trades",
+            "passing_criteria",
+            "metrics",
+            "equity_curve",  # B-C-narrow Phase 0 12th field
+        }
+        actual = {f.name for f in fields(RegimeHoldoutResult)}
+        assert actual == expected, (
+            f"RegimeHoldoutResult field set drift:\n"
+            f"  Missing: {sorted(expected - actual)}\n"
+            f"  Extra:   {sorted(actual - expected)}\n"
+            f"  Actual:  {sorted(actual)}\n"
+            f"  Expected (12 fields): {sorted(expected)}"
         )
 
     # ----- Signature tests (2) -----
@@ -275,6 +320,22 @@ class TestBCNarrowPhase0EngineExtension:
         assert pd.api.types.is_datetime64_any_dtype(result.equity_curve.index), (
             "equity_curve must have datetime-typed index "
             "(tz-awareness validated downstream at parquet write per engine.py:514-518)"
+        )
+        # PFR R3 MEDIUM M3-A fix (v3.3): semantic check on equity_curve content.
+        # The prior assertions catch shape/type but are silent on garbage data
+        # (e.g., engine populates equity_curve with raw closes, returns, or NaNs
+        # instead of portfolio values). Portfolio value is monetary and must be
+        # strictly positive at every bar (default initial cash = 100000; bankruptcy
+        # to <=0 would have other engine-level guards). This catches the
+        # "tests pass for the wrong reason" failure mode where engine returns a
+        # populated-but-semantically-wrong equity_curve.
+        assert (result.equity_curve > 0).all(), (
+            f"equity_curve must be strictly positive at every bar (portfolio value); "
+            f"got min={result.equity_curve.min()}, "
+            f"first_value={result.equity_curve.iloc[0]}, "
+            f"last_value={result.equity_curve.iloc[-1]}. Likely engine populated "
+            f"with returns/closes instead of values, or strategy collapsed below "
+            f"zero (which should fail the regime_holdout pass criteria upstream)."
         )
 
     # ----- LC-b internal construction test (all 14 LC fields asserted) -----
@@ -380,7 +441,13 @@ class TestBCNarrowPhase0EngineExtension:
     ):
         """Verify atomicity invariant per spec §3.1.2 — write_per_bar_artifact
         MUST be called before _write_to_registry (so registry row references
-        the just-written artifact path + SHA atomically)."""
+        the just-written artifact path + SHA atomically).
+
+        PFR R3 LOW L4 note (v3.3): this test verifies call-ORDER given both
+        wrapped functions succeed. If either raises (e.g., disk write fails,
+        registry write conflict fires), the exception propagates uncaught and
+        the test errors out — acceptable secondary failure mode (the registered
+        order-violation is impossible without both calls running)."""
         from backtest import engine
         call_order = []
 
@@ -400,7 +467,11 @@ class TestBCNarrowPhase0EngineExtension:
 
         engine.run_regime_holdout(
             dsl=dsl_bollinger_zscore_reversion,
-            batch_id="test-co",
+            # PFR R3 BLOCKING B1 fix (v3.3): batch_id and source_batch_id MUST match
+            # when both are non-None per _write_to_registry conflict guard at
+            # backtest/engine.py:1094-1108 (raise ValueError if disagree). LC.source_batch_id
+            # aliases registry runs.batch_id; values must be consistent.
+            batch_id="test-co-bsi",
             parent_run_id="test-parent-co",
             regime_key="evaluation_regimes.forward_2026",
             parquet_path=str(btc_parquet_path),
@@ -408,7 +479,7 @@ class TestBCNarrowPhase0EngineExtension:
             execution_config_path=Path("config/execution_phase4_15bps.yaml"),
             env_config=env_config_override_forward_2026,
             run_id_override="test_co_001",
-            source_batch_id="test-bsi",
+            source_batch_id="test-co-bsi",
             parent_run_id_override="test-parent-override",
             artifact_dir=tmp_path / "artifact_co",
         )
@@ -545,18 +616,30 @@ class TestBCNarrowPhase0EngineExtension:
     ):
         """Per D-N2 fix: lcb_active = (artifact_dir is not None) — single gate.
         Other LC-b kwargs set but artifact_dir=None → LC-b path NOT activated;
-        legacy path taken; no error."""
+        legacy path taken; no error.
+
+        PFR R3 HIGH H1-A fix (v3.3): this test originally checked only
+        `result.run_id != "test-rid"` — a weak gate silent on source_batch_id
+        and parent_run_id_override leaking in the legacy path. Hardened to
+        ALSO assert registry row uses the POSITIONAL batch_id + parent_run_id
+        (not the LC-b override values). Per advisor: a v1.x regression that
+        re-introduced unconditional honoring of source_batch_id or
+        parent_run_id_override in legacy path would have slipped through
+        the original 1-assertion gate."""
         from backtest.engine import run_regime_holdout
+        from backtest.experiment_registry import get_connection
+
+        db_path = tmp_path / "test_artifact_none.db"
         result = run_regime_holdout(
             dsl=dsl_bollinger_zscore_reversion,
             batch_id="test-bc", parent_run_id="test-parent",
             regime_key="evaluation_regimes.forward_2026",
             parquet_path=str(btc_parquet_path),
-            db_path=tmp_path / "test_artifact_none.db",
+            db_path=db_path,
             env_config=env_config_override_forward_2026,
             run_id_override="test-rid",  # set but ignored without artifact_dir
-            source_batch_id="test-bsi",
-            parent_run_id_override="test-prio",
+            source_batch_id="test-bsi",  # set but ignored without artifact_dir
+            parent_run_id_override="test-prio",  # set but ignored without artifact_dir
             artifact_dir=None,  # primary gate — LC-b NOT activated
         )
         # Legacy path taken — result.run_id is the engine-minted UUID, NOT override
@@ -565,6 +648,26 @@ class TestBCNarrowPhase0EngineExtension:
             f"(legacy path); got result.run_id={result.run_id}"
         )
         assert result.equity_curve is not None  # always populated regardless
+
+        # H1-A hardening: verify registry row reflects POSITIONAL values, NOT overrides.
+        # This catches sibling-leak regressions where source_batch_id or
+        # parent_run_id_override would inadvertently be honored in legacy path.
+        with get_connection(db_path) as conn:
+            row = conn.execute(
+                "SELECT batch_id, parent_run_id FROM runs WHERE run_id = ?",
+                (result.run_id,),
+            ).fetchone()
+        assert row is not None, (
+            f"Registry row missing for run_id={result.run_id!r}"
+        )
+        assert row[0] == "test-bc", (
+            f"Legacy path must use POSITIONAL batch_id 'test-bc', NOT the "
+            f"source_batch_id override 'test-bsi'; got row.batch_id={row[0]!r}"
+        )
+        assert row[1] == "test-parent", (
+            f"Legacy path must use POSITIONAL parent_run_id 'test-parent', NOT "
+            f"the parent_run_id_override 'test-prio'; got row.parent_run_id={row[1]!r}"
+        )
 
     def test_run_regime_holdout_lcb_resolves_canonical_parquet_when_none(
         self, dsl_bollinger_zscore_reversion, tmp_path,
@@ -582,13 +685,15 @@ class TestBCNarrowPhase0EngineExtension:
 
         result = run_regime_holdout(
             dsl=dsl_bollinger_zscore_reversion,
-            batch_id="test-bc", parent_run_id="test-parent",
+            # PFR R3 BLOCKING B1 fix (v3.3): batch_id matches source_batch_id per
+            # _write_to_registry conflict guard at backtest/engine.py:1094-1108.
+            batch_id="test-canon-bsi", parent_run_id="test-parent",
             regime_key="evaluation_regimes.forward_2026",
             parquet_path=None,  # NOT passed — engine resolves canonical
             db_path=db_path,
             execution_config_path=Path("config/execution_phase4_15bps.yaml"),
             env_config=env_config_override_forward_2026,
-            run_id_override=run_id, source_batch_id="test-bsi",
+            run_id_override=run_id, source_batch_id="test-canon-bsi",
             parent_run_id_override="test-prio", artifact_dir=artifact_dir,
         )
 
@@ -608,11 +713,35 @@ class TestBCNarrowPhase0EngineExtension:
 
 - [ ] **Step 1.3: Update existing RegimeHoldoutResult test stubs**
 
-Edit `tests/test_phase2c_evaluation_gate_runner.py:83` — find existing `return RegimeHoldoutResult(...)` call. Add `equity_curve=pd.Series(dtype=float)` arg (ensure `import pandas as pd` at top).
+PFR R3 MEDIUM M1 fix (v3.3): the original Step 1.3 had a soft parenthetical
+about ensuring `import pandas as pd`. Empirical: NEITHER stub file has a
+module-level `import pandas as pd` — `test_phase2c_evaluation_gate_runner.py`
+imports only `pathlib.Path` + `pytest` at top; `test_t1_4_backward_compat.py`
+has an inline `import pandas as pd` at line 1008 (inside a method, not module
+scope). Adding `equity_curve=pd.Series(dtype=float)` without first adding the
+module-level import will cause `NameError` at test collection time, taking
+down the entire test module. Explicit two-step procedure for EACH file:
 
-Same fix at `tests/test_t1_4_backward_compat.py:1384`.
+- [ ] **Step 1.3a (for both files): verify or add module-level `import pandas as pd`**
 
-- [ ] **Step 1.4: Run all 14 new tests — they must FAIL (RED)**
+```bash
+# For tests/test_phase2c_evaluation_gate_runner.py:
+grep -E "^import pandas|^import pandas as pd" tests/test_phase2c_evaluation_gate_runner.py
+# If empty → add `import pandas as pd` at the top of the imports block.
+# Same check for tests/test_t1_4_backward_compat.py:
+grep -E "^import pandas|^import pandas as pd" tests/test_t1_4_backward_compat.py
+# If empty → add `import pandas as pd` at the top of the imports block.
+```
+
+- [ ] **Step 1.3b: append `equity_curve=pd.Series(dtype=float)` arg to each stub**
+
+Edit `tests/test_phase2c_evaluation_gate_runner.py:83` — find existing
+`return RegimeHoldoutResult(...)` call. Add `equity_curve=pd.Series(dtype=float)`
+as the final kwarg.
+
+Same edit at `tests/test_t1_4_backward_compat.py:1384`.
+
+- [ ] **Step 1.4: Run all 13 new tests — they must FAIL (RED)**
 
 ```bash
 cd /Users/yutianyang/Documents/GitHub/btc-alpha-pipeline
@@ -626,7 +755,7 @@ Expected: most tests FAIL with `AttributeError: 'RegimeHoldoutResult' has no fie
 ```bash
 git add tests/conftest.py tests/test_t1_1_artifact_writer.py \
         tests/test_phase2c_evaluation_gate_runner.py tests/test_t1_4_backward_compat.py
-git commit -m "test(b-c-narrow/phase-0): add 14 failing engine-extension tests + shared fixtures (T1)
+git commit -m "test(b-c-narrow/phase-0): add 13 failing engine-extension tests + shared fixtures (T1)
 
 Per Plan v3-Phase0 Task 1. RED-phase tests verify (post-implementation):
 - RegimeHoldoutResult dataclass 12 fields (incl. equity_curve)
@@ -645,7 +774,7 @@ dsl_monday_dip_buy) at tests/conftest.py loading from recovered raw_payloads.
 
 Existing test stubs at tests/test_phase2c_evaluation_gate_runner.py:83 +
 tests/test_t1_4_backward_compat.py:1384 add equity_curve=pd.Series(dtype=float)
-for backward-compat. All 14 tests FAIL at this commit (RED phase). T2/T3/T4
+for backward-compat. All 13 tests FAIL at this commit (RED phase). T2/T3/T4
 implement engine changes to bring GREEN."
 ```
 
@@ -683,14 +812,18 @@ class RegimeHoldoutResult:
     equity_curve: pd.Series  # B-C-narrow Phase 0
 ```
 
-- [ ] **Step 2.2: Run 2 shape tests + full suite zero-regression**
+- [ ] **Step 2.2: Run shape test + full suite zero-regression**
+
+PFR R3 v3.3: post M2-A + L1 merger, the prior 2 shape tests
+(`_exposes_equity_curve_field` + `_dataclass_field_count_12`) are folded into
+a single `test_regime_holdout_result_dataclass_exact_field_set` set-equality test.
 
 ```bash
-python -m pytest tests/test_t1_1_artifact_writer.py::TestBCNarrowPhase0EngineExtension::test_regime_holdout_result_exposes_equity_curve_field tests/test_t1_1_artifact_writer.py::TestBCNarrowPhase0EngineExtension::test_regime_holdout_result_dataclass_field_count_12 -v
+python -m pytest tests/test_t1_1_artifact_writer.py::TestBCNarrowPhase0EngineExtension::test_regime_holdout_result_dataclass_exact_field_set -v
 python -m pytest -q
 ```
 
-Expected: 2 PASS;full suite zero regression.
+Expected: 1 PASS; full suite zero regression.
 
 - [ ] **Step 2.3: Commit**
 
@@ -822,48 +955,17 @@ If `get_git_commit` not imported, add to the existing import line.
 Read current body at engine.py lines 2435-2523. Replace the section from line 2435 (the `result = run_backtest(...)` call) through line 2523 (the closing `return RegimeHoldoutResult(...)`) with the corrected sequence:
 
 ```python
-    # ---- Existing: run backtest + evaluate pass (lines 2435-2446 unchanged) ----
-    result = run_backtest(
-        strategy_cls=strategy_cls,
-        start_date=start_dt,
-        end_date=end_dt,
-        strategy_params=strategy_params or {},
-        parquet_path=parquet_path,
-        cash=cash,
-        write_registry=False,
-        execution_config_path=_rh_effective_exec_path,
-    )
-
-    passed = _evaluate_regime_holdout_pass(result.metrics, passing_criteria)
-
-    # ---- B-C-narrow Phase 0 LC-b sequence (D-N1 + D-N2 + D-N3 + D-N4 + BLOCKING-2 fixes) ----
-
-    # D-N2 + F3 (Codex P0-DN2 BLOCKING fix): lcb_active uses single-gate (artifact_dir is not None).
-    # Effective IDs gated behind lcb_active — overrides ONLY honored on LC-b path;
-    # legacy path uses engine-minted UUID + positional parent_run_id verbatim.
-    # This prevents the test self-contradiction where artifact_dir=None tests assert
-    # run_id_override is ignored but implementation unconditionally honored it (v3-Phase0
-    # plan v1 R1 Codex catch).
+    # ---- B-C-narrow Phase 0 LC-b PREFLIGHT (PFR R3 MEDIUM M1-C fix v3.3) ----
+    # Scalar LC-b precondition checks moved BEFORE run_backtest per advisor M1-C:
+    # validating cheap scalars before launching expensive backtest prevents
+    # full backtest runs + trade CSV writes on bad LC-b setups (e.g.,
+    # hypothesis_hash=None, missing execution_config_path, get_git_commit() None).
+    # D-N3 + D-N4 + BLOCKING-2 preconditions are now hoisted; empty-string ID
+    # checks (run_id_override="" / source_batch_id="") still happen later at
+    # LineageContext __post_init__ because they require LC construction context.
     lcb_active = artifact_dir is not None
-
+    git_sha: str | None = None
     if lcb_active:
-        # LC-b path: honor producer-passed overrides
-        effective_run_id = run_id_override if run_id_override is not None else result.run_id
-        effective_parent_run_id = (
-            parent_run_id_override if parent_run_id_override is not None else parent_run_id
-        )
-    else:
-        # Legacy path: ignore LC-b overrides; use engine-minted UUID + positional parent
-        effective_run_id = result.run_id
-        effective_parent_run_id = parent_run_id
-
-    holdout_run_id = effective_run_id  # preserve alias for logging
-
-    # LC-b: write per-bar artifact + construct LC if active
-    artifact_metadata: dict[str, Any] | None = None
-    lcb_lineage_context = None
-    if lcb_active:
-        # D-N3 + D-N4 + BLOCKING-2: precondition checks before LC construction
         if hypothesis_hash is None:
             raise ValueError(
                 "B-C-narrow LC-b precondition: hypothesis_hash must not be None at "
@@ -883,6 +985,56 @@ Read current body at engine.py lines 2435-2523. Replace the section from line 24
                 "at LC-b path (required for cost_anchor_id derivation via "
                 "COST_ANCHOR_ID_MAPPING per artifact_schema.py:298-302)."
             )
+
+    # ---- Existing: run backtest + evaluate pass (lines 2435-2446 unchanged) ----
+    result = run_backtest(
+        strategy_cls=strategy_cls,
+        start_date=start_dt,
+        end_date=end_dt,
+        strategy_params=strategy_params or {},
+        parquet_path=parquet_path,
+        cash=cash,
+        write_registry=False,
+        execution_config_path=_rh_effective_exec_path,
+    )
+
+    passed = _evaluate_regime_holdout_pass(result.metrics, passing_criteria)
+
+    # ---- B-C-narrow Phase 0 LC-b sequence (D-N1 + D-N2 + post-preflight) ----
+
+    # D-N2 + F3 (Codex P0-DN2 BLOCKING fix): lcb_active uses single-gate (artifact_dir is not None).
+    # Effective IDs gated behind lcb_active — overrides ONLY honored on LC-b path;
+    # legacy path uses engine-minted UUID + positional parent_run_id verbatim.
+    # This prevents the test self-contradiction where artifact_dir=None tests assert
+    # run_id_override is ignored but implementation unconditionally honored it (v3-Phase0
+    # plan v1 R1 Codex catch).
+    if lcb_active:
+        # LC-b path: honor producer-passed overrides
+        effective_run_id = run_id_override if run_id_override is not None else result.run_id
+        effective_parent_run_id = (
+            parent_run_id_override if parent_run_id_override is not None else parent_run_id
+        )
+    else:
+        # Legacy path: ignore LC-b overrides; use engine-minted UUID + positional parent
+        effective_run_id = result.run_id
+        effective_parent_run_id = parent_run_id
+
+    holdout_run_id = effective_run_id  # preserve alias for logging
+
+    # LC-b: write per-bar artifact + construct LC if active
+    artifact_metadata: dict[str, Any] | None = None
+    lcb_lineage_context = None
+    if lcb_active:
+        # (Preflight scalar preconditions already verified above; git_sha already
+        # resolved. effective_parquet_path resolution still happens here because it
+        # depends on parquet_path arg evaluated once.)
+        # Defensive narrowing: preflight raised if git_sha was None when lcb_active;
+        # re-assert here to make the invariant explicit across the two if-blocks.
+        assert git_sha is not None, (
+            "Internal invariant violation: git_sha must be non-None inside LC-b "
+            "block — the preflight `if lcb_active:` block above should have "
+            "raised ValueError if get_git_commit() returned None."
+        )
 
         # BLOCKING-2 fix: resolve canonical parquet path when None
         effective_parquet_path = (
@@ -995,13 +1147,13 @@ Read current body at engine.py lines 2435-2523. Replace the section from line 24
     )
 ```
 
-- [ ] **Step 4.3: Run all 14 Phase 0 tests — must PASS (GREEN)**
+- [ ] **Step 4.3: Run all 13 Phase 0 tests — must PASS (GREEN)**
 
 ```bash
 python -m pytest tests/test_t1_1_artifact_writer.py::TestBCNarrowPhase0EngineExtension -v
 ```
 
-Expected: 14/14 PASS.
+Expected: 13/13 PASS.
 
 - [ ] **Step 4.4: Full test suite zero-regression**
 
@@ -1009,7 +1161,10 @@ Expected: 14/14 PASS.
 python -m pytest -q
 ```
 
-Expected: 2317 + 14 = 2331 tests passing.
+PFR R3 LOW L3 fix (v3.3): Expected: zero regression vs pre-Phase-0 baseline +
+13 net new passing. Avoid hard-coding absolute test counts (the pre-Phase-0
+baseline may drift due to other concurrent work outside this Phase 0 scope;
+the binding contract is zero regression + the 13 new tests passing).
 
 - [ ] **Step 4.5: Commit**
 
@@ -1035,14 +1190,14 @@ Codex R2 BLOCKING/HIGH fixes within Phase 0 scope:
 Helpers added: _compute_sha256_file (file SHA256 chunked) +
 _resolve_canonical_parquet_path (BTC parquet default).
 
-Tests: 14/14 Phase 0 tests now GREEN. Full suite 2331/2331 zero regression."
+Tests: 13/13 Phase 0 tests now GREEN. Full suite: zero regression vs pre-Phase-0 baseline + 13 net new passing."
 ```
 
 ---
 
 ### Task 5: Phase 0 final ratify
 
-- [ ] **Step 5.1: Confirm 14 tests + full suite all GREEN**
+- [ ] **Step 5.1: Confirm 13 tests + full suite all GREEN**
 
 ```bash
 python -m pytest tests/test_t1_1_artifact_writer.py::TestBCNarrowPhase0EngineExtension -v
@@ -1052,8 +1207,8 @@ python -m pytest -q
 - [ ] **Step 5.2: Charlie register-event #N — Phase 0 ratify before Plan v3-Phase1 drafting**
 
 **STOP HERE.** Surface to Charlie:
-- 14 Phase 0 engine-extension tests GREEN
-- Full test suite 2331/2331 passing
+- 13 Phase 0 engine-extension tests GREEN
+- Full test suite zero regression vs pre-Phase-0 baseline + 13 net new passing
 - Engine modifications confined to RegimeHoldoutResult dataclass + run_regime_holdout signature + run_regime_holdout body + helper functions (_compute_sha256_file + _resolve_canonical_parquet_path)
 - All 7 Codex R2 BLOCKING/HIGH/MEDIUM fixes within Phase 0 scope applied (D-N1 through D-N4 + BLOCKING-2 + canonical parquet resolution + engine_commit assertion + db_path tmp isolation)
 
