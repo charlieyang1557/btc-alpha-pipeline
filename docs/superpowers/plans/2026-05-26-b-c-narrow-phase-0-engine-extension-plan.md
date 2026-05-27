@@ -82,19 +82,15 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
+# DEFECT-N2 fix per PFR R2: single source of truth — import from producer.
+# Producer at scripts/run_phase2c_evaluation_gate.py:242 uses regex-based fence
+# match (_FENCE_RE); conftest must NOT diverge with a parallel implementation.
+# Import precedent: tests/test_t1_4_backward_compat.py:1323 already imports from
+# this module — top-of-module import is safe (no module-load side effects).
+from scripts.run_phase2c_evaluation_gate import _strip_markdown_fence
+
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-
-
-def _strip_markdown_fence(text: str) -> str:
-    """Mirror scripts/run_phase2c_evaluation_gate.py:_strip_markdown_fence semantics."""
-    s = text.strip()
-    if s.startswith("```"):
-        first_nl = s.find("\n")
-        s = s[first_nl + 1:] if first_nl != -1 else s
-    if s.endswith("```"):
-        s = s.rsplit("```", 1)[0].strip()
-    return s
 
 
 @pytest.fixture
@@ -250,9 +246,11 @@ class TestBCNarrowPhase0EngineExtension:
     # ----- Equity curve population test (1) -----
 
     def test_run_regime_holdout_returns_result_with_equity_curve_populated(
-        self, dsl_bollinger_zscore_reversion, btc_parquet_path, tmp_path
+        self, dsl_bollinger_zscore_reversion, btc_parquet_path, tmp_path,
+        env_config_override_forward_2026,
     ):
-        """result.equity_curve must be non-empty UTC-aware pd.Series."""
+        """result.equity_curve must be non-empty pd.Series (naive index — Backtrader-native;
+        UTC localization deferred to consumer per engine.py:514-518)."""
         from backtest.engine import run_regime_holdout
         result = run_regime_holdout(
             dsl=dsl_bollinger_zscore_reversion,
@@ -262,6 +260,7 @@ class TestBCNarrowPhase0EngineExtension:
             parquet_path=str(btc_parquet_path),
             db_path=tmp_path / "test_eq_curve.db",
             execution_config_path=Path("config/execution_phase4_15bps.yaml"),
+            env_config=env_config_override_forward_2026,
         )
         assert isinstance(result.equity_curve, pd.Series)
         assert len(result.equity_curve) > 0, (
@@ -281,7 +280,8 @@ class TestBCNarrowPhase0EngineExtension:
     # ----- LC-b internal construction test (all 14 LC fields asserted) -----
 
     def test_run_regime_holdout_lcb_constructs_lineage_context_with_all_14_fields(
-        self, dsl_bollinger_zscore_reversion, btc_parquet_path, tmp_path
+        self, dsl_bollinger_zscore_reversion, btc_parquet_path, tmp_path,
+        env_config_override_forward_2026,
     ):
         """When LC-b path active (artifact_dir provided), engine constructs LC
         internally with all 14 fields populated correctly + stamps registry row."""
@@ -300,6 +300,7 @@ class TestBCNarrowPhase0EngineExtension:
             parquet_path=str(btc_parquet_path),
             db_path=db_path,
             execution_config_path=Path("config/execution_phase4_15bps.yaml"),
+            env_config=env_config_override_forward_2026,
             # 4 LC-b kwargs (cost_anchor_id NOT passed):
             run_id_override=run_id,
             source_batch_id="test-source-batch-lcb",
@@ -324,6 +325,17 @@ class TestBCNarrowPhase0EngineExtension:
 
         # Per-field assertions (all 14 LC fields — Charlie no敷衍 requirement)
         assert rid == run_id, f"run_id mismatch: {rid}"
+        # CONTRACT BOUNDARY (per PFR R2 LOW F2): the engine's hypothesis_hash
+        # field stores the full 64-char SHA256 hex from strategies.dsl.compute_dsl_hash
+        # (D2 compilation-manifest contract per strategies/dsl.py:280). This is
+        # DISTINCT from agents.hypothesis_hash.hash_dsl, which returns the first 16
+        # chars and is the D3 orchestrator dedup key written to batch_summary
+        # (contract documented at agents/hypothesis_hash.py:154-173 +
+        # tests/test_hypothesis_hash.py:325). The two hashes serve independent
+        # purposes by design — D2 (compilation) vs D3 (dedup) — and both contracts
+        # remain in force. This assertion is the 64-char compute_dsl_hash; the
+        # 16-char hash_dsl is exercised by tests/test_hypothesis_hash.py and is
+        # NOT in scope for Phase 0 engine extension.
         assert hh is not None and len(hh) == 64, f"hypothesis_hash invalid: {hh!r}"
         # batch_id column at registry = LC.source_batch_id field per
         # artifact_schema.py:261 ("aliases registry runs.batch_id")
@@ -363,7 +375,8 @@ class TestBCNarrowPhase0EngineExtension:
     # ----- Call-order test (write_per_bar_artifact BEFORE _write_to_registry) -----
 
     def test_run_regime_holdout_writes_artifact_before_registry(
-        self, dsl_bollinger_zscore_reversion, btc_parquet_path, tmp_path, monkeypatch
+        self, dsl_bollinger_zscore_reversion, btc_parquet_path, tmp_path, monkeypatch,
+        env_config_override_forward_2026,
     ):
         """Verify atomicity invariant per spec §3.1.2 — write_per_bar_artifact
         MUST be called before _write_to_registry (so registry row references
@@ -393,6 +406,7 @@ class TestBCNarrowPhase0EngineExtension:
             parquet_path=str(btc_parquet_path),
             db_path=tmp_path / "test_call_order.db",
             execution_config_path=Path("config/execution_phase4_15bps.yaml"),
+            env_config=env_config_override_forward_2026,
             run_id_override="test_co_001",
             source_batch_id="test-bsi",
             parent_run_id_override="test-parent-override",
@@ -411,10 +425,19 @@ class TestBCNarrowPhase0EngineExtension:
     # ----- Backward-compat test -----
 
     def test_run_regime_holdout_backward_compat_no_lcb_kwargs(
-        self, dsl_bollinger_zscore_reversion, btc_parquet_path, tmp_path
+        self, dsl_bollinger_zscore_reversion, btc_parquet_path, tmp_path,
+        env_config_override_forward_2026,
     ):
         """Legacy callers (no LC-b kwargs) get unchanged behavior; equity_curve
-        always populated (regardless of LC-b path)."""
+        always populated (regardless of LC-b path).
+
+        NOTE on env_config kwarg: env_config is an existing pre-Phase-0 engine kwarg
+        (engine.py:2286), NOT one of the 4 new LC-b kwargs. Passing it preserves
+        legacy semantics — the override is required because environments.yaml
+        has forward_2026.end:null at this register (fire-time captured); without
+        the override the engine TypeErrors on date.fromisoformat(None). The "no
+        LC-b kwargs" assertion of this test refers to run_id_override /
+        source_batch_id / parent_run_id_override / artifact_dir — none passed."""
         from backtest.engine import run_regime_holdout
         result = run_regime_holdout(
             dsl=dsl_bollinger_zscore_reversion,
@@ -423,6 +446,7 @@ class TestBCNarrowPhase0EngineExtension:
             regime_key="evaluation_regimes.forward_2026",
             parquet_path=str(btc_parquet_path),
             db_path=tmp_path / "test_legacy.db",
+            env_config=env_config_override_forward_2026,
         )
         assert result.run_id is not None
         assert result.hypothesis_hash is not None and len(result.hypothesis_hash) == 64
@@ -433,7 +457,8 @@ class TestBCNarrowPhase0EngineExtension:
     # ----- Boundary case tests -----
 
     def test_run_regime_holdout_lcb_empty_run_id_override_fails_closed(
-        self, dsl_bollinger_zscore_reversion, btc_parquet_path, tmp_path
+        self, dsl_bollinger_zscore_reversion, btc_parquet_path, tmp_path,
+        env_config_override_forward_2026,
     ):
         """LC.run_id is STRICT non-empty per __post_init__; empty string FAILs CLOSED."""
         from backtest.engine import run_regime_holdout
@@ -445,6 +470,7 @@ class TestBCNarrowPhase0EngineExtension:
                 parquet_path=str(btc_parquet_path),
                 db_path=tmp_path / "test_empty_rid.db",
                 execution_config_path=Path("config/execution_phase4_15bps.yaml"),
+                env_config=env_config_override_forward_2026,
                 run_id_override="",  # invalid empty
                 source_batch_id="test-bsi",
                 parent_run_id_override="test-prio",
@@ -452,7 +478,8 @@ class TestBCNarrowPhase0EngineExtension:
             )
 
     def test_run_regime_holdout_lcb_empty_source_batch_id_fails_closed(
-        self, dsl_bollinger_zscore_reversion, btc_parquet_path, tmp_path
+        self, dsl_bollinger_zscore_reversion, btc_parquet_path, tmp_path,
+        env_config_override_forward_2026,
     ):
         """LC.source_batch_id STRICT; empty FAIL CLOSED."""
         from backtest.engine import run_regime_holdout
@@ -464,6 +491,7 @@ class TestBCNarrowPhase0EngineExtension:
                 parquet_path=str(btc_parquet_path),
                 db_path=tmp_path / "test_empty_sbi.db",
                 execution_config_path=Path("config/execution_phase4_15bps.yaml"),
+                env_config=env_config_override_forward_2026,
                 run_id_override="test-rid-valid",
                 source_batch_id="",
                 parent_run_id_override="test-prio",
@@ -471,7 +499,8 @@ class TestBCNarrowPhase0EngineExtension:
             )
 
     def test_run_regime_holdout_lcb_invalid_artifact_dir_propagates(
-        self, dsl_bollinger_zscore_reversion, btc_parquet_path, tmp_path
+        self, dsl_bollinger_zscore_reversion, btc_parquet_path, tmp_path,
+        env_config_override_forward_2026,
     ):
         """Invalid/unwritable artifact_dir propagates error cleanly."""
         from backtest.engine import run_regime_holdout
@@ -483,13 +512,15 @@ class TestBCNarrowPhase0EngineExtension:
                 parquet_path=str(btc_parquet_path),
                 db_path=tmp_path / "test_bad_dir.db",
                 execution_config_path=Path("config/execution_phase4_15bps.yaml"),
+                env_config=env_config_override_forward_2026,
                 run_id_override="test-rid", source_batch_id="test-bsi",
                 parent_run_id_override="test-prio",
                 artifact_dir=Path("/nonexistent/no_permission/dir"),
             )
 
     def test_run_regime_holdout_lcb_missing_execution_config_path_fails(
-        self, dsl_bollinger_zscore_reversion, btc_parquet_path, tmp_path
+        self, dsl_bollinger_zscore_reversion, btc_parquet_path, tmp_path,
+        env_config_override_forward_2026,
     ):
         """LC-b path requires execution_config_path for cost_anchor_id derivation;
         None → LC __post_init__ COST_ANCHOR_ID_MAPPING lookup fails closed."""
@@ -502,13 +533,15 @@ class TestBCNarrowPhase0EngineExtension:
                 parquet_path=str(btc_parquet_path),
                 db_path=tmp_path / "test_no_cfg.db",
                 execution_config_path=None,  # missing required
+                env_config=env_config_override_forward_2026,
                 run_id_override="test-rid", source_batch_id="test-bsi",
                 parent_run_id_override="test-prio",
                 artifact_dir=tmp_path / "artifact_no_cfg",
             )
 
     def test_run_regime_holdout_lcb_artifact_dir_none_disables_lcb_path(
-        self, dsl_bollinger_zscore_reversion, btc_parquet_path, tmp_path
+        self, dsl_bollinger_zscore_reversion, btc_parquet_path, tmp_path,
+        env_config_override_forward_2026,
     ):
         """Per D-N2 fix: lcb_active = (artifact_dir is not None) — single gate.
         Other LC-b kwargs set but artifact_dir=None → LC-b path NOT activated;
@@ -520,6 +553,7 @@ class TestBCNarrowPhase0EngineExtension:
             regime_key="evaluation_regimes.forward_2026",
             parquet_path=str(btc_parquet_path),
             db_path=tmp_path / "test_artifact_none.db",
+            env_config=env_config_override_forward_2026,
             run_id_override="test-rid",  # set but ignored without artifact_dir
             source_batch_id="test-bsi",
             parent_run_id_override="test-prio",
@@ -533,7 +567,8 @@ class TestBCNarrowPhase0EngineExtension:
         assert result.equity_curve is not None  # always populated regardless
 
     def test_run_regime_holdout_lcb_resolves_canonical_parquet_when_none(
-        self, dsl_bollinger_zscore_reversion, tmp_path
+        self, dsl_bollinger_zscore_reversion, tmp_path,
+        env_config_override_forward_2026,
     ):
         """Per BLOCKING-2 fix: when parquet_path=None in LC-b path, engine
         resolves canonical default (data/raw/btcusdt_1h.parquet) for
@@ -552,6 +587,7 @@ class TestBCNarrowPhase0EngineExtension:
             parquet_path=None,  # NOT passed — engine resolves canonical
             db_path=db_path,
             execution_config_path=Path("config/execution_phase4_15bps.yaml"),
+            env_config=env_config_override_forward_2026,
             run_id_override=run_id, source_batch_id="test-bsi",
             parent_run_id_override="test-prio", artifact_dir=artifact_dir,
         )
@@ -596,7 +632,7 @@ Per Plan v3-Phase0 Task 1. RED-phase tests verify (post-implementation):
 - RegimeHoldoutResult dataclass 12 fields (incl. equity_curve)
 - run_regime_holdout signature 4 LC-b kwargs (NOT 5; cost_anchor_id derived)
 - Negative: cost_anchor_id NOT in signature
-- equity_curve populated UTC-aware
+- equity_curve populated (naive index per Backtrader; UTC localization deferred to write_per_bar_artifact at engine.py:514-518)
 - LC-b internal construction with all 14 LC fields stamped at registry row
   (explicit engine_commit assertion per Codex R2 HIGH; cost_anchor_id derivation)
 - write_per_bar_artifact BEFORE _write_to_registry call-order
@@ -738,7 +774,9 @@ from backtest.wf_lineage import CORRECTED_WF_ENGINE_COMMIT
 from backtest.artifact_schema import LineageContext
 ```
 
-Add helper function `_compute_sha256_file` if not present (grep first: `grep -n "def _compute_sha256_file" backtest/engine.py`):
+Add helper function `_compute_sha256_file` if not present (grep first: `grep -n "def _compute_sha256_file" backtest/engine.py`).
+
+**Placement (per PFR R2 LOW N5):** both `_compute_sha256_file` and `_resolve_canonical_parquet_path` (defined below) MUST land immediately after `backtest/engine.py:53` — that is, in the constants block right after the existing `PROJECT_ROOT = Path(__file__).resolve().parent.parent` (engine.py:53) and `RESULTS_DIR = PROJECT_ROOT / "data" / "results"` (engine.py:54), and BEFORE any function definitions. This ordering satisfies two preconditions: (a) `_resolve_canonical_parquet_path` references `PROJECT_ROOT`, so it must come after line 53 to have the constant in scope; (b) keeping all module-level helpers grouped post-constants keeps the engine's overall structure unchanged from existing convention. Verified anchor: `grep -n "^PROJECT_ROOT\b" backtest/engine.py` → `53:PROJECT_ROOT = Path(__file__).resolve().parent.parent`.
 
 ```python
 def _compute_sha256_file(file_path: Path | None) -> str | None:
