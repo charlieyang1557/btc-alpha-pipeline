@@ -148,7 +148,7 @@ Per Charlie register #N+6 (Path 1: full AMEND-RE-PFR-R5) 2026-05-27. PFR R4 fire
 | MR4-1 | MEDIUM | Advisor PFR R4 MEDIUM-1 | Update MR3-2 change-log table row (line 120) — replace inaccurate citations (168/2045/2664/2848) with explicit acknowledgment that v4 attempt was INCOMPLETE; mark that CR4-B1 v5 fix corrects the actual stale site at lines 2090-2091. Audit-trail integrity per recurring re-grep-at-adoption discipline. |
 | LR4-1 | LOW | Codex PFR R4 LOW-1a | Plan line 137 (CR2-B1 detailed application instructions section preamble) "currently use" → past tense / design-rationale framing. Implementer reading after v4 CR3-B1 inline rewrite should not see contradicting "currently use" claim. |
 | LR4-2 | LOW | Codex PFR R4 LOW-1b | Plan line 200 (File Structure table) "22 test methods" → "24 test methods". Stale count from before R2 added Tests 23+24. |
-| LR4-3 | LOW | Codex PFR R4 LOW-1c | Plan line 2852 (Step 12.1 confirm step) "14 tests GREEN" → "24 tests GREEN". Stale count from v1 enumeration. |
+| LR4-3 | LOW | Codex PFR R4 LOW-1c | Plan line 2905 (Step 12.1 confirm step; v5 amend imprecisely cited "2852" — corrected to actual location 2905 per LR5-3 v6) "14 tests GREEN" → "24 tests GREEN". Stale count from v1 enumeration. |
 | LR4-4 | LOW | Advisor PFR R4 LOW-1 | LR3-3 defensive note citation `experiment_registry.py:167` → either drop (since :58 + :124 already cover parent_run_id column) or replace with `:56` (run_id TEXT PRIMARY KEY which COUNT WHERE run_id = ? query depends on). Lean: replace with `:56` for completeness. |
 | LR4-5 | LOW | Advisor PFR R4 LOW-2 | POST-fire `_finalize_batch_registry` docstring (plan lines 2196-2210) updated to explicitly contrast vs preflight: "DISTINCT FROM PREFLIGHT: POST-fire DOES call create_table... Twin functions; opposite create_table behavior; differentiated docstrings." Eliminates twin-function-trap risk for future implementers reading near-identical docstrings. |
 
@@ -157,6 +157,32 @@ Per Charlie register #N+6 (Path 1: full AMEND-RE-PFR-R5) 2026-05-27. PFR R4 fire
 **Test count v4 → v5: 24 unchanged (no new tests at R4; only textual/citation polish + 1 docstring contradiction fix).**
 
 **Cycle status updated**: PFR R1 17 → R2 9 → R3 8 → R4 7. Steady saturation trajectory; all v5 fixes are TEXTUAL (no implementation churn). Predicted R5 → LOW-only or APPROVE → Rule 2 SEAL-eve adversarial dispatch (OPERATIONALLY REQUIRED per cumulative 26+ instance empirical pattern) → Plan SEAL.
+
+---
+
+## PFR R5 ADOPT findings applied (Plan v6 amendments)
+
+Per Charlie register #N+7 (Path 1: full AMEND-RE-PFR-R6 + option (a) argparse rejection for CR5-B1) 2026-05-27. PFR R5 fired as B2 2-leg dispatch on v5 (`49ffc74`); Codex returned NOT-APPROVE (1 BLOCKING + 1 LOW); Advisor returned APPROVE-WITH-FINDINGS (3 LOW). **B2 reverse-direction value AGAIN load-bearing at R5** — Codex caught a real CB1 invariant breach (`--dry-run --enable-b-c-narrow-recovery --force-rerun-existing` combination would DELETE registry rows BEFORE dry-run exit) that Advisor's saturation-expectation lens missed.
+
+**Both legs RE-VERIFIED PUSHBACK on Advisor R1 HIGH-5 SOUND at R5**.
+
+**Saturation-expectation Mode A bias surfaced**: Advisor's own R5 risk disclosure flagged "cycle-saturation expectation pressure (R5 expected to be clean)" — Advisor resisted for textual-stale-count finding (LR5-2) but didn't apply the resistance to CLI flag combinatorics dimension. Codex (without saturation prior) independently caught the BLOCKING via fresh re-derivation. NAMED-eligible-for-feedback-memory-codification at separate Charlie register-event: "Saturation-expectation pressure ≠ saturation evidence; reviewers should re-derive each dimension fresh regardless of prior cycle trajectory."
+
+7/7 v5 R4 ADOPT fixes verified correctly applied at v5 per both legs. The R5 BLOCKING is a NEW dimension (CLI flag combination semantics) not caught at R1-R4 because no prior round had attacked the operator-flag-combinatorics surface.
+
+| # | Severity | Origin | Fix in v6 |
+|---|---|---|---|
+| CR5-B1 | BLOCKING | Codex PFR R5 BLOCKING-1 | Add argparse mutual-exclusion guard rejecting `--dry-run` + `--force-rerun-existing` combination (option (a) per Charlie register). Operator must consciously choose between dry-run (intent-validation) AND force-rerun-existing (destructive cleanup) — never both. Fail-fast at argparse before any mutation. Matches R9-B-guarded "Charlie manual confirm if parent_run_id re-used" intent. Added Test 25 `test_argparse_rejects_dry_run_plus_force_rerun_existing_combination` (parametrized over single-flag-each + both-flags-set; asserts argparse rejects both-flags-set + no DB mutation). |
+| LR5-1 | LOW | Codex PFR R5 LOW-1 | Test class docstring at plan line 378 still says "(12 enumerated) + BLOCKING-4 reference test (1) + LC-b threading test (1) = 14 methods" — stale from v1; updated to "(24 methods total in v5: 14 base from v1 enumeration + 8 PFR R1 ADOPT + 2 PFR R2 ADOPT)". Test class docstring is copied into actual test file so stale count would propagate to test code. |
+| LR5-2 | LOW | Advisor PFR R5 LOW-1 | Plan line 2824 (Step 11.1 AST classifier rationale) "all 14 new tests use mocking" → "all 24 new tests use mocking". Parallel-but-not-cited site that LR4-3 (v5 fix) missed because the LR4-3 cite explicitly targeted Step 12.1 only. |
+| LR5-3 | LOW | Advisor PFR R5 LOW-2 | LR4-3 change-log row citation "Plan line 2852 (Step 12.1 confirm step)" → "Plan line 2905" (actual location). Recurring re-grep-at-adoption-time meta-lesson per Advisor R4 senior-quant perspective. Audit-trail integrity. |
+| LR5-4 | LOW | Advisor PFR R5 LOW-3 (optional) | Docstring at plan lines 2169-2170 — replace "see CREATE_TABLE_SQL at experiment_registry.py:58 + MIGRATION_COLUMNS at :124 + run_id PRIMARY KEY at :56" with explicit "see parent_run_id in CREATE_TABLE_SQL at experiment_registry.py:58 + in MIGRATION_COLUMNS at :124 + run_id PRIMARY KEY at :56" — disambiguates whether :58/:124 point to the constants themselves or to the parent_run_id row within them (the latter is the intended semantic). |
+
+**Total v6 amendments: 5 ADOPT inline (1 BLOCKING + 4 LOW).**
+
+**Test count v5 → v6: 24 → 25 (+ 1 new Test 25 for CR5-B1 argparse guard).**
+
+**Cycle status updated**: PFR R1 17 → R2 9 → R3 8 → R4 7 → R5 5 (1 BLOCKING + 4 LOW). Cycle still NOT at true saturation; v5 amend was textual but v6 adds 1 real code change (CLI guard) + 1 new test. Predicted R6 → LOW-only or APPROVE → Rule 2 SEAL-eve adversarial dispatch → Plan SEAL.
 
 ---
 
@@ -375,7 +401,10 @@ Add the following class. Each test body is FULL runnable code — no placeholder
 
 
 class TestBCNarrowPhase2ProducerEdits:
-    """Phase 2 producer-edit tests per spec §6.3 (12 enumerated) + BLOCKING-4 reference test (1) + LC-b threading test (1) = 14 methods.
+    """Phase 2 producer-edit tests — 25 methods total in v6 (14 base from v1 enumeration:
+    12 per spec §6.3 + BLOCKING-4 reference test + LC-b threading test; 8 NEW per PFR R1
+    ADOPT for CB1/CB2/CB3/CB5/H2/M1/M4; 2 NEW per PFR R2 ADOPT for MR2-3/MR2-4; 1 NEW per
+    PFR R5 ADOPT for CR5-B1).
 
     Locked decisions:
     - --enable-b-c-narrow-recovery CLI flag gates the recovery flow (3 NEW behaviors)
@@ -1776,20 +1805,103 @@ docstring note per M2:
             "(engine_commit OVERRIDE) are DISTINCT fields per spec §2 disambiguation "
             "table. Aligning them silently is a regression."
         )
+
+    # ----- Test 25 (CR5-B1 PFR R5 ADOPT v6): argparse rejects --dry-run + --force-rerun-existing -----
+
+    @pytest.mark.parametrize("dry_run,force_rerun,should_pass", [
+        (False, False, True),    # neither flag → OK
+        (True, False, True),     # --dry-run alone → OK
+        (False, True, True),     # --force-rerun-existing alone → OK
+        (True, True, False),     # both flags → REJECTED at argparse
+    ])
+    def test_argparse_rejects_dry_run_plus_force_rerun_existing_combination(
+        self, tmp_path, dry_run, force_rerun, should_pass
+    ):
+        """CR5-B1 PFR R5 ADOPT v6: --dry-run and --force-rerun-existing are MUTUALLY
+        EXCLUSIVE. Combining them would cause W1 preflight (which runs BEFORE dry-run
+        exit per CB1 ordering) to DELETE registry rows when force_rerun_existing=True,
+        violating CB1 read-only invariant on dry-run path.
+
+        Operator must consciously choose intent-validation (dry-run) vs destructive
+        cleanup (force-rerun-existing), never both. Argparse rejects the combination
+        at parse-time before any state mutation.
+
+        Codex R5 BLOCKING-1 catch (saturation-expectation Mode A bias: Advisor missed
+        this dimension via cycle-saturation prior); B2 reverse-direction value reaffirmed.
+        """
+        _require_b_c_narrow_symbols()
+        argv = [
+            "run_phase2c_evaluation_gate.py",
+            "--source-batch-id", BCNARROW_SOURCE_BATCH_ID,
+            "--candidate-hashes", "test_hash_",
+            "--run-id", BCNARROW_PARENT_RUN_ID,
+            "--regime-key", BCNARROW_REGIME_KEY,
+            "--execution-config", BCNARROW_EXECUTION_CONFIG_PATH,
+            "--output-root", str(tmp_path),
+            "--enable-b-c-narrow-recovery",
+        ]
+        if dry_run:
+            argv.append("--dry-run")
+        if force_rerun:
+            argv.append("--force-rerun-existing")
+
+        # Mock _load_corrected_candidates + enforce_corrected_engine_lineage so main()
+        # doesn't actually try to load real candidates / git state — we only test the
+        # argparse guard at the very entry of main().
+        with patch(
+            "scripts.run_phase2c_evaluation_gate._load_corrected_candidates",
+            return_value=[{"hypothesis_hash": "test_hash_" + "a"*53, "position": 0,
+                           "theme": "test", "name": "test", "wf_test_period_sharpe": 0.5}],
+        ), patch(
+            "scripts.run_phase2c_evaluation_gate.enforce_corrected_engine_lineage",
+            return_value="f112599abcdef",
+        ), patch(
+            "scripts.run_phase2c_evaluation_gate.DEFAULT_DB_PATH",
+            tmp_path / "test_argparse_guard.db",
+        ), patch("sys.argv", argv):
+            from scripts.run_phase2c_evaluation_gate import main
+            if should_pass:
+                # No SystemExit on valid combinations (may exit normally with rc=0 for
+                # dry-run, or proceed); we don't assert specific return code here.
+                try:
+                    main()
+                except SystemExit as e:
+                    # argparse SystemExit (e.code == 2) would be UNEXPECTED here;
+                    # other exits (rc=0 dry-run, rc=1 mock-induced) are OK.
+                    assert e.code != 2, (
+                        f"CR5-B1: dry_run={dry_run} force_rerun={force_rerun} "
+                        f"should NOT trigger argparse rejection (rc=2); got rc={e.code}"
+                    )
+                # No mutation expected on dry_run path (existing behavior; CR5-B1
+                # ensures the combination itself is rejected, not the standalone flags).
+            else:
+                # both flags set → argparse REJECTS with SystemExit(2)
+                with pytest.raises(SystemExit) as exc_info:
+                    main()
+                assert exc_info.value.code == 2, (
+                    f"CR5-B1: --dry-run + --force-rerun-existing combination must "
+                    f"be REJECTED at argparse (SystemExit code 2); got code={exc_info.value.code}"
+                )
+                # No DB mutation should have occurred
+                db_path = tmp_path / "test_argparse_guard.db"
+                assert not db_path.exists(), (
+                    f"CR5-B1: argparse rejection must fire BEFORE any DB I/O; "
+                    f"db_path {db_path} unexpectedly exists"
+                )
 ```
 
 ---
 
-- [ ] **Step 9.3: Run all 24 new tests — they MUST FAIL (RED)** (L1 PFR R1 fix: wording)
+- [ ] **Step 9.3: Run all 25 new tests — they MUST FAIL (RED)** (L1 PFR R1 fix: wording)
 
 ```bash
 cd /Users/yutianyang/Documents/GitHub/btc-alpha-pipeline
 python -m pytest tests/test_phase2c_evaluation_gate_runner.py::TestBCNarrowPhase2ProducerEdits -v
 ```
 
-Expected: Per H3 PFR R1 fix, the test file STILL COLLECTS even when NEW symbols are absent (the `try/except ImportError` wrapper in Step 9.1 prevents collection-time failure). Each of the 24 tests fails with explicit AssertionError from `_require_b_c_narrow_symbols()` showing the underlying `ImportError on import` (L1 PFR R1 — wording fixed from "NameError" since Python's missing-symbol error class is `ImportError`, not `NameError`). Some tests may also FAIL with `TypeError: _evaluate_one_candidate() got an unexpected keyword argument 'artifact_dir_root'` or `AttributeError` on missing `_CSV_FIELDS` entries.
+Expected: Per H3 PFR R1 fix, the test file STILL COLLECTS even when NEW symbols are absent (the `try/except ImportError` wrapper in Step 9.1 prevents collection-time failure). Each of the 25 tests fails with explicit AssertionError from `_require_b_c_narrow_symbols()` showing the underlying `ImportError on import` (L1 PFR R1 — wording fixed from "NameError" since Python's missing-symbol error class is `ImportError`, not `NameError`). Some tests may also FAIL with `TypeError: _evaluate_one_candidate() got an unexpected keyword argument 'artifact_dir_root'` or `AttributeError` on missing `_CSV_FIELDS` entries.
 
-If ALL 24 tests pass at this point → SOMETHING WRONG (Task 10 already implemented OR tests are no-ops). Halt and inspect.
+If ALL 25 tests pass at this point → SOMETHING WRONG (Task 10 already implemented OR tests are no-ops). Halt and inspect.
 
 - [ ] **Step 9.4: Commit failing tests**
 
@@ -1798,7 +1910,7 @@ git add tests/test_phase2c_evaluation_gate_runner.py
 git commit -m "test(b-c-narrow/phase-2): add 24 failing producer-edit tests (T9; v4 post-PFR R3)
 
 Per Plan v3-Phase2 v4 Task 9 (Charlie register chain #N+3 Path 1 + #N+4 Path 1 + #N+5 Path 1).
-24 RED-phase tests = 14 v1 enumeration + 8 NEW per PFR R1 ADOPT + 2 NEW per PFR R2 ADOPT (Tests 23+24 for MR2-3/MR2-4):
+25 RED-phase tests = 14 v1 enumeration + 8 NEW per PFR R1 ADOPT + 2 NEW per PFR R2 ADOPT (Tests 23+24 for MR2-3/MR2-4) + 1 NEW per PFR R5 ADOPT (Test 25 for CR5-B1):
 - LC-b kwarg threading from producer to engine (1 test)
 - equity_curve consumption from extended RegimeHoldoutResult (1 test)
 - γ3/γ4/T_obs merge into inline per-candidate JSON write (1 test)
@@ -1814,7 +1926,7 @@ Per Plan v3-Phase2 v4 Task 9 (Charlie register chain #N+3 Path 1 + #N+4 Path 1 +
 - BLOCKING-4 _build_argparser callable + --enable-b-c-narrow-recovery + --force-rerun-existing flags (1 test)
 - Schema domain routing: evaluation_domain on summary with ADDITIVE B-C-narrow fields (1 test)
 
-All 24 tests FAIL at this commit (RED phase). T10 implements producer edits to bring GREEN.
+All 25 tests FAIL at this commit (RED phase). T10 implements producer edits to bring GREEN.
 
 PFR R1 ADOPT additions (Tests 15-22 — 8 tests):
 - Test 15 (CB1): --dry-run + --enable-b-c-narrow-recovery no-mutation invariant
@@ -1957,10 +2069,33 @@ Edit `_build_argparser()` at lines 726-837. Append BEFORE the final `return pars
             "exists in registry, DELETE all rows WHERE parent_run_id = ... AND "
             "the parent row itself before re-fire. Operator-confirmed clean state "
             "discipline per R9-B-guarded lock. Default False (refuse-if-exists; "
-            "manual cleanup required)."
+            "manual cleanup required). MUTUALLY EXCLUSIVE with --dry-run per "
+            "CR5-B1 PFR R5 ADOPT (v6) — combination rejected at argparse "
+            "(operator must consciously choose intent-validation vs destructive cleanup)."
         ),
     )
 ```
+
+**CR5-B1 PFR R5 ADOPT (v6): argparse mutual-exclusion guard.** Add the following block IMMEDIATELY AFTER `args = _build_argparser().parse_args()` at scripts:881, BEFORE the existing `if args.universe is None and args.candidate_hashes is None:` check at scripts:883:
+
+```python
+    # CR5-B1 PFR R5 ADOPT (v6): reject --dry-run + --force-rerun-existing combination.
+    # W1 preflight runs BEFORE dry-run exit (per CB1 v3 ordering) and DELETEs registry
+    # rows when force_rerun_existing=True; combining with --dry-run would mutate state
+    # BEFORE the dry-run exit, violating CB1 read-only invariant. Operator must consciously
+    # choose intent-validation (dry-run) vs destructive cleanup (force-rerun-existing).
+    if args.dry_run and args.force_rerun_existing:
+        parser = _build_argparser()
+        parser.error(
+            "--dry-run and --force-rerun-existing are MUTUALLY EXCLUSIVE "
+            "(CR5-B1 PFR R5 ADOPT v6). Combining them would DELETE registry rows "
+            "BEFORE dry-run exits — violating the CB1 read-only invariant. "
+            "Choose ONE: --dry-run (intent-validation, no mutation) OR "
+            "--force-rerun-existing (destructive cleanup of prior partial state)."
+        )
+```
+
+Note: `parser.error()` writes the message to stderr + exits with code 2 — fail-fast at argparse-time, before any state-mutating code runs.
 
 - [ ] **Step 10.3a: Add NEW `_validate_b_c_narrow_recovery_identity_or_raise()` function (CB2 PFR R1 ADOPT)**
 
@@ -2166,9 +2301,12 @@ def _finalize_batch_registry_preflight_or_raise(
     #
     # LR3-3 PFR R3 ADOPT (v4) DEFENSIVE NOTE: Path 3 assumes runs table has parent_run_id
     # + run_id columns. True for any DB created via create_table (see CREATE_TABLE_SQL
-    # at experiment_registry.py:58 + MIGRATION_COLUMNS at :124 + run_id PRIMARY KEY
+    # at experiment_registry.py — specifically: parent_run_id row in CREATE_TABLE_SQL
+    # at :58 + parent_run_id row in MIGRATION_COLUMNS at :124 + run_id TEXT PRIMARY KEY
     # at :56 — LR4-4 PFR R4 ADOPT v5 fix replaced stale :167 citation which actually
-    # points to current_git_sha column NOT parent_run_id). Theoretical
+    # points to current_git_sha column NOT parent_run_id; LR5-4 PFR R5 ADOPT v6 phrasing
+    # precision disambiguated whether :58/:124 point to the constants themselves vs the
+    # parent_run_id row within them — latter is intended). Theoretical
     # edge case: pre-Phase-1A legacy DB without parent_run_id column would raise
     # OperationalError on COUNT query — NO such DB exists in this project (no
     # pre-Phase-1A schema preserved); defensive note only. If a future cycle introduces
@@ -2733,13 +2871,13 @@ grep -n "_exec_cfg_bytes\|aggregate\[\"forward_window_metadata\"\]\|_write_aggre
 
 Expected: `_exec_cfg_bytes` defined around line 1023; `aggregate["forward_window_metadata"]` around 1051; `_write_aggregate_summary` call around 1053. Place W6 block between lines 1051 and 1053.
 
-- [ ] **Step 10.9: Run all 24 Phase 2 tests — must PASS (GREEN)**
+- [ ] **Step 10.9: Run all 25 Phase 2 tests — must PASS (GREEN)**
 
 ```bash
 python -m pytest tests/test_phase2c_evaluation_gate_runner.py::TestBCNarrowPhase2ProducerEdits -v
 ```
 
-Expected: 24/24 PASS.
+Expected: 25/25 PASS.
 
 If any test FAILS, inspect — likely culprits:
 - import error in producer (Step 10.1 missed an import)
@@ -2753,7 +2891,7 @@ If any test FAILS, inspect — likely culprits:
 python -m pytest -q
 ```
 
-Expected: zero regression vs pre-Phase-2 baseline (HEAD `b10ffb2`: 2328 pass / 0 failed / 2 xfailed per Phase 0 SEAL note) + 24 net new passing Phase 2 tests. Total expected: 2352 pass / 0 failed / 2 xfailed (binding contract is zero regression + 24 new passing; the 2352 integer is informational).
+Expected: zero regression vs pre-Phase-2 baseline (HEAD `b10ffb2`: 2328 pass / 0 failed / 2 xfailed per Phase 0 SEAL note) + 25 net new passing Phase 2 tests. Total expected: 2353 pass / 0 failed / 2 xfailed (binding contract is zero regression + 25 new passing; the 2352 integer is informational).
 
 The T1.4 `test_4_tuple_matches_locked_values` test (at `tests/test_t1_4_backward_compat.py:490`) may FAIL at this step because the AST classifier now sees additional test/scripts-side `_write_to_registry` callers (if any added). Task 11 handles T1.4 baseline maintenance — if T1.4 fails at Step 10.10, proceed to Step 10.11 (commit Task 10) WITHOUT fixing T1.4 here. Task 11 commit closes the T1.4 baseline gap atomically.
 
@@ -2777,7 +2915,7 @@ Per Plan v3-Phase2 Task 10 + spec §3.2 + 4 Codex BLOCKING-carry fixes from Phas
 - _write_aggregate_csv: emits 5 new fields with backward-compat None→empty-string pattern
 - main(): wires archive PRE-flight + finalize PRE-flight guard + LC-b kwargs threading + finalize POST-fire (all gated by --enable-b-c-narrow-recovery for backward-compat)
 
-Tests: 24/24 Phase 2 tests GREEN. T1.4 baseline maintenance pending Task 11. Full suite zero regression except for expected T1.4 4-tuple drift (Task 11 closes)."
+Tests: 25/25 Phase 2 tests GREEN. T1.4 baseline maintenance pending Task 11. Full suite zero regression except for expected T1.4 4-tuple drift (Task 11 closes)."
 ```
 
 ---
@@ -2821,7 +2959,7 @@ for (pp, ll) in dynamic_sites:
 
 Expected output:
 - `prod_count`: still 4 (Phase 2 added NO new `_write_to_registry` callers in `backtest/`)
-- `test_count`: 49 (Phase 2 added zero direct `_write_to_registry` calls in tests — all 14 new tests use mocking via `unittest.mock.patch` OR call `_evaluate_one_candidate` which internally calls `run_regime_holdout` which internally calls `_write_to_registry`; the AST classifier counts only DIRECT call sites in `tests/`, so test_count stays 49 UNLESS a new test directly invokes `_write_to_registry`)
+- `test_count`: 49 (Phase 2 added zero direct `_write_to_registry` calls in tests — all 25 new tests use mocking via `unittest.mock.patch` OR call `_evaluate_one_candidate` which internally calls `run_regime_holdout` which internally calls `_write_to_registry`; the AST classifier counts only DIRECT call sites in `tests/`, so test_count stays 49 UNLESS a new test directly invokes `_write_to_registry`)
 - `scripts_count`: still 0 (Phase 2's `_finalize_batch_registry` uses `insert_run`, NOT `_write_to_registry`; these are DIFFERENT functions)
 - `dynamic_count`: still 23 (Phase 2 tests use `unittest.mock.patch` decorator/context, NOT `_write_to_registry(**args)` dynamic pattern)
 
@@ -2873,7 +3011,7 @@ Expected: all tests in the class PASS.
 python -m pytest -q
 ```
 
-Expected: 2352 pass / 0 failed / 2 xfailed (24 net new passing vs pre-Phase-2 baseline). Zero regression.
+Expected: 2353 pass / 0 failed / 2 xfailed (25 net new passing vs pre-Phase-2 baseline). Zero regression.
 
 - [ ] **Step 11.6: Commit T1.4 baseline maintenance (skip if no drift)**
 
@@ -2902,7 +3040,7 @@ methodological error)."
 
 ### Task 12: Phase 2 final ratify packet
 
-- [ ] **Step 12.1: Confirm 24 tests GREEN + full suite zero regression + T1.4 baseline updated (or unchanged)**
+- [ ] **Step 12.1: Confirm 25 tests GREEN + full suite zero regression + T1.4 baseline updated (or unchanged)**
 
 ```bash
 python -m pytest tests/test_phase2c_evaluation_gate_runner.py::TestBCNarrowPhase2ProducerEdits -v
@@ -2911,9 +3049,9 @@ python -m pytest -q
 ```
 
 Expected:
-- 24/24 Phase 2 tests PASS
+- 25/25 Phase 2 tests PASS
 - T1.4 B1 class PASSES (4-tuple verified)
-- Full suite: 2352 pass / 0 failed / 2 xfailed (zero regression vs `b10ffb2` baseline + 24 net new passing)
+- Full suite: 2353 pass / 0 failed / 2 xfailed (zero regression vs `b10ffb2` baseline + 25 net new passing)
 
 - [ ] **Step 12.2: Write Phase 2 ratify packet artifact**
 
@@ -2941,7 +3079,7 @@ Create `docs/superpowers/phase-2-impl-results/phase-2-ratify-summary.md`:
 
 | Test class | Methods | PASS | FAIL | Status |
 |---|---|---|---|---|
-| TestBCNarrowPhase2ProducerEdits | 24 | 24 | 0 | GREEN |
+| TestBCNarrowPhase2ProducerEdits | 25 | 25 | 0 | GREEN |
 | TestT1_4_B1_SignatureBackwardCompat | (existing) | (all) | 0 | GREEN |
 | Full suite (b10ffb2 baseline + 24 new) | 2352 | 2352 | 0 (+ 2 xfailed) | zero regression |
 
@@ -2979,7 +3117,7 @@ git commit -m "evidence(b-c-narrow/phase-2): Phase 2 ratify packet (T12)
 Per Plan v3-Phase2 Task 12.
 
 Phase 2 deliverables: 24/24 TestBCNarrowPhase2ProducerEdits PASS; full suite
-zero regression vs b10ffb2 baseline + 24 net new passing. T1.4 baseline
+zero regression vs b10ffb2 baseline + 25 net new passing. T1.4 baseline
 maintained per BLOCKING-6 AST classifier output.
 
 4 BLOCKING-carry fixes from Phase 0 plan v2 PFR R2 all verified:
@@ -2998,7 +3136,7 @@ is a SEPARATE register-event #N+3 per anti-pre-emption discipline."
 **STOP.** Surface to Charlie:
 - 24 Phase 2 producer-edit tests GREEN
 - T1.4 B1 4-tuple unchanged (or updated per AST classifier; whichever applies)
-- Full test suite zero regression vs pre-Phase-2 baseline + 24 net new passing
+- Full test suite zero regression vs pre-Phase-2 baseline + 25 net new passing
 - Producer modifications confined to `scripts/run_phase2c_evaluation_gate.py` (7 modify-zones + 3 NEW functions) + 1 test file extension
 - All 4 BLOCKING-carry items from Phase 0 plan v2 PFR R2 verified fixed (BLOCKING-1 + BLOCKING-3 + BLOCKING-4 + BLOCKING-6)
 
