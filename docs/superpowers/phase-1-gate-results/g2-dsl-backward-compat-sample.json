@@ -1,0 +1,246 @@
+{
+  "validated_at_utc": "2026-05-27T16:13:41Z",
+  "head_commit": "b8d6523",
+  "cohort": "cohort_a (phase4_forward_2026_15bps_v1)",
+  "cohort_source_csv": "data/phase2c_evaluation_gate/phase4_forward_2026_15bps_v1/holdout_results.csv",
+  "n_total": 39,
+  "n_pass": 39,
+  "n_fail": 0,
+  "pass_rate": 1.0,
+  "per_attempt": [
+    {
+      "hypothesis_hash": "18d92ce5d0b40cc7",
+      "path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/raw_payloads/batch_4f894318-eb69-48b5-95ef-e22abe3ecdd1/attempt_0032_response.txt",
+      "pass": true,
+      "error": null
+    },
+    {
+      "hypothesis_hash": "22864f01a49e3452",
+      "path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/raw_payloads/batch_4f894318-eb69-48b5-95ef-e22abe3ecdd1/attempt_0110_response.txt",
+      "pass": true,
+      "error": null
+    },
+    {
+      "hypothesis_hash": "2433a38b2f9a7211",
+      "path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/raw_payloads/batch_a12c2a65-4314-4dde-be6e-968a0c70ee6e/attempt_0154_response.txt",
+      "pass": true,
+      "error": null
+    },
+    {
+      "hypothesis_hash": "2b1ca44778281d97",
+      "path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/raw_payloads/batch_4f894318-eb69-48b5-95ef-e22abe3ecdd1/attempt_0090_response.txt",
+      "pass": true,
+      "error": null
+    },
+    {
+      "hypothesis_hash": "2c5e3cc08d407b73",
+      "path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/raw_payloads/batch_355a8f9f-2a1f-435d-a1a8-c365b92e185b/attempt_0035_response.txt",
+      "pass": true,
+      "error": null
+    },
+    {
+      "hypothesis_hash": "2cc19d1b5e2c9024",
+      "path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/raw_payloads/batch_71d42a07-d88f-431a-a653-601010cf1921/attempt_0035_response.txt",
+      "pass": true,
+      "error": null
+    },
+    {
+      "hypothesis_hash": "34588c948b1ff12b",
+      "path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/raw_payloads/batch_4f894318-eb69-48b5-95ef-e22abe3ecdd1/attempt_0160_response.txt",
+      "pass": true,
+      "error": null
+    },
+    {
+      "hypothesis_hash": "35dcfcfbee4cfafc",
+      "path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/raw_payloads/batch_91ad68ed-6470-45a7-8735-171c39ff25c3/attempt_0174_response.txt",
+      "pass": true,
+      "error": null
+    },
+    {
+      "hypothesis_hash": "38a1bb228f103c26",
+      "path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/raw_payloads/batch_4f894318-eb69-48b5-95ef-e22abe3ecdd1/attempt_0118_response.txt",
+      "pass": true,
+      "error": null
+    },
+    {
+      "hypothesis_hash": "3a2559fbeff71f94",
+      "path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/raw_payloads/batch_a12c2a65-4314-4dde-be6e-968a0c70ee6e/attempt_0055_response.txt",
+      "pass": true,
+      "error": null
+    },
+    {
+      "hypothesis_hash": "3b013ac903ab047b",
+      "path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/raw_payloads/batch_91ad68ed-6470-45a7-8735-171c39ff25c3/attempt_0090_response.txt",
+      "pass": true,
+      "error": null
+    },
+    {
+      "hypothesis_hash": "3c3ba9b95d2ea37c",
+      "path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/raw_payloads/batch_4f894318-eb69-48b5-95ef-e22abe3ecdd1/attempt_0115_response.txt",
+      "pass": true,
+      "error": null
+    },
+    {
+      "hypothesis_hash": "3d3938aed6376f04",
+      "path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/raw_payloads/batch_4f894318-eb69-48b5-95ef-e22abe3ecdd1/attempt_0055_response.txt",
+      "pass": true,
+      "error": null
+    },
+    {
+      "hypothesis_hash": "3ebec90d7be309ab",
+      "path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/raw_payloads/batch_a12c2a65-4314-4dde-be6e-968a0c70ee6e/attempt_0119_response.txt",
+      "pass": true,
+      "error": null
+    },
+    {
+      "hypothesis_hash": "406d4f4dfb4d46de",
+      "path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/raw_payloads/batch_91ad68ed-6470-45a7-8735-171c39ff25c3/attempt_0085_response.txt",
+      "pass": true,
+      "error": null
+    },
+    {
+      "hypothesis_hash": "41d3b759a1004c97",
+      "path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/raw_payloads/batch_4f894318-eb69-48b5-95ef-e22abe3ecdd1/attempt_0200_response.txt",
+      "pass": true,
+      "error": null
+    },
+    {
+      "hypothesis_hash": "4a3c8e2fe04d72c1",
+      "path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/raw_payloads/batch_4f894318-eb69-48b5-95ef-e22abe3ecdd1/attempt_0121_response.txt",
+      "pass": true,
+      "error": null
+    },
+    {
+      "hypothesis_hash": "4ce6e78ff9cff9b9",
+      "path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/raw_payloads/batch_a12c2a65-4314-4dde-be6e-968a0c70ee6e/attempt_0195_response.txt",
+      "pass": true,
+      "error": null
+    },
+    {
+      "hypothesis_hash": "52b04f27b7ee565b",
+      "path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/raw_payloads/batch_91ad68ed-6470-45a7-8735-171c39ff25c3/attempt_0105_response.txt",
+      "pass": true,
+      "error": null
+    },
+    {
+      "hypothesis_hash": "53e1b5030aefe836",
+      "path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/raw_payloads/batch_355a8f9f-2a1f-435d-a1a8-c365b92e185b/attempt_0006_response.txt",
+      "pass": true,
+      "error": null
+    },
+    {
+      "hypothesis_hash": "54ae22768a3f78e9",
+      "path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/raw_payloads/batch_355a8f9f-2a1f-435d-a1a8-c365b92e185b/attempt_0179_response.txt",
+      "pass": true,
+      "error": null
+    },
+    {
+      "hypothesis_hash": "5b4d89be0ccb9be1",
+      "path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/raw_payloads/batch_355a8f9f-2a1f-435d-a1a8-c365b92e185b/attempt_0170_response.txt",
+      "pass": true,
+      "error": null
+    },
+    {
+      "hypothesis_hash": "5fcf29ab42c5f8b6",
+      "path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/raw_payloads/batch_355a8f9f-2a1f-435d-a1a8-c365b92e185b/attempt_0049_response.txt",
+      "pass": true,
+      "error": null
+    },
+    {
+      "hypothesis_hash": "7240602b60cd7271",
+      "path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/raw_payloads/batch_91ad68ed-6470-45a7-8735-171c39ff25c3/attempt_0026_response.txt",
+      "pass": true,
+      "error": null
+    },
+    {
+      "hypothesis_hash": "7abff29fc2f117a1",
+      "path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/raw_payloads/batch_4f894318-eb69-48b5-95ef-e22abe3ecdd1/attempt_0086_response.txt",
+      "pass": true,
+      "error": null
+    },
+    {
+      "hypothesis_hash": "8a2a8f73f71a835e",
+      "path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/raw_payloads/batch_91ad68ed-6470-45a7-8735-171c39ff25c3/attempt_0080_response.txt",
+      "pass": true,
+      "error": null
+    },
+    {
+      "hypothesis_hash": "8def2951c72f0961",
+      "path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/raw_payloads/batch_4f894318-eb69-48b5-95ef-e22abe3ecdd1/attempt_0196_response.txt",
+      "pass": true,
+      "error": null
+    },
+    {
+      "hypothesis_hash": "95d5cfc1c0a9579a",
+      "path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/raw_payloads/batch_71d42a07-d88f-431a-a653-601010cf1921/attempt_0060_response.txt",
+      "pass": true,
+      "error": null
+    },
+    {
+      "hypothesis_hash": "9c90efe879157a5c",
+      "path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/raw_payloads/batch_4f894318-eb69-48b5-95ef-e22abe3ecdd1/attempt_0112_response.txt",
+      "pass": true,
+      "error": null
+    },
+    {
+      "hypothesis_hash": "aa8c55c16db41ea7",
+      "path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/raw_payloads/batch_a12c2a65-4314-4dde-be6e-968a0c70ee6e/attempt_0094_response.txt",
+      "pass": true,
+      "error": null
+    },
+    {
+      "hypothesis_hash": "b10f4563366481b3",
+      "path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/raw_payloads/batch_a12c2a65-4314-4dde-be6e-968a0c70ee6e/attempt_0185_response.txt",
+      "pass": true,
+      "error": null
+    },
+    {
+      "hypothesis_hash": "b24ca51d477c2e96",
+      "path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/raw_payloads/batch_a12c2a65-4314-4dde-be6e-968a0c70ee6e/attempt_0186_response.txt",
+      "pass": true,
+      "error": null
+    },
+    {
+      "hypothesis_hash": "bc5ea1beab19fcdd",
+      "path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/raw_payloads/batch_355a8f9f-2a1f-435d-a1a8-c365b92e185b/attempt_0070_response.txt",
+      "pass": true,
+      "error": null
+    },
+    {
+      "hypothesis_hash": "c076cdad4ee7ca42",
+      "path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/raw_payloads/batch_71d42a07-d88f-431a-a653-601010cf1921/attempt_0165_response.txt",
+      "pass": true,
+      "error": null
+    },
+    {
+      "hypothesis_hash": "cfd24b8b72d6e429",
+      "path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/raw_payloads/batch_a12c2a65-4314-4dde-be6e-968a0c70ee6e/attempt_0179_response.txt",
+      "pass": true,
+      "error": null
+    },
+    {
+      "hypothesis_hash": "d04e1b054fe4d69d",
+      "path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/raw_payloads/batch_a12c2a65-4314-4dde-be6e-968a0c70ee6e/attempt_0010_response.txt",
+      "pass": true,
+      "error": null
+    },
+    {
+      "hypothesis_hash": "d3fe403c8b1c4130",
+      "path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/raw_payloads/batch_71d42a07-d88f-431a-a653-601010cf1921/attempt_0080_response.txt",
+      "pass": true,
+      "error": null
+    },
+    {
+      "hypothesis_hash": "dc7d6de5e71772ae",
+      "path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/raw_payloads/batch_91ad68ed-6470-45a7-8735-171c39ff25c3/attempt_0198_response.txt",
+      "pass": true,
+      "error": null
+    },
+    {
+      "hypothesis_hash": "ec6a8a385c1a3e9a",
+      "path": "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/raw_payloads/batch_71d42a07-d88f-431a-a653-601010cf1921/attempt_0120_response.txt",
+      "pass": true,
+      "error": null
+    }
+  ]
+}
