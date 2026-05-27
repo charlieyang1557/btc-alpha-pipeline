@@ -173,9 +173,9 @@ Per Charlie register #N+7 (Path 1: full AMEND-RE-PFR-R6 + option (a) argparse re
 | # | Severity | Origin | Fix in v6 |
 |---|---|---|---|
 | CR5-B1 | BLOCKING | Codex PFR R5 BLOCKING-1 | Add argparse mutual-exclusion guard rejecting `--dry-run` + `--force-rerun-existing` combination (option (a) per Charlie register). Operator must consciously choose between dry-run (intent-validation) AND force-rerun-existing (destructive cleanup) — never both. Fail-fast at argparse before any mutation. Matches R9-B-guarded "Charlie manual confirm if parent_run_id re-used" intent. Added Test 25 `test_argparse_rejects_dry_run_plus_force_rerun_existing_combination` (parametrized over single-flag-each + both-flags-set; asserts argparse rejects both-flags-set + no DB mutation). |
-| LR5-1 | LOW | Codex PFR R5 LOW-1 | Test class docstring at plan line 378 still says "(12 enumerated) + BLOCKING-4 reference test (1) + LC-b threading test (1) = 14 methods" — stale from v1; updated to "(24 methods total in v5: 14 base from v1 enumeration + 8 PFR R1 ADOPT + 2 PFR R2 ADOPT)". Test class docstring is copied into actual test file so stale count would propagate to test code. |
-| LR5-2 | LOW | Advisor PFR R5 LOW-1 | Plan line 2824 (Step 11.1 AST classifier rationale) "all 14 new tests use mocking" → "all 24 new tests use mocking". Parallel-but-not-cited site that LR4-3 (v5 fix) missed because the LR4-3 cite explicitly targeted Step 12.1 only. |
-| LR5-3 | LOW | Advisor PFR R5 LOW-2 | LR4-3 change-log row citation "Plan line 2852 (Step 12.1 confirm step)" → "Plan line 2905" (actual location). Recurring re-grep-at-adoption-time meta-lesson per Advisor R4 senior-quant perspective. Audit-trail integrity. |
+| LR5-1 | LOW | Codex PFR R5 LOW-1 | Test class docstring at plan line 378 (now 404) "14 methods" → "25 methods total in v6+v7 (LR6-2 PFR R6 ADOPT correction: prescription had said '24 in v5' but implementer correctly went to '25' since CR5-B1 added Test 25 in same v6 cycle)". |
+| LR5-2 | LOW | Advisor PFR R5 LOW-1 | Plan line 2824 (now 2962) "all 14 new tests use mocking" → "all 25 new tests use mocking" (LR6-2 PFR R6 ADOPT correction: prescription had said '24' but actual is '25'). |
+| LR5-3 | LOW | Advisor PFR R5 LOW-2 | LR4-3 change-log row citation "Plan line 2852 (Step 12.1 confirm step)" → "Plan line 3043 (Step 12.1 confirm step actual location)". LR6-2 PFR R6 ADOPT correction: v6 amend imprecisely cited '2905' (Step 10.11 commit message location); Advisor R6 LOW-2 caught the mis-cite via fresh grep; v7 corrects to '3043' (actual Step 12.1 location). Recurring re-grep-at-adoption-time meta-lesson per Advisor R4 senior-quant perspective at TWO cycle layers. Audit-trail integrity. |
 | LR5-4 | LOW | Advisor PFR R5 LOW-3 (optional) | Docstring at plan lines 2169-2170 — replace "see CREATE_TABLE_SQL at experiment_registry.py:58 + MIGRATION_COLUMNS at :124 + run_id PRIMARY KEY at :56" with explicit "see parent_run_id in CREATE_TABLE_SQL at experiment_registry.py:58 + in MIGRATION_COLUMNS at :124 + run_id PRIMARY KEY at :56" — disambiguates whether :58/:124 point to the constants themselves or to the parent_run_id row within them (the latter is the intended semantic). |
 
 **Total v6 amendments: 5 ADOPT inline (1 BLOCKING + 4 LOW).**
@@ -183,6 +183,35 @@ Per Charlie register #N+7 (Path 1: full AMEND-RE-PFR-R6 + option (a) argparse re
 **Test count v5 → v6: 24 → 25 (+ 1 new Test 25 for CR5-B1 argparse guard).**
 
 **Cycle status updated**: PFR R1 17 → R2 9 → R3 8 → R4 7 → R5 5 (1 BLOCKING + 4 LOW). Cycle still NOT at true saturation; v5 amend was textual but v6 adds 1 real code change (CLI guard) + 1 new test. Predicted R6 → LOW-only or APPROVE → Rule 2 SEAL-eve adversarial dispatch → Plan SEAL.
+
+---
+
+## PFR R6 ADOPT findings applied (Plan v7 amendments)
+
+Per Charlie register #N+8 (Path 1: full AMEND-RE-PFR-R7 + option (b) no-op mocks for CR6-B1) 2026-05-27. PFR R6 fired as B2 2-leg dispatch on v6 (`0ce7066`); Codex returned NOT-APPROVE (1 BLOCKING + 2 LOW); Advisor returned APPROVE-WITH-FINDINGS (1 HIGH + 2 MEDIUM + 2 LOW). **CONVERGENT BLOCKING/HIGH on Test 25 fixture insufficiency** — both legs caught it independently via Test 15 fixture pattern comparison; Codex tier BLOCKING (test would fail at GREEN unavoidably); Advisor tier HIGH. **Adopted Codex tier** per "GREEN gate unachievable" risk.
+
+**B2 reverse-direction value AGAIN at R6** — Advisor explicitly resisted saturation-expectation per their own R5 meta-lesson and produced:
+- HIGH-1 / Codex BLOCKING-1 convergent (Test 25 fixture)
+- MEDIUM-1 (multiple stale 24-count sites + LR5-3 mis-cite — Codex framed as LOW-1)
+- **MEDIUM-2 NEW DIMENSION (Codex missed)**: no partial-state recovery runbook for W3-succeeds-W5/W6-fails operator failure mode (operator-runbook lens dimension)
+
+**Both legs RE-VERIFIED PUSHBACK on Advisor R1 HIGH-5 SOUND at R6**.
+
+**Cycle trajectory non-monotonic**: R5 = 5 ADOPT, R6 = 5 ADOPT. Per Advisor senior-quant analysis: "fix produces new fragile surface" dynamic — CR5-B1 in v6 added Test 25 which itself has fixture gap caught at R6. Once Test 25 fixture closed in v7, expected R7 = LOW-only/APPROVE → Rule 2 SEAL-eve adversarial dispatch (OPERATIONALLY REQUIRED per cumulative 26+ instance empirical pattern) → Plan SEAL.
+
+| # | Severity | Origin | Fix in v7 |
+|---|---|---|---|
+| CR6-B1 | BLOCKING | Convergent — Codex PFR R6 BLOCKING-1 + Advisor PFR R6 HIGH-1 | Fix Test 25 fixture per option (b) per Charlie register: add `patch("scripts.run_phase2c_evaluation_gate._archive_canonical_pre_flight")` as no-op mock to all 4 parametrized cases. Test 25 specifically targets argparse mutex surface, NOT recovery flow — mocking out downstream W3/W4/W5/W6 keeps test scope tight while allowing should_pass cases to reach the "assert e.code != 2" check without uncaught FileNotFoundError. Add additional mocks for `_capture_phase4_forward_window_metadata`, `_evaluate_one_candidate`, `_write_aggregate_csv`, `_write_aggregate_summary`, `_finalize_batch_registry` to cover all downstream side-effects reachable via should_pass paths. |
+| MR6-1 | MEDIUM | Codex PFR R6 LOW-1 elevated + Advisor PFR R6 MEDIUM-1 | Whack-a-mole stale-count cleanup at remaining sites missed by LR5-x (Codex enumerated: 176, 177, 254, 1910, 3084, 3119, 3137). Plus correct Advisor's MEDIUM-1 catch: LR5-3 row mis-cites "line 2905" — Step 12.1 confirm step is actually at line 3043 (line 2905 is in Step 10.11 commit message). Plus update Step 9.4 commit headline (line 1910) "24 failing producer-edit tests (T9; v4 post-PFR R3)" → "25 failing producer-edit tests (T9; v6+v7 post-PFR R6 ADOPT)". This is the 4th cycle of stale-count whack-a-mole (LR3-1 22→24 in v4 + LR4-3 14→24 in v5 + LR5-2 14→25 in v6 + MR6-1 24→25 in v7); per Advisor MEDIUM-1 proposed systemic discipline fix — NAMED-eligible-for-feedback-memory-codification: "When test count changes across PFR rounds, run grep audit for all variant count phrasings + add `# COUNT TARGET (PFR Rn)` markers per-site to make the discipline explicit." NOT in Phase 2 plan scope. |
+| MR6-2 | MEDIUM | Advisor PFR R6 MEDIUM-2 (NEW DIMENSION — Codex missed) | Add explicit "Partial-state recovery runbook" subsection to Task 10 covering W3-succeeds-W5/W6-fails failure mode. Operator runbook steps: (1) inspect `archive/phase4_forward_2026_15bps_v1_d0b8101/` to verify state; (2) manually `mv archive/phase4_forward_2026_15bps_v1_d0b8101/ ./phase4_forward_2026_15bps_v1/` to restore canonical; (3) re-run producer with `--force-rerun-existing` flag to clean partial registry rows and retry. Acknowledges destructive-without-atomic-rollback as accepted trade-off for single-operator scope (vs over-engineered try/except-with-rollback wrapper). |
+| LR6-1 | LOW | Codex PFR R6 LOW-2 | Normalize Step 10/Step 12 handoff wording to match File Structure table. Step 10 lead-in says "7 modify-zones (per File Structure table)" → "9 modify-zones (per File Structure table)" matching plan line 253. Step 12 ratify handoff at line 3140 "7 modify-zones + 3 NEW functions" → "9 modify-zones + 4 NEW helpers" — count drift due to v2 ADOPT adding `_validate_b_c_narrow_recovery_identity_or_raise` (4th NEW helper). |
+| LR6-2 | LOW | Advisor PFR R6 LOW-1 | Update LR5-1 + LR5-2 change-log table row prescription text from "24" → "25" — implementer correctly chose 25 in v6 (Test 25 added in same v6 amend per CR5-B1); change-log audit trail should reflect actual implementation. Plus update LR5-3 row citation per MR6-1: "Plan line 2905" → "Plan line 3043 (Step 12.1 actual location; v6 cite was mis-direction)". |
+
+**Total v7 amendments: 5 ADOPT inline (1 BLOCKING + 2 MEDIUM + 2 LOW).**
+
+**Test count v6 → v7: 25 unchanged (CR6-B1 fixes existing Test 25 fixture; no new tests).**
+
+**Cycle status (post v7 prediction)**: R6 = 5 → R7 expected = LOW-only or APPROVE (per Advisor "Test 25 fixture closure → cycle saturation" prediction). If R7 saturates → Rule 2 SEAL-eve adversarial dispatch is OPERATIONALLY REQUIRED next register-event per [feedback_advisor_own_anchoring_implementation_review.md] cumulative 26+ instance empirical pattern. Phase 0 was 5 PFR rounds; Phase 2 at 7 rounds exceeds Phase 0 but with monotonic-after-R5 trajectory (the R5/R6 plateau at 5 was attributable to "fix produces new fragile surface" dynamic with Test 25; v7 closes that surface).
 
 ---
 
@@ -1845,9 +1874,14 @@ docstring note per M2:
         if force_rerun:
             argv.append("--force-rerun-existing")
 
-        # Mock _load_corrected_candidates + enforce_corrected_engine_lineage so main()
-        # doesn't actually try to load real candidates / git state — we only test the
-        # argparse guard at the very entry of main().
+        # CR6-B1 PFR R6 ADOPT (v7): no-op mock all downstream side-effects so should_pass
+        # cases reach the "assert e.code != 2" check without uncaught FileNotFoundError
+        # from W3 archive PRE-flight (canonical absent at tmp_path) or W4 forward_window
+        # capture (parquet absent) or W5 candidate loop (engine not runnable). Test 25
+        # specifically targets argparse mutex surface — does NOT test recovery flow.
+        # Downstream surfaces mocked: archive (W3) + forward_window capture (W4) +
+        # candidate evaluator (W5) + aggregate CSV write + aggregate JSON write +
+        # finalize POST-fire (W6).
         with patch(
             "scripts.run_phase2c_evaluation_gate._load_corrected_candidates",
             return_value=[{"hypothesis_hash": "test_hash_" + "a"*53, "position": 0,
@@ -1858,6 +1892,50 @@ docstring note per M2:
         ), patch(
             "scripts.run_phase2c_evaluation_gate.DEFAULT_DB_PATH",
             tmp_path / "test_argparse_guard.db",
+        ), patch(
+            # CR6-B1: no-op W3 archive PRE-flight (canonical absent at tmp_path → would FileNotFoundError)
+            "scripts.run_phase2c_evaluation_gate._archive_canonical_pre_flight",
+            return_value=None,
+        ), patch(
+            # CR6-B1: no-op W4 forward_window capture (real parquet read; not relevant to argparse test)
+            "scripts.run_phase2c_evaluation_gate._capture_phase4_forward_window_metadata",
+            return_value={
+                "forward_window_start_utc": "2026-01-01T00:00:00Z",
+                "forward_window_end_utc": "2026-04-16T07:00:00Z",
+                "forward_bar_count": 2528,
+                "parquet_data_sha256": "x" * 64,
+                "forward_end_date_iso": "2026-04-16",
+            },
+        ), patch(
+            # CR6-B1: no-op env_config override builder
+            "scripts.run_phase2c_evaluation_gate._build_phase4_env_config_override",
+            return_value={"evaluation_regimes": {"forward_2026": {"end": "2026-04-16"}}},
+        ), patch(
+            # CR6-B1: no-op W5 candidate evaluator (real engine not runnable in unit-test scope)
+            "scripts.run_phase2c_evaluation_gate._evaluate_one_candidate",
+            return_value={
+                "hypothesis_hash": "test_hash_" + "a"*53, "position": 0,
+                "theme": "test", "name": "test", "wf_test_period_sharpe": 0.5,
+                "lifecycle_state": "holdout_passed", "holdout_passed": True,
+                "holdout_metrics": {"sharpe_ratio": 1.0, "max_drawdown": -0.05,
+                                     "total_return": 0.1, "total_trades": 10},
+                "passing_criteria": {}, "gate_pass_per_criterion": {},
+                "wall_clock_seconds": 0.0, "error_message": None,
+            },
+        ), patch(
+            # CR6-B1: no-op CSV + aggregate JSON writers (filesystem side effects)
+            "scripts.run_phase2c_evaluation_gate._write_aggregate_csv",
+            return_value=None,
+        ), patch(
+            "scripts.run_phase2c_evaluation_gate._write_aggregate_summary",
+            return_value=None,
+        ), patch(
+            # CR6-B1: no-op W6 POST-fire finalize (registry write)
+            "scripts.run_phase2c_evaluation_gate._finalize_batch_registry",
+            return_value=None,
+        ), patch(
+            "scripts.run_phase2c_evaluation_gate._finalize_batch_registry_preflight_or_raise",
+            return_value=None,
         ), patch("sys.argv", argv):
             from scripts.run_phase2c_evaluation_gate import main
             if should_pass:
@@ -1907,9 +1985,9 @@ If ALL 25 tests pass at this point → SOMETHING WRONG (Task 10 already implemen
 
 ```bash
 git add tests/test_phase2c_evaluation_gate_runner.py
-git commit -m "test(b-c-narrow/phase-2): add 24 failing producer-edit tests (T9; v4 post-PFR R3)
+git commit -m "test(b-c-narrow/phase-2): add 25 failing producer-edit tests (T9; v7 post-PFR R6 ADOPT)
 
-Per Plan v3-Phase2 v4 Task 9 (Charlie register chain #N+3 Path 1 + #N+4 Path 1 + #N+5 Path 1).
+Per Plan v3-Phase2 v7 Task 9 (Charlie register chain #N+3 Path 1 + #N+4 Path 1 + #N+5 Path 1 + #N+6 Path 1 + #N+7 Path 1 + #N+8 Path 1).
 25 RED-phase tests = 14 v1 enumeration + 8 NEW per PFR R1 ADOPT + 2 NEW per PFR R2 ADOPT (Tests 23+24 for MR2-3/MR2-4) + 1 NEW per PFR R5 ADOPT (Test 25 for CR5-B1):
 - LC-b kwarg threading from producer to engine (1 test)
 - equity_curve consumption from extended RegimeHoldoutResult (1 test)
@@ -1948,7 +2026,7 @@ PFR R2 ADOPT additions (Tests 23-24 — 2 tests):
 ### Task 10: Implement producer edits (TDD GREEN)
 
 **Files:**
-- Modify: `scripts/run_phase2c_evaluation_gate.py` (7 modify-zones per File Structure table above)
+- Modify: `scripts/run_phase2c_evaluation_gate.py` (9 modify-zones per File Structure table above)
 
 This is the largest task. Implementation order: imports → CLI flags → archive step → finalize step → `_evaluate_one_candidate` → CSV fields → CSV writer → `_aggregate_summary_dict` (NOT touched per spec §3.2.2 — cohort fields already cohort-level) → `main()` wiring → GREEN.
 
@@ -2920,6 +2998,27 @@ Tests: 25/25 Phase 2 tests GREEN. T1.4 baseline maintenance pending Task 11. Ful
 
 ---
 
+### Partial-state recovery runbook (MR6-2 PFR R6 ADOPT v7)
+
+**Context**: Task 10 W3 archive PRE-flight is destructive (canonical → archive via `shutil.move`). If W5 candidate loop crashes mid-loop OR W6 finalize POST-fire raises after some child rows written, operator lands in half-mutated state. This subsection documents the manual recovery steps; the design is acknowledged as destructive-without-atomic-rollback (single-operator scope; over-engineered try/except-with-rollback wrapper rejected as out-of-scope per anti-pre-emption).
+
+**Failure-mode matrix** (post-W3-success):
+
+| Failure point | State after failure | Recovery steps |
+|---|---|---|
+| W5 candidate loop crashes mid-loop (e.g., engine OOM, unexpected DSL error, parquet I/O error) | canonical archived; partial child rows in registry (0..38); NO parent row | (1) `ls data/phase2c_evaluation_gate/archive/phase4_forward_2026_15bps_v1_d0b8101/` to verify archive intact + `sqlite3 backtest/experiments.db "SELECT COUNT(*) FROM runs WHERE parent_run_id='phase4_forward_2026_15bps_v1_b_c_narrow';"` to confirm partial child count;<br>(2) `mv data/phase2c_evaluation_gate/archive/phase4_forward_2026_15bps_v1_d0b8101/ data/phase2c_evaluation_gate/phase4_forward_2026_15bps_v1/` to restore canonical;<br>(3) re-run producer with `--enable-b-c-narrow-recovery --force-rerun-existing` flag to DELETE partial child rows + re-fire from clean state |
+| W6 finalize POST-fire raises (e.g., SQLite I/O error, schema constraint violation) | canonical archived; all 39 child rows in registry; NO parent row | Same recovery steps (1)-(3) above. The partial state is detected by W1 preflight on re-fire (parent_run_id has child rows but no parent → idempotency check would raise without `--force-rerun-existing`); `--force-rerun-existing` DELETEs children + (absent) parent, re-runs cleanly. |
+| W3 archive succeeds + W4 forward_window_metadata capture fails (parquet I/O error before any candidate written) | canonical archived; NO registry rows yet; no parquet artifacts in canonical dir | Same recovery: manual `mv` archive back + `--force-rerun-existing` is harmless (no rows to delete; preflight Path 1 returns clean) + re-fire. |
+
+**Operator discipline**:
+- DO NOT attempt to manually edit `backtest/experiments.db` to clean partial child rows — use `--force-rerun-existing` which is the audited cleanup path.
+- DO NOT delete the `archive/phase4_forward_2026_15bps_v1_d0b8101/` directory without first restoring canonical — that is the only intact copy of the original artifact lineage.
+- After recovery, verify `current_git_sha` in the resulting parent row matches the recovery-time HEAD, not the prior failed-attempt HEAD.
+
+**Design trade-off acknowledgment**: a try/except wrapper around W3-through-W6 with full rollback would require: (a) snapshotting the registry transactionally, (b) tracking partial parquet writes per-candidate, (c) restoring canonical-from-archive on failure. This is engineering for a low-probability failure surface in a single-operator project. The manual runbook above is the accepted trade-off. Future cycle (Phase 3 or Phase 4) MAY revisit this if multi-operator concurrency or higher reliability is required — out of Phase 2 scope per anti-pre-emption.
+
+---
+
 ### Task 11: T1.4 baseline maintenance (BLOCKING-6 AST classifier output)
 
 **Files:**
@@ -3081,7 +3180,7 @@ Create `docs/superpowers/phase-2-impl-results/phase-2-ratify-summary.md`:
 |---|---|---|---|---|
 | TestBCNarrowPhase2ProducerEdits | 25 | 25 | 0 | GREEN |
 | TestT1_4_B1_SignatureBackwardCompat | (existing) | (all) | 0 | GREEN |
-| Full suite (b10ffb2 baseline + 24 new) | 2352 | 2352 | 0 (+ 2 xfailed) | zero regression |
+| Full suite (b10ffb2 baseline + 25 new) | 2353 | 2353 | 0 (+ 2 xfailed) | zero regression |
 
 ## 4 BLOCKING-carry fixes verified
 
@@ -3116,7 +3215,7 @@ git commit -m "evidence(b-c-narrow/phase-2): Phase 2 ratify packet (T12)
 
 Per Plan v3-Phase2 Task 12.
 
-Phase 2 deliverables: 24/24 TestBCNarrowPhase2ProducerEdits PASS; full suite
+Phase 2 deliverables: 25/25 TestBCNarrowPhase2ProducerEdits PASS; full suite
 zero regression vs b10ffb2 baseline + 25 net new passing. T1.4 baseline
 maintained per BLOCKING-6 AST classifier output.
 
@@ -3134,10 +3233,10 @@ is a SEPARATE register-event #N+3 per anti-pre-emption discipline."
 - [ ] **Step 12.4: STOP HERE — Surface to Charlie register-event #N+2**
 
 **STOP.** Surface to Charlie:
-- 24 Phase 2 producer-edit tests GREEN
+- 25 Phase 2 producer-edit tests GREEN
 - T1.4 B1 4-tuple unchanged (or updated per AST classifier; whichever applies)
 - Full test suite zero regression vs pre-Phase-2 baseline + 25 net new passing
-- Producer modifications confined to `scripts/run_phase2c_evaluation_gate.py` (7 modify-zones + 3 NEW functions) + 1 test file extension
+- Producer modifications confined to `scripts/run_phase2c_evaluation_gate.py` (9 modify-zones + 4 NEW helpers: `_validate_b_c_narrow_recovery_identity_or_raise` + `_archive_canonical_pre_flight` + `_finalize_batch_registry_preflight_or_raise` + `_finalize_batch_registry`) + 1 test file extension
 - All 4 BLOCKING-carry items from Phase 0 plan v2 PFR R2 verified fixed (BLOCKING-1 + BLOCKING-3 + BLOCKING-4 + BLOCKING-6)
 
 **Do NOT surface Phase 3 fire-plan drafting authorization as a sub-option of #N+2.** Per anti-pre-emption discipline, Phase 3 drafting requires its own register-event #N+3 — fire that as a SEPARATE Charlie message after #N+2 is resolved.
