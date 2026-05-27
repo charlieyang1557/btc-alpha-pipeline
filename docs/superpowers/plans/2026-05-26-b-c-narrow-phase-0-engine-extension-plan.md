@@ -35,7 +35,7 @@
 
 | File | Action | Scope |
 |---|---|---|
-| `backtest/engine.py` | MODIFY | Imports section near top of file (add `from backtest.wf_lineage import CORRECTED_WF_ENGINE_COMMIT` + `from backtest.artifact_schema import LineageContext` + add `get_git_commit` to existing `from backtest.experiment_registry import ...`; see Step 4.1) + post-engine.py:53 constants block (add `_compute_sha256_file` + `_resolve_canonical_parquet_path` helpers) + Lines 2044-2063 (RegimeHoldoutResult dataclass +equity_curve field) + 2270-2291 (run_regime_holdout signature +4 LC-b kwargs) + 2435-2523 (body sequencing fix + LC-b internal construction including PFR R4 v3.4 preflight extension) |
+| `backtest/engine.py` | MODIFY | 5 modify-zones (per Tasks 2-4):<br>• **Imports** (Step 4.1): add `CORRECTED_WF_ENGINE_COMMIT`, `LineageContext`, `get_git_commit`<br>• **Post-line-53 constants** (Step 4.1): add `_compute_sha256_file` + `_resolve_canonical_parquet_path`<br>• **Lines 2044-2063** (Task 2): RegimeHoldoutResult +`equity_curve` field<br>• **Lines 2270-2291** (Task 3): `run_regime_holdout` signature +4 LC-b kwargs<br>• **Lines 2435-2523** (Task 4): body sequence + LC-b construction + preflight |
 | `tests/conftest.py` | CREATE OR EXTEND | NEW shared fixtures (`btc_parquet_path`, `dsl_bollinger_zscore_reversion`, `dsl_monday_dip_buy`) for engine tests |
 | `tests/test_t1_1_artifact_writer.py` | EXTEND | NEW `TestBCNarrowPhase0EngineExtension` class (13 test methods post-PFR-R3-v3.3 merger; all bodies in full per Charlie no敷衍) |
 | `tests/test_phase2c_evaluation_gate_runner.py` | MODIFY | Line 83 existing `RegimeHoldoutResult(...)` stub +`equity_curve=pd.Series(dtype=float)` arg |
@@ -91,12 +91,18 @@ import pytest
 # Producer's `_strip_markdown_fence` at scripts/run_phase2c_evaluation_gate.py:242
 # uses regex-based fence match (_FENCE_RE); conftest must NOT diverge with a
 # parallel implementation.
-# PFR R3 LOW L2 + PFR R4 MEDIUM N2b fix (v3.4): module import is safe —
-# scripts/run_phase2c_evaluation_gate.py top-of-module (lines 75-130) contains
-# only `import` statements + top-level constant assignments. No top-level
-# function calls, no `if __name__ == "__main__":` block at module load, no
-# network/disk I/O at import time. Importing `_strip_markdown_fence` triggers
-# only side-effect-free module initialization.
+# PFR R3 LOW L2 + PFR R4 MEDIUM N2b + PFR R4 MEDIUM M2 fix (v3.5): module
+# import is safe in practice — scripts/run_phase2c_evaluation_gate.py top-of-
+# module (lines 75-130) has only import statements + top-level constant
+# assignments + ONE benign side-effecting call: line 90's
+# `sys.path.insert(0, str(PROJECT_ROOT))` (PROJECT_ROOT resolves to repo root
+# via Path(__file__).resolve().parent.parent). The sys.path mutation is
+# idempotent (re-running prepends a duplicate but doesn't break import
+# resolution) AND the pytest test runner already includes the repo root in
+# sys.path by default, so the call is functionally a no-op when imported from
+# tests/. No network/disk I/O at import; no `if __name__ == "__main__":`
+# block runs at module load. Pre-existing safe-import precedent at
+# tests/test_t1_4_backward_compat.py:1323-1326 already exercises this path.
 from scripts.run_phase2c_evaluation_gate import _strip_markdown_fence
 
 
@@ -407,7 +413,12 @@ class TestBCNarrowPhase0EngineExtension:
         # 16-char hash_dsl is exercised by tests/test_hypothesis_hash.py and is
         # NOT in scope for Phase 0 engine extension.
         assert hh is not None and len(hh) == 64, f"hypothesis_hash invalid: {hh!r}"
-        int(hh, 16)  # PFR R4 LOW N4 (v3.4): hex-shape check; ValueError on non-hex
+        # PFR R4 LOW N4 (v3.4) + PFR R4 LOW L1 (v3.5): hex-shape + lowercase
+        # strictness. int(..., 16) catches non-hex characters; .lower() check
+        # catches uppercase regressions (hashlib.sha256.hexdigest() contract
+        # is lowercase per strategies/dsl.py:280 compute_dsl_hash).
+        int(hh, 16)
+        assert hh == hh.lower(), f"hypothesis_hash must be lowercase hex: {hh!r}"
         # batch_id column at registry = LC.source_batch_id field per
         # artifact_schema.py:261 ("aliases registry runs.batch_id")
         assert bid == "test-source-batch-lcb"
@@ -429,21 +440,23 @@ class TestBCNarrowPhase0EngineExtension:
         assert "execution_phase4_15bps.yaml" in (ecp or ""), (
             f"execution_config_path missing: {ecp!r}"
         )
-        # PFR R4 LOW N4 fix (v3.4): hex-shape check alongside length.
-        # `len == 64` alone permits 64-char non-hex strings; SHA256 contract
-        # is 64 lowercase hex digits. Use int(..., 16) parse as the hex shape
-        # check — raises ValueError if any character is non-hex.
+        # PFR R4 LOW N4 (v3.4) + PFR R4 LOW L1 (v3.5): hex-shape + lowercase
+        # strictness checks alongside length-64. SHA256 contract per
+        # hashlib.sha256.hexdigest() is 64 lowercase hex digits.
         assert ecsha is not None and len(ecsha) == 64
         int(ecsha, 16)  # ValueError on non-hex char
+        assert ecsha == ecsha.lower(), f"execution_config_sha256 must be lowercase: {ecsha!r}"
         assert psha is not None and len(psha) == 64
-        int(psha, 16)  # ValueError on non-hex char
+        int(psha, 16)
+        assert psha == psha.lower(), f"parquet_data_sha256 must be lowercase: {psha!r}"
         # cost_anchor_id DERIVED by LC __post_init__ (NOT passed)
         assert cai == "phase4_forward_15bps_v1", (
             f"cost_anchor_id derivation failed: {cai!r}"
         )
         assert rpbp is not None and rpbp != "", f"returns_per_bar_path empty: {rpbp!r}"
         assert rpbsha is not None and len(rpbsha) == 64
-        int(rpbsha, 16)  # PFR R4 LOW N4 (v3.4): ValueError on non-hex char
+        int(rpbsha, 16)
+        assert rpbsha == rpbsha.lower(), f"returns_per_bar_sha256 must be lowercase: {rpbsha!r}"
         assert tobs is not None and tobs > 0, f"T_obs invalid: {tobs!r}"
 
         # Verify per-bar parquet file exists
@@ -538,7 +551,10 @@ class TestBCNarrowPhase0EngineExtension:
         )
         assert result.run_id is not None
         assert result.hypothesis_hash is not None and len(result.hypothesis_hash) == 64
-        int(result.hypothesis_hash, 16)  # PFR R4 LOW N4 (v3.4): hex-shape check
+        int(result.hypothesis_hash, 16)
+        assert result.hypothesis_hash == result.hypothesis_hash.lower(), (
+            f"hypothesis_hash must be lowercase: {result.hypothesis_hash!r}"
+        )
         assert result.total_trades >= 0
         assert result.equity_curve is not None
         assert len(result.equity_curve) > 0
@@ -549,9 +565,20 @@ class TestBCNarrowPhase0EngineExtension:
         self, dsl_bollinger_zscore_reversion, btc_parquet_path, tmp_path,
         env_config_override_forward_2026,
     ):
-        """LC.run_id is STRICT non-empty per __post_init__; empty string FAILs CLOSED."""
+        """LC.run_id is STRICT non-empty; empty run_id_override FAILS CLOSED in
+        preflight per N1 v3.4 hoist (BEFORE run_backtest).
+
+        PFR R4 MEDIUM M1 fix (v3.5): use `match=` parameter to pin the raise
+        to PREFLIGHT specifically. Without match=, a broad `(ValueError,
+        RuntimeError)` would pass even if a future implementation regression
+        moved the empty-string check post-run_backtest (e.g., back to LC
+        __post_init__). The match string is the unique substring of the
+        preflight error message — see engine body N1 fix at line ~1014."""
         from backtest.engine import run_regime_holdout
-        with pytest.raises((ValueError, RuntimeError)):
+        with pytest.raises(
+            ValueError,
+            match=r"run_id_override must be non-empty if provided at LC-b path",
+        ):
             run_regime_holdout(
                 dsl=dsl_bollinger_zscore_reversion,
                 batch_id="test-bc", parent_run_id="test-parent",
@@ -570,9 +597,16 @@ class TestBCNarrowPhase0EngineExtension:
         self, dsl_bollinger_zscore_reversion, btc_parquet_path, tmp_path,
         env_config_override_forward_2026,
     ):
-        """LC.source_batch_id STRICT; empty FAIL CLOSED."""
+        """LC.source_batch_id STRICT; empty FAIL CLOSED in preflight per N1 v3.4.
+
+        PFR R4 MEDIUM M1 fix (v3.5): pin to preflight via match= parameter
+        (same rationale as test_lcb_empty_run_id_override). See N1 hoist at
+        engine body line ~1020."""
         from backtest.engine import run_regime_holdout
-        with pytest.raises((ValueError, RuntimeError)):
+        with pytest.raises(
+            ValueError,
+            match=r"source_batch_id must be non-empty if provided at LC-b path",
+        ):
             run_regime_holdout(
                 dsl=dsl_bollinger_zscore_reversion,
                 batch_id="test-bc", parent_run_id="test-parent",
@@ -728,6 +762,9 @@ class TestBCNarrowPhase0EngineExtension:
             f"got {row[0]!r}"
         )
         int(row[0], 16)  # PFR R4 LOW N4 (v3.4): hex-shape check on parquet_data_sha256
+        assert row[0] == row[0].lower(), (
+            f"parquet_data_sha256 must be lowercase: {row[0]!r}"
+        )
 ```
 
 - [ ] **Step 1.3: Update existing RegimeHoldoutResult test stubs**
