@@ -1539,11 +1539,17 @@ class TestT1_4_Pc9BaselineGate:
         ])
         pre_t1_x_baseline = total_collected - t1_4_collected - t1_5_collected
 
-        # v4-6 + Advisor F2 post-SEAL polish: strict baseline lock at 2191 (per CLAUDE.md
-        # Phase Marker + §3.1 pc 9 ratify-time lock); decouples T1.x growth from baseline
-        # regression detection. T1.5 cohort added 2026-05-24 per Charlie B1 register;
-        # baseline 2191 preserved (semantic: pre-T1.x baseline at T1.4 SEAL HEAD `12dffde`).
-        BASELINE = 2191
+        # v4-6 + Advisor F2 post-SEAL polish: strict baseline lock per CLAUDE.md
+        # Phase Marker + §3.1 pc 9 ratify-time lock; decouples T1.x growth from baseline
+        # regression detection. T1.5 cohort added 2026-05-24 per Charlie B1 register
+        # (baseline preserved at 2191; semantic: pre-T1.x baseline at T1.4 SEAL HEAD `12dffde`).
+        # B-C-narrow Phase 0 Task 1 commit `ebc0d26` (2026-05-27) added 13 new test
+        # methods in TestBCNarrowPhase0EngineExtension at tests/test_t1_1_artifact_writer.py.
+        # Per Charlie register AMEND-PC9-INLINE-A (2026-05-27): advance BASELINE
+        # 2191 → 2204 (T1.5 maintenance precedent extension; new B-C-narrow tests
+        # treated as part of expanded pre-T1.x cohort. Future B-C-narrow Phase 1+/2+/3-4
+        # cohorts may trigger further BASELINE advances or invariant-level gate refactor.)
+        BASELINE = 2204
         assert pre_t1_x_baseline == BASELINE, (
             f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
             f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "
