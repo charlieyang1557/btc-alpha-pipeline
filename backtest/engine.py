@@ -43,15 +43,49 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 
+from backtest.artifact_schema import LineageContext
 from backtest.bt_parquet_feed import ParquetFeed
 from backtest.execution_model import configure_cerebro
+from backtest.experiment_registry import get_git_commit
 from backtest.metrics import compute_all_metrics
 from backtest.slippage import load_execution_config
+from backtest.wf_lineage import CORRECTED_WF_ENGINE_COMMIT
 
 logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 RESULTS_DIR = PROJECT_ROOT / "data" / "results"
+
+
+def _compute_sha256_file(file_path: Path | None) -> str | None:
+    """B-C-narrow Phase 0: compute SHA256 of a file via 64KB chunked streaming.
+
+    Returns None if file_path is None or file does not exist. Used by LC-b
+    construction for execution_config_sha256 + parquet_data_sha256 fields.
+    """
+    import hashlib
+    if file_path is None:
+        return None
+    path = Path(file_path)
+    if not path.exists():
+        return None
+    sha = hashlib.sha256()
+    with open(path, "rb") as f:
+        while True:
+            chunk = f.read(64 * 1024)
+            if not chunk:
+                break
+            sha.update(chunk)
+    return sha.hexdigest()
+
+
+def _resolve_canonical_parquet_path() -> Path:
+    """B-C-narrow Phase 0: resolve canonical BTC parquet path used when
+    LC-b caller doesn't pass parquet_path explicitly. Per spec §3.4 LC-b
+    construction must produce non-empty parquet_data_sha256 (LC STRICT field).
+    """
+    return PROJECT_ROOT / "data" / "raw" / "btcusdt_1h.parquet"
+
 
 # ---------------------------------------------------------------------------
 # T1.1: scipy version precondition (Contract 2.0.1)
@@ -2446,6 +2480,57 @@ def run_regime_holdout(
             _lc_repo_root_rh / lineage_context.execution_config_path
         )
 
+    # ---- B-C-narrow Phase 0 LC-b PREFLIGHT (PFR R3 MEDIUM M1-C + PFR R4 MEDIUM N1 fix v3.4) ----
+    # Scalar LC-b precondition checks moved BEFORE run_backtest per advisor M1-C +
+    # extended to ALSO cover empty-string ID overrides per advisor R4 MEDIUM-N1:
+    # validating cheap scalars before launching expensive backtest prevents
+    # full backtest runs + trade CSV writes on bad LC-b setups (e.g.,
+    # hypothesis_hash=None, missing execution_config_path, get_git_commit() None,
+    # empty-string run_id_override / source_batch_id).
+    # D-N3 + D-N4 + BLOCKING-2 preconditions are hoisted; empty-string ID checks
+    # are now ALSO hoisted (M1-C complete coverage; v3.3 had partial coverage).
+    lcb_active = artifact_dir is not None
+    git_sha: str | None = None
+    if lcb_active:
+        if hypothesis_hash is None:
+            raise ValueError(
+                "B-C-narrow LC-b precondition: hypothesis_hash must not be None at "
+                "LC-b path (required for LC.hypothesis_hash STRICT field). "
+                "Either provide dsl or ensure compute_dsl_hash succeeds."
+            )
+        git_sha = get_git_commit()
+        if git_sha is None:
+            raise ValueError(
+                "B-C-narrow LC-b precondition: get_git_commit() returned None. "
+                "Cannot construct LineageContext with empty current_git_sha "
+                "(LC STRICT field). Ensure git is available + repo not in detached state."
+            )
+        if execution_config_path is None:
+            raise ValueError(
+                "B-C-narrow LC-b precondition: execution_config_path must not be None "
+                "at LC-b path (required for cost_anchor_id derivation via "
+                "COST_ANCHOR_ID_MAPPING per artifact_schema.py:298-302)."
+            )
+        # PFR R4 MEDIUM N1 fix (v3.4): hoist empty-string checks. Without these,
+        # boundary tests with run_id_override="" / source_batch_id="" run full
+        # backtest (~2528 bars) before LC.__post_init__ raises. Same fail-closed
+        # semantics (ValueError raised either way), but ~2 minutes saved per
+        # affected test at ratify time. Semantically equivalent to LC __post_init__'s
+        # STRICT non-empty contract — just hoisted to preflight for efficiency.
+        if run_id_override is not None and run_id_override == "":
+            raise ValueError(
+                "B-C-narrow LC-b precondition: run_id_override must be non-empty "
+                "if provided at LC-b path (LC.run_id STRICT non-empty field). "
+                "Pass None to use engine-minted UUID, or pass a non-empty string."
+            )
+        if source_batch_id is not None and source_batch_id == "":
+            raise ValueError(
+                "B-C-narrow LC-b precondition: source_batch_id must be non-empty "
+                "if provided at LC-b path (LC.source_batch_id STRICT non-empty field). "
+                "Pass None to inherit positional batch_id, or pass a non-empty string."
+            )
+
+    # ---- Existing: run backtest + evaluate pass (lines 2435-2446 unchanged) ----
     result = run_backtest(
         strategy_cls=strategy_cls,
         start_date=start_dt,
@@ -2459,16 +2544,79 @@ def run_regime_holdout(
 
     passed = _evaluate_regime_holdout_pass(result.metrics, passing_criteria)
 
-    # Registry row uses the fresh holdout run_id (already minted by
-    # run_backtest); the orchestrator links via parent_run_id, not by
-    # collapsing the train and holdout rows.
-    holdout_run_id = result.run_id
+    # ---- B-C-narrow Phase 0 LC-b sequence (D-N1 + D-N2 + post-preflight) ----
 
+    # D-N2 + F3 (Codex P0-DN2 BLOCKING fix): lcb_active uses single-gate (artifact_dir is not None).
+    # Effective IDs gated behind lcb_active — overrides ONLY honored on LC-b path;
+    # legacy path uses engine-minted UUID + positional parent_run_id verbatim.
+    # This prevents the test self-contradiction where artifact_dir=None tests assert
+    # run_id_override is ignored but implementation unconditionally honored it (v3-Phase0
+    # plan v1 R1 Codex catch).
+    if lcb_active:
+        # LC-b path: honor producer-passed overrides
+        effective_run_id = run_id_override if run_id_override is not None else result.run_id
+        effective_parent_run_id = (
+            parent_run_id_override if parent_run_id_override is not None else parent_run_id
+        )
+    else:
+        # Legacy path: ignore LC-b overrides; use engine-minted UUID + positional parent
+        effective_run_id = result.run_id
+        effective_parent_run_id = parent_run_id
+
+    holdout_run_id = effective_run_id  # preserve alias for logging
+
+    # LC-b: write per-bar artifact + construct LC if active
+    artifact_metadata: dict[str, Any] | None = None
+    lcb_lineage_context = None
+    if lcb_active:
+        # (Preflight scalar preconditions already verified above; git_sha already
+        # resolved. effective_parquet_path resolution still happens here because it
+        # depends on parquet_path arg evaluated once.)
+        # Defensive narrowing: preflight raised if git_sha was None when lcb_active;
+        # re-assert here to make the invariant explicit across the two if-blocks.
+        assert git_sha is not None, (
+            "Internal invariant violation: git_sha must be non-None inside LC-b "
+            "block — the preflight `if lcb_active:` block above should have "
+            "raised ValueError if get_git_commit() returned None."
+        )
+
+        # BLOCKING-2 fix: resolve canonical parquet path when None
+        effective_parquet_path = (
+            parquet_path if parquet_path is not None else str(_resolve_canonical_parquet_path())
+        )
+
+        # Step 3: write per-bar artifact (always BEFORE registry — atomicity invariant)
+        artifact_metadata = write_per_bar_artifact(
+            result.equity_curve,
+            artifact_dir,
+            effective_run_id,
+        )
+
+        # Step 4: construct LineageContext internally (all 13 explicit fields +
+        # cost_anchor_id derived by __post_init__)
+        lcb_lineage_context = LineageContext(
+            run_id=effective_run_id,
+            hypothesis_hash=hypothesis_hash,
+            source_batch_id=(
+                source_batch_id if source_batch_id is not None else batch_id
+            ),
+            regime_key=regime_key,
+            engine_commit=CORRECTED_WF_ENGINE_COMMIT,
+            current_git_sha=git_sha,
+            execution_config_path=str(execution_config_path),
+            execution_config_sha256=_compute_sha256_file(execution_config_path) or "",
+            parquet_data_sha256=_compute_sha256_file(effective_parquet_path) or "",
+            # cost_anchor_id OMITTED — uses default sentinel; __post_init__ derives.
+            returns_per_bar_path=artifact_metadata["returns_per_bar_path"],
+            returns_per_bar_sha256=artifact_metadata["returns_per_bar_sha256"],
+            T_obs=artifact_metadata["T_obs"],
+            parent_run_id=effective_parent_run_id,
+        )
+        # D-N1: do NOT explicitly call revalidate_for_write() here —
+        # _write_to_registry at engine.py:1149 invokes it as part of T1.1 SYS5 invariant.
+
+    # ---- Existing: cost_model + notes_payload (unchanged) ----
     from backtest.execution_model import ConstantSlippage
-    # PHASE4 cost-config override: registry-write cost_model must reflect
-    # the same config that run_backtest used for the actual fire.
-    # FIX-H2: use _rh_effective_exec_path (derived from LC if scalar was None)
-    # so registry cost_model matches the actual runtime config in both paths.
     _exec_cfg = (
         load_execution_config(_rh_effective_exec_path)
         if _rh_effective_exec_path is not None
@@ -2487,8 +2635,11 @@ def run_regime_holdout(
         },
     }
 
+    # ---- Registry write: use engine-built LC if LC-b active, else producer-passed LC ----
+    effective_lineage_context = lcb_lineage_context if lcb_active else lineage_context
+
     _write_to_registry(
-        run_id=holdout_run_id,
+        run_id=effective_run_id,
         strategy_cls=strategy_cls,
         strategy_params=strategy_params or {},
         start_date=start_dt,
@@ -2499,7 +2650,7 @@ def run_regime_holdout(
         metrics=result.metrics,
         db_path=db_path,
         run_type="regime_holdout",
-        parent_run_id=parent_run_id,
+        parent_run_id=effective_parent_run_id,
         train_start=None,
         train_end=None,
         notes=json.dumps(notes_payload),
@@ -2510,21 +2661,23 @@ def run_regime_holdout(
         strategy_source=strategy_source,
         feature_version=feature_version,
         execution_config_path=execution_config_path,
-        lineage_context=lineage_context,
+        lineage_context=effective_lineage_context,
+        artifact_dir=artifact_dir,
     )
 
     logger.info(
-        "Regime holdout %s: passed=%s sharpe=%.3f dd=%.3f ret=%.4f trades=%d",
+        "Regime holdout %s: passed=%s sharpe=%.3f dd=%.3f ret=%.4f trades=%d%s",
         holdout_run_id[:8], passed,
         result.metrics.get("sharpe_ratio", float("nan")),
         result.metrics.get("max_drawdown", float("nan")),
         result.metrics.get("total_return", float("nan")),
         result.metrics.get("total_trades", 0),
+        f" T_obs={artifact_metadata['T_obs']}" if artifact_metadata else "",
     )
 
     return RegimeHoldoutResult(
-        run_id=holdout_run_id,
-        parent_run_id=parent_run_id,
+        run_id=effective_run_id,
+        parent_run_id=effective_parent_run_id,
         batch_id=batch_id,
         hypothesis_hash=hypothesis_hash,
         regime_holdout_passed=passed,
@@ -2534,7 +2687,7 @@ def run_regime_holdout(
         total_trades=int(result.metrics.get("total_trades", 0) or 0),
         passing_criteria=dict(passing_criteria),
         metrics=dict(result.metrics),
-        equity_curve=result.equity_curve,  # B-C-narrow Phase 0 Task 2 (plan v3.5)
+        equity_curve=result.equity_curve,  # B-C-narrow Phase 0
     )
 
 
