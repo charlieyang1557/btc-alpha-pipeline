@@ -2048,6 +2048,11 @@ class RegimeHoldoutResult:
     The four passing-criteria fields mirror the v2 environments.yaml
     block. ``regime_holdout_passed`` is the AND of all four — see
     :func:`_evaluate_regime_holdout_pass` for the exact comparison.
+
+    B-C-narrow Phase 0 extension (2026-05-27, Task 2 per plan v3.5):
+    ``equity_curve`` field added per Approach D' to expose per-bar equity
+    series for downstream consumers (per-bar parquet write + γ3/γ4 moment
+    computation at producer boundary).
     """
 
     run_id: str
@@ -2061,6 +2066,7 @@ class RegimeHoldoutResult:
     total_trades: int
     passing_criteria: dict[str, float]
     metrics: dict[str, Any]
+    equity_curve: pd.Series  # B-C-narrow Phase 0 12th field
 
 
 def _load_regime_block_config(
@@ -2520,6 +2526,7 @@ def run_regime_holdout(
         total_trades=int(result.metrics.get("total_trades", 0) or 0),
         passing_criteria=dict(passing_criteria),
         metrics=dict(result.metrics),
+        equity_curve=result.equity_curve,  # B-C-narrow Phase 0 Task 2 (plan v3.5)
     )
 
 
