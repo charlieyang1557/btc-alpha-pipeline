@@ -31,6 +31,49 @@
 | γ3/γ4 persistence | Per-candidate `holdout_summary.json` ONLY (NOT registry rows); T_obs in BOTH | Spec §3.6 |
 | Compensating cleanup | Option (a) refuse-if-exists by default + `--force-rerun-existing` opt-in DELETE; manual cleanup otherwise (R9-B-guarded) | Charlie register pre-PV2 |
 | TDD discipline | No敷衍 — all test bodies are runnable code with full assertions; no placeholders | Charlie register pre-PV2 + Phase 0/1 precedent |
+| PFR R1 main() PRE-flight chain order (NEW v2 lock per CB1) | (1) identity-guard + idempotency PRE-check (read-only) → (2) existing dry-run exit → (3) archive (destructive) → (4) candidate loop with LC-b kwargs → (5) finalize POST-fire parent row | Charlie register #N+3 (Path 1 AMEND) 2026-05-27 + Codex BLOCKING-1 |
+| PFR R1 recovery identity guard (NEW v2 lock per CB2) | When `--enable-b-c-narrow-recovery` set: args.run_id MUST equal BCNARROW_PARENT_RUN_ID; args.regime_key MUST equal BCNARROW_REGIME_KEY; args.execution_config MUST canonicalize to BCNARROW_EXECUTION_CONFIG_PATH; args.source_batch_id MUST equal BCNARROW_SOURCE_BATCH_ID | Charlie register #N+3 + Codex BLOCKING-2 |
+| PFR R1 returns_per_bar_path semantics lock (NEW v2 lock per CB5) | Producer stores `"returns_per_bar.parquet"` (bare filename — matches engine's child registry row stamp at engine.py:526+656); resolution context implicit per per-candidate JSON location | Charlie register #N+3 + Advisor BLOCKING-2 |
+| PFR R1 SHA single-source lock (NEW v2 lock per CB6) | Producer queries engine-written child registry row via `get_run(conn, child_run_id)` post-engine-return and copies `returns_per_bar_path` + `returns_per_bar_sha256` directly — NO recomputation | Charlie register #N+3 + Advisor BLOCKING-3 |
+| PFR R1 cohort_metadata derivation lock (NEW v2 lock per CB3) | `initial_capital = 10_000.0` (engine.run_regime_holdout cash default at engine.py:2324); `fee_model = ConstantSlippage.from_config(execution_config).fee_model_label` (= "effective_15bps_per_side" for 15bps anchor per slippage.py:94-100) — derived NOT hardcoded; matches children's fee_model | Charlie register #N+3 + Codex BLOCKING-3 |
+| PFR R1 engine_commit registry stamping (NEW v2 lock per CB4) | Parent row `git_commit` = CORRECTED_WF_ENGINE_COMMIT ("eb1c87f") via engine's OVERRIDE pattern at engine.py:1314; `current_git_sha` = fire-time head_sha (separate column); engine_commit ALSO written to notes JSON for explicit forensic recoverability (registry has no engine_commit column per experiment_registry.py:54-103) | Charlie register #N+3 + Codex BLOCKING-4 |
+
+---
+
+## PFR R1 ADOPT findings applied (Plan v2 amendments)
+
+Per Charlie register #N+3 (Path 1: full AMEND + PFR R2) 2026-05-27. PFR R1 fired as B2 2-leg dispatch (Codex `codex:codex-rescue` + Advisor `quant-research-advisor`); both legs returned NOT-APPROVE; all cited file:line claims orchestrator-verified at HEAD `9b52754` (zero hallucinations from either leg).
+
+**Convergence summary:**
+- Both legs flagged 3 BLOCKING semantic-fields (initial_capital + fee_model + LC-b mock keys), expressed as 2 BLOCKING + 1 HIGH at convergent severity.
+- Codex-only BLOCKING (4 of 6): dry-run safety (CB1), identity guard (CB2), engine_commit/git_commit semantic (CB4), fee_model literal (subsumed CB3).
+- Advisor-only BLOCKING (2 of 6): returns_per_bar_path divergence (CB5), SHA recomputation (CB6).
+- Reverse-direction catch: Advisor's empirical-code-verification dimension surfaced CB5+CB6 that Codex's structural-contract dimension missed; vice-versa, Codex's dry-run + identity dimensions caught CB1+CB2 that Advisor missed.
+- 1 PUSHBACK on Advisor HIGH-5 (batch_id parent vs children divergence): spec §3.2.3 line 117 EXPLICITLY locks `parent.batch_id = parent_run_id`; deviation would require spec amend (separate Charlie register), NOT plan-level fix.
+
+| # | Severity | Origin | Fix in v2 |
+|---|---|---|---|
+| CB1 | BLOCKING | Codex BLOCKING-1 + Advisor HIGH-1 | Reorder Step 10.8 main() wiring: (0) identity guard → (1) idempotency PRE-check (read-only) → (2) existing dry-run exit → (3) archive (destructive) → (4) candidate loop → (5) finalize POST. Added Tests 15+16 for dry-run + duplicate-rows no-mutation invariants. |
+| CB2 | BLOCKING | Codex BLOCKING-2 | NEW `_validate_b_c_narrow_recovery_identity_or_raise()` validates 4 cohort identity fields (run_id, regime_key, execution_config_path, source_batch_id) BEFORE any mutation. Added Test 17 parametrized over wrong-value-per-field. |
+| CB3 | BLOCKING | Codex BLOCKING-3 + Advisor HIGH-6 | cohort_metadata derives `initial_capital = 10_000.0` (engine cash default per engine.py:2324) + `fee_model = ConstantSlippage.from_config(execution_config).fee_model_label` (= "effective_15bps_per_side" per slippage.py:94-100); NO hardcoded "phase4_15bps_v1"; NO hardcoded 100000.0. Updated test_finalize_batch_registry_parent_cohort_metadata_complete + added Test 18 for parent-vs-child consistency. |
+| CB4 | BLOCKING | Codex BLOCKING-4 | parent_row["git_commit"] = CORRECTED_WF_ENGINE_COMMIT ("eb1c87f") matching engine's OVERRIDE pattern at engine.py:1314; parent_row["current_git_sha"] = head_sha (separate column); engine_commit ALSO written to notes JSON for explicit forensic recoverability. Updated test_finalize_batch_registry_parent_cohort_metadata_complete. |
+| CB5 | BLOCKING | Advisor BLOCKING-2 | Producer stores `"returns_per_bar.parquet"` (bare filename) in summary JSON + CSV; matches engine's child registry row stamp (engine.py:526 + 656). Added Test 19 asserting producer summary.returns_per_bar_path == engine-written child row's returns_per_bar_path. |
+| CB6 | BLOCKING | Advisor BLOCKING-3 | Producer queries engine-written child registry row via `get_run(conn, child_run_id)` post-engine-return and copies returns_per_bar_path + returns_per_bar_sha256 directly. No recomputation; engine's atomic write is single source. Updated Test 4 to verify producer SHA == registry child row SHA. |
+| H1 | HIGH | Advisor BLOCKING-1 (downgraded post-verification) | Test mocks for `compute_per_bar_returns` updated to `pd.Series([float('nan')] + [0.01] * 2527)` (length 2528, first NaN — matches production at engine.py:394-396); compute_moments mock T_obs=2527 (post-NaN-filter count). 5 test stubs updated. |
+| H2 | HIGH | Advisor HIGH-2 | Producer imports `DEFAULT_DB_PATH` explicitly from `backtest.experiment_registry`; threads as explicit default to `_finalize_batch_registry*`. Added Test 20 verifying DEFAULT_DB_PATH constant value (regression guard). |
+| H3 | HIGH | Advisor HIGH-3 | Module-top NEW-symbol imports (Step 9.1) wrapped in try/except so collection succeeds at RED phase; individual tests fail with explicit error rather than collection error masking pre-existing test failures in file. |
+| M1 | MEDIUM | Codex HIGH-1 + Advisor MEDIUM-1 | Removed `mean`+`std` from all 5 compute_moments mock returns; added Test 22 asserting actual `compute_moments` return keys are exactly {"gamma3","gamma4","T_obs"} (API surface lock). |
+| M2 | MEDIUM | Advisor HIGH-4 (downgraded) | Test 9 docstring annotated: exercises DELETE behavior (field-agnostic), not realistic engine-written row shape; realistic e2e deferred to Phase 3 (`tests/test_b_c_narrow_recovery.py`). |
+| M3 | MEDIUM | Advisor MEDIUM-3 | `_finalize_batch_registry*` refactored to explicit `conn = get_connection(...); try: with conn: ... finally: conn.close()` pattern; no file handle leak. |
+| M4 | MEDIUM | Advisor MEDIUM-4 | Added Test 21 invoking REAL `run_regime_holdout` (no mock) with `dsl_bollinger_zscore_reversion` fixture; verifies LC-b path end-to-end (parquet exists; child registry row LC-stamped; equity_curve populated). |
+| M5 | MEDIUM | Advisor MEDIUM-5 | NEW module-level constants at scripts:117 (near `PHASE4_FORWARD_2026_REGIME_KEY`): `BCNARROW_PARENT_RUN_ID` + `BCNARROW_ARCHIVE_BASENAME` + `BCNARROW_SOURCE_BATCH_ID` + `BCNARROW_REGIME_KEY` + `BCNARROW_EXECUTION_CONFIG_PATH`. All literals reference constants. |
+| L1 | LOW | Codex LOW-1 | Plan Step 9.3 wording "NameError on import" → "ImportError on import" (Python correct error class). |
+| L2 | LOW | Advisor LOW-1 | Removed spurious `# noqa: E402` from new imports in Step 10.1 (E402 directive doesn't apply — no non-import code precedes). |
+| L3 | LOW | Advisor LOW-2 | `_finalize_batch_registry` docstring: "Children (39 rows)" → "Child rows (one per evaluated candidate)" (drops cohort_a-specific magic number). |
+
+**Total v2 amendments: 17 ADOPT inline + 1 PUSHBACK (advisor HIGH-5) noted for separate spec adjudication.**
+
+**Test count v1 → v2: 14 → 22 (+ 8 new tests for CB1+CB2+CB3+CB5+H2+M1+M4 + parametrized Test 17 covers all 4 identity-guard fields).**
 
 ---
 
@@ -38,8 +81,8 @@
 
 | File | Action | Scope |
 |---|---|---|
-| `scripts/run_phase2c_evaluation_gate.py` | MODIFY | 7 modify-zones (per Task 10):<br>• **Imports** (Step 10.1): add `create_table`, `get_connection`, `insert_run`, `get_run` from `backtest.experiment_registry`; `compute_moments`, `compute_per_bar_returns`, `_compute_sha256_file` from `backtest.engine`; `shutil` for archive `move`<br>• **`_build_argparser`** (Step 10.2): add `--enable-b-c-narrow-recovery` boolean flag + `--force-rerun-existing` boolean flag<br>• **NEW `_archive_canonical_pre_flight()`** (Step 10.3): pre-loop archive of `data/phase2c_evaluation_gate/phase4_forward_2026_15bps_v1/` → `archive/phase4_forward_2026_15bps_v1_d0b8101/`<br>• **NEW `_finalize_batch_registry_preflight_or_raise()`** (Step 10.4a): BLOCKING-1 PRE-flight guard (refuse-if-exists; `--force-rerun-existing` DELETE WHERE parent_run_id)<br>• **NEW `_finalize_batch_registry()`** (Step 10.4b): BLOCKING-1 POST-fire parent row write via `insert_run`; calls `create_table` first (BLOCKING-3 fix)<br>• **`_evaluate_one_candidate`** signature + body (Step 10.5; lines 480-573): add 4 LC-b kwargs + compute moments + merge B-C-narrow fields into inline JSON write at lines 550-556<br>• **`_CSV_FIELDS`** (Step 10.6; lines 581-595): add 5 new fields (gamma3, gamma4, T_obs, returns_per_bar_path, returns_per_bar_sha256)<br>• **`_write_aggregate_csv`** (Step 10.7; lines 598-637): emit 5 new fields per row<br>• **`main()`** (Step 10.8; lines 864-1072): wire `_archive_canonical_pre_flight` (between overwrite-protection at line 929 and `run_dir.mkdir` at line 946) + wire `_finalize_batch_registry_preflight_or_raise` (after archive PRE-flight) + thread `artifact_dir_root` + `parent_run_id_override` to `_evaluate_one_candidate` + wire `_finalize_batch_registry` after candidate loop (after CSV write at line 996; before aggregate JSON write at line 1053) |
-| `tests/test_phase2c_evaluation_gate_runner.py` | EXTEND | NEW `TestBCNarrowPhase2ProducerEdits` class (14 test methods; all bodies full runnable code per Charlie no敷衍 + Phase 0 precedent) |
+| `scripts/run_phase2c_evaluation_gate.py` | MODIFY | 9 modify-zones (per Task 10; v2 expanded per PFR R1 ADOPT):<br>• **Imports** (Step 10.1): add `create_table`, `get_connection`, `insert_run`, `get_run`, `DEFAULT_DB_PATH` from `backtest.experiment_registry` (H2); `compute_moments`, `compute_per_bar_returns`, `CORRECTED_WF_ENGINE_COMMIT` from `backtest.engine` (CB4) and `backtest.wf_lineage` (already imported); `load_execution_config`, `ConstantSlippage` from `backtest.execution_model` (CB3 fee_model derivation); `shutil` for archive `move`<br>• **NEW module-level constants** (Step 10.1b; near scripts:117 PHASE4_FORWARD_2026_REGIME_KEY): `BCNARROW_PARENT_RUN_ID = "phase4_forward_2026_15bps_v1_b_c_narrow"` + `BCNARROW_ARCHIVE_BASENAME = "phase4_forward_2026_15bps_v1_d0b8101"` + `BCNARROW_SOURCE_BATCH_ID = "phase2c_15_main_fire_combined"` + `BCNARROW_REGIME_KEY = "evaluation_regimes.forward_2026"` + `BCNARROW_EXECUTION_CONFIG_PATH = "config/execution_phase4_15bps.yaml"` (M5)<br>• **`_build_argparser`** (Step 10.2): add `--enable-b-c-narrow-recovery` + `--force-rerun-existing` boolean flags<br>• **NEW `_validate_b_c_narrow_recovery_identity_or_raise()`** (Step 10.3a; CB2): 4-field cohort identity guard called BEFORE any mutation<br>• **NEW `_archive_canonical_pre_flight()`** (Step 10.3b): destructive archive of canonical → archive_root / BCNARROW_ARCHIVE_BASENAME (refuse-if-exists)<br>• **NEW `_finalize_batch_registry_preflight_or_raise()`** (Step 10.4a): R9 PRE-flight idempotency guard (read-only; refuse-if-exists; `--force-rerun-existing` DELETE WHERE parent_run_id) + `create_table` BLOCKING-3 fix + explicit `try/finally conn.close()` (M3)<br>• **NEW `_finalize_batch_registry()`** (Step 10.4b): POST-fire parent row write via `insert_run`; cohort_metadata derived (CB3); parent.git_commit = CORRECTED_WF_ENGINE_COMMIT (CB4 OVERRIDE pattern); engine_commit also in notes JSON; explicit `try/finally conn.close()` (M3)<br>• **`_evaluate_one_candidate`** signature + body (Step 10.5; lines 480-573): add 4 LC-b kwargs (2 NEW); compute moments from equity_curve; query engine-written child registry row for returns_per_bar_path + returns_per_bar_sha256 (CB5 bare filename + CB6 single-source); merge into inline JSON write at lines 550-556<br>• **`_CSV_FIELDS`** (Step 10.6; lines 581-595): add 5 new fields (gamma3, gamma4, T_obs, returns_per_bar_path, returns_per_bar_sha256)<br>• **`_write_aggregate_csv`** (Step 10.7; lines 598-637): emit 5 new fields per row<br>• **`main()`** (Step 10.8; lines 864-1072): REORDERED wiring per CB1 — (0) identity guard (CB2) → (1) idempotency PRE-check (read-only) → (2) existing `_check_overwrite_protection` + dry-run exit (preserved verbatim) → (3) archive PRE-flight (destructive; AFTER dry-run) → (4) existing forward_window_metadata capture → (5) candidate loop with LC-b kwargs threaded → (6) finalize POST-fire parent row (after candidate loop + existing CSV write at line 996; before aggregate JSON write at line 1053) |
+| `tests/test_phase2c_evaluation_gate_runner.py` | EXTEND | NEW `TestBCNarrowPhase2ProducerEdits` class (22 test methods in v2; 14 from v1 enumeration + 8 NEW per PFR R1 ADOPT for CB1/CB2/CB3/CB5/H2/M1/M4; all bodies full runnable code per Charlie no敷衍 + Phase 0 precedent) |
 | `tests/test_t1_4_backward_compat.py` | MODIFY | `_B1_LOCKED_4TUPLE` update at lines 84-89 per AST classifier dry-run output post-Phase-2-implementation commits + (if any new dynamic-pattern test) extend `approved_files` at lines 538-541 with rationale |
 
 **Data layer (Phase 2):** none. Phase 2 touches NO data files; archive step + parent-row DB write are exercised in tests via tmp_path isolation. The actual recovery fire is Phase 3 (separate sub-plan + Charlie register-event #N+3).
@@ -108,13 +151,13 @@ Expected: prints `Phase 0 SEAL chain verified.` Any AssertionError → Phase 0 c
 
 **Reuse:** `_stub_corrected_candidates` at line 51 + existing fixture patterns at lines 78-108. Use `dsl_bollinger_zscore_reversion` fixture from `tests/conftest.py` (Phase 0 deliverable) for end-to-end tests that need a real DSL.
 
-- [ ] **Step 9.1: Verify required imports present at top of `tests/test_phase2c_evaluation_gate_runner.py`**
+- [ ] **Step 9.1: Verify required imports present at top of `tests/test_phase2c_evaluation_gate_runner.py`** (H3 lazy-import wrapper applied per PFR R1)
 
 ```bash
 head -50 tests/test_phase2c_evaluation_gate_runner.py
 ```
 
-Required imports (add at module top if missing):
+Required imports (add at module top if missing). Per H3 fix: NEW-symbol imports are wrapped in `try/except ImportError` so that at RED phase the test file STILL COLLECTS successfully (individual NEW-test tests fail with explicit AttributeError, but pre-existing tests in the file remain visible). Without this wrapper, a single missing NEW symbol fails the whole module collection and hides any pre-existing test regressions:
 
 ```python
 import json
@@ -125,21 +168,60 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import pytest
 
+# Existing-symbol imports (these symbols exist at Phase 0 SEAL):
 from backtest.engine import RegimeHoldoutResult, compute_moments, compute_per_bar_returns
-from backtest.experiment_registry import create_table, get_connection, get_run, insert_run
+from backtest.experiment_registry import (
+    DEFAULT_DB_PATH,  # H2: explicit import for db_path co-location lock + Test 20 regression guard
+    create_table,
+    get_connection,
+    get_run,
+    insert_run,
+)
 from scripts.run_phase2c_evaluation_gate import (
     _CSV_FIELDS,
-    _archive_canonical_pre_flight,
     _build_argparser,
     _evaluate_one_candidate,
-    _finalize_batch_registry,
-    _finalize_batch_registry_preflight_or_raise,
     _write_aggregate_csv,
     _write_aggregate_summary,
 )
+
+# H3 fix: NEW-symbol imports wrapped so collection succeeds at RED phase.
+# At RED phase these symbols don't exist; tests using them fail individually
+# (with explicit error via the _require_new helper below), but the test file
+# still collects and ALL OTHER existing tests remain visible.
+try:
+    from scripts.run_phase2c_evaluation_gate import (
+        BCNARROW_ARCHIVE_BASENAME,
+        BCNARROW_EXECUTION_CONFIG_PATH,
+        BCNARROW_PARENT_RUN_ID,
+        BCNARROW_REGIME_KEY,
+        BCNARROW_SOURCE_BATCH_ID,
+        _archive_canonical_pre_flight,
+        _finalize_batch_registry,
+        _finalize_batch_registry_preflight_or_raise,
+        _validate_b_c_narrow_recovery_identity_or_raise,
+    )
+    _BC_NARROW_SYMBOLS_AVAILABLE = True
+except ImportError as _e:
+    _BC_NARROW_SYMBOLS_AVAILABLE = False
+    _BC_NARROW_IMPORT_ERROR = str(_e)
+
+
+def _require_b_c_narrow_symbols():
+    """Test-helper: raise AssertionError with explicit message if NEW B-C-narrow
+    symbols not yet defined in producer (RED phase). Used by tests in
+    TestBCNarrowPhase2ProducerEdits to fail with actionable error rather than
+    obscure AttributeError."""
+    if not _BC_NARROW_SYMBOLS_AVAILABLE:
+        raise AssertionError(
+            f"B-C-narrow Phase 2 NEW symbols not yet defined in "
+            f"scripts/run_phase2c_evaluation_gate.py — Task 10 implementation "
+            f"required to bring this test GREEN. Original ImportError: "
+            f"{_BC_NARROW_IMPORT_ERROR}"
+        )
 ```
 
-Note: 3 symbols (`_archive_canonical_pre_flight`, `_finalize_batch_registry`, `_finalize_batch_registry_preflight_or_raise`) are NEW per Task 10 — these imports will fail at RED-phase test collection (NameError on import). Expected.
+Note: At RED phase (pre-Task-10), the `try/except` block sets `_BC_NARROW_SYMBOLS_AVAILABLE = False`. Tests in `TestBCNarrowPhase2ProducerEdits` MUST call `_require_b_c_narrow_symbols()` as the first line of each test body — this fails the test with an explicit RED-phase message rather than obscure AttributeError. Pre-existing 9+ tests in the file (lines 110+) collect + run unaffected (H3 fix per Advisor PFR R1).
 
 - [ ] **Step 9.2: Append `TestBCNarrowPhase2ProducerEdits` class to `tests/test_phase2c_evaluation_gate_runner.py`**
 
@@ -303,8 +385,10 @@ class TestBCNarrowPhase2ProducerEdits:
         ) as mock_pbr, patch(
             "scripts.run_phase2c_evaluation_gate.compute_moments"
         ) as mock_moments:
-            mock_pbr.return_value = pd.Series([0.01] * 2527)
-            mock_moments.return_value = {"gamma3": 0.5, "gamma4": 3.2, "T_obs": 2527, "mean": 0.01, "std": 0.005}
+            # H1: 2528-length with first NaN matches engine.compute_per_bar_returns at engine.py:394-396
+            mock_pbr.return_value = pd.Series([float('nan')] + [0.01] * 2527)
+            # M1: actual compute_moments returns only 3 keys (engine.py:474)
+            mock_moments.return_value = {"gamma3": 0.5, "gamma4": 3.2, "T_obs": 2527}
 
             _evaluate_one_candidate(
                 candidate=stub_candidate,
@@ -347,10 +431,10 @@ class TestBCNarrowPhase2ProducerEdits:
             return_value=stub_holdout_result,
         ), patch(
             "scripts.run_phase2c_evaluation_gate.compute_per_bar_returns",
-            return_value=pd.Series([0.01] * 2527),
+            return_value=pd.Series([float('nan')] + [0.01] * 2527),  # H1: 2528-length, first NaN (matches engine.compute_per_bar_returns at engine.py:394-396)
         ), patch(
             "scripts.run_phase2c_evaluation_gate.compute_moments",
-            return_value={"gamma3": 0.5, "gamma4": 3.2, "T_obs": 2527, "mean": 0.01, "std": 0.005},
+            return_value={"gamma3": 0.5, "gamma4": 3.2, "T_obs": 2527},  # M1: actual compute_moments returns only these 3 keys (engine.py:474)
         ):
             _evaluate_one_candidate(
                 candidate=stub_candidate,
@@ -396,10 +480,10 @@ class TestBCNarrowPhase2ProducerEdits:
             return_value=stub_holdout_result,
         ), patch(
             "scripts.run_phase2c_evaluation_gate.compute_per_bar_returns",
-            return_value=pd.Series([0.01] * 2527),
+            return_value=pd.Series([float('nan')] + [0.01] * 2527),  # H1: 2528-length, first NaN (matches engine.compute_per_bar_returns at engine.py:394-396)
         ), patch(
             "scripts.run_phase2c_evaluation_gate.compute_moments",
-            return_value={"gamma3": 0.5, "gamma4": 3.2, "T_obs": 2527, "mean": 0.01, "std": 0.005},
+            return_value={"gamma3": 0.5, "gamma4": 3.2, "T_obs": 2527},  # M1: actual compute_moments returns only these 3 keys (engine.py:474)
         ):
             _evaluate_one_candidate(
                 candidate=stub_candidate,
@@ -558,10 +642,10 @@ class TestBCNarrowPhase2ProducerEdits:
             side_effect=fake_run_regime_holdout,
         ), patch(
             "scripts.run_phase2c_evaluation_gate.compute_per_bar_returns",
-            return_value=pd.Series([0.01] * 2527),
+            return_value=pd.Series([float('nan')] + [0.01] * 2527),  # H1: 2528-length, first NaN (matches engine.compute_per_bar_returns at engine.py:394-396)
         ), patch(
             "scripts.run_phase2c_evaluation_gate.compute_moments",
-            return_value={"gamma3": 0.5, "gamma4": 3.2, "T_obs": 2527, "mean": 0.01, "std": 0.005},
+            return_value={"gamma3": 0.5, "gamma4": 3.2, "T_obs": 2527},  # M1: actual compute_moments returns only these 3 keys (engine.py:474)
         ):
             artifact_dir = artifact_dir_root / stub_candidate["hypothesis_hash"]
             artifact_dir.mkdir(parents=True)
@@ -814,10 +898,10 @@ class TestBCNarrowPhase2ProducerEdits:
             return_value=stub_holdout_result,
         ), patch(
             "scripts.run_phase2c_evaluation_gate.compute_per_bar_returns",
-            return_value=pd.Series([0.01] * 2527),
+            return_value=pd.Series([float('nan')] + [0.01] * 2527),  # H1: 2528-length, first NaN (matches engine.compute_per_bar_returns at engine.py:394-396)
         ), patch(
             "scripts.run_phase2c_evaluation_gate.compute_moments",
-            return_value={"gamma3": 0.5, "gamma4": 3.2, "T_obs": 2527, "mean": 0.01, "std": 0.005},
+            return_value={"gamma3": 0.5, "gamma4": 3.2, "T_obs": 2527},  # M1: actual compute_moments returns only these 3 keys (engine.py:474)
         ):
             _evaluate_one_candidate(
                 candidate=stub_candidate,
@@ -853,24 +937,495 @@ class TestBCNarrowPhase2ProducerEdits:
         check_evaluation_semantics_or_raise(summary, artifact_path=str(summary_path))
 ```
 
-- [ ] **Step 9.3: Run all 14 new tests — they MUST FAIL (RED)**
+### v2 PFR R1 ADOPT updates to Step 9.2 (apply BEFORE Step 9.3)
+
+Per Charlie register #N+3 (Path 1 — full AMEND). The test class TestBCNarrowPhase2ProducerEdits
+gets in-place updates to existing Tests 4 + 6 + 8 + 9 (per CB3/CB4/CB5/CB6/M2) and 8 NEW tests
+(Tests 15-22) appended at end. Implementer applies inline edits to existing tests, then appends
+the 8 NEW tests to the same class.
+
+#### Universal update for ALL tests in the class (H3 PFR R1)
+
+Add `_require_b_c_narrow_symbols()` as the FIRST line of every test body in
+TestBCNarrowPhase2ProducerEdits. This converts collection-time ImportError on missing NEW
+symbols (which would hide ALL pre-existing tests in the file) into per-test AssertionError
+with an explicit RED-phase message:
+
+```python
+def test_<name>(self, ...):
+    """..."""
+    _require_b_c_narrow_symbols()  # H3 PFR R1: fail explicit if NEW symbols absent
+    # ... rest of test body unchanged ...
+```
+
+Apply to all 14 existing tests (Tests 1-14). Replace 14 occurrences.
+
+#### Test 4 REWRITE: `test_evaluate_one_candidate_summary_path_sha_from_engine_registry_row`
+
+**Rename** from `test_evaluate_one_candidate_summary_includes_returns_per_bar_path_sha`.
+**Rewrite** per CB5+CB6: producer reads bare filename + SHA from engine-written child
+registry row (single source), NOT by recomputing from file.
+
+```python
+    def test_evaluate_one_candidate_summary_path_sha_from_engine_registry_row(
+        self, stub_holdout_result, stub_candidate, tmp_path
+    ):
+        """CB5+CB6 PFR R1 fix: producer reads returns_per_bar_path (bare filename)
+        + returns_per_bar_sha256 from engine-written child registry row (single
+        source of truth); does NOT recompute SHA from file. Same column NAME,
+        same VALUE everywhere (registry / JSON / CSV)."""
+        _require_b_c_narrow_symbols()
+        output_dir = tmp_path / "output"
+        output_dir.mkdir()
+        artifact_dir_root = output_dir
+        db_path = tmp_path / "test_path_sha.db"
+        expected_path = "returns_per_bar.parquet"  # bare filename per engine.py:526
+        expected_sha = "a" * 64  # deterministic fixture SHA (64-char lowercase hex)
+
+        def fake_run_regime_holdout(**kwargs):
+            # Simulate engine: write parquet + create registry row with stamped values.
+            candidate_artifact_dir = kwargs["artifact_dir"]
+            candidate_artifact_dir.mkdir(parents=True, exist_ok=True)
+            (candidate_artifact_dir / "returns_per_bar.parquet").write_bytes(b"x")
+            conn = get_connection(kwargs["db_path"])
+            try:
+                with conn:
+                    create_table(conn)
+                    insert_run(conn, {
+                        "run_id": kwargs["run_id_override"],
+                        "run_type": "regime_holdout",
+                        "parent_run_id": kwargs["parent_run_id_override"],
+                        "strategy_name": "test_strat",
+                        "strategy_source": "b_c_narrow_recovery",
+                        "git_commit": "eb1c87f",
+                        "created_at_utc": "2026-05-27T00:00:00Z",
+                        "fee_model": "effective_15bps_per_side",
+                        "initial_capital": 10_000.0,
+                        "returns_per_bar_path": expected_path,  # bare filename
+                        "returns_per_bar_sha256": expected_sha,
+                        "T_obs": 2527,
+                    })
+            finally:
+                conn.close()
+            return stub_holdout_result
+
+        with patch(
+            "scripts.run_phase2c_evaluation_gate.run_regime_holdout",
+            side_effect=fake_run_regime_holdout,
+        ), patch(
+            "scripts.run_phase2c_evaluation_gate.compute_per_bar_returns",
+            return_value=pd.Series([float('nan')] + [0.01] * 2527),  # H1
+        ), patch(
+            "scripts.run_phase2c_evaluation_gate.compute_moments",
+            return_value={"gamma3": 0.5, "gamma4": 3.2, "T_obs": 2527},  # M1
+        ):
+            _evaluate_one_candidate(
+                candidate=stub_candidate,
+                head_sha=self.HEAD_SHA,
+                source_batch_id=self.SOURCE_BATCH_ID,
+                run_id=self.PARENT_RUN_ID,
+                output_dir=output_dir,
+                regime_key="evaluation_regimes.forward_2026",
+                execution_config_path=Path("config/execution_phase4_15bps.yaml"),
+                env_config_override={"evaluation_regimes": {"forward_2026": {"end": "2026-04-16"}}},
+                artifact_dir_root=artifact_dir_root,
+                parent_run_id_override=self.PARENT_RUN_ID,
+                db_path=db_path,  # CB6: explicit db_path for hermetic test
+            )
+
+        artifact_dir = artifact_dir_root / stub_candidate["hypothesis_hash"]
+        summary = json.loads((artifact_dir / "holdout_summary.json").read_text())
+
+        # CB5: bare filename matches engine's child row (NOT subdir/filename).
+        assert summary["returns_per_bar_path"] == expected_path
+        # CB6: SHA from registry (single source); no recomputation.
+        assert summary["returns_per_bar_sha256"] == expected_sha
+        # CB5+CB6: cross-validate summary value == registry value (same source).
+        with get_connection(db_path) as conn:
+            child_row = get_run(conn, f"{self.PARENT_RUN_ID}_{stub_candidate['hypothesis_hash']}")
+        assert summary["returns_per_bar_path"] == child_row["returns_per_bar_path"]
+        assert summary["returns_per_bar_sha256"] == child_row["returns_per_bar_sha256"]
+```
+
+#### Test 6 UPDATE: cohort_metadata derived values per CB3+CB4
+
+Update cohort_metadata fixture per CB3 (derived initial_capital + fee_model) + CB4 (git_commit
+= engine_commit; current_git_sha separate; engine_commit also in notes JSON). Key assertions:
+
+```python
+        # CB3 PFR R1 ADOPT: derived values match engine defaults
+        assert row.get("initial_capital") == 10_000.0    # engine cash default per engine.py:2324
+        assert row.get("fee_model") == "effective_15bps_per_side"  # cost_model.fee_model_label
+        # CB4 PFR R1 ADOPT: git_commit = engine_commit (OVERRIDE pattern per engine.py:1314)
+        assert row.get("git_commit") == "eb1c87f"        # CORRECTED_WF_ENGINE_COMMIT
+        assert row.get("current_git_sha") == "f112599"   # fire-time HEAD (separate column)
+        # CB4 PFR R1 ADOPT: engine_commit in notes JSON for forensic recoverability
+        notes = json.loads(row.get("notes") or "{}")
+        assert notes.get("engine_commit") == "eb1c87f"
+```
+
+Update the `cohort_metadata` fixture in Test 6 body: replace `"initial_capital": 100000.0` →
+`10_000.0`; replace `"fee_model": "phase4_15bps_v1"` → `"effective_15bps_per_side"`.
+
+#### Test 8 UPDATE + Test 9 UPDATE
+
+For Test 8 (`test_finalize_batch_registry_parent_idempotency_refuses_duplicate`): update
+cohort_metadata fixture to use CB3 derived values (`initial_capital=10_000.0`,
+`fee_model="effective_15bps_per_side"`). Body assertion behavior unchanged.
+
+For Test 9 (`test_finalize_batch_registry_compensating_cleanup_on_partial_failure`): add
+docstring note per M2:
+
+```python
+        """Verify --force-rerun-existing DELETEs rows WHERE parent_run_id = '...'
+        AND WHERE run_id = '...' (parent itself) before re-fire allowed.
+
+        M2 PFR R1 NOTE: this test exercises the DELETE WHERE query behavior, which
+        is field-agnostic — children inserted here are hand-rolled minimal-shape
+        rows (NOT realistic engine-written rows with full LC-stamped fields).
+        The cleanup mechanism works the same way regardless of row shape, so this
+        test is sufficient for verifying the DELETE behavior. Realistic engine-
+        written partial-fire state exercise is deferred to the Phase 3 E2E test
+        suite (tests/test_b_c_narrow_recovery.py per spec §6.1)."""
+```
+
+#### NEW Tests 15-22 (append after existing Test 14)
+
+```python
+    # ===== v2 PFR R1 ADOPT — 8 NEW tests =====
+
+    # ----- Test 15 (CB1): --dry-run + --enable-b-c-narrow-recovery no-mutation -----
+
+    def test_dry_run_with_b_c_narrow_recovery_leaves_state_untouched(self, tmp_path, monkeypatch):
+        """CB1 PFR R1 fix: when --dry-run is set together with --enable-b-c-narrow-recovery,
+        the producer's PRE-flight chain runs read-only checks (identity guard + idempotency)
+        and exits at the existing dry-run gate, with NO archive or DB mutation."""
+        _require_b_c_narrow_symbols()
+        output_root = tmp_path / "output"
+        output_root.mkdir()
+        canonical = output_root / "phase4_forward_2026_15bps_v1"
+        canonical.mkdir()
+        (canonical / "marker.json").write_text('{"pre_run": true}')
+        archive_root = output_root / "archive"
+        db_path = tmp_path / "dry_run_db.db"
+        monkeypatch.setattr("backtest.experiment_registry.DEFAULT_DB_PATH", db_path)
+
+        with patch(
+            "scripts.run_phase2c_evaluation_gate._load_corrected_candidates",
+            return_value=[{
+                "hypothesis_hash": "test_hash_" + "a" * 53,
+                "position": 0, "theme": "test", "name": "test",
+                "wf_test_period_sharpe": 0.5,
+            }],
+        ), patch(
+            "scripts.run_phase2c_evaluation_gate.enforce_corrected_engine_lineage",
+            return_value="f112599abcdef",
+        ), patch("sys.argv", [
+            "run_phase2c_evaluation_gate.py",
+            "--source-batch-id", BCNARROW_SOURCE_BATCH_ID,
+            "--candidate-hashes", "test_hash_",
+            "--run-id", BCNARROW_PARENT_RUN_ID,
+            "--regime-key", BCNARROW_REGIME_KEY,
+            "--execution-config", BCNARROW_EXECUTION_CONFIG_PATH,
+            "--output-root", str(output_root),
+            "--enable-b-c-narrow-recovery",
+            "--dry-run",
+        ]):
+            from scripts.run_phase2c_evaluation_gate import main
+            rc = main()
+
+        assert canonical.exists(), "CB1: dry-run must NOT archive canonical"
+        assert (canonical / "marker.json").exists(), "CB1: marker file must remain"
+        assert not archive_root.exists() or not any(archive_root.iterdir()), (
+            "CB1: dry-run must NOT create archive target"
+        )
+        if db_path.exists():
+            with get_connection(db_path) as conn:
+                create_table(conn)
+                parent_rows = conn.execute(
+                    "SELECT COUNT(*) FROM runs WHERE run_id = ?", (BCNARROW_PARENT_RUN_ID,)
+                ).fetchone()[0]
+            assert parent_rows == 0, f"CB1: dry-run must NOT write parent registry row; got {parent_rows}"
+
+    # ----- Test 16 (CB1): pre-existing parent row → preflight refuses BEFORE archive -----
+
+    def test_preflight_refuses_before_archive_when_parent_exists(self, tmp_path):
+        """CB1 PFR R1 fix: when parent_run_id already exists in registry,
+        _finalize_batch_registry_preflight_or_raise raises RuntimeError BEFORE
+        archive PRE-flight runs. Canonical artifact must remain in place."""
+        _require_b_c_narrow_symbols()
+        output_root = tmp_path / "output"
+        output_root.mkdir()
+        canonical = output_root / "phase4_forward_2026_15bps_v1"
+        canonical.mkdir()
+        (canonical / "marker.json").write_text('{"pre_existing": true}')
+        db_path = tmp_path / "test_preflight_refuse.db"
+
+        conn = get_connection(db_path)
+        try:
+            with conn:
+                create_table(conn)
+                insert_run(conn, {
+                    "run_id": BCNARROW_PARENT_RUN_ID,
+                    "run_type": "batch_summary",
+                    "parent_run_id": None,
+                    "strategy_name": "cohort_summary",
+                    "strategy_source": "b_c_narrow_recovery",
+                    "git_commit": "eb1c87f",
+                    "created_at_utc": "2026-05-26T00:00:00Z",
+                    "fee_model": "effective_15bps_per_side",
+                    "initial_capital": 10_000.0,
+                })
+        finally:
+            conn.close()
+
+        with pytest.raises(RuntimeError, match=r"parent_run_id .* already exists"):
+            _finalize_batch_registry_preflight_or_raise(
+                parent_run_id=BCNARROW_PARENT_RUN_ID,
+                force_rerun_existing=False,
+                db_path=db_path,
+            )
+
+        assert canonical.exists()
+        assert (canonical / "marker.json").exists()
+
+    # ----- Test 17 (CB2): identity guard rejects each wrong-value field -----
+
+    @pytest.mark.parametrize("wrong_field,wrong_value", [
+        ("run_id", "some-random-uuid-not-bcnarrow"),
+        ("regime_key", "v2.regime_holdout"),
+        ("execution_config_path", Path("config/execution_phase4_07bps.yaml")),
+        ("source_batch_id", "some-other-batch-uuid"),
+    ])
+    def test_identity_guard_rejects_wrong_value(self, wrong_field, wrong_value):
+        """CB2 PFR R1 fix: identity guard must reject when any of 4 fields mismatches
+        BCNARROW_* constants. Test parametrized across all 4 wrong-value cases."""
+        _require_b_c_narrow_symbols()
+        kwargs = {
+            "run_id": BCNARROW_PARENT_RUN_ID,
+            "regime_key": BCNARROW_REGIME_KEY,
+            "execution_config_path": Path(BCNARROW_EXECUTION_CONFIG_PATH),
+            "source_batch_id": BCNARROW_SOURCE_BATCH_ID,
+        }
+        kwargs[wrong_field] = wrong_value
+        with pytest.raises(ValueError, match=r"must equal"):
+            _validate_b_c_narrow_recovery_identity_or_raise(**kwargs)
+
+    # ----- Test 18 (CB3): parent metadata derived from engine defaults -----
+
+    def test_finalize_batch_registry_parent_metadata_matches_engine_defaults(self, tmp_path):
+        """CB3 PFR R1 fix: parent.initial_capital MUST equal engine cash default
+        (10_000.0 per engine.py:2324); parent.fee_model MUST equal
+        cost_model.fee_model_label (= 'effective_15bps_per_side' for 15bps anchor
+        per slippage.py:94-100) — both DERIVED, never hardcoded literals."""
+        _require_b_c_narrow_symbols()
+        db_path = tmp_path / "test_consistency.db"
+        exec_cfg = load_execution_config(Path(BCNARROW_EXECUTION_CONFIG_PATH))
+        cost_model = ConstantSlippage.from_config(exec_cfg)
+        cohort_metadata = {
+            "execution_config_path": BCNARROW_EXECUTION_CONFIG_PATH,
+            "execution_config_sha256": "e" * 64,
+            "parquet_data_sha256": "f" * 64,
+            "regime_key": BCNARROW_REGIME_KEY,
+            "cost_anchor_id": "phase4_forward_15bps_v1",
+            "current_git_sha": "f112599",
+            "effective_start": "2026-01-01T00:00:00Z",
+            "initial_capital": 10_000.0,
+            "fee_model": cost_model.fee_model_label,
+        }
+        _finalize_batch_registry(
+            parent_run_id=BCNARROW_PARENT_RUN_ID,
+            cohort_metadata=cohort_metadata,
+            db_path=db_path,
+        )
+        with get_connection(db_path) as conn:
+            row = get_run(conn, BCNARROW_PARENT_RUN_ID)
+        assert row.get("initial_capital") == 10_000.0
+        assert row.get("fee_model") == "effective_15bps_per_side"
+
+    # ----- Test 19 (CB5): producer summary.returns_per_bar_path == registry child row value -----
+
+    def test_producer_returns_per_bar_path_matches_engine_child_row(
+        self, stub_holdout_result, stub_candidate, tmp_path
+    ):
+        """CB5 PFR R1 fix (cross-validation companion to rewritten Test 4):
+        verify producer JSON value EQUALS engine child registry row value for
+        returns_per_bar_path. Both must be the bare filename 'returns_per_bar.parquet'."""
+        _require_b_c_narrow_symbols()
+        output_dir = tmp_path / "output"
+        output_dir.mkdir()
+        artifact_dir_root = output_dir
+        db_path = tmp_path / "test_path_match.db"
+        bare_filename = "returns_per_bar.parquet"
+
+        def fake_run_regime_holdout(**kwargs):
+            candidate_artifact_dir = kwargs["artifact_dir"]
+            candidate_artifact_dir.mkdir(parents=True, exist_ok=True)
+            (candidate_artifact_dir / bare_filename).write_bytes(b"x")
+            conn = get_connection(kwargs["db_path"])
+            try:
+                with conn:
+                    create_table(conn)
+                    insert_run(conn, {
+                        "run_id": kwargs["run_id_override"],
+                        "run_type": "regime_holdout",
+                        "parent_run_id": kwargs["parent_run_id_override"],
+                        "strategy_name": "test_strat",
+                        "strategy_source": "b_c_narrow_recovery",
+                        "git_commit": "eb1c87f",
+                        "created_at_utc": "2026-05-27T00:00:00Z",
+                        "fee_model": "effective_15bps_per_side",
+                        "initial_capital": 10_000.0,
+                        "returns_per_bar_path": bare_filename,
+                        "returns_per_bar_sha256": "9" * 64,
+                        "T_obs": 2527,
+                    })
+            finally:
+                conn.close()
+            return stub_holdout_result
+
+        with patch(
+            "scripts.run_phase2c_evaluation_gate.run_regime_holdout",
+            side_effect=fake_run_regime_holdout,
+        ), patch(
+            "scripts.run_phase2c_evaluation_gate.compute_per_bar_returns",
+            return_value=pd.Series([float('nan')] + [0.01] * 2527),
+        ), patch(
+            "scripts.run_phase2c_evaluation_gate.compute_moments",
+            return_value={"gamma3": 0.5, "gamma4": 3.2, "T_obs": 2527},
+        ):
+            _evaluate_one_candidate(
+                candidate=stub_candidate,
+                head_sha=self.HEAD_SHA,
+                source_batch_id=self.SOURCE_BATCH_ID,
+                run_id=self.PARENT_RUN_ID,
+                output_dir=output_dir,
+                regime_key="evaluation_regimes.forward_2026",
+                execution_config_path=Path(BCNARROW_EXECUTION_CONFIG_PATH),
+                env_config_override={"evaluation_regimes": {"forward_2026": {"end": "2026-04-16"}}},
+                artifact_dir_root=artifact_dir_root,
+                parent_run_id_override=self.PARENT_RUN_ID,
+                db_path=db_path,
+            )
+
+        artifact_dir = artifact_dir_root / stub_candidate["hypothesis_hash"]
+        summary = json.loads((artifact_dir / "holdout_summary.json").read_text())
+        with get_connection(db_path) as conn:
+            child_row = get_run(conn, f"{self.PARENT_RUN_ID}_{stub_candidate['hypothesis_hash']}")
+        assert summary["returns_per_bar_path"] == bare_filename
+        assert child_row["returns_per_bar_path"] == bare_filename
+        assert summary["returns_per_bar_path"] == child_row["returns_per_bar_path"]
+
+    # ----- Test 20 (H2): DEFAULT_DB_PATH co-location regression guard -----
+
+    def test_default_db_path_constant_regression_guard(self):
+        """H2 PFR R1 fix: lock DEFAULT_DB_PATH value to its canonical location so
+        a future refactor cannot silently split parent (producer-written) from
+        children (engine-written) into different DBs."""
+        _require_b_c_narrow_symbols()
+        repo_root = Path("/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline")
+        expected = repo_root / "backtest" / "experiments.db"
+        assert DEFAULT_DB_PATH == expected, (
+            f"H2: DEFAULT_DB_PATH drift. Expected {expected!r}; got {DEFAULT_DB_PATH!r}. "
+            f"Parent + engine-written children rely on this constant for co-location."
+        )
+
+    # ----- Test 21 (M4): LC-b e2e real engine smoke -----
+
+    def test_lcb_e2e_real_engine_writes_parquet_and_registry(
+        self, dsl_bollinger_zscore_reversion, btc_parquet_path, tmp_path,
+        env_config_override_forward_2026,
+    ):
+        """M4 PFR R1 fix: end-to-end smoke against REAL run_regime_holdout (no mock).
+        Verifies engine extension + producer wiring + registry stamping work together
+        on a real BTC parquet + real DSL fixture. Catches Phase 0 regressions that
+        a mock-only test pyramid would miss."""
+        _require_b_c_narrow_symbols()
+        output_dir = tmp_path / "output"
+        output_dir.mkdir()
+        artifact_dir_root = output_dir
+        db_path = tmp_path / "test_lcb_e2e.db"
+        candidate = {
+            "hypothesis_hash": "e2e_real_hash_" + "a" * 50,
+            "position": 32,
+            "theme": "mean_reversion",
+            "name": "bollinger_zscore_reversion",
+            "wf_test_period_sharpe": 0.85,
+        }
+
+        with patch(
+            "scripts.run_phase2c_evaluation_gate._load_dsl_from_response",
+            return_value=dsl_bollinger_zscore_reversion,
+        ), patch(
+            "scripts.run_phase2c_evaluation_gate.enforce_corrected_engine_lineage",
+            return_value="f112599abcdef",
+        ):
+            summary = _evaluate_one_candidate(
+                candidate=candidate,
+                head_sha="f112599abcdef",
+                source_batch_id=BCNARROW_SOURCE_BATCH_ID,
+                run_id=BCNARROW_PARENT_RUN_ID,
+                output_dir=output_dir,
+                regime_key=BCNARROW_REGIME_KEY,
+                execution_config_path=Path(BCNARROW_EXECUTION_CONFIG_PATH),
+                env_config_override=env_config_override_forward_2026,
+                artifact_dir_root=artifact_dir_root,
+                parent_run_id_override=BCNARROW_PARENT_RUN_ID,
+                db_path=db_path,
+            )
+
+        artifact_dir = artifact_dir_root / candidate["hypothesis_hash"]
+        rpb = artifact_dir / "returns_per_bar.parquet"
+        assert rpb.exists() and rpb.stat().st_size > 0
+
+        child_run_id = f"{BCNARROW_PARENT_RUN_ID}_{candidate['hypothesis_hash']}"
+        with get_connection(db_path) as conn:
+            child_row = get_run(conn, child_run_id)
+        assert child_row is not None
+        assert child_row.get("returns_per_bar_path") == "returns_per_bar.parquet"
+        assert child_row.get("returns_per_bar_sha256") is not None
+        assert len(child_row["returns_per_bar_sha256"]) == 64
+        int(child_row["returns_per_bar_sha256"], 16)
+        assert child_row.get("T_obs") is not None and child_row["T_obs"] > 0
+        assert child_row.get("git_commit") == "eb1c87f"
+        assert summary.get("returns_per_bar_path") == child_row["returns_per_bar_path"]
+        assert summary.get("returns_per_bar_sha256") == child_row["returns_per_bar_sha256"]
+        assert summary.get("T_obs") == child_row["T_obs"]
+
+    # ----- Test 22 (M1): compute_moments return-keys API surface lock -----
+
+    def test_compute_moments_return_keys_exactly(self):
+        """M1 PFR R1 fix: lock engine.compute_moments API surface — exactly 3 keys
+        (gamma3, gamma4, T_obs); NO mean/std/etc. Future engine refactor that
+        adds/removes keys breaks producer's summary['gamma3']/['gamma4']/['T_obs']
+        consumption — this test catches the drift at engine-test layer."""
+        _require_b_c_narrow_symbols()
+        import numpy as np
+        result = compute_moments(np.array([0.01, 0.02, -0.01, 0.005, -0.003]))
+        assert set(result.keys()) == {"gamma3", "gamma4", "T_obs"}
+```
+
+---
+
+- [ ] **Step 9.3: Run all 22 new tests — they MUST FAIL (RED)** (L1 PFR R1 fix: wording)
 
 ```bash
 cd /Users/yutianyang/Documents/GitHub/btc-alpha-pipeline
 python -m pytest tests/test_phase2c_evaluation_gate_runner.py::TestBCNarrowPhase2ProducerEdits -v
 ```
 
-Expected: most tests FAIL at collection time with `ImportError` on `_archive_canonical_pre_flight`, `_finalize_batch_registry`, or `_finalize_batch_registry_preflight_or_raise` (NEW functions per Task 10). Some tests may also FAIL with `TypeError: _evaluate_one_candidate() got an unexpected keyword argument 'artifact_dir_root'` or `AttributeError` on missing `_CSV_FIELDS` entries.
+Expected: Per H3 PFR R1 fix, the test file STILL COLLECTS even when NEW symbols are absent (the `try/except ImportError` wrapper in Step 9.1 prevents collection-time failure). Each of the 22 tests fails with explicit AssertionError from `_require_b_c_narrow_symbols()` showing the underlying `ImportError on import` (L1 PFR R1 — wording fixed from "NameError" since Python's missing-symbol error class is `ImportError`, not `NameError`). Some tests may also FAIL with `TypeError: _evaluate_one_candidate() got an unexpected keyword argument 'artifact_dir_root'` or `AttributeError` on missing `_CSV_FIELDS` entries.
 
-If ALL 14 tests pass at this point → SOMETHING WRONG (Task 10 already implemented OR tests are no-ops). Halt and inspect.
+If ALL 22 tests pass at this point → SOMETHING WRONG (Task 10 already implemented OR tests are no-ops). Halt and inspect.
 
 - [ ] **Step 9.4: Commit failing tests**
 
 ```bash
 git add tests/test_phase2c_evaluation_gate_runner.py
-git commit -m "test(b-c-narrow/phase-2): add 14 failing producer-edit tests (T9)
+git commit -m "test(b-c-narrow/phase-2): add 22 failing producer-edit tests (T9; v2 PFR R1 amend)
 
-Per Plan v3-Phase2 Task 9. RED-phase tests verify (post-Task-10):
+Per Plan v3-Phase2 v2 Task 9 (Charlie register #N+3 Path 1 — full AMEND).
+22 RED-phase tests = 14 v1 enumeration + 8 NEW per PFR R1 ADOPT:
 - LC-b kwarg threading from producer to engine (1 test)
 - equity_curve consumption from extended RegimeHoldoutResult (1 test)
 - γ3/γ4/T_obs merge into inline per-candidate JSON write (1 test)
@@ -898,20 +1453,32 @@ All 14 tests FAIL at this commit (RED phase). T10 implements producer edits to b
 
 This is the largest task. Implementation order: imports → CLI flags → archive step → finalize step → `_evaluate_one_candidate` → CSV fields → CSV writer → `_aggregate_summary_dict` (NOT touched per spec §3.2.2 — cohort fields already cohort-level) → `main()` wiring → GREEN.
 
-- [ ] **Step 10.1: Add imports**
+- [ ] **Step 10.1: Add imports (v2 per CB3 + CB4 + H2 + L2 PFR R1 ADOPT)**
 
 Edit `scripts/run_phase2c_evaluation_gate.py` near top of file (after existing imports, around line 87-103). Add:
 
 ```python
 import shutil  # B-C-narrow Phase 2: archive PRE-flight uses shutil.move
 
-# B-C-narrow Phase 2: producer-side moments + LC-b file sha helpers (Phase 0 SEAL chain f112599)
-from backtest.engine import (  # noqa: E402  (sys.path.insert prepended above)
+# B-C-narrow Phase 2 v2: producer-side moments compute helpers (Phase 0 SEAL chain f112599).
+# v2 per CB6 PFR R1: REMOVED _compute_sha256_file import — producer no longer recomputes
+# SHA; queries engine-written child registry row via get_run instead.
+from backtest.engine import (
     compute_moments,
     compute_per_bar_returns,
-    _compute_sha256_file,
 )
-from backtest.experiment_registry import (  # noqa: E402
+# CB3 PFR R1: fee_model derivation from execution_config — producer reads cost_model.fee_model_label
+# (matches engine's children-row stamp at engine.py:1278). NO hardcoded fee_model literal.
+from backtest.execution_model import ConstantSlippage, load_execution_config
+# CB4 PFR R1: engine_commit OVERRIDE constant for parent row git_commit stamping
+# (mirror engine.py:1314 OVERRIDE pattern).
+from backtest.wf_lineage import CORRECTED_WF_ENGINE_COMMIT
+# H2 PFR R1: DEFAULT_DB_PATH explicit import for parent-child co-location regression guard
+# (Test 20). Producer's `db_path: Path | None = None` kwarg defaults to None → get_connection's
+# default → DEFAULT_DB_PATH; engine's run_regime_holdout's db_path defaults likewise. Importing
+# the constant explicitly makes the contract visible to the reader.
+from backtest.experiment_registry import (
+    DEFAULT_DB_PATH,
     create_table,
     get_connection,
     get_run,
@@ -919,15 +1486,50 @@ from backtest.experiment_registry import (  # noqa: E402
 )
 ```
 
-**Placement:** AFTER the existing `from backtest.engine import run_regime_holdout, RegimeHoldoutResult` block at line 92, and AFTER the existing `from backtest.wf_lineage import (...)` block at lines 93-102. The new imports are additive; existing imports preserved verbatim.
+**L2 PFR R1 ADOPT:** removed `# noqa: E402` from all new imports — E402 doesn't apply (no non-import code precedes the imports block per scripts:75-103).
+
+**Placement:** AFTER the existing `from backtest.engine import run_regime_holdout, RegimeHoldoutResult` block at line 92, AFTER the existing `from backtest.wf_lineage import (...)` block at lines 93-102, and AFTER the existing `from strategies.dsl import StrategyDSL` at line 103. The new imports are additive; existing imports preserved verbatim.
 
 Verify imports resolve cleanly:
 
 ```bash
-python -c "from scripts.run_phase2c_evaluation_gate import compute_moments, compute_per_bar_returns, _compute_sha256_file, create_table, get_connection, get_run, insert_run; print('imports OK')"
+python -c "from scripts.run_phase2c_evaluation_gate import compute_moments, compute_per_bar_returns, ConstantSlippage, load_execution_config, CORRECTED_WF_ENGINE_COMMIT, DEFAULT_DB_PATH, create_table, get_connection, get_run, insert_run; print('v2 imports OK')"
 ```
 
-Expected: `imports OK`.
+Expected: `v2 imports OK`.
+
+- [ ] **Step 10.1b: Add module-level constants block (NEW per M5 PFR R1 ADOPT)**
+
+Add the following constants block immediately after `PHASE4_FORWARD_2026_REGIME_KEY = "evaluation_regimes.forward_2026"` at scripts:117 and BEFORE any function definitions. These named constants replace inline literals throughout the v2 producer + tests:
+
+```python
+# ---------------------------------------------------------------------------
+# B-C-narrow recovery cycle locked identity constants (per Plan v3-Phase2 v2
+# PFR R1 ADOPT M5). All B-C-narrow recovery wiring references these constants;
+# NO inline literals. Operator misuse is caught at identity guard (CB2) which
+# compares CLI args to these locked values.
+#
+# Source-of-truth locks (DO NOT change without spec amend):
+# - BCNARROW_PARENT_RUN_ID:        spec §2 Q4 + §3.2.3
+# - BCNARROW_ARCHIVE_BASENAME:     spec §2 Q3 (uses original `current_git_sha`=d0b8101)
+# - BCNARROW_SOURCE_BATCH_ID:      spec §1 + G3 inventory (combined synthetic dir)
+# - BCNARROW_REGIME_KEY:           spec §1 cohort_a forward_2026
+# - BCNARROW_EXECUTION_CONFIG_PATH: spec §2 Q5 cost anchor lock
+# ---------------------------------------------------------------------------
+BCNARROW_PARENT_RUN_ID: str = "phase4_forward_2026_15bps_v1_b_c_narrow"
+BCNARROW_ARCHIVE_BASENAME: str = "phase4_forward_2026_15bps_v1_d0b8101"
+BCNARROW_SOURCE_BATCH_ID: str = "phase2c_15_main_fire_combined"
+BCNARROW_REGIME_KEY: str = PHASE4_FORWARD_2026_REGIME_KEY  # alias for clarity at recovery sites
+BCNARROW_EXECUTION_CONFIG_PATH: str = "config/execution_phase4_15bps.yaml"
+```
+
+Verify the constants resolve:
+
+```bash
+python -c "from scripts.run_phase2c_evaluation_gate import BCNARROW_PARENT_RUN_ID, BCNARROW_ARCHIVE_BASENAME, BCNARROW_SOURCE_BATCH_ID, BCNARROW_REGIME_KEY, BCNARROW_EXECUTION_CONFIG_PATH; print('M5 constants OK')"
+```
+
+Expected: `M5 constants OK`.
 
 - [ ] **Step 10.2: Add `--enable-b-c-narrow-recovery` + `--force-rerun-existing` CLI flags**
 
@@ -964,9 +1566,92 @@ Edit `_build_argparser()` at lines 726-837. Append BEFORE the final `return pars
     )
 ```
 
-- [ ] **Step 10.3: Add NEW `_archive_canonical_pre_flight()` function**
+- [ ] **Step 10.3a: Add NEW `_validate_b_c_narrow_recovery_identity_or_raise()` function (CB2 PFR R1 ADOPT)**
 
-Add the function in the producer at a stable location — RECOMMENDED: AFTER `_check_overwrite_protection()` at line 861 and BEFORE `def main():` at line 864. This keeps R9 helpers grouped with main() preconditions.
+Per Codex BLOCKING-2: when `--enable-b-c-narrow-recovery` is set, operator could pass mismatched cohort identity (wrong `--run-id`, wrong regime, wrong execution-config, wrong source-batch). Without a fail-fast guard, the archive + DB mutation runs against the wrong cohort silently.
+
+Add the identity guard function in the producer at the same grouped location as `_archive_canonical_pre_flight` (after `_check_overwrite_protection()` at line 861, before `def main():` at line 864). This guard runs FIRST in the recovery PRE-flight chain (per CB1 reorder lock).
+
+```python
+def _validate_b_c_narrow_recovery_identity_or_raise(
+    run_id: str,
+    regime_key: str,
+    execution_config_path: Path | None,
+    source_batch_id: str,
+) -> None:
+    """B-C-narrow Phase 2 (CB2 PFR R1 ADOPT): identity guard for recovery flow.
+
+    When --enable-b-c-narrow-recovery is set, this guard validates 4 cohort
+    identity fields against locked constants BEFORE any mutation (archive,
+    DB write). Fail-fast with explicit per-field rationale.
+
+    Required values (locked at scripts:118-122 module-level constants):
+    - run_id == BCNARROW_PARENT_RUN_ID
+    - regime_key == BCNARROW_REGIME_KEY
+    - execution_config_path canonicalizes to BCNARROW_EXECUTION_CONFIG_PATH
+    - source_batch_id == BCNARROW_SOURCE_BATCH_ID
+
+    Order in recovery PRE-flight chain (per CB1 lock):
+    1. This guard (read-only)
+    2. _finalize_batch_registry_preflight_or_raise (read-only)
+    3. (existing) _check_overwrite_protection
+    4. (existing) dry-run exit if args.dry_run
+    5. _archive_canonical_pre_flight (destructive — first mutation)
+
+    Raises:
+        ValueError: with multi-line explicit message listing every wrong field
+            and the required value. Operator runs producer with corrected flags.
+    """
+    errors: list[str] = []
+    if run_id != BCNARROW_PARENT_RUN_ID:
+        errors.append(
+            f"--run-id={run_id!r} must equal {BCNARROW_PARENT_RUN_ID!r} "
+            f"(B-C-narrow cohort lock per spec §2 Q4)"
+        )
+    if regime_key != BCNARROW_REGIME_KEY:
+        errors.append(
+            f"--regime-key={regime_key!r} must equal {BCNARROW_REGIME_KEY!r} "
+            f"(B-C-narrow cohort_a is forward_2026 per spec §1)"
+        )
+    if execution_config_path is None:
+        errors.append(
+            f"--execution-config must be {BCNARROW_EXECUTION_CONFIG_PATH!r} "
+            f"(cost anchor lock per spec §2 Q5); got None"
+        )
+    else:
+        # Canonicalize: resolve absolute path then take repo-relative form.
+        ec_path_obj = Path(execution_config_path).resolve()
+        try:
+            ec_path_repo_rel = str(ec_path_obj.relative_to(PROJECT_ROOT))
+        except ValueError:
+            # Path is outside repo root — keep as absolute for the error message
+            ec_path_repo_rel = str(ec_path_obj)
+        if ec_path_repo_rel != BCNARROW_EXECUTION_CONFIG_PATH:
+            errors.append(
+                f"--execution-config={ec_path_repo_rel!r} must equal "
+                f"{BCNARROW_EXECUTION_CONFIG_PATH!r} (cost anchor lock per spec §2 Q5)"
+            )
+    if source_batch_id != BCNARROW_SOURCE_BATCH_ID:
+        errors.append(
+            f"--source-batch-id={source_batch_id!r} must equal "
+            f"{BCNARROW_SOURCE_BATCH_ID!r} (combined synthetic dir per "
+            f"spec §1 + Phase 1 G3 inventory)"
+        )
+    if errors:
+        raise ValueError(
+            "B-C-narrow recovery identity guard (CB2 PFR R1 ADOPT): refusing to "
+            "mutate state due to inconsistent cohort identity. The "
+            "--enable-b-c-narrow-recovery flag locks the recovery flow to the "
+            "specific cohort_a artifact at "
+            f"data/phase2c_evaluation_gate/{BCNARROW_ARCHIVE_BASENAME}/ "
+            "(per spec §1 + §2 + §3.2.3). All 4 identity fields must match:\n"
+            "  - " + "\n  - ".join(errors)
+        )
+```
+
+- [ ] **Step 10.3b: Add NEW `_archive_canonical_pre_flight()` function**
+
+Add the function in the producer at a stable location — RECOMMENDED: AFTER `_validate_b_c_narrow_recovery_identity_or_raise()` (Step 10.3a) and BEFORE `def main():` at line 864. This keeps R9 helpers grouped with main() preconditions.
 
 ```python
 def _archive_canonical_pre_flight(
@@ -1019,6 +1704,8 @@ def _archive_canonical_pre_flight(
         )
 ```
 
+**CB1 PFR R1 NOTE:** This archive function is DESTRUCTIVE (irreversible from operator's normal mental model). Per CB1 ordering lock, it runs LAST in the PRE-flight chain — AFTER identity guard (Step 10.3a) AND idempotency PRE-check (Step 10.4a) AND existing dry-run exit (scripts:933-944). The wiring sequence in main() (Step 10.8 below) enforces this order.
+
 - [ ] **Step 10.4: Add NEW `_finalize_batch_registry_preflight_or_raise()` + `_finalize_batch_registry()` functions**
 
 Add both functions AFTER `_archive_canonical_pre_flight()` (so all R9 helpers are grouped pre-main):
@@ -1052,29 +1739,34 @@ def _finalize_batch_registry_preflight_or_raise(
     Raises:
         RuntimeError: if pre-existing rows found AND force_rerun_existing=False.
     """
-    with get_connection(db_path) as conn:
-        create_table(conn)  # BLOCKING-3: ensure runs table exists before query
-        n_children = conn.execute(
-            "SELECT COUNT(*) FROM runs WHERE parent_run_id = ?", (parent_run_id,)
-        ).fetchone()[0]
-        n_parent = conn.execute(
-            "SELECT COUNT(*) FROM runs WHERE run_id = ?", (parent_run_id,)
-        ).fetchone()[0]
-        if n_children == 0 and n_parent == 0:
-            return  # clean state; proceed
-        if not force_rerun_existing:
-            raise RuntimeError(
-                f"B-C-narrow finalize PRE-flight: parent_run_id {parent_run_id!r} "
-                f"already exists in registry ({n_parent} parent row, {n_children} "
-                f"child rows). Refusing to re-fire without --force-rerun-existing "
-                f"flag (R9-B-guarded lock). Operator must either (a) inspect "
-                f"+ accept pre-existing state, OR (b) re-run with --force-rerun-existing "
-                f"to DELETE rows and re-fire from clean state."
-            )
-        # force_rerun_existing=True: DELETE children + parent
-        conn.execute("DELETE FROM runs WHERE parent_run_id = ?", (parent_run_id,))
-        conn.execute("DELETE FROM runs WHERE run_id = ?", (parent_run_id,))
-        conn.commit()
+    # M3 PFR R1 fix: explicit try/finally conn.close() pattern; `with conn:` commits
+    # on success / rolls back on exception but does NOT close the file handle.
+    conn = get_connection(db_path)
+    try:
+        with conn:
+            create_table(conn)  # BLOCKING-3: ensure runs table exists before query
+            n_children = conn.execute(
+                "SELECT COUNT(*) FROM runs WHERE parent_run_id = ?", (parent_run_id,)
+            ).fetchone()[0]
+            n_parent = conn.execute(
+                "SELECT COUNT(*) FROM runs WHERE run_id = ?", (parent_run_id,)
+            ).fetchone()[0]
+            if n_children == 0 and n_parent == 0:
+                return  # clean state; proceed
+            if not force_rerun_existing:
+                raise RuntimeError(
+                    f"B-C-narrow finalize PRE-flight: parent_run_id {parent_run_id!r} "
+                    f"already exists in registry ({n_parent} parent row, {n_children} "
+                    f"child rows). Refusing to re-fire without --force-rerun-existing "
+                    f"flag (R9-B-guarded lock). Operator must either (a) inspect "
+                    f"+ accept pre-existing state, OR (b) re-run with --force-rerun-existing "
+                    f"to DELETE rows and re-fire from clean state."
+                )
+            # force_rerun_existing=True: DELETE children + parent (single transaction via `with conn:`)
+            conn.execute("DELETE FROM runs WHERE parent_run_id = ?", (parent_run_id,))
+            conn.execute("DELETE FROM runs WHERE run_id = ?", (parent_run_id,))
+    finally:
+        conn.close()
 
 
 def _finalize_batch_registry(
@@ -1084,26 +1776,40 @@ def _finalize_batch_registry(
 ) -> None:
     """B-C-narrow Phase 2: POST-fire parent batch_summary row write (R9 POST-fire half).
 
-    Per spec §3.2.3:
+    Per spec §3.2.3 + PFR R1 v2 ADOPT (CB3 + CB4 + L3):
     - Open db via get_connection(db_path); ensure runs table exists (create_table
       BLOCKING-3 fix).
     - Build parent row dict with cohort-level fields populated + per-candidate
       metric fields NULL.
+    - CB4: parent.git_commit = CORRECTED_WF_ENGINE_COMMIT ("eb1c87f") matching
+      engine's OVERRIDE pattern at engine.py:1314 (lc.engine_commit OVERRIDE-writes
+      to runs.git_commit column). cohort_metadata["current_git_sha"] populates the
+      separate current_git_sha column (fire-time HEAD).
+    - CB4 forensic: engine_commit ALSO written to `notes` JSON for explicit
+      recoverability (registry has no engine_commit column per
+      experiment_registry.py:54-103).
     - insert_run(conn, parent_row_dict).
 
-    Children (39 rows) are written by engine inside run_regime_holdout's
-    _write_to_registry call (Phase 0 sequencing per spec §3.1.2). This function
-    writes ONLY the 1 parent row.
+    Child rows (one per evaluated candidate) are written by engine inside
+    run_regime_holdout's _write_to_registry call (Phase 0 sequencing per
+    spec §3.1.2). This function writes ONLY the 1 parent row.
+    (L3 PFR R1 fix: changed "Children (39 rows)" → generic "child rows per
+    evaluated candidate" to drop cohort_a-specific magic number.)
 
     Args:
-        parent_run_id: e.g., "phase4_forward_2026_15bps_v1_b_c_narrow".
-        cohort_metadata: dict with required keys:
+        parent_run_id: e.g., BCNARROW_PARENT_RUN_ID
+            ("phase4_forward_2026_15bps_v1_b_c_narrow").
+        cohort_metadata: dict with required keys (CB3 PFR R1 lock):
             execution_config_path, execution_config_sha256, parquet_data_sha256,
             regime_key, cost_anchor_id, current_git_sha, effective_start,
-            initial_capital, fee_model.
+            initial_capital, fee_model. initial_capital MUST equal engine's
+            cash default (10_000.0 per engine.py:2324); fee_model MUST be
+            derived via ConstantSlippage.from_config(...).fee_model_label
+            (per slippage.py:94-100; matches child rows' fee_model via engine.py:1278).
         db_path: SQLite registry path. Default None → get_connection's default
-            (typically backtest/experiments.db). Default-None co-locates the
-            parent row with engine-written children.
+            (DEFAULT_DB_PATH = backtest/experiments.db per experiment_registry.py:46).
+            Default-None co-locates the parent row with engine-written children
+            (engine uses same default inside _write_to_registry).
     """
     required_keys = {
         "execution_config_path", "execution_config_sha256", "parquet_data_sha256",
@@ -1117,13 +1823,24 @@ def _finalize_batch_registry(
             f"keys: {sorted(missing)}. Required: {sorted(required_keys)}."
         )
 
+    # CB4 PFR R1: parent_row notes JSON includes engine_commit for explicit
+    # forensic recoverability. Registry has no engine_commit column; the
+    # value is OVERRIDE-stamped into git_commit column (mirrors engine pattern).
+    notes_payload = {
+        "engine_commit": CORRECTED_WF_ENGINE_COMMIT,
+        "cohort": "b_c_narrow_recovery",
+        "spec_reference": "docs/superpowers/specs/2026-05-26-b-c-narrow-data-recovery-design.md (sealed at d6c7fc0)",
+    }
+
     parent_row = {
         "run_id": parent_run_id,
         "run_type": "batch_summary",
         "parent_run_id": None,
         "strategy_name": "cohort_summary",
         "strategy_source": "b_c_narrow_recovery",
-        "git_commit": cohort_metadata["current_git_sha"],
+        # CB4 PFR R1: git_commit = engine_commit (matches engine OVERRIDE at engine.py:1314).
+        # current_git_sha is the separate fire-time HEAD per spec §2 disambiguation table.
+        "git_commit": CORRECTED_WF_ENGINE_COMMIT,
         "created_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "effective_start": cohort_metadata["effective_start"],
         "initial_capital": cohort_metadata["initial_capital"],
@@ -1134,6 +1851,7 @@ def _finalize_batch_registry(
         "regime_key": cohort_metadata["regime_key"],
         "cost_anchor_id": cohort_metadata["cost_anchor_id"],
         "current_git_sha": cohort_metadata["current_git_sha"],
+        "notes": json.dumps(notes_payload),
         # Per-candidate metric fields NULL at parent (spec §3.2.3):
         "sharpe_ratio": None,
         "max_drawdown": None,
@@ -1143,18 +1861,27 @@ def _finalize_batch_registry(
         "returns_per_bar_path": None,
         "returns_per_bar_sha256": None,
         "T_obs": None,
-        "batch_id": parent_run_id,  # parent's batch_id = its own run_id (cohort grouping key)
+        # batch_id = parent_run_id per spec §3.2.3 line 117 EXPLICIT LOCK.
+        # PFR R1 PUSHBACK (Advisor HIGH-5): plan follows spec verbatim; if downstream
+        # Tier 6 queries are confused by parent.batch_id ≠ children.batch_id, that is a
+        # spec-level discussion at separate Charlie register, NOT a Phase 2 plan fix.
+        "batch_id": parent_run_id,
     }
-    with get_connection(db_path) as conn:
-        create_table(conn)  # BLOCKING-3: ensure runs table exists before insert
-        insert_run(conn, parent_row)
+    # M3 PFR R1 fix: explicit try/finally conn.close() pattern.
+    conn = get_connection(db_path)
+    try:
+        with conn:
+            create_table(conn)  # BLOCKING-3: ensure runs table exists before insert
+            insert_run(conn, parent_row)
+    finally:
+        conn.close()
 ```
 
-- [ ] **Step 10.5: Edit `_evaluate_one_candidate` — signature + LC-b threading + moments merge**
+- [ ] **Step 10.5: Edit `_evaluate_one_candidate` — signature + LC-b threading + moments merge + registry-query for path/SHA (v2 per CB5+CB6)**
 
 Edit `scripts/run_phase2c_evaluation_gate.py` at function definition starting line 480.
 
-**Signature change (lines 480-489):** add 2 NEW kwargs at end (default None preserves backward-compat for all legacy callers).
+**Signature change (lines 480-489; v2 expanded):** add 3 NEW kwargs at end (default None preserves backward-compat for all legacy callers). The NEW `db_path` kwarg enables hermetic test isolation AND lets the producer query the same registry the engine wrote to (CB6 single-source SHA lookup).
 
 ```python
 def _evaluate_one_candidate(
@@ -1169,6 +1896,9 @@ def _evaluate_one_candidate(
     # B-C-narrow Phase 2 LC-b kwargs (default None preserves backward-compat):
     artifact_dir_root: Path | None = None,
     parent_run_id_override: str | None = None,
+    # B-C-narrow Phase 2 v2 per CB6: db_path threading for registry-query single-source SHA
+    # (None → engine + producer both use DEFAULT_DB_PATH; tests pass tmp_path for isolation).
+    db_path: Path | None = None,
 ) -> dict[str, Any]:
 ```
 
@@ -1191,7 +1921,7 @@ def _evaluate_one_candidate(
         child_run_id_override = None
 ```
 
-2. Modify the `run_regime_holdout(...)` call at lines 512-519. Add 4 LC-b kwargs (passing None when not active is safe per Phase 0 single-gate `lcb_active = artifact_dir is not None`):
+2. Modify the `run_regime_holdout(...)` call at lines 512-519. Add 4 LC-b kwargs + thread `db_path` (passing None when not active is safe per Phase 0 single-gate `lcb_active = artifact_dir is not None`):
 
 ```python
         holdout_result = run_regime_holdout(
@@ -1201,6 +1931,7 @@ def _evaluate_one_candidate(
             regime_key=regime_key,
             execution_config_path=execution_config_path,
             env_config=env_config_override,
+            db_path=db_path,  # CB6: thread to engine so producer's get_run uses same DB
             # B-C-narrow Phase 2 LC-b 4 kwargs (None when artifact_dir_root is None;
             # engine's single-gate lcb_active = artifact_dir is not None → no LC-b path):
             run_id_override=child_run_id_override,
@@ -1210,10 +1941,11 @@ def _evaluate_one_candidate(
         )
 ```
 
-3. Add moments compute + B-C-narrow field merge AFTER `summary = _per_candidate_summary(...)` block at lines 538-548, BEFORE `candidate_dir = output_dir / candidate["hypothesis_hash"]` at line 550:
+3. Add moments compute + registry-derived path+SHA + B-C-narrow field merge AFTER `summary = _per_candidate_summary(...)` block at lines 538-548, BEFORE `candidate_dir = output_dir / candidate["hypothesis_hash"]` at line 550:
 
 ```python
-    # B-C-narrow Phase 2: compute γ3/γ4/T_obs from equity_curve + merge into summary.
+    # B-C-narrow Phase 2 (v2 per CB5+CB6): compute γ3/γ4/T_obs from equity_curve
+    # + query engine-written child registry row for path+SHA (single-source).
     # Only on LC-b path AND when holdout_result populated (lifecycle != 'holdout_error');
     # legacy + error paths skip the merge to preserve backward-compat schema.
     if lcb_active and holdout_result is not None:
@@ -1222,20 +1954,48 @@ def _evaluate_one_candidate(
         summary["gamma3"] = moments.get("gamma3")
         summary["gamma4"] = moments.get("gamma4")
         summary["T_obs"] = moments.get("T_obs")
-        # Derive parquet path + SHA from engine's atomic write (engine wrote
-        # candidate_artifact_dir / "returns_per_bar.parquet" inside run_regime_holdout
-        # per Phase 0 spec §3.1.2). Path is relative to output_dir for portability.
-        rpb_absolute = candidate_artifact_dir / "returns_per_bar.parquet"
-        if not rpb_absolute.exists():
+
+        # CB5 + CB6 (PFR R1 v2): producer reads returns_per_bar_path + returns_per_bar_sha256
+        # from the engine-written child registry row (single source of truth). The engine's
+        # atomic write at engine.py:526-657 stamps:
+        #   - returns_per_bar_path = "returns_per_bar.parquet" (bare filename per engine.py:526)
+        #   - returns_per_bar_sha256 = SHA256 of just-written parquet (engine.py:637-645)
+        # into the child registry row via LineageContext (engine.py:1308-1309). Producer
+        # COPIES these values verbatim — NO recomputation. This eliminates the divergence
+        # surface where producer-recomputed SHA could differ from engine-stamped SHA on any
+        # filesystem race. Same column NAME, same VALUE everywhere (registry / JSON / CSV).
+        child_run_id = child_run_id_override
+        with get_connection(db_path) as conn:
+            child_row = get_run(conn, child_run_id)
+        if child_row is None:
             raise RuntimeError(
-                f"B-C-narrow merge: engine did not write {rpb_absolute} despite LC-b path. "
-                f"Possible Phase 0 SEAL regression. Inspect run_regime_holdout."
+                f"B-C-narrow CB5+CB6: child registry row missing for "
+                f"run_id={child_run_id!r} after run_regime_holdout returned. "
+                f"Engine should have written it inside run_regime_holdout per "
+                f"Phase 0 SEAL chain. Possible Phase 0 SEAL regression OR "
+                f"db_path mismatch between producer's query and engine's write. "
+                f"Verify db_path={db_path!r} matches engine's internal default."
             )
-        summary["returns_per_bar_path"] = str(rpb_absolute.relative_to(output_dir))
-        summary["returns_per_bar_sha256"] = _compute_sha256_file(rpb_absolute)
+        # CB5: bare filename (NOT subdir/filename); resolution context is per-candidate JSON
+        # location (the per-candidate directory at output_dir / hypothesis_hash).
+        summary["returns_per_bar_path"] = child_row.get("returns_per_bar_path")
+        summary["returns_per_bar_sha256"] = child_row.get("returns_per_bar_sha256")
+        if summary["returns_per_bar_path"] != "returns_per_bar.parquet":
+            raise RuntimeError(
+                f"B-C-narrow CB5: engine-stamped returns_per_bar_path is not the bare "
+                f"filename 'returns_per_bar.parquet'; got "
+                f"{summary['returns_per_bar_path']!r}. Possible engine "
+                f"`write_per_bar_artifact` regression at engine.py:526."
+            )
+        if summary["returns_per_bar_sha256"] is None or len(summary["returns_per_bar_sha256"]) != 64:
+            raise RuntimeError(
+                f"B-C-narrow CB6: engine-stamped returns_per_bar_sha256 invalid "
+                f"({summary['returns_per_bar_sha256']!r}). Possible engine "
+                f"`write_per_bar_artifact` SHA computation regression at engine.py:637-645."
+            )
 ```
 
-The remainder of `_evaluate_one_candidate` (the inline JSON write at lines 550-573) is **NOT changed** — the per-candidate JSON `holdout_summary.json` write at lines 552-556 now naturally includes the merged B-C-narrow fields because `summary` was extended.
+The remainder of `_evaluate_one_candidate` (the inline JSON write at lines 550-573) is **NOT changed** — the per-candidate JSON `holdout_summary.json` write at lines 552-556 now naturally includes the merged B-C-narrow fields because `summary` was extended. Producer no longer imports or calls `_compute_sha256_file` (v1 used it; v2 removed per CB6 single-source discipline).
 
 - [ ] **Step 10.6: Extend `_CSV_FIELDS`**
 
@@ -1317,40 +2077,100 @@ Edit `scripts/run_phase2c_evaluation_gate.py` lines 598-637. The DictWriter `wri
 
 The behavior on legacy callers (where `gamma3` / `gamma4` / `T_obs` / `returns_per_bar_path` / `returns_per_bar_sha256` are absent from `summary` dict): the `.get(..., None)` calls return None → emitted as empty string in CSV (matches existing pattern for `holdout_passed` None handling).
 
-- [ ] **Step 10.8: Wire `_archive_canonical_pre_flight` + `_finalize_batch_registry_preflight_or_raise` + `_finalize_batch_registry` into `main()`**
+- [ ] **Step 10.8: Wire identity guard + PRE-flight + archive + POST-fire into `main()` (v2 per CB1+CB2+CB3 PFR R1 ADOPT — REORDERED)**
 
-Edit `scripts/run_phase2c_evaluation_gate.py` `main()` function (lines 864-1072). 4 wiring points:
+Edit `scripts/run_phase2c_evaluation_gate.py` `main()` function (lines 864-1072). 
 
-**Wiring point 1: pass new args from CLI to local vars (after argparse at line 881).** No code change needed — `args.enable_b_c_narrow_recovery` and `args.force_rerun_existing` are auto-bound by argparse to the dest attributes (`enable_b_c_narrow_recovery` and `force_rerun_existing` per `--enable-b-c-narrow-recovery` / `--force-rerun-existing` standard dash-to-underscore conversion).
+**v2 wiring chain (per CB1 lock — read-only checks before dry-run exit; destructive ops after dry-run exit):**
 
-**Wiring point 2: archive PRE-flight (after `_check_overwrite_protection` at line 929; before `if args.dry_run:` at line 933).** Insert:
+| Wiring | When | Operation | File:line target | Side-effect type |
+|---|---|---|---|---|
+| W0 | After argparse (~line 881) + after lineage guard (~line 903) | Identity guard (`_validate_b_c_narrow_recovery_identity_or_raise`) | Insert AFTER lineage guard + AFTER `--regime-key` check at line 901, BEFORE `_load_corrected_candidates` at line 905 | READ-ONLY (raises ValueError) |
+| W1 | After W0 | Idempotency PRE-check (`_finalize_batch_registry_preflight_or_raise`) | Insert right after W0 | READ-ONLY by default; DELETE only if --force-rerun-existing |
+| W2 | (existing) After `_check_overwrite_protection` at line 929 | `if args.dry_run` exit at line 933-944 | PRESERVED VERBATIM | (existing behavior) |
+| W3 | After `run_dir.mkdir` at line 946 | Archive PRE-flight (`_archive_canonical_pre_flight`) | Insert AFTER `run_dir.mkdir` and BEFORE forward_window_metadata capture at line 954 | DESTRUCTIVE (shutil.move; runs AFTER dry-run exit only) |
+| W4 | (existing) forward_window_metadata capture at lines 954-973 | PRESERVED VERBATIM | (existing behavior) |
+| W5 | (existing) candidate loop at lines 975-991 | Thread `artifact_dir_root` + `parent_run_id_override` + `db_path` kwargs to `_evaluate_one_candidate` | MODIFIED |
+| W6 | (existing) After hashlib computation at lines 1016-1051; BEFORE aggregate JSON write at line 1053 | `_finalize_batch_registry` POST-fire (parent batch_summary row) | Insert between line 1051 and 1053 | WRITE (insert_run) |
+
+---
+
+**W0 + W1 — read-only PRE-flight chain (BEFORE dry-run exit per CB1):**
+
+Insert after the lineage guard at line 903 + after the existing `--regime-key` validation at line 901, BEFORE `_load_corrected_candidates(args.source_batch_id)` at line 905:
 
 ```python
-    # B-C-narrow Phase 2 PRE-flight chain (gated by --enable-b-c-narrow-recovery):
-    # (1) Archive canonical phase4_forward_2026_15bps_v1/ to archive/...d0b8101/ via shutil.move.
-    # (2) Idempotency guard: refuse if parent_run_id exists OR DELETE if --force-rerun-existing.
+    head_sha = enforce_corrected_engine_lineage()
+
+    # B-C-narrow Phase 2 (v2 PFR R1 ADOPT) — read-only PRE-flight chain
+    # gated by --enable-b-c-narrow-recovery. Per CB1 lock: identity guard +
+    # idempotency PRE-check fire BEFORE the existing dry-run exit (so
+    # `--dry-run --enable-b-c-narrow-recovery` validates intent without
+    # mutating state). Archive (destructive) fires AFTER dry-run exit (W3).
     if args.enable_b_c_narrow_recovery:
-        canonical_phase4_path = Path(args.output_root).resolve() / "phase4_forward_2026_15bps_v1"
-        archive_root = Path(args.output_root).resolve() / "archive"
-        # archive_basename uses the original artifact's current_git_sha "d0b8101"
-        # (spec §2 Q3 lock). DO NOT recompute from current HEAD.
-        _archive_canonical_pre_flight(
-            canonical_path=canonical_phase4_path,
-            archive_root=archive_root,
-            archive_basename="phase4_forward_2026_15bps_v1_d0b8101",
+        # W0 — CB2: identity guard validates 4 cohort identity fields
+        # (run_id, regime_key, execution_config, source_batch_id) against
+        # BCNARROW_* constants. Raises ValueError BEFORE any mutation if any
+        # field mismatches. Operator misuse caught fast.
+        # NOTE: --run-id arg is needed for the identity check; _resolve_run_id
+        # is the lookup helper. If --run-id absent, _resolve_run_id mints a
+        # UUID4 (scripts:840-841) — identity guard catches that as wrong run_id.
+        bcnarrow_proposed_run_id = _resolve_run_id(args)
+        _validate_b_c_narrow_recovery_identity_or_raise(
+            run_id=bcnarrow_proposed_run_id,
+            regime_key=args.regime_key,
+            execution_config_path=args.execution_config,
+            source_batch_id=args.source_batch_id,
         )
-        # parent_run_id for B-C-narrow recovery is the --run-id arg verbatim (the
-        # operator passes --run-id phase4_forward_2026_15bps_v1_b_c_narrow per Phase 3 T13).
-        # db_path=None → get_connection's default; co-locates parent with engine-written
-        # children (engine uses the same default inside _write_to_registry).
+        # W1 — R9 PRE-flight idempotency check (read-only by default; DELETE
+        # children + parent only when --force-rerun-existing is set).
+        # db_path=None → DEFAULT_DB_PATH (= backtest/experiments.db); engine's
+        # _write_to_registry also defaults to this path → co-location.
         _finalize_batch_registry_preflight_or_raise(
-            parent_run_id=run_id,
+            parent_run_id=bcnarrow_proposed_run_id,
             force_rerun_existing=args.force_rerun_existing,
             db_path=None,
         )
+
+    all_candidates = _load_corrected_candidates(args.source_batch_id)
 ```
 
-**Wiring point 3: thread `artifact_dir_root` + `parent_run_id_override` to `_evaluate_one_candidate` (loop at lines 975-991).** Modify the call site:
+---
+
+**W2 — existing dry-run exit (PRESERVED VERBATIM):**
+
+No code change. The existing `if args.dry_run:` block at scripts:933-944 runs unchanged. With CB1 reorder, W0+W1 already ran (validating intent) but W3 (archive) has NOT yet run, so dry-run exits with NO state mutation.
+
+---
+
+**W3 — archive PRE-flight (DESTRUCTIVE; AFTER dry-run exit per CB1):**
+
+Insert AFTER `run_dir.mkdir(parents=True, exist_ok=True)` at line 946 and BEFORE the existing `forward_window_metadata` capture at line 954:
+
+```python
+    run_dir.mkdir(parents=True, exist_ok=True)
+    run_started_utc = _utc_now_iso()
+
+    # B-C-narrow Phase 2 (v2 per CB1 PFR R1 ADOPT) — DESTRUCTIVE archive.
+    # Runs AFTER dry-run exit (W2 preserved); operator confirmed by reaching here.
+    # Per CB1: archive is LAST step of PRE-flight chain so that any earlier
+    # read-only refusal (identity guard W0, idempotency check W1, dry-run W2)
+    # leaves the canonical artifact in place.
+    if args.enable_b_c_narrow_recovery:
+        canonical_phase4_path = Path(args.output_root).resolve() / "phase4_forward_2026_15bps_v1"
+        archive_root = Path(args.output_root).resolve() / "archive"
+        _archive_canonical_pre_flight(
+            canonical_path=canonical_phase4_path,
+            archive_root=archive_root,
+            archive_basename=BCNARROW_ARCHIVE_BASENAME,  # M5 PFR R1: named constant
+        )
+```
+
+---
+
+**W5 — modified candidate loop (thread artifact_dir_root + parent_run_id_override + db_path):**
+
+Modify the existing loop at scripts:975-991:
 
 ```python
     for i, candidate in enumerate(selected, start=1):
@@ -1370,26 +2190,38 @@ Edit `scripts/run_phase2c_evaluation_gate.py` `main()` function (lines 864-1072)
             # B-C-narrow Phase 2 LC-b kwargs (None on legacy callers preserves backward-compat):
             artifact_dir_root=(run_dir if args.enable_b_c_narrow_recovery else None),
             parent_run_id_override=(run_id if args.enable_b_c_narrow_recovery else None),
+            # CB6 v2 PFR R1: db_path threading for registry-query single-source SHA.
+            # None → producer + engine both use DEFAULT_DB_PATH (co-located).
+            db_path=None,
         )
         summaries.append(s)
 ```
 
-**Wiring point 4: `_finalize_batch_registry` POST-fire (after CSV write at line 996; before aggregate JSON write at line 1053).** Insert:
+---
+
+**W6 — POST-fire parent batch_summary row (CB3 v2 — DERIVED metadata, NOT hardcoded):**
+
+Insert AFTER scripts:1051 (`aggregate["forward_window_metadata"] = ...`) and BEFORE scripts:1053 (`_write_aggregate_summary` call):
 
 ```python
-    # B-C-narrow Phase 2 POST-fire chain (gated by --enable-b-c-narrow-recovery):
-    # Write the parent batch_summary row. Children (39 rows) already written by engine
-    # per-candidate inside run_regime_holdout's _write_to_registry call (Phase 0).
+    # B-C-narrow Phase 2 POST-fire (v2 PFR R1 per CB3 + CB4):
+    # Write parent batch_summary row. Children (one per evaluated candidate)
+    # already written by engine inside run_regime_holdout's _write_to_registry
+    # call (Phase 0 sequencing per spec §3.1.2). This block writes ONLY the parent.
     if args.enable_b_c_narrow_recovery:
-        # Derive cohort metadata from forward_window_metadata + execution_config probe.
-        # parquet_data_sha256 comes from forward_window_metadata (captured at fire-time;
-        # exists for forward_2026 regime per scripts:957).
         if forward_window_metadata is None:
+            # Should be unreachable post-CB2 identity guard (regime_key locked to
+            # forward_2026 → forward_window_metadata always captured). Defensive
+            # raise per HARD CONSTRAINT — never silently fall through.
             raise RuntimeError(
-                "B-C-narrow finalize: forward_window_metadata missing. "
-                "B-C-narrow recovery requires --regime-key evaluation_regimes.forward_2026 "
-                "(per spec §1 cohort_a scope)."
+                "B-C-narrow finalize POST-fire: forward_window_metadata missing "
+                "despite passing identity guard. Possible regression in "
+                "forward_window_metadata capture at scripts:954-973."
             )
+        # CB3 PFR R1 ADOPT: derive fee_model from cost_model.fee_model_label
+        # (matches children's fee_model via engine.py:1278). NO hardcoded "phase4_15bps_v1".
+        _exec_cfg = load_execution_config(args.execution_config)
+        _cost_model = ConstantSlippage.from_config(_exec_cfg)
         cohort_metadata = {
             "execution_config_path": _exec_cfg_path_relative,
             "execution_config_sha256": hashlib.sha256(_exec_cfg_bytes).hexdigest(),
@@ -1401,38 +2233,46 @@ Edit `scripts/run_phase2c_evaluation_gate.py` `main()` function (lines 864-1072)
             "cost_anchor_id": "phase4_forward_15bps_v1",
             "current_git_sha": head_sha,
             "effective_start": forward_window_metadata["forward_window_start_utc"],
-            "initial_capital": 100000.0,  # canonical default per BacktestResult.initial_capital
-            "fee_model": "phase4_15bps_v1",
+            # CB3 PFR R1 ADOPT: initial_capital = engine cash default (engine.py:2324 = 10_000.0).
+            # Producer's _evaluate_one_candidate does NOT pass cash override; engine uses default
+            # → children rows have initial_capital = 10_000.0. Parent MUST match for consistency.
+            # (PUSHBACK candidate: could be None/NULL at parent since cohort summary != per-strategy
+            # backtest; locked to 10_000.0 for strict match per Codex BLOCKING-3 fix.)
+            "initial_capital": 10_000.0,
+            # CB3 PFR R1 ADOPT: derive from cost_model.fee_model_label (slippage.py:94-100).
+            # For execution_phase4_15bps.yaml → total_bps = 15 → "effective_15bps_per_side".
+            # NO hardcoded literal.
+            "fee_model": _cost_model.fee_model_label,
         }
         _finalize_batch_registry(
             parent_run_id=run_id,
             cohort_metadata=cohort_metadata,
-            db_path=None,  # get_connection default; co-locates with engine-written children
+            db_path=None,  # DEFAULT_DB_PATH; co-located with engine-written children
         )
         logger.info(
             "[B-C-narrow] _finalize_batch_registry: parent batch_summary row written at "
-            "run_id=%s with cohort metadata (%d fields)",
-            run_id, len(cohort_metadata),
+            "run_id=%s (engine_commit=%s, fee_model=%s, cohort_metadata fields=%d)",
+            run_id, CORRECTED_WF_ENGINE_COMMIT, _cost_model.fee_model_label, len(cohort_metadata),
         )
 ```
 
-**IMPORTANT subtle point:** `_exec_cfg_path_relative`, `_exec_cfg_bytes`, and `hashlib` are computed at scripts:1016-1034 (currently AFTER `_write_aggregate_csv` and AFTER `_aggregate_summary_dict`). The POST-fire `_finalize_batch_registry` block must run AFTER that computation. Place the POST-fire block BETWEEN scripts:1034 (last hashlib computation) and scripts:1053 (aggregate JSON write), or equivalently AFTER scripts:1051 (the `aggregate["forward_window_metadata"] = ...` line). Use that placement.
+---
 
-**Re-validate the placement:**
+**Re-validate placement of W6:**
 
 ```bash
-grep -n "_exec_cfg_bytes\|aggregate\['forward_window_metadata'\]\|_write_aggregate_summary" scripts/run_phase2c_evaluation_gate.py | head -10
+grep -n "_exec_cfg_bytes\|aggregate\[\"forward_window_metadata\"\]\|_write_aggregate_summary" scripts/run_phase2c_evaluation_gate.py | head -10
 ```
 
-Expected: `_exec_cfg_bytes` defined around line 1023; `aggregate["forward_window_metadata"]` around 1051; `_write_aggregate_summary` call around 1053. Place `_finalize_batch_registry` POST-fire block between lines 1051 and 1053.
+Expected: `_exec_cfg_bytes` defined around line 1023; `aggregate["forward_window_metadata"]` around 1051; `_write_aggregate_summary` call around 1053. Place W6 block between lines 1051 and 1053.
 
-- [ ] **Step 10.9: Run all 14 Phase 2 tests — must PASS (GREEN)**
+- [ ] **Step 10.9: Run all 22 Phase 2 tests — must PASS (GREEN)**
 
 ```bash
 python -m pytest tests/test_phase2c_evaluation_gate_runner.py::TestBCNarrowPhase2ProducerEdits -v
 ```
 
-Expected: 14/14 PASS.
+Expected: 22/22 PASS.
 
 If any test FAILS, inspect — likely culprits:
 - import error in producer (Step 10.1 missed an import)
@@ -1446,7 +2286,7 @@ If any test FAILS, inspect — likely culprits:
 python -m pytest -q
 ```
 
-Expected: zero regression vs pre-Phase-2 baseline (HEAD `b10ffb2`: 2328 pass / 0 failed / 2 xfailed per Phase 0 SEAL note) + 14 net new passing Phase 2 tests. Total expected: 2342 pass / 0 failed / 2 xfailed (binding contract is zero regression + 14 new passing; the 2342 integer is informational).
+Expected: zero regression vs pre-Phase-2 baseline (HEAD `b10ffb2`: 2328 pass / 0 failed / 2 xfailed per Phase 0 SEAL note) + 22 net new passing Phase 2 tests. Total expected: 2350 pass / 0 failed / 2 xfailed (binding contract is zero regression + 22 new passing; the 2350 integer is informational).
 
 The T1.4 `test_4_tuple_matches_locked_values` test (at `tests/test_t1_4_backward_compat.py:490`) may FAIL at this step because the AST classifier now sees additional test/scripts-side `_write_to_registry` callers (if any added). Task 11 handles T1.4 baseline maintenance — if T1.4 fails at Step 10.10, proceed to Step 10.11 (commit Task 10) WITHOUT fixing T1.4 here. Task 11 commit closes the T1.4 baseline gap atomically.
 
@@ -1470,7 +2310,7 @@ Per Plan v3-Phase2 Task 10 + spec §3.2 + 4 Codex BLOCKING-carry fixes from Phas
 - _write_aggregate_csv: emits 5 new fields with backward-compat None→empty-string pattern
 - main(): wires archive PRE-flight + finalize PRE-flight guard + LC-b kwargs threading + finalize POST-fire (all gated by --enable-b-c-narrow-recovery for backward-compat)
 
-Tests: 14/14 Phase 2 tests GREEN. T1.4 baseline maintenance pending Task 11. Full suite zero regression except for expected T1.4 4-tuple drift (Task 11 closes)."
+Tests: 22/22 Phase 2 tests GREEN. T1.4 baseline maintenance pending Task 11. Full suite zero regression except for expected T1.4 4-tuple drift (Task 11 closes)."
 ```
 
 ---
@@ -1566,7 +2406,7 @@ Expected: all tests in the class PASS.
 python -m pytest -q
 ```
 
-Expected: 2342 pass / 0 failed / 2 xfailed (14 net new passing vs pre-Phase-2 baseline). Zero regression.
+Expected: 2350 pass / 0 failed / 2 xfailed (22 net new passing vs pre-Phase-2 baseline). Zero regression.
 
 - [ ] **Step 11.6: Commit T1.4 baseline maintenance (skip if no drift)**
 
@@ -1604,9 +2444,9 @@ python -m pytest -q
 ```
 
 Expected:
-- 14/14 Phase 2 tests PASS
+- 22/22 Phase 2 tests PASS
 - T1.4 B1 class PASSES (4-tuple verified)
-- Full suite: 2342 pass / 0 failed / 2 xfailed (zero regression vs `b10ffb2` baseline + 14 net new passing)
+- Full suite: 2350 pass / 0 failed / 2 xfailed (zero regression vs `b10ffb2` baseline + 22 net new passing)
 
 - [ ] **Step 12.2: Write Phase 2 ratify packet artifact**
 
@@ -1634,9 +2474,9 @@ Create `docs/superpowers/phase-2-impl-results/phase-2-ratify-summary.md`:
 
 | Test class | Methods | PASS | FAIL | Status |
 |---|---|---|---|---|
-| TestBCNarrowPhase2ProducerEdits | 14 | 14 | 0 | GREEN |
+| TestBCNarrowPhase2ProducerEdits | 22 | 22 | 0 | GREEN |
 | TestT1_4_B1_SignatureBackwardCompat | (existing) | (all) | 0 | GREEN |
-| Full suite (b10ffb2 baseline + 14 new) | 2342 | 2342 | 0 (+ 2 xfailed) | zero regression |
+| Full suite (b10ffb2 baseline + 22 new) | 2350 | 2350 | 0 (+ 2 xfailed) | zero regression |
 
 ## 4 BLOCKING-carry fixes verified
 
@@ -1671,8 +2511,8 @@ git commit -m "evidence(b-c-narrow/phase-2): Phase 2 ratify packet (T12)
 
 Per Plan v3-Phase2 Task 12.
 
-Phase 2 deliverables: 14/14 TestBCNarrowPhase2ProducerEdits PASS; full suite
-zero regression vs b10ffb2 baseline + 14 net new passing. T1.4 baseline
+Phase 2 deliverables: 22/22 TestBCNarrowPhase2ProducerEdits PASS; full suite
+zero regression vs b10ffb2 baseline + 22 net new passing. T1.4 baseline
 maintained per BLOCKING-6 AST classifier output.
 
 4 BLOCKING-carry fixes from Phase 0 plan v2 PFR R2 all verified:
@@ -1689,9 +2529,9 @@ is a SEPARATE register-event #N+3 per anti-pre-emption discipline."
 - [ ] **Step 12.4: STOP HERE — Surface to Charlie register-event #N+2**
 
 **STOP.** Surface to Charlie:
-- 14 Phase 2 producer-edit tests GREEN
+- 22 Phase 2 producer-edit tests GREEN
 - T1.4 B1 4-tuple unchanged (or updated per AST classifier; whichever applies)
-- Full test suite zero regression vs pre-Phase-2 baseline + 14 net new passing
+- Full test suite zero regression vs pre-Phase-2 baseline + 22 net new passing
 - Producer modifications confined to `scripts/run_phase2c_evaluation_gate.py` (7 modify-zones + 3 NEW functions) + 1 test file extension
 - All 4 BLOCKING-carry items from Phase 0 plan v2 PFR R2 verified fixed (BLOCKING-1 + BLOCKING-3 + BLOCKING-4 + BLOCKING-6)
 
