@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` to implement this sub-plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. Tasks 14 + 14b each contain explicit STOP HERE blocks for Charlie register-events #N+19a (T13 fire authorization) + #N+19b (T14b canonical-path relocation authorization) before operational execution — the implementer subagent MUST NOT bypass these without an explicit Charlie register fire.
 
-**Sub-plan scope:** Phase 3 of the B-C-narrow data-recovery cycle ONLY — operational fire of the 39-candidate cohort_a re-run against the forward_2026 window using the Phase 2 producer wiring at HEAD `0a54f65`. Three operational steps consumed from spec §5: T13 producer fire (producer-W3 archive + LC-b candidate loop + W4 finalize parent batch_summary), T14 V4 reproducibility gate (G4-G7 + ε=1e-6 per-candidate match), T14b canonical-path relocation (sibling → canonical mv after V4 PASS). NO new source code edits. NO engine code edits. NO producer code edits. NO spec amendments. The plan adds ONE new test file (`tests/test_b_c_narrow_v4_reproducibility.py`; 7 test methods inlined per BLOCKING-5 carry from Phase 2 plan v3-Phase2 line 3651) + ONE new fixture (`tests/fixtures/b_c_narrow_archived_baseline.json`; created POST-T13 fire BEFORE T14 V4 gate, see Step 14.3) + ONE new evidence artifact (`docs/superpowers/phase-3-impl-results/phase-3-ratify-summary.md`).
+**Sub-plan scope:** Phase 3 of the B-C-narrow data-recovery cycle ONLY — operational fire of the 39-candidate cohort_a re-run against the forward_2026 window using the Phase 2 producer wiring at HEAD `0a54f65`. Three operational steps consumed from spec §5: T13 producer fire (producer-W3 archive + LC-b candidate loop + W4 finalize parent batch_summary), T14 V4 reproducibility gate (G4-G7 + ε=1e-6 per-candidate match), T14b canonical-path relocation (sibling → canonical mv after V4 PASS). NO new source code edits. NO engine code edits. NO producer code edits. NO spec amendments. The plan adds ONE new test file (`tests/test_b_c_narrow_v4_reproducibility.py`; 12 test methods inlined per BLOCKING-5 carry from Phase 2 plan v3-Phase2 line 3651 + PFR R1 v2 + R2 v3 expansions) + ONE new fixture (`tests/fixtures/b_c_narrow_archived_baseline.json`; created POST-T13 fire BEFORE T14 V4 gate, see Step 14.3) + ONE new evidence artifact (`docs/superpowers/phase-3-impl-results/phase-3-ratify-summary.md`).
 
 **Sub-plan motivation:** Phase 0 (engine extension; sealed at `f112599`) added `RegimeHoldoutResult.equity_curve` + 4 LC-b kwargs + atomic write-then-registry sequencing inside `run_regime_holdout`. Phase 1 (pre-impl gates; sealed at `b10ffb2`) returned all 4 BLOCKING gates PASS (G1 engine-diff audit + G2 DSL backward-compat + G3 raw_payloads inventory + G3.5 engine smoke pre-satisfied). Phase 2 (producer TDD; impl sealed at `4b7a4c6`; T10 producer code polish Bundle (a) at `3a1226b`; ratify packet polish Bundle (b) at `0a54f65`) wired the producer behind `--enable-b-c-narrow-recovery` with 4 new helpers (W0 identity guard, W1a/W1b finalize preflight, W3 archive, W4 finalize POST-fire) + 6 module-level `BCNARROW_*` constants. Phase 3 executes the wiring against the 39 cohort_a candidates and verifies V4 reproducibility vs the archived original — the only step that produces new data artifacts in the entire cycle.
 
@@ -47,6 +47,42 @@ Convergence summary:
 
 Total v2 amendments: 17 ADOPT inline + 3 PUSHBACK adjudications.
 Test count v1 → v2: 7 → 12 (+ 5 NEW: 4 all-39 per CB3 + 1 cross-FS per AM1; AH1 absorbed into CB3 drift-test rewrite).
+
+---
+
+## PFR R2 ADOPT findings applied (Plan v3 amendments)
+
+Per Charlie register #N+19' (Path 1: full AMEND + PFR R3) 2026-05-28. PFR R2 fired as B2 2-leg dispatch on v2 (commit `21566ef`); Codex returned NOT-APPROVE (2 BLOCKING + 1 HIGH + 2 MEDIUM + 2 LOW); Advisor returned APPROVE-WITH-FINDINGS (0 BLOCKING + 2 HIGH + 4 MEDIUM + 3 LOW).
+
+Convergence summary:
+- CB2-R2-B1 CONVERGENT at different angles: Codex (pytest module-load skip needs `allow_module_level=True` else collection error per `_pytest/python.py:543-550`) + Advisor (G6 registry-always-present means G6 FAILs not SKIPs pre-fire → Step 13.4 commits known-FAILING test → violates CLAUDE.md HARD CONSTRAINT). Combined fix: per-test fixture refactor + per-test SKIP gate at G6 body + Step 13.3/13.5 expected-output update.
+- G4-R2-B2 Codex-only load-bearing spec-vs-engine: engine writes full equity_curve including leading NaN row → `len(df) == T_obs + 1`, not `len(df) == T_obs`. Verified empirically (engine.py:530-545 + existing test_t_obs_matches_finite_row_count at test_t1_1_artifact_writer.py:546-560).
+- CB3-R2-H1 Codex-only: G4 all-39 missing spec §4.3 subchecks (c) non-degenerate + (d) UTC-aware timestamp.
+- H2-Advisor Advisor-only: drift-stop test docstring overstates scope (inlined assertion not production code path).
+- 5 MEDIUM (CH4-R2-M1 path equality + CM5-R2-M2 STOP packet update + G6-Cohort-R2-M3 cohort field expansion + G6-BatchID-R2-M4 batch_id assertion + AM1-CrossFS-R2-M5 substring tightening).
+- 5 LOW (Stale-7-R2-L1 + G6-Docstring-R2-L2 + G6-Batched-R2-L3 + Module-Side-L4 + 2360-Stale-L5).
+- 3 implementer sub-decisions adjudicated: Sub-1 ACCEPT preserve LIKE / Sub-2 ACCEPT-WITH-EXTENSION via M3+M4 / Sub-3 REJECT via CB2-R2-B1 supersession.
+- Reverse-direction healthy: Advisor caught operationally-critical RED commit angle that Codex missed.
+
+| # | Severity | Origin | Fix in v3 |
+|---|---|---|---|
+| CB2-R2-B1 | BLOCKING | Codex+Advisor CONVERGENT | Removed module-load `_resolve_active_run_dir()` invocation + `ACTIVE_RUN_DIR` module-level constant. Replaced with `active_run_dir` per-test fixture (no `allow_module_level=True` wart). Each fire-state test takes `active_run_dir` parameter. G6 body adds per-test SKIP gate checking registry parent row existence (G6 SKIPs not FAILs pre-fire). Updated Step 13.3 + Step 13.5 expected output to reflect SKIP-based semantics (10 SKIPPED + 2 PASSED = 12 collected; 0 FAILED; 0 ERRORS). Satisfies CLAUDE.md HARD CONSTRAINT "NEVER commit code that doesn't pass existing tests". |
+| G4-R2-B2 | BLOCKING | Codex | Engine VERIFIED: engine.py:530-545 writes full `equity_curve` (length includes leading bar) as parquet with `return` column having first row NaN. T_obs = `count(finite(returns_array))` excludes the leading NaN. So `len(df) == T_obs + 1` typically. Existing `test_t_obs_matches_finite_row_count` (test_t1_1_artifact_writer.py:546-560) confirms by asserting `result["T_obs"] == count(finite(parquet.return))`, NOT `len(parquet) == T_obs`. Fix Option C (most defensive): assert `len(df.dropna(subset=['return'])) == T_obs` at both N=2 G4 + all-39 G4 sites. Documented at fix sites. |
+| CB3-R2-H1 | HIGH | Codex | Extended G4 all-39 to include all 4 subchecks per spec §4.3: (a) finite-row count = T_obs per G4-R2-B2; (b) SHA256 summary + computed + registry tri-way; (c) parquet not all-NaN AND not all-zero (degenerate); (d) timestamp column UTC-aware. Docstring updated to claim full 4-subcheck coverage at all-39 layer. |
+| H2-Advisor | HIGH | Advisor | Option A docstring polish (substantive coverage already provided by other V4 tests; drift-stop value is in error-message-format contract): reframed docstring to "Contract test for drift-stop error message format + meta-test that inlined assertion pattern raises AssertionError when given 10ε deviation. Does NOT exercise production ε-comparison machinery — that's covered by other V4 tests." |
+| CH4-R2-M1 | MEDIUM | Codex | Tightened CH4 (a) child registry `returns_per_bar_path` from substring `in` to equality with expected basename `returns_per_bar.parquet`. |
+| CM5-R2-M2 | MEDIUM | Codex | Updated Step 13.5 STOP packet expected-state wording from stale "5 FAILED + 2 PASSED" to reflect CB2-R2-B1 SKIP-based semantics: `10 SKIPPED + 2 PASSED + 0 FAILED + 0 ERRORS = 12 collected`. Verified count math. |
+| G6-Cohort-R2-M3 | MEDIUM | Advisor | Extended G6 parent cohort metadata coverage from 5 fields to all 15 cohort-level fields per spec §3.2.3 line 117 — `git_commit, current_git_sha, engine_commit, execution_config_path, execution_config_sha256, parquet_data_sha256, regime_key, cost_anchor_id, batch_id, created_at_utc, effective_start, initial_capital, fee_model, strategy_name, strategy_source`. Tolerates column-vs-`notes`-JSON-key existence per Phase 2 CB4 lock by checking key presence before asserting non-null. |
+| G6-BatchID-R2-M4 | MEDIUM | Advisor | Added tightening assertion: `parent_row["batch_id"] == BCNARROW_PARENT_RUN_ID` per spec §3.2.3 (in addition to non-null per M3). |
+| AM1-CrossFS-R2-M5 | MEDIUM | Codex | Tightened cross-FS test mock from substring `"archive" in str(self)` to path-endswith / equality check against `archive_root` Path object to reduce brittleness. |
+| Stale-7-R2-L1 | LOW | Codex | Updated plan:5 + plan:224 "7 test methods" → "12 test methods" to match v2 expansion. |
+| G6-Docstring-R2-L2 | LOW | Advisor | Updated G6 docstring + removed empty placeholder loop at end of G6 body. Docstring now matches implementation post-Sub-2 adjudication: cohort metadata (15 fields per M3) at parent + per-candidate fields at children; NULL-at-children direction structurally unimplementable. |
+| G6-Batched-R2-L3 | LOW | Advisor | Style note only — kept per-field loop (clearer error messages); documented choice inline. |
+| Module-Side-L4 | LOW | Codex | RESOLVED by CB2-R2-B1 refactor (no module-import-time `pytest.skip` invocation; per-test fixture pattern). Noted as superseded. |
+| 2360-Stale-L5 | LOW | Codex | Verified current HEAD test count at 2362. Updated all "2372 passed" → "2374 passed" sites (plan:1490 + plan:1821 + plan:1850) with note: 2362 baseline + 12 new V4 tests = 2374. |
+
+Total v3 amendments: 14 ADOPT inline + 3 sub-decision adjudications.
+Test count v2 → v3: 12 unchanged (G4 all-39 expansion adds (c) + (d) subchecks within existing `test_g4_all_39_per_bar_parquet_integrity` test body, not new test method; H2 docstring polish; G6 docstring polish + cohort field expansion within existing test body; no new test methods).
 
 ---
 
@@ -99,7 +135,7 @@ Test count v1 → v2: 7 → 12 (+ 5 NEW: 4 all-39 per CB3 + 1 cross-FS per AM1; 
 | File | Action | Scope |
 |---|---|---|
 | `docs/superpowers/plans/2026-05-27-b-c-narrow-phase-3-fire-plan.md` | CREATE | this plan |
-| `tests/test_b_c_narrow_v4_reproducibility.py` | CREATE at Step 13.2 | 12 NEW test methods (5 spec §6.4 N=2 fixture + 2 BLOCKING-5 carry G6+G7 + 4 all-39 V4 gate per CB3 PFR R1 ADOPT v2 + 1 cross-FS G7 per AM1 PFR R1 ADOPT v2) |
+| `tests/test_b_c_narrow_v4_reproducibility.py` | CREATE at Step 13.2 | 12 NEW test methods (5 spec §6.4 N=2 fixture + 2 BLOCKING-5 carry G6+G7 + 4 all-39 V4 gate per CB3 PFR R1 ADOPT v2 + 1 cross-FS G7 per AM1 PFR R1 ADOPT v2; per-test `active_run_dir` fixture per CB2-R2-B1 PFR R2 ADOPT v3 supersedes v2 module-load pattern; G4 all-39 4-subcheck expansion per CB3-R2-H1; G6 cohort-field expansion per G6-Cohort-R2-M3) |
 | `tests/fixtures/b_c_narrow_archived_baseline.json` | CREATE at Step 14.3 | N=2 candidates frozen snapshot from archived original (POST-T13 fire) |
 | `docs/superpowers/phase-3-impl-results/phase-3-ratify-summary.md` | CREATE at Step 14c.1 | Phase 3 ratify packet (precondition table + V4 results + G4-G7 per-gate results + verdict + next register-event) |
 
@@ -221,7 +257,7 @@ Expected: prints `Phase 0 SEAL state present: ...` with zero AssertionError. Any
 ### Task 13: Pre-fire — V4+G4-G7 test bodies (TDD RED) + pre-flight precondition checks
 
 **Files:**
-- Create: `tests/test_b_c_narrow_v4_reproducibility.py` (NEW; 7 test methods)
+- Create: `tests/test_b_c_narrow_v4_reproducibility.py` (NEW; 12 test methods per PFR R1 v2 + R2 v3 expansion — Stale-7-R2-L1 PFR R2 ADOPT v3 corrects v1 stale "7")
 - Defer to Step 14.3: `tests/fixtures/b_c_narrow_archived_baseline.json` (captured POST-T13 fire BEFORE T14 V4 gate runs)
 
 **Task discipline:** TDD RED phase only. Tests authored against the contract that the fire-step (Task 14) MUST satisfy. RED expected because the fixture file does not exist yet AND the sibling output dir does not exist yet AND the archive dir does not exist yet AND the registry parent row does not exist yet. GREEN expected at Step 14.5 (after fire + fixture capture + V4 gate run).
@@ -321,22 +357,30 @@ Write the following file content verbatim:
 ```python
 """V4 reproducibility + G4-G7 gate tests for B-C-narrow Phase 3 fire.
 
-Per Plan v3-Phase3 v2 Step 13.2. Tests authored RED before Task 14 fire.
+Per Plan v3-Phase3 v3 Step 13.2. Tests authored RED before Task 14 fire.
 GREEN expected at Step 14.5 after fire + fixture capture + V4 gate run.
 
-Test count: 12 methods (PFR R1 ADOPT v2 expansion):
+Test count: 12 methods (PFR R1 ADOPT v2 + PFR R2 ADOPT v3 expansion):
   - 5 N=2 fixture tests per spec §6.4 (schema-version-bump drift catch)
   - 2 BLOCKING-5 carry from Phase 2 plan v3-Phase2 line 3651 (G6+G7 inline)
-  - 4 all-39 V4 gate tests per CB3 PFR R1 ADOPT v2 (spec §4.2/§4.3 full coverage)
-  - 1 cross-FS G7 test per AM1 PFR R1 ADOPT v2 (st_dev guard coverage)
+  - 4 all-39 V4 gate tests per CB3 PFR R1 ADOPT v2 (spec §4.2/§4.3 full coverage;
+    all-39 G4 extended to all 4 subchecks per CB3-R2-H1 PFR R2 ADOPT v3)
+  - 1 cross-FS G7 test per AM1 PFR R1 ADOPT v2 (st_dev guard coverage;
+    AM1-CrossFS-R2-M5 substring tightening per PFR R2 ADOPT v3)
 
-Path-adaptive design per CB2 PFR R1 ADOPT v2:
+Per-test fixture design per CB2-R2-B1 PFR R2 ADOPT v3
+(supersedes CB2 PFR R1 ADOPT v2 module-load `_resolve_active_run_dir` pattern):
   Tests work in BOTH pre-T14b state (sibling dir populated, canonical empty/absent)
-  AND post-T14b state (sibling gone, canonical populated). Via module-level
-  `_resolve_active_run_dir()` helper, the test suite satisfies CLAUDE.md HARD
+  AND post-T14b state (sibling gone, canonical populated). Via per-test
+  `active_run_dir` pytest fixture + per-test SKIP gate at G6 body checking
+  registry parent row existence, the test suite satisfies CLAUDE.md HARD
   CONSTRAINT 'NEVER commit code that doesn't pass existing tests' across the
-  T14b mv lifecycle. The 2 path-independent contract tests (drift stop-condition
-  + G7 refuse + G7 cross-FS) always pass regardless of disk state.
+  T14b mv lifecycle (10 SKIPPED + 2 PASSED + 0 FAILED + 0 ERRORS pre-fire;
+  12 PASSED post-fire). The 2 path-independent contract tests (G7 refuse +
+  G7 cross-FS) always pass regardless of disk state. The drift-stop test now
+  takes the `active_run_dir` fixture so it SKIPs pre-fire alongside the other
+  fire-state tests; per H2-Advisor PFR R2 ADOPT v3 (Option A docstring
+  reframing) its substantive value is in the error-message-format contract.
 
 Fixture file: tests/fixtures/b_c_narrow_archived_baseline.json
   Captured at Step 14.3 POST-T13 fire BEFORE T14 V4 gate runs.
@@ -390,12 +434,18 @@ FIXTURE_PATH = (
 )
 
 
-def _resolve_active_run_dir() -> Path:
-    """Resolve active run dir: sibling (pre-T14b) OR canonical (post-T14b).
+@pytest.fixture
+def active_run_dir() -> Path:
+    """Per-test fixture: resolve active run dir (sibling pre-T14b OR canonical post-T14b).
 
-    Per CB2 PFR R1 ADOPT v2: tests must work in BOTH states so Task 14b
-    commit + Task 14c ratify both PASS-state per CLAUDE.md HARD CONSTRAINT
-    'NEVER commit code that doesn't pass existing tests'.
+    CB2-R2-B1 PFR R2 ADOPT v3: refactored from module-load `_resolve_active_run_dir()`
+    + module-level `ACTIVE_RUN_DIR` constant. Module-load `pytest.skip()` would have
+    required `allow_module_level=True` parameter (else collection error per
+    `_pytest/python.py:543-550`); even with that, all fire-state tests share a single
+    cached resolution outcome — making per-test SKIP behavior coarser. The per-test
+    fixture pattern is cleaner: each fire-state test takes `active_run_dir`
+    parameter; tests that do NOT need the run dir (G7 refuse + G7 cross-FS) skip
+    taking the fixture entirely.
 
     Pre-T14b state: SIBLING_RUN_DIR exists (populated by Step 14.1 fire);
     CANONICAL_RUN_DIR is absent (archived by producer W3).
@@ -403,7 +453,7 @@ def _resolve_active_run_dir() -> Path:
     is populated (mv target).
 
     If NEITHER exists (fire never executed; e.g. RED phase at Step 13.3), the
-    fixture-dependent tests skip cleanly via pytest.skip.
+    fixture-dependent tests skip cleanly via pytest.skip (no module-load wart).
     """
     if SIBLING_RUN_DIR.exists():
         return SIBLING_RUN_DIR
@@ -415,8 +465,9 @@ def _resolve_active_run_dir() -> Path:
     )
 
 
-# Module-level resolution per CB2 PFR R1 ADOPT v2.
-ACTIVE_RUN_DIR = _resolve_active_run_dir()
+# CB2-R2-B1 PFR R2 ADOPT v3: removed module-load `ACTIVE_RUN_DIR = _resolve_active_run_dir()`
+# constant. Per-test fixture pattern above replaces it. Resolves Module-Side-L4 (no
+# module-import-time side effects + no `allow_module_level=True` wart).
 
 # Locked sample candidates per Plan v3-Phase3 fixture sampling rule:
 # lexicographically smallest 2 hypothesis_hash strings from cohort_a.
@@ -480,7 +531,7 @@ def _load_all_39_candidates_from_csv(run_dir: Path) -> dict:
 class TestV4Reproducibility:
     """V4 per-candidate metric reproducibility — sibling vs archived original."""
 
-    def test_v4_per_candidate_metric_diff_within_epsilon(self) -> None:
+    def test_v4_per_candidate_metric_diff_within_epsilon(self, active_run_dir: Path) -> None:
         """Each sampled (N=2) candidate's 3 float metrics match archive within ε=1e-6.
 
         Spec §4.2 + §6.4: sharpe_ratio + max_drawdown + total_return float
@@ -490,10 +541,12 @@ class TestV4Reproducibility:
 
         N=2 sample catches JSON-dict-layer schema drift; CB3 ADOPT v2 all-39
         test below covers full cohort directly from CSV.
+
+        CB2-R2-B1 PFR R2 ADOPT v3: takes `active_run_dir` per-test fixture.
         """
         fixture = _load_fixture()
         for hh in SAMPLE_HASHES:
-            new_summary = _load_summary(ACTIVE_RUN_DIR, hh)
+            new_summary = _load_summary(active_run_dir, hh)
             old_metrics = fixture[hh]["holdout_metrics"]
             new_metrics = new_summary["holdout_metrics"]
             for metric_name in ("sharpe_ratio", "max_drawdown", "total_return"):
@@ -506,15 +559,17 @@ class TestV4Reproducibility:
                     f"exceeds ε={V4_EPSILON} (spec §4.2 strict stop-condition)"
                 )
 
-    def test_v4_total_trades_exact_match(self) -> None:
+    def test_v4_total_trades_exact_match(self, active_run_dir: Path) -> None:
         """Each sampled (N=2) candidate's total_trades (int) + holdout_passed (bool)
         + 4 gate_pass_per_criterion subfields match archive EXACTLY (no ε).
 
         Spec §4.2 + §6.4: integer + bool values use exact equality (NO tolerance).
+
+        CB2-R2-B1 PFR R2 ADOPT v3: takes `active_run_dir` per-test fixture.
         """
         fixture = _load_fixture()
         for hh in SAMPLE_HASHES:
-            new_summary = _load_summary(ACTIVE_RUN_DIR, hh)
+            new_summary = _load_summary(active_run_dir, hh)
             old_fix = fixture[hh]
             new_total_trades = int(new_summary["holdout_metrics"]["total_trades"])
             old_total_trades = int(old_fix["holdout_metrics"]["total_trades"])
@@ -541,26 +596,41 @@ class TestV4Reproducibility:
                     f"on {hh}: old={old_sub} new={new_sub}"
                 )
 
-    def test_v4_drift_stop_condition_blocks_seal_on_breach(self) -> None:
-        """Synthetic ε-breach injection into the all-39 loop must trigger SEAL stop.
+    def test_v4_drift_stop_condition_blocks_seal_on_breach(self, active_run_dir: Path) -> None:
+        """Contract test for drift-stop error message format + meta-test that
+        inlined assertion pattern raises AssertionError when given 10ε deviation.
 
-        Per CB3 + AH1 PFR R1 ADOPT v2 (AH1 subsumed): the drift-stop test was
-        rewritten to be substantive. Previous version asserted pure arithmetic
-        without exercising the actual ε-comparison machinery against real metric
-        values. v2 version:
-          1. Loads all-39 archived rows
+        H2-Advisor PFR R2 ADOPT v3 (Option A docstring reframing): the previous
+        v2 docstring overstated this test's scope. This test does NOT exercise the
+        production ε-comparison machinery — that's covered by
+        `test_v4_per_candidate_metric_diff_within_epsilon` (N=2) +
+        `test_v4_all_39_per_candidate_metric_diff_within_epsilon` (all-39). Those
+        tests would catch real ε breaches in the actual production code path.
+
+        This test's substantive value is in the ERROR-MESSAGE-FORMAT contract:
+        when a real ε breach occurs, the AssertionError must mention the
+        candidate's hash so the operator can identify which candidate broke V4
+        reproducibility. The test injects a synthetic 10×ε perturbation into
+        one candidate's holdout_sharpe, runs an inlined ε-comparison loop that
+        mirrors the production pattern, and asserts the AssertionError message
+        contains the perturbed candidate's hash.
+
+        Procedure:
+          1. Loads all-39 archived rows + all-39 new rows
           2. Picks the first candidate (by lex-sorted hash)
           3. Injects a synthetic perturbation of 10×ε into that candidate's
              holdout_sharpe value
-          4. Runs the all-39 ε-comparison
+          4. Runs an inlined ε-comparison (NOT the production V4 test method —
+             that's separately covered)
           5. Asserts AssertionError raised AND that the error message mentions
              the perturbed candidate's hash
 
-        This locks the spec §4.2 stop-condition behavior contract against a real
-        ε breach in the actual production code path, not just pure arithmetic.
+        Locks the error-message contract for spec §4.2 stop-condition behavior.
+
+        CB2-R2-B1 PFR R2 ADOPT v3: takes `active_run_dir` per-test fixture.
         """
         archive_rows = _load_all_39_candidates_from_csv(ARCHIVE_RUN_DIR)
-        new_rows = _load_all_39_candidates_from_csv(ACTIVE_RUN_DIR)
+        new_rows = _load_all_39_candidates_from_csv(active_run_dir)
         perturbed_hash = sorted(archive_rows.keys())[0]
         # Inject synthetic 10×ε perturbation into one candidate's holdout_sharpe
         perturbed_sharpe = (
@@ -584,15 +654,17 @@ class TestV4Reproducibility:
             f"hash {perturbed_hash}. Got: {exc_info.value!r}"
         )
 
-    def test_v4_all_39_per_candidate_metric_diff_within_epsilon(self) -> None:
+    def test_v4_all_39_per_candidate_metric_diff_within_epsilon(self, active_run_dir: Path) -> None:
         """All 39 candidates' 3 float metrics match archive within ε=1e-6.
 
         CB3 PFR R1 ADOPT v2: reads archive + new CSV directly (NOT specific-
         keys fixture). Covers spec §4.2/§4.3 per-candidate full-cohort
         requirement that the N=2 fixture test does not satisfy.
+
+        CB2-R2-B1 PFR R2 ADOPT v3: takes `active_run_dir` per-test fixture.
         """
         archive_rows = _load_all_39_candidates_from_csv(ARCHIVE_RUN_DIR)
-        new_rows = _load_all_39_candidates_from_csv(ACTIVE_RUN_DIR)
+        new_rows = _load_all_39_candidates_from_csv(active_run_dir)
         assert set(archive_rows.keys()) == set(new_rows.keys()), (
             f"CSV hash-set mismatch: archive has "
             f"{set(archive_rows.keys()) - set(new_rows.keys())} extra; "
@@ -617,13 +689,15 @@ class TestV4Reproducibility:
                     f"exceeds ε={V4_EPSILON} (spec §4.2 strict stop-condition)"
                 )
 
-    def test_v4_all_39_total_trades_exact_match(self) -> None:
+    def test_v4_all_39_total_trades_exact_match(self, active_run_dir: Path) -> None:
         """All 39 candidates' total_trades (int) + holdout_passed (bool) match exactly.
 
         CB3 PFR R1 ADOPT v2: exact-equality coverage for full cohort.
+
+        CB2-R2-B1 PFR R2 ADOPT v3: takes `active_run_dir` per-test fixture.
         """
         archive_rows = _load_all_39_candidates_from_csv(ARCHIVE_RUN_DIR)
-        new_rows = _load_all_39_candidates_from_csv(ACTIVE_RUN_DIR)
+        new_rows = _load_all_39_candidates_from_csv(active_run_dir)
         for hh in sorted(archive_rows.keys()):
             old_row = archive_rows[hh]
             new_row = new_rows[hh]
@@ -645,11 +719,12 @@ class TestV4Reproducibility:
 class TestG4ParquetIntegrity:
     """G4 per-bar parquet integrity gate."""
 
-    def test_g4_per_bar_parquet_row_count_matches_t_obs(self) -> None:
-        """Per-bar parquet row count must equal T_obs from summary; SHA256 must
-        match summary AND registry; data must be non-degenerate; timestamp UTC-aware.
+    def test_g4_per_bar_parquet_row_count_matches_t_obs(self, active_run_dir: Path) -> None:
+        """Per-bar parquet finite-return count must equal T_obs from summary;
+        SHA256 must match summary AND registry; data must be non-degenerate;
+        timestamp UTC-aware.
 
-        Spec §4.3 G4: (a) row count = T_obs from summary; (b) SHA256 of
+        Spec §4.3 G4: (a) finite-row count = T_obs from summary; (b) SHA256 of
         file = `returns_per_bar_sha256` in summary + registry; (c) data not
         all-NaN; (d) `timestamp` column UTC-aware (parquet writes `timestamp`
         as a column not as the index per engine.py:498-510).
@@ -657,24 +732,45 @@ class TestG4ParquetIntegrity:
         CH4 PFR R1 ADOPT v2: extended to query registry per-candidate row and
         assert returns_per_bar_path + returns_per_bar_sha256 + T_obs all match
         across summary + computed + registry (not just summary as v1 claimed).
+
+        G4-R2-B2 PFR R2 ADOPT v3 (Option C — most defensive):
+          Engine VERIFIED: `write_per_bar_artifact` (backtest/engine.py:530-545)
+          writes full `equity_curve` (length includes leading bar) as parquet
+          with `return` column having first row NaN. `T_obs` = `count(finite(
+          returns_array))` excludes the leading NaN. So `len(df) == T_obs + 1`
+          typically (not `len(df) == T_obs`).
+          Existing `test_t_obs_matches_finite_row_count` at
+          `tests/test_t1_1_artifact_writer.py:546-560` confirms by asserting
+          `result["T_obs"] == count(finite(parquet.return))`.
+          Fix: assert finite-return count = T_obs at the application level via
+          `df.dropna(subset=['return'])`. This is engine-behavior-agnostic
+          (works whether engine trims or keeps leading NaN row).
+
+        CB2-R2-B1 PFR R2 ADOPT v3: takes `active_run_dir` per-test fixture.
+
+        CH4-R2-M1 PFR R2 ADOPT v3: tightened path assertion (CH4-a) below from
+        substring `in` to equality with expected basename `returns_per_bar.parquet`.
         """
         from backtest.experiment_registry import get_connection, DEFAULT_DB_PATH, get_run
 
         conn = get_connection(DEFAULT_DB_PATH)
         try:
             for hh in SAMPLE_HASHES:
-                summary = _load_summary(ACTIVE_RUN_DIR, hh)
-                candidate_dir = ACTIVE_RUN_DIR / hh
+                summary = _load_summary(active_run_dir, hh)
+                candidate_dir = active_run_dir / hh
                 parquet_path = candidate_dir / "returns_per_bar.parquet"
                 assert parquet_path.exists(), (
                     f"G4 missing parquet for candidate {hh} at {parquet_path}"
                 )
-                # (a) row count = T_obs
+                # (a) finite-return count = T_obs (G4-R2-B2 Option C: defensive)
                 df = pd.read_parquet(parquet_path)
                 t_obs_summary = int(summary["T_obs"])
-                assert len(df) == t_obs_summary, (
-                    f"G4(a) row count mismatch on {hh}: "
-                    f"parquet rows={len(df)} summary T_obs={t_obs_summary}"
+                finite_row_count = int(df["return"].notna().sum())
+                assert finite_row_count == t_obs_summary, (
+                    f"G4(a) finite-return count mismatch on {hh}: "
+                    f"finite_rows={finite_row_count} summary T_obs={t_obs_summary} "
+                    f"(parquet total rows={len(df)} including leading-NaN row per "
+                    f"engine.py:530-545)"
                 )
                 # (b) SHA256 match — summary + computed + registry tri-way
                 hasher = hashlib.sha256()
@@ -725,12 +821,16 @@ class TestG4ParquetIntegrity:
                 assert child_row is not None, (
                     f"CH4 G4 get_run returned None for child_run_id={child_run_id!r}"
                 )
-                # (CH4-a) returns_per_bar_path stored matches expected basename
+                # (CH4-a) returns_per_bar_path stored matches expected basename exactly
+                # CH4-R2-M1 PFR R2 ADOPT v3: tightened from substring `in` to equality.
+                # Per Phase 0 SEAL: registry stores BASENAME only ("returns_per_bar.parquet"),
+                # not absolute path. Substring would also match e.g.
+                # "broken_returns_per_bar.parquet.bak" — equality forecloses that drift class.
                 expected_path_basename = "returns_per_bar.parquet"
                 stored_path = child_row.get("returns_per_bar_path")
-                assert stored_path is not None and expected_path_basename in str(stored_path), (
+                assert stored_path == expected_path_basename, (
                     f"CH4 G4 child registry returns_per_bar_path FAIL on {hh}: "
-                    f"expected basename {expected_path_basename!r}, "
+                    f"expected exactly {expected_path_basename!r}, "
                     f"got {stored_path!r}"
                 )
                 # (CH4-b) SHA256 in registry = computed = summary (tri-way)
@@ -754,22 +854,38 @@ class TestG4ParquetIntegrity:
         finally:
             conn.close()
 
-    def test_g4_all_39_per_bar_parquet_integrity(self) -> None:
-        """All 39 candidates: per-bar parquet exists + non-empty + SHA256 in registry.
+    def test_g4_all_39_per_bar_parquet_integrity(self, active_run_dir: Path) -> None:
+        """All 39 candidates: per-bar parquet — all 4 spec §4.3 G4 subchecks.
 
         CB3 PFR R1 ADOPT v2: extends G4 coverage to full cohort. Per-candidate
-        N=2 deep validation above + this all-39 surface-level check together
-        satisfy spec §4.3 G4 full-cohort coverage requirement.
+        N=2 deep validation above + this all-39 check together satisfy spec
+        §4.3 G4 full-cohort coverage requirement.
+
+        CB3-R2-H1 PFR R2 ADOPT v3: extended from v2's (a)+(b) to all 4 subchecks
+        per spec §4.3:
+          (a) finite-row count = T_obs from summary (G4-R2-B2 Option C —
+              defensive, engine-behavior-agnostic via dropna)
+          (b) SHA256 tri-way (file → summary → registry)
+          (c) data not all-NaN AND not all-zero (non-degenerate write)
+          (d) `timestamp` column UTC-aware (column not index)
+
+        CB2-R2-B1 PFR R2 ADOPT v3: takes `active_run_dir` per-test fixture.
+
+        Sub-1 ACCEPT PFR R2 ADOPT v3: LIKE substring pattern preserved at registry
+        SELECT (already in v2; matches per-child run_id naming under producer LC-b
+        path; tightening to equality would require knowing exact child run_id
+        format which is producer-internal).
         """
         from backtest.experiment_registry import get_connection, DEFAULT_DB_PATH
 
-        archive_rows = _load_all_39_candidates_from_csv(ACTIVE_RUN_DIR)
+        all_39_csv_rows = _load_all_39_candidates_from_csv(active_run_dir)
         conn = get_connection(DEFAULT_DB_PATH)
         try:
             cur = conn.cursor()
-            for hh in sorted(archive_rows.keys()):
-                candidate_dir = ACTIVE_RUN_DIR / hh
+            for hh in sorted(all_39_csv_rows.keys()):
+                candidate_dir = active_run_dir / hh
                 parquet_path = candidate_dir / "returns_per_bar.parquet"
+                summary = _load_summary(active_run_dir, hh)
                 assert parquet_path.exists(), (
                     f"G4 all-39 missing parquet for candidate {hh}"
                 )
@@ -777,12 +893,25 @@ class TestG4ParquetIntegrity:
                 assert len(df) > 0, (
                     f"G4 all-39 empty parquet for candidate {hh}"
                 )
-                # SHA256 vs registry
+                # (a) finite-return count = T_obs (G4-R2-B2 Option C)
+                t_obs_summary = int(summary["T_obs"])
+                finite_row_count = int(df["return"].notna().sum())
+                assert finite_row_count == t_obs_summary, (
+                    f"G4(a) all-39 finite-return count mismatch on {hh}: "
+                    f"finite_rows={finite_row_count} summary T_obs={t_obs_summary} "
+                    f"(parquet total rows={len(df)} including leading-NaN row)"
+                )
+                # (b) SHA256 tri-way — file + summary + registry
                 hasher = hashlib.sha256()
                 with parquet_path.open("rb") as fh:
                     for chunk in iter(lambda: fh.read(65536), b""):
                         hasher.update(chunk)
                 computed_sha = hasher.hexdigest()
+                stored_sha_summary = summary["returns_per_bar_sha256"]
+                assert computed_sha == stored_sha_summary, (
+                    f"G4(b) all-39 SHA256 summary-vs-computed mismatch on {hh}: "
+                    f"computed={computed_sha!r} summary={stored_sha_summary!r}"
+                )
                 cur.execute(
                     "SELECT returns_per_bar_sha256 FROM runs WHERE "
                     "parent_run_id = ? AND run_type = 'regime_holdout' "
@@ -791,11 +920,36 @@ class TestG4ParquetIntegrity:
                 )
                 row = cur.fetchone()
                 assert row is not None, (
-                    f"G4 all-39 registry lookup FAIL on {hh}"
+                    f"G4(b) all-39 registry lookup FAIL on {hh}"
                 )
                 assert row[0] == computed_sha, (
-                    f"G4 all-39 SHA256 mismatch on {hh}: "
+                    f"G4(b) all-39 SHA256 registry-vs-computed mismatch on {hh}: "
                     f"computed={computed_sha!r} registry={row[0]!r}"
+                )
+                # (c) CB3-R2-H1 PFR R2 ADOPT v3: data not all-NaN AND not all-zero
+                # (degenerate write detection)
+                assert finite_row_count > 0, (
+                    f"G4(c) all-39 degenerate parquet on {hh}: zero finite rows"
+                )
+                returns_abs_sum = float(df["return"].abs().sum())
+                assert returns_abs_sum > 0, (
+                    f"G4(c) all-39 degenerate parquet on {hh}: "
+                    f"all-zero returns (sum(|return|) == 0); constant equity curve"
+                )
+                # (d) CB3-R2-H1 PFR R2 ADOPT v3: timestamp column UTC-aware
+                assert "timestamp" in df.columns, (
+                    f"G4(d) all-39 parquet missing `timestamp` column on {hh}: "
+                    f"columns={list(df.columns)}"
+                )
+                ts_dtype = df["timestamp"].dtype
+                assert pd.api.types.is_datetime64_any_dtype(ts_dtype), (
+                    f"G4(d) all-39 timestamp column dtype non-datetime on {hh}: "
+                    f"{ts_dtype}"
+                )
+                tz = getattr(ts_dtype, "tz", None)
+                assert tz is not None and str(tz) in ("UTC", "utc"), (
+                    f"G4(d) all-39 timestamp column not UTC-aware on {hh}: "
+                    f"tz={tz!r}"
                 )
         finally:
             conn.close()
@@ -804,7 +958,7 @@ class TestG4ParquetIntegrity:
 class TestG5GammaRoundTrip:
     """G5 γ3 / γ4 round-trip gate."""
 
-    def test_g5_gamma_round_trip_from_parquet_within_epsilon(self) -> None:
+    def test_g5_gamma_round_trip_from_parquet_within_epsilon(self, active_run_dir: Path) -> None:
         """Recompute γ3/γ4 from per-bar parquet via compute_moments; must
         match stored summary values within abs diff < 1e-10 (float64 round-trip
         determinism). T_obs must match bit-exact (integer).
@@ -820,12 +974,14 @@ class TestG5GammaRoundTrip:
         RIGOROUS because it validates the parquet column's round-trip integrity
         end-to-end (catches parquet write/read drift that the recompose
         approach would miss).
+
+        CB2-R2-B1 PFR R2 ADOPT v3: takes `active_run_dir` per-test fixture.
         """
         from backtest.engine import compute_moments
 
         for hh in SAMPLE_HASHES:
-            summary = _load_summary(ACTIVE_RUN_DIR, hh)
-            candidate_dir = ACTIVE_RUN_DIR / hh
+            summary = _load_summary(active_run_dir, hh)
+            candidate_dir = active_run_dir / hh
             parquet_path = candidate_dir / "returns_per_bar.parquet"
             assert parquet_path.exists(), (
                 f"G5 missing parquet for candidate {hh}"
@@ -857,18 +1013,20 @@ class TestG5GammaRoundTrip:
                     f"abs_diff={diff!r} exceeds ε={G5_EPSILON}"
                 )
 
-    def test_g5_all_39_gamma_round_trip(self) -> None:
+    def test_g5_all_39_gamma_round_trip(self, active_run_dir: Path) -> None:
         """All 39 candidates: γ3/γ4 round-trip via compute_moments within ε=1e-10.
 
         CB3 PFR R1 ADOPT v2: full-cohort G5 coverage. Loads per-candidate
         holdout_summary.json (NOT the N=2 fixture) for each of the 39 candidates.
+
+        CB2-R2-B1 PFR R2 ADOPT v3: takes `active_run_dir` per-test fixture.
         """
         from backtest.engine import compute_moments
 
-        archive_rows = _load_all_39_candidates_from_csv(ACTIVE_RUN_DIR)
-        for hh in sorted(archive_rows.keys()):
-            summary = _load_summary(ACTIVE_RUN_DIR, hh)
-            candidate_dir = ACTIVE_RUN_DIR / hh
+        all_39_csv_rows = _load_all_39_candidates_from_csv(active_run_dir)
+        for hh in sorted(all_39_csv_rows.keys()):
+            summary = _load_summary(active_run_dir, hh)
+            candidate_dir = active_run_dir / hh
             parquet_path = candidate_dir / "returns_per_bar.parquet"
             assert parquet_path.exists(), (
                 f"G5 all-39 missing parquet for candidate {hh}"
@@ -902,27 +1060,50 @@ class TestG6RegistryParentChildIntegrity:
     """G6 registry parent-child integrity gate."""
 
     def test_g6_registry_parent_child_integrity_after_fire(self) -> None:
-        """Registry must contain exactly 1 batch_summary parent row at
-        run_id=phase4_forward_2026_15bps_v1_b_c_narrow + 39 child rows
-        (run_type=regime_holdout); each child's parent_run_id = parent;
-        parent cohort metadata non-null; child per-candidate metadata non-null;
-        parent-only fields NULL at children.
+        """Registry parent-child integrity after fire:
+          - Parent row: 1 row at run_id=phase4_forward_2026_15bps_v1_b_c_narrow with
+            run_type='batch_summary'; cohort-level metadata (15 fields per spec
+            §3.2.3 line 117) non-null; batch_id == BCNARROW_PARENT_RUN_ID per
+            G6-BatchID-R2-M4.
+          - Children rows: 39 rows with parent_run_id = parent + run_type =
+            'regime_holdout'; per-candidate metadata (hypothesis_hash + sharpe_ratio
+            + max_drawdown + total_return + total_trades + regime_holdout_passed)
+            non-null.
+          - Note: per-candidate fields like returns_per_bar_path /
+            returns_per_bar_sha256 / T_obs are persisted at children (per Phase 0
+            LineageContext semantics), NOT parent-only. NULL-at-children assertion
+            direction is structurally unimplementable for the current schema and
+            removed per G6-Docstring-R2-L2 + Sub-2 ACCEPT-WITH-EXTENSION.
 
         Spec §4.3 G6: SELECT COUNT(*) FROM runs WHERE
         parent_run_id='phase4_forward_2026_15bps_v1_b_c_narrow' AND
         run_type='regime_holdout' = 39; parent row exists with
-        run_type='batch_summary'. Cohort-level metadata at parent; per-
-        candidate metadata at children.
+        run_type='batch_summary'.
 
         BLOCKING-5 carry per Plan v3-Phase2 line 3651: G6 inline coverage
         required at Phase 3 (not enumerated in spec §6.4).
 
-        CH4 PFR R1 ADOPT v2: extended to assert parent row cohort metadata
-        (initial_capital + fee_model + execution_config_sha256 + git_commit +
-        created_at_utc + batch_id + parent_run_id) non-null + each child row
-        per-candidate metadata (hypothesis_hash + sharpe_ratio + max_drawdown
-        + total_return + total_trades + regime_holdout_passed) non-null +
-        parent-only fields (returns_per_bar_path etc.) NULL at children level.
+        G6-Cohort-R2-M3 PFR R2 ADOPT v3: extended parent cohort metadata
+        coverage from 5 fields to all 15 cohort-level fields per spec §3.2.3
+        line 117. Tolerates column-vs-`notes`-JSON-key existence per Phase 2 CB4
+        lock by checking key presence before asserting non-null.
+
+        G6-BatchID-R2-M4 PFR R2 ADOPT v3: added tightening assertion
+        `parent_row["batch_id"] == BCNARROW_PARENT_RUN_ID`.
+
+        G6-Docstring-R2-L2 + Sub-2 ACCEPT-WITH-EXTENSION PFR R2 ADOPT v3:
+        docstring rewritten to match implementation; empty placeholder loop
+        removed.
+
+        CB2-R2-B1 PFR R2 ADOPT v3: per-test SKIP gate added at top — registry
+        is always present but the parent row is absent pre-fire; if parent row
+        absent → SKIP (not FAIL) so this test does not violate CLAUDE.md HARD
+        CONSTRAINT "NEVER commit code that doesn't pass existing tests" at Step
+        13.4 RED commit.
+
+        G6-Batched-R2-L3 PFR R2 ADOPT v3 (style decision): kept per-field loop
+        rather than batched SELECT for clearer per-field error messages on
+        first failure (cohort-field-NULL drift class).
         """
         from backtest.experiment_registry import get_connection, DEFAULT_DB_PATH
 
@@ -930,6 +1111,17 @@ class TestG6RegistryParentChildIntegrity:
         conn.row_factory = sqlite3.Row
         try:
             cur = conn.cursor()
+            # CB2-R2-B1 PFR R2 ADOPT v3: per-test SKIP gate
+            cur.execute(
+                "SELECT COUNT(*) FROM runs WHERE run_id = ?",
+                (BCNARROW_PARENT_RUN_ID,),
+            )
+            if cur.fetchone()[0] == 0:
+                pytest.skip(
+                    "Phase 3 fire not yet executed — parent batch_summary row "
+                    "absent from registry; G6 invariant check requires fire-time "
+                    "state. Test will be exercised at Step 14.4 V4 gate run."
+                )
             # Parent row
             cur.execute(
                 "SELECT * FROM runs WHERE run_id = ?",
@@ -945,22 +1137,44 @@ class TestG6RegistryParentChildIntegrity:
                 f"G6 parent row run_type FAIL: expected 'batch_summary', "
                 f"found {parent_row['run_type']!r}"
             )
-            # CH4 PFR R1 ADOPT v2: parent cohort metadata non-null
+            # G6-Cohort-R2-M3 PFR R2 ADOPT v3: parent cohort metadata non-null
+            # — extended from 5 fields to all 15 cohort-level fields per spec
+            # §3.2.3 line 117. Tolerate column-vs-`notes`-JSON-key existence
+            # variance per Phase 2 CB4 lock (some fields like `engine_commit`
+            # may live in `notes` JSON not as direct column; check key presence
+            # before asserting non-null).
             parent_cohort_metadata = (
+                "git_commit",
+                "current_git_sha",
+                "engine_commit",
+                "execution_config_path",
+                "execution_config_sha256",
+                "parquet_data_sha256",
+                "regime_key",
+                "cost_anchor_id",
+                "batch_id",
+                "created_at_utc",
+                "effective_start",
                 "initial_capital",
                 "fee_model",
-                "git_commit",
-                "created_at_utc",
-                "batch_id",
+                "strategy_name",
+                "strategy_source",
             )
             parent_keys = set(parent_row.keys())
             for field_name in parent_cohort_metadata:
                 if field_name not in parent_keys:
-                    continue  # tolerate schema variants; only assert when present
+                    continue  # tolerate schema variants (column vs notes JSON-key)
                 assert parent_row[field_name] is not None, (
-                    f"CH4 G6 parent row cohort metadata NULL FAIL: "
+                    f"G6-Cohort-R2-M3 parent row cohort metadata NULL FAIL: "
                     f"field={field_name!r} expected non-null at parent_run_id="
                     f"{BCNARROW_PARENT_RUN_ID}"
+                )
+            # G6-BatchID-R2-M4 PFR R2 ADOPT v3: lock parent.batch_id ==
+            # BCNARROW_PARENT_RUN_ID per spec §3.2.3.
+            if "batch_id" in parent_keys:
+                assert parent_row["batch_id"] == BCNARROW_PARENT_RUN_ID, (
+                    f"G6-BatchID-R2-M4 parent.batch_id expected "
+                    f"{BCNARROW_PARENT_RUN_ID!r}, got {parent_row['batch_id']!r}"
                 )
             # Child rows
             cur.execute(
@@ -1012,13 +1226,14 @@ class TestG6RegistryParentChildIntegrity:
                         f"CH4 G6 child row per-candidate metadata NULL FAIL: "
                         f"field={field_name!r} at child run_id={child['run_id']!r}"
                     )
-                # Parent-only fields (NULL at children level expected)
-                # Note: returns_per_bar_path + returns_per_bar_sha256 + T_obs
-                # are per-candidate persistence fields at children (NOT parent-
-                # only), so don't assert NULL on those. Parent-only fields are
-                # those that ONLY make sense at cohort level. Empty set if no
-                # such fields surface in current schema; this loop is a
-                # placeholder for future drift catches.
+            # G6-Docstring-R2-L2 + Sub-2 ACCEPT-WITH-EXTENSION PFR R2 ADOPT v3:
+            # Per Phase 0 LineageContext semantics, per-candidate fields like
+            # returns_per_bar_path / returns_per_bar_sha256 / T_obs are persisted
+            # at children (NOT parent-only). NULL-at-children direction is
+            # structurally unimplementable for the current schema. The empty
+            # placeholder loop from v2 has been removed; if a future schema
+            # change introduces a truly parent-only field that should be NULL at
+            # children, add the assertion here.
         finally:
             conn.close()
 
@@ -1105,8 +1320,17 @@ class TestG7ArchiveIdempotency:
 
         original_stat = Path.stat
 
+        # AM1-CrossFS-R2-M5 PFR R2 ADOPT v3: tightened substring match to
+        # endswith / equality on resolved Path identity. Previous substring
+        # `"archive" in str(self)` could spuriously match unrelated paths
+        # containing the word "archive". The new pattern matches only the
+        # specific archive_root or paths under it.
+        archive_root_str = str(archive_root)
+
         def mocked_stat(self, *args, **kwargs):
-            if "archive" in str(self):
+            self_str = str(self)
+            # Match exact archive_root OR any path strictly under archive_root
+            if self_str == archive_root_str or self_str.startswith(archive_root_str + "/"):
                 return FakeStat(dev=999)  # different FS
             return FakeStat(dev=111)
 
@@ -1125,33 +1349,37 @@ class TestG7ArchiveIdempotency:
         )
 ```
 
-- [ ] **Step 13.3: Verify RED phase (9 fire-state tests SKIPPED-or-RED + 2 static contract tests PASS + 1 drift-stop hybrid)**
+- [ ] **Step 13.3: Verify RED phase (10 fire-state tests SKIPPED + 2 static contract tests PASS)**
 
 ```bash
 python -m pytest tests/test_b_c_narrow_v4_reproducibility.py -v
 ```
 
-Per CM5 PFR R1 ADOPT v2: with the CB2 path-adaptive pattern, fire-state tests now SKIP cleanly via `_resolve_active_run_dir` → `pytest.skip(...)` (rather than raw FAIL) when neither sibling nor canonical exists. Skips encode the same RED-pre-fire semantics that the v1 plan called "FAIL with missing-file message"; both equally signal "fire not yet executed". Static contract tests (G7 refuse + G7 cross-FS) PASS unconditionally via tmp_path. The drift-stop test is a hybrid: it reads from ACTIVE_RUN_DIR + ARCHIVE_RUN_DIR (so it SKIPs pre-fire) but exercises the all-39 ε-comparison + synthetic perturbation injection on real metric values when the fire is complete.
+Per CM5-R2-M2 + CB2-R2-B1 PFR R2 ADOPT v3: with the CB2-R2-B1 per-test fixture refactor, all 10 fire-state tests now SKIP cleanly when the active_run_dir fixture cannot resolve (neither SIBLING nor CANONICAL exists) — including G6, which now has its own per-test SKIP gate at the top of the test body checking registry parent row existence. Skips encode the same RED-pre-fire semantics that the v1 plan called "FAIL with missing-file message"; both equally signal "fire not yet executed". The 2 static contract tests (G7 refuse + G7 cross-FS) PASS unconditionally via tmp_path. The drift-stop test takes the `active_run_dir` fixture so it SKIPs pre-fire alongside the other fire-state tests.
+
+Per CB2-R2-B1: this design satisfies CLAUDE.md HARD CONSTRAINT "NEVER commit code that doesn't pass existing tests" at Step 13.4 RED commit — 0 FAILED + 0 ERRORS pre-fire.
 
 Expected behavior (12 total tests):
-- `TestV4Reproducibility::test_v4_per_candidate_metric_diff_within_epsilon` → SKIPPED (sibling/canonical absent) pre-fire; PASSED post-fire
+- `TestV4Reproducibility::test_v4_per_candidate_metric_diff_within_epsilon` → SKIPPED (active_run_dir fixture skip) pre-fire; PASSED post-fire
 - `TestV4Reproducibility::test_v4_total_trades_exact_match` → SKIPPED pre-fire; PASSED post-fire
-- `TestV4Reproducibility::test_v4_drift_stop_condition_blocks_seal_on_breach` → SKIPPED pre-fire (ACTIVE_RUN_DIR resolution); PASSED post-fire (synthetic perturbation triggers AssertionError)
+- `TestV4Reproducibility::test_v4_drift_stop_condition_blocks_seal_on_breach` → SKIPPED pre-fire (active_run_dir fixture); PASSED post-fire (synthetic perturbation triggers AssertionError)
 - `TestV4Reproducibility::test_v4_all_39_per_candidate_metric_diff_within_epsilon` → SKIPPED pre-fire; PASSED post-fire
 - `TestV4Reproducibility::test_v4_all_39_total_trades_exact_match` → SKIPPED pre-fire; PASSED post-fire
 - `TestG4ParquetIntegrity::test_g4_per_bar_parquet_row_count_matches_t_obs` → SKIPPED pre-fire; PASSED post-fire
 - `TestG4ParquetIntegrity::test_g4_all_39_per_bar_parquet_integrity` → SKIPPED pre-fire; PASSED post-fire
 - `TestG5GammaRoundTrip::test_g5_gamma_round_trip_from_parquet_within_epsilon` → SKIPPED pre-fire; PASSED post-fire
 - `TestG5GammaRoundTrip::test_g5_all_39_gamma_round_trip` → SKIPPED pre-fire; PASSED post-fire
-- `TestG6RegistryParentChildIntegrity::test_g6_registry_parent_child_integrity_after_fire` → FAIL with AssertionError "expected 1 parent row ... found 0" (registry has no parent row pre-fire; no skip on registry queries because the registry is always present)
-- `TestG7ArchiveIdempotency::test_g7_archive_idempotency_refuses_existing_target` → PASS (uses tmp_path)
-- `TestG7ArchiveIdempotency::test_g7_archive_refuses_cross_filesystem_attempt` → PASS (uses tmp_path + monkeypatch)
+- `TestG6RegistryParentChildIntegrity::test_g6_registry_parent_child_integrity_after_fire` → SKIPPED pre-fire (per-test SKIP gate per CB2-R2-B1 checks registry parent row existence); PASSED post-fire
+- `TestG7ArchiveIdempotency::test_g7_archive_idempotency_refuses_existing_target` → PASS (uses tmp_path; does not take active_run_dir fixture)
+- `TestG7ArchiveIdempotency::test_g7_archive_refuses_cross_filesystem_attempt` → PASS (uses tmp_path + monkeypatch; does not take active_run_dir fixture)
 
-Summary expected at Step 13.3 (pre-fire): 9 SKIPPED + 2 PASSED + 1 FAILED (G6 registry parent-child).
+Summary expected at Step 13.3 (pre-fire): **10 SKIPPED + 2 PASSED + 0 FAILED + 0 ERRORS = 12 collected**.
 
 Step 14.4 (post-fire): 12 PASSED + 0 SKIPPED + 0 FAILED.
 
 If you see a different failure pattern (e.g., ImportError, ModuleNotFoundError, AttributeError on `BCNARROW_*` constants), STOP — Phase 2 SEAL state may have regressed (already caught by Precondition 4 + 5 in §"Phase 3 execution preconditions", but re-check).
+
+If you see a collection error (e.g., InteralError, `pytest.skip used outside of a test`), STOP — CB2-R2-B1 per-test fixture refactor may have regressed (no module-load `pytest.skip` invocation should remain).
 
 - [ ] **Step 13.4: Commit pre-fire test bodies + pre-flight evidence**
 
@@ -1178,10 +1406,15 @@ ADOPT v2):
 - TestG7ArchiveIdempotency::test_g7_archive_idempotency_refuses_existing_target
 - TestG7ArchiveIdempotency::test_g7_archive_refuses_cross_filesystem_attempt
 
-Expected at this commit (pre-fire): 9 SKIPPED + 2 PASSED + 1 FAILED (G6).
-SKIPs encode RED-pre-fire semantics via _resolve_active_run_dir per CB2 ADOPT.
-PASSes lock contracts that are TESTABLE without the fire — by design.
-G6 FAILs because registry parent row absent (no skip on registry queries).
+Expected at this commit (pre-fire): 10 SKIPPED + 2 PASSED + 0 FAILED + 0 ERRORS.
+SKIPs encode RED-pre-fire semantics via per-test `active_run_dir` fixture
+(CB2-R2-B1 PFR R2 ADOPT v3 refactor) + per-test SKIP gate at G6 body checking
+registry parent row existence.
+PASSes lock contracts that are TESTABLE without the fire — by design (G7 refuse +
+G7 cross-FS use tmp_path).
+
+Satisfies CLAUDE.md HARD CONSTRAINT "NEVER commit code that doesn't pass existing
+tests" per CB2-R2-B1 PFR R2 ADOPT v3 (0 FAILED + 0 ERRORS at Step 13.4 RED commit).
 
 GREEN expected at Step 14.5 post-fire + fixture capture (12 PASSED).
 
@@ -1239,7 +1472,10 @@ NEXT STEP requires destructive operational write:
 What to surface to Charlie:
   - Plan path: docs/superpowers/plans/2026-05-27-b-c-narrow-phase-3-fire-plan.md
   - Commit just landed: <git rev-parse --short HEAD> (Task 13 RED)
-  - Test status: 5 FAILED + 2 PASSED (expected)
+  - Test status: 10 SKIPPED + 2 PASSED + 0 FAILED + 0 ERRORS = 12 collected (expected
+    per CM5-R2-M2 PFR R2 ADOPT v3; fire-state tests SKIP via per-test `active_run_dir`
+    fixture + G6 per-test SKIP gate per CB2-R2-B1 PFR R2 ADOPT v3; static contract
+    tests PASS via tmp_path)
   - Fire command (exact bash to be executed at Step 14.1):
     [paste the bash from Step 14.1 verbatim]
   - Expected wall-clock: ~10-15 seconds (39 candidates × ~0.25s/candidate
@@ -1487,7 +1723,11 @@ Also run full test suite zero-regression check:
 python -m pytest -q
 ```
 
-Expected: `2372 passed` (= 2360 from Phase 2 baseline + 12 new V4 tests, with 2 xfailed unchanged) OR equivalent. Net new = 12 passing tests (no test deletions; no regressions). If full suite reveals regressions outside `test_b_c_narrow_v4_reproducibility.py`, STOP — surface to Charlie.
+Expected: `2374 passed` (= **2362** current HEAD baseline at v3 plan-drafting time + 12 new V4 tests, with 2 xfailed unchanged) OR equivalent.
+
+Per 2360-Stale-L5 PFR R2 ADOPT v3: Phase 2 baseline of 2360 mentioned in v1/v2 has drifted upward by 2 tests since the Phase 2 ratify packet sealed (current `python -m pytest --collect-only -q | tail -5` at HEAD `21566ef` returns `2362 tests collected`). The expected post-fire test count is 2362 + 12 = 2374. Per spec §6.7 line 397 evidence-vs-claim drift tolerance, implementer should use the actual measured value at execution time.
+
+Net new = 12 passing tests (no test deletions; no regressions). If full suite reveals regressions outside `test_b_c_narrow_v4_reproducibility.py`, STOP — surface to Charlie.
 
 - [ ] **Step 14.6: Commit T13 fire evidence + V4 gate results + fixture**
 
@@ -1520,7 +1760,8 @@ Registry writes (backtest/experiments.db):
 
 T14 V4 gate (G4-G7 + ε=1e-6 per-candidate + all-39 full-cohort coverage):
 - 12/12 tests in tests/test_b_c_narrow_v4_reproducibility.py PASSED
-- Full suite zero regression (2372 passed / 0 failed / 2 xfailed)
+- Full suite zero regression (2374 passed / 0 failed / 2 xfailed; per 2360-Stale-L5
+  PFR R2 ADOPT v3: baseline = 2362 at HEAD `21566ef` + 12 new V4 = 2374)
 
 Fixture file (committed):
 - tests/fixtures/b_c_narrow_archived_baseline.json (N=2 candidates per
@@ -1676,15 +1917,15 @@ finally:
 
 If any verification (a)-(f) fails, surface to Step 14b.2.5 failure adjudication block below — do NOT skip to Step 14b.3.
 
-Per CB2 PFR R1 ADOPT v2: re-run the V4+G4-G7 suite POST-mv. With the path-adaptive `_resolve_active_run_dir` pattern, `ACTIVE_RUN_DIR` now resolves to `CANONICAL_RUN_DIR` (sibling is gone; canonical is populated); tests should PASS in BOTH pre-T14b and post-T14b states:
+Per CB2-R2-B1 PFR R2 ADOPT v3 (supersedes CB2 PFR R1 ADOPT v2 module-load pattern): re-run the V4+G4-G7 suite POST-mv. With the per-test `active_run_dir` fixture pattern, each fixture invocation resolves to `CANONICAL_RUN_DIR` (sibling is gone; canonical is populated); G6 per-test SKIP gate also passes now that the parent row is present. Tests should PASS in post-T14b state:
 
 ```bash
 python -m pytest tests/test_b_c_narrow_v4_reproducibility.py -v
 ```
 
-Expected: `12 passed`. CB2 PFR R1 ADOPT v2 satisfies CLAUDE.md HARD CONSTRAINT "NEVER commit code that doesn't pass existing tests" across both Task 14b commit (post-mv) and Task 14c ratify (post-mv) lifecycle stages.
+Expected: `12 passed`. CB2-R2-B1 PFR R2 ADOPT v3 satisfies CLAUDE.md HARD CONSTRAINT "NEVER commit code that doesn't pass existing tests" across all three commit boundaries: Task 13 RED (10 SKIPPED + 2 PASSED), Task 14b post-mv (12 PASSED), Task 14c ratify (12 PASSED).
 
-If any test FAILS post-mv: STOP — `_resolve_active_run_dir` may have regressed OR canonical state may differ from sibling state in a way the path-adaptive design did not anticipate. Surface to Charlie before committing.
+If any test FAILS post-mv: STOP — `active_run_dir` fixture resolution OR G6 per-test SKIP gate may have regressed OR canonical state may differ from sibling state in a way the design did not anticipate. Surface to Charlie before committing.
 
 - [ ] **Step 14b.2.5: Failure adjudication (if post-mv verification FAILS)**
 
@@ -1733,9 +1974,10 @@ Phase 5 work) now see B-C-narrow recovered content with per-bar parquet
 preservation + γ3/γ4 moments + registry linkage. Original lineage preserved
 at archive/ for cross-verification.
 
-V4 test status post-mv: per CB2 PFR R1 ADOPT v2 path-adaptive design via
-_resolve_active_run_dir, all 12 V4+G4-G7 tests PASS post-mv (ACTIVE_RUN_DIR
-resolves to CANONICAL_RUN_DIR). This satisfies CLAUDE.md HARD CONSTRAINT
+V4 test status post-mv: per CB2-R2-B1 PFR R2 ADOPT v3 per-test fixture pattern
+(supersedes v2 module-load pattern), all 12 V4+G4-G7 tests PASS post-mv
+(`active_run_dir` fixture resolves to CANONICAL_RUN_DIR; G6 per-test SKIP gate
+passes because parent row present). This satisfies CLAUDE.md HARD CONSTRAINT
 "NEVER commit code that doesn't pass existing tests".
 
 Next: Phase 3 ratify packet at Task 14c → Charlie register #N+19c.
@@ -1767,7 +2009,7 @@ Per AL3 PFR R1 ADOPT v2: placeholders correspond to: `<sha>` = output of Step 13
 
 **Date:** <ISO UTC at Step 14c.1 commit time>
 **HEAD commit:** <git rev-parse --short HEAD>
-**Plan version:** v3-Phase3 v2 (PFR R1 17 ADOPT applied per Charlie register #N+19 Path 1 2026-05-28; further PFR R2 iteration count if amended)
+**Plan version:** v3-Phase3 v3 (PFR R1 17 ADOPT applied per Charlie register #N+19 Path 1 2026-05-28 + PFR R2 14 ADOPT applied per Charlie register #N+19' Path 1 2026-05-28; further PFR R3 iteration count if amended)
 **Plan path:** `docs/superpowers/plans/2026-05-27-b-c-narrow-phase-3-fire-plan.md`
 **Spec path:** `docs/superpowers/specs/2026-05-26-b-c-narrow-data-recovery-design.md` (sealed at `d6c7fc0`)
 **Authorization:** Charlie register `#N+19a` (T13 fire) + `#N+19b` (T14b mv) <fire dates>
@@ -1804,13 +2046,15 @@ Per AL3 PFR R1 ADOPT v2: placeholders correspond to: `<sha>` = output of Step 13
 | `TestV4Reproducibility::test_v4_drift_stop_condition_blocks_seal_on_breach` | §4.2 + §6.4 (synthetic ε-breach per CB3+AH1 ADOPT) | <PASSED> |
 | `TestV4Reproducibility::test_v4_all_39_per_candidate_metric_diff_within_epsilon` | §4.2 (all-39 per CB3 ADOPT v2) | <PASSED> |
 | `TestV4Reproducibility::test_v4_all_39_total_trades_exact_match` | §4.2 (all-39 per CB3 ADOPT v2) | <PASSED> |
-| `TestG4ParquetIntegrity::test_g4_per_bar_parquet_row_count_matches_t_obs` | §4.3 G4 (N=2 deep + registry tri-way per CH4 ADOPT v2) | <PASSED> |
-| `TestG4ParquetIntegrity::test_g4_all_39_per_bar_parquet_integrity` | §4.3 G4 (all-39 surface per CB3 ADOPT v2) | <PASSED> |
+| `TestG4ParquetIntegrity::test_g4_per_bar_parquet_row_count_matches_t_obs` | §4.3 G4 (N=2 deep + registry tri-way per CH4 ADOPT v2; G4-R2-B2 Option C defensive finite-row vs T_obs; CH4-R2-M1 path equality) | <PASSED> |
+| `TestG4ParquetIntegrity::test_g4_all_39_per_bar_parquet_integrity` | §4.3 G4 (all-39 surface per CB3 ADOPT v2; all 4 subchecks (a)+(b)+(c)+(d) per CB3-R2-H1) | <PASSED> |
 | `TestG5GammaRoundTrip::test_g5_gamma_round_trip_from_parquet_within_epsilon` | §4.3 G5 (N=2 per AM2 docstring note) | <PASSED> |
 | `TestG5GammaRoundTrip::test_g5_all_39_gamma_round_trip` | §4.3 G5 (all-39 per CB3 ADOPT v2) | <PASSED> |
-| `TestG6RegistryParentChildIntegrity::test_g6_registry_parent_child_integrity_after_fire` | §4.3 G6 (BLOCKING-5 carry + AL4 invariant comment + CH4 metadata extensions) | <PASSED> |
+| `TestG6RegistryParentChildIntegrity::test_g6_registry_parent_child_integrity_after_fire` | §4.3 G6 (BLOCKING-5 carry + AL4 invariant + CH4 metadata + G6-Cohort-R2-M3 all 15 cohort fields + G6-BatchID-R2-M4 batch_id assertion + CB2-R2-B1 per-test SKIP gate + G6-Docstring-R2-L2 docstring polish) | <PASSED> |
 | `TestG7ArchiveIdempotency::test_g7_archive_idempotency_refuses_existing_target` | §4.3 G7 (BLOCKING-5 carry) | <PASSED> |
-| `TestG7ArchiveIdempotency::test_g7_archive_refuses_cross_filesystem_attempt` | §4.3 G7 (cross-FS guard per AM1 ADOPT v2) | <PASSED> |
+| `TestG7ArchiveIdempotency::test_g7_archive_refuses_cross_filesystem_attempt` | §4.3 G7 (cross-FS guard per AM1 ADOPT v2; AM1-CrossFS-R2-M5 substring tightened to endswith / equality) | <PASSED> |
+
+**Drift-stop test scope note (H2-Advisor PFR R2 ADOPT v3 docstring reframing):** `test_v4_drift_stop_condition_blocks_seal_on_breach` is now framed as a contract test for drift-stop error-message format + meta-test that inlined assertion pattern raises AssertionError when given 10ε deviation. It does NOT exercise the production ε-comparison machinery — that's covered by `test_v4_per_candidate_metric_diff_within_epsilon` + `test_v4_all_39_per_candidate_metric_diff_within_epsilon`.
 
 **Verification command:**
 
@@ -1818,16 +2062,16 @@ Per AL3 PFR R1 ADOPT v2: placeholders correspond to: `<sha>` = output of Step 13
 python -m pytest tests/test_b_c_narrow_v4_reproducibility.py -v
 ```
 
-**Full suite zero-regression:** <2372 passed / 0 failed / 2 xfailed> (Phase 2 baseline 2360 + 12 new V4 tests; net new = 12 passing)
+**Full suite zero-regression:** <2374 passed / 0 failed / 2 xfailed> (current HEAD `21566ef` baseline 2362 + 12 new V4 tests = 2374; per 2360-Stale-L5 PFR R2 ADOPT v3 baseline drift correction; original v1/v2 stated 2360 baseline)
 
 ## Per-gate G4-G7 result summary (additional evidence)
 
 | Gate | Spec ref | Coverage | Result |
 |---|---|---|---|
-| G4 — Per-bar parquet integrity | §4.3 G4 | row count = T_obs (a) + SHA256 match (b) + non-degenerate (c) + UTC-aware timestamp column (d) + registry tri-way per CH4 ADOPT v2 | <PASS for N=2 deep + N=39 surface per CB3 ADOPT v2> |
+| G4 — Per-bar parquet integrity | §4.3 G4 | (a) finite-row count = T_obs (G4-R2-B2 Option C defensive) + (b) SHA256 tri-way + (c) non-degenerate (non-all-NaN AND non-all-zero per CB3-R2-H1) + (d) UTC-aware timestamp column + registry tri-way per CH4 ADOPT v2 (CH4-R2-M1 path equality tightening) | <PASS for N=2 deep + N=39 all-4-subcheck per CB3-R2-H1 ADOPT v3> |
 | G5 — γ3/γ4 round-trip | §4.3 G5 | `compute_moments` recompute vs stored within abs diff < 1e-10 + T_obs bit-exact | <PASS for N=2 + N=39 per CB3 ADOPT v2> |
-| G6 — Registry parent-child integrity | §4.3 G6 | 1 parent batch_summary + 39 child regime_holdout + parent_run_id linkage + parent cohort metadata + child per-candidate metadata non-null per CH4 ADOPT v2 | <PASS> |
-| G7 — Archive idempotency | §4.3 G7 | strict refuse-if-exists semantics (tmp_path isolation) + cross-FS guard per AM1 ADOPT v2 | <PASS> |
+| G6 — Registry parent-child integrity | §4.3 G6 | 1 parent batch_summary + 39 child regime_holdout + parent_run_id linkage + parent cohort metadata (all 15 fields per spec §3.2.3 per G6-Cohort-R2-M3 ADOPT v3) + batch_id == BCNARROW_PARENT_RUN_ID per G6-BatchID-R2-M4 + child per-candidate metadata non-null per CH4 ADOPT v2 | <PASS> |
+| G7 — Archive idempotency | §4.3 G7 | strict refuse-if-exists semantics (tmp_path isolation) + cross-FS guard per AM1 ADOPT v2 (AM1-CrossFS-R2-M5 substring tightening) | <PASS> |
 
 **Note on sample size (updated per CB3 PFR R1 ADOPT v2):** Spec §4.2/§4.3 per-candidate full-cohort coverage now satisfied at Phase 3. N=2 fixture (`18d92ce5d0b40cc7` + `22864f01a49e3452`) retained for JSON-dict-layer schema-version drift catch (which raw-CSV all-39 comparison would miss). All-39 coverage added via 4 NEW tests (V4 ε metric diff + V4 total_trades exact + G4 per-bar parquet integrity + G5 γ3/γ4 round-trip) reading archive + new CSVs directly. Total V4+G4-G7 test count: 12 (5 N=2 fixture + 2 BLOCKING-5 carry G6+G7 + 4 all-39 CB3 + 1 cross-FS AM1).
 
@@ -1846,8 +2090,8 @@ python -m pytest tests/test_b_c_narrow_v4_reproducibility.py -v
 **ALL Phase 3 deliverables GREEN.** Phase 3 ratify gate met.
 
 - T13 fire executed cleanly with `--enable-b-c-narrow-recovery` (single command; ~<X> seconds wall-clock)
-- T14 V4 gate: 12/12 tests PASSED (ε=1e-6 N=2 fixture + all-39 V4 gate per CB3 ADOPT v2 + G4-G7 coverage + registry tri-way per CH4 ADOPT v2 + cross-FS guard per AM1 ADOPT v2)
-- Full suite zero-regression (2372 passed / 0 failed / 2 xfailed)
+- T14 V4 gate: 12/12 tests PASSED (ε=1e-6 N=2 fixture + all-39 V4 gate per CB3 ADOPT v2 + G4-G7 coverage + registry tri-way per CH4 ADOPT v2 + cross-FS guard per AM1 ADOPT v2; G4 expansion to all 4 subchecks per CB3-R2-H1 + G6 cohort field expansion per G6-Cohort-R2-M3 + G6 batch_id assertion per G6-BatchID-R2-M4)
+- Full suite zero-regression (2374 passed / 0 failed / 2 xfailed; baseline 2362 at HEAD `21566ef` + 12 new = 2374 per 2360-Stale-L5 PFR R2 ADOPT v3)
 - T14b canonical-path relocation complete; canonical now holds B-C-narrow recovered content with per-bar parquet preservation + γ3/γ4 moments + registry linkage
 - Original lineage preserved at `archive/phase4_forward_2026_15bps_v1_d0b8101/` for cross-verification
 
@@ -1857,13 +2101,13 @@ Phase 4 (SEAL bundle: NOTE doc + B2 reviewer dispatch + Rule 2 SEAL-eve + atomic
 
 Per Plan v3-Phase3 sub-decision (i) + CR-SE-H2 ADOPT carry from Phase 2 v9: spec line 286 ("T12 — Archive original: `mv data/phase2c_evaluation_gate/phase4_forward_2026_15bps_v1 data/phase2c_evaluation_gate/archive/phase4_forward_2026_15bps_v1_d0b8101/`") preserved BYTE-IDENTICAL per Architecture B sealed-content invariance. Producer W3 (gated by `--enable-b-c-narrow-recovery` per Phase 2 SEAL) performs the archive INLINE during T13 fire, superseding the manual mv step de-facto. Spec amend / Architecture B errata supplement NAMED-eligible at Phase 4 SEAL bundle (not auto-bundled here).
 
-## Post-mv test behavior (path-adaptive via CB2 PFR R1 ADOPT v2)
+## Post-mv test behavior (per-test fixture via CB2-R2-B1 PFR R2 ADOPT v3)
 
-Per CB2 PFR R1 ADOPT v2 path-adaptive design: tests in `tests/test_b_c_narrow_v4_reproducibility.py` resolve `ACTIVE_RUN_DIR` at module-load via `_resolve_active_run_dir()` — `SIBLING_RUN_DIR` (pre-T14b) OR `CANONICAL_RUN_DIR` (post-T14b). All 12 V4+G4-G7 tests continue to PASS post-mv.
+Per CB2-R2-B1 PFR R2 ADOPT v3 (replaces CB2 PFR R1 ADOPT v2's path-adaptive module-load pattern): fire-state tests in `tests/test_b_c_narrow_v4_reproducibility.py` take a per-test `active_run_dir` fixture that resolves to `SIBLING_RUN_DIR` (pre-T14b) OR `CANONICAL_RUN_DIR` (post-T14b). G6 has its own per-test SKIP gate at the body top checking registry parent row existence. All 12 V4+G4-G7 tests continue to PASS post-mv.
 
-This satisfies CLAUDE.md HARD CONSTRAINT "NEVER commit code that doesn't pass existing tests" across BOTH Task 14b commit boundary AND Task 14c ratify packet commit boundary.
+This satisfies CLAUDE.md HARD CONSTRAINT "NEVER commit code that doesn't pass existing tests" across THREE commit boundaries: (1) Task 13 RED commit (10 SKIPPED + 2 PASSED + 0 FAILED + 0 ERRORS); (2) Task 14b commit (post-mv: 12 PASSED); (3) Task 14c ratify packet commit (post-mv: 12 PASSED). No module-load `pytest.skip()` invocation (no `allow_module_level=True` wart).
 
-The 3 path-independent contract tests (`test_v4_drift_stop_condition_blocks_seal_on_breach` (hybrid — reads both ACTIVE + ARCHIVE post-fire), `test_g7_archive_idempotency_refuses_existing_target`, `test_g7_archive_refuses_cross_filesystem_attempt`) test contracts that hold regardless of disk state (path-independent: drift-stop uses synthetic injection + tmp_path; G7 refuse + cross-FS use tmp_path + monkeypatch).
+The 2 path-independent contract tests (`test_g7_archive_idempotency_refuses_existing_target`, `test_g7_archive_refuses_cross_filesystem_attempt`) test contracts that hold regardless of disk state (path-independent: G7 refuse + cross-FS use tmp_path + monkeypatch). The drift-stop test (`test_v4_drift_stop_condition_blocks_seal_on_breach`) takes the `active_run_dir` fixture so it SKIPs pre-fire alongside the other fire-state tests; per H2-Advisor PFR R2 ADOPT v3 (Option A docstring reframing) its substantive value is in the error-message-format contract, not exercising the production ε-comparison machinery (covered by the other V4 tests).
 
 ## Next register-event (#N+19c) — Phase 3 ratify ONLY
 
@@ -1879,7 +2123,7 @@ Phase 4 sub-plan drafting is NOT a sub-option of #N+19c; it requires its own reg
 
 | Path | Type | Purpose |
 |---|---|---|
-| `tests/test_b_c_narrow_v4_reproducibility.py` | Python test | 12 V4+G4-G7 test methods (5 N=2 fixture spec §6.4 + 2 BLOCKING-5 carry G6+G7 + 4 all-39 per CB3 ADOPT v2 + 1 cross-FS per AM1 ADOPT v2; path-adaptive via _resolve_active_run_dir per CB2 ADOPT v2) |
+| `tests/test_b_c_narrow_v4_reproducibility.py` | Python test | 12 V4+G4-G7 test methods (5 N=2 fixture spec §6.4 + 2 BLOCKING-5 carry G6+G7 + 4 all-39 per CB3 ADOPT v2 + 1 cross-FS per AM1 ADOPT v2; per-test `active_run_dir` fixture per CB2-R2-B1 PFR R2 ADOPT v3 supersedes v2 module-load `_resolve_active_run_dir` pattern; G4 all-39 4-subcheck expansion per CB3-R2-H1; G6 cohort-field expansion per G6-Cohort-R2-M3) |
 | `tests/fixtures/b_c_narrow_archived_baseline.json` | JSON fixture | N=2 candidates frozen snapshot from archived original (sampled lexicographically smallest) |
 | `docs/superpowers/phase-3-impl-results/phase-3-ratify-summary.md` | Markdown | This file — comprehensive Phase 3 ratify packet |
 | `data/phase2c_evaluation_gate/phase4_forward_2026_15bps_v1/` (gitignored) | Data | Canonical post-T14b: 39 candidate dirs + per-bar parquet + aggregate |
@@ -1904,10 +2148,11 @@ Phase 3 deliverables (all GREEN):
 - T14 V4 gate: 12/12 tests PASSED (ε=1e-6 N=2 fixture + all-39 V4 per CB3
   ADOPT v2 + G4-G7 + registry tri-way per CH4 ADOPT v2 + cross-FS per AM1
   ADOPT v2)
-- T14b mv: canonical path repopulated with recovered content (per CB2 ADOPT
-  v2 path-adaptive design, all 12 V4 tests PASS post-mv via
-  _resolve_active_run_dir → CANONICAL_RUN_DIR)
-- Full suite zero-regression (2372 / 0 / 2 xfailed)
+- T14b mv: canonical path repopulated with recovered content (per CB2-R2-B1 PFR
+  R2 ADOPT v3 per-test fixture refactor, all 12 V4 tests PASS post-mv via
+  `active_run_dir` fixture → CANONICAL_RUN_DIR)
+- Full suite zero-regression (2374 / 0 / 2 xfailed; baseline 2362 + 12 new per
+  2360-Stale-L5 PFR R2 ADOPT v3)
 
 T14b evidence (rolled in per AL1 PFR R1 ADOPT v2 default — Step 14b.3 empty
 commit SKIPPED unless Charlie #N+19b explicitly requested):
@@ -1974,7 +2219,7 @@ The following are NOT in Phase 3 scope and require SEPARATE Charlie register-eve
 
 2. **Architecture B errata supplement for spec §5 T12 supersession** (sub-decision (i) carry): NAMED-eligible at Phase 4 SEAL bundle drafting. Spec line 286 byte-identical preserved per Architecture B sealed-content invariance at strictest reading; supersession applied inline via producer W3 + `--enable-b-c-narrow-recovery` flag (already landed at Phase 2 SEAL); spec amend / errata supplement deferred to Phase 4 SEAL bundle.
 
-3. **V4 test post-mv refactor**: SUPERSEDED by CB2 PFR R1 ADOPT v2 path-adaptive design. Tests now resolve `ACTIVE_RUN_DIR` at module-load via `_resolve_active_run_dir()` (sibling OR canonical), so they PASS in both pre-T14b and post-T14b states. No further refactor needed; no Phase 4 SEAL bundle deliverable.
+3. **V4 test post-mv refactor**: SUPERSEDED by CB2-R2-B1 PFR R2 ADOPT v3 per-test `active_run_dir` fixture pattern (which itself superseded CB2 PFR R1 ADOPT v2 module-load `_resolve_active_run_dir()` pattern). Tests now resolve via per-test fixture (sibling OR canonical) + G6 per-test SKIP gate, so they PASS in both pre-T14b and post-T14b states. No further refactor needed; no Phase 4 SEAL bundle deliverable.
 
 4. **G4 + G5 N=39 full coverage**: NO LONGER DEFERRED per CB3 PFR R1 ADOPT v2. N=39 full-coverage V4 gate landed in v2 (4 new tests + 1 cross-FS test = 12 total V4+G4-G7 methods). Spec §4.2 + §4.3 per-candidate coverage requirement now satisfied at Phase 3. N=2 fixture retained for schema-version drift catch on JSON dict layer (which raw-CSV all-39 comparison would miss).
 
@@ -2001,4 +2246,4 @@ If V4 FAILS at Step 14.5 (any of 12 tests per v2 expansion): STOP and surface SE
 
 If full suite shows regressions outside `test_b_c_narrow_v4_reproducibility.py` at Step 14.5: STOP and surface — regressions indicate hidden Phase 0/2 SEAL state issue.
 
-End of Plan v3-Phase3 v2 (PFR R1 ADOPT 17 inline + 3 PUSHBACK adjudications applied per Charlie register #N+19 Path 1 2026-05-28).
+End of Plan v3-Phase3 v3 (PFR R1 ADOPT 17 inline + 3 PUSHBACK adjudications applied per Charlie register #N+19 Path 1 2026-05-28 + PFR R2 ADOPT 14 inline + 3 sub-decision adjudications applied per Charlie register #N+19' Path 1 2026-05-28).
