@@ -96,7 +96,7 @@ Convergence summary:
 - engine_commit silently skipped (Codex R3 MEDIUM-1 + Advisor R3 HIGH-1 CONVERGENT; adjudicated HIGH for V4 anchor load-bearing). engine_commit lives in `notes` JSON (scripts:1347-1350), not direct column; v3 M3 15-field iteration silently skipped via `if field_name in parent_keys: continue`. Parse notes JSON + assert explicitly.
 - AH2-R3 Advisor-only: G4 `.notna()` vs engine `np.isfinite` asymmetry — engine uses np.isfinite (NaN + ±inf filter at engine.py:444-446); .notna only filters NaN. Methodologically bit-equivalent for BTC pct_change but engine-aligned via np.isfinite.
 - AM1-R3 MEDIUM Advisor-only: Sub-1 PUSHBACK candidate REOPENED. Producer scheme IS known: `f"{run_id}_{hh}"` at scripts:582. Equality lookup is safer than LIKE substring (no spoofable substring collisions). Sub-1 ACCEPT preserve at PFR R2 was conservative for v3; Advisor R3 reopens with new evidence — adjudicated ACCEPT-NEW (replace LIKE substring with equality at both G4 sites).
-- Sub-2 R3 MEDIUM Codex-only: parent-row NULL direction (5 strategy-specific fields: sharpe_ratio, max_drawdown, total_return, total_trades, win_rate) — per spec §3.2.3 line 118 + producer scripts:1373-1381 (producer explicitly sets NULL at parent). Sub-2 R2 ACCEPT-WITH-EXTENSION claimed coverage via M3+M4 but neither addressed this direction.
+- Sub-2 R3 MEDIUM Codex-only: parent-row NULL direction (5 strategy-specific fields: sharpe_ratio, max_drawdown, total_return, total_trades, win_rate) — per spec §3.2.3 line 118 + producer scripts:1373-1381 (producer explicitly sets NULL at parent). Sub-2 R2 ACCEPT-WITH-EXTENSION claimed coverage via M3+M4 but neither addressed this direction. **SUPERSEDED at v5 by Sub-2-R4-B1: 5 fields → 8 fields per empirical verification of producer + spec line 118; see PFR R4 ADOPT section.**
 - AM3-R3 MEDIUM Advisor-only: AL5 `summary.get('lifecycle_state') == 'holdout_error'` silently treats missing key as None (no error); added explicit None-check.
 - AM2-R3 MEDIUM Advisor-only: drift-stop test scope-only docstring note; scope = `holdout_sharpe` only (semantically = sharpe_ratio per metric_map). NAMED-eligible extension at Phase 4 if metric set widens.
 - 5 LOW (CL1-R3 stale v2 commit-message refs + AL1-R3 M5 description correction (endswith → prefix-match) + AL2-R3 engine_commit 2-stage defensive comment + AL3-R3 wall-clock estimate (10-15s → ~10s per spec §7 R6) + AL4-R3 defensive duplicate-hash CSV check).
@@ -110,7 +110,7 @@ Convergence summary:
 | AH1-R3 | HIGH | Codex+Advisor CONVERGENT (elevated) | Added explicit engine_commit assertion via notes JSON parse: `notes_payload = json.loads(parent_row['notes'])` + `assert notes_payload.get('engine_commit') == 'eb1c87f'`. v3 M3 15-field iteration silently `continue`d at `if field_name in parent_keys` because engine_commit is in `notes` JSON (scripts:1347-1350), not direct column. CORRECTED_WF_ENGINE_COMMIT = "eb1c87f" is the V4 reproducibility anchor — MUST match. Codex R3 MEDIUM-1 + Advisor R3 HIGH-1 CONVERGENT; adjudicated HIGH for V4 anchor load-bearing. |
 | AH2-R3 | HIGH | Advisor | Replaced `df["return"].notna().sum()` with `np.isfinite(df["return"]).sum()` at ALL G4 sites (N=2 + all-39). Engine compute_moments uses np.isfinite (NaN + ±inf filter at engine.py:444-446); .notna only filters NaN. For BTC pct_change essentially unreachable difference (no divide-by-zero), but methodologically bit-equivalent to engine semantics. numpy already imported (plan:408). |
 | AM1-R3 | MEDIUM | Advisor (Sub-1 REOPEN) | Replaced LIKE substring SQL with equality lookup at BOTH G4 sites (N=2 plan:808-812 + all-39 plan:915-920). Producer scheme IS known: `f"{run_id}_{hh}"` at scripts:582. Equality is safer + tighter (no spoofable substring collisions). Sub-1 ACCEPT preserve at PFR R2 was conservative for v3; Advisor R3 M1 reopens with new producer evidence → ACCEPT-NEW at v4. |
-| Sub-2 R3 | MEDIUM | Codex | Added NULL-at-parent direction loop to G6 body (5 strategy-specific fields: sharpe_ratio, max_drawdown, total_return, total_trades, win_rate). Per spec §3.2.3 line 118 + producer scripts:1373-1381 (producer explicitly sets NULL at parent). Sub-2 R2 ACCEPT-WITH-EXTENSION claimed coverage via M3+M4 but neither addressed this direction. |
+| Sub-2 R3 | MEDIUM | Codex | Added NULL-at-parent direction loop to G6 body (5 strategy-specific fields: sharpe_ratio, max_drawdown, total_return, total_trades, win_rate). Per spec §3.2.3 line 118 + producer scripts:1373-1381 (producer explicitly sets NULL at parent). Sub-2 R2 ACCEPT-WITH-EXTENSION claimed coverage via M3+M4 but neither addressed this direction. **SUPERSEDED at v5 by Sub-2-R4-B1 below — 5 → 8 fields per empirical verification.** |
 | AM3-R3 | MEDIUM | Advisor | Added explicit None-check for lifecycle_state in Step 14.2(g) AL5 holdout_error verification. v3 used `summary.get('lifecycle_state') == 'holdout_error'` which silently treats missing key as None == 'holdout_error' = False (silent pass — masks producer error-encoding drift). Now: assert lifecycle is not None before comparison. |
 | AM2-R3 | MEDIUM | Advisor | Added drift-stop test scope-only docstring note: scope = `holdout_sharpe` only (semantically = sharpe_ratio per metric_map at plan:675). NAMED-eligible-for-extension at Phase 4 SEAL bundle if V4 metric set widens (e.g., total_trades drift via int-rounding contract). |
 | CL1-R3 | LOW | Codex | Updated 5 "Per Plan v3-Phase3 v2/v3" → "v4" stale references in commit-message templates (plan:1528 Task 13 + plan:1888 Task 14 + plan:2102 Task 14b + plan:2290 Task 14c + End-of-plan marker line 2396 + test file docstring line 360 + ratify packet Plan version line 2159). Historical inline references in commit message body kept (referencing actual PFR R1/R2 v2/v3 changes). |
@@ -123,6 +123,24 @@ Total v4 amendments: 13 ADOPT inline + 1 Sub-1 PUSHBACK reopen-and-ACCEPT.
 Test count v3 → v4: 12 unchanged (all v4 fixes within existing test bodies + docstring/assertion polish; no new test methods).
 
 Cycle convergence: ADOPT 17 → 14 → 13; BLOCKING count stable at 2-3 per round (CB1+CB2+CB3 R1 → CB2-R2-B1 + G4-R2-B2 R2 → CB1-R3 + CB2-R3 R3). Codex reverse-direction continues healthy (R3 caught both BLOCKINGs that Advisor missed); Advisor reverse-direction continues healthy (R3 caught Sub-1 PUSHBACK reopen + AH2 engine asymmetry + AM3 lifecycle silent-pass that Codex missed). 1 cross-leg CONVERGENT (engine_commit silent-skip), 12 single-leg catches.
+
+---
+
+## PFR R4 ADOPT findings applied (Plan v5 amendments)
+
+Per Charlie register #N+19''' (Path 1: standard AMEND + PFR R5) 2026-05-28. PFR R4 fired as B2 2-leg dispatch on v4 (commit `72641aa`); **DIVERGENT verdicts**: Codex returned APPROVE-WITH-FINDINGS (0 BLOCKING + 0 HIGH + 0 MEDIUM + 1 LOW + 4 NOTES + saturation observation "R4 is at LOW-only / notes level"); Advisor returned NOT-APPROVE (1 BLOCKING + 0 HIGH + 0 MEDIUM + 0 LOW).
+
+**Convergence**: same root issue (Sub-2 NULL field list mismatch) at divergent severity. **Codex LOW underestimated** — checked only scripts:1373-1377 (4 fields visible) and flagged win_rate wording. **Advisor BLOCKING SOUND** — checked full scripts:1373-1387 (8 fields explicit) and flagged 4 missing fields + 1 spurious field. **Orchestrator empirical verification** at HEAD `72641aa`: producer scripts:1373-1387 + spec §3.2.3 line 118 BOTH enumerate 8 fields verbatim; plan v4 5-field list (incl. wrong `win_rate`, missing 4 LC-b semantic fields) is substantively wrong. Advisor SOUND; Codex LOW underestimate adjudicated up to BLOCKING.
+
+| # | Severity | Origin | Fix in v5 |
+|---|---|---|---|
+| Sub-2-R4-B1 | BLOCKING (adjudicated from Codex LOW + Advisor BLOCKING DIVERGENT) | Advisor R4 BLOCKING (CONVERGENT root with Codex R4 LOW; severity-divergent at field-count gap) | G6 `expected_parent_null_fields` corrected from 5 fields (incl. wrong `win_rate`) → 8 fields per spec §3.2.3 line 118 + producer scripts:1373-1381 verbatim. 4 metric (sharpe_ratio + max_drawdown + total_return + total_trades) + 4 LC-b semantic (hypothesis_hash + returns_per_bar_path + returns_per_bar_sha256 + T_obs). All cross-references in plan body + ADOPT change-log + docstring + comment markers updated to reflect 8-field list. Sub-2 R3 row in PFR R2 ADOPT table marked SUPERSEDED. |
+
+Total v5 amendments: 1 ADOPT inline (substantive G6 invariant correction) + cross-reference cleanups in change-log / docstrings / comment markers.
+
+Test count v4 → v5: 12 unchanged (G6 body assertion list expanded from 5 → 8 fields; no new test methods).
+
+**Cycle convergence (updated v5)**: ADOPT 17 → 14 → 13 → 2. R4 substantive ADOPT count is 1 (Sub-2-R4-B1 + 1 LOW absorbed); plan is converging strongly. Codex saturation signal at R4 is correct in trajectory direction but underestimated 1 BLOCKING via partial-line empirical reading. Cycle approaching SEAL-eve readiness pending PFR R5 confirmation that both legs return at LOW-floor.
 
 ---
 
@@ -1154,20 +1172,20 @@ class TestG6RegistryParentChildIntegrity:
             run_type='batch_summary'; cohort-level metadata (14 direct columns
             per spec §3.2.3 line 117 + engine_commit via notes JSON per AH1-R3)
             non-null; batch_id == BCNARROW_PARENT_RUN_ID per G6-BatchID-R2-M4;
-            5 strategy-specific fields NULL at parent per Sub-2 R3 + spec §3.2.3
-            line 118 + producer scripts:1373-1381.
+            **8 per-candidate fields NULL at parent** per Sub-2-R4-B1 (v5 CORRECTED
+            from v4's 5-field list per empirical verification of producer
+            scripts:1373-1381 + spec §3.2.3 line 118).
           - Children rows: 39 rows with parent_run_id = parent + run_type =
             'regime_holdout'; per-candidate metadata (hypothesis_hash + sharpe_ratio
             + max_drawdown + total_return + total_trades + regime_holdout_passed)
             non-null.
           - Note: per-candidate fields like returns_per_bar_path /
             returns_per_bar_sha256 / T_obs are persisted at children (per Phase 0
-            LineageContext semantics), NOT parent-only. NULL-at-children assertion
-            direction is structurally unimplementable for the current schema and
-            removed per G6-Docstring-R2-L2 + Sub-2 ACCEPT-WITH-EXTENSION (the
-            distinct NULL-at-parent direction added per Sub-2 R3 PFR R3 ADOPT v4
-            below covers the 5 strategy-specific fields the producer explicitly
-            sets NULL at parent).
+            LineageContext semantics) AND ALSO explicitly NULL'd at parent by
+            producer scripts:1378-1381 (per spec §3.2.3 line 118 cohort/per-candidate
+            metadata segregation). NULL-at-children assertion direction is structurally
+            unimplementable; NULL-at-parent direction IS implemented at producer +
+            covered by Sub-2-R4-B1 v5 (8 fields: 4 metric + 4 LC-b semantic).
 
         Spec §4.3 G6: SELECT COUNT(*) FROM runs WHERE
         parent_run_id='phase4_forward_2026_15bps_v1_b_c_narrow' AND
@@ -1208,12 +1226,18 @@ class TestG6RegistryParentChildIntegrity:
         explicitly per Advisor R3 H1 (CONVERGENT with Codex R3 M1 elevated to
         HIGH for V4 anchor load-bearing).
 
-        Sub-2 R3 PFR R3 ADOPT v4: parent-row NULL direction added (5 strategy-
-        specific fields: sharpe_ratio, max_drawdown, total_return, total_trades,
-        win_rate). Per spec §3.2.3 line 118 + producer scripts:1373-1381
-        (producer explicitly sets these to NULL at parent). Sub-2 R2
-        ACCEPT-WITH-EXTENSION claimed coverage via M3+M4 but neither addressed
-        this direction (Codex R3 MEDIUM-2).
+        Sub-2-R4-B1 PFR R4 ADOPT v5 (SUPERSEDES Sub-2 R3 v4): parent-row NULL
+        direction CORRECTED to 8 fields per producer scripts:1373-1381 + spec
+        §3.2.3 line 118 verbatim. v4 Sub-2 R3 erroneously listed 5 fields incl.
+        `win_rate` (NOT producer-NULL'd; NOT in spec) and MISSED 4 LC-b semantic
+        fields (hypothesis_hash + returns_per_bar_path + returns_per_bar_sha256
+        + T_obs). Advisor PFR R4 BLOCKING flagged via empirical reading of full
+        scripts:1373-1387 (Codex saw only :1373-1377; missed :1378-1381 4 fields).
+        Orchestrator empirical verification confirmed Advisor SOUND; Codex LOW
+        underestimate corrected post-divergent-adjudication. 8 fields = 4 metric
+        (sharpe_ratio + max_drawdown + total_return + total_trades) + 4 LC-b
+        semantic (hypothesis_hash + returns_per_bar_path + returns_per_bar_sha256
+        + T_obs).
 
         G6-Batched-R2-L3 PFR R2 ADOPT v3 (style decision): kept per-field loop
         rather than batched SELECT for clearer per-field error messages on
@@ -1328,26 +1352,37 @@ class TestG6RegistryParentChildIntegrity:
                     f"G6-BatchID-R2-M4 parent.batch_id expected "
                     f"{BCNARROW_PARENT_RUN_ID!r}, got {parent_row['batch_id']!r}"
                 )
-            # Sub-2 R3 PFR R3 ADOPT v4: parent-row NULL direction (5 strategy-
-            # specific fields). Per spec §3.2.3 line 118 + producer
-            # scripts:1373-1381 (producer explicitly sets these NULL at parent).
-            # Sub-2 R2 ACCEPT-WITH-EXTENSION claimed coverage via M3+M4 but
-            # neither addressed this direction (Codex R3 MEDIUM-2).
+            # Sub-2-R4-B1 PFR R4 ADOPT v5: parent-row NULL direction CORRECTED
+            # to 8 fields per producer scripts:1373-1381 + spec §3.2.3 line 118
+            # verbatim. v3/v4 Sub-2 R3 ADOPT erroneously listed 5 fields incl.
+            # `win_rate` (NOT in producer's explicit NULL list NOR in spec) and
+            # MISSED 4 LC-b semantic fields (hypothesis_hash + returns_per_bar_path
+            # + returns_per_bar_sha256 + T_obs). Advisor PFR R4 BLOCKING flagged
+            # via empirical reading of scripts:1373-1387 (Codex R4 saw only
+            # scripts:1373-1377 = 4 fields visible there; missed scripts:1378-1381).
+            # Orchestrator empirical verification at HEAD `72641aa` confirmed
+            # Advisor's reading SOUND; Codex's LOW underestimate corrected
+            # post-divergent-adjudication.
             expected_parent_null_fields = (
+                # Per-candidate metric fields (4) per scripts:1373-1377:
                 "sharpe_ratio",
                 "max_drawdown",
                 "total_return",
                 "total_trades",
-                "win_rate",
+                # LC-b semantic / identity fields (4) per scripts:1378-1381:
+                "hypothesis_hash",
+                "returns_per_bar_path",
+                "returns_per_bar_sha256",
+                "T_obs",
             )
             for field_name in expected_parent_null_fields:
                 if field_name not in parent_keys:
                     continue  # tolerate column-existence variance
                 assert parent_row[field_name] is None, (
-                    f"Sub-2 R3 G6: parent_row[{field_name!r}] expected NULL "
-                    f"(strategy-specific field at parent), got "
+                    f"Sub-2-R4-B1 G6: parent_row[{field_name!r}] expected NULL "
+                    f"(per-candidate field at parent), got "
                     f"{parent_row[field_name]!r}. Producer writes NULL at "
-                    f"scripts:1373-1381."
+                    f"scripts:1373-1381 (8 fields total)."
                 )
             # Child rows
             cur.execute(
