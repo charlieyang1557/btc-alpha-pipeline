@@ -310,7 +310,7 @@ Per Charlie register #N+11 (Path 1: full v10 amend + dispatch SEAL-eve R3) 2026-
 | CR-SE-R2-H1 | HIGH | Codex SEAL-eve R2 HIGH-1 | NEW Test 26 — `test_w1_reorder_force_rerun_existing_without_force_leaves_registry_intact`. Main() entrypoint regression test for CR-SE-H1 W1a/W1b state-inconsistency window fix: setup pre-existing parent + child rows + non-empty `run_dir` + `--force-rerun-existing` WITHOUT `--force`; invoke `main()`; assert `main()` returns overwrite-protection rc != 0; assert registry rows REMAIN (NOT deleted by W1b); assert `_archive_canonical_pre_flight` was NOT called. Locks the v9 reorder invariant against future regression. |
 | CR-SE-R2-M1 | MEDIUM | Codex SEAL-eve R2 LOW-1 elevated + Advisor SEAL-eve R2 MEDIUM-1 (CONVERGENT) | Inline-apply LR-SE-2 at Test 16 docstring (line 1470-1472) — rewrite to state the test directly exercises `_finalize_batch_registry_preflight_or_raise`; no main() / archive ordering claim (since Test 26 now covers the ordering). |
 | CR-SE-R2-M2 | MEDIUM | Codex SEAL-eve R2 LOW-2 elevated + Advisor SEAL-eve R2 MEDIUM-1 (CONVERGENT) | Inline-apply LR-SE-3 at Test 21 signature (line 1664) — remove `btc_parquet_path` from fixture signature (engine resolves canonical via `_resolve_canonical_parquet_path()`). |
-| AR-SE-R2-M3 | MEDIUM | Advisor SEAL-eve R2 MEDIUM-2 (NEW DIMENSION) | Add same-FS pre-check at `_archive_canonical_pre_flight` per option (a): `if Path(canonical_path).stat().st_dev != Path(archive_root).resolve().parent.stat().st_dev: raise NotImplementedError(...)`. Defensive against cross-FS shutil.move partial-move (atomic only on same-FS via os.rename; falls back to copy+delete on cross-FS which is NOT atomic). For this project's `data/phase2c_evaluation_gate/` and sibling `data/phase2c_evaluation_gate/archive/` → same FS by construction (sibling dirs under common parent); but defensive check guards against operator misconfiguring `--output-root` to different mount. |
+| AR-SE-R2-M3 | MEDIUM | Advisor SEAL-eve R2 MEDIUM-2 (NEW DIMENSION) | Add same-FS pre-check at `_archive_canonical_pre_flight`: `if canonical_path.stat().st_dev != archive_root.resolve().stat().st_dev: raise NotImplementedError(...)`. Defensive against cross-FS shutil.move partial-move (atomic only on same-FS via os.rename; falls back to copy+delete on cross-FS which is NOT atomic). v11 CR-SE-R3-M2 reconciliation: text uses `archive_root.resolve().stat()` (NOT `.parent.stat()`) per implementation — source-vs-destination FS check is what shutil.move actually needs (destination = archive_root + archive_basename lives WITHIN archive_root); checking parent would be semantically less correct. For this project's `data/phase2c_evaluation_gate/` and sibling `data/phase2c_evaluation_gate/archive/` → same FS by construction (sibling dirs under common parent); defensive check guards against operator misconfiguring `--output-root` to different mount. |
 | AR-SE-R2-M4 | MEDIUM | Advisor SEAL-eve R2 MEDIUM-3 (NEW DIMENSION) | Extract `BCNARROW_CANONICAL_BASENAME = "phase4_forward_2026_15bps_v1"` as 6th module constant near other BCNARROW_* constants at scripts:117. Use at W3 producer site (currently hardcoded literal at plan:3045). Test fixtures may retain inline literals (test-fixture-local acceptable). |
 | AR-SE-R2-L1 | LOW | Advisor SEAL-eve R2 LOW-1 (NEW DIMENSION) | Identity guard doesn't validate `--candidate-hashes`. NAMED-eligible-for-Phase-3-fire-plan-operator-runbook (defer per Advisor's option c). Out-of-scope for v10 plan amend; document in Phase 3 plan as operator-discipline requirement. |
 | AR-SE-R2-L2 | LOW | Advisor SEAL-eve R2 LOW-2 | Replace W1a ternary-expression-as-statement with explicit `if/else`. Current `_finalize_batch_registry_preflight_or_raise(...) if not args.force_rerun_existing else None` → standard `if not args.force_rerun_existing: _finalize_batch_registry_preflight_or_raise(...)` block. Readability fix. |
@@ -322,6 +322,41 @@ Per Charlie register #N+11 (Path 1: full v10 amend + dispatch SEAL-eve R3) 2026-
 **Test count v9 → v10: 25 → 26 (+ NEW Test 26 for CR-SE-R2-H1 W1 reorder regression).**
 
 **Cycle status**: PFR R1 17 → R2 9 → R3 8 → R4 7 → R5 5 → R6 5 → R7 5 → SEAL-eve R1 10 → SEAL-eve R2 9 (1 BLOCKING + 1 HIGH + 4 MEDIUM + 4 LOW). Cycle invariant CONFIRMED: every adversarial round surfaces new dimensions. Charlie Path 1 (this register) explicitly continues — additional SEAL-eve R3 verification round.
+
+---
+
+## SEAL-eve R3 ADOPT findings applied (Plan v11 SEAL-CANDIDATE amendments — Path α termination)
+
+Per Charlie register #N+12 (Path 2: AMEND-THEN-SEAL-EVE-DIRECT-VIA-PATH-α-TERMINATION — apply 6 R3 ADOPT inline + commit v11 as SEAL-candidate + skip SEAL-eve R4 + proceed direct to Plan SEAL ratify) 2026-05-27. SEAL-eve R3 fired as Rule 2 adversarial B2 2-leg dispatch on v10 (`99d195d`); **Codex returned NOT-APPROVE-V11 with LOWEST severity in entire cycle (0 BLOCKING + 0 HIGH + 1 MEDIUM + 2 LOW)**; Advisor returned NOT-APPROVE-V11 with same finding at tier-divergent BLOCKING framing (1 BLOCKING + 1 HIGH + 3 MEDIUM + 2 LOW; BLOCKING based on 8th cycle CR3-B1 meta-lesson recurrence framing, not runtime severity).
+
+**CONVERGENT on AR-SE-R2-M4 incompleteness** at MEDIUM-equivalent severity (Codex MEDIUM tier; Advisor BLOCKING tier per cycle-pattern framing). Adjudicated MEDIUM per Codex tier matching trajectory of declining severity (R6=0 BLOCKING → R7=0 → SE-R3=0 from Codex framing).
+
+**Cycle termination decision per Charlie Path 2**: 10 adversarial rounds + monotonically-declining severity + Codex first-ever 0-BLOCKING/0-HIGH at R3 + Advisor explicit senior-quant recommendation for Path α termination + 10-round empirical cycle-invariant pattern (every round finds new dimensions; structural failure mode that additional adversarial rounds cannot close — only fundamentally re-organizing plan structure would) → Charlie sole-authority decides termination. Path 2 inline-finalize matches R6.1 §2.2 narrow patch SEAL + B-C-extended Scope-B SEAL precedent (Path α inline-fix-and-ratify at cycle saturation).
+
+**Both legs RE-VERIFIED PUSHBACK on Advisor R1 HIGH-5 SOUND at SEAL-eve R3** (11th re-verification across 10 rounds).
+
+| # | Severity (adjudicated) | Origin | Fix in v11 |
+|---|---|---|---|
+| CR-SE-R3-M1 | MEDIUM | Convergent: Codex SE-R3 MEDIUM-1 + Advisor SE-R3 BLOCKING-1 (tier adjudicated MEDIUM per Codex framing — 1-line code fix) | Inline-rewrite W3 producer site at plan:3191 to USE `BCNARROW_CANONICAL_BASENAME` constant (defined at plan:2374 per AR-SE-R2-M4) instead of hardcoded literal `"phase4_forward_2026_15bps_v1"`. Closes AR-SE-R2-M4 consumer-site rewrite that v10 missed (8th cycle CR3-B1 template-vs-inline meta-lesson recurrence at producer code body layer). |
+| CR-SE-R3-M2 | MEDIUM | Advisor SE-R3 HIGH-1 (downgraded MEDIUM per impl-correct-but-undocumented) | Reconcile AR-SE-R2-M3 cross-FS guard text vs implementation. Implementation uses `archive_root.resolve().stat().st_dev` (without `.parent`) which is MORE CORRECT for cross-FS shutil.move concern (source-vs-destination); change-log row prescription used `.parent` which would check parent-vs-canonical. Update plan:313 change-log row text to match implementation; add inline rationale "v11 prefers archive_root.stat() over archive_root.parent.stat() because destination = archive_root + archive_basename lives within archive_root; source-destination same-FS check is what shutil.move actually needs". |
+| CR-SE-R3-M3 | MEDIUM | Codex SE-R3 LOW-2 (elevated per cold-implementer-trap potential) | Align W1a table row wording with v10 code. Table says W1a calls preflight "regardless of operator's actual flag value" but code intentionally skips W1a when `--force-rerun-existing` set. Update W table row to: "W1a (NEW per CR-SE-H1 v9; AR-SE-R2-L2 v10 if/else): Idempotency READ-ONLY check ONLY when NOT --force-rerun-existing. When operator passes --force-rerun-existing, W1a is SKIPPED entirely — operator has explicitly authorized DELETE; W1b handles it after _check_overwrite_protection. When not --force-rerun-existing, W1a queries (read-only) and raises if parent exists." Eliminates table-vs-code contradiction that could cause cold-implementer to break the force-rerun path Test 26 protects. |
+| CR-SE-R3-L1 | LOW | Advisor SE-R3 MEDIUM-1 (downgraded LOW — defensive, not active bug) | Add docstring note to Test 26 monkeypatch on `DEFAULT_DB_PATH` (plan:2137): "Defensive monkeypatch — current W1a logic skips preflight DB query under `--force-rerun-existing`, so this patch is currently unused. Retained against future W1a behavior change that DOES query DB to ensure hermetic isolation." |
+| CR-SE-R3-L2 | LOW | Advisor SE-R3 MEDIUM-2 (downgraded LOW — text-only; deletion marker comment) | Replace literal line-cite "(lines ~2703-2779)" in CR-SE-R2-B1 deletion marker (plan:2985) with grep-anchor phrasing: "the INSIDE-try block above (grep-anchor: `_bc_narrow_fields = None  # candidate failure`)". 9th cycle line-cite whack-a-mole closure at deletion-marker layer per Codex R6 systemic discipline proposal. |
+| CR-SE-R3-L3 | LOW | Codex SE-R3 LOW-1 + Advisor SE-R3 LOW-1 (CONVERGENT — multi-site stale 25-count drift + commit msg version-string stale) | Multi-site stale-count cleanup: Step 9.4 commit headline "25 failing producer-edit tests" → "26 failing producer-edit tests"; commit msg version-string "v9 post-SEAL-eve R1 ADOPT" → "v10 post-SEAL-eve R2 ADOPT" (then v11 implicitly post-SEAL-eve R3 inline-finalize). Other stale 25/2353 sites bumped to 26/2354 per Codex enumeration. |
+
+**Total v11 amendments: 6 ADOPT inline (3 MEDIUM + 3 LOW; NO BLOCKING/HIGH per Codex tier framing).**
+
+**Test count v10 → v11: 26 unchanged (all v11 fixes textual/citation/code-style polish).**
+
+**Cycle status (TERMINATED at v11 per Charlie Path 2 register)**: PFR R1 17 → R2 9 → R3 8 → R4 7 → R5 5 → R6 5 → R7 5 → SEAL-eve R1 10 → SEAL-eve R2 9 → SEAL-eve R3 5 (Codex tier; adjudicated). v11 = **SEAL-CANDIDATE**.
+
+**Next register-event per Charlie Path 2**: Plan v3-Phase2 SEAL ratify (no SEAL-eve R4) → Charlie EXEC-SUBAGENT register for Phase 2 implementation (subagent-driven-development per Phase 0 precedent: dispatch fresh subagent per task T9 → T10 → T11 → T12 with two-stage review OR orchestrator-manual execution).
+
+**Meta-lessons codified across 10-round cycle (NAMED-eligible-for-feedback-memory-codification at separate Charlie register-events)**:
+1. "Saturation-expectation pressure ≠ saturation evidence" (per R5 lesson + 5 wrong predictions across R5/R6/R7/SEAL-eve R1/R2)
+2. "Re-grep-at-adoption-time discipline; use grep-anchor cites not literal line numbers when amend cycles cause line-shifts" (per R4/R5/R6/R7/SE-R3 recurring stale-cite pattern)
+3. "When sub-plan cumulative ADOPT trail exceeds ~5 rounds OR plan exceeds ~3000 lines, consider Path α inline-finalize termination over additional adversarial rigor" (per Advisor SE-R3 senior-quant senior recommendation; this Phase 2 cycle terminated at 10 rounds + 3618+ lines)
+4. "Add new symbol (constant, helper, function) WITH inline consumer-site rewrite in same edit" (per 8-cycle CR3-B1 template-vs-inline recurrence — final closure at CR-SE-R3-M1 v11)
 
 ---
 
@@ -2134,6 +2169,12 @@ docstring note per M2:
         run_dir.mkdir()
         (run_dir / "partial_state.json").write_text('{"prior_failed_run": true}')
         db_path = tmp_path / "test_w1_reorder.db"
+        # CR-SE-R3-L1 SEAL-eve R3 ADOPT v11 DEFENSIVE NOTE: this monkeypatch on
+        # DEFAULT_DB_PATH is currently UNUSED in this test's actual flow — W1a's
+        # `if not args.force_rerun_existing` evaluates False under --force-rerun-existing,
+        # so W1a is SKIPPED entirely; _check_overwrite_protection aborts before W1b
+        # could query DB. The monkeypatch is retained DEFENSIVELY against future
+        # W1a behavior change that DOES query DB (ensures hermetic isolation if so).
         monkeypatch.setattr("scripts.run_phase2c_evaluation_gate.DEFAULT_DB_PATH", db_path)
 
         # Pre-populate registry with parent + child rows (simulating prior partial fire)
@@ -2245,7 +2286,7 @@ If ALL 26 tests pass at this point → SOMETHING WRONG (Task 10 already implemen
 
 ```bash
 git add tests/test_phase2c_evaluation_gate_runner.py
-git commit -m "test(b-c-narrow/phase-2): add 25 failing producer-edit tests (T9; v9 post-SEAL-eve R1 ADOPT)
+git commit -m "test(b-c-narrow/phase-2): add 26 failing producer-edit tests (T9; v11 post-SEAL-eve R3 ADOPT — SEAL-CANDIDATE)
 
 Per Plan v3-Phase2 v9 Task 9 (Charlie register chain #N+3 Path 1 + #N+4 Path 1 + #N+5 Path 1 + #N+6 Path 1 + #N+7 Path 1 + #N+8 Path 1 + #N+9 Path 2 + #N+10 Path 1).
 26 RED-phase tests = 14 v1 enumeration + 8 NEW per PFR R1 ADOPT + 2 NEW per PFR R2 ADOPT (Tests 23+24 for MR2-3/MR2-4) + 1 NEW per PFR R5 ADOPT (Test 25 for CR5-B1) + 1 NEW per SEAL-eve R2 ADOPT (Test 26 for CR-SE-R2-H1 W1 reorder regression):
@@ -2982,7 +3023,7 @@ def _evaluate_one_candidate(
 
 The remainder of `_evaluate_one_candidate` (inline JSON write at lines 550-573) is **NOT changed** — `summary` now includes B-C-narrow fields when LC-b path completed cleanly, OR omits them when candidate failed (consistent with spec R5 contract that error-path summaries have NULL metric fields).
 
-**CR-SE-R2-B1 SEAL-eve R2 ADOPT v10 deletion**: the OLD outside-try B-C-merge code block that was here in v1-v9 (added at v1; never removed when CR-SE-M1 v9 added the new INSIDE-try block above) is **INTENTIONALLY REMOVED**. The INSIDE-try block at the `try:` body above (lines ~2703-2779) is the canonical source-of-truth. Implementer must NOT re-introduce an outside-try B-C-merge block. Per CR3-B1 7th-cycle meta-lesson recurrence — when adding new code, DELETE the superseded code in the same edit; do not leave both alongside.
+**CR-SE-R2-B1 SEAL-eve R2 ADOPT v10 deletion** (CR-SE-R3-L2 SEAL-eve R3 v11 grep-anchor switch): the OLD outside-try B-C-merge code block that was here in v1-v9 (added at v1; never removed when CR-SE-M1 v9 added the new INSIDE-try block above) is **INTENTIONALLY REMOVED**. The INSIDE-try block above (grep-anchor: `_bc_narrow_fields = None  # candidate failure`) is the canonical source-of-truth. Implementer must NOT re-introduce an outside-try B-C-merge block. Per CR3-B1 7th-cycle meta-lesson recurrence — when adding new code, DELETE the superseded code in the same edit; do not leave both alongside. (v11 LR4-3 line-cite "lines ~2703-2779" was stale at v10; CR-SE-R3-L2 switched to grep-anchor phrasing.)
 
 Producer no longer imports or calls `_compute_sha256_file` (v1 used it; v2 removed per CB6 single-source discipline).
 
@@ -3075,7 +3116,7 @@ Edit `scripts/run_phase2c_evaluation_gate.py` `main()` function (lines 864-1072)
 | Wiring | When | Operation | File:line target | Side-effect type |
 |---|---|---|---|---|
 | W0 | After argparse (~line 881) + after lineage guard (~line 903) | Identity guard (`_validate_b_c_narrow_recovery_identity_or_raise`) | Insert AFTER lineage guard + AFTER `--regime-key` check at line 901, BEFORE `_load_corrected_candidates` at line 905 | READ-ONLY (raises ValueError) |
-| W1a (NEW per CR-SE-H1 v9) | After W0; BEFORE existing `_check_overwrite_protection` at line 929 | Idempotency READ-ONLY check ONLY (call `_finalize_batch_registry_preflight_or_raise(force_rerun_existing=False, ...)` regardless of operator's actual flag value — read-only refusal-detection only) | Insert after W0 | READ-ONLY |
+| W1a (NEW per CR-SE-H1 v9; CR-SE-R3-M3 v11 wording alignment) | After W0; BEFORE existing `_check_overwrite_protection` at line 929 | Idempotency READ-ONLY check ONLY **when NOT `--force-rerun-existing`**. When operator passes `--force-rerun-existing`, W1a is SKIPPED entirely — operator has explicitly authorized DELETE; W1b handles it AFTER `_check_overwrite_protection`. When NOT `--force-rerun-existing`, W1a calls `_finalize_batch_registry_preflight_or_raise(force_rerun_existing=False, ...)` (read-only) and raises if parent exists. | Insert after W0 with explicit `if not args.force_rerun_existing:` guard per AR-SE-R2-L2 v10 if/else | READ-ONLY (when invoked) |
 | (existing) | At line 929 | `_check_overwrite_protection(run_dir, args.force)` — refuses non-empty `run_dir` without `--force` | PRESERVED VERBATIM | READ-ONLY (returns 1 to abort) |
 | W1b (NEW per CR-SE-H1 v9) | After `_check_overwrite_protection` at line 929; BEFORE dry-run exit at line 933 | Idempotency DELETE if `--force-rerun-existing` (call `_finalize_batch_registry_preflight_or_raise(force_rerun_existing=True, ...)` IF `args.force_rerun_existing`) — destructive DELETE only here, AFTER both identity guard + overwrite-protection passed | Insert between scripts:929 and scripts:933 | DESTRUCTIVE (DELETE only if `--force-rerun-existing`) |
 | W2 | (existing) `if args.dry_run` exit at line 933-944 | PRESERVED VERBATIM | (existing behavior) |
@@ -3188,7 +3229,11 @@ Insert AFTER `run_dir.mkdir(parents=True, exist_ok=True)` at line 946 and BEFORE
     # read-only refusal (identity guard W0, idempotency check W1, dry-run W2)
     # leaves the canonical artifact in place.
     if args.enable_b_c_narrow_recovery:
-        canonical_phase4_path = Path(args.output_root).resolve() / "phase4_forward_2026_15bps_v1"
+        # CR-SE-R3-M1 SEAL-eve R3 ADOPT v11: USE BCNARROW_CANONICAL_BASENAME constant
+        # (defined at scripts:117-ish per AR-SE-R2-M4 v10) instead of hardcoded literal.
+        # Closes 8th-cycle CR3-B1 template-vs-inline recurrence — v10 defined constant
+        # but didn't rewrite W3 consumer site; v11 closes the consumer-site gap.
+        canonical_phase4_path = Path(args.output_root).resolve() / BCNARROW_CANONICAL_BASENAME
         archive_root = Path(args.output_root).resolve() / "archive"
         _archive_canonical_pre_flight(
             canonical_path=canonical_phase4_path,
@@ -3317,7 +3362,7 @@ If any test FAILS, inspect — likely culprits:
 python -m pytest -q
 ```
 
-Expected: zero regression vs pre-Phase-2 baseline (HEAD `b10ffb2`: 2328 pass / 0 failed / 2 xfailed per Phase 0 SEAL note) + 26 net new passing Phase 2 tests. Total expected: 2354 pass / 0 failed / 2 xfailed (binding contract is zero regression + 25 new passing; the 2353 integer is informational).
+Expected: zero regression vs pre-Phase-2 baseline (HEAD `b10ffb2`: 2328 pass / 0 failed / 2 xfailed per Phase 0 SEAL note) + 26 net new passing Phase 2 tests. Total expected: 2354 pass / 0 failed / 2 xfailed (binding contract is zero regression + 26 new passing; the 2354 integer is informational).
 
 The T1.4 `test_4_tuple_matches_locked_values` test (at `tests/test_t1_4_backward_compat.py:490`) may FAIL at this step because the AST classifier now sees additional test/scripts-side `_write_to_registry` callers (if any added). Task 11 handles T1.4 baseline maintenance — if T1.4 fails at Step 10.10, proceed to Step 10.11 (commit Task 10) WITHOUT fixing T1.4 here. Task 11 commit closes the T1.4 baseline gap atomically.
 
@@ -3406,7 +3451,7 @@ for (pp, ll) in dynamic_sites:
 
 Expected output:
 - `prod_count`: still 4 (Phase 2 added NO new `_write_to_registry` callers in `backtest/`)
-- `test_count`: 49 (Phase 2 added zero direct `_write_to_registry` calls in tests — all 25 new tests use mocking via `unittest.mock.patch` OR call `_evaluate_one_candidate` which internally calls `run_regime_holdout` which internally calls `_write_to_registry`; the AST classifier counts only DIRECT call sites in `tests/`, so test_count stays 49 UNLESS a new test directly invokes `_write_to_registry`)
+- `test_count`: 49 (Phase 2 added zero direct `_write_to_registry` calls in tests — all 26 new tests use mocking via `unittest.mock.patch` OR call `_evaluate_one_candidate` which internally calls `run_regime_holdout` which internally calls `_write_to_registry`; the AST classifier counts only DIRECT call sites in `tests/`, so test_count stays 49 UNLESS a new test directly invokes `_write_to_registry`)
 - `scripts_count`: still 0 (Phase 2's `_finalize_batch_registry` uses `insert_run`, NOT `_write_to_registry`; these are DIFFERENT functions)
 - `dynamic_count`: still 23 (Phase 2 tests use `unittest.mock.patch` decorator/context, NOT `_write_to_registry(**args)` dynamic pattern)
 
@@ -3528,7 +3573,7 @@ Create `docs/superpowers/phase-2-impl-results/phase-2-ratify-summary.md`:
 |---|---|---|---|---|
 | TestBCNarrowPhase2ProducerEdits | 25 | 25 | 0 | GREEN |
 | TestT1_4_B1_SignatureBackwardCompat | (existing) | (all) | 0 | GREEN |
-| Full suite (b10ffb2 baseline + 25 new) | 2353 | 2353 | 0 (+ 2 xfailed) | zero regression |
+| Full suite (b10ffb2 baseline + 26 new) | 2354 | 2354 | 0 (+ 2 xfailed) | zero regression |
 
 ## 4 BLOCKING-carry fixes verified
 
@@ -3563,7 +3608,7 @@ git commit -m "evidence(b-c-narrow/phase-2): Phase 2 ratify packet (T12)
 
 Per Plan v3-Phase2 Task 12.
 
-Phase 2 deliverables: 25/25 TestBCNarrowPhase2ProducerEdits PASS; full suite
+Phase 2 deliverables: 26/26 TestBCNarrowPhase2ProducerEdits PASS; full suite
 zero regression vs b10ffb2 baseline + 26 net new passing. T1.4 baseline
 maintained per BLOCKING-6 AST classifier output.
 
@@ -3581,7 +3626,7 @@ is a SEPARATE register-event #N+3 per anti-pre-emption discipline."
 - [ ] **Step 12.4: STOP HERE — Surface to Charlie register-event #N+2**
 
 **STOP.** Surface to Charlie:
-- 25 Phase 2 producer-edit tests GREEN
+- 26 Phase 2 producer-edit tests GREEN
 - T1.4 B1 4-tuple unchanged (or updated per AST classifier; whichever applies)
 - Full test suite zero regression vs pre-Phase-2 baseline + 26 net new passing
 - Producer modifications confined to `scripts/run_phase2c_evaluation_gate.py` (9 modify-zones + 4 NEW helpers: `_validate_b_c_narrow_recovery_identity_or_raise` + `_archive_canonical_pre_flight` + `_finalize_batch_registry_preflight_or_raise` + `_finalize_batch_registry`) + 1 test file extension
