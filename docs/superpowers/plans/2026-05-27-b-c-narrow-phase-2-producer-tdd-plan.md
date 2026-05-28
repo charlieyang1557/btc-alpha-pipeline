@@ -17,7 +17,7 @@
 | # | BLOCKING-carry from Phase 0 plan v2 | Fix applied in this sub-plan |
 |---|---|---|
 | **BLOCKING-1** | R9 finalizer call-order architectural flaw: original v2 wiring placed `_finalize_batch_registry` AFTER children written, which then refuses or deletes them. | **Task 10**: R9 split into TWO halves — (PRE-flight) `_finalize_batch_registry_preflight_or_raise()` BEFORE candidate loop checks parent_run_id absence (refuse-if-exists; `--force-rerun-existing` opt-in DELETEs WHERE parent_run_id); (POST-fire) `_finalize_batch_registry()` AFTER candidate loop writes the parent batch_summary row only. Children written by engine inside `run_regime_holdout` per Phase 0 sequencing. |
-| **BLOCKING-3** | `_finalize_batch_registry` queries SQLite before `create_table` runs → OperationalError on missing `runs` table. | **Task 10 Step 10.4**: `_finalize_batch_registry()` imports `create_table` + `get_connection` + `insert_run` from `backtest.experiment_registry` and calls `create_table(conn)` UNCONDITIONALLY before `insert_run(conn, parent_row_dict)`. Idempotent (CREATE TABLE IF NOT EXISTS + MIGRATION_COLUMNS additive). |
+| **BLOCKING-3** | `_finalize_batch_registry` queries SQLite before `create_table` runs → OperationalError on missing `runs` table. | **Task 10 Step 10.4**: `_finalize_batch_registry()` (POST-fire ONLY) imports `create_table` + `get_connection` + `insert_run` from `backtest.experiment_registry` and calls `create_table(conn)` before `insert_run(conn, parent_row_dict)`. Idempotent at POST-fire path. Per v3 CR2-B2 + v5 CR4-B1 + v9 AR-SE-M3 corrections: `_finalize_batch_registry_preflight_or_raise()` (preflight) is TRULY read-only — 3-path early-exit via sqlite_master; does NOT call create_table (would commit DDL → violate CB1 read-only invariant on dry-run path). v1/v2 design said both functions called create_table unconditionally; v3+ split into preflight (no create_table) + POST-fire (with create_table). v9 AR-SE-M3 row update restores ADOPT-trail self-consistency. |
 | **BLOCKING-4** | Phase 0 plan v2 test code referenced `_parse_args` — function does NOT exist in `scripts/run_phase2c_evaluation_gate.py`. The actual function is `_build_argparser()` at line 726. | **Task 9 Step 9.2**: every Phase 2 test that touches the producer's argparse layer references `_build_argparser()` (verified at scripts:726). Added explicit test `test_build_argparser_callable_no_parse_args` to lock the convention going forward. |
 | **BLOCKING-6** | Phase 0 plan v2 §6.5 "Plan v1 computes exact via grep" for T1.4 4-tuple update — grep-based counting is methodologically wrong per `tests/test_t1_4_backward_compat.py:67-80` §8.1 METHODOLOGY DIVERGENCE NOTE (AST-correct numbers required; grep over-counts by including `def` + docstrings + comments). | **Task 11**: T1.4 baseline maintenance uses the AST classifier at `TestT1_4_B1_SignatureBackwardCompat._enumerate_call_sites()` (lines 422-488) to compute new 4-tuple. NO grep counting anywhere. AST classifier dry-run runs BEFORE updating `_B1_LOCKED_4TUPLE`; observed counts inserted with rationale. |
 
@@ -241,6 +241,47 @@ Per Charlie register #N+9 (Path 2: AMEND-THEN-SEAL-EVE-DIRECT — apply 5 ADOPT 
 **Test count v7 → v8: 25 unchanged.**
 
 **Cycle status update**: PFR R1 17 → R2 9 → R3 8 → R4 7 → R5 5 → R6 5 → R7 5 (2 MEDIUM + 3 LOW; no BLOCKING/HIGH). v8 = SEAL-candidate per Charlie Path 2 register; next register-event is Rule 2 SEAL-eve adversarial dispatch (B2 2-leg with MAX adversarial directive) NOT standard PFR R8. Per [feedback_advisor_own_anchoring_implementation_review.md] cumulative 26+ instance empirical pattern, SEAL-eve is OPERATIONALLY REQUIRED final-line-of-defense before SEAL artifact draft.
+
+---
+
+## SEAL-eve ADOPT findings applied (Plan v9 amendments)
+
+Per Charlie register #N+10 (Path 1: full v9 amend with all 10 ADOPT + dispatch SEAL-eve R2 for second-round adversarial verification) 2026-05-27. SEAL-eve fired as Rule 2 adversarial B2 2-leg dispatch on v8 (`ff43945`); Codex returned NOT-APPROVE-V9-AMEND-REQUIRED (2 BLOCKING + 1 HIGH + 1 MEDIUM); Advisor returned APPROVE-WITH-FINDINGS-LOW-ONLY-FLOOR (3 MEDIUM + 4 LOW). **B2 reverse-direction value FULLY VINDICATED at SEAL-eve** — exactly as Advisor's R5/R6/R7 meta-lessons predicted.
+
+**Tier divergence on W1 ordering** (Codex BLOCKING-2 vs Advisor MEDIUM-1; same finding): adopted as HIGH (CR-SE-H1) — between Codex's BLOCKING (audit-trail break) and Advisor's MEDIUM (recovery via re-run with `--force`) tiers. Real state-inconsistency window but recoverable; HIGH severity is appropriate per "halfway between" adjudication.
+
+**Codex caught 3 NEW dimensions** Advisor missed via structural-discipline lens:
+- CR-SE-B1: Test 15 doesn't actually enforce dry-run no-mutation invariant (CR2-B2 ADOPT didn't actually land in test body)
+- CR-SE-H2: Phase 3 archive handoff inconsistent (plan W3 producer-gated vs spec §5 T12 manual `mv`; spec T13 lacks new flag)
+- CR-SE-M1: B-C merge block inserted OUTSIDE candidate-level try/except (violates spec R5 contract; failures abort whole producer instead of `lifecycle_state='holdout_error'`)
+
+**Advisor caught 3 META-LESSON recurrence** Codex missed via execution-trace lens:
+- AR-SE-M2: Tests 5+6+8+9 stale fixture values (`100000.0` + `"phase4_15bps_v1"`); v2 ADOPT addressed Tests 6+8 only; Tests 5+9 NOT addressed → 6th cycle of CR3-B1 meta-lesson recurrence
+- AR-SE-M3: BLOCKING-3 row at line 20 still says "UNCONDITIONALLY" — describes v1/v2 design; contradicts CR2-B2 v3 preflight/POST-fire split
+- LR-SE-1: grep-anchor fix doesn't cover version-strings (Step 9.4 commit headline `v7 post-PFR R6 ADOPT` stale)
+
+**Both legs RE-VERIFIED PUSHBACK on Advisor R1 HIGH-5 SOUND at SEAL-eve**.
+
+**Cycle invariant established**: every round (R1 through SEAL-eve) surfaced NEW dimensions. Saturation expectation wrong 4 times (R5, R6, R7, SEAL-eve). As long as adversarial review continues, new dimensions emerge. Charlie's Path 1 register (full v9 + SEAL-eve R2) explicitly accepts this cycle invariant and chooses additional adversarial verification over Path 2 inline-finalize termination.
+
+| # | Severity | Origin | Fix in v9 |
+|---|---|---|---|
+| CR-SE-B1 | BLOCKING | Codex SEAL-eve BLOCKING-1 | Strengthen Test 15 to actually enforce dry-run DB no-mutation invariant: assert `not db_path.exists()` for absent-DB case (or snapshot pre-existing DB bytes/schema and assert unchanged); do NOT call `create_table(conn)` inside Test 15 assertion path (the call would create the runs table → mask the very mutation the test is meant to detect). |
+| CR-SE-H1 | HIGH (Codex BLOCKING-2 + Advisor MEDIUM-1 → adjudicated HIGH) | Codex SEAL-eve BLOCKING-2 + Advisor SEAL-eve MEDIUM-1 (convergent at finding; tier divergent) | Reorder main() wiring: move `_check_overwrite_protection` BEFORE W1 destructive DELETE. New order: W0 identity guard (read-only) → existing `_check_overwrite_protection` (read-only refusal on non-empty `run_dir` without `--force`) → W1 idempotency + DELETE (destructive, gated by `--force-rerun-existing`) → existing dry-run exit → W3 archive PRE-flight (destructive) → ... eliminates state-inconsistency window where `--force-rerun-existing` without `--force` on non-empty run_dir would DELETE registry rows then abort at overwrite gate. |
+| CR-SE-H2 | HIGH | Codex SEAL-eve HIGH-1 | Plan v9 explicitly resolves Phase 3 archive handoff inconsistency. Add note to File Structure or Task 12 ratify section: "Plan v8 W3 producer-gated archive (under `--enable-b-c-narrow-recovery`) SUPERSEDES spec §5 T12 manual `mv` archive command. Phase 3 fire-plan command MUST include `--enable-b-c-narrow-recovery` flag (the spec T13 producer command at spec line 289 was written before W3 producer-archive design was added in v1; updated at this register-event but spec text retained per Architecture-B sealed-content invariance). NAMED-eligible-for-spec-amend at Phase 3 register OR Phase 4 SEAL bundle as errata supplement." |
+| CR-SE-M1 | MEDIUM | Codex SEAL-eve MEDIUM-1 | Move B-C merge block at Step 10.5 INSIDE candidate-level `try/except` boundary. Currently block runs AFTER `_per_candidate_summary(...)` at lines 538-548, OUTSIDE the existing `try/except` at lines 508-534. v9 fix: move B-C merge logic INTO the `try` block (after `holdout_result = run_regime_holdout(...)` succeeds) so `compute_per_bar_returns` / `compute_moments` / `get_run(conn, child_run_id)` failures produce `lifecycle_state='holdout_error'` per spec R5 contract rather than aborting the whole producer. |
+| AR-SE-M2 | MEDIUM | Advisor SEAL-eve MEDIUM-2 | Inline-rewrite Tests 5 + Test 9 fixture values: `"initial_capital": 100000.0` → `10_000.0`; `"fee_model": "phase4_15bps_v1"` → `"effective_15bps_per_side"`. v2 ADOPT only addressed Tests 6 + 8 of the 4 affected tests; v9 closes the 6th cycle of CR3-B1 meta-lesson recurrence by applying to Tests 5 + 9 inline. |
+| AR-SE-M3 | MEDIUM | Advisor SEAL-eve MEDIUM-3 | Update BLOCKING-3 row at line 20 of header table — current "UNCONDITIONALLY" wording describes v1/v2 design where `_finalize_batch_registry` always called create_table. v3 CR2-B2 split into preflight (TRULY read-only; NO create_table) + POST-fire (DOES call create_table). New row text: "Task 10 Step 10.4: `_finalize_batch_registry()` (POST-fire ONLY) imports `create_table` + `get_connection` + `insert_run` from `backtest.experiment_registry` and calls `create_table(conn)` before `insert_run(conn, parent_row_dict)`. Preflight `_finalize_batch_registry_preflight_or_raise()` is TRULY read-only per CR2-B2 v3 — 3-path early-exit via sqlite_master; does NOT call create_table. Idempotent at POST-fire path." |
+| LR-SE-1 | LOW | Advisor SEAL-eve LOW-1 | Step 9.4 commit message headline version-string update: `(T9; v7 post-PFR R6 ADOPT)` → `(T9; v9 post-SEAL-eve R1 ADOPT)`. 6th cycle of staleness recurrence at version-string layer (grep-anchor fix doesn't cover version-strings). |
+| LR-SE-2 | LOW | Advisor SEAL-eve LOW-2 | Test 16 docstring update: existing wording overclaims "raises RuntimeError BEFORE archive PRE-flight runs" but test body only calls preflight directly, doesn't exercise main() ordering. Update docstring to match what body actually tests (preflight raises on pre-existing parent; canonical filesystem untouched is trivially true since preflight is filesystem-read-only). |
+| LR-SE-3 | LOW | Advisor SEAL-eve LOW-3 | Test 21 vestigial `btc_parquet_path` fixture in signature — engine resolves canonical via `_resolve_canonical_parquet_path()`; fixture never used. Drop from signature. |
+| LR-SE-4 | LOW | Advisor SEAL-eve LOW-4 | Locked decisions table cross-check (informational; no action required per advisor). |
+
+**Total v9 amendments: 10 ADOPT inline (1 BLOCKING + 2 HIGH + 3 MEDIUM + 4 LOW).**
+
+**Test count v8 → v9: 25 unchanged (all v9 fixes ordering/contract/textual/citation polish).**
+
+**Cycle status update**: SEAL-eve R1 produced 10 ADOPT findings (largest scope since R1's 17). v9 closes all 10 inline. Next register-event: SEAL-eve R2 dispatch per Charlie Path 1 — additional adversarial verification before SEAL artifact draft. Per cycle invariant pattern, SEAL-eve R2 may surface additional NEW dimensions; Path 1 explicitly accepts this for additional rigor over Path α inline-finalize termination.
 
 ---
 
@@ -786,8 +827,8 @@ class TestBCNarrowPhase2ProducerEdits:
             "cost_anchor_id": "phase4_forward_15bps_v1",
             "current_git_sha": "f112599",
             "effective_start": "2026-01-01T00:00:00Z",
-            "initial_capital": 100000.0,
-            "fee_model": "phase4_15bps_v1",
+            "initial_capital": 10_000.0,  # AR-SE-M2 SEAL-eve v9: engine cash default per engine.py:2324
+            "fee_model": "effective_15bps_per_side",  # AR-SE-M2 SEAL-eve v9: cost_model.fee_model_label per slippage.py:94-100
         }
 
         _finalize_batch_registry(
@@ -828,8 +869,8 @@ class TestBCNarrowPhase2ProducerEdits:
             "cost_anchor_id": "phase4_forward_15bps_v1",
             "current_git_sha": "f112599",
             "effective_start": "2026-01-01T00:00:00Z",
-            "initial_capital": 100000.0,
-            "fee_model": "phase4_15bps_v1",
+            "initial_capital": 10_000.0,  # AR-SE-M2 SEAL-eve v9: engine cash default per engine.py:2324
+            "fee_model": "effective_15bps_per_side",  # AR-SE-M2 SEAL-eve v9: cost_model.fee_model_label per slippage.py:94-100
         }
         _finalize_batch_registry(
             db_path=db_path,
@@ -938,8 +979,8 @@ class TestBCNarrowPhase2ProducerEdits:
             "cost_anchor_id": "phase4_forward_15bps_v1",
             "current_git_sha": "f112599",
             "effective_start": "2026-01-01T00:00:00Z",
-            "initial_capital": 100000.0,
-            "fee_model": "phase4_15bps_v1",
+            "initial_capital": 10_000.0,  # AR-SE-M2 SEAL-eve v9: engine cash default per engine.py:2324
+            "fee_model": "effective_15bps_per_side",  # AR-SE-M2 SEAL-eve v9: cost_model.fee_model_label per slippage.py:94-100
         }
         # First write: should succeed
         _finalize_batch_registry(
@@ -980,8 +1021,8 @@ class TestBCNarrowPhase2ProducerEdits:
                     "strategy_source": "b_c_narrow_recovery",
                     "created_at_utc": "2026-05-27T00:00:00Z",
                     "git_commit": "f112599",
-                    "fee_model": "phase4_15bps_v1",
-                    "initial_capital": 100000.0,
+                    "fee_model": "effective_15bps_per_side",  # AR-SE-M2 SEAL-eve v9
+                    "initial_capital": 10_000.0,  # AR-SE-M2 SEAL-eve v9
                     "final_capital": 105000.0,
                     "total_return": 0.05,
                     "sharpe_ratio": 1.0,
@@ -996,8 +1037,8 @@ class TestBCNarrowPhase2ProducerEdits:
                 "strategy_source": "b_c_narrow_recovery",
                 "created_at_utc": "2026-05-27T00:00:00Z",
                 "git_commit": "f112599",
-                "fee_model": "phase4_15bps_v1",
-                "initial_capital": 100000.0,
+                "fee_model": "effective_15bps_per_side",  # AR-SE-M2 SEAL-eve v9
+                "initial_capital": 10_000.0,  # AR-SE-M2 SEAL-eve v9
             })
 
         # Preflight with --force-rerun-existing: should DELETE all 6 rows
@@ -1406,13 +1447,22 @@ docstring note per M2:
         assert not archive_root.exists() or not any(archive_root.iterdir()), (
             "CB1: dry-run must NOT create archive target"
         )
-        if db_path.exists():
-            with get_connection(db_path) as conn:
-                create_table(conn)
-                parent_rows = conn.execute(
-                    "SELECT COUNT(*) FROM runs WHERE run_id = ?", (BCNARROW_PARENT_RUN_ID,)
-                ).fetchone()[0]
-            assert parent_rows == 0, f"CB1: dry-run must NOT write parent registry row; got {parent_rows}"
+        # CR-SE-B1 SEAL-eve v9 fix: actually enforce dry-run DB no-mutation invariant.
+        # PRIOR v8 body checked parent-row count IF DB exists AND called create_table(conn)
+        # in the assertion path — but create_table commits DDL, which would CREATE the runs
+        # table during the assertion, masking the very mutation the test was meant to detect.
+        # v9 strict assertion: DB file MUST NOT EXIST after dry-run with absent-DB start
+        # state (CR2-B2 v3 preflight is truly read-only on absent-DB → Path 1 early-exit
+        # returns clean WITHOUT opening or creating the DB file). If DB file exists post-
+        # dry-run, that proves W1 preflight or some downstream code mutated state on a
+        # supposedly-read-only path.
+        assert not db_path.exists(), (
+            f"CR-SE-B1 SEAL-eve: dry-run with absent-DB start MUST leave DB file absent. "
+            f"db_path={db_path} unexpectedly exists post-dry-run; this proves W1 preflight "
+            f"or downstream code mutated state on a supposedly-read-only dry-run path "
+            f"(CB1 invariant breach). CR2-B2 v3 preflight Path 1 must early-exit on absent-DB "
+            f"WITHOUT calling get_connection (which creates the file in sqlite3 semantics)."
+        )
 
     # ----- Test 16 (CB1): pre-existing parent row → preflight refuses BEFORE archive -----
 
@@ -2014,9 +2064,9 @@ If ALL 25 tests pass at this point → SOMETHING WRONG (Task 10 already implemen
 
 ```bash
 git add tests/test_phase2c_evaluation_gate_runner.py
-git commit -m "test(b-c-narrow/phase-2): add 25 failing producer-edit tests (T9; v7 post-PFR R6 ADOPT)
+git commit -m "test(b-c-narrow/phase-2): add 25 failing producer-edit tests (T9; v9 post-SEAL-eve R1 ADOPT)
 
-Per Plan v3-Phase2 v7 Task 9 (Charlie register chain #N+3 Path 1 + #N+4 Path 1 + #N+5 Path 1 + #N+6 Path 1 + #N+7 Path 1 + #N+8 Path 1).
+Per Plan v3-Phase2 v9 Task 9 (Charlie register chain #N+3 Path 1 + #N+4 Path 1 + #N+5 Path 1 + #N+6 Path 1 + #N+7 Path 1 + #N+8 Path 1 + #N+9 Path 2 + #N+10 Path 1).
 25 RED-phase tests = 14 v1 enumeration + 8 NEW per PFR R1 ADOPT + 2 NEW per PFR R2 ADOPT (Tests 23+24 for MR2-3/MR2-4) + 1 NEW per PFR R5 ADOPT (Test 25 for CR5-B1):
 - LC-b kwarg threading from producer to engine (1 test)
 - equity_curve consumption from extended RegimeHoldoutResult (1 test)
@@ -2644,7 +2694,91 @@ def _evaluate_one_candidate(
         )
 ```
 
-3. Add moments compute + registry-derived path+SHA + B-C-narrow field merge AFTER `summary = _per_candidate_summary(...)` block at lines 538-548, BEFORE `candidate_dir = output_dir / candidate["hypothesis_hash"]` at line 550:
+3. Add moments compute + registry-derived path+SHA + B-C-narrow field merge AFTER `summary = _per_candidate_summary(...)` block at lines 538-548, BEFORE `candidate_dir = output_dir / candidate["hypothesis_hash"]` at line 550.
+
+**CR-SE-M1 SEAL-eve v9 ADOPT**: the B-C merge block MUST be INSIDE the candidate-level `try/except` boundary (existing try/except at lines 508-534) per spec R5 contract: candidate-level failures produce `lifecycle_state='holdout_error'` + continue to next candidate, NOT abort the whole producer. v1-v8 placed the merge block AFTER the existing try/except → any `compute_per_bar_returns` / `compute_moments` / `get_run(conn, child_run_id)` exception would abort the producer mid-cohort. v9 fix: move merge logic INTO the `try` block (immediately after `holdout_result = run_regime_holdout(...)` succeeds, BEFORE setting `lifecycle_state = "holdout_passed"/"holdout_failed"`).
+
+**v9 fixed structure** (the merge logic moves INSIDE the try block):
+
+```python
+    try:
+        dsl = _load_dsl_from_response(source_batch_id, candidate["position"])
+        holdout_result = run_regime_holdout(
+            dsl=dsl,
+            batch_id=source_batch_id,
+            parent_run_id=f"phase2c_eval_gate_{run_id}",
+            regime_key=regime_key,
+            execution_config_path=execution_config_path,
+            env_config=env_config_override,
+            db_path=db_path,
+            run_id_override=child_run_id_override,
+            source_batch_id=source_batch_id if lcb_active else None,
+            parent_run_id_override=parent_run_id_override if lcb_active else None,
+            artifact_dir=candidate_artifact_dir,
+        )
+        # CR-SE-M1 SEAL-eve v9: B-C-narrow merge logic INSIDE try/except — failures
+        # in moments compute or registry query → caught as candidate-level
+        # 'holdout_error' per spec R5 contract, not whole-producer abort.
+        if lcb_active:
+            from backtest.engine import compute_per_bar_returns, compute_moments
+            returns = compute_per_bar_returns(holdout_result.equity_curve)
+            moments = compute_moments(returns)
+            # Query engine-written child registry row for path + SHA (CB5+CB6 single-source)
+            child_run_id_for_query = child_run_id_override
+            _conn = get_connection(db_path)
+            try:
+                child_row = get_run(_conn, child_run_id_for_query)
+            finally:
+                _conn.close()
+            if child_row is None:
+                raise RuntimeError(
+                    f"B-C-narrow CB5+CB6: child registry row missing for "
+                    f"run_id={child_run_id_for_query!r} after run_regime_holdout returned."
+                )
+            # Hold moments + path + SHA for merge into summary (set AFTER summary built)
+            _bc_narrow_fields = {
+                "gamma3": moments.get("gamma3"),
+                "gamma4": moments.get("gamma4"),
+                "T_obs": moments.get("T_obs"),
+                "returns_per_bar_path": child_row.get("returns_per_bar_path"),
+                "returns_per_bar_sha256": child_row.get("returns_per_bar_sha256"),
+            }
+        else:
+            _bc_narrow_fields = None
+        lifecycle_state = (
+            "holdout_passed" if holdout_result.regime_holdout_passed
+            else "holdout_failed"
+        )
+        error_message: str | None = None
+    except Exception:
+        holdout_result = None
+        _bc_narrow_fields = None  # candidate failure → no B-C-narrow merge
+        lifecycle_state = "holdout_error"
+        error_message = traceback.format_exc()
+        # (existing logger.warning preserved)
+        ...
+    finished = datetime.now(timezone.utc)
+    wall_clock = (finished - started).total_seconds()
+
+    summary = _per_candidate_summary(
+        candidate=candidate,
+        head_sha=head_sha,
+        source_batch_id=source_batch_id,
+        run_id=run_id,
+        regime_key=regime_key,
+        holdout_result=holdout_result,
+        lifecycle_state=lifecycle_state,
+        error_message=error_message,
+        wall_clock_seconds=wall_clock,
+    )
+    # CR-SE-M1 v9: merge B-C-narrow fields if captured in try block (None if
+    # candidate failed → no merge; summary lacks fields → backward-compat-safe
+    # per existing None-handling in _write_aggregate_csv at Step 10.7).
+    if _bc_narrow_fields is not None:
+        summary.update(_bc_narrow_fields)
+```
+
+The remainder of `_evaluate_one_candidate` (inline JSON write at lines 550-573) is **NOT changed** — `summary` now includes B-C-narrow fields when LC-b path completed cleanly, OR omits them when candidate failed (consistent with spec R5 contract that error-path summaries have NULL metric fields).
 
 ```python
     # B-C-narrow Phase 2 (v2 per CB5+CB6): compute γ3/γ4/T_obs from equity_curve
@@ -2793,32 +2927,39 @@ The behavior on legacy callers (where `gamma3` / `gamma4` / `T_obs` / `returns_p
 
 Edit `scripts/run_phase2c_evaluation_gate.py` `main()` function (lines 864-1072). 
 
-**v2 wiring chain (per CB1 lock — read-only checks before dry-run exit; destructive ops after dry-run exit):**
+**v9 wiring chain per CR-SE-H1 SEAL-eve ADOPT REORDER** (CB1 lock preserved — read-only checks before dry-run exit; destructive ops after dry-run exit; W1 destructive DELETE now AFTER _check_overwrite_protection read-only refusal):
 
 | Wiring | When | Operation | File:line target | Side-effect type |
 |---|---|---|---|---|
 | W0 | After argparse (~line 881) + after lineage guard (~line 903) | Identity guard (`_validate_b_c_narrow_recovery_identity_or_raise`) | Insert AFTER lineage guard + AFTER `--regime-key` check at line 901, BEFORE `_load_corrected_candidates` at line 905 | READ-ONLY (raises ValueError) |
-| W1 | After W0 | Idempotency PRE-check (`_finalize_batch_registry_preflight_or_raise`) | Insert right after W0 | READ-ONLY by default; DELETE only if --force-rerun-existing |
-| W2 | (existing) After `_check_overwrite_protection` at line 929 | `if args.dry_run` exit at line 933-944 | PRESERVED VERBATIM | (existing behavior) |
+| W1a (NEW per CR-SE-H1 v9) | After W0; BEFORE existing `_check_overwrite_protection` at line 929 | Idempotency READ-ONLY check ONLY (call `_finalize_batch_registry_preflight_or_raise(force_rerun_existing=False, ...)` regardless of operator's actual flag value — read-only refusal-detection only) | Insert after W0 | READ-ONLY |
+| (existing) | At line 929 | `_check_overwrite_protection(run_dir, args.force)` — refuses non-empty `run_dir` without `--force` | PRESERVED VERBATIM | READ-ONLY (returns 1 to abort) |
+| W1b (NEW per CR-SE-H1 v9) | After `_check_overwrite_protection` at line 929; BEFORE dry-run exit at line 933 | Idempotency DELETE if `--force-rerun-existing` (call `_finalize_batch_registry_preflight_or_raise(force_rerun_existing=True, ...)` IF `args.force_rerun_existing`) — destructive DELETE only here, AFTER both identity guard + overwrite-protection passed | Insert between scripts:929 and scripts:933 | DESTRUCTIVE (DELETE only if `--force-rerun-existing`) |
+| W2 | (existing) `if args.dry_run` exit at line 933-944 | PRESERVED VERBATIM | (existing behavior) |
 | W3 | After `run_dir.mkdir` at line 946 | Archive PRE-flight (`_archive_canonical_pre_flight`) | Insert AFTER `run_dir.mkdir` and BEFORE forward_window_metadata capture at line 954 | DESTRUCTIVE (shutil.move; runs AFTER dry-run exit only) |
 | W4 | (existing) forward_window_metadata capture at lines 954-973 | PRESERVED VERBATIM | (existing behavior) |
 | W5 | (existing) candidate loop at lines 975-991 | Thread `artifact_dir_root` + `parent_run_id_override` + `db_path` kwargs to `_evaluate_one_candidate` | MODIFIED |
 | W6 | (existing) After hashlib computation at lines 1016-1051; BEFORE aggregate JSON write at line 1053 | `_finalize_batch_registry` POST-fire (parent batch_summary row) | Insert between line 1051 and 1053 | WRITE (insert_run) |
 
+**CR-SE-H1 SEAL-eve REORDER rationale**: prior v2-v8 design ran W1 (destructive DELETE gated by `--force-rerun-existing`) BEFORE `_check_overwrite_protection`. Codex SEAL-eve BLOCKING-2 caught the state-inconsistency window: operator passes `--force-rerun-existing` WITHOUT `--force` on non-empty `run_dir` → W1 DELETEs registry rows, then `_check_overwrite_protection` aborts → DB cleaned, filesystem dirty. v9 fix: split W1 into W1a (read-only detection) + W1b (destructive DELETE). W1a runs before `_check_overwrite_protection`; W1b runs AFTER it. If overwrite-protection refuses, W1b's DELETE never executes — operator's state remains intact for diagnosis.
+
 ---
 
-**W0 + W1 — read-only PRE-flight chain (BEFORE dry-run exit per CB1):**
+**W0 + W1a — read-only PRE-flight chain BEFORE existing `_check_overwrite_protection` (CR-SE-H1 v9 reorder):**
 
 Insert after the lineage guard at line 903 + after the existing `--regime-key` validation at line 901, BEFORE `_load_corrected_candidates(args.source_batch_id)` at line 905:
 
 ```python
     head_sha = enforce_corrected_engine_lineage()
 
-    # B-C-narrow Phase 2 (v2 PFR R1 ADOPT) — read-only PRE-flight chain
-    # gated by --enable-b-c-narrow-recovery. Per CB1 lock: identity guard +
-    # idempotency PRE-check fire BEFORE the existing dry-run exit (so
-    # `--dry-run --enable-b-c-narrow-recovery` validates intent without
-    # mutating state). Archive (destructive) fires AFTER dry-run exit (W3).
+    # B-C-narrow Phase 2 (v2 PFR R1 ADOPT + v9 CR-SE-H1 REORDER) — read-only
+    # PRE-flight chain gated by --enable-b-c-narrow-recovery. Per CB1 lock +
+    # CR-SE-H1: identity guard (W0) + idempotency READ-ONLY check (W1a) fire
+    # BEFORE existing _check_overwrite_protection (which is read-only refusal
+    # on non-empty run_dir without --force). W1b destructive DELETE moves
+    # AFTER _check_overwrite_protection per CR-SE-H1 to eliminate state-
+    # inconsistency window (DB cleaned + FS dirty if --force-rerun-existing
+    # without --force on non-empty run_dir).
     if args.enable_b_c_narrow_recovery:
         # W0 — CB2: identity guard validates 4 cohort identity fields
         # (run_id, regime_key, execution_config, source_batch_id) against
@@ -2834,17 +2975,49 @@ Insert after the lineage guard at line 903 + after the existing `--regime-key` v
             execution_config_path=args.execution_config,
             source_batch_id=args.source_batch_id,
         )
-        # W1 — R9 PRE-flight idempotency check (read-only by default; DELETE
-        # children + parent only when --force-rerun-existing is set).
-        # db_path=None → DEFAULT_DB_PATH (= backtest/experiments.db); engine's
-        # _write_to_registry also defaults to this path → co-location.
+        # W1a (CR-SE-H1 v9): READ-ONLY idempotency check ONLY.
+        # Always pass force_rerun_existing=False here regardless of operator's
+        # actual flag value — the destructive DELETE is deferred to W1b which
+        # runs AFTER _check_overwrite_protection. W1a's role: refuse fast if
+        # parent_run_id pre-exists AND operator did NOT pass --force-rerun-existing.
+        # If operator DID pass --force-rerun-existing, W1a returns clean (preflight
+        # logic treats force_rerun_existing=True/False symmetrically on refuse-vs-
+        # DELETE branch); the actual DELETE fires at W1b.
         _finalize_batch_registry_preflight_or_raise(
             parent_run_id=bcnarrow_proposed_run_id,
-            force_rerun_existing=args.force_rerun_existing,
+            force_rerun_existing=False,  # W1a is read-only-detection only; ignore actual flag
             db_path=None,
-        )
+        ) if not args.force_rerun_existing else None
+        # W1a-conditional: if operator passed --force-rerun-existing, skip read-only
+        # refusal (operator has explicitly authorized DELETE; W1b will handle it).
+        # If operator did NOT pass --force-rerun-existing AND parent exists, W1a
+        # raises RuntimeError above and we never reach _check_overwrite_protection.
 
     all_candidates = _load_corrected_candidates(args.source_batch_id)
+```
+
+**W1b — DESTRUCTIVE DELETE AFTER `_check_overwrite_protection` (CR-SE-H1 v9 NEW):**
+
+Insert AFTER existing `rc = _check_overwrite_protection(run_dir, args.force)` at scripts:929 + the `if rc is not None: return rc` at scripts:930-931, BEFORE existing `if args.dry_run:` at scripts:933:
+
+```python
+    rc = _check_overwrite_protection(run_dir, args.force)
+    if rc is not None:
+        return rc
+
+    # W1b (CR-SE-H1 v9): destructive DELETE — runs ONLY when --force-rerun-existing
+    # is set AND we've passed the read-only refusal gates (identity guard W0 + W1a
+    # idempotency-detect + _check_overwrite_protection). If any prior gate would
+    # have refused the request, W1b never executes — no DB mutation occurs.
+    # Eliminates Codex SEAL-eve BLOCKING-2 state-inconsistency window where
+    # --force-rerun-existing without --force on non-empty run_dir would DELETE
+    # registry rows then abort at overwrite gate.
+    if args.enable_b_c_narrow_recovery and args.force_rerun_existing:
+        _finalize_batch_registry_preflight_or_raise(
+            parent_run_id=bcnarrow_proposed_run_id,
+            force_rerun_existing=True,  # actual DELETE branch
+            db_path=None,
+        )
 ```
 
 ---
@@ -3280,7 +3453,9 @@ Phase 2 sealed at task level (no Phase Marker advance per [feedback_claude_md_fr
 
 **Phase 3+ blockers DEFERRED** to respective sub-plans per spec §5 enumeration:
 
-- **Phase 3** (T12 archive operator command + T13 producer fire + T14 V4 reproducibility gate + T14b canonical-path relocation): 39-candidate cohort_a re-run with `parquet_data_sha256` populated + per-bar artifacts + γ3/γ4 moments + V4 reproducibility gate (ε=1e-6). Drafting requires Charlie register-event #N+3 after Phase 2 ratify.
+- **Phase 3** (T13 producer fire + T14 V4 reproducibility gate + T14b canonical-path relocation): 39-candidate cohort_a re-run with `parquet_data_sha256` populated + per-bar artifacts + γ3/γ4 moments + V4 reproducibility gate (ε=1e-6). Drafting requires Charlie register-event #N+3 after Phase 2 ratify.
+
+  **CR-SE-H2 SEAL-eve v9 ADOPT clarification**: Plan v8 W3 producer-gated archive (under `--enable-b-c-narrow-recovery`) SUPERSEDES sealed spec §5 T12 manual `mv` archive command. The spec T12 manual `mv` was written in spec v1-v3 before the producer W3 design was added in plan v1. Phase 3 fire-plan command MUST include `--enable-b-c-narrow-recovery` flag (the spec T13 example at spec line 289 was written before the new CLI flag was added; updated at Phase 3 plan drafting). Spec text retained per Architecture-B sealed-content invariance discipline (sealed-content NOT modified in place); this Phase 3 inheritance handoff documented here at Phase 2 SEAL plan + NAMED-eligible-for-spec-amend at Phase 3 register OR Phase 4 SEAL bundle as errata supplement per Architecture-B precedent. The producer W3 + `--enable-b-c-narrow-recovery` design has 7 PFR rounds + SEAL-eve adversarial dispatch verification; the spec T12/T13 manual-mv description was written pre-design.
 - **Phase 4** (T15 NOTE doc + T16 SEAL bundle + Phase Marker advance per Option 1A atomic): B-C-narrow data-recovery cycle SEAL artifact + arc-level closeout. Drafting requires Charlie register-event #N+4 after Phase 3 SEAL.
 - **BLOCKING-5 G4-G7 test bodies** (per Codex R2 Phase 0 plan v2 finding): G4 per-bar parquet integrity + G5 γ3/γ4 round-trip + G6 registry parent-child integrity + G7 archive idempotency. All 4 gates are POST-impl gates that fire at Phase 3 (per spec §4.3). Bodies inlined in Plan v3-Phase3 (not Phase 2 scope).
 
