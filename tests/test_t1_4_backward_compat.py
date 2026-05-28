@@ -1316,7 +1316,7 @@ class TestT1_4_B3_LegitimateFlowsAndOptOutSemantic:
 
         assert found_run_regime_holdout_call, (
             "B3.4: scripts/run_phase2c_evaluation_gate.py must contain run_regime_holdout call "
-            "(per evaluation-gate driver convention at scripts/run_phase2c_evaluation_gate.py:512-519)"
+            "(per evaluation-gate driver convention at scripts/run_phase2c_evaluation_gate.py:592-606)"
         )
 
     def test_b3_4_eval_gate_chain_default_normalization(
