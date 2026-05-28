@@ -79,6 +79,7 @@ import csv
 import json
 import logging
 import re
+import shutil  # B-C-narrow Phase 2: archive PRE-flight uses shutil.move
 import sys
 import traceback
 import uuid
@@ -102,6 +103,34 @@ from backtest.wf_lineage import (  # noqa: E402
 )
 from strategies.dsl import StrategyDSL  # noqa: E402
 
+# B-C-narrow Phase 2 v3: producer-side moments compute helpers (Phase 0 SEAL chain f112599).
+# v2 per CB6 PFR R1: REMOVED _compute_sha256_file import — producer no longer recomputes
+# SHA; queries engine-written child registry row via get_run instead.
+# v3 per LR2-1 PFR R2 ADOPT: re-added `# noqa: E402` (lines 89-90 contain non-import code
+# `PROJECT_ROOT` + `sys.path.insert` per scripts:89-90; existing imports lines 92-103 use noqa
+# for this reason; Ruff at pyproject.toml:61-62 selects E rules).
+from backtest.engine import (  # noqa: E402
+    compute_moments,
+    compute_per_bar_returns,
+)
+# CB3 PFR R1: fee_model derivation from execution_config — producer reads cost_model.fee_model_label
+# (matches engine's children-row stamp at engine.py:1278). NO hardcoded fee_model literal.
+from backtest.execution_model import ConstantSlippage, load_execution_config  # noqa: E402
+# H2 PFR R1: DEFAULT_DB_PATH explicit import for parent-child co-location regression guard
+# (Test 20). Producer's `db_path: Path | None = None` kwarg defaults to None → get_connection's
+# default → DEFAULT_DB_PATH; engine's run_regime_holdout's db_path defaults likewise. Importing
+# the constant explicitly makes the contract visible to the reader.
+from backtest.experiment_registry import (  # noqa: E402
+    DEFAULT_DB_PATH,
+    create_table,
+    get_connection,
+    get_run,
+    insert_run,
+)
+# LR3-2 PFR R3 ADOPT (v4): REMOVED `PROJECT_ROOT as REGISTRY_PROJECT_ROOT` alias —
+# unused in producer body (Test 20 has its own import per MR2-2 v3 fix). Would
+# trigger Ruff F401 unused-import if enforced.
+
 logger = logging.getLogger(__name__)
 
 DEFAULT_SOURCE_BATCH_ID = "b6fcbf86-4d57-4d1f-ae41-1778296b1ae9"
@@ -118,6 +147,30 @@ PHASE4_FORWARD_2026_REGIME_KEY = "evaluation_regimes.forward_2026"
 PHASE4_FORWARD_WINDOW_START_UTC = "2026-01-01T00:00:00Z"
 PHASE4_FORWARD_WINDOW_START_DATE = "2026-01-01"  # date-only form for date.fromisoformat
 DEFAULT_PARQUET_PATH = PROJECT_ROOT / "data" / "raw" / "btcusdt_1h.parquet"
+
+# ---------------------------------------------------------------------------
+# B-C-narrow recovery cycle locked identity constants (per Plan v3-Phase2 v2
+# PFR R1 ADOPT M5). All B-C-narrow recovery wiring references these constants;
+# NO inline literals. Operator misuse is caught at identity guard (CB2) which
+# compares CLI args to these locked values.
+#
+# Source-of-truth locks (DO NOT change without spec amend):
+# - BCNARROW_PARENT_RUN_ID:        spec §2 Q4 + §3.2.3
+# - BCNARROW_ARCHIVE_BASENAME:     spec §2 Q3 (uses original `current_git_sha`=d0b8101)
+# - BCNARROW_SOURCE_BATCH_ID:      spec §1 + G3 inventory (combined synthetic dir)
+# - BCNARROW_REGIME_KEY:           spec §1 cohort_a forward_2026
+# - BCNARROW_EXECUTION_CONFIG_PATH: spec §2 Q5 cost anchor lock
+# ---------------------------------------------------------------------------
+BCNARROW_PARENT_RUN_ID: str = "phase4_forward_2026_15bps_v1_b_c_narrow"
+BCNARROW_ARCHIVE_BASENAME: str = "phase4_forward_2026_15bps_v1_d0b8101"
+BCNARROW_SOURCE_BATCH_ID: str = "phase2c_15_main_fire_combined"
+BCNARROW_REGIME_KEY: str = PHASE4_FORWARD_2026_REGIME_KEY  # alias for clarity at recovery sites
+BCNARROW_EXECUTION_CONFIG_PATH: str = "config/execution_phase4_15bps.yaml"
+# AR-SE-R2-M4 SEAL-eve R2 ADOPT v10: canonical artifact basename — extracted from
+# hardcoded literals at 5 sites (W3 producer call + 4 test fixtures). M5 PFR R1
+# ADOPT extracted other BCNARROW_* constants but missed this one; v10 closes
+# constant-extraction discipline gap.
+BCNARROW_CANONICAL_BASENAME: str = "phase4_forward_2026_15bps_v1"
 
 
 def _capture_phase4_forward_window_metadata(
@@ -486,6 +539,12 @@ def _evaluate_one_candidate(
     regime_key: str = "v2.regime_holdout",
     execution_config_path: Path | None = None,
     env_config_override: dict[str, Any] | None = None,
+    # B-C-narrow Phase 2 LC-b kwargs (default None preserves backward-compat):
+    artifact_dir_root: Path | None = None,
+    parent_run_id_override: str | None = None,
+    # B-C-narrow Phase 2 v2 per CB6: db_path threading for registry-query single-source SHA
+    # (None → engine + producer both use DEFAULT_DB_PATH; tests pass tmp_path for isolation).
+    db_path: Path | None = None,
 ) -> dict[str, Any]:
     """Evaluate a single candidate through the regime holdout AND-gate.
 
@@ -503,7 +562,28 @@ def _evaluate_one_candidate(
     injected at fire-time. Threads through to run_regime_holdout(
     env_config=...) bypassing the default load_environments_config()
     call. Default None preserves backward compat for non-Phase-4 callers.
+
+    B-C-narrow Phase 2 LC-b activation: when artifact_dir_root is provided,
+    producer builds 4 LC-b scalars (run_id_override + source_batch_id +
+    parent_run_id_override + artifact_dir) and threads them to
+    run_regime_holdout. Per CR-SE-M1 v9: producer-side moments compute +
+    registry-query for path/SHA happens INSIDE the candidate-level
+    try/except boundary, so failures produce `lifecycle_state='holdout_error'`
+    per spec R5 contract rather than aborting the whole producer.
     """
+    # B-C-narrow Phase 2 LC-b activation: derived from cohort-level artifact_dir_root.
+    # When artifact_dir_root is None (legacy callers), LC-b kwargs stay None → engine
+    # legacy path. When provided, build per-candidate scalars matching engine's LC-b
+    # 4-kwarg contract (Phase 0 SEAL signature).
+    lcb_active = artifact_dir_root is not None
+    if lcb_active:
+        candidate_artifact_dir = artifact_dir_root / candidate["hypothesis_hash"]
+        candidate_artifact_dir.mkdir(parents=True, exist_ok=True)
+        child_run_id_override = f"{run_id}_{candidate['hypothesis_hash']}"
+    else:
+        candidate_artifact_dir = None
+        child_run_id_override = None
+
     started = datetime.now(timezone.utc)
     try:
         dsl = _load_dsl_from_response(
@@ -516,7 +596,45 @@ def _evaluate_one_candidate(
             regime_key=regime_key,
             execution_config_path=execution_config_path,
             env_config=env_config_override,
+            db_path=db_path,  # CB6: thread to engine so producer's get_run uses same DB
+            # B-C-narrow Phase 2 LC-b 4 kwargs (None when artifact_dir_root is None;
+            # engine's single-gate lcb_active = artifact_dir is not None → no LC-b path):
+            run_id_override=child_run_id_override,
+            source_batch_id=source_batch_id if lcb_active else None,
+            parent_run_id_override=parent_run_id_override if lcb_active else None,
+            artifact_dir=candidate_artifact_dir,
         )
+        # CR-SE-M1 SEAL-eve v9: B-C-narrow merge logic INSIDE try/except — failures
+        # in moments compute or registry query → caught as candidate-level
+        # 'holdout_error' per spec R5 contract, not whole-producer abort.
+        if lcb_active:
+            returns = compute_per_bar_returns(holdout_result.equity_curve)
+            moments = compute_moments(returns)
+            # Query engine-written child registry row for path + SHA (CB5+CB6 single-source).
+            # MR2-1 PFR R2 ADOPT (v3): explicit try/finally conn.close() pattern (matches
+            # M3 _finalize_batch_registry* pattern; `with get_connection(...) as conn:`
+            # commits on success / rolls back on exception but does NOT close the file
+            # handle on context exit per sqlite3 semantics).
+            _conn = get_connection(db_path)
+            try:
+                child_row = get_run(_conn, child_run_id_override)
+            finally:
+                _conn.close()
+            if child_row is None:
+                raise RuntimeError(
+                    f"B-C-narrow CB5+CB6: child registry row missing for "
+                    f"run_id={child_run_id_override!r} after run_regime_holdout returned."
+                )
+            # Hold moments + path + SHA for merge into summary (applied AFTER summary built)
+            _bc_narrow_fields = {
+                "gamma3": moments.get("gamma3"),
+                "gamma4": moments.get("gamma4"),
+                "T_obs": moments.get("T_obs"),
+                "returns_per_bar_path": child_row.get("returns_per_bar_path"),
+                "returns_per_bar_sha256": child_row.get("returns_per_bar_sha256"),
+            }
+        else:
+            _bc_narrow_fields = None
         lifecycle_state = (
             "holdout_passed" if holdout_result.regime_holdout_passed
             else "holdout_failed"
@@ -524,6 +642,7 @@ def _evaluate_one_candidate(
         error_message: str | None = None
     except Exception:
         holdout_result = None
+        _bc_narrow_fields = None  # candidate failure → no B-C-narrow merge
         lifecycle_state = "holdout_error"
         error_message = traceback.format_exc()
         logger.warning(
@@ -546,6 +665,11 @@ def _evaluate_one_candidate(
         error_message=error_message,
         wall_clock_seconds=wall_clock,
     )
+    # CR-SE-M1 v9: merge B-C-narrow fields if captured in try block (None if
+    # candidate failed → no merge; summary lacks fields → backward-compat-safe
+    # per existing None-handling in _write_aggregate_csv at Step 10.7).
+    if _bc_narrow_fields is not None:
+        summary.update(_bc_narrow_fields)
 
     candidate_dir = output_dir / candidate["hypothesis_hash"]
     candidate_dir.mkdir(parents=True, exist_ok=True)
@@ -592,6 +716,12 @@ _CSV_FIELDS: tuple[str, ...] = (
     "holdout_total_trades",
     "wall_clock_seconds",
     "error_message",
+    # B-C-narrow Phase 2 additions (spec §3.2.5):
+    "gamma3",
+    "gamma4",
+    "T_obs",
+    "returns_per_bar_path",
+    "returns_per_bar_sha256",
 )
 
 
@@ -634,6 +764,18 @@ def _write_aggregate_csv(
                     (s.get("error_message") or "").splitlines()[-1]
                     if s.get("error_message") else ""
                 ),
+                # B-C-narrow Phase 2 additions (spec §3.2.5):
+                "gamma3": (
+                    f"{s['gamma3']:.6f}" if s.get("gamma3") is not None else ""
+                ),
+                "gamma4": (
+                    f"{s['gamma4']:.6f}" if s.get("gamma4") is not None else ""
+                ),
+                "T_obs": (
+                    str(s["T_obs"]) if s.get("T_obs") is not None else ""
+                ),
+                "returns_per_bar_path": s.get("returns_per_bar_path") or "",
+                "returns_per_bar_sha256": s.get("returns_per_bar_sha256") or "",
             })
 
 
@@ -834,6 +976,36 @@ def _build_argparser() -> argparse.ArgumentParser:
             "aggregate holdout_summary.json for self-auditing artifacts."
         ),
     )
+    # B-C-narrow Phase 2 recovery flags (spec §3.2.3 + §3.2.4; R9-B-guarded lock).
+    parser.add_argument(
+        "--enable-b-c-narrow-recovery",
+        action="store_true",
+        default=False,
+        help=(
+            "Enable B-C-narrow data-recovery flow (3 NEW behaviors): "
+            "(1) PRE-flight archive of canonical phase4_forward_2026_15bps_v1/ "
+            "to archive/phase4_forward_2026_15bps_v1_d0b8101/ via shutil.move "
+            "(refuse-if-exists); (2) PRE-flight parent_run_id idempotency guard "
+            "(refuse-if-exists in registry); (3) POST-fire _finalize_batch_registry "
+            "writes the parent batch_summary row (children written by engine "
+            "per-candidate inside run_regime_holdout). Default False preserves "
+            "backward-compat for legacy callers (PHASE2C_15, PHASE2C_8.1, etc.)."
+        ),
+    )
+    parser.add_argument(
+        "--force-rerun-existing",
+        action="store_true",
+        default=False,
+        help=(
+            "When --enable-b-c-narrow-recovery is set AND parent_run_id already "
+            "exists in registry, DELETE all rows WHERE parent_run_id = ... AND "
+            "the parent row itself before re-fire. Operator-confirmed clean state "
+            "discipline per R9-B-guarded lock. Default False (refuse-if-exists; "
+            "manual cleanup required). MUTUALLY EXCLUSIVE with --dry-run per "
+            "CR5-B1 PFR R5 ADOPT (v6) — combination rejected at argparse "
+            "(operator must consciously choose intent-validation vs destructive cleanup)."
+        ),
+    )
     return parser
 
 
@@ -861,6 +1033,368 @@ def _check_overwrite_protection(
     return None
 
 
+def _validate_b_c_narrow_recovery_identity_or_raise(
+    run_id: str,
+    regime_key: str,
+    execution_config_path: Path | None,
+    source_batch_id: str,
+) -> None:
+    """B-C-narrow Phase 2 (CB2 PFR R1 ADOPT): identity guard for recovery flow.
+
+    When --enable-b-c-narrow-recovery is set, this guard validates 4 cohort
+    identity fields against locked constants BEFORE any mutation (archive,
+    DB write). Fail-fast with explicit per-field rationale.
+
+    Required values (locked at scripts module-level BCNARROW_* constants):
+    - run_id == BCNARROW_PARENT_RUN_ID
+    - regime_key == BCNARROW_REGIME_KEY
+    - execution_config_path canonicalizes to BCNARROW_EXECUTION_CONFIG_PATH
+    - source_batch_id == BCNARROW_SOURCE_BATCH_ID
+
+    Order in recovery PRE-flight chain (per CB1 lock + CR-SE-H1 v9 reorder):
+    1. W0 — This guard (read-only)
+    2. W1a — _finalize_batch_registry_preflight_or_raise (read-only) when
+       NOT --force-rerun-existing
+    3. (existing) _check_overwrite_protection
+    4. W1b — _finalize_batch_registry_preflight_or_raise (DESTRUCTIVE) when
+       --force-rerun-existing
+    5. (existing) dry-run exit if args.dry_run
+    6. W3 — _archive_canonical_pre_flight (destructive — first FS mutation)
+
+    Raises:
+        ValueError: with multi-line explicit message listing every wrong field
+            and the required value. Operator runs producer with corrected flags.
+    """
+    errors: list[str] = []
+    if run_id != BCNARROW_PARENT_RUN_ID:
+        errors.append(
+            f"--run-id={run_id!r} must equal {BCNARROW_PARENT_RUN_ID!r} "
+            f"(B-C-narrow cohort lock per spec §2 Q4)"
+        )
+    if regime_key != BCNARROW_REGIME_KEY:
+        errors.append(
+            f"--regime-key={regime_key!r} must equal {BCNARROW_REGIME_KEY!r} "
+            f"(B-C-narrow cohort_a is forward_2026 per spec §1)"
+        )
+    if execution_config_path is None:
+        errors.append(
+            f"--execution-config must be {BCNARROW_EXECUTION_CONFIG_PATH!r} "
+            f"(cost anchor lock per spec §2 Q5); got None"
+        )
+    else:
+        # Canonicalize: resolve absolute path then take repo-relative form.
+        ec_path_obj = Path(execution_config_path).resolve()
+        try:
+            ec_path_repo_rel = str(ec_path_obj.relative_to(PROJECT_ROOT))
+        except ValueError:
+            # Path is outside repo root — keep as absolute for the error message
+            ec_path_repo_rel = str(ec_path_obj)
+        if ec_path_repo_rel != BCNARROW_EXECUTION_CONFIG_PATH:
+            errors.append(
+                f"--execution-config={ec_path_repo_rel!r} must equal "
+                f"{BCNARROW_EXECUTION_CONFIG_PATH!r} (cost anchor lock per spec §2 Q5)"
+            )
+    if source_batch_id != BCNARROW_SOURCE_BATCH_ID:
+        errors.append(
+            f"--source-batch-id={source_batch_id!r} must equal "
+            f"{BCNARROW_SOURCE_BATCH_ID!r} (combined synthetic dir per "
+            f"spec §1 + Phase 1 G3 inventory)"
+        )
+    if errors:
+        raise ValueError(
+            "B-C-narrow recovery identity guard (CB2 PFR R1 ADOPT): refusing to "
+            "mutate state due to inconsistent cohort identity. The "
+            "--enable-b-c-narrow-recovery flag locks the recovery flow to the "
+            "specific cohort_a artifact at "
+            f"data/phase2c_evaluation_gate/{BCNARROW_ARCHIVE_BASENAME}/ "
+            "(per spec §1 + §2 + §3.2.3). All 4 identity fields must match:\n"
+            "  - " + "\n  - ".join(errors)
+        )
+
+
+def _archive_canonical_pre_flight(
+    canonical_path: Path,
+    archive_root: Path,
+    archive_basename: str,
+) -> None:
+    """B-C-narrow Phase 2: PRE-flight archive of canonical artifact dir before recovery fire.
+
+    Per spec §3.2.4 + BLOCKING-1 R9 PRE-flight split:
+    - Check archive_root exists; create if absent.
+    - Check archive_root / archive_basename does NOT exist (refuse-if-exists per G7).
+    - shutil.move canonical_path → archive_root / archive_basename.
+    - Verify post-move: canonical_path vacated; archive target populated.
+
+    Args:
+        canonical_path: e.g., data/phase2c_evaluation_gate/phase4_forward_2026_15bps_v1/
+        archive_root:   e.g., data/phase2c_evaluation_gate/archive/
+        archive_basename: e.g., "phase4_forward_2026_15bps_v1_d0b8101" (uses original current_git_sha)
+
+    Raises:
+        FileNotFoundError: if canonical_path does not exist (nothing to archive).
+        FileExistsError: if archive_root / archive_basename already exists
+            (operator manual cleanup required per R10 §4.3 G7 strict refuse).
+        NotImplementedError: if canonical_path and archive_root are on DIFFERENT
+            filesystems (st_dev mismatch); shutil.move falls back to non-atomic
+            copy+delete on cross-FS (AR-SE-R2-M3 v10 defensive guard).
+    """
+    if not canonical_path.exists():
+        raise FileNotFoundError(
+            f"B-C-narrow archive PRE-flight: canonical path {canonical_path} does not exist. "
+            f"Nothing to archive. (Did Phase 3 already run? Or canonical never present?)"
+        )
+    archive_root.mkdir(parents=True, exist_ok=True)
+    # AR-SE-R2-M3 SEAL-eve R2 ADOPT v10 + CR-SE-R3-M2 v11 reconciliation: same-FS
+    # pre-check before shutil.move. shutil.move is atomic via os.rename ONLY when
+    # source + target are on the same filesystem; falls back to copy + delete on
+    # cross-FS, which is NOT atomic. Project's data/phase2c_evaluation_gate/ and
+    # sibling data/phase2c_evaluation_gate/archive/ are same-FS by construction
+    # (sibling dirs under common parent). v11 uses archive_root.resolve().stat()
+    # (NOT .parent.stat()) because destination = archive_root + archive_basename
+    # lives WITHIN archive_root; source-destination same-FS check is what
+    # shutil.move actually needs. Defensive check guards against operator
+    # misconfiguring --output-root to different mount point.
+    if canonical_path.stat().st_dev != archive_root.resolve().stat().st_dev:
+        raise NotImplementedError(
+            f"B-C-narrow archive PRE-flight (AR-SE-R2-M3 v10 cross-FS guard): "
+            f"canonical_path {canonical_path} and archive_root {archive_root} are on "
+            f"DIFFERENT filesystems (st_dev mismatch). shutil.move falls back to "
+            f"non-atomic copy+delete on cross-FS, exposing partial-move failure mode. "
+            f"This project's archive convention assumes same-FS (sibling dirs under "
+            f"common parent). Operator must ensure --output-root targets same FS as "
+            f"the canonical artifact, OR raise spec-amend register for cross-FS support."
+        )
+    archive_target = archive_root / archive_basename
+    if archive_target.exists():
+        raise FileExistsError(
+            f"B-C-narrow archive PRE-flight: archive target {archive_target} already exists. "
+            f"Refusing to overwrite (G7 §4.3 strict). Operator must manually cleanup the "
+            f"stale archive (e.g., from a prior aborted attempt) before re-fire. "
+            f"Recommended: inspect {archive_target} content before deletion."
+        )
+    shutil.move(str(canonical_path), str(archive_target))
+    if canonical_path.exists():
+        raise RuntimeError(
+            f"B-C-narrow archive PRE-flight: shutil.move did not vacate canonical_path "
+            f"{canonical_path}. Possible cross-filesystem partial move failure."
+        )
+    if not archive_target.exists():
+        raise RuntimeError(
+            f"B-C-narrow archive PRE-flight: shutil.move did not populate archive_target "
+            f"{archive_target}."
+        )
+
+
+def _finalize_batch_registry_preflight_or_raise(
+    parent_run_id: str,
+    force_rerun_existing: bool,
+    db_path: Path | None = None,
+) -> None:
+    """B-C-narrow Phase 2: PRE-flight idempotency guard for parent_run_id (R9-B-guarded).
+
+    Per spec §3.2.3 + BLOCKING-1 R9 PRE-flight split + CR2-B2 v3 + CR4-B1 v5 fix:
+
+    TRULY read-only on read path — does NOT call create_table. The function is
+    expected to fire BEFORE the existing dry-run exit (per CB1 ordering); a
+    create_table call here would commit DDL (CREATE TABLE IF NOT EXISTS + ALTER
+    TABLE migrations per experiment_registry.py:207-219), violating the
+    "read-only PRE-flight check before dry-run exit" invariant. The 3-path
+    early-exit logic uses sqlite_master read-only detection:
+
+    - Path 1 (DB file absent): treat as clean state; return immediately (no I/O).
+    - Path 2 (DB present but runs table absent): treat as clean state; return
+      (sqlite_master SELECT is purely read-only).
+    - Path 3 (runs table present): query parent + child row counts WITHOUT
+      calling create_table.
+      - If no rows present: clean state; return.
+      - If rows present AND force_rerun_existing=False: raise RuntimeError (refuse).
+      - If rows present AND force_rerun_existing=True: DELETE all matching rows
+        (children + parent) inside a `with conn:` transaction (commits on success;
+        rolls back on exception).
+
+    create_table runs ONLY in POST-fire _finalize_batch_registry (which runs AFTER
+    dry-run exit per CB1 wiring), so production write path still ensures table
+    existence — just not on the preflight read path.
+
+    LR3-3 PFR R3 ADOPT (v4) DEFENSIVE NOTE: Path 3 assumes runs table has
+    parent_run_id + run_id columns. True for any DB created via create_table
+    (see parent_run_id row in CREATE_TABLE_SQL at experiment_registry.py:58 +
+    parent_run_id row in MIGRATION_COLUMNS at :124 + run_id TEXT PRIMARY KEY
+    at :56). Theoretical edge case: pre-Phase-1A legacy DB without parent_run_id
+    column would raise OperationalError on COUNT query — NO such DB exists in
+    this project; defensive note only.
+
+    Args:
+        parent_run_id: cohort parent run_id (e.g., "phase4_forward_2026_15bps_v1_b_c_narrow").
+        force_rerun_existing: operator opt-in to DELETE pre-existing rows.
+        db_path: SQLite registry path. Default None → get_connection's default
+            (typically backtest/experiments.db). Default-None co-locates the
+            parent row with engine-written children (engine calls get_connection
+            with the same default inside _write_to_registry).
+
+    Raises:
+        RuntimeError: if pre-existing rows found AND force_rerun_existing=False.
+    """
+    effective_db_path = db_path if db_path is not None else DEFAULT_DB_PATH
+
+    # Path 1: DB file absent → clean state (no file I/O at all).
+    if not effective_db_path.exists():
+        return
+
+    # M3 PFR R1 fix: explicit try/finally conn.close() pattern; `with conn:` commits
+    # on success / rolls back on exception but does NOT close the file handle.
+    conn = get_connection(effective_db_path)
+    try:
+        # Path 2: DB present but runs table absent → clean state.
+        # Use sqlite_master read-only query to detect — does NOT trigger CREATE TABLE.
+        cursor = conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='runs'"
+        )
+        if cursor.fetchone() is None:
+            # runs table does not exist; no prior rows possible → clean state.
+            return
+
+        # Path 3: runs table present → query counts (read-only) + raise/DELETE.
+        with conn:
+            n_children = conn.execute(
+                "SELECT COUNT(*) FROM runs WHERE parent_run_id = ?", (parent_run_id,)
+            ).fetchone()[0]
+            n_parent = conn.execute(
+                "SELECT COUNT(*) FROM runs WHERE run_id = ?", (parent_run_id,)
+            ).fetchone()[0]
+            if n_children == 0 and n_parent == 0:
+                return  # clean state; proceed
+            if not force_rerun_existing:
+                raise RuntimeError(
+                    f"B-C-narrow finalize PRE-flight: parent_run_id {parent_run_id!r} "
+                    f"already exists in registry ({n_parent} parent row, {n_children} "
+                    f"child rows). Refusing to re-fire without --force-rerun-existing "
+                    f"flag (R9-B-guarded lock). Operator must either (a) inspect "
+                    f"+ accept pre-existing state, OR (b) re-run with --force-rerun-existing "
+                    f"to DELETE rows and re-fire from clean state."
+                )
+            # force_rerun_existing=True: DELETE children + parent (single transaction via `with conn:`)
+            conn.execute("DELETE FROM runs WHERE parent_run_id = ?", (parent_run_id,))
+            conn.execute("DELETE FROM runs WHERE run_id = ?", (parent_run_id,))
+    finally:
+        conn.close()
+
+
+def _finalize_batch_registry(
+    parent_run_id: str,
+    cohort_metadata: dict[str, Any],
+    db_path: Path | None = None,
+) -> None:
+    """B-C-narrow Phase 2: POST-fire parent batch_summary row write (R9 POST-fire half).
+
+    Per spec §3.2.3 + PFR R1 v2 ADOPT (CB3 + CB4 + L3) + LR4-5 v5 contrast:
+
+    DISTINCT FROM PREFLIGHT: POST-fire DOES call create_table(conn) before insert
+    (BLOCKING-3 fix), guaranteeing the runs table exists. The companion preflight
+    function `_finalize_batch_registry_preflight_or_raise` is TRULY read-only and
+    does NOT call create_table (per CR2-B2 v3) — POST-fire runs AFTER dry-run
+    exit so create_table mutation here is acceptable. Twin functions; opposite
+    create_table behavior; differentiated docstrings.
+
+    - Open db via get_connection(db_path); call create_table(conn) — ensures
+      runs table exists (BLOCKING-3 fix); committed DDL is fine here because
+      POST-fire path is past the dry-run gate per CB1 wiring.
+    - Build parent row dict with cohort-level fields populated + per-candidate
+      metric fields NULL.
+    - CB4: parent.git_commit = CORRECTED_WF_ENGINE_COMMIT ("eb1c87f") matching
+      engine's OVERRIDE pattern at engine.py:1328-1348 (lc.engine_commit OVERRIDE-writes
+      to runs.git_commit column). cohort_metadata["current_git_sha"] populates the
+      separate current_git_sha column (fire-time HEAD).
+    - CB4 forensic: engine_commit ALSO written to `notes` JSON for explicit
+      recoverability (registry has no engine_commit column per
+      experiment_registry.py:54-103).
+    - insert_run(conn, parent_row_dict).
+
+    Child rows (one per evaluated candidate) are written by engine inside
+    run_regime_holdout's _write_to_registry call (Phase 0 sequencing per
+    spec §3.1.2). This function writes ONLY the 1 parent row.
+
+    Args:
+        parent_run_id: e.g., BCNARROW_PARENT_RUN_ID
+            ("phase4_forward_2026_15bps_v1_b_c_narrow").
+        cohort_metadata: dict with required keys (CB3 PFR R1 lock):
+            execution_config_path, execution_config_sha256, parquet_data_sha256,
+            regime_key, cost_anchor_id, current_git_sha, effective_start,
+            initial_capital, fee_model. initial_capital MUST equal engine's
+            cash default (10_000.0 per engine.py:2324); fee_model MUST be
+            derived via ConstantSlippage.from_config(...).fee_model_label
+            (per slippage.py:94-100; matches child rows' fee_model via engine.py:1278).
+        db_path: SQLite registry path. Default None → get_connection's default
+            (DEFAULT_DB_PATH = backtest/experiments.db per experiment_registry.py:46).
+            Default-None co-locates the parent row with engine-written children
+            (engine uses same default inside _write_to_registry).
+    """
+    required_keys = {
+        "execution_config_path", "execution_config_sha256", "parquet_data_sha256",
+        "regime_key", "cost_anchor_id", "current_git_sha", "effective_start",
+        "initial_capital", "fee_model",
+    }
+    missing = required_keys - set(cohort_metadata.keys())
+    if missing:
+        raise ValueError(
+            f"B-C-narrow _finalize_batch_registry: cohort_metadata missing required "
+            f"keys: {sorted(missing)}. Required: {sorted(required_keys)}."
+        )
+
+    # CB4 PFR R1: parent_row notes JSON includes engine_commit for explicit
+    # forensic recoverability. Registry has no engine_commit column; the
+    # value is OVERRIDE-stamped into git_commit column (mirrors engine pattern).
+    notes_payload = {
+        "engine_commit": CORRECTED_WF_ENGINE_COMMIT,
+        "cohort": "b_c_narrow_recovery",
+        "spec_reference": "docs/superpowers/specs/2026-05-26-b-c-narrow-data-recovery-design.md (sealed at d6c7fc0)",
+    }
+
+    parent_row = {
+        "run_id": parent_run_id,
+        "run_type": "batch_summary",
+        "parent_run_id": None,
+        "strategy_name": "cohort_summary",
+        "strategy_source": "b_c_narrow_recovery",
+        # CB4 PFR R1: git_commit = engine_commit (matches engine OVERRIDE at engine.py:1328-1348).
+        # current_git_sha is the separate fire-time HEAD per spec §2 disambiguation table.
+        "git_commit": CORRECTED_WF_ENGINE_COMMIT,
+        "created_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "effective_start": cohort_metadata["effective_start"],
+        "initial_capital": cohort_metadata["initial_capital"],
+        "fee_model": cohort_metadata["fee_model"],
+        "execution_config_path": cohort_metadata["execution_config_path"],
+        "execution_config_sha256": cohort_metadata["execution_config_sha256"],
+        "parquet_data_sha256": cohort_metadata["parquet_data_sha256"],
+        "regime_key": cohort_metadata["regime_key"],
+        "cost_anchor_id": cohort_metadata["cost_anchor_id"],
+        "current_git_sha": cohort_metadata["current_git_sha"],
+        "notes": json.dumps(notes_payload),
+        # Per-candidate metric fields NULL at parent (spec §3.2.3):
+        "sharpe_ratio": None,
+        "max_drawdown": None,
+        "total_return": None,
+        "total_trades": None,
+        "hypothesis_hash": None,
+        "returns_per_bar_path": None,
+        "returns_per_bar_sha256": None,
+        "T_obs": None,
+        # batch_id = parent_run_id per spec §3.2.3 line 117 EXPLICIT LOCK.
+        # PFR R1 PUSHBACK (Advisor HIGH-5): plan follows spec verbatim; if downstream
+        # Tier 6 queries are confused by parent.batch_id ≠ children.batch_id, that is a
+        # spec-level discussion at separate Charlie register, NOT a Phase 2 plan fix.
+        "batch_id": parent_run_id,
+    }
+    # M3 PFR R1 fix: explicit try/finally conn.close() pattern.
+    conn = get_connection(db_path)
+    try:
+        with conn:
+            create_table(conn)  # BLOCKING-3: ensure runs table exists before insert
+            insert_run(conn, parent_row)
+    finally:
+        conn.close()
+
+
 def main() -> int:
     """Entry point.
 
@@ -879,6 +1413,21 @@ def main() -> int:
         level=logging.INFO,
     )
     args = _build_argparser().parse_args()
+
+    # CR5-B1 PFR R5 ADOPT (v6): reject --dry-run + --force-rerun-existing combination.
+    # W1 preflight runs BEFORE dry-run exit (per CB1 v3 ordering) and DELETEs registry
+    # rows when force_rerun_existing=True; combining with --dry-run would mutate state
+    # BEFORE the dry-run exit, violating CB1 read-only invariant. Operator must consciously
+    # choose intent-validation (dry-run) vs destructive cleanup (force-rerun-existing).
+    if args.dry_run and args.force_rerun_existing:
+        parser = _build_argparser()
+        parser.error(
+            "--dry-run and --force-rerun-existing are MUTUALLY EXCLUSIVE "
+            "(CR5-B1 PFR R5 ADOPT v6). Combining them would DELETE registry rows "
+            "BEFORE dry-run exits — violating the CB1 read-only invariant. "
+            "Choose ONE: --dry-run (intent-validation, no mutation) OR "
+            "--force-rerun-existing (destructive cleanup of prior partial state)."
+        )
 
     if args.universe is None and args.candidate_hashes is None:
         print(
@@ -901,6 +1450,51 @@ def main() -> int:
         return 2
 
     head_sha = enforce_corrected_engine_lineage()
+
+    # B-C-narrow Phase 2 (v2 PFR R1 ADOPT + v9 CR-SE-H1 REORDER) — read-only
+    # PRE-flight chain gated by --enable-b-c-narrow-recovery. Per CB1 lock +
+    # CR-SE-H1: identity guard (W0) + idempotency READ-ONLY check (W1a) fire
+    # BEFORE existing _check_overwrite_protection (which is read-only refusal
+    # on non-empty run_dir without --force). W1b destructive DELETE moves
+    # AFTER _check_overwrite_protection per CR-SE-H1 to eliminate state-
+    # inconsistency window (DB cleaned + FS dirty if --force-rerun-existing
+    # without --force on non-empty run_dir).
+    bcnarrow_proposed_run_id: str | None = None
+    if args.enable_b_c_narrow_recovery:
+        # W0 — CB2: identity guard validates 4 cohort identity fields
+        # (run_id, regime_key, execution_config, source_batch_id) against
+        # BCNARROW_* constants. Raises ValueError BEFORE any mutation if any
+        # field mismatches. Operator misuse caught fast.
+        # NOTE: --run-id arg is needed for the identity check; _resolve_run_id
+        # is the lookup helper. If --run-id absent, _resolve_run_id mints a
+        # UUID4 — identity guard catches that as wrong run_id.
+        bcnarrow_proposed_run_id = _resolve_run_id(args)
+        _validate_b_c_narrow_recovery_identity_or_raise(
+            run_id=bcnarrow_proposed_run_id,
+            regime_key=args.regime_key,
+            execution_config_path=args.execution_config,
+            source_batch_id=args.source_batch_id,
+        )
+        # W1a (CR-SE-H1 v9; AR-SE-R2-L2 v10 style fix): READ-ONLY idempotency check ONLY.
+        # Always pass force_rerun_existing=False here regardless of operator's actual
+        # flag value — the destructive DELETE is deferred to W1b which runs AFTER
+        # _check_overwrite_protection. W1a's role: refuse fast if parent_run_id pre-
+        # exists AND operator did NOT pass --force-rerun-existing. If operator DID
+        # pass --force-rerun-existing, skip W1a refusal check (operator has explicitly
+        # authorized DELETE; W1b will handle it). If operator did NOT pass --force-
+        # rerun-existing AND parent exists, W1a raises RuntimeError below and we never
+        # reach _check_overwrite_protection.
+        # AR-SE-R2-L2 v10 SEAL-eve R2 ADOPT: replaced ternary-expression-as-statement
+        # form with explicit if/else for readability — prior `func(...) if cond else None`
+        # pattern was readability-fragile.
+        if not args.force_rerun_existing:
+            _finalize_batch_registry_preflight_or_raise(
+                parent_run_id=bcnarrow_proposed_run_id,
+                force_rerun_existing=False,  # W1a is read-only-detection only
+                db_path=None,
+            )
+        # else: operator authorized DELETE via --force-rerun-existing; skip W1a
+        # refusal check; W1b below will handle the DELETE.
 
     all_candidates = _load_corrected_candidates(args.source_batch_id)
     selected = _resolve_candidate_universe(args, all_candidates)
@@ -930,6 +1524,20 @@ def main() -> int:
     if rc is not None:
         return rc
 
+    # W1b (CR-SE-H1 v9): destructive DELETE — runs ONLY when --force-rerun-existing
+    # is set AND we've passed the read-only refusal gates (identity guard W0 + W1a
+    # idempotency-detect + _check_overwrite_protection). If any prior gate would
+    # have refused the request, W1b never executes — no DB mutation occurs.
+    # Eliminates Codex SEAL-eve BLOCKING-2 state-inconsistency window where
+    # --force-rerun-existing without --force on non-empty run_dir would DELETE
+    # registry rows then abort at overwrite gate.
+    if args.enable_b_c_narrow_recovery and args.force_rerun_existing:
+        _finalize_batch_registry_preflight_or_raise(
+            parent_run_id=bcnarrow_proposed_run_id,
+            force_rerun_existing=True,  # actual DELETE branch
+            db_path=None,
+        )
+
     if args.dry_run:
         print("\n[Phase 2C eval gate] --dry-run: stopping before backtests.")
         for c in selected[:10]:
@@ -945,6 +1553,24 @@ def main() -> int:
 
     run_dir.mkdir(parents=True, exist_ok=True)
     run_started_utc = _utc_now_iso()
+
+    # B-C-narrow Phase 2 (v2 per CB1 PFR R1 ADOPT) — DESTRUCTIVE archive.
+    # Runs AFTER dry-run exit (W2 preserved); operator confirmed by reaching here.
+    # Per CB1: archive is LAST step of PRE-flight chain so that any earlier
+    # read-only refusal (identity guard W0, idempotency check W1a/W1b, dry-run W2)
+    # leaves the canonical artifact in place.
+    if args.enable_b_c_narrow_recovery:
+        # CR-SE-R3-M1 SEAL-eve R3 ADOPT v11: USE BCNARROW_CANONICAL_BASENAME constant
+        # (defined at module-level per AR-SE-R2-M4 v10) instead of hardcoded literal.
+        # Closes 8th-cycle CR3-B1 template-vs-inline recurrence — v10 defined constant
+        # but didn't rewrite W3 consumer site; v11 closes the consumer-site gap.
+        canonical_phase4_path = Path(args.output_root).resolve() / BCNARROW_CANONICAL_BASENAME
+        archive_root = Path(args.output_root).resolve() / "archive"
+        _archive_canonical_pre_flight(
+            canonical_path=canonical_phase4_path,
+            archive_root=archive_root,
+            archive_basename=BCNARROW_ARCHIVE_BASENAME,  # M5 PFR R1: named constant
+        )
 
     # PHASE4 R2: capture forward_window_metadata + build env_config override
     # at fire-time when regime is forward_2026. Done ONCE before iterating
@@ -987,6 +1613,12 @@ def main() -> int:
             regime_key=args.regime_key,
             execution_config_path=args.execution_config,
             env_config_override=env_config_override,
+            # B-C-narrow Phase 2 LC-b kwargs (None on legacy callers preserves backward-compat):
+            artifact_dir_root=(run_dir if args.enable_b_c_narrow_recovery else None),
+            parent_run_id_override=(run_id if args.enable_b_c_narrow_recovery else None),
+            # CB6 v2 PFR R1: db_path threading for registry-query single-source SHA.
+            # None → producer + engine both use DEFAULT_DB_PATH (co-located).
+            db_path=None,
         )
         summaries.append(s)
 
@@ -1049,6 +1681,55 @@ def main() -> int:
             if k != "forward_end_date_iso"
         }
         aggregate["forward_window_metadata"] = artifact_fwm
+
+    # B-C-narrow Phase 2 POST-fire (v2 PFR R1 per CB3 + CB4):
+    # Write parent batch_summary row. Children (one per evaluated candidate)
+    # already written by engine inside run_regime_holdout's _write_to_registry
+    # call (Phase 0 sequencing per spec §3.1.2). This block writes ONLY the parent.
+    if args.enable_b_c_narrow_recovery:
+        if forward_window_metadata is None:
+            # Should be unreachable post-CB2 identity guard (regime_key locked to
+            # forward_2026 → forward_window_metadata always captured). Defensive
+            # raise per HARD CONSTRAINT — never silently fall through.
+            raise RuntimeError(
+                "B-C-narrow finalize POST-fire: forward_window_metadata missing "
+                "despite passing identity guard. Possible regression in "
+                "forward_window_metadata capture at scripts:954-973."
+            )
+        # CB3 PFR R1 ADOPT: derive fee_model from cost_model.fee_model_label
+        # (matches children's fee_model via engine.py:1278). NO hardcoded "phase4_15bps_v1".
+        _exec_cfg = load_execution_config(args.execution_config)
+        _cost_model = ConstantSlippage.from_config(_exec_cfg)
+        cohort_metadata = {
+            "execution_config_path": _exec_cfg_path_relative,
+            "execution_config_sha256": hashlib.sha256(_exec_cfg_bytes).hexdigest(),
+            "parquet_data_sha256": forward_window_metadata["parquet_data_sha256"],
+            "regime_key": args.regime_key,
+            # cost_anchor_id locked to phase4_forward_15bps_v1 per spec §2 Q5
+            # (B-C-narrow uses phase4_forward_15bps_v1 anchor; Tier 5/6 promotion
+            # uses spot_realistic_15bps_v1 anchor at SEPARATE successor cycle).
+            "cost_anchor_id": "phase4_forward_15bps_v1",
+            "current_git_sha": head_sha,
+            "effective_start": forward_window_metadata["forward_window_start_utc"],
+            # CB3 PFR R1 ADOPT: initial_capital = engine cash default (engine.py:2324 = 10_000.0).
+            # Producer's _evaluate_one_candidate does NOT pass cash override; engine uses default
+            # → children rows have initial_capital = 10_000.0. Parent MUST match for consistency.
+            "initial_capital": 10_000.0,
+            # CB3 PFR R1 ADOPT: derive from cost_model.fee_model_label (slippage.py:94-100).
+            # For execution_phase4_15bps.yaml → total_bps = 15 → "effective_15bps_per_side".
+            # NO hardcoded literal.
+            "fee_model": _cost_model.fee_model_label,
+        }
+        _finalize_batch_registry(
+            parent_run_id=run_id,
+            cohort_metadata=cohort_metadata,
+            db_path=None,  # DEFAULT_DB_PATH; co-located with engine-written children
+        )
+        logger.info(
+            "[B-C-narrow] _finalize_batch_registry: parent batch_summary row written at "
+            "run_id=%s (engine_commit=%s, fee_model=%s, cohort_metadata fields=%d)",
+            run_id, CORRECTED_WF_ENGINE_COMMIT, _cost_model.fee_model_label, len(cohort_metadata),
+        )
 
     _write_aggregate_summary(aggregate, run_dir / "holdout_summary.json")
 
