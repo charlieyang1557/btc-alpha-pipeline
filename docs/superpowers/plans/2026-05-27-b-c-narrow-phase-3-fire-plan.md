@@ -168,6 +168,50 @@ Next register-event #N+19''''': SEAL-eve Rule 2 adversarial review verdict adjud
 
 ---
 
+## SEAL-eve R1 ADOPT findings applied (Plan v7 amendments — RE-SEAL-CANDIDATE post-empirical-correction)
+
+Per Charlie register #N+19''''' (Path 1: full AMEND + SEAL-eve R2) 2026-05-28. SEAL-eve R1
+fired as B2 2-leg dispatch on v6 SEAL-CANDIDATE (commit `6611a18`); **DIVERGENT verdicts**:
+Codex NOT-APPROVE (2 BLOCKING + 1 MEDIUM + 2 LOW via EMPIRICAL pytest run); Advisor
+APPROVE-WITH-FINDINGS LOW-only (1 LOW + 4 NOTES via static read).
+
+**Rule 2 SEAL-eve OPERATIONALLY REQUIRED VINDICATED** — Codex's empirical-run methodology
+caught 2 architectural BLOCKINGs that 5 standard PFR rounds + Advisor static SEAL-eve all
+missed. Phase 3 cycle is 5th cumulative VINDICATION of Rule 2 (extending Phase 2 + B-C-extended
++ R6.1 §2.2 narrow patch baseline).
+
+Convergence summary:
+- CB2-SE-B1 (Codex empirical only): pre-fire fall-through to Phase 2 canonical content; 10 FAILED
+  not 10 SKIPPED. Critical: `_resolve_active_run_dir` was replaced with `active_run_dir` fixture
+  at R2 (CB2-R2-B1) but the fixture's existence-only check is insufficient at this Phase boundary
+  because Phase 2 had previously populated CANONICAL_RUN_DIR path.
+- G7-SE-B2 (Codex empirical only): FakeStat missing st_mode → AttributeError on Path.mkdir.
+- CM6-SE-M1 (Codex): CM6 R2 ambiguity recurrence at Step 14c.2 commit-vs-STOP.
+- L1-SE-L1 (CONVERGENT Codex + Advisor): stale `_resolve_active_run_dir` references at 2 sites
+  missed by L1-CONVERGENT R5 fix (which addressed 7 user-facing sites but missed 2 internal-template
+  sites).
+
+**Methodology lesson**: standard PFR static review is insufficient for catching execution-time
+architectural flaws. SEAL-eve R2 brief MUST mandate empirical pytest dispatch.
+
+| # | Severity | Origin | Fix in v7 |
+|---|---|---|---|
+| CB2-SE-B1 | BLOCKING | Codex (empirical pytest run only) | `active_run_dir` fixture extended with B-C-narrow recovery marker check: archive file `data/phase2c_evaluation_gate/archive/phase4_forward_2026_15bps_v1_d0b8101/holdout_results.csv` (W3 archive output during T13 fire) is the unique B-C-narrow-state precondition. Pre-fire CANONICAL_RUN_DIR exists (Phase 2 baseline populated this path) — fixture must NOT fall through to it when fire has not run. Added ARCHIVE_MARKER_FILE constant + skip-if-absent guard at fixture body top + defensive partial-state skip. Resolves Codex empirical-run finding (v6 pre-fire was 10 FAILED + 1 PASSED + 1 SKIPPED, not plan's claimed 10 SKIPPED + 2 PASSED). |
+| G7-SE-B2 | BLOCKING | Codex (empirical pytest run only) | FakeStat class extended with `st_mode = 0o040755` (directory mode) + 8 defensive stat-result attributes (st_ino, st_nlink, st_uid, st_gid, st_size, st_atime, st_mtime, st_ctime) for any other Path/os.stat-using code path. Producer's `Path.mkdir(parents=True, exist_ok=True)` at scripts:1146 internally calls `stat().st_mode` on pre-created `archive_root` dir → AttributeError on v6 FakeStat with only `st_dev`. Resolves Codex empirical-run finding. Mock now falls through to real `Path.stat` for any non-mocked path (preserves test isolation). |
+| CM6-SE-M1 | MEDIUM | Codex | Re-clarified Step 14c.2 commit-before-STOP semantics (CM6 R2 ambiguity recurrence). Added inline rationale at Step 14c.2 commit section: "Per CM6-R2-M2 v3 + CM6-SE-M1 v7 re-clarification: this commit ALWAYS executes (no Charlie auth needed for documentation commit). #N+19c is the RATIFY ACKNOWLEDGMENT of the committed packet — Charlie reviews + signs off; does NOT gate the commit itself. Charlie auth gates are at #N+19a (T13 fire) + #N+19b (T14b mv); ratify ack is post-fire post-mv documentation." Removed "no commit without Charlie auth" ambiguity at final handoff (plan:2559). |
+| L1-SE-L1 | LOW | Codex+Advisor CONVERGENT | Updated 2 stale `_resolve_active_run_dir` references missed by L1-CONVERGENT R5 (which fixed 7 version-marker sites but missed these 2 internal-template sites). plan:1738-1740 Task 13 commit template body + plan:2488 ratify packet inline test inventory both updated to reference CB2-R2-B1 PFR R2 ADOPT v3 per-test fixture + CB2-SE-B1 v7 archive-marker check. Plan:160 anchor-line cites verified — methodology note acknowledges line-number drift; switched to per-fix textual anchoring per CR-SE-R3-L2 v11 Phase 2 lesson. |
+
+Total v7 amendments: 4 ADOPT inline (2 BLOCKING + 1 MEDIUM + 1 LOW).
+Test count v6 → v7: 12 unchanged (CB2-SE-B1 + G7-SE-B2 fixes within existing test fixture +
+test body; no new test methods).
+
+v7 = RE-SEAL-CANDIDATE (post-empirical-correction).
+
+Next register-event #N+19'''''': SEAL-eve R2 Rule 2 adversarial review with mandatory empirical
+pytest dispatch (B2 2-leg parallel; Codex empirical-run discipline codified into R2 brief).
+
+---
+
 ## Sub-decisions applied (Path A defaults per Charlie register #N+18; Charlie may override at PFR R1)
 
 | # | Sub-decision | Default applied | Rationale |
@@ -511,6 +555,13 @@ ARCHIVE_RUN_DIR = (
     / "archive"
     / "phase4_forward_2026_15bps_v1_d0b8101"
 )
+# CB2-SE-B1 PFR SEAL-eve R1 ADOPT v7: B-C-narrow recovery marker.
+# The W3 archive operation creates this file as part of T13 fire.
+# Pre-fire CANONICAL_RUN_DIR exists (Phase 2 baseline populated it) — must NOT
+# fall through to that path when fire has not run. Archive marker presence is
+# the unique B-C-narrow-state precondition (Phase 2 baseline never created this
+# archive directory).
+ARCHIVE_MARKER_FILE = ARCHIVE_RUN_DIR / "holdout_results.csv"
 FIXTURE_PATH = (
     PROJECT_ROOT / "tests" / "fixtures" / "b_c_narrow_archived_baseline.json"
 )
@@ -518,32 +569,46 @@ FIXTURE_PATH = (
 
 @pytest.fixture
 def active_run_dir() -> Path:
-    """Per-test fixture: resolve active run dir (sibling pre-T14b OR canonical post-T14b).
+    """Per-test fixture: resolve active B-C-narrow run dir based on fire state.
 
-    CB2-R2-B1 PFR R2 ADOPT v3: refactored from module-load `_resolve_active_run_dir()`
-    + module-level `ACTIVE_RUN_DIR` constant. Module-load `pytest.skip()` would have
-    required `allow_module_level=True` parameter (else collection error per
-    `_pytest/python.py:543-550`); even with that, all fire-state tests share a single
-    cached resolution outcome — making per-test SKIP behavior coarser. The per-test
-    fixture pattern is cleaner: each fire-state test takes `active_run_dir`
-    parameter; tests that do NOT need the run dir (G7 refuse + G7 cross-FS) skip
-    taking the fixture entirely.
+    CB2-SE-B1 PFR SEAL-eve R1 ADOPT v7: pre-fire fall-through fix. Phase 2 baseline
+    populated CANONICAL_RUN_DIR before B-C-narrow Phase 3 fire; pre-fire fixture must
+    NOT return CANONICAL_RUN_DIR (would run tests against Phase 2 content). The
+    archive marker file is uniquely created by W3 during T13 fire — its presence is
+    the B-C-narrow-state precondition.
 
-    Pre-T14b state: SIBLING_RUN_DIR exists (populated by Step 14.1 fire);
-    CANONICAL_RUN_DIR is absent (archived by producer W3).
-    Post-T14b state: SIBLING_RUN_DIR is gone (consumed by mv); CANONICAL_RUN_DIR
-    is populated (mv target).
+    State machine:
+    - Pre-fire (no archive): SKIP — neither B-C-narrow sibling nor B-C-narrow canonical exists yet
+    - Post-T13 pre-T14b (sibling + archive both exist): return SIBLING_RUN_DIR
+    - Post-T14b (canonical + archive exist; sibling gone): return CANONICAL_RUN_DIR
 
-    If NEITHER exists (fire never executed; e.g. RED phase at Step 13.3), the
-    fixture-dependent tests skip cleanly via pytest.skip (no module-load wart).
+    Codex SEAL-eve R1 empirical pytest run on v6 caught the pre-fire fall-through bug
+    (10 FAILED instead of 10 SKIPPED). Advisor SEAL-eve R1 static read missed it.
+
+    CB2-R2-B1 PFR R2 ADOPT v3 (carried): refactored from module-load
+    `_resolve_active_run_dir()` + module-level `ACTIVE_RUN_DIR` constant. Module-load
+    `pytest.skip()` would have required `allow_module_level=True` parameter (else
+    collection error per `_pytest/python.py:543-550`); even with that, all fire-state
+    tests share a single cached resolution outcome — making per-test SKIP behavior
+    coarser. The per-test fixture pattern is cleaner: each fire-state test takes
+    `active_run_dir` parameter; tests that do NOT need the run dir (G7 refuse +
+    G7 cross-FS) skip taking the fixture entirely.
     """
+    if not ARCHIVE_MARKER_FILE.exists():
+        pytest.skip(
+            "Phase 3 B-C-narrow fire not yet executed — archive marker absent at "
+            f"{ARCHIVE_MARKER_FILE}. Pre-fire CANONICAL_RUN_DIR contains Phase 2 baseline "
+            "content (NOT B-C-narrow recovery output); skipping fire-state tests until "
+            "T13 producer fire writes the archive marker via W3."
+        )
     if SIBLING_RUN_DIR.exists():
         return SIBLING_RUN_DIR
     if CANONICAL_RUN_DIR.exists():
         return CANONICAL_RUN_DIR
+    # Defensive: archive exists but neither dir → partial-state failure mode (corrupt cycle)
     pytest.skip(
-        "Neither SIBLING_RUN_DIR nor CANONICAL_RUN_DIR exists — Phase 3 fire "
-        "not yet executed. Tests will be exercised at Step 14.4 V4 gate run."
+        f"Archive marker present but neither SIBLING_RUN_DIR nor CANONICAL_RUN_DIR exists; "
+        "partial-state failure — manual cleanup required per R9 compensating-cleanup."
     )
 
 
@@ -1604,6 +1669,18 @@ class TestG7ArchiveIdempotency:
         misconfiguration via mocked Path.stat().
 
         AM1 PFR R1 ADOPT v2: NEW test for st_dev guard coverage.
+
+        G7-SE-B2 PFR SEAL-eve R1 ADOPT v7: FakeStat extended with `st_mode`
+        (directory mode = 0o040755) + 8 defensive stat-result attributes for
+        any other Path/os.stat-using code path. Producer's
+        `Path.mkdir(parents=True, exist_ok=True)` at scripts:1146 internally
+        calls `stat().st_mode` on pre-created `archive_root` dir → AttributeError
+        on v6 FakeStat with only `st_dev`. Codex empirical pytest run on v6
+        caught this; Advisor static SEAL-eve missed it. The mock now falls
+        through to the real `Path.stat` for any non-mocked path so test
+        isolation is preserved (only `archive_root` + paths strictly under it,
+        and `canonical` + paths under it, return FakeStat; everything else
+        gets real stat behavior).
         """
         from scripts.run_phase2c_evaluation_gate import (
             _archive_canonical_pre_flight,
@@ -1617,8 +1694,28 @@ class TestG7ArchiveIdempotency:
         archive_root.mkdir()
 
         class FakeStat:
-            def __init__(self, dev: int):
+            """Stat-result stand-in with all attributes Path/stat-using code might query.
+
+            G7-SE-B2 PFR SEAL-eve R1 ADOPT v7: extended from v6 (which had only
+            `st_dev`). Producer's `Path.mkdir(parents=True, exist_ok=True)` at
+            scripts:1146 internally calls `stat().st_mode` on the pre-created
+            `archive_root` dir → AttributeError on v6. Added `st_mode` (directory
+            mode = 0o040755) + 8 defensive attributes for any other Path/os.stat
+            code path that might be exercised through the cross-FS guard.
+            """
+
+            def __init__(self, dev: int, mode: int = 0o040755):
                 self.st_dev = dev
+                self.st_mode = mode  # CB2-SE-B2 fix: required by Path.mkdir's internal stat()
+                # Defensive additions for any other Path/os.stat-using code path:
+                self.st_ino = 0
+                self.st_nlink = 1
+                self.st_uid = 0
+                self.st_gid = 0
+                self.st_size = 0
+                self.st_atime = 0.0
+                self.st_mtime = 0.0
+                self.st_ctime = 0.0
 
         original_stat = Path.stat
 
@@ -1632,13 +1729,21 @@ class TestG7ArchiveIdempotency:
         # unrelated paths containing the word "archive". The new pattern
         # matches only the specific archive_root or paths strictly under it.
         archive_root_str = str(archive_root)
+        canonical_str = str(canonical)
 
         def mocked_stat(self, *args, **kwargs):
-            self_str = str(self)
+            # G7-SE-B2 PFR SEAL-eve R1 ADOPT v7: fall through to real stat
+            # for any non-mocked path so test isolation is preserved (other
+            # Path objects within Path.mkdir's internal machinery, e.g. parent
+            # directories, get real stat behavior).
+            s = str(self)
             # Match exact archive_root OR any path strictly under archive_root
-            if self_str == archive_root_str or self_str.startswith(archive_root_str + "/"):
-                return FakeStat(dev=999)  # different FS
-            return FakeStat(dev=111)
+            if s == archive_root_str or s.startswith(archive_root_str + "/"):
+                return FakeStat(dev=999)  # different FS for archive_root + subpaths
+            if s == canonical_str or s.startswith(canonical_str + "/"):
+                return FakeStat(dev=111)
+            # Fall through to real stat for any other Path objects
+            return original_stat(self, *args, **kwargs)
 
         monkeypatch.setattr(Path, "stat", mocked_stat)
 
@@ -1735,9 +1840,14 @@ Sample candidates per fixture sampling rule (lexicographically smallest 2):
 Fixture file (tests/fixtures/b_c_narrow_archived_baseline.json) captured
 POST-T13 fire BEFORE T14 V4 gate runs (see Step 14.3).
 
-Path-adaptive design per CB2 PFR R1 ADOPT v2: SIBLING_RUN_DIR (pre-T14b)
-OR CANONICAL_RUN_DIR (post-T14b) resolved via _resolve_active_run_dir;
-tests work in both states satisfying CLAUDE.md HARD CONSTRAINT.
+Path-adaptive design per CB2-R2-B1 PFR R2 ADOPT v3 per-test `active_run_dir`
+fixture + CB2-SE-B1 PFR SEAL-eve R1 ADOPT v7 archive-marker check (skips when
+archive absent pre-fire). Resolves SIBLING_RUN_DIR (post-T13 pre-T14b) OR
+CANONICAL_RUN_DIR (post-T14b) only when ARCHIVE_MARKER_FILE present; otherwise
+SKIP (pre-fire state with Phase 2 canonical content). Supersedes CB2 PFR R1
+ADOPT v2 module-load `_resolve_active_run_dir` pattern + closes Codex SEAL-eve
+R1 empirical pre-fire fall-through finding. Tests work in both states satisfying
+CLAUDE.md HARD CONSTRAINT.
 
 All-39 V4 gate per CB3 PFR R1 ADOPT v2: reads raw CSV directly (not
 fixture); spec §4.2/§4.3 per-candidate full-cohort coverage achieved.
@@ -2449,7 +2559,7 @@ Phase 4 sub-plan drafting is NOT a sub-option of #N+19c; it requires its own reg
 
 - [ ] **Step 14c.2: Commit ratify packet, THEN STOP for Charlie register #N+19c (ratify ack only)**
 
-Per CM6 PFR R1 ADOPT v2 Option A: commit lands FIRST (this step), then STOP for Charlie register #N+19c. Register #N+19c is ratify acknowledgment + push decision for the already-committed packet — NOT a pre-commit authorization gate. This matches the Phase 2 ratify pattern where the commit lands before the Charlie ratify acknowledgment register-event.
+Per CM6 PFR R1 ADOPT v2 Option A + CM6-R2-M2 PFR R2 ADOPT v3 + CM6-SE-M1 PFR SEAL-eve R1 ADOPT v7 re-clarification: this commit ALWAYS executes (no Charlie auth needed for documentation commit). Register #N+19c is the RATIFY ACKNOWLEDGMENT of the already-committed packet — Charlie reviews + signs off; does NOT gate the commit itself. Charlie auth gates are at #N+19a (T13 fire) + #N+19b (T14b mv); ratify ack is post-fire post-mv documentation. This matches the Phase 2 ratify pattern where the commit lands before the Charlie ratify acknowledgment register-event.
 
 ```bash
 git add docs/superpowers/phase-3-impl-results/phase-3-ratify-summary.md
@@ -2485,7 +2595,7 @@ Data artifacts produced (gitignored):
 - backtest/experiments.db (1 parent + 39 children at parent_run_id=phase4_forward_2026_15bps_v1_b_c_narrow)
 
 Test + fixture artifacts (committed):
-- tests/test_b_c_narrow_v4_reproducibility.py (12 V4+G4-G7 test methods; path-adaptive per CB2 ADOPT v2)
+- tests/test_b_c_narrow_v4_reproducibility.py (12 V4+G4-G7 test methods; path-adaptive per CB2-R2-B1 v3 fixture + CB2-SE-B1 v7 archive-marker check)
 - tests/fixtures/b_c_narrow_archived_baseline.json (N=2 candidates per spec §6.6 + AM3 lex-smallest-2 rationale)
 
 Phase 4 (SEAL bundle: NOTE doc + B2 reviewer dispatch + Rule 2 SEAL-eve +
@@ -2556,7 +2666,7 @@ Per `superpowers:subagent-driven-development` — the implementer subagent shoul
 5. Execute Task 14c (Steps 14c.1 → 14c.2). STOP at Step 14c.2 for Charlie register #N+19c.
 6. Surface ratify packet at `docs/superpowers/phase-3-impl-results/phase-3-ratify-summary.md` for Phase 3 ratify acknowledgment.
 
-The implementer MUST treat each STOP HERE block as a hard barrier. The implementer MUST NOT execute Step 14.1 fire, Step 14b.1 mv, or Step 14c.2 commit without seeing Charlie's explicit authorization message in the conversation record.
+The implementer MUST treat each STOP HERE block as a hard barrier. The implementer MUST NOT execute Step 14.1 fire (gated by #N+19a) or Step 14b.1 mv (gated by #N+19b) without seeing Charlie's explicit authorization message in the conversation record. Per CM6 PFR R1 ADOPT v2 Option A + CM6-R2-M2 PFR R2 ADOPT v3 + CM6-SE-M1 PFR SEAL-eve R1 ADOPT v7 re-clarification: Step 14c.2 ratify packet commit is documentation that ALWAYS executes — no Charlie auth needed for documentation commit; #N+19c is post-commit ratify ACKNOWLEDGMENT only (Charlie reviews + signs off the already-committed packet; does NOT gate the commit itself).
 
 If V4 FAILS at Step 14.5 (any of 12 tests per v2 expansion): STOP and surface SEAL BLOCKED per spec §4.2 stop-condition. Do NOT proceed to Task 14b. Do NOT execute the mv. Adjudication paths (a/b/c per spec §4.2) require Charlie register-event.
 
