@@ -1,7 +1,7 @@
 # B-C-narrow Phase 2 ratify packet
 
 **Date:** 2026-05-28T04:27:45Z
-**HEAD commit:** `eda6535` (last code commit — Task 11 line-ref consistency fix; Task 12 commit `d42beeb` adds this packet only, no code changes)
+**HEAD commit:** `3a1226b` (last code commit — T10 producer code polish Bundle a from Phase 2 NAMED-deferred catalogue; this commit adds Bundle b doc polish only, no code changes)
 **Plan version:** v3-Phase2 v11 SEAL-CANDIDATE (sealed at commit `d9b0718`)
 **Plan path:** `docs/superpowers/plans/2026-05-27-b-c-narrow-phase-2-producer-tdd-plan.md`
 **Spec path:** `docs/superpowers/specs/2026-05-26-b-c-narrow-data-recovery-design.md` (sealed at `d6c7fc0`)
@@ -18,6 +18,8 @@
 
 NOTE on untracked working tree: same set of pre-existing untracked artifacts present at Phase 1 ratify (per `phase-1-ratify-summary.md` line 14-17 NOTE) plus the 4 plan documents from the parallel R5.1/R5.2/R6.1 cycle planning work. None of these are imported by any test or by `scripts/run_phase2c_evaluation_gate.py` and cannot affect Phase 2 GREEN-phase semantics.
 
+Note on table format: Phase 2 preconditions are plan-derived rather than spec-gated (Phase 2 implementation arc consumes Phase 0/1 SEAL artifacts + Plan v3-Phase2 v11 SEAL; no fresh spec-§ references). The 3-column format omits the "Spec ref" column present in Phase 1's 4-col precondition table by design. If a future cycle adds spec-gated preconditions, migrate to 4-col with explicit per-row spec refs.
+
 ## Test results
 
 | Test class | Items collected | PASS | FAIL | Status |
@@ -25,6 +27,14 @@ NOTE on untracked working tree: same set of pre-existing untracked artifacts pre
 | `TestBCNarrowPhase2ProducerEdits` (test_phase2c_evaluation_gate_runner.py) | 32 | 32 | 0 | **GREEN** |
 | `TestT1_4_B1_SignatureBackwardCompat` (test_t1_4_backward_compat.py) | 4 | 4 | 0 | **GREEN** |
 | Full pytest suite | 2362 | 2360 | 0 (+ 2 xfailed) | **zero regression** |
+
+**Verification commands:**
+
+```bash
+python -m pytest tests/test_phase2c_evaluation_gate_runner.py::TestBCNarrowPhase2ProducerEdits -v
+python -m pytest tests/test_t1_4_backward_compat.py::TestT1_4_B1_SignatureBackwardCompat -v
+python -m pytest -q  # full suite
+```
 
 ### Plan template stale-count NOTE (NAMED-eligible post-Task-12 polish)
 
@@ -75,7 +85,10 @@ T1.4 baseline maintenance confined to `tests/test_t1_4_backward_compat.py` (Task
 | Task 10 (GREEN) | `86f75ff` | producer implementation: 9 modify-zones + 4 helpers + 2 CLI flags |
 | Task 11 (T1.4 maint) | `dd6669d` | T1.4 baseline maintenance per AST classifier (no drift) |
 | Task 11 (consistency) | `eda6535` | T1.4 line-reference consistency fix (code-quality Important) |
-| Task 12 (this packet) | THIS COMMIT | Phase 2 ratify packet artifact |
+| Task 12 (ratify packet) | `d42beeb` | Phase 2 ratify packet artifact (original) |
+| Task 12 (T12-polish) | `4b7a4c6` | Ratify packet documentation polish (HEAD field clarification + denominator fix from T12 code-quality Important) |
+| T10 producer code polish (Bundle a) | `3a1226b` | T10 producer code polish — Bundle a Items 1+2 from Phase 2 NAMED-deferred catalogue |
+| Task 12 (Bundle b polish) | this commit (Bundle b ratify packet polish) | Bundle b doc polish — Items 5+6+7 from Phase 2 NAMED-deferred catalogue (verification commands footnote + 3-col preconditions annotation + commit chain enumeration) |
 
 ## Overall verdict
 
@@ -93,7 +106,7 @@ Phase 3 fire (T13 producer run + T14 V4 reproducibility gate + T14b canonical-pa
 Per anti-pre-emption discipline: register-event #N+2 is Phase 2 ratify acknowledgment ONLY. The Phase 3 fire-plan drafting authorization is a SEPARATE register-event #N+3.
 
 - Phase 2 ratify acknowledgment
-- Push decision for Phase 2 implementation commits (`9a94f39` Task 9 + `86f75ff` Task 10 + `dd6669d` Task 11 + `eda6535` consistency fix + Task 12 ratify packet)
+- Push decision for Phase 2 implementation commits (`9a94f39` Task 9 + `86f75ff` Task 10 + `dd6669d` Task 11 + `eda6535` consistency fix + `d42beeb` Task 12 ratify packet + `4b7a4c6` T12-polish + `3a1226b` T10 producer code Bundle a + this commit Bundle b doc polish)
 - NAMED-eligible plan-quality polish for stale 25/2354 → 32/2360 numbers in plan template (lines 3543-3546, 3574, 3576): SEPARATE Charlie register decision
 
 Phase 3 fire sub-plan drafting is NOT a sub-option of #N+2; it requires its own register-event #N+3.
