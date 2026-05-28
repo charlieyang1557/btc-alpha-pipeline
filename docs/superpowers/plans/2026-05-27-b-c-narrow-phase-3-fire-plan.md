@@ -134,13 +134,37 @@ Per Charlie register #N+19''' (Path 1: standard AMEND + PFR R5) 2026-05-28. PFR 
 
 | # | Severity | Origin | Fix in v5 |
 |---|---|---|---|
-| Sub-2-R4-B1 | BLOCKING (adjudicated from Codex LOW + Advisor BLOCKING DIVERGENT) | Advisor R4 BLOCKING (CONVERGENT root with Codex R4 LOW; severity-divergent at field-count gap) | G6 `expected_parent_null_fields` corrected from 5 fields (incl. wrong `win_rate`) → 8 fields per spec §3.2.3 line 118 + producer scripts:1373-1381 verbatim. 4 metric (sharpe_ratio + max_drawdown + total_return + total_trades) + 4 LC-b semantic (hypothesis_hash + returns_per_bar_path + returns_per_bar_sha256 + T_obs). All cross-references in plan body + ADOPT change-log + docstring + comment markers updated to reflect 8-field list. Sub-2 R3 row in PFR R2 ADOPT table marked SUPERSEDED. |
+| Sub-2-R4-B1 | BLOCKING (adjudicated from Codex LOW + Advisor BLOCKING DIVERGENT) | Advisor R4 BLOCKING (CONVERGENT root with Codex R4 LOW; severity-divergent at field-count gap) | G6 `expected_parent_null_fields` corrected from 5 fields (incl. wrong `win_rate`) → 8 fields per spec §3.2.3 line 118 + producer scripts:1373-1381 verbatim. 4 metric (sharpe_ratio + max_drawdown + total_return + total_trades) + 4 LC-b semantic (hypothesis_hash + returns_per_bar_path + returns_per_bar_sha256 + T_obs). All cross-references in plan body + ADOPT change-log + docstring + comment markers updated to reflect 8-field list. Sub-2 R3 row in PFR R3 ADOPT table marked SUPERSEDED. |
 
 Total v5 amendments: 1 ADOPT inline (substantive G6 invariant correction) + cross-reference cleanups in change-log / docstrings / comment markers.
 
 Test count v4 → v5: 12 unchanged (G6 body assertion list expanded from 5 → 8 fields; no new test methods).
 
 **Cycle convergence (updated v5)**: ADOPT 17 → 14 → 13 → 2. R4 substantive ADOPT count is 1 (Sub-2-R4-B1 + 1 LOW absorbed); plan is converging strongly. Codex saturation signal at R4 is correct in trajectory direction but underestimated 1 BLOCKING via partial-line empirical reading. Cycle approaching SEAL-eve readiness pending PFR R5 confirmation that both legs return at LOW-floor.
+
+---
+
+## PFR R5 ADOPT findings applied (Plan v6 amendments — SEAL-CANDIDATE)
+
+Per Charlie register #N+19'''' (Path 2: AMEND 4 ADOPT → v6 SEAL-CANDIDATE → SKIP standard PFR R6 → dispatch SEAL-eve Rule 2 directly) 2026-05-28. PFR R5 fired as B2 2-leg dispatch on v5 (commit `772cea1`); Codex returned APPROVE-WITH-FINDINGS LOW-only (3 LOW; recommends SEAL-eve direct); Advisor returned APPROVE-WITH-FINDINGS (1 MEDIUM + 1 LOW + 4 NOTES; mild lean PFR R6 but Path 2 acceptable). **Both legs declare LOW-floor.**
+
+Convergence: L1 version-marker drift CONVERGENT (Codex 4 sites + Advisor 7 sites; Advisor superset enumeration adopted). Codex R4 partial-line reading methodology error openly acknowledged in R5 verdict.
+
+Phase 2 R7→SEAL-eve precedent: Path 2 chosen per Phase 3's faster convergence (R4 LOW-floor 1 round earlier than Phase 2's R5; cycle saturation criterion satisfied per both legs). Rule 2 SEAL-eve dispatch is OPERATIONALLY REQUIRED per 26+ instance precedent regardless of standard PFR round count.
+
+| # | Severity | Origin | Fix in v6 |
+|---|---|---|---|
+| AM1-R5 | MEDIUM | Advisor | Extended all-39 V4 test `test_v4_all_39_total_trades_exact_match` to assert `gate_pass_per_criterion` 4 subfields exact match per spec §4.2 line 229 verbatim. v5 covered only CSV-column fields (`holdout_total_trades` + `holdout_passed`); gate_pass_per_criterion is JSON-only (not surfaced as CSV columns). N=2 fixture test already covers gate_pass at fixture-layer; all-39 layer extension closes spec literal coverage gap. Subfield names verified at producer scripts:504-518: `sharpe_passed` + `drawdown_passed` + `return_passed` + `trades_passed`. Logical-implication mitigation (deterministic AND-gate) acknowledged by Advisor R5 as NOT sufficient for spec literal compliance. |
+| CL1-R5 | LOW | Codex | Fixed plan:137 PFR R4 ADOPT table Sub-2-R4-B1 row: "Sub-2 R3 row in PFR R2 ADOPT table marked SUPERSEDED" → "Sub-2 R3 row in PFR R3 ADOPT table marked SUPERSEDED" (Sub-2 R3 actually lives in PFR R3 ADOPT table at plan:113, not PFR R2). |
+| CL2-R5 | LOW | Codex | Added Sub-2-R4-B1 reference at ratify packet G6 sites (plan:2275 G6 test row + plan:2295 G6 gate summary row) to acknowledge the 8-field correction lineage; ratify packet now explicitly enumerates 8 per-candidate fields NULL at parent per Sub-2-R4-B1 v6 (4 metric + 4 LC-b semantic). |
+| L1-CONVERGENT | LOW | Codex+Advisor CONVERGENT (Advisor superset 7 sites) | Updated 7 version-marker sites from "v4" → "v6" with full PFR R4 + R5 history embedded: plan:418 (test file docstring template) + plan:1603 (Task 13 commit template) + plan:1963 (Task 14 commit template) + plan:2177 (Task 14b commit template) + plan:2234 (ratify packet `Plan version` field — extended with full PFR R1+R2+R3+R4+R5 lineage + Path 2 SEAL-CANDIDATE marker) + plan:2365 (Task 14c commit template) + plan:2471 (End-of-plan marker — extended with full PFR R1+R2+R3+R4+R5 lineage + Path 2 SEAL-eve direct dispatch note). **Methodology note (NAMED-deferred to post-SEAL register-event):** This is the 2nd recurrence of CL1-R3 class. Per memory `feedback_invariant_level_vs_enumeration.md`, when fix iterations show producer-consumer asymmetry recurrence at same boundary class, adopt centralized invariant-level closure at producer layer (single source-of-truth for plan version string via header constant + Jinja-style placeholder). NOT applied at v6 (out of v6 scope per brief); flagged for separate Charlie register-event at post-Phase-3 polish cycle. |
+
+Total v6 amendments: 4 ADOPT inline (1 MEDIUM + 3 LOW).
+Test count v5 → v6: 12 unchanged (AM1-R5 expansion adds ~70 lines within existing all-39 V4 `test_v4_all_39_total_trades_exact_match` test method body; no new test methods).
+
+Cycle convergence (FINAL pre-SEAL-eve): ADOPT 17 → 14 → 13 → 2 → 4 = 50 total. 0 BLOCKING at R5 from either leg. v6 = SEAL-CANDIDATE.
+
+Next register-event #N+19''''': SEAL-eve Rule 2 adversarial review verdict adjudication (B2 2-leg parallel dispatch fired by orchestrator after this v6 commit per Path 2 SKIP-PFR-R6 → SEAL-eve-direct).
 
 ---
 
@@ -415,7 +439,7 @@ Write the following file content verbatim:
 ```python
 """V4 reproducibility + G4-G7 gate tests for B-C-narrow Phase 3 fire.
 
-Per Plan v3-Phase3 v4 Step 13.2. Tests authored RED before Task 14 fire.
+Per Plan v3-Phase3 v6 Step 13.2. Tests authored RED before Task 14 fire.
 GREEN expected at Step 14.5 after fire + fixture capture + V4 gate run.
 
 Test count: 12 methods (PFR R1 ADOPT v2 + PFR R2 ADOPT v3 expansion):
@@ -774,11 +798,28 @@ class TestV4Reproducibility:
                 )
 
     def test_v4_all_39_total_trades_exact_match(self, active_run_dir: Path) -> None:
-        """All 39 candidates' total_trades (int) + holdout_passed (bool) match exactly.
+        """All 39 candidates' total_trades (int) + holdout_passed (bool) +
+        gate_pass_per_criterion 4 subfields (bools) match exactly.
 
         CB3 PFR R1 ADOPT v2: exact-equality coverage for full cohort.
 
         CB2-R2-B1 PFR R2 ADOPT v3: takes `active_run_dir` per-test fixture.
+
+        AM1-R5 PFR R5 ADOPT v6: extended to iterate per-candidate
+        `holdout_summary.json` files at all-39 layer to assert
+        `gate_pass_per_criterion` 4 subfields exact match per spec §4.2 line 229
+        verbatim ("`gate_pass_per_criterion` 4 subfields: each exact match").
+        v5 covered only CSV-column fields (`holdout_total_trades` + `holdout_passed`);
+        gate_pass_per_criterion is JSON-only (not surfaced as CSV columns). N=2
+        fixture test (`test_v4_total_trades_exact_match` above) already covers
+        gate_pass at fixture-layer; replicating at all-39 layer closes spec
+        literal coverage gap. Advisor R5 M1 acknowledged logical-implication
+        mitigation (deterministic AND-gate; if 4 subfields all True per
+        sub-criterion gate produces holdout_passed) was NOT sufficient for spec
+        literal compliance. Subfield names verified at producer
+        scripts/run_phase2c_evaluation_gate.py:504-518: `sharpe_passed` +
+        `drawdown_passed` + `return_passed` + `trades_passed` (matches N=2 test
+        loop at this file's earlier `test_v4_total_trades_exact_match`).
         """
         archive_rows = _load_all_39_candidates_from_csv(ARCHIVE_RUN_DIR)
         new_rows = _load_all_39_candidates_from_csv(active_run_dir)
@@ -798,6 +839,59 @@ class TestV4Reproducibility:
                 f"V4 all-39 holdout_passed exact-match FAIL on {hh}: "
                 f"old={old_row['holdout_passed']!r} new={new_row['holdout_passed']!r}"
             )
+            # AM1-R5 PFR R5 ADOPT v6: spec §4.2 line 229 requires
+            # gate_pass_per_criterion 4 subfields exact match at all-39 layer.
+            # JSON-only field (not surfaced in CSV); load per-candidate summaries
+            # from archive + sibling/canonical run dirs.
+            archive_summary_path = (
+                ARCHIVE_RUN_DIR / hh / "holdout_summary.json"
+            )
+            new_summary_path = active_run_dir / hh / "holdout_summary.json"
+            assert archive_summary_path.exists(), (
+                f"AM1-R5 V4 all-39 {hh}: archive holdout_summary.json missing at "
+                f"{archive_summary_path}"
+            )
+            assert new_summary_path.exists(), (
+                f"AM1-R5 V4 all-39 {hh}: new holdout_summary.json missing at "
+                f"{new_summary_path}"
+            )
+            archive_summary = json.loads(archive_summary_path.read_text())
+            new_summary = json.loads(new_summary_path.read_text())
+            archive_gate_pass = archive_summary.get("gate_pass_per_criterion")
+            new_gate_pass = new_summary.get("gate_pass_per_criterion")
+            assert archive_gate_pass is not None, (
+                f"AM1-R5 V4 all-39 {hh}: archive summary missing "
+                f"gate_pass_per_criterion (top-level None — producer skipped "
+                f"gate evaluation at scripts:527?)"
+            )
+            assert new_gate_pass is not None, (
+                f"AM1-R5 V4 all-39 {hh}: new summary missing "
+                f"gate_pass_per_criterion (top-level None)"
+            )
+            # Spec §4.2 line 229: 4 subfields exact match (bool comparison; NO ε
+            # tolerance). Subfield names per producer scripts:504-518.
+            expected_subfields = (
+                "sharpe_passed",
+                "drawdown_passed",
+                "return_passed",
+                "trades_passed",
+            )
+            for subfield in expected_subfields:
+                assert subfield in archive_gate_pass, (
+                    f"AM1-R5 V4 all-39 {hh}: archive summary missing "
+                    f"gate_pass_per_criterion.{subfield}"
+                )
+                assert subfield in new_gate_pass, (
+                    f"AM1-R5 V4 all-39 {hh}: new summary missing "
+                    f"gate_pass_per_criterion.{subfield}"
+                )
+                old_sub = bool(archive_gate_pass[subfield])
+                new_sub = bool(new_gate_pass[subfield])
+                assert new_sub == old_sub, (
+                    f"AM1-R5 V4 all-39 gate_pass_per_criterion.{subfield} "
+                    f"exact-match FAIL on {hh}: old={old_sub} new={new_sub}. "
+                    f"Spec §4.2 line 229 requires EXACT match (bool, no ε)."
+                )
 
 
 class TestG4ParquetIntegrity:
@@ -1600,7 +1694,7 @@ git add tests/test_b_c_narrow_v4_reproducibility.py
 git commit -m "$(cat <<'EOF'
 test(b-c-narrow/phase-3): T13 RED — V4+G4-G7 test bodies (12 methods)
 
-Per Plan v3-Phase3 v4 Task 13. RED phase before T13 fire authorization.
+Per Plan v3-Phase3 v6 Task 13. RED phase before T13 fire authorization.
 
 Test methods (12 total = 5 spec §6.4 N=2 fixture + 2 BLOCKING-5 carry G6+G7
 + 4 all-39 V4 gate per CB3 PFR R1 ADOPT v2 + 1 cross-FS G7 per AM1 PFR R1
@@ -1960,7 +2054,7 @@ git add tests/fixtures/b_c_narrow_archived_baseline.json
 git commit -m "$(cat <<'EOF'
 evidence(b-c-narrow/phase-3): T13 fire + T14 V4 gate GREEN (Task 14)
 
-Per Plan v3-Phase3 v4 Task 14. Charlie register #N+19a fired authorization.
+Per Plan v3-Phase3 v6 Task 14. Charlie register #N+19a fired authorization.
 
 T13 fire executed at <ISO UTC timestamp>:
   python -m scripts.run_phase2c_evaluation_gate \
@@ -2174,7 +2268,7 @@ If Charlie did request a separate boundary marker:
 git commit --allow-empty -m "$(cat <<'EOF'
 evidence(b-c-narrow/phase-3): T14b canonical-path relocation (Task 14b)
 
-Per Plan v3-Phase3 v4 Task 14b. Charlie register #N+19b fired authorization
+Per Plan v3-Phase3 v6 Task 14b. Charlie register #N+19b fired authorization
 + explicitly requested separate boundary-marker commit per AL1 PFR R1 ADOPT
 v2 OPTIONAL path.
 
@@ -2231,7 +2325,7 @@ Per AL3 PFR R1 ADOPT v2: placeholders correspond to: `<sha>` = output of Step 13
 
 **Date:** <ISO UTC at Step 14c.1 commit time>
 **HEAD commit:** <git rev-parse --short HEAD>
-**Plan version:** v3-Phase3 v4 (PFR R1 17 ADOPT applied per Charlie register #N+19 Path 1 2026-05-28 + PFR R2 14 ADOPT applied per Charlie register #N+19' Path 1 2026-05-28 + PFR R3 13 ADOPT applied per Charlie register #N+19'' Path 1 2026-05-28)
+**Plan version:** v3-Phase3 v6 (R1 17 + R2 14 + R3 13 + R4 2 + R5 4 inline; SEAL-CANDIDATE per Path 2 R5 register; PFR R1 17 ADOPT applied per Charlie register #N+19 Path 1 2026-05-28 + PFR R2 14 ADOPT applied per Charlie register #N+19' Path 1 2026-05-28 + PFR R3 13 ADOPT applied per Charlie register #N+19'' Path 1 2026-05-28 + PFR R4 2 ADOPT applied per Charlie register #N+19''' Path 1 2026-05-28 + PFR R5 4 ADOPT applied per Charlie register #N+19'''' Path 2 2026-05-28)
 **Plan path:** `docs/superpowers/plans/2026-05-27-b-c-narrow-phase-3-fire-plan.md`
 **Spec path:** `docs/superpowers/specs/2026-05-26-b-c-narrow-data-recovery-design.md` (sealed at `d6c7fc0`)
 **Authorization:** Charlie register `#N+19a` (T13 fire) + `#N+19b` (T14b mv) <fire dates>
@@ -2272,7 +2366,7 @@ Per AL3 PFR R1 ADOPT v2: placeholders correspond to: `<sha>` = output of Step 13
 | `TestG4ParquetIntegrity::test_g4_all_39_per_bar_parquet_integrity` | §4.3 G4 (all-39 surface per CB3 ADOPT v2; all 4 subchecks (a)+(b)+(c)+(d) per CB3-R2-H1) | <PASSED> |
 | `TestG5GammaRoundTrip::test_g5_gamma_round_trip_from_parquet_within_epsilon` | §4.3 G5 (N=2 per AM2 docstring note) | <PASSED> |
 | `TestG5GammaRoundTrip::test_g5_all_39_gamma_round_trip` | §4.3 G5 (all-39 per CB3 ADOPT v2) | <PASSED> |
-| `TestG6RegistryParentChildIntegrity::test_g6_registry_parent_child_integrity_after_fire` | §4.3 G6 (BLOCKING-5 carry + AL4 invariant + CH4 metadata + G6-Cohort-R2-M3 all 15 cohort fields + G6-BatchID-R2-M4 batch_id assertion + CB2-R2-B1 per-test SKIP gate + G6-Docstring-R2-L2 docstring polish) | <PASSED> |
+| `TestG6RegistryParentChildIntegrity::test_g6_registry_parent_child_integrity_after_fire` | §4.3 G6 (BLOCKING-5 carry + AL4 invariant + CH4 metadata + G6-Cohort-R2-M3 all 15 cohort fields + G6-BatchID-R2-M4 batch_id assertion + CB2-R2-B1 per-test SKIP gate + G6-Docstring-R2-L2 docstring polish + Sub-2-R4-B1 v6 8-field NULL-at-parent correction per producer scripts:1373-1381 + spec §3.2.3 line 118) | <PASSED> |
 | `TestG7ArchiveIdempotency::test_g7_archive_idempotency_refuses_existing_target` | §4.3 G7 (BLOCKING-5 carry) | <PASSED> |
 | `TestG7ArchiveIdempotency::test_g7_archive_refuses_cross_filesystem_attempt` | §4.3 G7 (cross-FS guard per AM1 ADOPT v2; AM1-CrossFS-R2-M5 substring tightened to prefix match (startswith) or equality per AL1-R3 description correction) | <PASSED> |
 
@@ -2292,7 +2386,7 @@ python -m pytest tests/test_b_c_narrow_v4_reproducibility.py -v
 |---|---|---|---|
 | G4 — Per-bar parquet integrity | §4.3 G4 | (a) finite-row count = T_obs (G4-R2-B2 Option C defensive) + (b) SHA256 tri-way + (c) non-degenerate (non-all-NaN AND non-all-zero per CB3-R2-H1) + (d) UTC-aware timestamp column + registry tri-way per CH4 ADOPT v2 (CH4-R2-M1 path equality tightening) | <PASS for N=2 deep + N=39 all-4-subcheck per CB3-R2-H1 ADOPT v3> |
 | G5 — γ3/γ4 round-trip | §4.3 G5 | `compute_moments` recompute vs stored within abs diff < 1e-10 + T_obs bit-exact | <PASS for N=2 + N=39 per CB3 ADOPT v2> |
-| G6 — Registry parent-child integrity | §4.3 G6 | 1 parent batch_summary + 39 child regime_holdout + parent_run_id linkage + parent cohort metadata (all 15 fields per spec §3.2.3 per G6-Cohort-R2-M3 ADOPT v3) + batch_id == BCNARROW_PARENT_RUN_ID per G6-BatchID-R2-M4 + child per-candidate metadata non-null per CH4 ADOPT v2 | <PASS> |
+| G6 — Registry parent-child integrity | §4.3 G6 | 1 parent batch_summary + 39 child regime_holdout + parent_run_id linkage + parent cohort metadata (14 direct columns per spec §3.2.3 line 117 per G6-Cohort-R2-M3 ADOPT v3 + engine_commit via notes JSON per AH1-R3 ADOPT v4) + batch_id == BCNARROW_PARENT_RUN_ID per G6-BatchID-R2-M4 + 8 per-candidate fields NULL at parent per Sub-2-R4-B1 ADOPT v6 (4 metric + 4 LC-b semantic per producer scripts:1373-1381 + spec §3.2.3 line 118) + 39 child rows with regime_holdout type + child per-candidate metadata non-null per CH4 ADOPT v2 | <PASS> |
 | G7 — Archive idempotency | §4.3 G7 | strict refuse-if-exists semantics (tmp_path isolation) + cross-FS guard per AM1 ADOPT v2 (AM1-CrossFS-R2-M5 substring tightening) | <PASS> |
 
 **Note on sample size (updated per CB3 PFR R1 ADOPT v2):** Spec §4.2/§4.3 per-candidate full-cohort coverage now satisfied at Phase 3. N=2 fixture (`18d92ce5d0b40cc7` + `22864f01a49e3452`) retained for JSON-dict-layer schema-version drift catch (which raw-CSV all-39 comparison would miss). All-39 coverage added via 4 NEW tests (V4 ε metric diff + V4 total_trades exact + G4 per-bar parquet integrity + G5 γ3/γ4 round-trip) reading archive + new CSVs directly. Total V4+G4-G7 test count: 12 (5 N=2 fixture + 2 BLOCKING-5 carry G6+G7 + 4 all-39 CB3 + 1 cross-FS AM1).
@@ -2362,7 +2456,7 @@ git add docs/superpowers/phase-3-impl-results/phase-3-ratify-summary.md
 git commit -m "$(cat <<'EOF'
 evidence(b-c-narrow/phase-3): Phase 3 ratify packet (Task 14c)
 
-Per Plan v3-Phase3 v4 Task 14c. Charlie register-events #N+19a + #N+19b
+Per Plan v3-Phase3 v6 Task 14c. Charlie register-events #N+19a + #N+19b
 fired authorizations for T13 fire + T14b canonical-path relocation.
 
 Phase 3 deliverables (all GREEN):
@@ -2468,4 +2562,4 @@ If V4 FAILS at Step 14.5 (any of 12 tests per v2 expansion): STOP and surface SE
 
 If full suite shows regressions outside `test_b_c_narrow_v4_reproducibility.py` at Step 14.5: STOP and surface — regressions indicate hidden Phase 0/2 SEAL state issue.
 
-End of Plan v3-Phase3 v4 (PFR R1 ADOPT 17 inline + 3 PUSHBACK adjudications applied per Charlie register #N+19 Path 1 2026-05-28 + PFR R2 ADOPT 14 inline + 3 sub-decision adjudications applied per Charlie register #N+19' Path 1 2026-05-28 + PFR R3 ADOPT 13 inline + 1 Sub-1 reopen-and-ACCEPT applied per Charlie register #N+19'' Path 1 2026-05-28).
+End of Plan v3-Phase3 v6 SEAL-CANDIDATE (R1 17 + R2 14 + R3 13 + R4 2 + R5 4 inline; Path 2 SEAL-eve direct per Charlie register #N+19''''; PFR R1 ADOPT 17 inline + 3 PUSHBACK adjudications applied per Charlie register #N+19 Path 1 2026-05-28 + PFR R2 ADOPT 14 inline + 3 sub-decision adjudications applied per Charlie register #N+19' Path 1 2026-05-28 + PFR R3 ADOPT 13 inline + 1 Sub-1 reopen-and-ACCEPT applied per Charlie register #N+19'' Path 1 2026-05-28 + PFR R4 ADOPT 1 BLOCKING + 1 LOW absorbed applied per Charlie register #N+19''' Path 1 2026-05-28 + PFR R5 ADOPT 4 inline applied per Charlie register #N+19'''' Path 2 2026-05-28; SKIP standard PFR R6 → dispatch SEAL-eve Rule 2 directly per Phase 2 R7→SEAL-eve precedent).
