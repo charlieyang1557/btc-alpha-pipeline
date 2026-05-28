@@ -285,6 +285,46 @@ Per Charlie register #N+10 (Path 1: full v9 amend with all 10 ADOPT + dispatch S
 
 ---
 
+## SEAL-eve R2 ADOPT findings applied (Plan v10 amendments)
+
+Per Charlie register #N+11 (Path 1: full v10 amend + dispatch SEAL-eve R3) 2026-05-27. SEAL-eve R2 fired as Rule 2 adversarial B2 2-leg dispatch on v9 (`551c58c`); Codex returned NOT-APPROVE-V10 (1 HIGH + 1 MEDIUM + 3 LOW); Advisor returned NOT-APPROVE-V10 (1 BLOCKING + 3 MEDIUM + 3 LOW). **CONVERGENT BLOCKING on CR-SE-M1 incompleteness** (Codex tier MEDIUM-1; Advisor tier BLOCKING-1; adjudicated BLOCKING per Advisor risk assessment — implementer applying both blocks would double-execute computation per candidate).
+
+**Cycle invariant DEFINITIVELY ESTABLISHED at 9 rounds**: every prediction of saturation has been WRONG. Advisor R2 senior-quant: "Every round surfaces NEW dimensions. The structural cause: fixing dimension X creates new exposure surface at dimension Y." This R2 round's BLOCKING is 7th cycle CR3-B1 meta-lesson recurrence — v9 added new inside-try block (CR-SE-M1 fix) but did NOT DELETE the old outside-try block at plan:2783-2842; the same template-vs-inline failure mode at producer code body layer.
+
+**Charlie Path 1 re-affirmation**: previous register chose Path 1 (standard amend + SEAL-eve R2); this register also Path 1 (standard amend + SEAL-eve R3) — explicit acceptance of cycle invariant + preference for additional rigor over Path α inline-finalize termination per R6.1 §2.2 narrow patch precedent.
+
+**B2 reverse-direction at SEAL-eve R2**:
+- Codex caught HIGH-1 (CR-SE-H1 W1a/W1b split has no main() entrypoint regression test) — Advisor missed
+- Advisor caught 3 NEW dimensions Codex missed: cross-FS shutil.move partial-move; canonical basename hardcoded 5× (M5 missed); identity guard doesn't validate --candidate-hashes
+
+**7 of 10 v9 SEAL-eve R1 ADOPT verified correctly applied**; 3 didn't land cleanly:
+- CR-SE-M1 partial (NEW block added; OLD block not deleted → convergent BLOCKING)
+- LR-SE-2 not applied (Test 16 docstring unchanged at site)
+- LR-SE-3 not applied (Test 21 signature unchanged at site)
+
+**Both legs RE-VERIFIED PUSHBACK on Advisor R1 HIGH-5 SOUND at SEAL-eve R2** (10th re-verification across cycle).
+
+| # | Severity | Origin | Fix in v10 |
+|---|---|---|---|
+| CR-SE-R2-B1 | BLOCKING | Convergent — Codex SEAL-eve R2 MEDIUM-1 + Advisor SEAL-eve R2 BLOCKING-1 (tier adjudicated BLOCKING) | DELETE OLD outside-try B-C-merge code block at plan:2783-2842; keep ONLY the NEW inside-try v9 code block at plan:2703-2779; update Step 10.5 sub-step 3 instruction at plan:2697 to unambiguously direct implementer to the INSIDE-try version. Add explicit "(v9 CR-SE-M1 superseded; this block intentionally removed)" marker where the OLD block was, OR delete the block entirely. Eliminates 7th-cycle CR3-B1 meta-lesson recurrence at producer code body layer. |
+| CR-SE-R2-H1 | HIGH | Codex SEAL-eve R2 HIGH-1 | NEW Test 26 — `test_w1_reorder_force_rerun_existing_without_force_leaves_registry_intact`. Main() entrypoint regression test for CR-SE-H1 W1a/W1b state-inconsistency window fix: setup pre-existing parent + child rows + non-empty `run_dir` + `--force-rerun-existing` WITHOUT `--force`; invoke `main()`; assert `main()` returns overwrite-protection rc != 0; assert registry rows REMAIN (NOT deleted by W1b); assert `_archive_canonical_pre_flight` was NOT called. Locks the v9 reorder invariant against future regression. |
+| CR-SE-R2-M1 | MEDIUM | Codex SEAL-eve R2 LOW-1 elevated + Advisor SEAL-eve R2 MEDIUM-1 (CONVERGENT) | Inline-apply LR-SE-2 at Test 16 docstring (line 1470-1472) — rewrite to state the test directly exercises `_finalize_batch_registry_preflight_or_raise`; no main() / archive ordering claim (since Test 26 now covers the ordering). |
+| CR-SE-R2-M2 | MEDIUM | Codex SEAL-eve R2 LOW-2 elevated + Advisor SEAL-eve R2 MEDIUM-1 (CONVERGENT) | Inline-apply LR-SE-3 at Test 21 signature (line 1664) — remove `btc_parquet_path` from fixture signature (engine resolves canonical via `_resolve_canonical_parquet_path()`). |
+| AR-SE-R2-M3 | MEDIUM | Advisor SEAL-eve R2 MEDIUM-2 (NEW DIMENSION) | Add same-FS pre-check at `_archive_canonical_pre_flight` per option (a): `if Path(canonical_path).stat().st_dev != Path(archive_root).resolve().parent.stat().st_dev: raise NotImplementedError(...)`. Defensive against cross-FS shutil.move partial-move (atomic only on same-FS via os.rename; falls back to copy+delete on cross-FS which is NOT atomic). For this project's `data/phase2c_evaluation_gate/` and sibling `data/phase2c_evaluation_gate/archive/` → same FS by construction (sibling dirs under common parent); but defensive check guards against operator misconfiguring `--output-root` to different mount. |
+| AR-SE-R2-M4 | MEDIUM | Advisor SEAL-eve R2 MEDIUM-3 (NEW DIMENSION) | Extract `BCNARROW_CANONICAL_BASENAME = "phase4_forward_2026_15bps_v1"` as 6th module constant near other BCNARROW_* constants at scripts:117. Use at W3 producer site (currently hardcoded literal at plan:3045). Test fixtures may retain inline literals (test-fixture-local acceptable). |
+| AR-SE-R2-L1 | LOW | Advisor SEAL-eve R2 LOW-1 (NEW DIMENSION) | Identity guard doesn't validate `--candidate-hashes`. NAMED-eligible-for-Phase-3-fire-plan-operator-runbook (defer per Advisor's option c). Out-of-scope for v10 plan amend; document in Phase 3 plan as operator-discipline requirement. |
+| AR-SE-R2-L2 | LOW | Advisor SEAL-eve R2 LOW-2 | Replace W1a ternary-expression-as-statement with explicit `if/else`. Current `_finalize_batch_registry_preflight_or_raise(...) if not args.force_rerun_existing else None` → standard `if not args.force_rerun_existing: _finalize_batch_registry_preflight_or_raise(...)` block. Readability fix. |
+| AR-SE-R2-L3 | LOW | Advisor SEAL-eve R2 LOW-3 | Uncaught RuntimeError/ValueError from W0/W1a/W1b leaves operator with raw traceback (vs CR5-B1 mutex which uses parser.error for clean exit). NAMED-eligible-for-Phase-3-fire-plan-operator-UX-polish (defer). Out-of-scope for v10. |
+| CR-SE-R2-L4 | LOW | Codex SEAL-eve R2 LOW-3 | ADOPT-trail count/version phrasings stale at lines 353 ("v6+v7" should be "v6+") + line 503 ("v6"). Update to version-neutral phrasing OR current v10 to close. |
+
+**Total v10 amendments: 8 inline + 2 NAMED-defer = 10 ADOPT (1 BLOCKING + 1 HIGH + 4 MEDIUM + 4 LOW).**
+
+**Test count v9 → v10: 25 → 26 (+ NEW Test 26 for CR-SE-R2-H1 W1 reorder regression).**
+
+**Cycle status**: PFR R1 17 → R2 9 → R3 8 → R4 7 → R5 5 → R6 5 → R7 5 → SEAL-eve R1 10 → SEAL-eve R2 9 (1 BLOCKING + 1 HIGH + 4 MEDIUM + 4 LOW). Cycle invariant CONFIRMED: every adversarial round surfaces new dimensions. Charlie Path 1 (this register) explicitly continues — additional SEAL-eve R3 verification round.
+
+---
+
 ### CR2-B1 detailed application instructions (Tests 1/2/3/7/14 → use shared helper)
 
 The 5 LC-b active mock-engine tests (Tests 1/2/3/7/14) WERE updated in v4 per CR3-B1 to use the new `_make_fake_engine_with_registry` helper method (defined in v3 at the top of TestBCNarrowPhase2ProducerEdits class). v3 ADOPT design rationale: each test in v2 used an inline `def fake_run_regime_holdout(**kwargs): ...; return stub_holdout_result` pattern that did NOT insert the child registry row; without the helper, the producer's CB6 path would have raised `RuntimeError("child registry row missing for run_id=...")` at GREEN phase. v4 inline-rewrite (per CR3-B1 PFR R3 meta-discipline learning — "add helper + template + detailed instructions" is fragile when test bodies remain stale; inline-rewrite affected code directly).
@@ -500,10 +540,10 @@ Add the following class. Each test body is FULL runnable code — no placeholder
 
 
 class TestBCNarrowPhase2ProducerEdits:
-    """Phase 2 producer-edit tests — 25 methods total in v6 (14 base from v1 enumeration:
+    """Phase 2 producer-edit tests — 26 methods total in v10 (14 base from v1 enumeration:
     12 per spec §6.3 + BLOCKING-4 reference test + LC-b threading test; 8 NEW per PFR R1
     ADOPT for CB1/CB2/CB3/CB5/H2/M1/M4; 2 NEW per PFR R2 ADOPT for MR2-3/MR2-4; 1 NEW per
-    PFR R5 ADOPT for CR5-B1).
+    PFR R5 ADOPT for CR5-B1; 1 NEW per SEAL-eve R2 ADOPT for CR-SE-R2-H1).
 
     Locked decisions:
     - --enable-b-c-narrow-recovery CLI flag gates the recovery flow (3 NEW behaviors)
@@ -1467,9 +1507,16 @@ docstring note per M2:
     # ----- Test 16 (CB1): pre-existing parent row → preflight refuses BEFORE archive -----
 
     def test_preflight_refuses_before_archive_when_parent_exists(self, tmp_path):
-        """CB1 PFR R1 fix: when parent_run_id already exists in registry,
-        _finalize_batch_registry_preflight_or_raise raises RuntimeError BEFORE
-        archive PRE-flight runs. Canonical artifact must remain in place."""
+        """CR-SE-R2-M1 SEAL-eve R2 ADOPT v10: this test directly exercises
+        `_finalize_batch_registry_preflight_or_raise` (helper-only) — verifies
+        the preflight raises RuntimeError when parent_run_id already exists in
+        registry. The canonical filesystem untouched assertion below is trivially
+        true since preflight is filesystem-read-only.
+
+        Note: end-to-end main() ordering (W1 reorder per CR-SE-H1 v9 — registry
+        rows REMAIN when overwrite-protection refuses) is exercised separately
+        by Test 26 (`test_w1_reorder_force_rerun_existing_without_force_leaves_registry_intact`).
+        This test does NOT exercise main() ordering; only the helper's raise behavior."""
         _require_b_c_narrow_symbols()
         output_root = tmp_path / "output"
         output_root.mkdir()
@@ -1661,10 +1708,15 @@ docstring note per M2:
     # ----- Test 21 (M4): LC-b e2e real engine smoke -----
 
     def test_lcb_e2e_real_engine_writes_parquet_and_registry(
-        self, dsl_bollinger_zscore_reversion, btc_parquet_path, tmp_path,
+        self, dsl_bollinger_zscore_reversion, tmp_path,
         env_config_override_forward_2026,
     ):
-        """M4 PFR R1 fix: end-to-end smoke against REAL run_regime_holdout (no mock).
+        """M4 PFR R1 fix + CR-SE-R2-M2 SEAL-eve R2 ADOPT v10: removed unused
+        `btc_parquet_path` fixture from signature — engine resolves canonical
+        parquet path internally via `_resolve_canonical_parquet_path()` per
+        Phase 0 SEAL chain (engine.py:82).
+
+        End-to-end smoke against REAL run_regime_holdout (no mock).
         Verifies engine extension + producer wiring + registry stamping work together
         on a real BTC parquet + real DSL fixture. Catches Phase 0 regressions that
         a mock-only test pyramid would miss."""
@@ -2045,20 +2097,149 @@ docstring note per M2:
                     f"CR5-B1: argparse rejection must fire BEFORE any DB I/O; "
                     f"db_path {db_path} unexpectedly exists"
                 )
+
+    # ----- Test 26 (CR-SE-R2-H1 SEAL-eve R2 ADOPT v10): main() entrypoint regression test
+    #       for CR-SE-H1 v9 W1a/W1b split — state-inconsistency window prevention -----
+
+    def test_w1_reorder_force_rerun_existing_without_force_leaves_registry_intact(
+        self, tmp_path, monkeypatch
+    ):
+        """CR-SE-R2-H1 SEAL-eve R2 ADOPT v10: main() entrypoint regression test for
+        CR-SE-H1 v9 W1a/W1b split state-inconsistency-window fix.
+
+        Pre-v9 behavior: W1 destructive DELETE ran BEFORE _check_overwrite_protection.
+        Operator passing --force-rerun-existing WITHOUT --force on non-empty run_dir
+        would: (1) DELETE registry rows; (2) abort at overwrite gate. State after
+        abort: DB cleaned (operator-intended) + filesystem dirty (prior partial state).
+
+        v9 CR-SE-H1 fix: split W1 into W1a (read-only BEFORE _check_overwrite_protection)
+        + W1b (destructive DELETE AFTER). If overwrite-protection refuses, W1b never
+        executes — operator's state remains intact.
+
+        This test exercises main() end-to-end with the exact scenario CR-SE-H1
+        addresses: setup pre-existing parent + child rows + non-empty run_dir +
+        --force-rerun-existing WITHOUT --force; assert main() returns overwrite-
+        protection rc != 0; assert registry rows REMAIN (NOT deleted); assert
+        _archive_canonical_pre_flight was NOT called.
+        """
+        _require_b_c_narrow_symbols()
+        output_root = tmp_path / "output"
+        output_root.mkdir()
+        canonical = output_root / "phase4_forward_2026_15bps_v1"
+        canonical.mkdir()
+        (canonical / "marker.json").write_text('{"pre_canonical": true}')
+        # Pre-populate non-empty run_dir (sibling dir at BCNARROW_PARENT_RUN_ID name
+        # per producer convention; scripts:908 `run_dir = output_root / run_id`).
+        run_dir = output_root / BCNARROW_PARENT_RUN_ID
+        run_dir.mkdir()
+        (run_dir / "partial_state.json").write_text('{"prior_failed_run": true}')
+        db_path = tmp_path / "test_w1_reorder.db"
+        monkeypatch.setattr("scripts.run_phase2c_evaluation_gate.DEFAULT_DB_PATH", db_path)
+
+        # Pre-populate registry with parent + child rows (simulating prior partial fire)
+        conn = get_connection(db_path)
+        try:
+            with conn:
+                create_table(conn)
+                insert_run(conn, {
+                    "run_id": BCNARROW_PARENT_RUN_ID,
+                    "run_type": "batch_summary",
+                    "parent_run_id": None,
+                    "strategy_name": "cohort_summary",
+                    "strategy_source": "b_c_narrow_recovery",
+                    "git_commit": "eb1c87f",
+                    "created_at_utc": "2026-05-26T00:00:00Z",
+                    "fee_model": "effective_15bps_per_side",
+                    "initial_capital": 10_000.0,
+                })
+                insert_run(conn, {
+                    "run_id": f"{BCNARROW_PARENT_RUN_ID}_partial_child_test",
+                    "run_type": "regime_holdout",
+                    "parent_run_id": BCNARROW_PARENT_RUN_ID,
+                    "strategy_name": "test_strat",
+                    "strategy_source": "b_c_narrow_recovery",
+                    "git_commit": "eb1c87f",
+                    "created_at_utc": "2026-05-26T00:00:00Z",
+                    "fee_model": "effective_15bps_per_side",
+                    "initial_capital": 10_000.0,
+                })
+        finally:
+            conn.close()
+
+        # Track if _archive_canonical_pre_flight was called
+        archive_called = []
+
+        with patch(
+            "scripts.run_phase2c_evaluation_gate._load_corrected_candidates",
+            return_value=[{"hypothesis_hash": "test_hash_" + "a"*53, "position": 0,
+                           "theme": "test", "name": "test", "wf_test_period_sharpe": 0.5}],
+        ), patch(
+            "scripts.run_phase2c_evaluation_gate.enforce_corrected_engine_lineage",
+            return_value="f112599abcdef",
+        ), patch(
+            "scripts.run_phase2c_evaluation_gate._archive_canonical_pre_flight",
+            side_effect=lambda **kw: archive_called.append(kw),
+        ), patch("sys.argv", [
+            "run_phase2c_evaluation_gate.py",
+            "--source-batch-id", BCNARROW_SOURCE_BATCH_ID,
+            "--candidate-hashes", "test_hash_",
+            "--run-id", BCNARROW_PARENT_RUN_ID,
+            "--regime-key", BCNARROW_REGIME_KEY,
+            "--execution-config", BCNARROW_EXECUTION_CONFIG_PATH,
+            "--output-root", str(output_root),
+            "--enable-b-c-narrow-recovery",
+            "--force-rerun-existing",
+            # NOTE: --force INTENTIONALLY OMITTED to exercise CR-SE-H1 v9 fix scenario
+        ]):
+            from scripts.run_phase2c_evaluation_gate import main
+            rc = main()
+
+        # Assert: main() returned overwrite-protection refusal rc (typically 1)
+        assert rc == 1, (
+            f"CR-SE-R2-H1: main() should return _check_overwrite_protection refusal "
+            f"rc=1 on non-empty run_dir without --force; got rc={rc}"
+        )
+
+        # Assert: archive was NOT called (W3 destructive op refused at overwrite gate)
+        assert len(archive_called) == 0, (
+            f"CR-SE-R2-H1: _archive_canonical_pre_flight must NOT be called when "
+            f"_check_overwrite_protection refuses; got {len(archive_called)} call(s)"
+        )
+
+        # Assert: registry rows REMAIN (CR-SE-H1 W1b never executed — operator state intact)
+        with get_connection(db_path) as conn:
+            n_parent = conn.execute(
+                "SELECT COUNT(*) FROM runs WHERE run_id = ?", (BCNARROW_PARENT_RUN_ID,)
+            ).fetchone()[0]
+            n_children = conn.execute(
+                "SELECT COUNT(*) FROM runs WHERE parent_run_id = ?", (BCNARROW_PARENT_RUN_ID,)
+            ).fetchone()[0]
+        assert n_parent == 1, (
+            f"CR-SE-R2-H1: parent registry row must REMAIN (W1b never executed since "
+            f"overwrite gate refused); got n_parent={n_parent}"
+        )
+        assert n_children == 1, (
+            f"CR-SE-R2-H1: child registry row must REMAIN (W1b never executed); "
+            f"got n_children={n_children}"
+        )
+
+        # Assert: canonical artifact untouched
+        assert canonical.exists()
+        assert (canonical / "marker.json").exists()
 ```
 
 ---
 
-- [ ] **Step 9.3: Run all 25 new tests — they MUST FAIL (RED)** (L1 PFR R1 fix: wording)
+- [ ] **Step 9.3: Run all 26 new tests — they MUST FAIL (RED)** (L1 PFR R1 fix: wording)
 
 ```bash
 cd /Users/yutianyang/Documents/GitHub/btc-alpha-pipeline
 python -m pytest tests/test_phase2c_evaluation_gate_runner.py::TestBCNarrowPhase2ProducerEdits -v
 ```
 
-Expected: Per H3 PFR R1 fix, the test file STILL COLLECTS even when NEW symbols are absent (the `try/except ImportError` wrapper in Step 9.1 prevents collection-time failure). Each of the 25 tests fails with explicit AssertionError from `_require_b_c_narrow_symbols()` showing the underlying `ImportError on import` (L1 PFR R1 — wording fixed from "NameError" since Python's missing-symbol error class is `ImportError`, not `NameError`). Some tests may also FAIL with `TypeError: _evaluate_one_candidate() got an unexpected keyword argument 'artifact_dir_root'` or `AttributeError` on missing `_CSV_FIELDS` entries.
+Expected: Per H3 PFR R1 fix, the test file STILL COLLECTS even when NEW symbols are absent (the `try/except ImportError` wrapper in Step 9.1 prevents collection-time failure). Each of the 26 tests fails with explicit AssertionError from `_require_b_c_narrow_symbols()` showing the underlying `ImportError on import` (L1 PFR R1 — wording fixed from "NameError" since Python's missing-symbol error class is `ImportError`, not `NameError`). Some tests may also FAIL with `TypeError: _evaluate_one_candidate() got an unexpected keyword argument 'artifact_dir_root'` or `AttributeError` on missing `_CSV_FIELDS` entries.
 
-If ALL 25 tests pass at this point → SOMETHING WRONG (Task 10 already implemented OR tests are no-ops). Halt and inspect.
+If ALL 26 tests pass at this point → SOMETHING WRONG (Task 10 already implemented OR tests are no-ops). Halt and inspect.
 
 - [ ] **Step 9.4: Commit failing tests**
 
@@ -2067,7 +2248,7 @@ git add tests/test_phase2c_evaluation_gate_runner.py
 git commit -m "test(b-c-narrow/phase-2): add 25 failing producer-edit tests (T9; v9 post-SEAL-eve R1 ADOPT)
 
 Per Plan v3-Phase2 v9 Task 9 (Charlie register chain #N+3 Path 1 + #N+4 Path 1 + #N+5 Path 1 + #N+6 Path 1 + #N+7 Path 1 + #N+8 Path 1 + #N+9 Path 2 + #N+10 Path 1).
-25 RED-phase tests = 14 v1 enumeration + 8 NEW per PFR R1 ADOPT + 2 NEW per PFR R2 ADOPT (Tests 23+24 for MR2-3/MR2-4) + 1 NEW per PFR R5 ADOPT (Test 25 for CR5-B1):
+26 RED-phase tests = 14 v1 enumeration + 8 NEW per PFR R1 ADOPT + 2 NEW per PFR R2 ADOPT (Tests 23+24 for MR2-3/MR2-4) + 1 NEW per PFR R5 ADOPT (Test 25 for CR5-B1) + 1 NEW per SEAL-eve R2 ADOPT (Test 26 for CR-SE-R2-H1 W1 reorder regression):
 - LC-b kwarg threading from producer to engine (1 test)
 - equity_curve consumption from extended RegimeHoldoutResult (1 test)
 - γ3/γ4/T_obs merge into inline per-candidate JSON write (1 test)
@@ -2083,7 +2264,7 @@ Per Plan v3-Phase2 v9 Task 9 (Charlie register chain #N+3 Path 1 + #N+4 Path 1 +
 - BLOCKING-4 _build_argparser callable + --enable-b-c-narrow-recovery + --force-rerun-existing flags (1 test)
 - Schema domain routing: evaluation_domain on summary with ADDITIVE B-C-narrow fields (1 test)
 
-All 25 tests FAIL at this commit (RED phase). T10 implements producer edits to bring GREEN.
+All 26 tests FAIL at this commit (RED phase). T10 implements producer edits to bring GREEN.
 
 PFR R1 ADOPT additions (Tests 15-22 — 8 tests):
 - Test 15 (CB1): --dry-run + --enable-b-c-narrow-recovery no-mutation invariant
@@ -2186,6 +2367,11 @@ BCNARROW_ARCHIVE_BASENAME: str = "phase4_forward_2026_15bps_v1_d0b8101"
 BCNARROW_SOURCE_BATCH_ID: str = "phase2c_15_main_fire_combined"
 BCNARROW_REGIME_KEY: str = PHASE4_FORWARD_2026_REGIME_KEY  # alias for clarity at recovery sites
 BCNARROW_EXECUTION_CONFIG_PATH: str = "config/execution_phase4_15bps.yaml"
+# AR-SE-R2-M4 SEAL-eve R2 ADOPT v10: canonical artifact basename — extracted from
+# hardcoded literals at 5 sites (W3 producer call + 4 test fixtures). M5 PFR R1
+# ADOPT extracted other BCNARROW_* constants but missed this one; v10 closes
+# constant-extraction discipline gap.
+BCNARROW_CANONICAL_BASENAME: str = "phase4_forward_2026_15bps_v1"
 ```
 
 Verify the constants resolve:
@@ -2371,6 +2557,22 @@ def _archive_canonical_pre_flight(
             f"Nothing to archive. (Did Phase 3 already run? Or canonical never present?)"
         )
     archive_root.mkdir(parents=True, exist_ok=True)
+    # AR-SE-R2-M3 SEAL-eve R2 ADOPT v10: same-FS pre-check before shutil.move.
+    # shutil.move is atomic via os.rename ONLY when source + target are on the same
+    # filesystem; falls back to copy + delete on cross-FS, which is NOT atomic.
+    # Project's data/phase2c_evaluation_gate/ and sibling data/phase2c_evaluation_gate/archive/
+    # are same-FS by construction (sibling dirs under common parent). Defensive check
+    # guards against operator misconfiguring --output-root to different mount point.
+    if canonical_path.stat().st_dev != archive_root.resolve().stat().st_dev:
+        raise NotImplementedError(
+            f"B-C-narrow archive PRE-flight (AR-SE-R2-M3 v10 cross-FS guard): "
+            f"canonical_path {canonical_path} and archive_root {archive_root} are on "
+            f"DIFFERENT filesystems (st_dev mismatch). shutil.move falls back to "
+            f"non-atomic copy+delete on cross-FS, exposing partial-move failure mode. "
+            f"This project's archive convention assumes same-FS (sibling dirs under "
+            f"common parent). Operator must ensure --output-root targets same FS as "
+            f"the canonical artifact, OR raise spec-amend register for cross-FS support."
+        )
     archive_target = archive_root / archive_basename
     if archive_target.exists():
         raise FileExistsError(
@@ -2780,68 +2982,9 @@ def _evaluate_one_candidate(
 
 The remainder of `_evaluate_one_candidate` (inline JSON write at lines 550-573) is **NOT changed** — `summary` now includes B-C-narrow fields when LC-b path completed cleanly, OR omits them when candidate failed (consistent with spec R5 contract that error-path summaries have NULL metric fields).
 
-```python
-    # B-C-narrow Phase 2 (v2 per CB5+CB6): compute γ3/γ4/T_obs from equity_curve
-    # + query engine-written child registry row for path+SHA (single-source).
-    # Only on LC-b path AND when holdout_result populated (lifecycle != 'holdout_error');
-    # legacy + error paths skip the merge to preserve backward-compat schema.
-    if lcb_active and holdout_result is not None:
-        returns = compute_per_bar_returns(holdout_result.equity_curve)
-        moments = compute_moments(returns)
-        summary["gamma3"] = moments.get("gamma3")
-        summary["gamma4"] = moments.get("gamma4")
-        summary["T_obs"] = moments.get("T_obs")
+**CR-SE-R2-B1 SEAL-eve R2 ADOPT v10 deletion**: the OLD outside-try B-C-merge code block that was here in v1-v9 (added at v1; never removed when CR-SE-M1 v9 added the new INSIDE-try block above) is **INTENTIONALLY REMOVED**. The INSIDE-try block at the `try:` body above (lines ~2703-2779) is the canonical source-of-truth. Implementer must NOT re-introduce an outside-try B-C-merge block. Per CR3-B1 7th-cycle meta-lesson recurrence — when adding new code, DELETE the superseded code in the same edit; do not leave both alongside.
 
-        # CB5 + CB6 (PFR R1 v2): producer reads returns_per_bar_path + returns_per_bar_sha256
-        # from the engine-written child registry row (single source of truth). The engine's
-        # atomic write at engine.py:526-657 stamps:
-        #   - returns_per_bar_path = "returns_per_bar.parquet" (bare filename per engine.py:526)
-        #   - returns_per_bar_sha256 = SHA256 of just-written parquet (engine.py:637-645)
-        # into the child registry row via LineageContext (engine.py:1308-1309). Producer
-        # COPIES these values verbatim — NO recomputation. This eliminates the divergence
-        # surface where producer-recomputed SHA could differ from engine-stamped SHA on any
-        # filesystem race. Same column NAME, same VALUE everywhere (registry / JSON / CSV).
-        child_run_id = child_run_id_override
-        # MR2-1 PFR R2 ADOPT (v3): explicit try/finally conn.close() pattern.
-        # v2 used `with get_connection(...) as conn:` which commits/rolls back on
-        # exception but does NOT close the file handle (matches M3 PFR R1 ADOPT
-        # discipline applied to _finalize_batch_registry*). Per-candidate read
-        # path runs N times for cohort_a (39 calls); without explicit close()
-        # this would leak 39 file handles per cohort fire.
-        _conn = get_connection(db_path)
-        try:
-            child_row = get_run(_conn, child_run_id)
-        finally:
-            _conn.close()
-        if child_row is None:
-            raise RuntimeError(
-                f"B-C-narrow CB5+CB6: child registry row missing for "
-                f"run_id={child_run_id!r} after run_regime_holdout returned. "
-                f"Engine should have written it inside run_regime_holdout per "
-                f"Phase 0 SEAL chain. Possible Phase 0 SEAL regression OR "
-                f"db_path mismatch between producer's query and engine's write. "
-                f"Verify db_path={db_path!r} matches engine's internal default."
-            )
-        # CB5: bare filename (NOT subdir/filename); resolution context is per-candidate JSON
-        # location (the per-candidate directory at output_dir / hypothesis_hash).
-        summary["returns_per_bar_path"] = child_row.get("returns_per_bar_path")
-        summary["returns_per_bar_sha256"] = child_row.get("returns_per_bar_sha256")
-        if summary["returns_per_bar_path"] != "returns_per_bar.parquet":
-            raise RuntimeError(
-                f"B-C-narrow CB5: engine-stamped returns_per_bar_path is not the bare "
-                f"filename 'returns_per_bar.parquet'; got "
-                f"{summary['returns_per_bar_path']!r}. Possible engine "
-                f"`write_per_bar_artifact` regression at engine.py:526."
-            )
-        if summary["returns_per_bar_sha256"] is None or len(summary["returns_per_bar_sha256"]) != 64:
-            raise RuntimeError(
-                f"B-C-narrow CB6: engine-stamped returns_per_bar_sha256 invalid "
-                f"({summary['returns_per_bar_sha256']!r}). Possible engine "
-                f"`write_per_bar_artifact` SHA computation regression at engine.py:637-645."
-            )
-```
-
-The remainder of `_evaluate_one_candidate` (the inline JSON write at lines 550-573) is **NOT changed** — the per-candidate JSON `holdout_summary.json` write at lines 552-556 now naturally includes the merged B-C-narrow fields because `summary` was extended. Producer no longer imports or calls `_compute_sha256_file` (v1 used it; v2 removed per CB6 single-source discipline).
+Producer no longer imports or calls `_compute_sha256_file` (v1 used it; v2 removed per CB6 single-source discipline).
 
 - [ ] **Step 10.6: Extend `_CSV_FIELDS`**
 
@@ -2975,23 +3118,26 @@ Insert after the lineage guard at line 903 + after the existing `--regime-key` v
             execution_config_path=args.execution_config,
             source_batch_id=args.source_batch_id,
         )
-        # W1a (CR-SE-H1 v9): READ-ONLY idempotency check ONLY.
-        # Always pass force_rerun_existing=False here regardless of operator's
-        # actual flag value — the destructive DELETE is deferred to W1b which
-        # runs AFTER _check_overwrite_protection. W1a's role: refuse fast if
-        # parent_run_id pre-exists AND operator did NOT pass --force-rerun-existing.
-        # If operator DID pass --force-rerun-existing, W1a returns clean (preflight
-        # logic treats force_rerun_existing=True/False symmetrically on refuse-vs-
-        # DELETE branch); the actual DELETE fires at W1b.
-        _finalize_batch_registry_preflight_or_raise(
-            parent_run_id=bcnarrow_proposed_run_id,
-            force_rerun_existing=False,  # W1a is read-only-detection only; ignore actual flag
-            db_path=None,
-        ) if not args.force_rerun_existing else None
-        # W1a-conditional: if operator passed --force-rerun-existing, skip read-only
-        # refusal (operator has explicitly authorized DELETE; W1b will handle it).
-        # If operator did NOT pass --force-rerun-existing AND parent exists, W1a
-        # raises RuntimeError above and we never reach _check_overwrite_protection.
+        # W1a (CR-SE-H1 v9; AR-SE-R2-L2 v10 style fix): READ-ONLY idempotency check ONLY.
+        # Always pass force_rerun_existing=False here regardless of operator's actual
+        # flag value — the destructive DELETE is deferred to W1b which runs AFTER
+        # _check_overwrite_protection. W1a's role: refuse fast if parent_run_id pre-
+        # exists AND operator did NOT pass --force-rerun-existing. If operator DID
+        # pass --force-rerun-existing, skip W1a refusal check (operator has explicitly
+        # authorized DELETE; W1b will handle it). If operator did NOT pass --force-
+        # rerun-existing AND parent exists, W1a raises RuntimeError below and we never
+        # reach _check_overwrite_protection.
+        # AR-SE-R2-L2 v10 SEAL-eve R2 ADOPT: replaced ternary-expression-as-statement
+        # form with explicit if/else for readability — prior `func(...) if cond else None`
+        # pattern was readability-fragile.
+        if not args.force_rerun_existing:
+            _finalize_batch_registry_preflight_or_raise(
+                parent_run_id=bcnarrow_proposed_run_id,
+                force_rerun_existing=False,  # W1a is read-only-detection only
+                db_path=None,
+            )
+        # else: operator authorized DELETE via --force-rerun-existing; skip W1a
+        # refusal check; W1b at line ~3014 below will handle the DELETE.
 
     all_candidates = _load_corrected_candidates(args.source_batch_id)
 ```
@@ -3151,13 +3297,13 @@ grep -n "_exec_cfg_bytes\|aggregate\[\"forward_window_metadata\"\]\|_write_aggre
 
 Expected: `_exec_cfg_bytes` defined around line 1023; `aggregate["forward_window_metadata"]` around 1051; `_write_aggregate_summary` call around 1053. Place W6 block between lines 1051 and 1053.
 
-- [ ] **Step 10.9: Run all 25 Phase 2 tests — must PASS (GREEN)**
+- [ ] **Step 10.9: Run all 26 Phase 2 tests — must PASS (GREEN)**
 
 ```bash
 python -m pytest tests/test_phase2c_evaluation_gate_runner.py::TestBCNarrowPhase2ProducerEdits -v
 ```
 
-Expected: 25/25 PASS.
+Expected: 26/26 PASS.
 
 If any test FAILS, inspect — likely culprits:
 - import error in producer (Step 10.1 missed an import)
@@ -3171,7 +3317,7 @@ If any test FAILS, inspect — likely culprits:
 python -m pytest -q
 ```
 
-Expected: zero regression vs pre-Phase-2 baseline (HEAD `b10ffb2`: 2328 pass / 0 failed / 2 xfailed per Phase 0 SEAL note) + 25 net new passing Phase 2 tests. Total expected: 2353 pass / 0 failed / 2 xfailed (binding contract is zero regression + 25 new passing; the 2353 integer is informational).
+Expected: zero regression vs pre-Phase-2 baseline (HEAD `b10ffb2`: 2328 pass / 0 failed / 2 xfailed per Phase 0 SEAL note) + 26 net new passing Phase 2 tests. Total expected: 2354 pass / 0 failed / 2 xfailed (binding contract is zero regression + 25 new passing; the 2353 integer is informational).
 
 The T1.4 `test_4_tuple_matches_locked_values` test (at `tests/test_t1_4_backward_compat.py:490`) may FAIL at this step because the AST classifier now sees additional test/scripts-side `_write_to_registry` callers (if any added). Task 11 handles T1.4 baseline maintenance — if T1.4 fails at Step 10.10, proceed to Step 10.11 (commit Task 10) WITHOUT fixing T1.4 here. Task 11 commit closes the T1.4 baseline gap atomically.
 
@@ -3195,7 +3341,7 @@ Per Plan v3-Phase2 Task 10 + spec §3.2 + 4 Codex BLOCKING-carry fixes from Phas
 - _write_aggregate_csv: emits 5 new fields with backward-compat None→empty-string pattern
 - main(): wires archive PRE-flight + finalize PRE-flight guard + LC-b kwargs threading + finalize POST-fire (all gated by --enable-b-c-narrow-recovery for backward-compat)
 
-Tests: 25/25 Phase 2 tests GREEN. T1.4 baseline maintenance pending Task 11. Full suite zero regression except for expected T1.4 4-tuple drift (Task 11 closes)."
+Tests: 26/26 Phase 2 tests GREEN. T1.4 baseline maintenance pending Task 11. Full suite zero regression except for expected T1.4 4-tuple drift (Task 11 closes)."
 ```
 
 ---
@@ -3312,7 +3458,7 @@ Expected: all tests in the class PASS.
 python -m pytest -q
 ```
 
-Expected: 2353 pass / 0 failed / 2 xfailed (25 net new passing vs pre-Phase-2 baseline). Zero regression.
+Expected: 2354 pass / 0 failed / 2 xfailed (26 net new passing vs pre-Phase-2 baseline). Zero regression.
 
 - [ ] **Step 11.6: Commit T1.4 baseline maintenance (skip if no drift)**
 
@@ -3341,7 +3487,7 @@ methodological error)."
 
 ### Task 12: Phase 2 final ratify packet
 
-- [ ] **Step 12.1: Confirm 25 tests GREEN + full suite zero regression + T1.4 baseline updated (or unchanged)**
+- [ ] **Step 12.1: Confirm 26 tests GREEN + full suite zero regression + T1.4 baseline updated (or unchanged)**
 
 ```bash
 python -m pytest tests/test_phase2c_evaluation_gate_runner.py::TestBCNarrowPhase2ProducerEdits -v
@@ -3350,9 +3496,9 @@ python -m pytest -q
 ```
 
 Expected:
-- 25/25 Phase 2 tests PASS
+- 26/26 Phase 2 tests PASS
 - T1.4 B1 class PASSES (4-tuple verified)
-- Full suite: 2353 pass / 0 failed / 2 xfailed (zero regression vs `b10ffb2` baseline + 25 net new passing)
+- Full suite: 2354 pass / 0 failed / 2 xfailed (zero regression vs `b10ffb2` baseline + 26 net new passing)
 
 - [ ] **Step 12.2: Write Phase 2 ratify packet artifact**
 
@@ -3418,7 +3564,7 @@ git commit -m "evidence(b-c-narrow/phase-2): Phase 2 ratify packet (T12)
 Per Plan v3-Phase2 Task 12.
 
 Phase 2 deliverables: 25/25 TestBCNarrowPhase2ProducerEdits PASS; full suite
-zero regression vs b10ffb2 baseline + 25 net new passing. T1.4 baseline
+zero regression vs b10ffb2 baseline + 26 net new passing. T1.4 baseline
 maintained per BLOCKING-6 AST classifier output.
 
 4 BLOCKING-carry fixes from Phase 0 plan v2 PFR R2 all verified:
@@ -3437,7 +3583,7 @@ is a SEPARATE register-event #N+3 per anti-pre-emption discipline."
 **STOP.** Surface to Charlie:
 - 25 Phase 2 producer-edit tests GREEN
 - T1.4 B1 4-tuple unchanged (or updated per AST classifier; whichever applies)
-- Full test suite zero regression vs pre-Phase-2 baseline + 25 net new passing
+- Full test suite zero regression vs pre-Phase-2 baseline + 26 net new passing
 - Producer modifications confined to `scripts/run_phase2c_evaluation_gate.py` (9 modify-zones + 4 NEW helpers: `_validate_b_c_narrow_recovery_identity_or_raise` + `_archive_canonical_pre_flight` + `_finalize_batch_registry_preflight_or_raise` + `_finalize_batch_registry`) + 1 test file extension
 - All 4 BLOCKING-carry items from Phase 0 plan v2 PFR R2 verified fixed (BLOCKING-1 + BLOCKING-3 + BLOCKING-4 + BLOCKING-6)
 
