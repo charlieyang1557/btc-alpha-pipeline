@@ -1498,7 +1498,17 @@ def main() -> int:
 
     all_candidates = _load_corrected_candidates(args.source_batch_id)
     selected = _resolve_candidate_universe(args, all_candidates)
-    run_id = _resolve_run_id(args)
+    # Item 1 polish (T10 Bundle a, Charlie register #N+16): in the B-C-narrow
+    # recovery path reuse the same run_id minted at W0 (line 1471) so preflight
+    # and execute share one UUID. In the legacy non-recovery path call
+    # _resolve_run_id(args) as before — behavior unchanged. This makes UUID4
+    # divergence between preflight and execute structurally impossible regardless
+    # of the W0 identity-guard catch.
+    run_id = (
+        bcnarrow_proposed_run_id
+        if args.enable_b_c_narrow_recovery
+        else _resolve_run_id(args)
+    )
     run_dir = Path(args.output_root).resolve() / run_id
 
     explicit_hashes = (
@@ -1645,6 +1655,13 @@ def main() -> int:
     # can verify which cost config produced this run without inferring
     # from run-id naming). Per Q2 refinement at Phase 4 implementation
     # arc Task 3 (sealed PHASE4_PLAN.md §1.4 cost configurations).
+    #
+    # Item 2 polish (T10 Bundle a, Charlie register #N+16): load
+    # the execution config ONCE here and reuse `_exec_cfg` at the
+    # POST-fire B-C-narrow finalize block below (was a second
+    # `load_execution_config(args.execution_config)` call → duplicate
+    # file read + YAML parse on the same config). The byte payload
+    # is also reused for sha256 hashing in both metadata sites.
     import hashlib
     _exec_cfg_path = (
         args.execution_config
@@ -1653,6 +1670,13 @@ def main() -> int:
     )
     _exec_cfg_path_resolved = _exec_cfg_path.resolve()
     _exec_cfg_bytes = _exec_cfg_path_resolved.read_bytes()
+    # Pass the resolved path (handles `args.execution_config is None`
+    # default → config/execution.yaml) so this call is correct for both
+    # the legacy path and the B-C-narrow recovery path. Original site
+    # at the POST-fire block passed args.execution_config directly, which
+    # was safe only because CB2 identity guard ensured it was non-None
+    # in the recovery branch.
+    _exec_cfg = load_execution_config(_exec_cfg_path_resolved)
     try:
         _exec_cfg_path_relative = str(
             _exec_cfg_path_resolved.relative_to(PROJECT_ROOT)
@@ -1698,7 +1722,8 @@ def main() -> int:
             )
         # CB3 PFR R1 ADOPT: derive fee_model from cost_model.fee_model_label
         # (matches children's fee_model via engine.py:1278). NO hardcoded "phase4_15bps_v1".
-        _exec_cfg = load_execution_config(args.execution_config)
+        # Item 2 polish (T10 Bundle a): reuse `_exec_cfg` loaded once above at
+        # the metadata block — was a second load_execution_config call.
         _cost_model = ConstantSlippage.from_config(_exec_cfg)
         cohort_metadata = {
             "execution_config_path": _exec_cfg_path_relative,
