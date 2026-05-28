@@ -212,6 +212,37 @@ pytest dispatch (B2 2-leg parallel; Codex empirical-run discipline codified into
 
 ---
 
+## SEAL-eve R2 ADOPT findings applied (Plan v8 amendments — RE-SEAL-CANDIDATE; Codex usage-limit-hit asymmetric leg)
+
+Per Charlie register #N+19'''''' (Path 3: apply 2 Advisor LOW + commit v8 + wait for Codex 5/30 reset) 2026-05-28. SEAL-eve R2 fired as B2 2-leg parallel dispatch on v7 (commit `e0e16a1`); **ASYMMETRIC verdicts due to Codex usage-limit-hit failure mode**:
+
+- **Codex SEAL-eve R2**: USAGE LIMIT HIT (resets 2026-05-30 3:29 PM, ~2 days). Per [feedback_reviewer_routing_subagent_default.md] codified failure mode "Codex usage-limit-hit (distinct from stall)". Brief preserved for re-dispatch when credits restore. No verdict available.
+
+- **Advisor SEAL-eve R2**: APPROVE-WITH-FINDINGS LOW-only (0 BLOCKING + 0 HIGH + 0 MEDIUM + 2 LOW + 5 NOTES). **Advisor extended methodology beyond R1 static read** — ran 3 empirical /tmp pytest verifications (`test_v7_skip_semantics.py` 3 PASS + 1 SKIP; `test_v7_fakestat.py` 2 PASS; `test_resolve_check.py` 1 PASS) that EMPIRICALLY VALIDATED v7's CB2-SE-B1 + G7-SE-B2 architectural fixes. This is methodology-significant evolution from R1 (where Advisor static read missed both BLOCKINGs Codex caught).
+
+- **Layer 3 orchestrator empirical verification**: independently confirmed 4 critical empirical facts at HEAD `e0e16a1`:
+  (a) engine.py stability (git log f112599..HEAD -- backtest/engine.py returns empty)
+  (b) producer Sub-2-R4-B1 alignment at scripts:1373-1381 (8 fields verbatim)
+  (c) spec §3.2.3 line 118 enumeration matches plan + producer
+  (d) pre-fire archive state confirmed absent (`ls data/phase2c_evaluation_gate/archive/` returns "No such file or directory")
+
+**Methodology lesson codified**: Codex usage-limit-hit failure mode is DISTINCT from stall (per memory note). At asymmetric verdict, Advisor's extended empirical methodology + Layer 3 orchestrator verification together provide partial coverage of Codex's empirical-execution dimension. Classical B2 2-leg convergence NOT achieved at v8; Path 3 chosen to apply Advisor LOW polish + wait for Codex limit reset for full SEAL-eve R2 closure.
+
+| # | Severity | Origin | Fix in v8 |
+|---|---|---|---|
+| L1-Advisor-R2 | LOW | Advisor SEAL-eve R2 (empirical /tmp validation context) | Added defensive comment at ARCHIVE_MARKER_FILE definition (plan:558-580) documenting the `_d0b8101` git-sha suffix invariant uniqueness rationale: derived from CORRECTED_WF_ENGINE_COMMIT-derived basename; Phase 2 producer W3 is ONLY code path that creates this archive; spec §3.2.4 + §4.3 G7 refuse-if-exists guards against double-creation. Closes Advisor R2 LOW concern about hypothetical future cycle false-marker-match. |
+| L2-Advisor-R2 | LOW | Advisor SEAL-eve R2 (theoretical port-to-tempfile concern) | Added DESIGN INVARIANT comment at G7 mock setup (plan:1731-1733 area) documenting that the mock relies on pytest tmp_path being pre-resolved on the target FS (macOS pytest pre-resolves /var/folders → /private/var/folders). Explicit warning: DO NOT port to plain tempfile.mkdtemp() without applying `.resolve()` to archive_root + canonical BEFORE constructing string forms — would silently break the cross-FS mock without diagnostic. Closes Advisor R2 LOW. |
+
+Total v8 amendments: 2 ADOPT inline (2 LOW; both DEFENSIVE COMMENTS at code sites; no executable code change).
+
+Test count v7 → v8: 12 unchanged (no test method changes; only inline comment additions).
+
+v8 = RE-SEAL-CANDIDATE (waiting-for-Codex-leg). Same architectural state as v7 + 2 defensive comments. When Codex limit resets (5/30 3:29 PM), re-dispatch Codex SEAL-eve R2 on v8 to achieve classical B2 2-leg convergence.
+
+**Next register-event #N+19''''''' (post-Codex-reset)**: Codex SEAL-eve R2 re-dispatch + verdict adjudication (CONVERGENT LOW-floor → Plan SEAL ratify; OR Codex surfaces new finding → SEAL-eve R3).
+
+---
+
 ## Sub-decisions applied (Path A defaults per Charlie register #N+18; Charlie may override at PFR R1)
 
 | # | Sub-decision | Default applied | Rationale |
@@ -561,6 +592,21 @@ ARCHIVE_RUN_DIR = (
 # fall through to that path when fire has not run. Archive marker presence is
 # the unique B-C-narrow-state precondition (Phase 2 baseline never created this
 # archive directory).
+#
+# L1-Advisor-R2 PFR SEAL-eve R2 ADOPT v8: invariant uniqueness DEFENSIVE NOTE.
+# The `_d0b8101` git-sha suffix in ARCHIVE_RUN_DIR is the B-C-narrow
+# CORRECTED_WF_ENGINE_COMMIT-derived basename (per spec §2 Q3 = A3 +
+# Phase 2 BCNARROW_ARCHIVE_BASENAME constant at scripts:117-ish). No other
+# cycle should ever write to this exact path because:
+#   (a) The suffix is derived from a specific git commit hash, making it
+#       cycle-unique by construction
+#   (b) Phase 2 producer W3 is the ONLY code path that creates this archive
+#       (per producer scripts:1146 + scripts:1175 shutil.move atomic transplant)
+#   (c) Spec §3.2.4 + §4.3 G7 refuse-if-exists guards against double-creation
+# If a future hypothetical cycle were to write to this exact path (extremely
+# unlikely given the suffix uniqueness), this marker check would pass falsely
+# and tests would run against the wrong cycle's archive. Per Advisor SEAL-eve
+# R2 LOW: severity LOW because suffix is provably unique to B-C-narrow.
 ARCHIVE_MARKER_FILE = ARCHIVE_RUN_DIR / "holdout_results.csv"
 FIXTURE_PATH = (
     PROJECT_ROOT / "tests" / "fixtures" / "b_c_narrow_archived_baseline.json"
@@ -1728,6 +1774,27 @@ class TestG7ArchiveIdempotency:
         # Previous substring `"archive" in str(self)` could spuriously match
         # unrelated paths containing the word "archive". The new pattern
         # matches only the specific archive_root or paths strictly under it.
+        #
+        # L2-Advisor-R2 PFR SEAL-eve R2 ADOPT v8: DESIGN INVARIANT — relies on
+        # pytest tmp_path being pre-resolved on the target FS, so that
+        # `str(path) == str(path.resolve())`. On macOS, `/var/folders/...` is a
+        # symlink to `/private/var/folders/...` but pytest's tmp_path is
+        # pre-resolved to `/private/var/...`, satisfying the invariant. The
+        # producer's `_archive_canonical_pre_flight` at scripts:1157 calls
+        # `archive_root.resolve()` then `.stat()` on the resolved Path; our mock
+        # matches against the str-form of the un-resolved tmp_path. This works
+        # ONLY because pytest pre-resolves tmp_path.
+        #
+        # DO NOT port this test to plain `tempfile.TemporaryDirectory()` or
+        # `tempfile.mkdtemp()` without applying `.resolve()` to archive_root and
+        # canonical BEFORE constructing archive_root_str / canonical_str. Without
+        # that, the mock would silently fall through to `original_stat` (the
+        # producer's resolved Path str != our un-resolved Path str), the cross-FS
+        # guard would NOT raise NotImplementedError, shutil.move would actually
+        # execute, and the test would FAIL with no diagnostic about the mock miss.
+        #
+        # Per Advisor SEAL-eve R2 LOW: severity LOW because port to plain
+        # tempfile is unlikely; this comment is defensive future-proofing.
         archive_root_str = str(archive_root)
         canonical_str = str(canonical)
 
