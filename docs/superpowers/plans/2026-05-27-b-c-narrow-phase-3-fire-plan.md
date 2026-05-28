@@ -86,6 +86,46 @@ Test count v2 → v3: 12 unchanged (G4 all-39 expansion adds (c) + (d) subchecks
 
 ---
 
+## PFR R3 ADOPT findings applied (Plan v4 amendments)
+
+Per Charlie register #N+19'' (Path 1: full AMEND + PFR R4) 2026-05-28. PFR R3 fired as B2 2-leg dispatch on v3 (commit `2f07199`); Codex returned NOT-APPROVE (2 BLOCKING + 0 HIGH + 2 MEDIUM + 1 LOW); Advisor returned APPROVE-WITH-FINDINGS (0 BLOCKING + 2 HIGH + 3 MEDIUM + 4 LOW + 1 PUSHBACK candidate).
+
+Convergence summary:
+- CB1-R3 BLOCKING Codex-only: v3 N=2 G4 stale total-row assertion not back-ported to Option C (engine writes leading NaN row; `len(df) == T_obs + 1` typically; existing assertion FAILs).
+- CB2-R3 BLOCKING Codex-only: G6 SKIP gate crashes on missing `runs` table (`get_connection()` does NOT init schema; fresh test env → `sqlite3.OperationalError` ERROR not SKIP).
+- engine_commit silently skipped (Codex R3 MEDIUM-1 + Advisor R3 HIGH-1 CONVERGENT; adjudicated HIGH for V4 anchor load-bearing). engine_commit lives in `notes` JSON (scripts:1347-1350), not direct column; v3 M3 15-field iteration silently skipped via `if field_name in parent_keys: continue`. Parse notes JSON + assert explicitly.
+- AH2-R3 Advisor-only: G4 `.notna()` vs engine `np.isfinite` asymmetry — engine uses np.isfinite (NaN + ±inf filter at engine.py:444-446); .notna only filters NaN. Methodologically bit-equivalent for BTC pct_change but engine-aligned via np.isfinite.
+- AM1-R3 MEDIUM Advisor-only: Sub-1 PUSHBACK candidate REOPENED. Producer scheme IS known: `f"{run_id}_{hh}"` at scripts:582. Equality lookup is safer than LIKE substring (no spoofable substring collisions). Sub-1 ACCEPT preserve at PFR R2 was conservative for v3; Advisor R3 reopens with new evidence — adjudicated ACCEPT-NEW (replace LIKE substring with equality at both G4 sites).
+- Sub-2 R3 MEDIUM Codex-only: parent-row NULL direction (5 strategy-specific fields: sharpe_ratio, max_drawdown, total_return, total_trades, win_rate) — per spec §3.2.3 line 118 + producer scripts:1373-1381 (producer explicitly sets NULL at parent). Sub-2 R2 ACCEPT-WITH-EXTENSION claimed coverage via M3+M4 but neither addressed this direction.
+- AM3-R3 MEDIUM Advisor-only: AL5 `summary.get('lifecycle_state') == 'holdout_error'` silently treats missing key as None (no error); added explicit None-check.
+- AM2-R3 MEDIUM Advisor-only: drift-stop test scope-only docstring note; scope = `holdout_sharpe` only (semantically = sharpe_ratio per metric_map). NAMED-eligible extension at Phase 4 if metric set widens.
+- 5 LOW (CL1-R3 stale v2 commit-message refs + AL1-R3 M5 description correction (endswith → prefix-match) + AL2-R3 engine_commit 2-stage defensive comment + AL3-R3 wall-clock estimate (10-15s → ~10s per spec §7 R6) + AL4-R3 defensive duplicate-hash CSV check).
+- B2 reverse-direction continues healthy: Advisor caught operationally-critical Sub-1 reopen + AM3 lifecycle silent treatment + AH2 engine asymmetry; Codex caught two BLOCKINGs (back-port miss + sqlite_master ERROR) that Advisor missed.
+- 1 PUSHBACK candidate: Sub-1 LIKE → equality REOPENED (PFR R2 ADOPT v3 preserved LIKE conservatively; PFR R3 ADOPT v4 reopens via Advisor R3 M1 with new producer scheme evidence) — ACCEPT-NEW at v4.
+
+| # | Severity | Origin | Fix in v4 |
+|---|---|---|---|
+| CB1-R3 | BLOCKING | Codex | Back-ported Option C from all-39 G4 sites (plan:765-773 + 896-902) to N=2 G4 site (was: `int(stored_registry_t_obs) == len(df) == t_obs_summary`; now: `int(stored_registry_t_obs) == finite_row_count == t_obs_summary`). Engine writes leading NaN row (engine.py:530-545); T_obs is finite-return count, NOT len(df). Existing v3 N=2 assertion would FAIL because len(df) == T_obs + 1. |
+| CB2-R3 | BLOCKING | Codex | Added `sqlite_master` table-existence guard BEFORE COUNT query in G6 per-test SKIP gate. `get_connection()` does NOT initialize schema (experiment_registry.py:178-190); in fresh test env with no prior `runs` table → `sqlite3.OperationalError: no such table: runs` (ERROR not SKIP). Mirrors guard pattern at plan:316-330. |
+| AH1-R3 | HIGH | Codex+Advisor CONVERGENT (elevated) | Added explicit engine_commit assertion via notes JSON parse: `notes_payload = json.loads(parent_row['notes'])` + `assert notes_payload.get('engine_commit') == 'eb1c87f'`. v3 M3 15-field iteration silently `continue`d at `if field_name in parent_keys` because engine_commit is in `notes` JSON (scripts:1347-1350), not direct column. CORRECTED_WF_ENGINE_COMMIT = "eb1c87f" is the V4 reproducibility anchor — MUST match. Codex R3 MEDIUM-1 + Advisor R3 HIGH-1 CONVERGENT; adjudicated HIGH for V4 anchor load-bearing. |
+| AH2-R3 | HIGH | Advisor | Replaced `df["return"].notna().sum()` with `np.isfinite(df["return"]).sum()` at ALL G4 sites (N=2 + all-39). Engine compute_moments uses np.isfinite (NaN + ±inf filter at engine.py:444-446); .notna only filters NaN. For BTC pct_change essentially unreachable difference (no divide-by-zero), but methodologically bit-equivalent to engine semantics. numpy already imported (plan:408). |
+| AM1-R3 | MEDIUM | Advisor (Sub-1 REOPEN) | Replaced LIKE substring SQL with equality lookup at BOTH G4 sites (N=2 plan:808-812 + all-39 plan:915-920). Producer scheme IS known: `f"{run_id}_{hh}"` at scripts:582. Equality is safer + tighter (no spoofable substring collisions). Sub-1 ACCEPT preserve at PFR R2 was conservative for v3; Advisor R3 M1 reopens with new producer evidence → ACCEPT-NEW at v4. |
+| Sub-2 R3 | MEDIUM | Codex | Added NULL-at-parent direction loop to G6 body (5 strategy-specific fields: sharpe_ratio, max_drawdown, total_return, total_trades, win_rate). Per spec §3.2.3 line 118 + producer scripts:1373-1381 (producer explicitly sets NULL at parent). Sub-2 R2 ACCEPT-WITH-EXTENSION claimed coverage via M3+M4 but neither addressed this direction. |
+| AM3-R3 | MEDIUM | Advisor | Added explicit None-check for lifecycle_state in Step 14.2(g) AL5 holdout_error verification. v3 used `summary.get('lifecycle_state') == 'holdout_error'` which silently treats missing key as None == 'holdout_error' = False (silent pass — masks producer error-encoding drift). Now: assert lifecycle is not None before comparison. |
+| AM2-R3 | MEDIUM | Advisor | Added drift-stop test scope-only docstring note: scope = `holdout_sharpe` only (semantically = sharpe_ratio per metric_map at plan:675). NAMED-eligible-for-extension at Phase 4 SEAL bundle if V4 metric set widens (e.g., total_trades drift via int-rounding contract). |
+| CL1-R3 | LOW | Codex | Updated 5 "Per Plan v3-Phase3 v2/v3" → "v4" stale references in commit-message templates (plan:1528 Task 13 + plan:1888 Task 14 + plan:2102 Task 14b + plan:2290 Task 14c + End-of-plan marker line 2396 + test file docstring line 360 + ratify packet Plan version line 2159). Historical inline references in commit message body kept (referencing actual PFR R1/R2 v2/v3 changes). |
+| AL1-R3 | LOW | Advisor | Updated M5 description from "endswith / equality" to "prefix match (startswith) or equality" at code-site comment (plan:1456-1463) + ratify packet table (plan:2202). PFR R2 ADOPT table description was mischaracterized; implementation actually uses `startswith(archive_root_str + "/") or equality`. Implementation is sound; only description corrected. |
+| AL2-R3 | LOW | Advisor | Added defensive inline comment at engine_commit notes JSON parse documenting future schema migration safety: if engine_commit becomes direct column, notes-JSON parse path still executes (notes still serialized); direct-column path also asserts via 14-field direct-column loop. Both paths safe; no migration-time bug. |
+| AL3-R3 | LOW | Advisor | Aligned Step 13.5 STOP packet wall-clock estimate from "~10-15 seconds" to "~10 seconds (per spec §7 R6: 39 × ~0.25s)". Step 14.1 + Step 14.2 instances kept at "10-15 seconds" (operational margin for archive + identity guard + finalize overhead per AL3-R3 brief scope). |
+| AL4-R3 | LOW | Advisor | Added defensive duplicate-hash check in `_load_all_39_candidates_from_csv` (plan:512-528). `csv.DictReader → dict` pattern silently overwrites duplicate keys; impossible in canonical CSV by construction (caught by Step 13.1(h) drift check) but defensive for future-proofing. Raises `ValueError` on first duplicate. |
+
+Total v4 amendments: 13 ADOPT inline + 1 Sub-1 PUSHBACK reopen-and-ACCEPT.
+Test count v3 → v4: 12 unchanged (all v4 fixes within existing test bodies + docstring/assertion polish; no new test methods).
+
+Cycle convergence: ADOPT 17 → 14 → 13; BLOCKING count stable at 2-3 per round (CB1+CB2+CB3 R1 → CB2-R2-B1 + G4-R2-B2 R2 → CB1-R3 + CB2-R3 R3). Codex reverse-direction continues healthy (R3 caught both BLOCKINGs that Advisor missed); Advisor reverse-direction continues healthy (R3 caught Sub-1 PUSHBACK reopen + AH2 engine asymmetry + AM3 lifecycle silent-pass that Codex missed). 1 cross-leg CONVERGENT (engine_commit silent-skip), 12 single-leg catches.
+
+---
+
 ## Sub-decisions applied (Path A defaults per Charlie register #N+18; Charlie may override at PFR R1)
 
 | # | Sub-decision | Default applied | Rationale |
@@ -357,7 +397,7 @@ Write the following file content verbatim:
 ```python
 """V4 reproducibility + G4-G7 gate tests for B-C-narrow Phase 3 fire.
 
-Per Plan v3-Phase3 v3 Step 13.2. Tests authored RED before Task 14 fire.
+Per Plan v3-Phase3 v4 Step 13.2. Tests authored RED before Task 14 fire.
 GREEN expected at Step 14.5 after fire + fixture capture + V4 gate run.
 
 Test count: 12 methods (PFR R1 ADOPT v2 + PFR R2 ADOPT v3 expansion):
@@ -514,13 +554,28 @@ def _load_all_39_candidates_from_csv(run_dir: Path) -> dict:
 
     Per CB3 PFR R1 ADOPT v2: all-39 V4 gate reads raw CSV (NOT specific-keys
     fixture) to satisfy spec §4.2 + §4.3 per-candidate full-cohort coverage.
+
+    AL4-R3 PFR R3 ADOPT v4: defensive duplicate-hash check.
+    csv.DictReader → dict pattern silently overwrites duplicate keys. Impossible
+    in canonical CSV by construction (39 hashes uniquely set per Step 13.1(h)
+    drift check), but defensive for future-proofing if CSV producer ever drifts.
     """
     csv_path = run_dir / "holdout_results.csv"
     assert csv_path.exists(), (
         f"holdout_results.csv missing at {csv_path} (precondition: fire complete)"
     )
     with csv_path.open() as f:
-        rows = {row["hypothesis_hash"]: row for row in csv.DictReader(f)}
+        rows = {}
+        seen_hashes = set()
+        for row in csv.DictReader(f):
+            hh = row["hypothesis_hash"]
+            if hh in seen_hashes:
+                raise ValueError(
+                    f"AL4-R3 duplicate hypothesis_hash in CSV: {hh} "
+                    f"(producer drift caught at {csv_path})"
+                )
+            seen_hashes.add(hh)
+            rows[hh] = row
     assert len(rows) == 39, (
         f"all-39 V4 gate expected 39 candidate rows in CSV, got {len(rows)} "
         f"at {csv_path}"
@@ -628,11 +683,22 @@ class TestV4Reproducibility:
         Locks the error-message contract for spec §4.2 stop-condition behavior.
 
         CB2-R2-B1 PFR R2 ADOPT v3: takes `active_run_dir` per-test fixture.
+
+        AM2-R3 PFR R3 ADOPT v4: drift-stop test currently scopes to
+        holdout_sharpe only (semantically = sharpe_ratio per metric_map below).
+        If V4 metric set widens (e.g., adding total_trades drift via int-
+        rounding contract, or max_drawdown / total_return permutations), the
+        drift-stop test would need extension to cover those metric classes.
+        NAMED-eligible-for-extension at Phase 4 SEAL bundle if metric set
+        widens.
         """
         archive_rows = _load_all_39_candidates_from_csv(ARCHIVE_RUN_DIR)
         new_rows = _load_all_39_candidates_from_csv(active_run_dir)
         perturbed_hash = sorted(archive_rows.keys())[0]
         # Inject synthetic 10×ε perturbation into one candidate's holdout_sharpe
+        # AM2-R3 PFR R3 ADOPT v4: scope = sharpe_ratio only (single-metric
+        # contract-test); not full per-metric coverage (other V4 tests cover
+        # max_drawdown + total_return + total_trades + bool subfields).
         perturbed_sharpe = (
             float(archive_rows[perturbed_hash]["holdout_sharpe"]) + 10 * V4_EPSILON
         )
@@ -763,9 +829,14 @@ class TestG4ParquetIntegrity:
                     f"G4 missing parquet for candidate {hh} at {parquet_path}"
                 )
                 # (a) finite-return count = T_obs (G4-R2-B2 Option C: defensive)
+                # AH2-R3 PFR R3 ADOPT v4: replaced .notna() with np.isfinite() to
+                # bit-mirror engine semantics. Engine compute_moments uses
+                # np.isfinite(arr) (engine.py:444-446) which excludes NaN AND ±inf.
+                # For BTC pct_change essentially unreachable difference (no
+                # divide-by-zero), but methodologically bit-equivalent to engine.
                 df = pd.read_parquet(parquet_path)
                 t_obs_summary = int(summary["T_obs"])
-                finite_row_count = int(df["return"].notna().sum())
+                finite_row_count = int(np.isfinite(df["return"]).sum())
                 assert finite_row_count == t_obs_summary, (
                     f"G4(a) finite-return count mismatch on {hh}: "
                     f"finite_rows={finite_row_count} summary T_obs={t_obs_summary} "
@@ -804,19 +875,22 @@ class TestG4ParquetIntegrity:
                 # The child run_id in the registry is per-candidate; query by
                 # parent_run_id + candidate-specific identifier (hypothesis_hash
                 # is the per-child run_id naming under the producer's LC-b path).
+                # AM1-R3 PFR R3 ADOPT v4: Sub-1 reopened. Producer scheme is
+                # `f"{run_id}_{hh}"` (scripts:582); equality lookup is safer than
+                # LIKE substring (no spoofable substring collisions). Sub-1 ACCEPT
+                # preserve at PFR R2 was conservative for v3; Advisor R3 M1 reopens.
+                child_run_id = f"{BCNARROW_PARENT_RUN_ID}_{hh}"
                 cur = conn.cursor()
                 cur.execute(
-                    "SELECT run_id FROM runs WHERE parent_run_id = ? "
-                    "AND run_type = 'regime_holdout' AND run_id LIKE ?",
-                    (BCNARROW_PARENT_RUN_ID, f"%{hh}%"),
+                    "SELECT run_id FROM runs WHERE run_id = ? AND run_type = ?",
+                    (child_run_id, "regime_holdout"),
                 )
                 child_id_row = cur.fetchone()
                 assert child_id_row is not None, (
                     f"CH4 G4 registry lookup FAIL on {hh}: no child run row "
-                    f"found with hypothesis_hash {hh} under parent "
-                    f"{BCNARROW_PARENT_RUN_ID}"
+                    f"found at run_id={child_run_id!r} (producer scheme "
+                    f"f'{{run_id}}_{{hh}}' per scripts:582)"
                 )
-                child_run_id = child_id_row[0]
                 child_row = get_run(conn, child_run_id)
                 assert child_row is not None, (
                     f"CH4 G4 get_run returned None for child_run_id={child_run_id!r}"
@@ -840,16 +914,24 @@ class TestG4ParquetIntegrity:
                     f"computed={computed_sha!r} summary={stored_sha!r} "
                     f"registry={stored_registry_sha!r}"
                 )
-                # (CH4-c) T_obs in registry = parquet rows = summary
+                # (CH4-c) T_obs in registry = finite-return count = summary
+                # CB1-R3 PFR R3 ADOPT v4: back-port Option C from all-39 G4 to N=2 G4 site.
+                # v3 applied Option C at all-39 sites (plan:765-773 + 896-902) but missed
+                # N=2 back-port. Engine writes leading NaN row (engine.py:530-545); T_obs
+                # is finite-return count (NOT len(df)). Original v3 assertion
+                # `int(stored_registry_t_obs) == len(df) == t_obs_summary` would FAIL because
+                # len(df) typically == T_obs + 1.
                 stored_registry_t_obs = child_row.get("T_obs")
                 assert (
                     int(stored_registry_t_obs)
-                    == len(df)
+                    == finite_row_count
                     == t_obs_summary
                 ), (
                     f"CH4 G4 T_obs tri-way mismatch on {hh}: "
-                    f"parquet rows={len(df)} summary T_obs={t_obs_summary} "
-                    f"registry T_obs={stored_registry_t_obs}"
+                    f"finite_rows={finite_row_count} summary T_obs={t_obs_summary} "
+                    f"registry T_obs={stored_registry_t_obs} "
+                    f"(parquet total rows={len(df)} including leading-NaN row per "
+                    f"engine.py:530-545)"
                 )
         finally:
             conn.close()
@@ -871,10 +953,10 @@ class TestG4ParquetIntegrity:
 
         CB2-R2-B1 PFR R2 ADOPT v3: takes `active_run_dir` per-test fixture.
 
-        Sub-1 ACCEPT PFR R2 ADOPT v3: LIKE substring pattern preserved at registry
-        SELECT (already in v2; matches per-child run_id naming under producer LC-b
-        path; tightening to equality would require knowing exact child run_id
-        format which is producer-internal).
+        AM1-R3 PFR R3 ADOPT v4: Sub-1 reopened. LIKE substring pattern replaced
+        with equality. Producer scheme IS known: `f"{run_id}_{hh}"` at scripts:582.
+        Sub-1 ACCEPT preserve at PFR R2 was conservative for v3; Advisor R3 M1
+        reopens — equality is safer + tighter (no spoofable substring collisions).
         """
         from backtest.experiment_registry import get_connection, DEFAULT_DB_PATH
 
@@ -894,8 +976,11 @@ class TestG4ParquetIntegrity:
                     f"G4 all-39 empty parquet for candidate {hh}"
                 )
                 # (a) finite-return count = T_obs (G4-R2-B2 Option C)
+                # AH2-R3 PFR R3 ADOPT v4: replaced .notna() with np.isfinite() to
+                # bit-mirror engine semantics (compute_moments uses np.isfinite
+                # at engine.py:444-446 — excludes NaN AND ±inf).
                 t_obs_summary = int(summary["T_obs"])
-                finite_row_count = int(df["return"].notna().sum())
+                finite_row_count = int(np.isfinite(df["return"]).sum())
                 assert finite_row_count == t_obs_summary, (
                     f"G4(a) all-39 finite-return count mismatch on {hh}: "
                     f"finite_rows={finite_row_count} summary T_obs={t_obs_summary} "
@@ -912,15 +997,19 @@ class TestG4ParquetIntegrity:
                     f"G4(b) all-39 SHA256 summary-vs-computed mismatch on {hh}: "
                     f"computed={computed_sha!r} summary={stored_sha_summary!r}"
                 )
+                # AM1-R3 PFR R3 ADOPT v4: Sub-1 reopened. Producer scheme is
+                # f"{run_id}_{hh}" (scripts:582); equality lookup is safer than LIKE
+                # substring (no spoofable substring collisions).
+                child_run_id = f"{BCNARROW_PARENT_RUN_ID}_{hh}"
                 cur.execute(
                     "SELECT returns_per_bar_sha256 FROM runs WHERE "
-                    "parent_run_id = ? AND run_type = 'regime_holdout' "
-                    "AND run_id LIKE ?",
-                    (BCNARROW_PARENT_RUN_ID, f"%{hh}%"),
+                    "run_id = ? AND run_type = ?",
+                    (child_run_id, "regime_holdout"),
                 )
                 row = cur.fetchone()
                 assert row is not None, (
-                    f"G4(b) all-39 registry lookup FAIL on {hh}"
+                    f"G4(b) all-39 registry lookup FAIL on {hh}: "
+                    f"run_id={child_run_id!r}"
                 )
                 assert row[0] == computed_sha, (
                     f"G4(b) all-39 SHA256 registry-vs-computed mismatch on {hh}: "
@@ -1062,9 +1151,11 @@ class TestG6RegistryParentChildIntegrity:
     def test_g6_registry_parent_child_integrity_after_fire(self) -> None:
         """Registry parent-child integrity after fire:
           - Parent row: 1 row at run_id=phase4_forward_2026_15bps_v1_b_c_narrow with
-            run_type='batch_summary'; cohort-level metadata (15 fields per spec
-            §3.2.3 line 117) non-null; batch_id == BCNARROW_PARENT_RUN_ID per
-            G6-BatchID-R2-M4.
+            run_type='batch_summary'; cohort-level metadata (14 direct columns
+            per spec §3.2.3 line 117 + engine_commit via notes JSON per AH1-R3)
+            non-null; batch_id == BCNARROW_PARENT_RUN_ID per G6-BatchID-R2-M4;
+            5 strategy-specific fields NULL at parent per Sub-2 R3 + spec §3.2.3
+            line 118 + producer scripts:1373-1381.
           - Children rows: 39 rows with parent_run_id = parent + run_type =
             'regime_holdout'; per-candidate metadata (hypothesis_hash + sharpe_ratio
             + max_drawdown + total_return + total_trades + regime_holdout_passed)
@@ -1073,7 +1164,10 @@ class TestG6RegistryParentChildIntegrity:
             returns_per_bar_sha256 / T_obs are persisted at children (per Phase 0
             LineageContext semantics), NOT parent-only. NULL-at-children assertion
             direction is structurally unimplementable for the current schema and
-            removed per G6-Docstring-R2-L2 + Sub-2 ACCEPT-WITH-EXTENSION.
+            removed per G6-Docstring-R2-L2 + Sub-2 ACCEPT-WITH-EXTENSION (the
+            distinct NULL-at-parent direction added per Sub-2 R3 PFR R3 ADOPT v4
+            below covers the 5 strategy-specific fields the producer explicitly
+            sets NULL at parent).
 
         Spec §4.3 G6: SELECT COUNT(*) FROM runs WHERE
         parent_run_id='phase4_forward_2026_15bps_v1_b_c_narrow' AND
@@ -1101,6 +1195,26 @@ class TestG6RegistryParentChildIntegrity:
         CONSTRAINT "NEVER commit code that doesn't pass existing tests" at Step
         13.4 RED commit.
 
+        CB2-R3 PFR R3 ADOPT v4: added `sqlite_master` table-existence guard
+        BEFORE the COUNT query. `get_connection()` opens SQLite without
+        initializing schema (experiment_registry.py:178-190); in fresh test env
+        with no prior `runs` table → `sqlite3.OperationalError: no such table:
+        runs` (ERROR not SKIP). Mirrors the guard pattern used at plan:316-330.
+
+        AH1-R3 PFR R3 ADOPT v4: engine_commit lives in `notes` JSON
+        (scripts:1347-1350), not direct column. v3 M3 15-field iteration
+        silently skipped this load-bearing V4 reproducibility anchor
+        (CORRECTED_WF_ENGINE_COMMIT = "eb1c87f"). Parse notes JSON + assert
+        explicitly per Advisor R3 H1 (CONVERGENT with Codex R3 M1 elevated to
+        HIGH for V4 anchor load-bearing).
+
+        Sub-2 R3 PFR R3 ADOPT v4: parent-row NULL direction added (5 strategy-
+        specific fields: sharpe_ratio, max_drawdown, total_return, total_trades,
+        win_rate). Per spec §3.2.3 line 118 + producer scripts:1373-1381
+        (producer explicitly sets these to NULL at parent). Sub-2 R2
+        ACCEPT-WITH-EXTENSION claimed coverage via M3+M4 but neither addressed
+        this direction (Codex R3 MEDIUM-2).
+
         G6-Batched-R2-L3 PFR R2 ADOPT v3 (style decision): kept per-field loop
         rather than batched SELECT for clearer per-field error messages on
         first failure (cohort-field-NULL drift class).
@@ -1111,7 +1225,22 @@ class TestG6RegistryParentChildIntegrity:
         conn.row_factory = sqlite3.Row
         try:
             cur = conn.cursor()
-            # CB2-R2-B1 PFR R2 ADOPT v3: per-test SKIP gate
+            # CB2-R3 PFR R3 ADOPT v4: add sqlite_master table-existence guard
+            # BEFORE the COUNT query. get_connection() does NOT initialize schema
+            # (experiment_registry.py:178-190); in fresh test env with no prior
+            # `runs` table → sqlite3.OperationalError: no such table: runs (ERROR
+            # not SKIP). The plan uses sqlite_master guard pattern elsewhere
+            # (plan:316-330); applying here for consistency.
+            cur.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='runs'"
+            )
+            if cur.fetchone() is None:
+                pytest.skip(
+                    "Phase 3 fire not yet executed — `runs` table does not exist "
+                    "in registry; G6 invariant check requires fire-time state. "
+                    "Test will be exercised at Step 14.4 V4 gate run."
+                )
+            # CB2-R2-B1 PFR R2 ADOPT v3: per-test SKIP gate (parent row presence)
             cur.execute(
                 "SELECT COUNT(*) FROM runs WHERE run_id = ?",
                 (BCNARROW_PARENT_RUN_ID,),
@@ -1137,16 +1266,40 @@ class TestG6RegistryParentChildIntegrity:
                 f"G6 parent row run_type FAIL: expected 'batch_summary', "
                 f"found {parent_row['run_type']!r}"
             )
-            # G6-Cohort-R2-M3 PFR R2 ADOPT v3: parent cohort metadata non-null
-            # — extended from 5 fields to all 15 cohort-level fields per spec
-            # §3.2.3 line 117. Tolerate column-vs-`notes`-JSON-key existence
-            # variance per Phase 2 CB4 lock (some fields like `engine_commit`
-            # may live in `notes` JSON not as direct column; check key presence
-            # before asserting non-null).
-            parent_cohort_metadata = (
+            parent_keys = set(parent_row.keys())
+            # AH1-R3 PFR R3 ADOPT v4: engine_commit lives in notes JSON
+            # (scripts:1347-1350), not direct column. v3 M3 15-field iteration
+            # silently skipped this load-bearing V4 reproducibility anchor
+            # (CORRECTED_WF_ENGINE_COMMIT = "eb1c87f"). Parse notes JSON +
+            # assert explicitly per Advisor R3 H1 (CONVERGENT Codex R3 M1).
+            # AL2-R3 PFR R3 ADOPT v4: defensive — if future schema migration adds
+            # engine_commit as direct column, the notes-JSON parse path here would
+            # still execute (notes still serialized); the direct-column path
+            # would also assert via the 14-field direct-column loop below. Both
+            # paths are safe; no migration-time bug.
+            notes_json_str = parent_row["notes"] if "notes" in parent_keys else None
+            if notes_json_str is None:
+                notes_json_str = "{}"
+            try:
+                notes_payload = json.loads(notes_json_str)
+            except json.JSONDecodeError as e:
+                pytest.fail(
+                    f"G6: parent_row['notes'] is not valid JSON: {e}"
+                )
+            assert notes_payload.get("engine_commit") == "eb1c87f", (
+                f"G6: notes['engine_commit'] expected 'eb1c87f' "
+                f"(CORRECTED_WF_ENGINE_COMMIT), got "
+                f"{notes_payload.get('engine_commit')!r}. V4 reproducibility "
+                f"anchor MUST match."
+            )
+            # G6-Cohort-R2-M3 PFR R2 ADOPT v3 (updated per AH1-R3): parent cohort
+            # metadata non-null — 14 direct-column fields per spec §3.2.3 line 117
+            # (engine_commit checked separately above via notes JSON per AH1-R3).
+            # Tolerate column-vs-`notes`-JSON-key existence variance per Phase 2
+            # CB4 lock (check key presence before asserting non-null).
+            expected_cohort_fields_direct = (
                 "git_commit",
                 "current_git_sha",
-                "engine_commit",
                 "execution_config_path",
                 "execution_config_sha256",
                 "parquet_data_sha256",
@@ -1160,8 +1313,7 @@ class TestG6RegistryParentChildIntegrity:
                 "strategy_name",
                 "strategy_source",
             )
-            parent_keys = set(parent_row.keys())
-            for field_name in parent_cohort_metadata:
+            for field_name in expected_cohort_fields_direct:
                 if field_name not in parent_keys:
                     continue  # tolerate schema variants (column vs notes JSON-key)
                 assert parent_row[field_name] is not None, (
@@ -1175,6 +1327,27 @@ class TestG6RegistryParentChildIntegrity:
                 assert parent_row["batch_id"] == BCNARROW_PARENT_RUN_ID, (
                     f"G6-BatchID-R2-M4 parent.batch_id expected "
                     f"{BCNARROW_PARENT_RUN_ID!r}, got {parent_row['batch_id']!r}"
+                )
+            # Sub-2 R3 PFR R3 ADOPT v4: parent-row NULL direction (5 strategy-
+            # specific fields). Per spec §3.2.3 line 118 + producer
+            # scripts:1373-1381 (producer explicitly sets these NULL at parent).
+            # Sub-2 R2 ACCEPT-WITH-EXTENSION claimed coverage via M3+M4 but
+            # neither addressed this direction (Codex R3 MEDIUM-2).
+            expected_parent_null_fields = (
+                "sharpe_ratio",
+                "max_drawdown",
+                "total_return",
+                "total_trades",
+                "win_rate",
+            )
+            for field_name in expected_parent_null_fields:
+                if field_name not in parent_keys:
+                    continue  # tolerate column-existence variance
+                assert parent_row[field_name] is None, (
+                    f"Sub-2 R3 G6: parent_row[{field_name!r}] expected NULL "
+                    f"(strategy-specific field at parent), got "
+                    f"{parent_row[field_name]!r}. Producer writes NULL at "
+                    f"scripts:1373-1381."
                 )
             # Child rows
             cur.execute(
@@ -1321,10 +1494,14 @@ class TestG7ArchiveIdempotency:
         original_stat = Path.stat
 
         # AM1-CrossFS-R2-M5 PFR R2 ADOPT v3: tightened substring match to
-        # endswith / equality on resolved Path identity. Previous substring
-        # `"archive" in str(self)` could spuriously match unrelated paths
-        # containing the word "archive". The new pattern matches only the
-        # specific archive_root or paths under it.
+        # prefix match (startswith) or equality on resolved Path identity.
+        # AL1-R3 PFR R3 ADOPT v4 description correction: PFR R2 ADOPT table
+        # (plan:77) described this as "endswith / equality" but implementation
+        # below actually uses startswith + equality (i.e., prefix match).
+        # Implementation is sound; only the description was mischaracterized.
+        # Previous substring `"archive" in str(self)` could spuriously match
+        # unrelated paths containing the word "archive". The new pattern
+        # matches only the specific archive_root or paths strictly under it.
         archive_root_str = str(archive_root)
 
         def mocked_stat(self, *args, **kwargs):
@@ -1388,7 +1565,7 @@ git add tests/test_b_c_narrow_v4_reproducibility.py
 git commit -m "$(cat <<'EOF'
 test(b-c-narrow/phase-3): T13 RED — V4+G4-G7 test bodies (12 methods)
 
-Per Plan v3-Phase3 v2 Task 13. RED phase before T13 fire authorization.
+Per Plan v3-Phase3 v4 Task 13. RED phase before T13 fire authorization.
 
 Test methods (12 total = 5 spec §6.4 N=2 fixture + 2 BLOCKING-5 carry G6+G7
 + 4 all-39 V4 gate per CB3 PFR R1 ADOPT v2 + 1 cross-FS G7 per AM1 PFR R1
@@ -1478,8 +1655,8 @@ What to surface to Charlie:
     tests PASS via tmp_path)
   - Fire command (exact bash to be executed at Step 14.1):
     [paste the bash from Step 14.1 verbatim]
-  - Expected wall-clock: ~10-15 seconds (39 candidates × ~0.25s/candidate
-    per existing forward_2026 patterns + producer overhead)
+  - Expected wall-clock: ~10 seconds (per spec §7 R6: 39 × ~0.25s; AL3-R3 PFR
+    R3 ADOPT v4 — aligned to spec; previous v3 "~10-15 seconds" was inflated)
   - Estimated registry writes: 1 parent + 39 children = 40 INSERTs
   - Estimated FS writes: 1 archive mv + 39 candidate dirs (each with
     holdout_summary.json + returns_per_bar.parquet) + 1 aggregate
@@ -1605,11 +1782,16 @@ finally:
 # (g) AL5 PFR R1 ADOPT v2: Verify no `holdout_error` candidates per spec §7 R5.
 # Per spec §7 R5: any holdout_error candidate in re-run → SEAL BLOCKED pending Charlie adjudication.
 # Without this check, V4 gate could pull from an errored candidate and produce false positive PASS/FAIL.
+# AM3-R3 PFR R3 ADOPT v4: added explicit None-check for lifecycle_state.
+# Silent missing-key treatment (summary.get('lifecycle_state') == 'holdout_error'
+# evaluates None == 'holdout_error' = False) would mask producer error-encoding
+# drift. Per Advisor R3 M3: surface missing key as error rather than silent pass.
 python -c "
 import json
 from pathlib import Path
 sibling = Path('data/phase2c_evaluation_gate/phase4_forward_2026_15bps_v1_b_c_narrow')
 errs = []
+missing_lifecycle = []
 for cand_dir in sibling.iterdir():
     if not cand_dir.is_dir():
         continue
@@ -1617,8 +1799,13 @@ for cand_dir in sibling.iterdir():
     if not summary_path.exists():
         continue
     summary = json.loads(summary_path.read_text())
-    if summary.get('lifecycle_state') == 'holdout_error':
+    lifecycle = summary.get('lifecycle_state')
+    if lifecycle is None:
+        missing_lifecycle.append(cand_dir.name)
+        continue
+    if lifecycle == 'holdout_error':
         errs.append(cand_dir.name)
+assert not missing_lifecycle, f'AL5 {missing_lifecycle}: summary.lifecycle_state missing — producer error-encoding drift?'
 assert not errs, f'holdout_error in cohort: {errs} (spec §7 R5: SEAL BLOCKED pending Charlie adjudication)'
 print(f'OK: zero holdout_error candidates in cohort')
 "
@@ -1738,7 +1925,7 @@ git add tests/fixtures/b_c_narrow_archived_baseline.json
 git commit -m "$(cat <<'EOF'
 evidence(b-c-narrow/phase-3): T13 fire + T14 V4 gate GREEN (Task 14)
 
-Per Plan v3-Phase3 v2 Task 14. Charlie register #N+19a fired authorization.
+Per Plan v3-Phase3 v4 Task 14. Charlie register #N+19a fired authorization.
 
 T13 fire executed at <ISO UTC timestamp>:
   python -m scripts.run_phase2c_evaluation_gate \
@@ -1952,7 +2139,7 @@ If Charlie did request a separate boundary marker:
 git commit --allow-empty -m "$(cat <<'EOF'
 evidence(b-c-narrow/phase-3): T14b canonical-path relocation (Task 14b)
 
-Per Plan v3-Phase3 v2 Task 14b. Charlie register #N+19b fired authorization
+Per Plan v3-Phase3 v4 Task 14b. Charlie register #N+19b fired authorization
 + explicitly requested separate boundary-marker commit per AL1 PFR R1 ADOPT
 v2 OPTIONAL path.
 
@@ -2009,7 +2196,7 @@ Per AL3 PFR R1 ADOPT v2: placeholders correspond to: `<sha>` = output of Step 13
 
 **Date:** <ISO UTC at Step 14c.1 commit time>
 **HEAD commit:** <git rev-parse --short HEAD>
-**Plan version:** v3-Phase3 v3 (PFR R1 17 ADOPT applied per Charlie register #N+19 Path 1 2026-05-28 + PFR R2 14 ADOPT applied per Charlie register #N+19' Path 1 2026-05-28; further PFR R3 iteration count if amended)
+**Plan version:** v3-Phase3 v4 (PFR R1 17 ADOPT applied per Charlie register #N+19 Path 1 2026-05-28 + PFR R2 14 ADOPT applied per Charlie register #N+19' Path 1 2026-05-28 + PFR R3 13 ADOPT applied per Charlie register #N+19'' Path 1 2026-05-28)
 **Plan path:** `docs/superpowers/plans/2026-05-27-b-c-narrow-phase-3-fire-plan.md`
 **Spec path:** `docs/superpowers/specs/2026-05-26-b-c-narrow-data-recovery-design.md` (sealed at `d6c7fc0`)
 **Authorization:** Charlie register `#N+19a` (T13 fire) + `#N+19b` (T14b mv) <fire dates>
@@ -2052,7 +2239,7 @@ Per AL3 PFR R1 ADOPT v2: placeholders correspond to: `<sha>` = output of Step 13
 | `TestG5GammaRoundTrip::test_g5_all_39_gamma_round_trip` | §4.3 G5 (all-39 per CB3 ADOPT v2) | <PASSED> |
 | `TestG6RegistryParentChildIntegrity::test_g6_registry_parent_child_integrity_after_fire` | §4.3 G6 (BLOCKING-5 carry + AL4 invariant + CH4 metadata + G6-Cohort-R2-M3 all 15 cohort fields + G6-BatchID-R2-M4 batch_id assertion + CB2-R2-B1 per-test SKIP gate + G6-Docstring-R2-L2 docstring polish) | <PASSED> |
 | `TestG7ArchiveIdempotency::test_g7_archive_idempotency_refuses_existing_target` | §4.3 G7 (BLOCKING-5 carry) | <PASSED> |
-| `TestG7ArchiveIdempotency::test_g7_archive_refuses_cross_filesystem_attempt` | §4.3 G7 (cross-FS guard per AM1 ADOPT v2; AM1-CrossFS-R2-M5 substring tightened to endswith / equality) | <PASSED> |
+| `TestG7ArchiveIdempotency::test_g7_archive_refuses_cross_filesystem_attempt` | §4.3 G7 (cross-FS guard per AM1 ADOPT v2; AM1-CrossFS-R2-M5 substring tightened to prefix match (startswith) or equality per AL1-R3 description correction) | <PASSED> |
 
 **Drift-stop test scope note (H2-Advisor PFR R2 ADOPT v3 docstring reframing):** `test_v4_drift_stop_condition_blocks_seal_on_breach` is now framed as a contract test for drift-stop error-message format + meta-test that inlined assertion pattern raises AssertionError when given 10ε deviation. It does NOT exercise the production ε-comparison machinery — that's covered by `test_v4_per_candidate_metric_diff_within_epsilon` + `test_v4_all_39_per_candidate_metric_diff_within_epsilon`.
 
@@ -2140,7 +2327,7 @@ git add docs/superpowers/phase-3-impl-results/phase-3-ratify-summary.md
 git commit -m "$(cat <<'EOF'
 evidence(b-c-narrow/phase-3): Phase 3 ratify packet (Task 14c)
 
-Per Plan v3-Phase3 v2 Task 14c. Charlie register-events #N+19a + #N+19b
+Per Plan v3-Phase3 v4 Task 14c. Charlie register-events #N+19a + #N+19b
 fired authorizations for T13 fire + T14b canonical-path relocation.
 
 Phase 3 deliverables (all GREEN):
@@ -2246,4 +2433,4 @@ If V4 FAILS at Step 14.5 (any of 12 tests per v2 expansion): STOP and surface SE
 
 If full suite shows regressions outside `test_b_c_narrow_v4_reproducibility.py` at Step 14.5: STOP and surface — regressions indicate hidden Phase 0/2 SEAL state issue.
 
-End of Plan v3-Phase3 v3 (PFR R1 ADOPT 17 inline + 3 PUSHBACK adjudications applied per Charlie register #N+19 Path 1 2026-05-28 + PFR R2 ADOPT 14 inline + 3 sub-decision adjudications applied per Charlie register #N+19' Path 1 2026-05-28).
+End of Plan v3-Phase3 v4 (PFR R1 ADOPT 17 inline + 3 PUSHBACK adjudications applied per Charlie register #N+19 Path 1 2026-05-28 + PFR R2 ADOPT 14 inline + 3 sub-decision adjudications applied per Charlie register #N+19' Path 1 2026-05-28 + PFR R3 ADOPT 13 inline + 1 Sub-1 reopen-and-ACCEPT applied per Charlie register #N+19'' Path 1 2026-05-28).
