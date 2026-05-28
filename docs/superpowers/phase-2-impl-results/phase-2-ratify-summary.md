@@ -1,7 +1,7 @@
 # B-C-narrow Phase 2 ratify packet
 
 **Date:** 2026-05-28T04:27:45Z
-**HEAD commit:** `eda6535`
+**HEAD commit:** `eda6535` (last code commit — Task 11 line-ref consistency fix; Task 12 commit `d42beeb` adds this packet only, no code changes)
 **Plan version:** v3-Phase2 v11 SEAL-CANDIDATE (sealed at commit `d9b0718`)
 **Plan path:** `docs/superpowers/plans/2026-05-27-b-c-narrow-phase-2-producer-tdd-plan.md`
 **Spec path:** `docs/superpowers/specs/2026-05-26-b-c-narrow-data-recovery-design.md` (sealed at `d6c7fc0`)
@@ -83,7 +83,7 @@ T1.4 baseline maintenance confined to `tests/test_t1_4_backward_compat.py` (Task
 
 - 32/32 `TestBCNarrowPhase2ProducerEdits` PASS (26 distinct methods + 6 parametrize-expansions)
 - 4/4 `TestT1_4_B1_SignatureBackwardCompat` PASS (AST 4-tuple `(4, 49, 0, 23)` unchanged — no drift)
-- 2360/2360 full suite PASS + 2 xfailed (zero regression vs `b10ffb2` baseline + 32 net new passing)
+- 2360 passed / 0 failed / 2 xfailed — full suite zero regression vs `b10ffb2` baseline + 32 net new passing
 - All 4 BLOCKING-carry items from Phase 0 plan v2 PFR R2 verified fixed (BLOCKING-1 R9 split + BLOCKING-3 create_table precondition + BLOCKING-4 `_build_argparser` reference + BLOCKING-6 AST classifier methodology)
 
 Phase 3 fire (T13 producer run + T14 V4 reproducibility gate + T14b canonical-path relocation) drafting is a **SEPARATE register-event (#N+3)** per anti-pre-emption discipline; do NOT bundle into #N+2.
