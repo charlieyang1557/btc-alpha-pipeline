@@ -1259,15 +1259,30 @@ class TestT1_4_B3_LegitimateFlowsAndOptOutSemantic:
                 )
 
     def test_b3_4_eval_gate_driver_does_not_pass_lineage_context_or_db_path(self) -> None:
-        """B3.4 γ-1 opt-out structural verification (v4 per Codex F2 SEAL-eve HIGH):
-        _evaluate_one_candidate's run_regime_holdout call does NOT pass lineage_context kwarg
-        AND does NOT pass db_path kwarg.
+        """B3.4 γ-1 opt-out structural verification (v4 per Codex F2 SEAL-eve HIGH;
+        v5 per B-C-narrow Phase 2 Task 11 baseline-maintenance for Task 10 CB6 supersession):
+        _evaluate_one_candidate's run_regime_holdout call does NOT pass lineage_context kwarg.
 
-        v4 strengthens v3 (which checked only lineage_context absence) per Codex F2 SEAL-eve:
-        DEFAULT_DB_PATH monkeypatch isolation in B3.4 chain test is only load-bearing if
-        the chain ACTUALLY relies on get_connection(None) → DEFAULT_DB_PATH fallback.
-        Verify both kwargs absent statically so the isolation mechanism's load-bearing
-        precondition is empirically enforced.
+        v4 originally locked BOTH `lineage_context` AND `db_path` as forbidden kwargs because
+        DEFAULT_DB_PATH monkeypatch isolation in B3.4 chain test was load-bearing on
+        get_connection(None) → DEFAULT_DB_PATH fallback. v5 narrows the forbidden set to
+        `lineage_context` only per B-C-narrow Phase 2 Task 10 CB6 design lock: producer now
+        legitimately threads `db_path` to engine so producer's CB6 `get_run(conn, child_run_id)`
+        query and engine's `_write_to_registry` use the SAME DB
+        (scripts/run_phase2c_evaluation_gate.py:599 — `db_path=db_path` with CB6 comment).
+        DEFAULT_DB_PATH fallback path is preserved when `db_path=None` (legacy callers) —
+        get_connection(None) still resolves to DEFAULT_DB_PATH in that case. B3.4 chain test
+        isolation now uses DEFAULT_DB_PATH monkeypatch alongside explicit db_path=None per
+        the smart-mock contract.
+
+        v5 maintenance class mirrors T1.5 Charlie B1 register 2026-05-24 precedent (baseline
+        maintenance for cohort-level producer signature evolution); the docstring's prior
+        prediction "If this changes, γ-4 corrective register required" was discharged by
+        Task 10 CB6 spec lock + Task 11 baseline-maintenance application here.
+
+        `lineage_context` remains forbidden per γ-1 opt-out invariant: eval-gate driver is the
+        legacy non-LC pathway, threading lineage_context would couple it to LC-positive flows
+        and break the B-C-narrow Phase 2 LC-b opt-in semantic.
         """
         eval_gate_script = _REPO_ROOT / "scripts" / "run_phase2c_evaluation_gate.py"
         tree = ast.parse(eval_gate_script.read_text())
@@ -1287,13 +1302,16 @@ class TestT1_4_B3_LegitimateFlowsAndOptOutSemantic:
 
             found_run_regime_holdout_call = True
             kwarg_names = {kw.arg for kw in node.keywords if kw.arg is not None}
-            # Both lineage_context AND db_path must be absent per γ-1 opt-out + Codex F2 v4 SEAL-eve
-            for forbidden_kwarg in ("lineage_context", "db_path"):
+            # v5 per B-C-narrow Phase 2 Task 11: `db_path` removed from forbidden set
+            # per Task 10 CB6 supersession (producer legitimately threads db_path so
+            # producer's get_run query + engine's _write_to_registry use SAME DB).
+            # `lineage_context` remains forbidden per γ-1 opt-out invariant.
+            for forbidden_kwarg in ("lineage_context",):
                 assert forbidden_kwarg not in kwarg_names, (
-                    f"B3.4 γ-1 + Codex F2 v4 SEAL-eve fix: scripts/run_phase2c_evaluation_gate.py "
-                    f"run_regime_holdout call at line {node.lineno} MUST NOT pass {forbidden_kwarg!r} kwarg "
-                    f"per T1.3-D opt-out + DEFAULT_DB_PATH isolation precondition. "
-                    f"If this changes, γ-4 corrective register required."
+                    f"B3.4 γ-1 + Codex F2 v4 SEAL-eve + Task 11 v5 maintenance: "
+                    f"scripts/run_phase2c_evaluation_gate.py run_regime_holdout call at "
+                    f"line {node.lineno} MUST NOT pass {forbidden_kwarg!r} kwarg per "
+                    f"T1.3-D opt-out invariant. If this changes, γ-4 corrective register required."
                 )
 
         assert found_run_regime_holdout_call, (
@@ -1344,8 +1362,25 @@ class TestT1_4_B3_LegitimateFlowsAndOptOutSemantic:
         # (real holdout writer shape) NOT default "single_run"; rejects unexpected kwargs to
         # prevent silent semantic drift. Real run_regime_holdout writer call at engine.py:2476-2502
         # passes run_type="regime_holdout" + batch_id + hypothesis_hash.
-        ALLOWED_KWARGS = frozenset({"dsl", "batch_id", "parent_run_id", "regime_key",
-                                     "execution_config_path", "env_config"})
+        #
+        # v4-3 per B-C-narrow Phase 2 Task 11 baseline-maintenance: ALLOWED_KWARGS extended
+        # with 5 new LC-b + CB6 kwargs per Task 10 producer signature expansion at
+        # scripts/run_phase2c_evaluation_gate.py:592-606 — db_path (CB6 single-source DB
+        # threading), artifact_dir + source_batch_id + run_id_override + parent_run_id_override
+        # (4 LC-b scalars; all None in the B3.4 legacy/opt-out path because
+        # artifact_dir_root is None in this test → lcb_active=False → run_id_override stays
+        # None and the 3 LC-b-conditional kwargs stay None per producer guard). γ-1 opt-out
+        # semantic preserved: smart-mock NEVER passes lineage_context to _write_to_registry.
+        ALLOWED_KWARGS = frozenset({
+            "dsl", "batch_id", "parent_run_id", "regime_key",
+            "execution_config_path", "env_config",
+            # B-C-narrow Phase 2 Task 11 v4-3 baseline-maintenance (5 new kwargs):
+            "db_path",                  # CB6: producer threads same DB to engine
+            "artifact_dir",             # LC-b: per-candidate artifact dir (None in legacy path)
+            "source_batch_id",          # LC-b scalar (None in legacy path)
+            "run_id_override",          # LC-b scalar (None in legacy path)
+            "parent_run_id_override",   # LC-b scalar (None in legacy path)
+        })
         def _mock_run_regime_holdout(
             *, dsl, batch_id, parent_run_id, regime_key,
             execution_config_path=None, env_config=None, **kwargs
@@ -1354,8 +1389,8 @@ class TestT1_4_B3_LegitimateFlowsAndOptOutSemantic:
             unexpected = set(kwargs.keys()) - ALLOWED_KWARGS
             if unexpected:
                 raise TypeError(
-                    f"B3.4 smart-mock v4-2 strict: unexpected kwargs {unexpected!r}. "
-                    f"Real run_regime_holdout caller at scripts/run_phase2c_evaluation_gate.py:512 "
+                    f"B3.4 smart-mock v4-3 strict: unexpected kwargs {unexpected!r}. "
+                    f"Real run_regime_holdout caller at scripts/run_phase2c_evaluation_gate.py:592-606 "
                     f"passes only {ALLOWED_KWARGS}; if eval-gate driver added a kwarg, "
                     f"verify γ-1 opt-out semantic still holds + update smart-mock."
                 )
@@ -1549,7 +1584,14 @@ class TestT1_4_Pc9BaselineGate:
         # 2191 → 2204 (T1.5 maintenance precedent extension; new B-C-narrow tests
         # treated as part of expanded pre-T1.x cohort. Future B-C-narrow Phase 1+/2+/3-4
         # cohorts may trigger further BASELINE advances or invariant-level gate refactor.)
-        BASELINE = 2204
+        # B-C-narrow Phase 2 Task 9 commit `9a94f39` (2026-05-27) added 32 new test
+        # methods in TestBCNarrowPhase2ProducerEdits at
+        # tests/test_phase2c_evaluation_gate_runner.py (RED-then-GREEN producer-edit
+        # specs; Task 10 commit `86f75ff` implemented producer to turn them GREEN).
+        # Per B-C-narrow Phase 2 Task 11 baseline-maintenance: advance BASELINE
+        # 2204 → 2236 (+32 per Phase 2 Task 9 expansion; same T1.5 precedent semantic
+        # — new B-C-narrow tests treated as part of expanded pre-T1.x cohort).
+        BASELINE = 2236
         assert pre_t1_x_baseline == BASELINE, (
             f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
             f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "
