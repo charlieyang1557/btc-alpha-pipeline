@@ -1,0 +1,32 @@
+{
+  "18d92ce5d0b40cc7": {
+    "gate_pass_per_criterion": {
+      "drawdown_passed": true,
+      "return_passed": true,
+      "sharpe_passed": false,
+      "trades_passed": true
+    },
+    "holdout_metrics": {
+      "max_drawdown": 0.1264130402273222,
+      "sharpe_ratio": -1.4910255457110801,
+      "total_return": -0.08086355994652528,
+      "total_trades": 16
+    },
+    "holdout_passed": false
+  },
+  "22864f01a49e3452": {
+    "gate_pass_per_criterion": {
+      "drawdown_passed": true,
+      "return_passed": true,
+      "sharpe_passed": true,
+      "trades_passed": true
+    },
+    "holdout_metrics": {
+      "max_drawdown": 0.07472262899386993,
+      "sharpe_ratio": 0.7184702564762976,
+      "total_return": 0.023889386619288633,
+      "total_trades": 9
+    },
+    "holdout_passed": true
+  }
+}
