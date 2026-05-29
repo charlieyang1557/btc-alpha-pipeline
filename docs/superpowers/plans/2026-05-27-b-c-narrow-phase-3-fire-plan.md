@@ -237,9 +237,23 @@ Total v8 amendments: 2 ADOPT inline (2 LOW; both DEFENSIVE COMMENTS at code site
 
 Test count v7 → v8: 12 unchanged (no test method changes; only inline comment additions).
 
-v8 = RE-SEAL-CANDIDATE (waiting-for-Codex-leg). Same architectural state as v7 + 2 defensive comments. When Codex limit resets (5/30 3:29 PM), re-dispatch Codex SEAL-eve R2 on v8 to achieve classical B2 2-leg convergence.
+v8 = **SEALED** per Charlie register #N+19''''''' SEAL-RATIFY 2026-05-28. The waiting-for-Codex-leg state was superseded by early credit restore: Codex SEAL-eve R2 was re-dispatched on v8 (commit `acaed3f`) ahead of the 5/30 3:29 PM reset and returned CONVERGENT LOW-floor (0 substantive findings). Classical B2 2-leg convergence achieved — see "SEAL-eve R2 Codex re-dispatch — CONVERGENT (Plan v8 SEALED)" subsection below.
 
-**Next register-event #N+19''''''' (post-Codex-reset)**: Codex SEAL-eve R2 re-dispatch + verdict adjudication (CONVERGENT LOW-floor → Plan SEAL ratify; OR Codex surfaces new finding → SEAL-eve R3).
+**Register-event #N+19''''''' FIRED 2026-05-28**: Codex SEAL-eve R2 re-dispatch returned CONVERGENT LOW-floor (0 substantive findings) → Charlie registered SEAL-RATIFY → Plan v3-Phase3 SEALED at v8. **Next register-event #N+19a**: T13 producer operational fire authorization (hard STOP per Step 14.1) — SEPARATE register; this SEAL fires no data.
+
+---
+
+## SEAL-eve R2 Codex re-dispatch — CONVERGENT (Plan v8 SEALED)
+
+Per Charlie register #N+19''''''' (SEAL-RATIFY) 2026-05-28. The Codex SEAL-eve R2 leg — deferred at the v8 commit due to a usage-limit hit — was re-dispatched on v8 (commit `acaed3f`) after Charlie restored credit early (ahead of the 5/30 3:29 PM reset). Classical B2 2-leg convergence on v8 is now COMPLETE.
+
+- **Codex SEAL-eve R2 (re-dispatch)**: APPROVE-WITH-FINDINGS — **0 BLOCKING + 0 HIGH + 0 MEDIUM + 0 LOW + 5 confirmation NOTES**. Empirical-pytest mandate satisfied (the codified SEAL-eve R1 lesson): Codex reconstructed the 12 inline V4 test methods and ran `pytest` against HEAD `acaed3f` pre-fire → **2 passed, 10 skipped, 0 failed, 0 errors**. Both v7 architectural fixes confirmed holding: CB2-SE-B1 (fire-state tests SKIP pre-fire, archive marker absent — not the v6 FAIL state) + G7-SE-B2 (`test_g7_archive_refuses_cross_filesystem_attempt` PASSED, no `AttributeError`). The 5 NOTES were all "no defect" confirmations: engine stability / 8-field NULL-at-parent / `engine_commit=eb1c87f` anchor / 39-hash inline list count / v8 changes comment-only.
+- **Advisor SEAL-eve R2 (on v8, prior)**: APPROVE-WITH-FINDINGS LOW-only (2 LOW already applied → v8) + 3 empirical /tmp pytest validations.
+- **Layer 3 orchestrator independent re-verification (2026-05-28, HEAD `acaed3f`)**: (a) `git log f112599..HEAD -- backtest/engine.py` empty → engine untouched since Phase 0 SEAL; ε=1e-6 reproducibility basis intact; (b) `git diff e0e16a1..HEAD` = plan file only, +67 lines / 0 deletions / prose + `#`-comment only; (c) producer NULL-at-parent at scripts:1374-1381 = exactly 8 fields matching Codex N2. **0 verified hallucinations either leg.**
+
+**Convergence: classical B2 2-leg LOW-floor achieved on v8.** Cycle saturation: PFR R1→R5 + SEAL-eve R1→R2 = 7 adversarial rounds; final round 0 substantive findings from both legs. **Rule 2 SEAL-eve VINDICATED (5th cumulative)** — SEAL-eve R1's Codex empirical run caught 2 architectural BLOCKINGs (CB2-SE-B1 + G7-SE-B2) that 5 standard PFR rounds + Advisor static SEAL-eve all missed.
+
+**v8 = SEALED.** No data is fired by this SEAL — Plan v3-Phase3 is locked; operational execution (T13 producer fire) remains gated at Charlie register #N+19a (hard STOP per Step 14.1).
 
 ---
 
@@ -2502,7 +2516,7 @@ Per AL3 PFR R1 ADOPT v2: placeholders correspond to: `<sha>` = output of Step 13
 
 **Date:** <ISO UTC at Step 14c.1 commit time>
 **HEAD commit:** <git rev-parse --short HEAD>
-**Plan version:** v3-Phase3 v6 (R1 17 + R2 14 + R3 13 + R4 2 + R5 4 inline; SEAL-CANDIDATE per Path 2 R5 register; PFR R1 17 ADOPT applied per Charlie register #N+19 Path 1 2026-05-28 + PFR R2 14 ADOPT applied per Charlie register #N+19' Path 1 2026-05-28 + PFR R3 13 ADOPT applied per Charlie register #N+19'' Path 1 2026-05-28 + PFR R4 2 ADOPT applied per Charlie register #N+19''' Path 1 2026-05-28 + PFR R5 4 ADOPT applied per Charlie register #N+19'''' Path 2 2026-05-28)
+**Plan version:** v3-Phase3 v8 (R1 17 + R2 14 + R3 13 + R4 2 + R5 4 + SEAL-eve R1 4 + SEAL-eve R2 2 inline; SEALED per Charlie register #N+19''''''' SEAL-RATIFY 2026-05-28; PFR R1 17 ADOPT applied per Charlie register #N+19 Path 1 2026-05-28 + PFR R2 14 ADOPT applied per Charlie register #N+19' Path 1 2026-05-28 + PFR R3 13 ADOPT applied per Charlie register #N+19'' Path 1 2026-05-28 + PFR R4 2 ADOPT applied per Charlie register #N+19''' Path 1 2026-05-28 + PFR R5 4 ADOPT applied per Charlie register #N+19'''' Path 2 2026-05-28)
 **Plan path:** `docs/superpowers/plans/2026-05-27-b-c-narrow-phase-3-fire-plan.md`
 **Spec path:** `docs/superpowers/specs/2026-05-26-b-c-narrow-data-recovery-design.md` (sealed at `d6c7fc0`)
 **Authorization:** Charlie register `#N+19a` (T13 fire) + `#N+19b` (T14b mv) <fire dates>
@@ -2739,4 +2753,4 @@ If V4 FAILS at Step 14.5 (any of 12 tests per v2 expansion): STOP and surface SE
 
 If full suite shows regressions outside `test_b_c_narrow_v4_reproducibility.py` at Step 14.5: STOP and surface — regressions indicate hidden Phase 0/2 SEAL state issue.
 
-End of Plan v3-Phase3 v6 SEAL-CANDIDATE (R1 17 + R2 14 + R3 13 + R4 2 + R5 4 inline; Path 2 SEAL-eve direct per Charlie register #N+19''''; PFR R1 ADOPT 17 inline + 3 PUSHBACK adjudications applied per Charlie register #N+19 Path 1 2026-05-28 + PFR R2 ADOPT 14 inline + 3 sub-decision adjudications applied per Charlie register #N+19' Path 1 2026-05-28 + PFR R3 ADOPT 13 inline + 1 Sub-1 reopen-and-ACCEPT applied per Charlie register #N+19'' Path 1 2026-05-28 + PFR R4 ADOPT 1 BLOCKING + 1 LOW absorbed applied per Charlie register #N+19''' Path 1 2026-05-28 + PFR R5 ADOPT 4 inline applied per Charlie register #N+19'''' Path 2 2026-05-28; SKIP standard PFR R6 → dispatch SEAL-eve Rule 2 directly per Phase 2 R7→SEAL-eve precedent).
+End of Plan v3-Phase3 v8 SEALED (R1 17 + R2 14 + R3 13 + R4 2 + R5 4 + SEAL-eve R1 4 + SEAL-eve R2 2 inline; Path 2 SEAL-eve direct per Charlie register #N+19''''; PFR R1 ADOPT 17 inline + 3 PUSHBACK adjudications applied per Charlie register #N+19 Path 1 2026-05-28 + PFR R2 ADOPT 14 inline + 3 sub-decision adjudications applied per Charlie register #N+19' Path 1 2026-05-28 + PFR R3 ADOPT 13 inline + 1 Sub-1 reopen-and-ACCEPT applied per Charlie register #N+19'' Path 1 2026-05-28 + PFR R4 ADOPT 1 BLOCKING + 1 LOW absorbed applied per Charlie register #N+19''' Path 1 2026-05-28 + PFR R5 ADOPT 4 inline applied per Charlie register #N+19'''' Path 2 2026-05-28; SKIP standard PFR R6 → dispatch SEAL-eve Rule 2 directly per Phase 2 R7→SEAL-eve precedent).
