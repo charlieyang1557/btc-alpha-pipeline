@@ -2,7 +2,7 @@
 
 **Cycle:** B-C-narrow data-recovery successor cycle — recover per-bar return series + per-candidate γ3/γ4 moments + registry linkage for the `phase4_forward_2026_15bps_v1` cohort_a (39 candidates), to satisfy the **R6.1 V_SEAL §10 binding precondition** and unblock post-V_SEAL Tier 6 evaluation application.
 
-**SEAL status:** DRAFT / SEAL-candidate (pending Phase 4 B2 re-review ADOPT + Rule-2 SEAL-eve + Charlie atomic-SEAL register #N+20).
+**SEAL status:** SEALED at the B-C-narrow data-recovery cycle SEAL register-event boundary 2026-05-29 (Charlie register #N+20; arc tag `b-c-narrow-data-recovery-v1`).
 
 **Path framing:** Approach D' (producer-edit + minimum bounded engine extension); PV3-SPLIT-BY-PHASE (5 phase-specific sub-plans, each with its own PFR + per-phase ratify + task-level SEAL; Phase Marker advance reserved for THIS arc-level Phase 4 closeout).
 
@@ -124,16 +124,16 @@ Per anti-pre-emption, the following §-candidates from this cycle are queued NAM
 
 ## §12 — V_SEAL closure
 
-- **§12.1 Register-event verbatim:** (Charlie #N+20 atomic-SEAL register text to be recorded at the SEAL commit.)
+- **§12.1 Register-event verbatim:** Charlie register #N+20 2026-05-29 — atomic SEAL authorized (arc tag `b-c-narrow-data-recovery-v1` + standard register verbatim). The cycle SEAL bundle (this NOTE + CLAUDE.md Phase Marker advance + `docs/phase_marker_history.md`) committed atomically per Option 1A (20th cumulative trigger).
 - **§12.2 Charlie register chain:** see §0 (cycle entry N1 → Phase 0/1/2/3 sub-phase registers → Option A re-plan → #N+19a′/b′/c′ re-fire → #N+20 cycle SEAL).
 - **§12.3 Locked substantive content recap:** see §2 (contract locks) + §5–§8 (deliverables).
-- **§12.4 Bundle + Option 1A atomic binding:** the SEAL commit atomically stages the NOTE + CLAUDE.md Phase Marker advance + `docs/phase_marker_history.md` (Option 1A binding; the **20th cumulative trigger**). Arc-level closeout → MAY carry an arc-level git tag (precedent: `phase4-forward-test-v1`, `phase5-diagnostic-execution-v1`; tag text at Charlie/orchestrator discretion).
+- **§12.4 Bundle + Option 1A atomic binding:** the SEAL commit atomically stages the NOTE + CLAUDE.md Phase Marker advance + `docs/phase_marker_history.md` (Option 1A binding; the **20th cumulative trigger**). Arc-level closeout → arc git tag `b-c-narrow-data-recovery-v1` minted on the SEAL commit (precedent: `phase4-forward-test-v1`, `phase5-diagnostic-execution-v1`).
 - **§12.5 Artifact signature:**
   - Path: `docs/phase5/B_C_NARROW_DATA_RECOVERY_NOTE.md`
   - Cycle: B-C-narrow data-recovery (R6.1 V_SEAL §10 binding precondition)
   - Sealed by: Charlie register #N+20 (Phase 4 atomic SEAL)
   - Cycle entry: Charlie register N1 2026-05-26
-  - Cycle SEAL ratify: 2026-05-29 (Phase 4 B2 re-review COMPLETE — Codex + advisor, 5 doc-precision ADOPT applied: +32 producer-test count, RED-commit `3a527db`, Phase 2 seal `d42beeb`, DRAFT-status, 10,366-files time-anchor; pending Rule-2 SEAL-eve + Charlie atomic-SEAL register #N+20)
+  - Cycle SEAL ratify: 2026-05-29 (Phase 4 B2 re-review COMPLETE — Codex + advisor, 5 doc-precision ADOPT applied; Rule-2 SEAL-eve CLEAR; Charlie atomic-SEAL register #N+20)
   - Phase seal commits: Phase 0 `f112599` / Phase 1 `b10ffb2` / Phase 2 `d42beeb` (ratify T12; polish through `0a54f65`) / Phase 3 `9d54b6b`
   - Re-fire commit chain: `cb59a55` → `0025afd` → `38e1291` → `5e77e63` → `9cabc9b` → `6d4bb7f` → `ff0c576` → `9d54b6b`
   - Adversarial round count (cycle): Phase 0 R1–R4 + Phase 1 R1–R2 + Phase 2 R1–R11+SEAL-eve + Phase 3 R1–R5 + SEAL-eve R1–R2 + re-fire B2 + Rule-2 SEAL-eve + Phase 4 SEAL B2 (Codex+advisor) + Rule-2 SEAL-eve
