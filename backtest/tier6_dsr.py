@@ -128,10 +128,14 @@ def load_candidate_moments(hypothesis_hash: str, df: pd.DataFrame) -> CandidateM
         A frozen :class:`CandidateMoments`.
 
     Raises:
-        ValueError: On sha256 integrity mismatch, or stored-vs-recompute
-            moment mismatch beyond ``MOMENT_RECOMPUTE_EPS``.
+        ValueError: If ``hypothesis_hash`` is absent from ``df``, on sha256
+            integrity mismatch, or stored-vs-recompute moment mismatch beyond
+            ``MOMENT_RECOMPUTE_EPS``.
     """
-    row = df.loc[df["hypothesis_hash"] == hypothesis_hash].iloc[0]
+    matches = df.loc[df["hypothesis_hash"] == hypothesis_hash]
+    if matches.empty:
+        raise ValueError(f"hypothesis_hash {hypothesis_hash!r} not found in cohort DataFrame")
+    row = matches.iloc[0]
     pq = HOLDOUT_DIR / hypothesis_hash / "returns_per_bar.parquet"
 
     # A8: artifact-integrity gate BEFORE recompute.
@@ -198,7 +202,7 @@ def expected_max_ratio_form_b(n_star: int) -> float:
     """Form B Euler-Mascheroni closed-form expected-max ratio (AUTHORITATIVE).
 
     BLdP 2014 / SD-A-alpha lock:
-    ``(1-g)*Phi^-1(1 - 1/N*) + g*Phi^-1(1 - 1/(N**e))``, g = Euler-Mascheroni.
+    ``(1-g)*Phi^-1(1 - 1/N*) + g*Phi^-1(1 - 1/(N*e))``, g = Euler-Mascheroni.
     This is the SD-A-alpha-locked instrument and the authoritative capital gate.
 
     Args:
@@ -242,10 +246,18 @@ def mertens_variance(sr: float, gamma3: float, gamma4: float, T: int) -> float:
         The Mertens variance (a positive float).
 
     Raises:
-        ValueError: If the numerator term is non-positive (degenerate /
-            asymptotic breakdown under extreme moments). This is the math
-            contract of this pure unit; the cohort evaluator wraps it.
+        ValueError: If ``T <= 1`` (degenerate; the ``T-1`` denominator is
+            zero/negative), if ``sr`` is non-finite (a flat zero-variance
+            return series yields ``sr = 0/0 = nan``, which the ``term <= 0``
+            guard below does NOT catch since ``nan <= 0`` is ``False``), or if
+            the numerator term is non-positive (asymptotic breakdown under
+            extreme moments). This is the math contract of this pure unit; the
+            cohort evaluator wraps it.
     """
+    if T <= 1:
+        raise ValueError(f"T must be >= 2 for Mertens variance; got T={T}")
+    if not math.isfinite(sr):
+        raise ValueError(f"non-finite sr={sr} passed to mertens_variance")
     term = 1.0 - gamma3 * sr + ((gamma4 - 1.0) / 4.0) * sr * sr
     if term <= 0.0:
         raise ValueError(
@@ -269,8 +281,20 @@ def sr_star(n_star: int, T: int, form: str) -> float:
 
     Returns:
         The expected-max Sharpe benchmark ``SR*``.
+
+    Raises:
+        ValueError: If ``T <= 1`` (the ``1/(T-1)`` null variance is
+            degenerate), or if ``form`` is neither ``"B"`` nor ``"A"`` (a typo
+            must NOT silently fall back to the lenient companion Form A).
     """
-    er = expected_max_ratio_form_b(n_star) if form == "B" else expected_max_ratio_form_a(n_star)
+    if T <= 1:
+        raise ValueError(f"T must be >= 2 for Mertens variance; got T={T}")
+    if form == "B":
+        er = expected_max_ratio_form_b(n_star)
+    elif form == "A":
+        er = expected_max_ratio_form_a(n_star)
+    else:
+        raise ValueError(f"unknown form {form!r}: expected 'B' or 'A'")
     return math.sqrt(1.0 / (T - 1)) * er
 
 
@@ -316,10 +340,19 @@ def evaluate_candidate(cm: CandidateMoments, n_star: int = N_STAR) -> dict:
         n_star: Effective number of independent trials (default ``N_STAR=18``).
 
     Returns:
-        A dict with both forms' ``sr_star_{B,A}``, ``er_{b,a}``,
+        A dict with both forms' ``er_{B,A}``, ``sr_star_{B,A}``,
         ``deflated_z_{B,A}``, ``psr_{B,A}``, ``dsr_statistic_{B,A}``,
         ``pass_{B,A}`` plus context fields.
+
+    Raises:
+        ValueError: If ``cm.T <= 1`` (degenerate; surfaces the same guard as
+            ``mertens_variance`` / ``sr_star`` rather than letting the
+            ``var_sr_null = 1/(T-1)`` context field raise a bare
+            ``ZeroDivisionError``), if ``cm.sr_per_bar`` is non-finite, or
+            propagated from ``mertens_variance`` on a non-positive term.
     """
+    if cm.T <= 1:
+        raise ValueError(f"T must be >= 2 for Mertens variance; got T={cm.T}")
     out: dict = {
         "hypothesis_hash": cm.hypothesis_hash,
         "name": cm.name,
@@ -333,13 +366,17 @@ def evaluate_candidate(cm: CandidateMoments, n_star: int = N_STAR) -> dict:
         "n_star": n_star,
         "z_pass": Z_PASS,
     }
-    out["er_b"] = expected_max_ratio_form_b(n_star)
-    out["er_a"] = expected_max_ratio_form_a(n_star)
     for form in ("B", "A"):
+        er = expected_max_ratio_form_b(n_star) if form == "B" else expected_max_ratio_form_a(n_star)
         ssz = sr_star(n_star, cm.T, form)
         z = deflated_z(cm.sr_per_bar, ssz, cm.gamma3, cm.gamma4, cm.T)
+        out[f"er_{form}"] = er
         out[f"sr_star_{form}"] = ssz
         out[f"deflated_z_{form}"] = z
+        # psr_{form} = Phi(deflated_z) = the BLdP DSR in probability form
+        # (pass at >= 1-alpha); dsr_statistic_{form} = deflated_z - z(1-alpha),
+        # the "DSR >= 0" recentered form per R6.1 §3.1. Naming intentionally
+        # matches R6.1 §3.1 / spec §5.4 — do NOT rename.
         out[f"psr_{form}"] = float(norm.cdf(z))
         out[f"dsr_statistic_{form}"] = z - Z_PASS
         out[f"pass_{form}"] = bool(z >= Z_PASS)

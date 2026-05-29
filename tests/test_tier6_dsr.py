@@ -130,6 +130,14 @@ def test_load_moments_a8_sha256_gate_raises_on_mismatch():
         t6.load_candidate_moments(h, bad)
 
 
+def test_load_moments_raises_on_missing_hash():
+    # FIX 4: an absent hash must raise ValueError (with the hash in the message),
+    # not let .iloc[0] raise a bare IndexError.
+    df = _cohort_df()
+    with pytest.raises(ValueError, match="no_such_hash_xyz"):
+        t6.load_candidate_moments("no_such_hash_xyz", df)
+
+
 def test_load_moments_fields_present():
     df = _cohort_df()
     h = "7abff29fc2f117a1"
@@ -185,11 +193,53 @@ def test_mertens_variance_guard():
         t6.mertens_variance(2.0, 5.0, 1.0, 100)
 
 
+def test_mertens_variance_degenerate_t_guard():
+    # FIX 1: T must be >= 2 (T-1 division). T=1 and T=0 raise BEFORE any division.
+    with pytest.raises(ValueError, match="T must be >= 2"):
+        t6.mertens_variance(0.08, 0.0, 3.0, 1)
+    with pytest.raises(ValueError, match="T must be >= 2"):
+        t6.mertens_variance(0.08, 0.0, 3.0, 0)
+
+
+def test_mertens_variance_non_finite_sr_guard():
+    # FIX 2: non-finite sr (e.g. nan from a flat zero-variance series, 0/0=nan)
+    # must raise — the `term <= 0` guard does NOT catch nan (nan <= 0 is False).
+    with pytest.raises(ValueError, match="non-finite sr"):
+        t6.mertens_variance(float("nan"), 0.0, 3.0, 2491)
+
+
+def test_evaluate_candidate_degenerate_t_guard():
+    # FIX 1: synthetic T=1 candidate propagates the T<2 guard through
+    # sr_star -> deflated_z -> mertens_variance.
+    with pytest.raises(ValueError, match="T must be >= 2"):
+        t6.evaluate_candidate(_synthetic_cm(sr=0.08, g3=0.0, g4=3.0, T=1))
+
+
+def test_evaluate_candidate_non_finite_sr_guard():
+    # FIX 2: a nan sr_per_bar (flat zero-variance return series) raises.
+    with pytest.raises(ValueError, match="non-finite sr"):
+        t6.evaluate_candidate(_synthetic_cm(sr=float("nan"), g3=0.0, g4=3.0, T=2491))
+
+
 def test_sr_star_null_scaling():
     er = t6.expected_max_ratio_form_b(18)
     assert abs(t6.sr_star(18, 2491, "B") - math.sqrt(1.0 / 2490) * er) < 1e-12
     er_a = t6.expected_max_ratio_form_a(18)
     assert abs(t6.sr_star(18, 2491, "A") - math.sqrt(1.0 / 2490) * er_a) < 1e-12
+
+
+def test_sr_star_rejects_unknown_form():
+    # FIX 3: unknown form must RAISE, not silently fall back to lenient Form A.
+    with pytest.raises(ValueError, match="unknown form"):
+        t6.sr_star(18, 2491, "C")
+
+
+def test_sr_star_degenerate_t_guard():
+    # FIX 1: sr_star also guards T < 2 (1/(T-1) division).
+    with pytest.raises(ValueError, match="T must be >= 2"):
+        t6.sr_star(18, 1, "B")
+    with pytest.raises(ValueError, match="T must be >= 2"):
+        t6.sr_star(18, 0, "B")
 
 
 def test_deflated_z_denominator_equals_sqrt_term():
@@ -227,6 +277,11 @@ def test_evaluate_candidate_emits_both_forms_and_equivalence():
         assert (res[f"psr_{form}"] >= 0.95) == res[f"pass_{form}"]
     assert abs(res["z_pass"] - 1.6449) < 1e-3
     assert res["pass_B"] is True
+    # FIX 6: expected-max-ratio keys are uppercase (er_B/er_A), consistent with
+    # sr_star_B/psr_B/pass_B. Lowercase er_b/er_a no longer exist.
+    assert "er_b" not in res and "er_a" not in res
+    assert res["er_B"] == t6.expected_max_ratio_form_b(18)
+    assert res["er_A"] == t6.expected_max_ratio_form_a(18)
 
 
 def test_evaluate_candidate_pass_at_z_pass_threshold():
