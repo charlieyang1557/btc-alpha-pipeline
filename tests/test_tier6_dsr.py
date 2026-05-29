@@ -332,10 +332,14 @@ def test_provisional_flag_only_on_passing_with_small_margin():
 
 
 def test_provisional_flag_marks_narrow_pass():
-    # Construct a pass whose dsr_statistic_B lands in [0, PROVISIONAL_DSR_MARGIN).
-    res = t6.annotate_flags(t6.evaluate_candidate(_synthetic_cm(sr=0.07, g3=0.0, g4=3.0, T=2491)))
-    if res["pass_B"] and 0 <= res["dsr_statistic_B"] < t6.PROVISIONAL_DSR_MARGIN:
-        assert res["provisional_flag"] is True
+    # FIX HIGH-2: sr=0.07 was vacuous (dsr_statistic_B ~ -0.008 -> pass_B=False,
+    # provisional branch never fires). sr=0.08 gives dsr_statistic_B ~ 0.49,
+    # squarely in [0, PROVISIONAL_DSR_MARGIN=0.5) -> a REAL narrow pass. Assert
+    # non-vacuously (no `if` guard) so the provisional branch is exercised.
+    res = t6.annotate_flags(t6.evaluate_candidate(_synthetic_cm(sr=0.08, g3=0.0, g4=3.0, T=2491)))
+    assert res["pass_B"] is True
+    assert 0 <= res["dsr_statistic_B"] < t6.PROVISIONAL_DSR_MARGIN
+    assert res["provisional_flag"] is True
 
 
 def test_r21_indeterminate_flag():
@@ -535,6 +539,67 @@ def test_evaluate_cohort_degenerate_candidate_flagged_not_crash(monkeypatch):
     assert "failure_reason" in row and row["failure_reason"]
     # degenerate row is excluded from the promotion list
     assert degenerate_hash not in {r["hypothesis_hash"] for r in out["promotion_list"]}
+
+
+def test_evaluate_cohort_data_integrity_error_propagates(monkeypatch):
+    # FIX HIGH-1: a DATA-INTEGRITY ValueError from load_candidate_moments
+    # (missing hash, SHA-256 mismatch, stored-vs-recompute moment mismatch) is
+    # NOT Mertens math degeneracy — it must PROPAGATE and crash evaluate_cohort,
+    # NOT be absorbed as mertens_degenerate_flag=True. Distinct from the
+    # degenerate test above, where the loader RETURNS and evaluate_candidate
+    # raises.
+    def fake_loader(hypothesis_hash, frame):
+        raise ValueError("sha mismatch")
+
+    monkeypatch.setattr(t6, "load_candidate_moments", fake_loader)
+    with pytest.raises(ValueError, match="sha mismatch"):
+        t6.evaluate_cohort(out_dir=None, n_sims=0, write=False)
+
+
+def test_evaluate_cohort_degenerate_count_zero_on_real_cohort():
+    # MED-2: the real cohort has no degenerate candidates (Mertens term in
+    # [0.699, 1.114]) -> degenerate_count == 0.
+    out = t6.evaluate_cohort(out_dir=None, n_sims=0, write=False)
+    assert out["degenerate_count"] == 0
+
+
+def test_evaluate_cohort_degenerate_count_positive_when_injected(monkeypatch):
+    # MED-2: injecting one Mertens-degenerate candidate -> degenerate_count >= 1.
+    df = t6._read_cohort_csv()
+    locked, _ = t6.derive_cohort(df)
+    degenerate_hash = locked[0]
+    real_loader = t6.load_candidate_moments
+
+    def fake_loader(hypothesis_hash, frame):
+        if hypothesis_hash == degenerate_hash:
+            # term = 1 - 5*2 + 0 = -9 < 0 -> mertens_variance raises ValueError
+            return t6.CandidateMoments(
+                hypothesis_hash, "synthetic_degenerate", "test",
+                sr_per_bar=2.0, gamma3=5.0, gamma4=1.0, T=100, trades=None)
+        return real_loader(hypothesis_hash, frame)
+
+    monkeypatch.setattr(t6, "load_candidate_moments", fake_loader)
+    out = t6.evaluate_cohort(out_dir=None, n_sims=0, write=False)
+    assert out["degenerate_count"] >= 1
+
+
+def test_mc_expected_max_ratio_rejects_non_positive_n_sims():
+    # MED-3: direct callers passing n_sims <= 0 get a clear ValueError rather
+    # than a nan from an empty-array mean. (evaluate_cohort guards separately
+    # via `if n_sims`.)
+    with pytest.raises(ValueError, match="n_sims must be positive"):
+        t6.mc_expected_max_ratio(n_star=18, n_sims=0)
+    with pytest.raises(ValueError, match="n_sims must be positive"):
+        t6.mc_expected_max_ratio(n_star=18, n_sims=-5)
+
+
+def test_results_csv_has_failure_reason_column(tmp_path):
+    # MED-1: failure_reason is a persisted column; normal rows emit "" (empty).
+    t6.evaluate_cohort(out_dir=tmp_path, n_sims=0)
+    res_df = pd.read_csv(tmp_path / "tier6_dsr_results.csv", keep_default_na=False)
+    assert "failure_reason" in res_df.columns
+    # real cohort has no degenerate rows -> all failure_reason are empty strings
+    assert (res_df["failure_reason"] == "").all()
 
 
 def test_evaluate_cohort_no_write_when_write_false(tmp_path):

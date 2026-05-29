@@ -457,7 +457,15 @@ def mc_expected_max_ratio(
         ``form_a_ratio`` / ``form_b_ratio`` (the closed forms), the signed
         errors ``form_a_minus_empirical`` / ``form_b_minus_empirical``, plus the
         echoed ``n_star`` / ``n_sims`` / ``seed``.
+
+    Raises:
+        ValueError: If ``n_sims <= 0`` (no draws → empty-array mean is nan).
+            ``evaluate_cohort`` already calls this only ``if n_sims`` (so
+            ``n_sims=0`` skips MC entirely); this guard is defensive for direct
+            callers.
     """
+    if n_sims <= 0:
+        raise ValueError(f"n_sims must be positive; got {n_sims}")
     rng = np.random.default_rng(seed)
     maxes = rng.standard_normal((n_sims, n_star)).max(axis=1)
     emp = float(maxes.mean())
@@ -484,15 +492,17 @@ DEFAULT_OUT_DIR = PROJECT_ROOT / "data/phase2c_evaluation_gate/tier6_dsr_v1"
 # evaluate_candidate + annotate_flags + the A3 degenerate-flag wrapper —
 # i.e. er_B/er_A (uppercase), var_sr_null (NOT var_null), psr_B/dsr_statistic_B
 # (NOT a bare ambiguous DSR_B). CSV emission uses extrasaction="ignore" so
-# row-only fields (non_authoritative, monday_flag, failure_reason) are dropped
-# from the authoritative CSV unless added as `extra` columns.
+# row-only fields (non_authoritative, monday_flag) are dropped from the
+# authoritative CSV unless added as `extra` columns. MED-1: failure_reason is
+# now a persisted column (empty string on normal rows, populated on degenerate
+# rows) so a flagged-fail's diagnostic survives into the written CSV.
 _RESULT_FIELDS = [
     "hypothesis_hash", "name", "theme", "T", "sr_per_bar",
     "gamma3", "gamma4", "trades", "var_sr_null",
     "er_B", "sr_star_B", "deflated_z_B", "psr_B", "dsr_statistic_B", "pass_B",
     "er_A", "sr_star_A", "deflated_z_A", "psr_A", "dsr_statistic_A", "pass_A",
     "g4_high_flag", "provisional_flag", "r21_indeterminate_flag",
-    "mertens_degenerate_flag",
+    "mertens_degenerate_flag", "failure_reason",
 ]
 
 
@@ -551,11 +561,16 @@ def _degenerate_fail_row(
 def _evaluate_one(hypothesis_hash: str, df: pd.DataFrame, n_star: int = N_STAR) -> dict:
     """Load → evaluate → annotate one candidate, with the A3 degenerate guard.
 
-    The hard ``ValueError`` RAISE stays inside the pure ``mertens_variance``
-    unit (math contract). Here, at the COHORT-EVALUATOR layer, we wrap the
-    ``load_candidate_moments`` + ``evaluate_candidate`` call in ``try/except
-    ValueError`` so a single degenerate candidate produces a flagged-fail row
-    and the batch continues.
+    DESIGN INVARIANT (HIGH-1): ``load_candidate_moments`` is called OUTSIDE the
+    try/except so its DATA-INTEGRITY ValueErrors (missing hash, SHA-256
+    mismatch, stored-vs-recompute moment mismatch) PROPAGATE and crash
+    ``evaluate_cohort`` with a clear message. These are not Mertens math
+    degeneracy; absorbing them as ``mertens_degenerate_flag=True`` would
+    silently mask artifact corruption at a capital-adjacent fire. ONLY
+    ``evaluate_candidate``'s Mertens-degeneracy ValueError (non-positive
+    variance term, etc.) is caught → ``_degenerate_fail_row`` so one degenerate
+    candidate produces a flagged-fail row and the batch continues. The hard
+    ``ValueError`` RAISE stays inside the pure ``mertens_variance`` unit.
 
     Args:
         hypothesis_hash: The candidate identifier.
@@ -564,17 +579,23 @@ def _evaluate_one(hypothesis_hash: str, df: pd.DataFrame, n_star: int = N_STAR) 
 
     Returns:
         An annotated result dict; ``mertens_degenerate_flag`` is False for a
-        clean candidate and True for a degenerate (flagged-fail) one.
+        clean candidate and True for a (Mertens-)degenerate flagged-fail one.
+
+    Raises:
+        ValueError: Propagated from ``load_candidate_moments`` on any
+            data-integrity failure (NOT caught here).
     """
-    cm: CandidateMoments | None = None
+    # Module-level lookup (not the imported name) so monkeypatching
+    # tier6_dsr.load_candidate_moments is honored by the cohort evaluator.
+    # Data-integrity ValueError propagates (crash) — see DESIGN INVARIANT above.
+    cm = load_candidate_moments(hypothesis_hash, df)
     try:
-        # Module-level lookup (not the imported name) so monkeypatching
-        # tier6_dsr.load_candidate_moments is honored by the cohort evaluator.
-        cm = load_candidate_moments(hypothesis_hash, df)
         row = annotate_flags(evaluate_candidate(cm, n_star=n_star))
         row["mertens_degenerate_flag"] = False
+        row["failure_reason"] = ""  # MED-1: consistent column on normal rows
         return row
     except ValueError as exc:
+        # ONLY Mertens math degeneracy is caught here.
         return _degenerate_fail_row(hypothesis_hash, cm, exc)
 
 
@@ -582,7 +603,10 @@ def _write_csv(path: Path, rows: list[dict], extra: tuple[str, ...] = ()) -> Non
     """Write ``rows`` to ``path`` as CSV using the reconciled ``_RESULT_FIELDS``.
 
     Uses ``extrasaction="ignore"`` so row-only fields not in the header
-    (e.g. ``failure_reason`` on the authoritative CSV) are silently dropped.
+    (e.g. ``non_authoritative`` / ``monday_flag`` on the authoritative CSV,
+    when not passed via ``extra``) are silently dropped. ``failure_reason`` is
+    part of ``_RESULT_FIELDS`` and is always emitted (empty string on normal
+    rows; ``restval=""`` covers any row missing the key).
 
     Args:
         path: Output CSV path.
@@ -590,8 +614,8 @@ def _write_csv(path: Path, rows: list[dict], extra: tuple[str, ...] = ()) -> Non
         extra: Additional column names appended after ``_RESULT_FIELDS``.
     """
     fields = _RESULT_FIELDS + list(extra)
-    with open(path, "w", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore", restval="")
         w.writeheader()
         for r in rows:
             w.writerow(r)
@@ -621,8 +645,9 @@ def evaluate_cohort(
     Returns:
         A dict with ``authoritative`` (18 rows), ``companion`` (21 rows),
         ``promotion_list`` (authoritative rows with ``pass_B is True``),
-        ``mc_validation``, ``n_star``, ``alpha``, ``authoritative_form="B"`` and
-        ``companion_form="B"``.
+        ``degenerate_count`` (count of authoritative+companion rows with
+        ``mertens_degenerate_flag is True``), ``mc_validation``, ``n_star``,
+        ``alpha``, ``authoritative_form="B"`` and ``companion_form="B"``.
     """
     # DESIGN INVARIANT: the wf_lineage evaluation-semantics consumption guard
     # (Task 8, next chunk) is inserted immediately after this read, before any
@@ -649,10 +674,17 @@ def evaluate_cohort(
     promotion_list = [r for r in authoritative if r["pass_B"] is True]
     mc = mc_expected_max_ratio(N_STAR, n_sims=n_sims) if n_sims else {}
 
+    # MED-2: count Mertens-degenerate flagged-fail rows across both partitions.
+    degenerate_count = sum(
+        1 for r in (*authoritative, *companion_rows)
+        if r.get("mertens_degenerate_flag") is True
+    )
+
     out = {
         "authoritative": authoritative,
         "companion": companion_rows,
         "promotion_list": promotion_list,
+        "degenerate_count": degenerate_count,
         "mc_validation": mc,
         "n_star": N_STAR,
         "alpha": ALPHA,
