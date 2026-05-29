@@ -1,6 +1,8 @@
 # B-C-narrow Phase 3 — Fire Plan (data-recovery execution)
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` to implement this sub-plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. Tasks 14 + 14b each contain explicit STOP HERE blocks for Charlie register-events #N+19a (T13 fire authorization) + #N+19b (T14b canonical-path relocation authorization) before operational execution — the implementer subagent MUST NOT bypass these without an explicit Charlie register fire.
+>
+> **⚠️ v9 RE-FIRE ERRATA (READ FIRST):** This plan was executed, found defective at the Step 14.5 full-suite gate, and REVERTED to the green SEAL tree `b96d3a8` (Charlie register Option A 2026-05-29). The **"## Plan v9 Re-fire Errata"** section (immediately after the v8 SEAL sections, before "## Sub-decisions applied") is AUTHORITATIVE for re-fire: follow its **§V9.4 Corrected Execution Sequence** + **§V9.5 edit catalogue**, NOT the stale v8 Task 13/14/14b body where they conflict. Critical: NO full-suite `pytest -q` may run while the canonical is absent (§V9.6 collection-crash invariant). Re-fire is gated on v9 re-SEAL + Charlie register #N+19a′ (§V9.8).
 
 **Sub-plan scope:** Phase 3 of the B-C-narrow data-recovery cycle ONLY — operational fire of the 39-candidate cohort_a re-run against the forward_2026 window using the Phase 2 producer wiring at HEAD `0a54f65`. Three operational steps consumed from spec §5: T13 producer fire (producer-W3 archive + LC-b candidate loop + W4 finalize parent batch_summary), T14 V4 reproducibility gate (G4-G7 + ε=1e-6 per-candidate match), T14b canonical-path relocation (sibling → canonical mv after V4 PASS). NO new source code edits. NO engine code edits. NO producer code edits. NO spec amendments. The plan adds ONE new test file (`tests/test_b_c_narrow_v4_reproducibility.py`; 12 test methods inlined per BLOCKING-5 carry from Phase 2 plan v3-Phase2 line 3651 + PFR R1 v2 + R2 v3 expansions) + ONE new fixture (`tests/fixtures/b_c_narrow_archived_baseline.json`; created POST-T13 fire BEFORE T14 V4 gate, see Step 14.3) + ONE new evidence artifact (`docs/superpowers/phase-3-impl-results/phase-3-ratify-summary.md`).
 
@@ -254,6 +256,95 @@ Per Charlie register #N+19''''''' (SEAL-RATIFY) 2026-05-28. The Codex SEAL-eve R
 **Convergence: classical B2 2-leg LOW-floor achieved on v8.** Cycle saturation: PFR R1→R5 + SEAL-eve R1→R2 = 7 adversarial rounds; final round 0 substantive findings from both legs. **Rule 2 SEAL-eve VINDICATED (5th cumulative)** — SEAL-eve R1's Codex empirical run caught 2 architectural BLOCKINGs (CB2-SE-B1 + G7-SE-B2) that 5 standard PFR rounds + Advisor static SEAL-eve all missed.
 
 **v8 = SEALED.** No data is fired by this SEAL — Plan v3-Phase3 is locked; operational execution (T13 producer fire) remains gated at Charlie register #N+19a (hard STOP per Step 14.1).
+
+---
+
+## Plan v9 Re-fire Errata — post-revert patch (Gaps 1/2/2b + Q1=a/Q2=a/Option A)
+
+**Driver:** The v8 SEAL-CANDIDATE fire-plan was EXECUTED (T13 fire + T14 V4 gate — both GREEN: 39 candidates recovered, 20 pass / 19 fail / 0 holdout_error; V4 12/12 ε=1e-6) on 2026-05-29, then the Step 14.5 full-suite zero-regression check surfaced 3 sealed-plan defects. Per Charlie register **Option A** 2026-05-29 the fire was REVERTED to the green SEAL tree `b96d3a8` (canonical restored from HEAD; 40 registry rows deleted; sibling/archive/fixture removed; Task-13 RED commit `3a527db` reverted via `bccbc47`; full suite 2360 passed + 2 xfailed). This v9 errata patches the 3 defects + the Q1/Q2 adjudication for re-fire.
+
+**Amendment convention:** This plan is amended IN-PLACE across versions (v1→v8 per the "## PFR Rx ADOPT findings applied" sections); v9 continues that convention (NOT Architecture-B byte-preserve — that governs sealed methodology docs, not execution plans). The v8 SEAL stands as the historical SEAL-eve convergence record. **Where §V9.4 (Corrected Execution Sequence) conflicts with the stale v8 Task 13/14/14b body, §V9.4 is AUTHORITATIVE** (see the v9 supersession pointer added to the top-of-document "For agentic workers" block). v8 step bodies are preserved for provenance; the implementer follows §V9.4 + §V9.5.
+
+**Charlie registers consumed:** Option A (revert + patch + re-fire) 2026-05-29; **Q1=(a)** [rescope A3/A4/A5 byte-identity to the archived original, not the post-recovery canonical]; **Q2=(a)** [keep canonical git-tracked → commit recovered content + commit archive — 3-leg adjudication Codex(a,0.8) + orchestrator(a) + advisor(c) → convergence (a)]; **Option A archive-binding** [git-vs-on-disk-archive, NOT the strict-literal git-vs-git commit-SHA placeholder]; **t1_4 rescope authored in Task 14b** (after archive commit), not Task 13.
+
+### §V9.1 — Gap catalogue (execution-time discovery; all verified against code/git 2026-05-29)
+
+| Gap | Defect | Evidence |
+|---|---|---|
+| **Gap 1** | The canonical `data/phase2c_evaluation_gate/phase4_forward_2026_15bps_v1/` is **git-TRACKED** (41 files), NOT gitignored. The v8 Step 14.6 note ("data artifacts under data/ are gitignored") is FALSE. The fire's W3 archive-`mv` DELETES 41 tracked files; post-T14b-mv the canonical holds recovered bytes ≠ `7c8f4a7` → t1_4 A3/A4/A5 byte-identity (assert canonical == `7c8f4a7`) FAIL. | `git ls-files` = 41; `.gitignore` has no `data/phase2c_evaluation_gate/` rule (entire eval-gate tree tracked: 10,366 files / 45 dirs). |
+| **Gap 2** | The new V4 file (`tests/test_b_c_narrow_v4_reproducibility.py`, 12 tests) bumps the suite collection count → breaks t1_4 pc9 gate (`:1594` `BASELINE=2236`; needs 2248). Task 13 never advanced it. | `pre_t1_x_baseline = total − t1_4 − t1_5` (`:1565-1575`); V4 is neither → +12 lands in baseline. |
+| **Gap 2b** | Step 13.3 RED-verify ran the V4 file IN ISOLATION → never collected the pc9 gate → missed Gap 2 at commit time. | plan:1847. |
+
+### §V9.2 — Adjudicated decisions
+- **Q1=(a):** rescope `test_t1_4_backward_compat.py` A3/A4/A5 to verify the **archived original snapshot** is byte-identical to `7c8f4a7`. A1/A6/A2 stay UNCHANGED (verified pass against recovered content — §V9.3).
+- **Q2=(a):** keep canonical git-tracked → COMMIT recovered canonical content (41 modified json/csv + 39 new `returns_per_bar.parquet`) AND commit the archive snapshot.
+- **Option A (archive-binding):** A3/A4/A5 compare `git show 7c8f4a7:<canonical>` (before) vs the archived snapshot **on disk** (after). Since Q2=(a) commits the archive, on a clean tree on-disk == committed == original → git-vs-git guarantee, NO commit-SHA placeholder.
+- **t1_4 rescope authored in Task 14b** (after archive committed) → never commits a known-failing test.
+
+### §V9.3 — Verified investigation conclusions (5-agent workflow 2026-05-29)
+- **A1/A6/A2 PASS against recovered content — NO rescope.** `check_evaluation_semantics_or_raise` (`backtest/wf_lineage.py:352-543`) validates ONLY `evaluation_semantics`/`engine_commit`/`engine_corrected_lineage`/`lineage_check`/`current_git_sha` + schema-routing (`regime_key`/`regime_label`); it NEVER reads `run_id`/γ3/γ4/T_obs/`returns_per_bar_*`. Recovered summary keeps `artifact_schema_version='phase2c_7_1'` (evaluation domain) → A2 domain-fence + ValueError hold. Producer round-trip-validates each summary with the SAME call (`scripts/run_phase2c_evaluation_gate.py:684-686`).
+- **Only `test_t1_4` reads the real canonical in the pytest gate.** `test_phase2c_evaluation_gate_runner.py` + `test_t1_5_smoke` use `tmp_path`/`output_root`/docstrings; phase5/closeout/g2 consumers are manual-CLI + column-name-robust (not in gate). **No patches needed outside t1_4** (note only: phase5 `cost_drag.py` mixes ε-reproduced 15bps with un-rerun 7/13/17bps on manual re-run — research-layer, not a test break).
+- **+39 `returns_per_bar.parquet` trip NO guard** — no file-count assertion; `_per_candidate_dirs()` filters `is_dir()` → dir count stays 39.
+- **B1 4-tuple UNAFFECTED** — V4 file adds zero `_write_to_registry` call-sites.
+- **run_id precision:** per-candidate `summary['run_id']` = `phase4_forward_2026_15bps_v1_b_c_narrow` (cohort-level, NO hash suffix; the hash-suffixed value is the REGISTRY `child_run_id_override` at `scripts:582`). Use the precise value in commit-message/fixture descriptions.
+
+### §V9.4 — Corrected execution sequence under v9 (AUTHORITATIVE; supersedes stale v8 steps where conflicting)
+
+**Task 13 (pre-fire — canonical PRESENT; full-suite SAFE here):**
+1. 13.1 pre-flight (a)–(h) — unchanged.
+2. 13.2 author V4 test file (RED) — unchanged (inline content per v8 Step 13.2).
+3. **[NEW 13.2.5] advance pc9 BASELINE 2236→2248** in `test_t1_4_backward_compat.py:1594` + history comment (V9-E2). **First** confirm the V4 file collects exactly 12 via `pytest --collect-only tests/test_b_c_narrow_v4_reproducibility.py` (no hidden parametrization) before locking 2248.
+4. 13.3 RED-verify: run V4 file isolated (10 skip + 2 pass) **AND [NEW] the FULL suite `python -m pytest -q`** (canonical present → no crash; pc9 at 2248 must PASS; expected = current-HEAD-collected + 12) (V9-E3, Gap 2b).
+5. 13.4 commit: stage **BOTH** `tests/test_b_c_narrow_v4_reproducibility.py` AND `tests/test_t1_4_backward_compat.py` (the pc9 edit) in one RED commit.
+6. 13.5 STOP — Charlie **#N+19a′** re-fire authorization.
+
+**Task 14 (fire — canonical ABSENT post-fire/pre-mv; NO full-suite here):**
+7. 14.0 verify register; 14.1 fire; 14.2 post-fire verify (a)–(g); 14.3 fixture capture; 14.4 V4 gate (12 pass).
+8. **[CHANGED 14.5] DELETE the full-suite run + "2374 passed" expectation** — canonical is absent (14.2e) → a full-suite run CRASHES pytest collection (§V9.6). Step 14.5 keeps ONLY the isolated V4-file run (12 pass).
+9. 14.6 commit FIXTURE ONLY (test-side evidence; data committed in Task 14b).
+10. 14.7 STOP — Charlie **#N+19b′** T14b authorization (only if V4 PASS).
+
+**Task 14b (relocation + commits — canonical REPOPULATED; full-suite SAFE again):**
+11. 14b.0 verify #N+19b′; 14b.1 mv sibling→canonical.
+12. **[NEW 14b.1.5] commit the archive snapshot** — `git add data/phase2c_evaluation_gate/archive/phase4_forward_2026_15bps_v1_d0b8101/` + commit. (Archive now a committed+on-disk object for Option-A A3/A4/A5.)
+13. 14b.2 post-mv verify (a)–(f).
+14. **[NEW 14b.2.5] author the t1_4 A3/A4/A5 Option-A rescope** (V9-E4) — archive committed + canonical repopulated, so the rescoped tests pass now (never committed known-failing).
+15. **[NEW 14b.2.7] commit recovered canonical content + t1_4 rescope** — `git add data/phase2c_evaluation_gate/phase4_forward_2026_15bps_v1/` (41 modified + 39 new parquet) + `tests/test_t1_4_backward_compat.py` (rescope). Confirm the modified+added set via `git status --porcelain` first.
+16. **[NEW 14b.2.8] run the FULL suite `python -m pytest -q`** — FIRST point all preconditions hold (canonical present, archive committed, V4 present, pc9=2248). Assert green: A1/A6/A2 pass, **A3/A4/A5 git-vs-on-disk-archive pass**, pc9 pass, 12 V4 pass. This is the relocated zero-regression gate (measure the actual count; do NOT assume "2374").
+17. Task 14c ratify packet — Charlie **#N+19c′** ack.
+
+### §V9.5 — Exact edit catalogue
+- **V9-E1 (Gap 1 note fix):** plan Step 14.6 note (`plan:2241`) "data artifacts under data/ are gitignored" is FALSE → replace with: the canonical + archive under `data/phase2c_evaluation_gate/` ARE git-tracked (only `data/raw`,`data/features`,`data/quality`,`data/results`,`data/compiled_strategies`,`raw_payloads`,`*.db` are gitignored); per Q2=(a) the recovered canonical + archive are committed at Steps 14b.1.5 + 14b.2.7. Remove the "(gitignored)" labels on the canonical + archive rows at `plan:2260`, `plan:2636-2638`, `plan:2673`; KEEP "(gitignored)" ONLY on the `backtest/experiments.db` row (genuinely ignored, `.gitignore:18`). **Do NOT** `git add backtest/experiments.db`.
+- **V9-E2 (Gap 2):** `tests/test_t1_4_backward_compat.py:1594` `BASELINE = 2236` → `BASELINE = 2248`; add a history comment in the existing AMEND-PC9 style: "B-C-narrow Phase 3 adds tests/test_b_c_narrow_v4_reproducibility.py (12 methods); V4 is neither a t1_4 nor t1_5 subtraction target so its +12 lands in pre_t1_x_baseline. Advance 2236→2248. Closes Gap2/Gap2b (Step 13.3 isolation missed the full-suite interaction)."
+- **V9-E3 (Gap 2b):** Step 13.3 — after the isolated V4 run, ADD `python -m pytest -q` (full suite) asserting green incl. the pc9 gate at 2248. Update the Step 13.3 title to note "+ full-suite green incl. pc9 at 2248."
+- **V9-E4 (t1_4 A3/A4/A5 rescope — Option A; authored at Step 14b.2.5):**
+  - Add near `_PHASE4_DIR` (`:49`): `_ARCHIVE_DIR = _REPO_ROOT / "data" / "phase2c_evaluation_gate" / "archive" / "phase4_forward_2026_15bps_v1_d0b8101"`  (basename == producer `BCNARROW_ARCHIVE_BASENAME`, `scripts:165`).
+  - Rewrite `_verify_byte_identity` (`:352-373`) to two-path git-vs-on-disk-archive:
+    ```python
+    def _verify_byte_identity(self, canonical_rel_path: str, archive_rel_path: str) -> None:
+        before_bytes = _git_show_bytes(_PRE_T1X_COMMIT, canonical_rel_path)   # original at 7c8f4a7
+        before_hash = _sha256_bytes(before_bytes)
+        after_bytes = _file_bytes(_REPO_ROOT / archive_rel_path)             # archived snapshot on disk (committed 14b.1.5)
+        after_hash = _sha256_bytes(after_bytes)
+        assert before_hash == after_hash, (
+            f"v9 re-fire byte-identity FAILED for {archive_rel_path}: 7c8f4a7 original "
+            f"sha256={before_hash} != archived snapshot sha256={after_hash}. Archive MUST "
+            f"preserve the pre-recovery original byte-for-byte (Q1=a + Option A)."
+        )
+    ```
+  - A3 (`:375-378`): `self._verify_byte_identity("data/phase2c_evaluation_gate/phase4_forward_2026_15bps_v1/holdout_results.csv", "data/phase2c_evaluation_gate/archive/phase4_forward_2026_15bps_v1_d0b8101/holdout_results.csv")`.
+  - A4 (`:380-383`): same pattern with `holdout_summary.json`.
+  - A5 (`:385-389`, keep `@pytest.mark.parametrize` over `_per_candidate_dirs()` — yields the 39 recovered-canonical dirs whose basenames == 7c8f4a7 basenames): `canonical_rel_path = str(candidate_dir.relative_to(_REPO_ROOT) / "holdout_summary.json"); archive_rel_path = str(_ARCHIVE_DIR.relative_to(_REPO_ROOT) / candidate_dir.name / "holdout_summary.json"); self._verify_byte_identity(canonical_rel_path, archive_rel_path)`.
+- **V9-E5 (scope + file-table):** plan:5 ("NO new source code edits ... adds ONE new test file + ONE fixture + ONE evidence artifact") → amend to register `tests/test_t1_4_backward_compat.py` as MODIFIED (pc9 BASELINE + A3/A4/A5 rescope) and the canonical + archive dirs as git-tracked content COMMITTED at 14b.1.5/14b.2.7. Update the file-structure table accordingly.
+
+### §V9.6 — DESIGN INVARIANT: no full-suite run while the canonical is absent
+`_per_candidate_dirs()` (`tests/test_t1_4_backward_compat.py:96-99`) AND A2's `_load_legacy_summary` (`:235`) call `_PHASE4_DIR.iterdir()` at **COLLECTION time** (inside the `@pytest.mark.parametrize` decorators `:205`/`:386`). If the canonical is ABSENT — the entire window between Step 14.1 fire (W3 vacates the canonical, 14.2e) and Step 14b.1 mv (repopulates it) — `iterdir()` raises `FileNotFoundError`, which **crashes the whole pytest collection** AND the pc9 gate's own subprocess `_collect_count([])`. Therefore: **NO full-suite `pytest -q` may run while the canonical is absent.** The v8 "Expected: 2374 passed" at Step 14.5 is STRUCTURALLY IMPOSSIBLE and is DELETED (not relocated as-is); the relocated full-suite at Step 14b.2.8 is the only valid zero-regression gate, and it MEASURES the count (current-HEAD-collected + 12 V4).
+
+### §V9.7 — VERIFIED-CLEAR (do not re-litigate at re-review)
+(a) B1 4-tuple test (`test_count=49`, `dynamic_count=23`, `:517`) unaffected — V4 adds zero `_write_to_registry` call-sites. (b) `test_per_candidate_count_locked_at_39` (`:340`) + A5 parametrize stay at 39 (new parquet is a FILE; helper filters `is_dir()`). (c) The `7c8f4a7` byte-identity assertion has exactly ONE consumer (t1_4 `_verify_byte_identity`) — the rescope is complete. (d) `backtest/experiments.db` correctly stays gitignored (`.gitignore:18`). (e) No CI/.github workflow reads the canonical (none exist / no matches).
+
+### §V9.8 — Re-fire register sequence
+The original #N+19a (T13 fire) was consumed by the now-reverted fire. v9 requires: **B2 re-review (Codex + advisor) on v9 → re-SEAL → Charlie #N+19a′ re-fire authorization** (Task 13 RED re-commit + fire) → #N+19b′ (T14b) → #N+19c′ (ratify). Exact prime-numbering at Charlie's discretion at each register-event. NO data fires without #N+19a′.
 
 ---
 
