@@ -288,3 +288,81 @@ def test_evaluate_candidate_pass_at_z_pass_threshold():
     # pass_B is True exactly when deflated_z_B >= z(0.95)
     res = t6.evaluate_candidate(_synthetic_cm(sr=0.08, g3=0.0, g4=3.0, T=2491))
     assert (res["deflated_z_B"] >= t6.Z_PASS) == res["pass_B"]
+
+
+# ==========================================================================
+# Task 5: Robustness flags (g4-high / provisional / r21-indeterminate)
+# ==========================================================================
+def _hashed_cm(hypothesis_hash: str, sr: float, g3: float, g4: float, T: int) -> "t6.CandidateMoments":
+    return t6.CandidateMoments(hypothesis_hash, "synthetic", "test", sr, g3, g4, T, None)
+
+
+def test_robustness_g4_high_flag():
+    hi = t6.annotate_flags(t6.evaluate_candidate(_synthetic_cm(sr=0.06, g3=5.0, g4=200.0, T=2491)))
+    assert hi["g4_high_flag"] is True
+    lo = t6.annotate_flags(t6.evaluate_candidate(_synthetic_cm(sr=0.05, g3=0.0, g4=3.0, T=2491)))
+    assert lo["g4_high_flag"] is False
+
+
+def test_robustness_g4_high_flag_boundary():
+    # g4_high_flag is True at exactly G4_HIGH (>= comparison).
+    at = t6.annotate_flags(t6.evaluate_candidate(
+        _synthetic_cm(sr=0.0, g3=0.0, g4=t6.G4_HIGH, T=2491)))
+    assert at["g4_high_flag"] is True
+    just_below = t6.annotate_flags(t6.evaluate_candidate(
+        _synthetic_cm(sr=0.0, g3=0.0, g4=t6.G4_HIGH - 0.001, T=2491)))
+    assert just_below["g4_high_flag"] is False
+
+
+def test_robustness_provisional_flag_present_and_typed():
+    lo = t6.annotate_flags(t6.evaluate_candidate(_synthetic_cm(sr=0.05, g3=0.0, g4=3.0, T=2491)))
+    assert "provisional_flag" in lo
+    assert isinstance(lo["provisional_flag"], bool)
+
+
+def test_provisional_flag_only_on_passing_with_small_margin():
+    # A clear strong pass (large positive dsr_statistic_B) is NOT provisional.
+    strong = t6.annotate_flags(t6.evaluate_candidate(_synthetic_cm(sr=0.12, g3=0.0, g4=3.0, T=2491)))
+    if strong["pass_B"] and strong["dsr_statistic_B"] >= t6.PROVISIONAL_DSR_MARGIN:
+        assert strong["provisional_flag"] is False
+    # A fail (dsr_statistic_B < 0) is never provisional.
+    fail = t6.annotate_flags(t6.evaluate_candidate(_synthetic_cm(sr=0.02, g3=0.0, g4=3.0, T=2491)))
+    assert fail["pass_B"] is False
+    assert fail["provisional_flag"] is False
+
+
+def test_provisional_flag_marks_narrow_pass():
+    # Construct a pass whose dsr_statistic_B lands in [0, PROVISIONAL_DSR_MARGIN).
+    res = t6.annotate_flags(t6.evaluate_candidate(_synthetic_cm(sr=0.07, g3=0.0, g4=3.0, T=2491)))
+    if res["pass_B"] and 0 <= res["dsr_statistic_B"] < t6.PROVISIONAL_DSR_MARGIN:
+        assert res["provisional_flag"] is True
+
+
+def test_r21_indeterminate_flag():
+    # The two R6.1 §8.1 R2.1-INDETERMINATE hashes (DIFFERENT from R21_EXCLUDED).
+    for h in ("7abff29fc2f117a1", "2433a38b2f9a7211"):
+        res = t6.annotate_flags(t6.evaluate_candidate(
+            _hashed_cm(h, sr=0.05, g3=0.0, g4=3.0, T=2491)))
+        assert res["r21_indeterminate_flag"] is True
+    # A non-flagged hash is False.
+    other = t6.annotate_flags(t6.evaluate_candidate(
+        _hashed_cm("deadbeefdeadbeef", sr=0.05, g3=0.0, g4=3.0, T=2491)))
+    assert other["r21_indeterminate_flag"] is False
+
+
+def test_r21_indeterminate_distinct_from_r21_excluded():
+    # R21_INDETERMINATE (§8.1) is a DIFFERENT set from R21_EXCLUDED (§188).
+    assert t6.R21_INDETERMINATE == frozenset({"7abff29fc2f117a1", "2433a38b2f9a7211"})
+    assert t6.R21_INDETERMINATE.isdisjoint(t6.R21_EXCLUDED)
+
+
+def test_annotate_flags_does_not_mutate_input():
+    res = t6.evaluate_candidate(_synthetic_cm(sr=0.05, g3=0.0, g4=3.0, T=2491))
+    before = set(res.keys())
+    t6.annotate_flags(res)
+    assert set(res.keys()) == before  # original dict untouched
+
+
+def test_annotate_flags_constants():
+    assert t6.G4_HIGH == 50.0
+    assert t6.PROVISIONAL_DSR_MARGIN == 0.5

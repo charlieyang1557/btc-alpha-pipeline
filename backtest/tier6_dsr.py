@@ -381,3 +381,48 @@ def evaluate_candidate(cm: CandidateMoments, n_star: int = N_STAR) -> dict:
         out[f"dsr_statistic_{form}"] = z - Z_PASS
         out[f"pass_{form}"] = bool(z >= Z_PASS)
     return out
+
+
+# --------------------------------------------------------------------------
+# Task 5: robustness flags (g4-high / provisional / r21-indeterminate)
+# --------------------------------------------------------------------------
+G4_HIGH = 50.0
+PROVISIONAL_DSR_MARGIN = 0.5
+
+# R6.1 §8.1 R2.1-INDETERMINATE identifiers. CONTRACT BOUNDARY: this is a
+# DIFFERENT set from R21_EXCLUDED (R5.1 §188; companion-partition cohort
+# exclusions). These two hashes are heavy-overlap candidates whose R2.1
+# disposition is indeterminate; they are annotated, never partition-excluded.
+R21_INDETERMINATE = frozenset({"7abff29fc2f117a1", "2433a38b2f9a7211"})
+
+
+def annotate_flags(res: dict) -> dict:
+    """Annotate an ``evaluate_candidate`` result dict with robustness flags.
+
+    Adds three boolean flags WITHOUT mutating the input dict:
+
+    - ``g4_high_flag``: ``gamma4 >= G4_HIGH`` (RAW kurtosis well above the
+      Gaussian 3.0; flags heavy-tailed candidates whose closed-form asymptotic
+      is least trustworthy).
+    - ``r21_indeterminate_flag``: ``hypothesis_hash in R21_INDETERMINATE``
+      (R6.1 §8.1; DIFFERENT from ``R21_EXCLUDED``).
+    - ``provisional_flag``: an authoritative (Form B) pass whose
+      ``dsr_statistic_B`` margin is in ``[0, PROVISIONAL_DSR_MARGIN)`` — a
+      narrow pass labelled provisional pending SD-E-γ serial-correlation
+      handling. A failing row (``pass_B`` False) is never provisional.
+
+    Args:
+        res: An ``evaluate_candidate`` (and optionally pre-flagged) result dict.
+            Must contain ``gamma4``, ``hypothesis_hash``, ``pass_B`` and
+            ``dsr_statistic_B``.
+
+    Returns:
+        A NEW dict (shallow copy of ``res``) with the three flags added.
+    """
+    res = dict(res)
+    res["g4_high_flag"] = bool(res["gamma4"] >= G4_HIGH)
+    res["r21_indeterminate_flag"] = res["hypothesis_hash"] in R21_INDETERMINATE
+    res["provisional_flag"] = bool(
+        res["pass_B"] and 0 <= res["dsr_statistic_B"] < PROVISIONAL_DSR_MARGIN
+    )
+    return res
