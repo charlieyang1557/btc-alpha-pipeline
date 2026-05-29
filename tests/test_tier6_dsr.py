@@ -408,3 +408,136 @@ def test_mc_default_params():
     assert out["seed"] == 20260529
     # n_sims is echoed as passed (we used a small count to keep the test fast).
     assert out["n_sims"] == 2000
+
+
+# ==========================================================================
+# Task 7: Cohort evaluator + artifact emitters
+# ==========================================================================
+import json  # noqa: E402
+
+
+def test_evaluate_cohort_structure(tmp_path):
+    out = t6.evaluate_cohort(out_dir=tmp_path, n_sims=2000)
+    assert len(out["authoritative"]) == 18
+    assert len(out["companion"]) == 21
+    # promotion list is exactly the authoritative-18 rows that pass Form B
+    promoted = {r["hypothesis_hash"] for r in out["promotion_list"]}
+    auth_pass = {r["hypothesis_hash"] for r in out["authoritative"] if r["pass_B"] is True}
+    assert promoted == auth_pass
+    # companion rows carry the same fields but are flagged non-authoritative
+    assert all(r["non_authoritative"] is True for r in out["companion"])
+    assert all("monday_flag" in r for r in out["companion"])
+    # top-level metadata
+    assert out["n_star"] == 18
+    assert out["alpha"] == 0.05
+    assert out["authoritative_form"] == "B"
+    assert out["companion_form"] == "B"
+    assert out["mc_validation"]["n_sims"] == 2000
+    # artifacts written
+    for fn in ("tier6_dsr_results.csv", "tier6_dsr_companion.csv",
+               "tier6_promotion_list.json", "tier6_mc_validation.json"):
+        assert (tmp_path / fn).exists()
+
+
+def test_companion_never_in_authoritative():
+    out = t6.evaluate_cohort(out_dir=None, n_sims=0, write=False)
+    auth = {r["hypothesis_hash"] for r in out["authoritative"]}
+    comp = {r["hypothesis_hash"] for r in out["companion"]}
+    assert auth.isdisjoint(comp)
+    assert len(auth) == 18 and len(comp) == 21
+    # n_sims=0 -> mc_validation is empty
+    assert out["mc_validation"] == {}
+
+
+def test_evaluate_cohort_promotion_list_subset_of_authoritative():
+    out = t6.evaluate_cohort(out_dir=None, n_sims=0, write=False)
+    auth_hashes = {r["hypothesis_hash"] for r in out["authoritative"]}
+    for r in out["promotion_list"]:
+        assert r["hypothesis_hash"] in auth_hashes
+        assert r["pass_B"] is True
+        assert r["non_authoritative"] is False  # promotion rows are authoritative
+
+
+def test_evaluate_cohort_authoritative_rows_have_flags():
+    out = t6.evaluate_cohort(out_dir=None, n_sims=0, write=False)
+    for r in out["authoritative"]:
+        for key in ("g4_high_flag", "provisional_flag", "r21_indeterminate_flag",
+                    "mertens_degenerate_flag", "non_authoritative"):
+            assert key in r
+        assert r["non_authoritative"] is False
+        assert r["mertens_degenerate_flag"] is False  # real cohort: term in [0.699, 1.114]
+
+
+def test_promotion_json_schema(tmp_path):
+    out = t6.evaluate_cohort(out_dir=tmp_path, n_sims=0)
+    promo = json.loads((tmp_path / "tier6_promotion_list.json").read_text())
+    assert promo["n_star"] == 18
+    assert promo["alpha"] == 0.05
+    assert promo["form"] == "B"
+    assert isinstance(promo["promoted"], list)
+    assert promo["count"] == len(promo["promoted"])
+    assert promo["count"] == len(out["promotion_list"])
+    assert set(promo["promoted"]) == {r["hypothesis_hash"] for r in out["promotion_list"]}
+
+
+def test_results_csv_has_reconciled_fields(tmp_path):
+    t6.evaluate_cohort(out_dir=tmp_path, n_sims=0)
+    res_df = pd.read_csv(tmp_path / "tier6_dsr_results.csv")
+    assert len(res_df) == 18
+    # A5/A9 reconciliation: real emitted keys (er_B/er_A, var_sr_null, psr/dsr),
+    # NOT the old var_null / ER_B / DSR_B inline-draft names.
+    for col in ("hypothesis_hash", "name", "theme", "T", "sr_per_bar",
+                "gamma3", "gamma4", "trades", "var_sr_null",
+                "er_B", "sr_star_B", "deflated_z_B", "psr_B", "dsr_statistic_B", "pass_B",
+                "er_A", "sr_star_A", "deflated_z_A", "psr_A", "dsr_statistic_A", "pass_A",
+                "g4_high_flag", "provisional_flag", "r21_indeterminate_flag",
+                "mertens_degenerate_flag"):
+        assert col in res_df.columns, f"missing column {col}"
+    assert "var_null" not in res_df.columns
+    assert "ER_B" not in res_df.columns and "DSR_B" not in res_df.columns
+
+
+def test_companion_csv_has_extra_columns(tmp_path):
+    t6.evaluate_cohort(out_dir=tmp_path, n_sims=0)
+    comp_df = pd.read_csv(tmp_path / "tier6_dsr_companion.csv")
+    assert len(comp_df) == 21
+    assert "non_authoritative" in comp_df.columns
+    assert "monday_flag" in comp_df.columns
+    assert bool(comp_df["non_authoritative"].all())
+
+
+def test_evaluate_cohort_degenerate_candidate_flagged_not_crash(monkeypatch):
+    # A3: a degenerate candidate (non-positive Mertens term) must NOT abort the
+    # batch; the cohort run COMPLETES with that candidate flagged
+    # mertens_degenerate_flag=True + pass_B=False (not an exception).
+    df = t6._read_cohort_csv()
+    locked, _ = t6.derive_cohort(df)
+    degenerate_hash = locked[0]
+    real_loader = t6.load_candidate_moments
+
+    def fake_loader(hypothesis_hash, frame):
+        if hypothesis_hash == degenerate_hash:
+            # term = 1 - 5*2 + 0 = -9 < 0 -> mertens_variance raises ValueError
+            return t6.CandidateMoments(
+                hypothesis_hash, "synthetic_degenerate", "test",
+                sr_per_bar=2.0, gamma3=5.0, gamma4=1.0, T=100, trades=None)
+        return real_loader(hypothesis_hash, frame)
+
+    monkeypatch.setattr(t6, "load_candidate_moments", fake_loader)
+    out = t6.evaluate_cohort(out_dir=None, n_sims=0, write=False)
+    assert len(out["authoritative"]) == 18  # batch completed, no abort
+    flagged = [r for r in out["authoritative"] if r["hypothesis_hash"] == degenerate_hash]
+    assert len(flagged) == 1
+    row = flagged[0]
+    assert row["mertens_degenerate_flag"] is True
+    assert row["pass_B"] is False
+    assert row["pass_A"] is False
+    assert "failure_reason" in row and row["failure_reason"]
+    # degenerate row is excluded from the promotion list
+    assert degenerate_hash not in {r["hypothesis_hash"] for r in out["promotion_list"]}
+
+
+def test_evaluate_cohort_no_write_when_write_false(tmp_path):
+    out = t6.evaluate_cohort(out_dir=tmp_path, n_sims=0, write=False)
+    assert out["authoritative"]  # computed
+    assert not any(tmp_path.iterdir())  # nothing written

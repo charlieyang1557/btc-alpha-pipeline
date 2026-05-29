@@ -10,7 +10,9 @@ untouched. This is the production closed-form DSR per CLAUDE.md HARD CONSTRAINT
 """
 from __future__ import annotations
 
+import csv
 import hashlib
+import json
 import math
 from dataclasses import dataclass
 from pathlib import Path
@@ -471,3 +473,209 @@ def mc_expected_max_ratio(
         "form_a_minus_empirical": fa - emp,
         "form_b_minus_empirical": fb - emp,
     }
+
+
+# --------------------------------------------------------------------------
+# Task 7: cohort evaluator + artifact emitters
+# --------------------------------------------------------------------------
+DEFAULT_OUT_DIR = PROJECT_ROOT / "data/phase2c_evaluation_gate/tier6_dsr_v1"
+
+# A5/A9 reconciliation: these MUST match the actual keys emitted by
+# evaluate_candidate + annotate_flags + the A3 degenerate-flag wrapper —
+# i.e. er_B/er_A (uppercase), var_sr_null (NOT var_null), psr_B/dsr_statistic_B
+# (NOT a bare ambiguous DSR_B). CSV emission uses extrasaction="ignore" so
+# row-only fields (non_authoritative, monday_flag, failure_reason) are dropped
+# from the authoritative CSV unless added as `extra` columns.
+_RESULT_FIELDS = [
+    "hypothesis_hash", "name", "theme", "T", "sr_per_bar",
+    "gamma3", "gamma4", "trades", "var_sr_null",
+    "er_B", "sr_star_B", "deflated_z_B", "psr_B", "dsr_statistic_B", "pass_B",
+    "er_A", "sr_star_A", "deflated_z_A", "psr_A", "dsr_statistic_A", "pass_A",
+    "g4_high_flag", "provisional_flag", "r21_indeterminate_flag",
+    "mertens_degenerate_flag",
+]
+
+
+def _read_cohort_csv() -> pd.DataFrame:
+    """Read the cohort ``holdout_results.csv`` (39 rows).
+
+    DESIGN INVARIANT: a single seam for the cohort CSV read so the next-chunk
+    ``wf_lineage`` evaluation-semantics consumption guard (Task 8) can be
+    inserted right after this read, and so tests can monkeypatch the read.
+
+    Returns:
+        The holdout results DataFrame.
+    """
+    return pd.read_csv(HOLDOUT_DIR / "holdout_results.csv")
+
+
+def _degenerate_fail_row(
+    hypothesis_hash: str, cm: CandidateMoments | None, exc: Exception
+) -> dict:
+    """Build a flagged auto-fail row for a candidate whose evaluation raised.
+
+    A3 (mertens-degenerate auto-fail-flag): a degenerate candidate (non-positive
+    Mertens variance term, or any ``ValueError`` from ``evaluate_candidate``)
+    must NEVER crash the cohort run. We emit a flagged-fail row instead.
+
+    Args:
+        hypothesis_hash: The candidate identifier.
+        cm: The loaded moments if available (for identifying fields), else None.
+        exc: The captured exception (its ``str`` becomes ``failure_reason``).
+
+    Returns:
+        A result dict with ``pass_B = pass_A = False``,
+        ``mertens_degenerate_flag = True``, ``failure_reason`` and any available
+        identifying fields, plus the other flags set to safe defaults.
+    """
+    row: dict = {
+        "hypothesis_hash": hypothesis_hash,
+        "name": cm.name if cm is not None else None,
+        "theme": cm.theme if cm is not None else None,
+        "T": cm.T if cm is not None else None,
+        "sr_per_bar": cm.sr_per_bar if cm is not None else None,
+        "gamma3": cm.gamma3 if cm is not None else None,
+        "gamma4": cm.gamma4 if cm is not None else None,
+        "trades": cm.trades if cm is not None else None,
+        "pass_B": False,
+        "pass_A": False,
+        "mertens_degenerate_flag": True,
+        "failure_reason": str(exc),
+        "g4_high_flag": False,
+        "provisional_flag": False,
+        "r21_indeterminate_flag": hypothesis_hash in R21_INDETERMINATE,
+    }
+    return row
+
+
+def _evaluate_one(hypothesis_hash: str, df: pd.DataFrame, n_star: int = N_STAR) -> dict:
+    """Load → evaluate → annotate one candidate, with the A3 degenerate guard.
+
+    The hard ``ValueError`` RAISE stays inside the pure ``mertens_variance``
+    unit (math contract). Here, at the COHORT-EVALUATOR layer, we wrap the
+    ``load_candidate_moments`` + ``evaluate_candidate`` call in ``try/except
+    ValueError`` so a single degenerate candidate produces a flagged-fail row
+    and the batch continues.
+
+    Args:
+        hypothesis_hash: The candidate identifier.
+        df: The cohort DataFrame.
+        n_star: Effective number of independent trials.
+
+    Returns:
+        An annotated result dict; ``mertens_degenerate_flag`` is False for a
+        clean candidate and True for a degenerate (flagged-fail) one.
+    """
+    cm: CandidateMoments | None = None
+    try:
+        # Module-level lookup (not the imported name) so monkeypatching
+        # tier6_dsr.load_candidate_moments is honored by the cohort evaluator.
+        cm = load_candidate_moments(hypothesis_hash, df)
+        row = annotate_flags(evaluate_candidate(cm, n_star=n_star))
+        row["mertens_degenerate_flag"] = False
+        return row
+    except ValueError as exc:
+        return _degenerate_fail_row(hypothesis_hash, cm, exc)
+
+
+def _write_csv(path: Path, rows: list[dict], extra: tuple[str, ...] = ()) -> None:
+    """Write ``rows`` to ``path`` as CSV using the reconciled ``_RESULT_FIELDS``.
+
+    Uses ``extrasaction="ignore"`` so row-only fields not in the header
+    (e.g. ``failure_reason`` on the authoritative CSV) are silently dropped.
+
+    Args:
+        path: Output CSV path.
+        rows: Result dicts to write.
+        extra: Additional column names appended after ``_RESULT_FIELDS``.
+    """
+    fields = _RESULT_FIELDS + list(extra)
+    with open(path, "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
+        w.writeheader()
+        for r in rows:
+            w.writerow(r)
+
+
+def evaluate_cohort(
+    out_dir: Path | None = DEFAULT_OUT_DIR,
+    n_sims: int = 100_000,
+    write: bool = True,
+) -> dict:
+    """Evaluate the locked-18 (authoritative) + companion-21 (quarantined) cohort.
+
+    Reads the cohort ``holdout_results.csv``, derives the 18/21 partition, and
+    for each candidate loads its moments, computes the Form B (authoritative) +
+    Form A (companion) DSR statistics, and annotates robustness flags. The A3
+    degenerate guard ensures a single degenerate candidate cannot abort the
+    batch. Companion rows additionally carry ``non_authoritative=True`` and
+    ``monday_flag``; authoritative rows carry ``non_authoritative=False``.
+
+    Args:
+        out_dir: Output directory for artifacts (default ``DEFAULT_OUT_DIR``).
+            Ignored when ``write`` is False or ``out_dir`` is None.
+        n_sims: Monte-Carlo simulation count; ``0`` skips MC validation
+            (``mc_validation`` becomes ``{}``).
+        write: When True (and ``out_dir`` is not None), write the 4 artifacts.
+
+    Returns:
+        A dict with ``authoritative`` (18 rows), ``companion`` (21 rows),
+        ``promotion_list`` (authoritative rows with ``pass_B is True``),
+        ``mc_validation``, ``n_star``, ``alpha``, ``authoritative_form="B"`` and
+        ``companion_form="B"``.
+    """
+    # DESIGN INVARIANT: the wf_lineage evaluation-semantics consumption guard
+    # (Task 8, next chunk) is inserted immediately after this read, before any
+    # downstream consumption of the cohort artifacts.
+    df = _read_cohort_csv()
+    locked, companion = derive_cohort(df)
+
+    authoritative: list[dict] = []
+    for h in locked:
+        row = _evaluate_one(h, df)
+        row["non_authoritative"] = False
+        authoritative.append(row)
+
+    companion_rows: list[dict] = []
+    for h in companion:
+        row = _evaluate_one(h, df)
+        row["non_authoritative"] = True
+        # Resolve the name for monday_flag from the cohort frame (the row's
+        # `name` may be None on a degenerate auto-fail).
+        name = str(df.loc[df["hypothesis_hash"] == h, "name"].iloc[0])
+        row["monday_flag"] = is_monday_pattern(name)
+        companion_rows.append(row)
+
+    promotion_list = [r for r in authoritative if r["pass_B"] is True]
+    mc = mc_expected_max_ratio(N_STAR, n_sims=n_sims) if n_sims else {}
+
+    out = {
+        "authoritative": authoritative,
+        "companion": companion_rows,
+        "promotion_list": promotion_list,
+        "mc_validation": mc,
+        "n_star": N_STAR,
+        "alpha": ALPHA,
+        "authoritative_form": "B",
+        "companion_form": "B",
+    }
+
+    if write and out_dir is not None:
+        out_dir.mkdir(parents=True, exist_ok=True)
+        _write_csv(out_dir / "tier6_dsr_results.csv", authoritative)
+        _write_csv(
+            out_dir / "tier6_dsr_companion.csv", companion_rows,
+            extra=("non_authoritative", "monday_flag"),
+        )
+        (out_dir / "tier6_promotion_list.json").write_text(json.dumps(
+            {
+                "n_star": N_STAR,
+                "alpha": ALPHA,
+                "form": "B",
+                "promoted": [r["hypothesis_hash"] for r in promotion_list],
+                "count": len(promotion_list),
+            },
+            indent=2,
+        ))
+        (out_dir / "tier6_mc_validation.json").write_text(json.dumps(mc, indent=2))
+    return out
