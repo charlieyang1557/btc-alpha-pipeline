@@ -166,3 +166,70 @@ def test_form_degenerate_guard():
         t6.expected_max_ratio_form_b(0)
     with pytest.raises(ValueError):
         t6.expected_max_ratio_form_a(0)
+
+
+# ==========================================================================
+# Task 4: Mertens variance + SR* + deflated-z + DSR/PSR + pass rule
+# ==========================================================================
+def test_mertens_variance_reduces_to_null_at_sr_zero():
+    # at SR=0 the skew/kurt terms vanish -> 1/(T-1)
+    assert abs(t6.mertens_variance(0.0, 5.0, 80.0, 2491) - 1.0 / 2490) < 1e-15
+
+
+def test_mertens_variance_guard():
+    # A4 (Codex HIGH, supersedes original buggy test):
+    # term=0.75 > 0 -> positive, NO raise.
+    assert t6.mertens_variance(1.0, 0.0, 0.0, 100) > 0
+    # term = 1 - 10 + 0 = -9 < 0 -> raise.
+    with pytest.raises(ValueError):
+        t6.mertens_variance(2.0, 5.0, 1.0, 100)
+
+
+def test_sr_star_null_scaling():
+    er = t6.expected_max_ratio_form_b(18)
+    assert abs(t6.sr_star(18, 2491, "B") - math.sqrt(1.0 / 2490) * er) < 1e-12
+    er_a = t6.expected_max_ratio_form_a(18)
+    assert abs(t6.sr_star(18, 2491, "A") - math.sqrt(1.0 / 2490) * er_a) < 1e-12
+
+
+def test_deflated_z_denominator_equals_sqrt_term():
+    # A10 DESIGN INVARIANT: sqrt(mertens * (T-1)) == sqrt(term) because
+    # mertens = term/(T-1). Assert the denominator equals sqrt(term).
+    sr, g3, g4, T = 0.08, 0.5, 10.0, 2491
+    term = 1.0 - g3 * sr + ((g4 - 1.0) / 4.0) * sr * sr
+    denom = math.sqrt(t6.mertens_variance(sr, g3, g4, T) * (T - 1))
+    assert abs(denom - math.sqrt(term)) < 1e-15
+
+
+def test_dsr_statistic_pass_rule_strong_not_weak():
+    # A1 (advisor HIGH-1, supersedes original equivalence test):
+    # sr_pass: clean STRONG pass (deflated_z ~ 2.13 >= 1.6449)
+    rp = t6.evaluate_candidate(_synthetic_cm(sr=0.08, g3=0.0, g4=3.0, T=2491))
+    assert rp["pass_B"] is True
+    assert (rp["dsr_statistic_B"] >= 0) == (rp["psr_B"] >= 0.95) == rp["pass_B"]
+    # sr_fail: SR_hat > SR* (weak rule WOULD pass) but deflated_z ~ 0.39 < 1.6449
+    rf = t6.evaluate_candidate(_synthetic_cm(sr=0.045, g3=0.0, g4=3.0, T=2491))
+    assert rf["sr_per_bar"] > rf["sr_star_B"]      # weak rule would pass
+    assert rf["pass_B"] is False                    # strong rule fails -> pins strong != weak
+    assert rf["psr_B"] < 0.95
+
+
+def test_evaluate_candidate_emits_both_forms_and_equivalence():
+    res = t6.evaluate_candidate(_synthetic_cm(sr=0.08, g3=0.0, g4=3.0, T=2491))
+    for form in ("B", "A"):
+        assert f"sr_star_{form}" in res
+        assert f"deflated_z_{form}" in res
+        assert f"psr_{form}" in res
+        assert f"dsr_statistic_{form}" in res
+        assert f"pass_{form}" in res
+        # equivalence: pass <=> dsr_statistic >= 0 <=> psr >= 0.95
+        assert (res[f"dsr_statistic_{form}"] >= 0) == res[f"pass_{form}"]
+        assert (res[f"psr_{form}"] >= 0.95) == res[f"pass_{form}"]
+    assert abs(res["z_pass"] - 1.6449) < 1e-3
+    assert res["pass_B"] is True
+
+
+def test_evaluate_candidate_pass_at_z_pass_threshold():
+    # pass_B is True exactly when deflated_z_B >= z(0.95)
+    res = t6.evaluate_candidate(_synthetic_cm(sr=0.08, g3=0.0, g4=3.0, T=2491))
+    assert (res["deflated_z_B"] >= t6.Z_PASS) == res["pass_B"]

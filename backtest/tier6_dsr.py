@@ -217,3 +217,130 @@ def expected_max_ratio_form_b(n_star: int) -> float:
         (1.0 - g) * norm.ppf(1.0 - 1.0 / n_star)
         + g * norm.ppf(1.0 - 1.0 / (n_star * math.e))
     )
+
+
+# --------------------------------------------------------------------------
+# Task 4: Mertens variance + SR* + deflated-z + DSR/PSR + pass rule
+# --------------------------------------------------------------------------
+Z_PASS = float(norm.ppf(1.0 - ALPHA))  # one-sided z(0.95) = 1.6449
+
+
+def mertens_variance(sr: float, gamma3: float, gamma4: float, T: int) -> float:
+    """Mertens 2002 asymptotic Sharpe-estimator variance ``Var(SR)``.
+
+    ``Var(SR) = (1 - g3*SR + ((g4-1)/4)*SR^2) / (T-1)``. ``gamma4`` is RAW
+    kurtosis (3 = Gaussian). At ``SR = 0`` the skew/kurtosis terms vanish and
+    this reduces to the null variance ``1/(T-1)``.
+
+    Args:
+        sr: Sharpe estimate (per-bar units).
+        gamma3: Population skew.
+        gamma4: RAW kurtosis (3 = Gaussian).
+        T: Count of finite per-bar returns.
+
+    Returns:
+        The Mertens variance (a positive float).
+
+    Raises:
+        ValueError: If the numerator term is non-positive (degenerate /
+            asymptotic breakdown under extreme moments). This is the math
+            contract of this pure unit; the cohort evaluator wraps it.
+    """
+    term = 1.0 - gamma3 * sr + ((gamma4 - 1.0) / 4.0) * sr * sr
+    if term <= 0.0:
+        raise ValueError(
+            f"non-positive Mertens variance term {term:.4f} "
+            f"(sr={sr}, g3={gamma3}, g4={gamma4}): asymptotic breakdown"
+        )
+    return term / (T - 1)
+
+
+def sr_star(n_star: int, T: int, form: str) -> float:
+    """Expected-max Sharpe benchmark ``SR* = sqrt(1/(T-1)) * ER``.
+
+    The null variance is ``1/(T-1)`` (Gaussian null: skew/kurtosis vanish at
+    SR=0). ``ER`` is the expected-max ratio: Form B (authoritative) or Form A
+    (companion).
+
+    Args:
+        n_star: Effective number of independent trials.
+        T: Count of finite per-bar returns.
+        form: ``"B"`` (authoritative) or ``"A"`` (companion).
+
+    Returns:
+        The expected-max Sharpe benchmark ``SR*``.
+    """
+    er = expected_max_ratio_form_b(n_star) if form == "B" else expected_max_ratio_form_a(n_star)
+    return math.sqrt(1.0 / (T - 1)) * er
+
+
+def deflated_z(sr: float, sr_star_val: float, gamma3: float, gamma4: float, T: int) -> float:
+    """Deflated z-statistic ``(SR_hat - SR*) * sqrt(T-1) / sqrt(Mertens(SR_hat))``.
+
+    DESIGN INVARIANT (A10): the denominator ``sqrt(mertens_variance(...)*(T-1))``
+    equals ``sqrt(term)`` exactly, because ``mertens_variance = term/(T-1)`` so
+    the ``(T-1)`` factors cancel: ``mertens*(T-1) = term``. We deliberately keep
+    the ``*(T-1)`` form (rather than recomputing ``term`` inline) so the single
+    source of truth for the variance term is ``mertens_variance`` — both the
+    benchmark scaling and the estimator SE flow through it, and its
+    non-positive guard fires once. ``test_deflated_z_denominator_equals_sqrt_term``
+    pins this cancellation.
+
+    Args:
+        sr: Sharpe estimate (per-bar units).
+        sr_star_val: The expected-max benchmark ``SR*`` for this candidate.
+        gamma3: Population skew.
+        gamma4: RAW kurtosis (3 = Gaussian).
+        T: Count of finite per-bar returns.
+
+    Returns:
+        The deflated z-statistic.
+
+    Raises:
+        ValueError: Propagated from ``mertens_variance`` on a non-positive term.
+    """
+    denom = math.sqrt(mertens_variance(sr, gamma3, gamma4, T) * (T - 1))
+    return (sr - sr_star_val) * math.sqrt(T - 1) / denom
+
+
+def evaluate_candidate(cm: CandidateMoments, n_star: int = N_STAR) -> dict:
+    """Compute Form B (authoritative) + Form A (companion) DSR statistics + pass.
+
+    Pass rule (R6.1 §3.1 locked, one-sided, no Bonferroni layering):
+    ``pass <=> deflated_z >= z(1-alpha)=1.6449 <=> PSR(SR*) >= 0.95
+    <=> dsr_statistic >= 0`` where ``dsr_statistic = deflated_z - z(0.95)`` and
+    ``PSR(SR*) = Phi(deflated_z)``.
+
+    Args:
+        cm: The candidate's moments.
+        n_star: Effective number of independent trials (default ``N_STAR=18``).
+
+    Returns:
+        A dict with both forms' ``sr_star_{B,A}``, ``er_{b,a}``,
+        ``deflated_z_{B,A}``, ``psr_{B,A}``, ``dsr_statistic_{B,A}``,
+        ``pass_{B,A}`` plus context fields.
+    """
+    out: dict = {
+        "hypothesis_hash": cm.hypothesis_hash,
+        "name": cm.name,
+        "theme": cm.theme,
+        "T": cm.T,
+        "sr_per_bar": cm.sr_per_bar,
+        "gamma3": cm.gamma3,
+        "gamma4": cm.gamma4,
+        "trades": cm.trades,
+        "var_sr_null": 1.0 / (cm.T - 1),  # A9: Var(SR_null) = 1/(T-1)
+        "n_star": n_star,
+        "z_pass": Z_PASS,
+    }
+    out["er_b"] = expected_max_ratio_form_b(n_star)
+    out["er_a"] = expected_max_ratio_form_a(n_star)
+    for form in ("B", "A"):
+        ssz = sr_star(n_star, cm.T, form)
+        z = deflated_z(cm.sr_per_bar, ssz, cm.gamma3, cm.gamma4, cm.T)
+        out[f"sr_star_{form}"] = ssz
+        out[f"deflated_z_{form}"] = z
+        out[f"psr_{form}"] = float(norm.cdf(z))
+        out[f"dsr_statistic_{form}"] = z - Z_PASS
+        out[f"pass_{form}"] = bool(z >= Z_PASS)
+    return out
