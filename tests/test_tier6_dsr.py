@@ -80,3 +80,64 @@ def test_derive_cohort_raises_on_partition_drift():
     dropped = df[df["hypothesis_hash"] != locked[0]]
     with pytest.raises(ValueError, match="cohort partition drift"):
         t6.derive_cohort(dropped)
+
+
+# ==========================================================================
+# Task 2: Moment loader + consume-with-verify (+ A8 sha256 integrity gate)
+# ==========================================================================
+def test_load_moments_matches_recompute_and_raw_kurtosis():
+    df = _cohort_df()
+    h = "7abff29fc2f117a1"  # ema_crossover_momentum_acceleration
+    cm = t6.load_candidate_moments(h, df)
+    # recompute from parquet
+    r = pd.read_parquet(t6.HOLDOUT_DIR / h / "returns_per_bar.parquet")["return"]
+    rf = r[np.isfinite(r)]
+    assert cm.T == len(rf)
+    assert abs(cm.gamma3 - float(skew(rf, bias=True))) < t6.MOMENT_RECOMPUTE_EPS
+    # RAW kurtosis (3=normal), NOT excess
+    assert abs(cm.gamma4 - float(kurtosis(rf, fisher=False, bias=True))) < t6.MOMENT_RECOMPUTE_EPS
+    assert abs(cm.gamma4 - float(kurtosis(rf, fisher=True, bias=True))) > 1.0  # != excess
+    assert abs(cm.sr_per_bar - rf.mean() / rf.std(ddof=0)) < 1e-12
+
+
+def test_load_moments_raises_on_stored_recompute_mismatch():
+    # if stored gamma deviates from recompute beyond EPS, raise (forensic guard)
+    df = _cohort_df()
+    h = "7abff29fc2f117a1"
+    bad = df.copy()
+    bad.loc[bad.hypothesis_hash == h, "gamma4"] = 999.0
+    with pytest.raises(ValueError, match="moment mismatch"):
+        t6.load_candidate_moments(h, bad)
+
+
+def test_load_moments_raises_on_t_obs_mismatch():
+    df = _cohort_df()
+    h = "7abff29fc2f117a1"
+    bad = df.copy()
+    bad.loc[bad.hypothesis_hash == h, "T_obs"] = 1
+    with pytest.raises(ValueError, match="moment mismatch"):
+        t6.load_candidate_moments(h, bad)
+
+
+def test_load_moments_a8_sha256_gate_raises_on_mismatch():
+    # A8: verify CSV-stored returns_per_bar_sha256 against on-disk parquet sha256
+    # BEFORE recompute; raise on mismatch (artifact-integrity gate).
+    df = _cohort_df()
+    h = "7abff29fc2f117a1"
+    bad = df.copy()
+    bad.loc[bad.hypothesis_hash == h, "returns_per_bar_sha256"] = "deadbeef" * 8
+    with pytest.raises(ValueError, match="sha256"):
+        t6.load_candidate_moments(h, bad)
+
+
+def test_load_moments_fields_present():
+    df = _cohort_df()
+    h = "7abff29fc2f117a1"
+    cm = t6.load_candidate_moments(h, df)
+    assert cm.hypothesis_hash == h
+    assert cm.name == "ema_crossover_momentum_acceleration"
+    assert cm.theme == "momentum"
+    assert cm.trades == 12  # holdout_total_trades
+    # frozen dataclass — cannot mutate
+    with pytest.raises(Exception):
+        cm.gamma3 = 0.0  # type: ignore[misc]
