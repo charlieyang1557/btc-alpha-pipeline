@@ -17,7 +17,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from scipy.stats import kurtosis, skew
+from scipy.stats import kurtosis, norm, skew
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 HOLDOUT_DIR = PROJECT_ROOT / "data/phase2c_evaluation_gate/phase4_forward_2026_15bps_v1"
@@ -167,4 +167,53 @@ def load_candidate_moments(hypothesis_hash: str, df: pd.DataFrame) -> CandidateM
     return CandidateMoments(
         hypothesis_hash, str(row["name"]), str(row["theme"]),
         sr, g3, g4, T, trades,
+    )
+
+
+# --------------------------------------------------------------------------
+# Task 3: expected-max ratios (Form A companion / Form B authoritative)
+# --------------------------------------------------------------------------
+def expected_max_ratio_form_a(n_star: int) -> float:
+    """Form A asymptotic expected-max ratio (COMPANION; non-authoritative).
+
+    ``sqrt(2 * ln N*)`` — the project's interim heuristic screen
+    (CLAUDE.md "interim screen only"). Retained for first-fire transparency;
+    NOT the capital-adjacent gate.
+
+    Args:
+        n_star: Effective number of independent trials (must be > 1).
+
+    Returns:
+        The normalized expected-max-of-N* ratio.
+
+    Raises:
+        ValueError: If ``n_star <= 1`` (log/degenerate).
+    """
+    if n_star <= 1:
+        raise ValueError("Form A expected-max requires N* > 1")
+    return math.sqrt(2.0 * math.log(n_star))
+
+
+def expected_max_ratio_form_b(n_star: int) -> float:
+    """Form B Euler-Mascheroni closed-form expected-max ratio (AUTHORITATIVE).
+
+    BLdP 2014 / SD-A-alpha lock:
+    ``(1-g)*Phi^-1(1 - 1/N*) + g*Phi^-1(1 - 1/(N**e))``, g = Euler-Mascheroni.
+    This is the SD-A-alpha-locked instrument and the authoritative capital gate.
+
+    Args:
+        n_star: Effective number of independent trials (must be > 1).
+
+    Returns:
+        The normalized expected-max-of-N* ratio.
+
+    Raises:
+        ValueError: If ``n_star <= 1`` (``Phi^-1(0) = -inf``).
+    """
+    if n_star <= 1:
+        raise ValueError("Form B closed-form requires N* > 1 (Phi^-1(0) = -inf)")
+    g = EULER_GAMMA
+    return float(
+        (1.0 - g) * norm.ppf(1.0 - 1.0 / n_star)
+        + g * norm.ppf(1.0 - 1.0 / (n_star * math.e))
     )

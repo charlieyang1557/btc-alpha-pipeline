@@ -141,3 +141,28 @@ def test_load_moments_fields_present():
     # frozen dataclass — cannot mutate
     with pytest.raises(Exception):
         cm.gamma3 = 0.0  # type: ignore[misc]
+
+
+# ==========================================================================
+# Task 3: Expected-max ratios (Form A + Form B) + monotonicity + guard
+# ==========================================================================
+def test_expected_max_ratios_at_18():
+    assert abs(t6.expected_max_ratio_form_a(18) - 2.4043) < 1e-3
+    assert abs(t6.expected_max_ratio_form_b(18) - 1.8539) < 1e-3
+
+
+def test_expected_max_ratios_monotonic_increasing():
+    for f in (t6.expected_max_ratio_form_a, t6.expected_max_ratio_form_b):
+        vals = [f(n) for n in (2, 5, 10, 18, 30)]
+        assert all(b > a for a, b in zip(vals, vals[1:]))
+
+
+def test_form_degenerate_guard():
+    with pytest.raises(ValueError):
+        t6.expected_max_ratio_form_b(1)
+    with pytest.raises(ValueError):
+        t6.expected_max_ratio_form_a(1)
+    with pytest.raises(ValueError):
+        t6.expected_max_ratio_form_b(0)
+    with pytest.raises(ValueError):
+        t6.expected_max_ratio_form_a(0)
