@@ -2,7 +2,7 @@
 
 **Cycle:** B-C-narrow data-recovery successor cycle — recover per-bar return series + per-candidate γ3/γ4 moments + registry linkage for the `phase4_forward_2026_15bps_v1` cohort_a (39 candidates), to satisfy the **R6.1 V_SEAL §10 binding precondition** and unblock post-V_SEAL Tier 6 evaluation application.
 
-**SEAL status:** SEALED (DRAFT pending Phase 4 B2 re-review + Rule-2 SEAL-eve + Charlie atomic-SEAL register).
+**SEAL status:** DRAFT / SEAL-candidate (pending Phase 4 B2 re-review ADOPT + Rule-2 SEAL-eve + Charlie atomic-SEAL register #N+20).
 
 **Path framing:** Approach D' (producer-edit + minimum bounded engine extension); PV3-SPLIT-BY-PHASE (5 phase-specific sub-plans, each with its own PFR + per-phase ratify + task-level SEAL; Phase Marker advance reserved for THIS arc-level Phase 4 closeout).
 
@@ -63,7 +63,7 @@ All dates UTC. Cycle entry → Phase 3 re-fire SEAL spanned 2026-05-26 → 2026-
 |---|---|---|---|---|
 | **0 Engine extension** | `f112599` | PFR R1–R4 (R4 convergent) | +13 (TestBCNarrowPhase0EngineExtension); pc9 2191→2204 | `RegimeHoldoutResult.equity_curve`; 4 LC-b kwargs; atomic write-then-registry; `_compute_sha256_file` + `_resolve_canonical_parquet_path` helpers; fail-closed preflight scalar validation. 6 Codex BLOCKINGs absorbed; 5 NOTE-deferred to Phase 2/3. |
 | **1 Pre-impl gates** | `b10ffb2` | PFR R1–R2 | observation only (no code) | G1 engine-diff audit (4-category framework; 0 NUMERICAL-PATH → ε=1e-6 achievable); G2 StrategyDSL backward-compat (N=39, 100% validate); G3 raw_payloads inventory (998 symlinks resolve, target-confined); G3.5 equity_curve smoke (pre-satisfied by Phase 0). |
-| **2 Producer TDD** | `0a54f65` (impl `86f75ff`) | PFR R1–R11 + SEAL-eve | +26 producer tests; pc9 2204→2236; T1.4 AST-classifier maintenance | `--enable-b-c-narrow-recovery` + `--force-rerun-existing`; R9 split (PRE-flight read-only guard + POST-fire parent-only finalizer; 39 children written by engine); W0 identity guard; W3 idempotent archive (refuse-if-exists + same-FS guard); `_CSV_FIELDS` ext (γ3/γ4/T_obs/returns_per_bar_path/sha256); LC-b threading + γ3/γ4 merge into inline per-candidate JSON. |
+| **2 Producer TDD** | `d42beeb` (ratify T12; impl `86f75ff`; polish through `0a54f65`) | PFR R1–R11 + SEAL-eve | +32 collected producer test items (26 distinct + 6 parametrize); pc9 2204→2236; T1.4 AST-classifier maintenance | `--enable-b-c-narrow-recovery` + `--force-rerun-existing`; R9 split (PRE-flight read-only guard + POST-fire parent-only finalizer; 39 children written by engine); W0 identity guard; W3 idempotent archive (refuse-if-exists + same-FS guard); `_CSV_FIELDS` ext (γ3/γ4/T_obs/returns_per_bar_path/sha256); LC-b threading + γ3/γ4 merge into inline per-candidate JSON. |
 | **3 Fire / data-recovery** | `9d54b6b` | PFR R1–R5 + SEAL-eve R1–R2 + (re-fire) B2 re-review + Rule-2 SEAL-eve | +12 V4 tests; pc9 2236→2248 | T13 fire (39 candidates) + T14 V4 reproducibility gate + T14b canonical relocation. FIRST fire executed + reverted (Option A) after 3 sealed-plan defects surfaced; v9/v9.1 re-fire errata; RE-fire executed clean. See §5–§8. |
 
 ---
@@ -91,7 +91,7 @@ The producer W3 step (`shutil.move`) relocated the pre-fire canonical to `data/p
 
 ## §8 — Re-fire / zero-regression verification (Gaps 1/2/2b)
 
-The FIRST fire (v8 plan) executed GREEN (V4 12/12) but the Step 14.5 full-suite gate surfaced **3 sealed-plan defects**: **Gap 1** — the canonical eval-gate dir is git-TRACKED (the entire `data/phase2c_evaluation_gate/` tree, 10,366 files / 45 dirs, is tracked), not gitignored as the plan assumed → the fire deletes/mutates 41 tracked files + breaks t1_4 byte-identity; **Gap 2** — the V4 file's +12 tests break the t1_4 pc9 baseline gate (2236→2248); **Gap 2b** — Step 13.3 ran the V4 file in isolation → missed Gap 2. Per Charlie register **Option A**, the fire was reverted to the green SEAL tree `b96d3a8` (canonical restored; 40 registry rows deleted; RED commit reverted `bccbc47`), the plan was patched (v9 re-fire errata `cb59a55` → B2 re-review both APPROVE/SOUND → v9.1 polish `0025afd` → Rule-2 SEAL-eve CLEAR → re-SEAL `38e1291`), and the RE-fire executed clean through the corrected §V9.4 sequence (RED `5e77e63` → fire → V4 12/12 → fixture `9cabc9b` → mv → archive commit `6d4bb7f` → t1_4 rescope + canonical commit `ff0c576` → relocated full-suite gate **2372 GREEN** → ratify `9d54b6b`). A **DESIGN INVARIANT** was codified: t1_4's `_per_candidate_dirs()` runs at pytest *collection* time, so no full-suite may run while the canonical is absent — the zero-regression gate was relocated to post-mv (Step 14b.2.8).
+The FIRST fire (v8 plan) executed GREEN (V4 12/12) but the Step 14.5 full-suite gate surfaced **3 sealed-plan defects**: **Gap 1** — the canonical eval-gate dir is git-TRACKED (the entire `data/phase2c_evaluation_gate/` tree — 10,366 files / 45 dirs at `7c8f4a7` pre-recovery — is tracked), not gitignored as the plan assumed → the fire deletes/mutates 41 tracked files + breaks t1_4 byte-identity; **Gap 2** — the V4 file's +12 tests break the t1_4 pc9 baseline gate (2236→2248); **Gap 2b** — Step 13.3 ran the V4 file in isolation → missed Gap 2. Per Charlie register **Option A**, the fire was reverted to the green SEAL tree `b96d3a8` (canonical restored; 40 registry rows deleted; RED commit `3a527db` reverted by `bccbc47`), the plan was patched (v9 re-fire errata `cb59a55` → B2 re-review both APPROVE/SOUND → v9.1 polish `0025afd` → Rule-2 SEAL-eve CLEAR → re-SEAL `38e1291`), and the RE-fire executed clean through the corrected §V9.4 sequence (RED `5e77e63` → fire → V4 12/12 → fixture `9cabc9b` → mv → archive commit `6d4bb7f` → t1_4 rescope + canonical commit `ff0c576` → relocated full-suite gate **2372 GREEN** → ratify `9d54b6b`). A **DESIGN INVARIANT** was codified: t1_4's `_per_candidate_dirs()` runs at pytest *collection* time, so no full-suite may run while the canonical is absent — the zero-regression gate was relocated to post-mv (Step 14b.2.8).
 
 ---
 
@@ -133,10 +133,10 @@ Per anti-pre-emption, the following §-candidates from this cycle are queued NAM
   - Cycle: B-C-narrow data-recovery (R6.1 V_SEAL §10 binding precondition)
   - Sealed by: Charlie register #N+20 (Phase 4 atomic SEAL)
   - Cycle entry: Charlie register N1 2026-05-26
-  - Cycle SEAL ratify: 2026-05-29 (pending Phase 4 B2 re-review + Rule-2 SEAL-eve)
-  - Phase seal commits: Phase 0 `f112599` / Phase 1 `b10ffb2` / Phase 2 `0a54f65` / Phase 3 `9d54b6b`
+  - Cycle SEAL ratify: 2026-05-29 (Phase 4 B2 re-review COMPLETE — Codex + advisor, 5 doc-precision ADOPT applied: +32 producer-test count, RED-commit `3a527db`, Phase 2 seal `d42beeb`, DRAFT-status, 10,366-files time-anchor; pending Rule-2 SEAL-eve + Charlie atomic-SEAL register #N+20)
+  - Phase seal commits: Phase 0 `f112599` / Phase 1 `b10ffb2` / Phase 2 `d42beeb` (ratify T12; polish through `0a54f65`) / Phase 3 `9d54b6b`
   - Re-fire commit chain: `cb59a55` → `0025afd` → `38e1291` → `5e77e63` → `9cabc9b` → `6d4bb7f` → `ff0c576` → `9d54b6b`
-  - Adversarial round count (cycle): Phase 0 R1–R4 + Phase 1 R1–R2 + Phase 2 R1–R11+SEAL-eve + Phase 3 R1–R5 + SEAL-eve R1–R2 + re-fire B2 + Rule-2 SEAL-eve
+  - Adversarial round count (cycle): Phase 0 R1–R4 + Phase 1 R1–R2 + Phase 2 R1–R11+SEAL-eve + Phase 3 R1–R5 + SEAL-eve R1–R2 + re-fire B2 + Rule-2 SEAL-eve + Phase 4 SEAL B2 (Codex+advisor) + Rule-2 SEAL-eve
   - Rule-2 SEAL-eve vindication: re-vindicated this cycle (Phase 3 v8 SEAL-eve R1 caught 2 architectural BLOCKINGs missed by 5 PFR rounds)
   - Cycle saturation: reached (Phase 3 re-review B2 LOW-floor + Rule-2 SEAL-eve CLEAR)
 
