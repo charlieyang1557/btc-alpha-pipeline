@@ -10,19 +10,30 @@ untouched. This is the production closed-form DSR per CLAUDE.md HARD CONSTRAINT
 """
 from __future__ import annotations
 
+import argparse
 import csv
 import hashlib
 import json
+import logging
 import math
+import sys
+import time
 from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import yaml
 from scipy.stats import kurtosis, norm, skew
 
+from backtest.wf_lineage import check_evaluation_semantics_or_raise
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-HOLDOUT_DIR = PROJECT_ROOT / "data/phase2c_evaluation_gate/phase4_forward_2026_15bps_v1"
+EVALUATION_GATE_DIR = PROJECT_ROOT / "data/phase2c_evaluation_gate"
+DEFAULT_COHORT = "phase4_forward_2026_15bps_v1"
+HOLDOUT_DIR = EVALUATION_GATE_DIR / DEFAULT_COHORT
+
+logger = logging.getLogger("tier6_dsr")
 
 ALPHA = 0.05
 N_STAR = 18
@@ -108,10 +119,17 @@ def _sha256_file(path: Path) -> str:
     return h.hexdigest()
 
 
-def load_candidate_moments(hypothesis_hash: str, df: pd.DataFrame) -> CandidateMoments:
+def load_candidate_moments(
+    hypothesis_hash: str,
+    df: pd.DataFrame,
+    holdout_dir: Path = HOLDOUT_DIR,
+) -> CandidateMoments:
     """Load per-candidate moments with consume-and-verify integrity gates.
 
     Pipeline:
+    0. A2 lineage guard: validate the per-candidate
+       ``<hash>/holdout_summary.json`` under the ``single_run_holdout_v1``
+       attestation domain BEFORE consuming the parquet. Raises on bad lineage.
     1. A8 artifact-integrity gate: verify the CSV-stored
        ``returns_per_bar_sha256`` against the on-disk parquet's actual
        SHA-256 BEFORE any recompute. Raises on mismatch.
@@ -125,20 +143,32 @@ def load_candidate_moments(hypothesis_hash: str, df: pd.DataFrame) -> CandidateM
     Args:
         hypothesis_hash: Candidate identifier (row key in ``df``).
         df: The holdout_results.csv DataFrame.
+        holdout_dir: Cohort directory holding ``<hash>/`` subdirs (A6; default
+            ``HOLDOUT_DIR``). A non-default ``--cohort`` flows through here.
 
     Returns:
         A frozen :class:`CandidateMoments`.
 
     Raises:
-        ValueError: If ``hypothesis_hash`` is absent from ``df``, on sha256
-            integrity mismatch, or stored-vs-recompute moment mismatch beyond
+        ValueError: If ``hypothesis_hash`` is absent from ``df``, on a per-
+            candidate lineage-guard failure, on sha256 integrity mismatch, or
+            on a stored-vs-recompute moment mismatch beyond
             ``MOMENT_RECOMPUTE_EPS``.
     """
     matches = df.loc[df["hypothesis_hash"] == hypothesis_hash]
     if matches.empty:
         raise ValueError(f"hypothesis_hash {hypothesis_hash!r} not found in cohort DataFrame")
     row = matches.iloc[0]
-    pq = HOLDOUT_DIR / hypothesis_hash / "returns_per_bar.parquet"
+    cand_dir = holdout_dir / hypothesis_hash
+
+    # A2: per-candidate lineage guard BEFORE any parquet read.
+    cand_summary_path = cand_dir / "holdout_summary.json"
+    cand_summary = json.loads(cand_summary_path.read_text())
+    check_evaluation_semantics_or_raise(
+        cand_summary, artifact_path=str(cand_summary_path)
+    )
+
+    pq = cand_dir / "returns_per_bar.parquet"
 
     # A8: artifact-integrity gate BEFORE recompute.
     stored_sha = str(row["returns_per_bar_sha256"])
@@ -506,17 +536,22 @@ _RESULT_FIELDS = [
 ]
 
 
-def _read_cohort_csv() -> pd.DataFrame:
+def _read_cohort_csv(holdout_dir: Path = HOLDOUT_DIR) -> pd.DataFrame:
     """Read the cohort ``holdout_results.csv`` (39 rows).
 
-    DESIGN INVARIANT: a single seam for the cohort CSV read so the next-chunk
-    ``wf_lineage`` evaluation-semantics consumption guard (Task 8) can be
-    inserted right after this read, and so tests can monkeypatch the read.
+    DESIGN INVARIANT: a single seam for the cohort CSV read so the
+    ``wf_lineage`` evaluation-semantics consumption guard (Task 8) is
+    inserted right after this read in ``evaluate_cohort``, and so tests can
+    monkeypatch the read.
+
+    Args:
+        holdout_dir: Cohort directory (A6; default ``HOLDOUT_DIR``). A non-
+            default ``--cohort`` resolves to a different directory here.
 
     Returns:
         The holdout results DataFrame.
     """
-    return pd.read_csv(HOLDOUT_DIR / "holdout_results.csv")
+    return pd.read_csv(holdout_dir / "holdout_results.csv")
 
 
 def _degenerate_fail_row(
@@ -558,24 +593,31 @@ def _degenerate_fail_row(
     return row
 
 
-def _evaluate_one(hypothesis_hash: str, df: pd.DataFrame, n_star: int = N_STAR) -> dict:
+def _evaluate_one(
+    hypothesis_hash: str,
+    df: pd.DataFrame,
+    n_star: int = N_STAR,
+    holdout_dir: Path = HOLDOUT_DIR,
+) -> dict:
     """Load → evaluate → annotate one candidate, with the A3 degenerate guard.
 
     DESIGN INVARIANT (HIGH-1): ``load_candidate_moments`` is called OUTSIDE the
-    try/except so its DATA-INTEGRITY ValueErrors (missing hash, SHA-256
-    mismatch, stored-vs-recompute moment mismatch) PROPAGATE and crash
-    ``evaluate_cohort`` with a clear message. These are not Mertens math
-    degeneracy; absorbing them as ``mertens_degenerate_flag=True`` would
-    silently mask artifact corruption at a capital-adjacent fire. ONLY
-    ``evaluate_candidate``'s Mertens-degeneracy ValueError (non-positive
-    variance term, etc.) is caught → ``_degenerate_fail_row`` so one degenerate
-    candidate produces a flagged-fail row and the batch continues. The hard
-    ``ValueError`` RAISE stays inside the pure ``mertens_variance`` unit.
+    try/except so its DATA-INTEGRITY ValueErrors (missing hash, per-candidate
+    lineage-guard failure, SHA-256 mismatch, stored-vs-recompute moment
+    mismatch) PROPAGATE and crash ``evaluate_cohort`` with a clear message.
+    These are not Mertens math degeneracy; absorbing them as
+    ``mertens_degenerate_flag=True`` would silently mask artifact corruption at
+    a capital-adjacent fire. ONLY ``evaluate_candidate``'s Mertens-degeneracy
+    ValueError (non-positive variance term, etc.) is caught →
+    ``_degenerate_fail_row`` so one degenerate candidate produces a flagged-fail
+    row and the batch continues. The hard ``ValueError`` RAISE stays inside the
+    pure ``mertens_variance`` unit.
 
     Args:
         hypothesis_hash: The candidate identifier.
         df: The cohort DataFrame.
         n_star: Effective number of independent trials.
+        holdout_dir: Cohort directory threaded to the loader (A6).
 
     Returns:
         An annotated result dict; ``mertens_degenerate_flag`` is False for a
@@ -588,7 +630,7 @@ def _evaluate_one(hypothesis_hash: str, df: pd.DataFrame, n_star: int = N_STAR) 
     # Module-level lookup (not the imported name) so monkeypatching
     # tier6_dsr.load_candidate_moments is honored by the cohort evaluator.
     # Data-integrity ValueError propagates (crash) — see DESIGN INVARIANT above.
-    cm = load_candidate_moments(hypothesis_hash, df)
+    cm = load_candidate_moments(hypothesis_hash, df, holdout_dir=holdout_dir)
     try:
         row = annotate_flags(evaluate_candidate(cm, n_star=n_star))
         row["mertens_degenerate_flag"] = False
@@ -621,10 +663,114 @@ def _write_csv(path: Path, rows: list[dict], extra: tuple[str, ...] = ()) -> Non
             w.writerow(r)
 
 
+# A12: cost-anchor preflight (HARD CONSTRAINT 270-271).
+# The two known-equivalent 15bps spot anchors (functionally identical bodies;
+# differ only by header + cost_model.name + SHA, by design). Allowlisted by
+# filename, but the loaded body's per-side cost is ALSO verified to be 15bps so
+# a future relabel cannot slip a 7bps body through under one of these names.
+COST_ANCHOR_15BPS_CONFIGS = frozenset({
+    "execution_phase4_15bps.yaml",
+    "execution_phaseb_spot_15bps.yaml",
+})
+COST_ANCHOR_REQUIRED_BPS_PER_SIDE = 15.0
+COST_ANCHOR_BPS_EPS = 1e-9
+
+
+def _per_side_cost_bps(cost_model: dict) -> float:
+    """Return the per-side effective cost in bps: ``default_fee_bps + slippage_bps``.
+
+    Args:
+        cost_model: The parsed ``cost_model`` block of an execution YAML.
+
+    Returns:
+        The per-side effective cost in bps (taker/default fee + slippage).
+    """
+    fee = float(cost_model.get("default_fee_bps", 0.0))
+    slip = float(cost_model.get("slippage_bps", 0.0))
+    return fee + slip
+
+
+def _assert_cost_anchor_15bps_spot(summary_dict: dict) -> None:
+    """Preflight: assert the summary's execution config is a 15bps/side spot anchor.
+
+    HARD CONSTRAINT 270-271 (CLAUDE.md Conservative-Anchor Gate Integrity): a
+    Tier 6 promotion-class evaluation must be anchored at the 15bps/side spot
+    cost model (30bps round-trip), NOT the prohibited 7bps effective model
+    (``config/execution.yaml`` / ``effective_7bps_per_side``).
+
+    Two-layer check:
+
+    1. ``execution_config_path`` basename must be one of the two known-
+       equivalent 15bps spot anchors (``COST_ANCHOR_15BPS_CONFIGS``).
+    2. The loaded YAML body's per-side cost (``default_fee_bps +
+       slippage_bps``) must equal 15.0 bps. This defends against a future
+       relabel that points one of the allowlisted names at a 7bps body.
+
+    Args:
+        summary_dict: The aggregate ``holdout_summary.json`` dict; must carry
+            ``execution_config_path`` (relative to the repo root or absolute).
+
+    Raises:
+        ValueError: With an explicit ``HARD CONSTRAINT 270`` message if the
+            config path is missing, not an allowlisted 15bps spot anchor, the
+            YAML is unreadable / lacks a ``cost_model``, or the loaded body's
+            per-side cost is not 15bps.
+    """
+    cfg_path_raw = summary_dict.get("execution_config_path")
+    if not cfg_path_raw:
+        raise ValueError(
+            "HARD CONSTRAINT 270: missing 'execution_config_path' in summary — "
+            "cannot verify the 15bps/side spot cost anchor for a Tier 6 "
+            "promotion-class evaluation. Refusing per CLAUDE.md "
+            "Conservative-Anchor Gate Integrity."
+        )
+    cfg_path = Path(cfg_path_raw)
+    basename = cfg_path.name
+    if basename not in COST_ANCHOR_15BPS_CONFIGS:
+        allowed = ", ".join(sorted(COST_ANCHOR_15BPS_CONFIGS))
+        raise ValueError(
+            f"HARD CONSTRAINT 270: execution_config_path={cfg_path_raw!r} is not "
+            f"an allowlisted 15bps/side spot anchor ({allowed}). The 7bps "
+            f"effective model (config/execution.yaml, effective_7bps_per_side) is "
+            f"PROHIBITED as a Tier 5/6 promotion basis. Refusing per CLAUDE.md "
+            f"Conservative-Anchor Gate Integrity."
+        )
+
+    # Resolve relative paths against the repo root (the summary stores the
+    # repo-relative path, e.g. "config/execution_phase4_15bps.yaml").
+    resolved = cfg_path if cfg_path.is_absolute() else PROJECT_ROOT / cfg_path
+    try:
+        cfg = yaml.safe_load(resolved.read_text())
+    except OSError as exc:
+        raise ValueError(
+            f"HARD CONSTRAINT 270: cannot read execution config {resolved} "
+            f"to verify the 15bps/side spot cost anchor: {exc}. Refusing per "
+            f"CLAUDE.md Conservative-Anchor Gate Integrity."
+        ) from exc
+    cost_model = (cfg or {}).get("cost_model")
+    if not isinstance(cost_model, dict):
+        raise ValueError(
+            f"HARD CONSTRAINT 270: execution config {resolved} has no "
+            f"'cost_model' block — cannot verify the 15bps/side spot cost "
+            f"anchor. Refusing per CLAUDE.md Conservative-Anchor Gate Integrity."
+        )
+    per_side = _per_side_cost_bps(cost_model)
+    if abs(per_side - COST_ANCHOR_REQUIRED_BPS_PER_SIDE) > COST_ANCHOR_BPS_EPS:
+        raise ValueError(
+            f"HARD CONSTRAINT 270: execution config {resolved} encodes "
+            f"{per_side}bps/side ({2 * per_side}bps round-trip), not the "
+            f"required {COST_ANCHOR_REQUIRED_BPS_PER_SIDE}bps/side spot anchor "
+            f"(30bps round-trip). A relabelled 7bps body cannot be used as a "
+            f"Tier 6 promotion basis. Refusing per CLAUDE.md Conservative-Anchor "
+            f"Gate Integrity."
+        )
+
+
 def evaluate_cohort(
     out_dir: Path | None = DEFAULT_OUT_DIR,
     n_sims: int = 100_000,
     write: bool = True,
+    holdout_dir: Path = HOLDOUT_DIR,
 ) -> dict:
     """Evaluate the locked-18 (authoritative) + companion-21 (quarantined) cohort.
 
@@ -641,6 +787,10 @@ def evaluate_cohort(
         n_sims: Monte-Carlo simulation count; ``0`` skips MC validation
             (``mc_validation`` becomes ``{}``).
         write: When True (and ``out_dir`` is not None), write the 4 artifacts.
+        holdout_dir: Cohort directory (A6; default ``HOLDOUT_DIR``). A non-
+            default ``--cohort`` resolves to a different directory and flows
+            through to the CSV read, the lineage guard, the cost-anchor
+            preflight, and the per-candidate moment loader.
 
     Returns:
         A dict with ``authoritative`` (18 rows), ``companion`` (21 rows),
@@ -648,22 +798,40 @@ def evaluate_cohort(
         ``degenerate_count`` (count of authoritative+companion rows with
         ``mertens_degenerate_flag is True``), ``mc_validation``, ``n_star``,
         ``alpha``, ``authoritative_form="B"`` and ``companion_form="B"``.
+
+    Raises:
+        ValueError: If the aggregate ``holdout_summary.json`` fails the
+            ``single_run_holdout_v1`` lineage guard (A2), if the cost-anchor
+            preflight (A12) rejects the execution config, or propagated from a
+            per-candidate data-integrity failure (A2/A8 in the loader).
     """
     # DESIGN INVARIANT: the wf_lineage evaluation-semantics consumption guard
-    # (Task 8, next chunk) is inserted immediately after this read, before any
-    # downstream consumption of the cohort artifacts.
-    df = _read_cohort_csv()
+    # (A2) + cost-anchor preflight (A12) fire IMMEDIATELY after the cohort CSV
+    # read and BEFORE any per-candidate parquet/moment consumption, so an unsafe
+    # lineage or a non-15bps-spot anchor aborts before any capital-adjacent math.
+    df = _read_cohort_csv(holdout_dir=holdout_dir)
+
+    summary_path = holdout_dir / "holdout_summary.json"
+    summary_dict = json.loads(summary_path.read_text())
+    # A2: aggregate lineage guard (module-global name so it is monkeypatchable).
+    check_evaluation_semantics_or_raise(
+        summary_dict, artifact_path=str(summary_path)
+    )
+    # A12: cost-anchor preflight (HARD CONSTRAINT 270-271). Module-global name so
+    # it is monkeypatchable; both fire before any per-candidate consumption.
+    _assert_cost_anchor_15bps_spot(summary_dict)
+
     locked, companion = derive_cohort(df)
 
     authoritative: list[dict] = []
     for h in locked:
-        row = _evaluate_one(h, df)
+        row = _evaluate_one(h, df, holdout_dir=holdout_dir)
         row["non_authoritative"] = False
         authoritative.append(row)
 
     companion_rows: list[dict] = []
     for h in companion:
-        row = _evaluate_one(h, df)
+        row = _evaluate_one(h, df, holdout_dir=holdout_dir)
         row["non_authoritative"] = True
         # Resolve the name for monday_flag from the cohort frame (the row's
         # `name` may be None on a degenerate auto-fail).
@@ -711,3 +879,125 @@ def evaluate_cohort(
         ))
         (out_dir / "tier6_mc_validation.json").write_text(json.dumps(mc, indent=2))
     return out
+
+
+# --------------------------------------------------------------------------
+# Task 8: CLI + UTC logging (A7)
+# --------------------------------------------------------------------------
+def _build_log_formatter() -> logging.Formatter:
+    """Return a logging formatter that emits UTC ISO-8601 timestamps (A7).
+
+    Sets ``converter = time.gmtime`` so the ``%(asctime)s`` field is rendered
+    in UTC (never local time), with an explicit trailing ``Z`` so the printed
+    timestamp is unambiguously a UTC instant. CLAUDE.md mandates all log
+    timestamps are UTC ISO-8601.
+
+    Returns:
+        A configured :class:`logging.Formatter` with ``converter`` set to
+        :func:`time.gmtime`.
+    """
+    fmt = logging.Formatter(
+        fmt="%(asctime)s.%(msecs)03dZ %(levelname)s %(name)s %(message)s",
+        datefmt="%Y-%m-%dT%H:%M:%S",
+    )
+    fmt.converter = time.gmtime
+    return fmt
+
+
+def _configure_logging() -> None:
+    """Attach a UTC stdout stream handler to the module logger (idempotent)."""
+    if logger.handlers:
+        return
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(_build_log_formatter())
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
+    logger.propagate = False
+
+
+def main(argv: list[str] | None = None) -> int:
+    """CLI entry point for the Tier 6 closed-form DSR cohort evaluation.
+
+    Reads ``--cohort`` (default ``phase4_forward_2026_15bps_v1``), resolves its
+    directory under ``data/phase2c_evaluation_gate/``, and runs
+    :func:`evaluate_cohort` with the lineage guard (A2) + cost-anchor preflight
+    (A12) firing before any per-candidate consumption. ``--dry-run`` computes
+    the cohort but writes NO artifacts.
+
+    Args:
+        argv: Optional argument vector (defaults to ``sys.argv[1:]``).
+
+    Returns:
+        ``0`` on success, ``1`` on any validation/lineage/cost-anchor failure
+        (surfaced as a clear log line, not a raw traceback).
+    """
+    parser = argparse.ArgumentParser(
+        prog="python -m backtest.tier6_dsr",
+        description=(
+            "Tier 6 closed-form Deflated Sharpe Ratio evaluation application "
+            "(R6.1-locked BLdP-2014 + §12 Errata; NOT the heuristic screen)."
+        ),
+    )
+    parser.add_argument(
+        "--cohort", default=DEFAULT_COHORT,
+        help=(
+            "Cohort directory name under data/phase2c_evaluation_gate/ "
+            f"(default: {DEFAULT_COHORT})."
+        ),
+    )
+    parser.add_argument(
+        "--out-dir", default=None,
+        help=(
+            "Output directory for the 4 artifacts (default: "
+            "data/phase2c_evaluation_gate/tier6_dsr_v1). Ignored under --dry-run."
+        ),
+    )
+    parser.add_argument(
+        "--n-sims", type=int, default=100_000,
+        help="Monte-Carlo expected-max validation sims; 0 skips MC (default: 100000).",
+    )
+    parser.add_argument(
+        "--dry-run", action="store_true",
+        help="Compute the cohort but write NO artifacts.",
+    )
+    args = parser.parse_args(argv)
+
+    _configure_logging()
+
+    holdout_dir = EVALUATION_GATE_DIR / args.cohort
+    out_dir = Path(args.out_dir) if args.out_dir is not None else DEFAULT_OUT_DIR
+    write = not args.dry_run
+
+    logger.info(
+        "tier6_dsr start: cohort=%s holdout_dir=%s out_dir=%s n_sims=%d dry_run=%s",
+        args.cohort, holdout_dir, out_dir, args.n_sims, args.dry_run,
+    )
+
+    try:
+        result = evaluate_cohort(
+            out_dir=out_dir,
+            n_sims=args.n_sims,
+            write=write,
+            holdout_dir=holdout_dir,
+        )
+    except (ValueError, OSError) as exc:
+        logger.error("tier6_dsr FAILED (validation/lineage/cost-anchor): %s", exc)
+        return 1
+
+    promotion_count = len(result["promotion_list"])
+    degenerate_count = result["degenerate_count"]
+    logger.info(
+        "tier6_dsr done: authoritative=%d companion=%d promoted=%d "
+        "degenerate=%d written=%s%s",
+        len(result["authoritative"]),
+        len(result["companion"]),
+        promotion_count,
+        degenerate_count,
+        write,
+        "" if write else " (dry-run: no artifacts written)",
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

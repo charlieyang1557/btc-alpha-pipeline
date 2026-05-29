@@ -519,7 +519,7 @@ def test_evaluate_cohort_degenerate_candidate_flagged_not_crash(monkeypatch):
     degenerate_hash = locked[0]
     real_loader = t6.load_candidate_moments
 
-    def fake_loader(hypothesis_hash, frame):
+    def fake_loader(hypothesis_hash, frame, **kwargs):
         if hypothesis_hash == degenerate_hash:
             # term = 1 - 5*2 + 0 = -9 < 0 -> mertens_variance raises ValueError
             return t6.CandidateMoments(
@@ -548,7 +548,7 @@ def test_evaluate_cohort_data_integrity_error_propagates(monkeypatch):
     # NOT be absorbed as mertens_degenerate_flag=True. Distinct from the
     # degenerate test above, where the loader RETURNS and evaluate_candidate
     # raises.
-    def fake_loader(hypothesis_hash, frame):
+    def fake_loader(hypothesis_hash, frame, **kwargs):
         raise ValueError("sha mismatch")
 
     monkeypatch.setattr(t6, "load_candidate_moments", fake_loader)
@@ -570,7 +570,7 @@ def test_evaluate_cohort_degenerate_count_positive_when_injected(monkeypatch):
     degenerate_hash = locked[0]
     real_loader = t6.load_candidate_moments
 
-    def fake_loader(hypothesis_hash, frame):
+    def fake_loader(hypothesis_hash, frame, **kwargs):
         if hypothesis_hash == degenerate_hash:
             # term = 1 - 5*2 + 0 = -9 < 0 -> mertens_variance raises ValueError
             return t6.CandidateMoments(
@@ -606,3 +606,185 @@ def test_evaluate_cohort_no_write_when_write_false(tmp_path):
     out = t6.evaluate_cohort(out_dir=tmp_path, n_sims=0, write=False)
     assert out["authoritative"]  # computed
     assert not any(tmp_path.iterdir())  # nothing written
+
+
+# ==========================================================================
+# Task 8: CLI + lineage guard (A2) + cost-anchor preflight (A12) +
+#         --cohort threading (A6) + UTC logging (A7) + main()
+# ==========================================================================
+import logging  # noqa: E402
+import time  # noqa: E402
+
+from backtest import wf_lineage as _wfl  # noqa: E402
+
+
+# --- A2: lineage guard on the REAL recovered summary (NON-monkeypatched) ---
+def test_real_top_level_summary_passes_lineage_guard():
+    # NON-monkeypatched: load the actual recovered aggregate summary and assert
+    # the production wf_lineage guard accepts it (no raise). This is the
+    # cross-module integration evidence that the recovered artifact is
+    # consumable under the single_run_holdout_v1 attestation domain.
+    summary = json.loads((t6.HOLDOUT_DIR / "holdout_summary.json").read_text())
+    # must not raise
+    _wfl.check_evaluation_semantics_or_raise(
+        summary, artifact_path=str(t6.HOLDOUT_DIR / "holdout_summary.json")
+    )
+
+
+def test_real_per_candidate_summaries_pass_lineage_guard():
+    # Every consumed per-candidate <hash>/holdout_summary.json carries the same
+    # single_run_holdout_v1 lineage tags and must pass the guard.
+    df = t6._read_cohort_csv()
+    for h in df["hypothesis_hash"]:
+        path = t6.HOLDOUT_DIR / h / "holdout_summary.json"
+        summary = json.loads(path.read_text())
+        _wfl.check_evaluation_semantics_or_raise(summary, artifact_path=str(path))
+
+
+def test_lineage_guard_raises_on_bad_evaluation_semantics():
+    # A summary dict with a missing/bad evaluation_semantics must raise.
+    bad = {"evaluation_semantics": "not_the_right_tag"}
+    with pytest.raises(ValueError):
+        _wfl.check_evaluation_semantics_or_raise(bad)
+    with pytest.raises(ValueError, match="evaluation_semantics"):
+        _wfl.check_evaluation_semantics_or_raise({})
+
+
+def test_evaluate_cohort_invokes_lineage_guard_before_parquet_read(monkeypatch):
+    # A2 call-order: the lineage guard fires on the aggregate summary BEFORE any
+    # per-candidate moment/parquet read. We make the guard raise and assert the
+    # loader is never reached.
+    calls = []
+
+    def boom(summary, **kw):
+        calls.append("guard")
+        raise ValueError("lineage tripwire")
+
+    def loader_should_not_run(*a, **k):
+        calls.append("loader")
+        raise AssertionError("load_candidate_moments must not run after guard raise")
+
+    monkeypatch.setattr(t6, "check_evaluation_semantics_or_raise", boom)
+    monkeypatch.setattr(t6, "load_candidate_moments", loader_should_not_run)
+    with pytest.raises(ValueError, match="lineage tripwire"):
+        t6.evaluate_cohort(out_dir=None, n_sims=0, write=False)
+    assert calls == ["guard"]  # loader never reached
+
+
+# --- A12: cost-anchor preflight (HARD CONSTRAINT 270-271) ---
+def test_cost_anchor_preflight_passes_on_real_summary():
+    summary = json.loads((t6.HOLDOUT_DIR / "holdout_summary.json").read_text())
+    # must not raise: real summary points at the 15bps spot anchor
+    t6._assert_cost_anchor_15bps_spot(summary)
+
+
+def test_cost_anchor_preflight_accepts_both_known_15bps_configs():
+    for cfg in ("config/execution_phase4_15bps.yaml",
+                "config/execution_phaseb_spot_15bps.yaml"):
+        t6._assert_cost_anchor_15bps_spot({"execution_config_path": cfg})
+
+
+def test_cost_anchor_preflight_rejects_7bps_effective_model():
+    # A synthetic summary pointing at the PROHIBITED 7bps effective model raises
+    # with the HARD CONSTRAINT message.
+    bad = {"execution_config_path": "config/execution.yaml"}
+    with pytest.raises(ValueError, match="HARD CONSTRAINT 270"):
+        t6._assert_cost_anchor_15bps_spot(bad)
+
+
+def test_cost_anchor_preflight_rejects_missing_path():
+    with pytest.raises(ValueError, match="HARD CONSTRAINT 270"):
+        t6._assert_cost_anchor_15bps_spot({})
+
+
+def test_cost_anchor_preflight_rejects_relabel_with_7bps_body(tmp_path):
+    # Defense-in-depth: a config with an allowlisted-looking name but a 7bps
+    # body must still be rejected (we verify the loaded body's cost is 15bps).
+    sneaky = tmp_path / "execution_phase4_15bps.yaml"
+    sneaky.write_text(
+        "cost_model:\n"
+        "  name: phase4_realistic_base_15bps\n"
+        "  default_fee_bps: 4.0\n"
+        "  slippage_bps: 3.0\n"
+    )
+    with pytest.raises(ValueError, match="HARD CONSTRAINT 270"):
+        t6._assert_cost_anchor_15bps_spot({"execution_config_path": str(sneaky)})
+
+
+def test_cost_anchor_preflight_is_invoked_by_evaluate_cohort(monkeypatch):
+    # The preflight is wired into evaluate_cohort before consumption.
+    seen = []
+    real = t6._assert_cost_anchor_15bps_spot
+
+    def spy(summary):
+        seen.append("preflight")
+        return real(summary)
+
+    monkeypatch.setattr(t6, "_assert_cost_anchor_15bps_spot", spy)
+    t6.evaluate_cohort(out_dir=None, n_sims=0, write=False)
+    assert "preflight" in seen
+
+
+# --- A6: --cohort honored (holdout_dir threading) ---
+def test_holdout_dir_param_changes_dir_read(tmp_path, monkeypatch):
+    # A non-default holdout_dir must actually be read (not silently ignored).
+    # Build a minimal fake cohort dir; assert _read_cohort_csv reads from it.
+    (tmp_path / "holdout_results.csv").write_text("hypothesis_hash,name\nx,y\n")
+    df = t6._read_cohort_csv(holdout_dir=tmp_path)
+    assert list(df["hypothesis_hash"]) == ["x"]
+
+
+def test_main_cohort_arg_resolves_non_default_dir(monkeypatch):
+    # CLI --cohort must change the resolved holdout_dir. We capture the
+    # holdout_dir evaluate_cohort is called with.
+    captured = {}
+
+    def fake_eval(*, out_dir, n_sims, write, holdout_dir):
+        captured["holdout_dir"] = holdout_dir
+        return {"promotion_list": [], "degenerate_count": 0,
+                "authoritative": [], "companion": []}
+
+    monkeypatch.setattr(t6, "evaluate_cohort", fake_eval)
+    rc = t6.main(["--cohort", "some_other_cohort_v9", "--dry-run", "--n-sims", "0"])
+    assert rc == 0
+    assert captured["holdout_dir"] == (
+        t6.PROJECT_ROOT / "data/phase2c_evaluation_gate" / "some_other_cohort_v9"
+    )
+
+
+# --- A7: UTC logging ---
+def test_logging_formatter_uses_utc():
+    fmt = t6._build_log_formatter()
+    assert fmt.converter is time.gmtime
+
+
+# --- CLI main() ---
+def test_main_dry_run_writes_nothing_and_returns_zero(tmp_path, monkeypatch):
+    # --dry-run must write nothing and return 0.
+    out_dir = tmp_path / "tier6_out"
+    rc = t6.main([
+        "--out-dir", str(out_dir), "--n-sims", "0", "--dry-run",
+    ])
+    assert rc == 0
+    assert not out_dir.exists() or not any(out_dir.iterdir())
+
+
+def test_main_non_dry_run_writes_to_tmp_out_dir(tmp_path):
+    # A real (non-dry) run into a tmp out-dir writes the 4 artifacts and
+    # returns 0. (Does NOT touch the production tier6_dsr_v1 dir.)
+    out_dir = tmp_path / "tier6_out"
+    rc = t6.main(["--out-dir", str(out_dir), "--n-sims", "0"])
+    assert rc == 0
+    for fn in ("tier6_dsr_results.csv", "tier6_dsr_companion.csv",
+               "tier6_promotion_list.json", "tier6_mc_validation.json"):
+        assert (out_dir / fn).exists()
+
+
+def test_main_returns_nonzero_on_validation_failure(monkeypatch):
+    # A lineage/validation failure surfaces as a non-zero exit (not a traceback).
+    def boom(*a, **k):
+        raise ValueError("simulated lineage failure")
+
+    monkeypatch.setattr(t6, "evaluate_cohort", boom)
+    rc = t6.main(["--n-sims", "0", "--dry-run"])
+    assert rc != 0
