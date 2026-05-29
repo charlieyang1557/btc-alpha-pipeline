@@ -47,6 +47,13 @@ _REPO_ROOT = Path(__file__).resolve().parent.parent
 _PRE_T1X_COMMIT = "7c8f4a7"  # Pre-T1.x parent of 12dffde (T1.x SEAL bundle); per §2.2 (i) git-plumbing LOCK
 _T1X_SEAL_COMMIT = "12dffde"  # T1.x SEAL bundle commit (T1.2 + T1.3 + T1.1)
 _PHASE4_DIR = _REPO_ROOT / "data" / "phase2c_evaluation_gate" / "phase4_forward_2026_15bps_v1"
+# B-C-narrow Phase 3 re-fire (Plan v9.1 §V9.5 V9-E4 + Q1=a / Option A): the recovery REPLACES
+# the canonical with recovered content (new run_id + gamma3/gamma4/T_obs/parquet), so A3/A4/A5
+# byte-identity now verifies the ARCHIVED ORIGINAL (producer W3 shutil.move'd the pre-fire
+# canonical here, committed at Step 14b.1.5, byte-identical to 7c8f4a7) instead of the
+# post-recovery canonical. A1/A6/A2 still read _PHASE4_DIR (recovered) — they validate
+# evaluation-semantics, not byte-identity.
+_ARCHIVE_DIR = _REPO_ROOT / "data" / "phase2c_evaluation_gate" / "archive" / "phase4_forward_2026_15bps_v1_d0b8101"
 
 # §2.5 RESOLVED — 9 new T1.x columns enumerated by name (per MIGRATION_COLUMNS at HEAD 12dffde)
 _T1X_NEW_COLUMNS: tuple[str, ...] = (
@@ -349,44 +356,53 @@ class TestT1_4_A3_A4_A5_HashByteIdentity:
             f"Sub-plan v6 §1.1 A5 locked N=39 at ratify (empirical at HEAD 12dffde)."
         )
 
-    def _verify_byte_identity(self, rel_path: str) -> None:
-        """Verify file at rel_path is byte-identical between pre-T1.x and HEAD.
+    def _verify_byte_identity(self, canonical_rel_path: str, archive_rel_path: str) -> None:
+        """Verify the ARCHIVED ORIGINAL is byte-identical to pre-T1.x 7c8f4a7.
 
-        Per §2.2 (i) git-plumbing LOCK: use `git show 7c8f4a7:<path>` for "before" bytes.
+        B-C-narrow Phase 3 re-fire (Plan v9.1 §V9.5 V9-E4 + Q1=a + Option A): the recovery
+        REPLACES the canonical with recovered content, so this no longer compares the
+        on-disk canonical. Instead "before" = the original at 7c8f4a7 (canonical path at
+        that commit) and "after" = the archived snapshot on disk (committed at Step 14b.1.5;
+        the producer W3 step shutil.move'd the pre-fire canonical there byte-for-byte). On a
+        clean tree the on-disk archive == the committed archive == the 7c8f4a7 original, so
+        this preserves the original-immutability invariant the test guards.
         """
-        # "Before" bytes from pre-T1.x parent commit
-        before_bytes = _git_show_bytes(_PRE_T1X_COMMIT, rel_path)
+        # "Before" bytes: original at pre-T1.x parent commit (canonical path at 7c8f4a7).
+        before_bytes = _git_show_bytes(_PRE_T1X_COMMIT, canonical_rel_path)
         before_hash = _sha256_bytes(before_bytes)
 
-        # "After" bytes from current on-disk (HEAD = 12dffde post-T1.x SEAL)
-        current_path = _REPO_ROOT / rel_path
-        after_bytes = _file_bytes(current_path)
+        # "After" bytes: the archived snapshot on disk (Q1=a + Option A).
+        after_bytes = _file_bytes(_REPO_ROOT / archive_rel_path)
         after_hash = _sha256_bytes(after_bytes)
 
         assert before_hash == after_hash, (
-            f"Byte-identity verification FAILED for {rel_path}: "
-            f"before_sha256={before_hash} != after_sha256={after_hash}. "
-            f"T1.x bundle MUST NOT have mutated legacy phase4 artifacts. "
-            f"Per §2.2 precondition verified at ratify via "
-            f"`git diff {_PRE_T1X_COMMIT}..{_T1X_SEAL_COMMIT} --stat -- "
-            f"data/phase2c_evaluation_gate/phase4_forward_2026_15bps_v1/` (empty)."
+            f"v9 re-fire byte-identity FAILED: 7c8f4a7 original {canonical_rel_path} "
+            f"sha256={before_hash} != archived snapshot {archive_rel_path} sha256={after_hash}. "
+            f"The B-C-narrow archive MUST preserve the pre-recovery original byte-for-byte "
+            f"(Q1=a rescope; archive committed at Step 14b.1.5)."
         )
 
     def test_a3_aggregate_holdout_results_csv_byte_identical(self) -> None:
-        """A3 MANDATORY: aggregate holdout_results.csv byte-identical."""
-        rel_path = "data/phase2c_evaluation_gate/phase4_forward_2026_15bps_v1/holdout_results.csv"
-        self._verify_byte_identity(rel_path)
+        """A3 MANDATORY: aggregate holdout_results.csv byte-identical (archive vs 7c8f4a7)."""
+        canonical_rel_path = "data/phase2c_evaluation_gate/phase4_forward_2026_15bps_v1/holdout_results.csv"
+        archive_rel_path = "data/phase2c_evaluation_gate/archive/phase4_forward_2026_15bps_v1_d0b8101/holdout_results.csv"
+        self._verify_byte_identity(canonical_rel_path, archive_rel_path)
 
     def test_a4_aggregate_holdout_summary_json_byte_identical(self) -> None:
-        """A4 MANDATORY (per Codex v4 Fv4-5): aggregate holdout_summary.json byte-identical."""
-        rel_path = "data/phase2c_evaluation_gate/phase4_forward_2026_15bps_v1/holdout_summary.json"
-        self._verify_byte_identity(rel_path)
+        """A4 MANDATORY (per Codex v4 Fv4-5): aggregate holdout_summary.json byte-identical (archive vs 7c8f4a7)."""
+        canonical_rel_path = "data/phase2c_evaluation_gate/phase4_forward_2026_15bps_v1/holdout_summary.json"
+        archive_rel_path = "data/phase2c_evaluation_gate/archive/phase4_forward_2026_15bps_v1_d0b8101/holdout_summary.json"
+        self._verify_byte_identity(canonical_rel_path, archive_rel_path)
 
     @pytest.mark.parametrize("candidate_dir", _per_candidate_dirs())
     def test_a5_per_candidate_holdout_summary_byte_identical(self, candidate_dir: Path) -> None:
-        """A5 MANDATORY: all 39 per-candidate holdout_summary.json byte-identical."""
-        rel_path = str(candidate_dir.relative_to(_REPO_ROOT) / "holdout_summary.json")
-        self._verify_byte_identity(rel_path)
+        """A5 MANDATORY: all 39 per-candidate holdout_summary.json byte-identical (archive vs 7c8f4a7)."""
+        # candidate_dir is the recovered-canonical hash subdir; its .name (hypothesis_hash)
+        # is shared with the archive subdir (same 39 basenames). before = 7c8f4a7 canonical
+        # path; after = archive on-disk (Q1=a + Option A).
+        canonical_rel_path = str(candidate_dir.relative_to(_REPO_ROOT) / "holdout_summary.json")
+        archive_rel_path = str(_ARCHIVE_DIR.relative_to(_REPO_ROOT) / candidate_dir.name / "holdout_summary.json")
+        self._verify_byte_identity(canonical_rel_path, archive_rel_path)
 
 
 # ---------------------------------------------------------------------------

@@ -30,7 +30,7 @@
     "holdout_passed": 20,
     "total": 39
   },
-  "current_git_sha": "d0b8101df61531ff3e055727e492295a1bb0591b",
+  "current_git_sha": "5e77e6358b75e49b8c40362df6470c1c927f42f7",
   "engine_commit": "eb1c87f",
   "engine_corrected_lineage": "wf-corrected-v1",
   "evaluation_semantics": "single_run_holdout_v1",
@@ -88,9 +88,9 @@
   "primary_universe_total": 15,
   "regime_key": "evaluation_regimes.forward_2026",
   "regime_label": "forward_2026",
-  "run_finished_utc": "2026-05-09T12:20:33Z",
-  "run_id": "phase4_forward_2026_15bps_v1",
-  "run_started_utc": "2026-05-09T12:20:23Z",
+  "run_finished_utc": "2026-05-29T09:18:18Z",
+  "run_id": "phase4_forward_2026_15bps_v1_b_c_narrow",
+  "run_started_utc": "2026-05-29T09:17:58Z",
   "source_batch_id": "phase2c_15_main_fire_combined",
   "universe": null
 }

@@ -1,10 +1,13 @@
 {
+  "T_obs": 2503,
   "artifact_schema_version": "phase2c_7_1",
-  "current_git_sha": "d0b8101df61531ff3e055727e492295a1bb0591b",
+  "current_git_sha": "5e77e6358b75e49b8c40362df6470c1c927f42f7",
   "engine_commit": "eb1c87f",
   "engine_corrected_lineage": "wf-corrected-v1",
   "error_message": null,
   "evaluation_semantics": "single_run_holdout_v1",
+  "gamma3": 5.385174411971672,
+  "gamma4": 146.58779368999575,
   "gate_pass_per_criterion": {
     "drawdown_passed": true,
     "return_passed": true,
@@ -31,9 +34,11 @@
   "position": 675,
   "regime_key": "evaluation_regimes.forward_2026",
   "regime_label": "forward_2026",
-  "run_id": "phase4_forward_2026_15bps_v1",
+  "returns_per_bar_path": "returns_per_bar.parquet",
+  "returns_per_bar_sha256": "b19822b5463509d8ceb5073510e70757038fd62d22e010c15559a69de2b786c9",
+  "run_id": "phase4_forward_2026_15bps_v1_b_c_narrow",
   "source_batch_id": "phase2c_15_main_fire_combined",
   "theme": "calendar_effect",
-  "wall_clock_seconds": 0.2603,
+  "wall_clock_seconds": 0.4888,
   "wf_test_period_sharpe": 0.308484
 }
