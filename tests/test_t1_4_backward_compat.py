@@ -1591,7 +1591,13 @@ class TestT1_4_Pc9BaselineGate:
         # Per B-C-narrow Phase 2 Task 11 baseline-maintenance: advance BASELINE
         # 2204 → 2236 (+32 per Phase 2 Task 9 expansion; same T1.5 precedent semantic
         # — new B-C-narrow tests treated as part of expanded pre-T1.x cohort).
-        BASELINE = 2236
+        # B-C-narrow Phase 3 re-fire (Plan v9.1 §V9.5 V9-E2 + Gap2/Gap2b): adds
+        # tests/test_b_c_narrow_v4_reproducibility.py (12 collected methods; confirmed
+        # via `pytest --collect-only`). V4 is neither a t1_4 nor a t1_5 subtraction
+        # target, so its +12 lands in pre_t1_x_baseline = total − t1_4 − t1_5. Advance
+        # BASELINE 2236 → 2248 (same B-C-narrow cohort precedent). Closes Gap2/Gap2b:
+        # Step 13.3 V4-isolated RED-verify missed this full-suite collection interaction.
+        BASELINE = 2248
         assert pre_t1_x_baseline == BASELINE, (
             f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
             f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "
