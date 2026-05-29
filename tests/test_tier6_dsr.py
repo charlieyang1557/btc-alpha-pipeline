@@ -366,3 +366,45 @@ def test_annotate_flags_does_not_mutate_input():
 def test_annotate_flags_constants():
     assert t6.G4_HIGH == 50.0
     assert t6.PROVISIONAL_DSR_MARGIN == 0.5
+
+
+# ==========================================================================
+# Task 6: MC expected-max validation (seeded, non-authoritative)
+# ==========================================================================
+def test_mc_expected_max_brackets_form_a_and_b():
+    out = t6.mc_expected_max_ratio(n_star=18, n_sims=20000, seed=12345)
+    # the empirical expected-max-of-18 standard normals is ~1.82-2.0; both
+    # closed forms should be in a sane neighborhood, Form B closer for Gaussian
+    assert 1.5 < out["empirical_ratio"] < 2.3
+    assert out["form_a_ratio"] == pytest.approx(2.4043, abs=1e-3)
+    assert out["form_b_ratio"] == pytest.approx(1.8539, abs=1e-3)
+    assert "form_a_minus_empirical" in out and "form_b_minus_empirical" in out
+
+
+def test_mc_difference_fields_consistent():
+    out = t6.mc_expected_max_ratio(n_star=18, n_sims=20000, seed=12345)
+    assert out["form_a_minus_empirical"] == pytest.approx(
+        out["form_a_ratio"] - out["empirical_ratio"], abs=1e-12)
+    assert out["form_b_minus_empirical"] == pytest.approx(
+        out["form_b_ratio"] - out["empirical_ratio"], abs=1e-12)
+
+
+def test_mc_form_b_is_better_gaussian_extreme_value_approx():
+    # A11: Form B is the better Gaussian-extreme-value approximation at N*=18,
+    # i.e. its signed error magnitude is smaller than Form A's.
+    out = t6.mc_expected_max_ratio(n_star=18, n_sims=100_000, seed=20260529)
+    assert abs(out["form_b_minus_empirical"]) < abs(out["form_a_minus_empirical"])
+
+
+def test_mc_is_seed_deterministic():
+    a = t6.mc_expected_max_ratio(18, n_sims=5000, seed=7)
+    b = t6.mc_expected_max_ratio(18, n_sims=5000, seed=7)
+    assert a["empirical_ratio"] == b["empirical_ratio"]
+
+
+def test_mc_default_params():
+    out = t6.mc_expected_max_ratio(n_sims=2000)
+    assert out["n_star"] == 18
+    assert out["seed"] == 20260529
+    # n_sims is echoed as passed (we used a small count to keep the test fast).
+    assert out["n_sims"] == 2000

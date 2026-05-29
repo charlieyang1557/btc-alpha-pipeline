@@ -426,3 +426,48 @@ def annotate_flags(res: dict) -> dict:
         res["pass_B"] and 0 <= res["dsr_statistic_B"] < PROVISIONAL_DSR_MARGIN
     )
     return res
+
+
+# --------------------------------------------------------------------------
+# Task 6: Monte-Carlo expected-max validation (seeded, NON-AUTHORITATIVE)
+# --------------------------------------------------------------------------
+def mc_expected_max_ratio(
+    n_star: int = N_STAR, n_sims: int = 100_000, seed: int = 20260529
+) -> dict:
+    """Monte-Carlo expected max of ``n_star`` i.i.d. standard normals.
+
+    Bounds the Form A / Form B closed-form approximation error at the moderate
+    ``N*=18`` regime by simulating ``n_sims`` draws of ``max`` of ``n_star``
+    standard normals and taking the sample mean (the expected-max ratio in
+    normalized ``SR*/sqrt(Var)`` units). NON-AUTHORITATIVE validation companion
+    — never a capital gate; the authoritative ratio is the Form B closed form.
+
+    The RNG is ``numpy.random.default_rng(seed)``, so the result is fully
+    reproducible for a fixed ``(n_star, n_sims, seed)``.
+
+    Args:
+        n_star: Effective number of independent trials (default ``N_STAR=18``).
+        n_sims: Number of Monte-Carlo simulations (default 100_000).
+        seed: RNG seed for reproducibility (default 20260529).
+
+    Returns:
+        A dict with ``empirical_ratio`` (sample mean of max-of-n_star normals),
+        ``form_a_ratio`` / ``form_b_ratio`` (the closed forms), the signed
+        errors ``form_a_minus_empirical`` / ``form_b_minus_empirical``, plus the
+        echoed ``n_star`` / ``n_sims`` / ``seed``.
+    """
+    rng = np.random.default_rng(seed)
+    maxes = rng.standard_normal((n_sims, n_star)).max(axis=1)
+    emp = float(maxes.mean())
+    fa = expected_max_ratio_form_a(n_star)
+    fb = expected_max_ratio_form_b(n_star)
+    return {
+        "n_star": n_star,
+        "n_sims": n_sims,
+        "seed": seed,
+        "empirical_ratio": emp,
+        "form_a_ratio": fa,
+        "form_b_ratio": fb,
+        "form_a_minus_empirical": fa - emp,
+        "form_b_minus_empirical": fb - emp,
+    }
