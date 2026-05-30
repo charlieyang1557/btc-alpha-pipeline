@@ -1613,7 +1613,15 @@ class TestT1_4_Pc9BaselineGate:
         # target, so its +12 lands in pre_t1_x_baseline = total − t1_4 − t1_5. Advance
         # BASELINE 2236 → 2248 (same B-C-narrow cohort precedent). Closes Gap2/Gap2b:
         # Step 13.3 V4-isolated RED-verify missed this full-suite collection interaction.
-        BASELINE = 2248
+        # Tier 6 DSR evaluation cohort (tier6-dsr-evaluation branch): adds
+        # tests/test_tier6_dsr.py (72 collected methods — 56 from Tasks 1-7
+        # closed-form DSR math + cohort evaluator + artifact emitters, 16 from
+        # Task 8 CLI + lineage guard + cost-anchor preflight). The tier6 module is
+        # purely additive (no existing module imports it) and test_tier6_dsr.py is
+        # neither a t1_4 nor a t1_5 subtraction target, so its +72 lands wholly in
+        # pre_t1_x_baseline = total − t1_4 − t1_5. Advance BASELINE 2248 → 2320
+        # (same expected-additive-cohort precedent as T1.5 + B-C-narrow cohorts).
+        BASELINE = 2320
         assert pre_t1_x_baseline == BASELINE, (
             f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
             f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "
