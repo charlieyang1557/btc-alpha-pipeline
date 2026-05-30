@@ -783,3 +783,18 @@ Anti-recurrence finding (class reference) per SF-23-i + SF-18 meta-errata extens
 - [[feedback_reviewer_routing_subagent_default]] B2 standing rule reaffirmation at 13+ cycle cumulative scale
 - [[feedback_invariant_level_vs_enumeration]] producer-consumer asymmetry recurrence pattern at framing layer (not just code layer)
 - Architecture B sealed-content invariance discipline at strictest reading codification candidate
+
+### §12.8 — Errata E8: T_obs magnitude + holdout-window-label correction (application-input)
+
+**Errata E8 (2026-05-30; post-V_SEAL Tier 6 evaluation application cycle SEAL register-event)**:
+
+The sealed prose describes the per-candidate moment-estimation source as **"T_obs ≈ 6000 for 2025 holdout"** (and "2025 holdout") at lines 207, 259, 277, and 450. The B-C-narrow-recovered cohort data shows this is **factually incorrect on BOTH the magnitude and the window label**:
+
+- **Actual per-candidate `T_obs` ≈ 2358–2503** (median ~2491), NOT ≈6000.
+- **Actual window is `forward_2026`: 2026-01-01 → 2026-04-16 (~3.5 months, `forward_bar_count` 2528)**, NOT a "2025 holdout" (and not a full-year window).
+
+Verified by orchestrator-independent inspection of `data/phase2c_evaluation_gate/phase4_forward_2026_15bps_v1/` (per-candidate `holdout_summary.json` `T_obs` + aggregate `forward_window_metadata`) + B2 advisor review at the post-V_SEAL Tier 6 evaluation application cycle entry.
+
+**Classification: application-input factual correction, NOT a methodology change.** The locked DSR formulas always consume the **actual per-candidate T** (SD-F Path 1: "per-bar full-holdout return series"); the "≈6000" was an illustrative magnitude in the prose, never a computational input. The lock holds intact: SD-C-α N=18 and the Form A/B expected-max **normalized ratios** (2.4043 / 1.8539) are **T-independent**; only the absolute SR\* magnitude scales with √(1/(T−1)), which the computation handles automatically via the real T. No sealed decision (a1 / SD-A-α / SD-B-α / Form-choice) is affected.
+
+**Sealed-content invariance preserved:** the entire pre-existing R6.1 NOTE body (lines 1–501) + §12.1–§12.7 (E1–E7) remain byte-identical at character level. This E8 is the canonical application-layer reference for the T_obs/window prose; the application-layer canonical record is **`docs/phase5/R6_1_TIER_6_EVALUATION_APPLICATION_NOTE.md` §5 + §7** (Tier 6 evaluation application cycle SEAL, where T_obs ≈ 2500 over forward_2026 drove the actual DSR computation → 0/18 promoted).
