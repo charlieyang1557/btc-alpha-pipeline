@@ -1,0 +1,10 @@
+{
+  "n_star": 18,
+  "n_sims": 100000,
+  "seed": 20260529,
+  "empirical_ratio": 1.820476853051825,
+  "form_a_ratio": 2.4043176819614187,
+  "form_b_ratio": 1.8538732029936469,
+  "form_a_minus_empirical": 0.5838408289095938,
+  "form_b_minus_empirical": 0.033396349941821946
+}
