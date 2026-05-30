@@ -1641,7 +1641,18 @@ class TestT1_4_Pc9BaselineGate:
         # is neither a t1_4 nor a t1_5 subtraction target, so its +32 lands wholly in
         # pre_t1_x_baseline = total − t1_4 − t1_5. Advance BASELINE 2328 → 2360
         # (same expected-additive-cohort precedent).
-        BASELINE = 2360
+        # Path B mechanism-first re-mine Section A (pathb-mechanism-first-rethink
+        # branch): adds tests/test_leakage_guards.py (75 collected — G1 AST future-op
+        # scanner + G2 truncation/reversal sentinel + G3 operator/ternary-sizing
+        # causality contract + G4a registry<->EXPECTED_FACTORS sync/invariance). The
+        # leakage-guards module is purely additive (no existing module imports it) and
+        # test_leakage_guards.py is neither a t1_4 nor a t1_5 subtraction target, so its
+        # +75 lands wholly in pre_t1_x_baseline = total − t1_4 − t1_5. Advance BASELINE
+        # 2360 → 2435 (same expected-additive-cohort precedent; per Charlie per-section
+        # commit-gate authorization for the Path B arc). Note: 11 of the 75 are skips
+        # (G3 ternary-sizing tests, skipif-pending Section C SizingSpec/_compile_sizing)
+        # — pytest --collect-only counts skipped items, so the +75 is correct.
+        BASELINE = 2435
         assert pre_t1_x_baseline == BASELINE, (
             f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
             f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "

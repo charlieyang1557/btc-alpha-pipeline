@@ -94,6 +94,132 @@ class FactorSpec:
         _assert_top_level_callable(self.compute, self.name)
 
 
+_FULL_SERIES_REDUCERS = frozenset({"mean", "std", "sum", "rank"})
+# Attribute names that, when seen as the *receiver* of one of the reducers
+# above, mean the reducer is a windowed/causal reduction and is ALLOWED.
+_WINDOWED_RECEIVERS = frozenset({"rolling", "ewm", "expanding"})
+
+
+def _assert_no_future_ops(fn: Callable, factor_name: str) -> None:
+    """Static AST scan rejecting future-touching ops in a factor's source.
+
+    Banned:
+      - ``shift(k)`` with a negative integer literal ``k`` (look-ahead).
+      - ``bfill`` / ``backfill`` calls.
+      - ``fillna(method='bfill')`` / ``fillna(method='backfill')``.
+      - ``rolling(..., center=True)`` (uses trailing AND leading bars).
+      - bare ``expanding()`` with no ``min_periods`` argument.
+      - full-Series reducers ``.mean()/.std()/.sum()/.rank()`` whose
+        receiver is NOT a ``rolling/ewm/expanding(...)`` call (i.e. a
+        global aggregation over the whole series).
+
+    Allowed: ``rolling(N).mean()``, ``ewm(span=N, adjust=False).mean()``,
+    ``expanding(min_periods=N).mean()``, positive ``shift(k)``.
+
+    This is a CONSERVATIVE static check: it inspects the compute function's
+    own source via ``inspect.getsource`` + ``ast``. It cannot follow calls
+    into helper functions, which is acceptable because factor compute
+    functions are required to be self-contained top-level callables (see
+    :func:`_assert_top_level_callable`). Compute PRIMITIVES in
+    ``factors/operators.py`` are deliberately NOT registered, so this
+    scanner never runs against them. Only the positional form ``shift(-k)``
+    is scanned: a non-literal argument (``K = -1; series.shift(K)``) or the
+    keyword form (``series.shift(periods=-1)``) passes this static check
+    silently — factor authors must use the positional literal form. The G2
+    truncation-invariance sentinel (``tests/test_leakage_guards.py``) is the
+    behavioral backstop that catches any shift-based future read regardless
+    of syntactic form.
+    ``groupby(...).mean()/.std()/.sum()/.rank()`` will be REJECTED as a
+    full-series aggregation because only ``rolling``/``ewm``/``expanding``
+    receivers are recognised as windowed; this is intentional given the
+    corpus is uniformly rolling/ewm-based.
+
+    Raises ``ValueError`` naming the offending construct.
+    """
+    src = textwrap.dedent(inspect.getsource(fn))
+    tree = ast.parse(src)
+
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call):
+            continue
+        func = node.func
+        if not isinstance(func, ast.Attribute):
+            continue
+        attr = func.attr
+
+        # shift(<negative literal>)
+        if attr == "shift" and node.args:
+            arg = node.args[0]
+            if (
+                isinstance(arg, ast.UnaryOp)
+                and isinstance(arg.op, ast.USub)
+                and isinstance(arg.operand, ast.Constant)
+                and isinstance(arg.operand.value, (int, float))
+            ):
+                raise ValueError(
+                    f"Factor {factor_name!r}: negative shift() is a "
+                    f"look-ahead op: detected shift(-{arg.operand.value!r})."
+                )
+
+        # bfill / backfill
+        if attr in ("bfill", "backfill"):
+            raise ValueError(
+                f"Factor {factor_name!r}: {attr}() back-fills from future "
+                f"bars and is prohibited."
+            )
+
+        # fillna(method='bfill'|'backfill')
+        if attr == "fillna":
+            for kw in node.keywords:
+                if (
+                    kw.arg == "method"
+                    and isinstance(kw.value, ast.Constant)
+                    and kw.value.value in ("bfill", "backfill")
+                ):
+                    raise ValueError(
+                        f"Factor {factor_name!r}: fillna(method="
+                        f"{kw.value.value!r}) back-fills from future bars."
+                    )
+
+        # rolling(..., center=True)
+        if attr == "rolling":
+            for kw in node.keywords:
+                if (
+                    kw.arg == "center"
+                    and isinstance(kw.value, ast.Constant)
+                    and kw.value.value is True
+                ):
+                    raise ValueError(
+                        f"Factor {factor_name!r}: rolling(center=True) reads "
+                        f"leading (future) bars and is prohibited."
+                    )
+
+        # bare expanding() — no min_periods bound excluding future bars
+        if attr == "expanding":
+            has_minp = any(kw.arg == "min_periods" for kw in node.keywords)
+            has_posarg = len(node.args) >= 1
+            if not has_minp and not has_posarg:
+                raise ValueError(
+                    f"Factor {factor_name!r}: bare expanding() is prohibited; "
+                    f"use expanding(min_periods=N)."
+                )
+
+        # full-series reducer not chained off a windowed receiver
+        if attr in _FULL_SERIES_REDUCERS:
+            recv = func.value
+            windowed = (
+                isinstance(recv, ast.Call)
+                and isinstance(recv.func, ast.Attribute)
+                and recv.func.attr in _WINDOWED_RECEIVERS
+            )
+            if not windowed:
+                raise ValueError(
+                    f"Factor {factor_name!r}: full-series .{attr}() is a "
+                    f"global aggregation; use a windowed "
+                    f"rolling/ewm/expanding(min_periods=) reduction instead."
+                )
+
+
 def _assert_top_level_callable(fn: Callable, factor_name: str) -> None:
     """Reject lambdas, nested functions, and dynamically-generated callables.
 
@@ -150,11 +276,16 @@ class FactorRegistry:
     _specs: dict[str, FactorSpec] = field(default_factory=dict)
 
     def register(self, spec: FactorSpec) -> None:
-        """Register a factor. Duplicate names are rejected."""
+        """Register a factor. Duplicate names are rejected.
+
+        G1 leakage gate: the compute function's source is statically scanned
+        for future-touching operations before the factor is admitted.
+        """
         if spec.name in self._specs:
             raise ValueError(
                 f"Factor name collision: {spec.name!r} already registered"
             )
+        _assert_no_future_ops(spec.compute, spec.name)
         self._specs[spec.name] = spec
 
     def get(self, name: str) -> FactorSpec:
