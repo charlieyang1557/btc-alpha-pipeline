@@ -208,3 +208,36 @@ Both legs convergent; no hallucinations (all load-bearing numbers/claims indepen
 | LOW-7 | n_replicates → 5000 (advisor Q3) | LOW | **ADOPTED** §3.5 |
 | LOW-8 | Rename `deflated_z_boot_*` → non-gate name (Codex Q4) | LOW | **ADOPTED** `robust_se_z_context` §3.1/§6 |
 | LOW-9 | 2452 baseline phrased as target, not verified claim (Codex) | LOW | **ADOPTED** §7 |
+
+---
+
+## §12. Path-2 Re-scope Erratum (E1) — sparse-returns ⇒ measurement not feasible (2026-05-30)
+
+**Status:** AUTHORITATIVE for the A-1 deliverable. Supersedes the *measurement* portions of §3.1/§6/§8.3 (inflation_ratio / serialcorr_increment as deliverable). Retains §2.2 (verdict-invariance), §3.2 (bootstrap method + finite-T input contract), §3.4 (determinism), §7 (tie-back + immutability), §8.1/§8.4 (no-reseal + isolation), and the Chunk-1 primitive (already built + committed `ed94374`).
+
+### E1.1 Trigger (implementation discovery, B2-verified)
+During Chunk-2 implementation, the cohort's per-bar return series were found **sparse**: zero-fraction **0.70–0.98** (nonzero count 54–758) — these are low-trade-frequency strategies (mostly exact-0.0 bars). Consequences (advisor + Codex, both verified):
+- The §3.2 premise "zero-variance replicates vanishingly rare at T≈2500" is **empirically false**: at long blocks up to ~27% of resamples are all-zero (degenerate). The `0.1%` raise-tripwire hard-fails even the authoritative run.
+- Dropping degenerate replicates is anti-conservative; bias is negligible at low skip but material at high skip (~+12% at 27%).
+- **`serialcorr_increment` is NOT cleanly sparsity-robust** (Codex: similar-sparsity candidates give opposite increment directions). The per-bar-Sharpe bootstrap is **partly ill-posed** for low-trade-frequency strategies — effective sample is the nonzero count, not T.
+- **Verdict-invariance UNCHANGED**: all 18 `SR̂ − SR* < 0` → 0/18, SE-independent. The sparsity does not touch the result.
+
+### E1.2 Decision (Charlie register 2026-05-30): Path 2 — scope down
+The empirical §6.1-gap *measurement* is not reliably extractable on this sparse cohort, and engineering threshold machinery to emit caveated-but-unreliable numbers is methodology-over-engineering on a zero-capital, verdict-invariant result. A-1 is re-scoped to: **the standing primitive + a verdict-invariance attestation + an evidence-grounded suitability diagnostic that demonstrates (not asserts) the bootstrap is unsuitable here.** A-2 (RW/WY) and SD-E-γ-as-measurement are **deferred** (rigor on a dead cohort; load-bearing only for a future near-threshold winner).
+
+### E1.3 Re-scoped deliverable
+1. **Primitive (retained, unchanged):** `stationary_bootstrap_indices`, `bootstrap_sharpe_se`, `mertens_se`, `substream_rng` (Chunk 1). The standing capability for future *denser* cohorts.
+2. **Verdict-invariance attestation:** per-candidate `excess = SR̂ − sr_star(N*, T, "B")` (moment-independent; no bootstrap). All 18 < 0 → 0/18, SE-independent. `max_excess` exhibited.
+3. **Suitability diagnostic (evidence-grounded "inconclusive"):** per-candidate `nonzero_count`, `zero_fraction`, and a **minimal degeneracy probe** — resample at each L and record the **skip_fraction** (fraction of all-zero/zero-variance replicates) WITHOUT raising. Demonstrates the bootstrap-Sharpe is unreliable here (zero-fraction → degeneracy).
+4. **Conclusion:** the §6.1 within-candidate serial-correlation gap is **not empirically quantifiable on this sparse cohort**; primitive stands for denser cohorts; verdict 0/18 unaffected.
+
+### E1.4 Artifacts (supersede §6) → `data/phase2c_evaluation_gate/tier6_serialcorr_robustness_v1/`
+- `suitability_diagnostic.csv` (18 authoritative) + `suitability_companion.csv` (21 companion): columns `hypothesis_hash, name, theme, T, nonzero_count, zero_fraction, sr_per_bar, sr_star_B, excess, skip_L1, skip_L6, skip_L12, skip_L24, skip_L48, skip_L96`. **NO** `inflation_*` / `serialcorr_increment_*` / `pass_*` columns.
+- `suitability_attestation.json`: `{cohort, base_seed, n_replicates, block_len_grid, n_authoritative, n_companion, all_excess_negative, max_excess, verdict_invariant, sparsity_summary:{zero_fraction min/median/max, nonzero_count min/median/max}, degeneracy_summary:{skip by L: min/median/max}, conclusion:"measurement_inconclusive_sparse_cohort", sealed_tier6_dsr_v1_sha256, generated_at_utc, source_commit}`.
+- Banner on every artifact: **"diagnostic; NON-AUTHORITATIVE; measurement inconclusive on sparse cohort; verdict invariant (0/18, SE-independent)."**
+
+### E1.5 Degeneracy-probe contract (new; the minimal "run it" probe)
+`bootstrap_skip_fraction(returns, expected_block_len, n_replicates, rng) -> float`: resamples (same Politis–Romano logic as the primitive), returns the fraction of replicates with zero resample variance. Does **NOT** raise on high skip (it is the *measurement* of degeneracy). The existing `bootstrap_sharpe_se` (strict, raises) is retained unchanged as the standing primitive. To stay DRY, factor the shared resampler into an internal `_bootstrap_sharpe_stats(returns, L, B, rng) -> (sr_b_valid, skip_fraction)` that both `bootstrap_sharpe_se` and `bootstrap_skip_fraction` call (this DOES amend the Chunk-1 module — allowed; it is A-1's own module on the branch, not the sealed `tier6_dsr.py`).
+
+### E1.6 Tests (adjust §7)
+Retain: tie-back (recomputed `deflated_z_B` — still computed for the attestation cross-check — matches sealed within EPS), sealed-artifact byte-immutability, primitive tests (Chunk 1, unchanged). Add: `bootstrap_skip_fraction` returns 0 on dense i.i.d. input and >0 on a synthetic sparse series; `_bootstrap_sharpe_stats` consistency with `bootstrap_sharpe_se`; suitability-runner counts (18+21), `all_excess_negative=True`, `max_excess≈−0.0044`; emitter schema (no inflation columns); CLI dry-run/bad-cohort. Drop: all inflation_ratio / serialcorr_increment / robust_se_z_context / degenerate-parity-of-inflation tests.

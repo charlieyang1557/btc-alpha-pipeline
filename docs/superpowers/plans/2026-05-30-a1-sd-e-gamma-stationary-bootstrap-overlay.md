@@ -1,5 +1,7 @@
 # A-1 SD-E-γ Stationary-Bootstrap Variance Overlay — Implementation Plan
 
+> **⚠️ SUPERSEDED IN PART (Path-2 re-scope, 2026-05-30):** Chunk 1 (the bootstrap primitives, Tasks 1–4) was built as planned. Tasks 5–10 (the *inflation-ratio measurement* track) were **superseded** when implementation discovered the cohort returns are sparse (low-trade-frequency) and the per-bar-Sharpe bootstrap measurement is not feasible. The authoritative deliverable is the spec's **§12 Path-2 Erratum E1** (primitive + verdict-invariance attestation + sparsity/degeneracy *suitability diagnostic* + honest "measurement inconclusive" conclusion). See [`docs/phase5/A1_SERIALCORR_BOOTSTRAP_SUITABILITY_NOTE.md`](../../phase5/A1_SERIALCORR_BOOTSTRAP_SUITABILITY_NOTE.md). The Tasks 5–10 below are retained for historical traceability only.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build `backtest/tier6_bootstrap.py` — a diagnostic-only, verdict-invariant stationary-bootstrap (Politis–Romano 1994) serial-correlation-robust Sharpe-estimator SE overlay on the sealed closed-form Tier 6 DSR — that measures the per-candidate `inflation_ratio = SE_boot/SE_mertens` on the recovered `phase4_forward_2026_15bps_v1` cohort (18 authoritative + 21 companion) and emits isolated, NON-AUTHORITATIVE artifacts.

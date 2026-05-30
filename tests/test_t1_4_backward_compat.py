@@ -1634,7 +1634,14 @@ class TestT1_4_Pc9BaselineGate:
         # guard/preflight-before-CSV-read tests ×2). Purely additive to the same
         # tier6 cohort, neither a t1_4 nor a t1_5 subtraction target. Advance
         # BASELINE 2323 → 2328 (+5, same expected-additive-cohort precedent).
-        BASELINE = 2328
+        # A-1 stationary-bootstrap suitability (a1-stationary-bootstrap-overlay branch):
+        # adds tests/test_tier6_bootstrap.py (32 collected — 16 Chunk-1 primitives +
+        # 16 Path-2 suitability runner/emitters/CLI). The tier6_bootstrap module is
+        # purely additive (no existing module imports it) and test_tier6_bootstrap.py
+        # is neither a t1_4 nor a t1_5 subtraction target, so its +32 lands wholly in
+        # pre_t1_x_baseline = total − t1_4 − t1_5. Advance BASELINE 2328 → 2360
+        # (same expected-additive-cohort precedent).
+        BASELINE = 2360
         assert pre_t1_x_baseline == BASELINE, (
             f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
             f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "
