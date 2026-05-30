@@ -112,7 +112,9 @@ Operational implementation:
 
 ### §5.4 Reported per-candidate fields (authoritative 18 + companion 21)
 
-`hypothesis_hash, name, theme, T, SR_per_bar, gamma3, gamma4, trades, var_null, ER_B, ER_A, SR_star_B, SR_star_A, deflated_z_B, deflated_z_A, DSR_B, DSR_A, pass_B, pass_A, g4_high_flag, provisional_flag, r21_indeterminate_flag` (+ `monday_flag` on the companion).
+As-implemented (per PFR amendments A5/A9 + final-review MINOR-1; `DSR` is reported in two scales — `psr_*` = Φ(deflated_z) probability, pass at ≥0.95; `dsr_statistic_*` = deflated_z − z(0.95), the "DSR ≥ 0" recentered form per R6.1 §3.1):
+
+`hypothesis_hash, name, theme, T, sr_per_bar, gamma3, gamma4, trades, var_sr_null, n_star, z_pass, er_B, er_A, sr_star_B, sr_star_A, deflated_z_B, deflated_z_A, psr_B, psr_A, dsr_statistic_B, dsr_statistic_A, pass_B, pass_A, g4_high_flag, provisional_flag, r21_indeterminate_flag, mertens_degenerate_flag, failure_reason` (+ `non_authoritative, monday_flag` on the companion CSV).
 
 ---
 
