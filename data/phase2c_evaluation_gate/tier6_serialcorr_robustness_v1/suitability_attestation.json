@@ -67,6 +67,6 @@
     "tier6_mc_validation.json": "49646c303c9329ad2a9b15be819d5cf8a1101fc1e09b3997aa693c4c06ea2acd",
     "tier6_promotion_list.json": "1803eb44812ba89e7c881e7dfec110d8403e08a232aa4e07acf4881b0093e699"
   },
-  "generated_at_utc": "2026-05-30T10:11:03.328023+00:00",
-  "source_commit": "ed943746539ab4754ad53564351386d27db0a22b"
+  "generated_at_utc": "2026-05-30T10:36:50.030525+00:00",
+  "source_commit": "caa654bc616a69ccf7f19b5d72fbeeada4f25a3d"
 }
