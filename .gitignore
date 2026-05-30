@@ -58,3 +58,6 @@ data/features/
 
 # Per-machine logs
 logs/
+
+# Auto-generated per-candidate Python tracebacks from walk-forward batch runs (noise; not canonical results)
+data/phase2c_walkforward/*/errors/
