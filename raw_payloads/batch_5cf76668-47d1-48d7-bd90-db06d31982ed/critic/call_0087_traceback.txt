@@ -3,10 +3,10 @@ error_message: forbidden_language: 'failing' at position 273
 
 traceback:
 Traceback (most recent call last):
-  File "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/agents/critic/d7b_live.py", line 316, in score
+  File "agents/critic/d7b_live.py", line 316, in score
     scores, reasoning, scan_results = parse_d7b_response(raw_text)
                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/agents/critic/d7b_parser.py", line 250, in parse_d7b_response
+  File "agents/critic/d7b_parser.py", line 250, in parse_d7b_response
     raise D7bContentError(
 agents.critic.d7b_parser.D7bContentError: forbidden_language: 'failing' at position 273
 

@@ -19,12 +19,13 @@ Strategy:
 from __future__ import annotations
 
 import sys
+from pathlib import Path
 import numpy as np
 import pandas as pd
 import backtrader as bt
 import vectorbt as vbt
 
-PROJECT_ROOT = "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline"
+PROJECT_ROOT = str(Path(__file__).resolve().parents[4])
 sys.path.insert(0, PROJECT_ROOT)
 
 from backtest.execution_model import AlphaBroker, MAX_DEFER_BARS

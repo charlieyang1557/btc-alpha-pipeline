@@ -17,12 +17,14 @@ Data: btcusdt_1h.parquet, window 2024-01-01 to 2024-04-01 (≈ 3 months 1h).
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import backtrader as bt
 import vectorbt as vbt
 
-DATA_PATH = "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline/data/raw/btcusdt_1h.parquet"
+DATA_PATH = str(Path(__file__).resolve().parents[4] / "data/raw/btcusdt_1h.parquet")
 START = "2024-01-01"
 END = "2024-04-01"
 FAST = 20

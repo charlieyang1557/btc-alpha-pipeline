@@ -15,12 +15,13 @@ Hypotheses:
 from __future__ import annotations
 
 import sys
+from pathlib import Path
 import numpy as np
 import pandas as pd
 import backtrader as bt
 import vectorbt as vbt
 
-PROJECT_ROOT = "/Users/yutianyang/Documents/GitHub/btc-alpha-pipeline"
+PROJECT_ROOT = str(Path(__file__).resolve().parents[4])
 DATA_PATH = f"{PROJECT_ROOT}/data/raw/btcusdt_1h.parquet"
 START = "2024-01-01"
 END = "2024-04-01"
