@@ -1627,7 +1627,14 @@ class TestT1_4_Pc9BaselineGate:
         # idempotency test). Purely additive to the same tier6 cohort, neither a
         # t1_4 nor a t1_5 subtraction target. Advance BASELINE 2320 → 2323 (+3,
         # same expected-additive-cohort precedent).
-        BASELINE = 2323
+        # Tier 6 DSR final-review hardening (tier6-dsr-evaluation branch): adds +5
+        # new test methods in tests/test_tier6_dsr.py (IMPORTANT-1 degenerate-row
+        # all-fields-NaN test + MINOR-1 self-describing-CSV n_star/z_pass tests
+        # ×2 [results-CSV column + _RESULT_FIELDS membership] + IMPORTANT-2
+        # guard/preflight-before-CSV-read tests ×2). Purely additive to the same
+        # tier6 cohort, neither a t1_4 nor a t1_5 subtraction target. Advance
+        # BASELINE 2323 → 2328 (+5, same expected-additive-cohort precedent).
+        BASELINE = 2328
         assert pre_t1_x_baseline == BASELINE, (
             f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
             f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "

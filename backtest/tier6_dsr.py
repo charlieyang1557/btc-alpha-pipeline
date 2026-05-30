@@ -526,9 +526,13 @@ DEFAULT_OUT_DIR = PROJECT_ROOT / "data/phase2c_evaluation_gate/tier6_dsr_v1"
 # authoritative CSV unless added as `extra` columns. MED-1: failure_reason is
 # now a persisted column (empty string on normal rows, populated on degenerate
 # rows) so a flagged-fail's diagnostic survives into the written CSV.
+# MINOR-1: n_star + z_pass are emitted per-row by evaluate_candidate; carrying
+# them makes the CSV self-describing (records the multiplicity N* and the
+# one-sided z(0.95) pass threshold used) instead of dropping them via
+# extrasaction="ignore".
 _RESULT_FIELDS = [
     "hypothesis_hash", "name", "theme", "T", "sr_per_bar",
-    "gamma3", "gamma4", "trades", "var_sr_null",
+    "gamma3", "gamma4", "trades", "var_sr_null", "n_star", "z_pass",
     "er_B", "sr_star_B", "deflated_z_B", "psr_B", "dsr_statistic_B", "pass_B",
     "er_A", "sr_star_A", "deflated_z_A", "psr_A", "dsr_statistic_A", "pass_A",
     "g4_high_flag", "provisional_flag", "r21_indeterminate_flag",
@@ -539,10 +543,11 @@ _RESULT_FIELDS = [
 def _read_cohort_csv(holdout_dir: Path = HOLDOUT_DIR) -> pd.DataFrame:
     """Read the cohort ``holdout_results.csv`` (39 rows).
 
-    DESIGN INVARIANT: a single seam for the cohort CSV read so the
-    ``wf_lineage`` evaluation-semantics consumption guard (Task 8) is
-    inserted right after this read in ``evaluate_cohort``, and so tests can
-    monkeypatch the read.
+    DESIGN INVARIANT (IMPORTANT-2): a single seam for the cohort CSV read so
+    that ``evaluate_cohort`` runs the ``wf_lineage`` evaluation-semantics
+    consumption guard (A2) + the cost-anchor preflight (A12) on the aggregate
+    summary BEFORE this read consumes the cohort CSV (honoring A2 "before
+    consuming"), and so tests can monkeypatch / spy on the read.
 
     Args:
         holdout_dir: Cohort directory (A6; default ``HOLDOUT_DIR``). A non-
@@ -563,6 +568,14 @@ def _degenerate_fail_row(
     Mertens variance term, or any ``ValueError`` from ``evaluate_candidate``)
     must NEVER crash the cohort run. We emit a flagged-fail row instead.
 
+    IMPORTANT-1: the 11 DSR numeric columns (``var_sr_null`` + the per-form
+    ``er/sr_star/deflated_z/psr/dsr_statistic``) are populated with
+    ``float("nan")`` rather than left absent. The CSV writer's ``restval=""``
+    would otherwise write empty strings for missing keys, which would break a
+    future ``df["psr_B"].astype(float)`` over a cohort that contains a
+    degenerate row. NaN keeps every numeric column numeric-parseable. (The
+    current cohort has 0 degenerate rows, so this is purely defensive.)
+
     Args:
         hypothesis_hash: The candidate identifier.
         cm: The loaded moments if available (for identifying fields), else None.
@@ -570,9 +583,12 @@ def _degenerate_fail_row(
 
     Returns:
         A result dict with ``pass_B = pass_A = False``,
-        ``mertens_degenerate_flag = True``, ``failure_reason`` and any available
-        identifying fields, plus the other flags set to safe defaults.
+        ``mertens_degenerate_flag = True``, ``failure_reason``, any available
+        identifying fields, all 11 DSR numeric columns set to ``float("nan")``,
+        ``n_star`` / ``z_pass`` (MINOR-1), and the other flags set to safe
+        defaults. Contains every ``_RESULT_FIELDS`` key.
     """
+    nan = float("nan")
     row: dict = {
         "hypothesis_hash": hypothesis_hash,
         "name": cm.name if cm is not None else None,
@@ -582,6 +598,15 @@ def _degenerate_fail_row(
         "gamma3": cm.gamma3 if cm is not None else None,
         "gamma4": cm.gamma4 if cm is not None else None,
         "trades": cm.trades if cm is not None else None,
+        # IMPORTANT-1: the 11 DSR numeric columns as NaN (numeric-parseable).
+        "var_sr_null": nan,
+        "er_B": nan, "sr_star_B": nan, "deflated_z_B": nan,
+        "psr_B": nan, "dsr_statistic_B": nan,
+        "er_A": nan, "sr_star_A": nan, "deflated_z_A": nan,
+        "psr_A": nan, "dsr_statistic_A": nan,
+        # MINOR-1: self-describing context fields carried even on degenerate rows.
+        "n_star": N_STAR,
+        "z_pass": Z_PASS,
         "pass_B": False,
         "pass_A": False,
         "mertens_degenerate_flag": True,
@@ -810,12 +835,14 @@ def evaluate_cohort(
             preflight (A12) rejects the execution config, or propagated from a
             per-candidate data-integrity failure (A2/A8 in the loader).
     """
-    # DESIGN INVARIANT: the wf_lineage evaluation-semantics consumption guard
-    # (A2) + cost-anchor preflight (A12) fire IMMEDIATELY after the cohort CSV
-    # read and BEFORE any per-candidate parquet/moment consumption, so an unsafe
-    # lineage or a non-15bps-spot anchor aborts before any capital-adjacent math.
-    df = _read_cohort_csv(holdout_dir=holdout_dir)
-
+    # DESIGN INVARIANT (IMPORTANT-2, honors A2 "before consuming"): the
+    # wf_lineage evaluation-semantics consumption guard (A2) + cost-anchor
+    # preflight (A12) fire on the aggregate holdout_summary.json BEFORE ANY
+    # cohort consumption — i.e. before the cohort CSV read (_read_cohort_csv) AND
+    # before any per-candidate parquet/moment read. The summary load depends only
+    # on holdout_dir (independent of the CSV), so an unsafe lineage or a
+    # non-15bps-spot anchor aborts before the first byte of cohort data is
+    # consumed for capital-adjacent math.
     summary_path = holdout_dir / "holdout_summary.json"
     summary_dict = json.loads(summary_path.read_text())
     # A2: aggregate lineage guard (module-global name so it is monkeypatchable).
@@ -823,8 +850,10 @@ def evaluate_cohort(
         summary_dict, artifact_path=str(summary_path)
     )
     # A12: cost-anchor preflight (HARD CONSTRAINT 270-271). Module-global name so
-    # it is monkeypatchable; both fire before any per-candidate consumption.
+    # it is monkeypatchable; both fire before any cohort consumption.
     _assert_cost_anchor_15bps_spot(summary_dict)
+
+    df = _read_cohort_csv(holdout_dir=holdout_dir)
 
     locked, companion = derive_cohort(df)
 

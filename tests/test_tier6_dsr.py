@@ -501,6 +501,56 @@ def test_results_csv_has_reconciled_fields(tmp_path):
     assert "ER_B" not in res_df.columns and "DSR_B" not in res_df.columns
 
 
+def test_results_csv_self_describing_includes_n_star_and_z_pass(tmp_path):
+    # FIX MINOR-1: n_star and z_pass are emitted per-row by evaluate_candidate;
+    # they must be carried into _RESULT_FIELDS so the CSV is self-describing
+    # (records the multiplicity N* and the one-sided z(0.95) threshold used).
+    t6.evaluate_cohort(out_dir=tmp_path, n_sims=0)
+    res_df = pd.read_csv(tmp_path / "tier6_dsr_results.csv")
+    assert "n_star" in res_df.columns
+    assert "z_pass" in res_df.columns
+    assert (res_df["n_star"] == 18).all()
+    assert (abs(res_df["z_pass"] - t6.Z_PASS) < 1e-9).all()
+
+
+def test_result_fields_includes_n_star_and_z_pass():
+    # FIX MINOR-1: explicit membership assertion on the field list.
+    assert "n_star" in t6._RESULT_FIELDS
+    assert "z_pass" in t6._RESULT_FIELDS
+
+
+def test_degenerate_fail_row_has_all_result_fields_with_nan_numerics():
+    # FIX IMPORTANT-1: a degenerate-fail row must populate every _RESULT_FIELDS
+    # key. The 11 DSR numeric columns (var_sr_null + er/sr_star/deflated_z/psr/
+    # dsr_statistic for both forms) must be float NaN (not absent), so a future
+    # df["psr_B"].astype(float) over a cohort containing a degenerate row does
+    # not choke on the empty-string restval. FIX MINOR-1: n_star/z_pass carried.
+    cm = t6.CandidateMoments(
+        "deadbeefdeadbeef", "synthetic_degenerate", "test",
+        sr_per_bar=2.0, gamma3=5.0, gamma4=1.0, T=100, trades=None)
+    exc = ValueError("non-positive Mertens variance term")
+    row = t6._degenerate_fail_row("deadbeefdeadbeef", cm, exc)
+    # every reconciled field is present
+    for field in t6._RESULT_FIELDS:
+        assert field in row, f"degenerate-fail row missing _RESULT_FIELDS key {field}"
+    # the 11 DSR numeric columns are float NaN (numeric-parseable, not "")
+    numeric_nan_fields = (
+        "var_sr_null",
+        "er_B", "sr_star_B", "deflated_z_B", "psr_B", "dsr_statistic_B",
+        "er_A", "sr_star_A", "deflated_z_A", "psr_A", "dsr_statistic_A",
+    )
+    for field in numeric_nan_fields:
+        assert isinstance(row[field], float), f"{field} must be a float, got {type(row[field])}"
+        assert math.isnan(row[field]), f"{field} must be NaN on a degenerate-fail row"
+    # n_star / z_pass carried even on degenerate rows (FIX MINOR-1)
+    assert row["n_star"] == t6.N_STAR
+    assert abs(row["z_pass"] - t6.Z_PASS) < 1e-9
+    # identity + fail markers preserved
+    assert row["pass_B"] is False and row["pass_A"] is False
+    assert row["mertens_degenerate_flag"] is True
+    assert row["failure_reason"]
+
+
 def test_companion_csv_has_extra_columns(tmp_path):
     t6.evaluate_cohort(out_dir=tmp_path, n_sims=0)
     comp_df = pd.read_csv(tmp_path / "tier6_dsr_companion.csv")
@@ -671,6 +721,48 @@ def test_evaluate_cohort_invokes_lineage_guard_before_parquet_read(monkeypatch):
     assert calls == ["guard"]  # loader never reached
 
 
+def test_evaluate_cohort_invokes_lineage_guard_before_csv_read(monkeypatch):
+    # FIX IMPORTANT-2 (A2 "before consuming"): the aggregate summary lineage
+    # guard must fire BEFORE the cohort CSV is consumed by _read_cohort_csv, not
+    # only before the per-candidate parquet read. We make the guard raise and
+    # spy on _read_cohort_csv; it must NEVER be called.
+    calls = []
+
+    def boom(summary, **kw):
+        calls.append("guard")
+        raise ValueError("lineage tripwire")
+
+    def csv_should_not_run(*a, **k):
+        calls.append("csv")
+        raise AssertionError("_read_cohort_csv must not run after guard raise")
+
+    monkeypatch.setattr(t6, "check_evaluation_semantics_or_raise", boom)
+    monkeypatch.setattr(t6, "_read_cohort_csv", csv_should_not_run)
+    with pytest.raises(ValueError, match="lineage tripwire"):
+        t6.evaluate_cohort(out_dir=None, n_sims=0, write=False)
+    assert calls == ["guard"]  # CSV read never reached
+
+
+def test_evaluate_cohort_cost_anchor_preflight_before_csv_read(monkeypatch):
+    # FIX IMPORTANT-2: the cost-anchor preflight (A12) likewise fires BEFORE the
+    # cohort CSV is consumed. A non-15bps anchor must abort before _read_cohort_csv.
+    calls = []
+
+    def boom(summary):
+        calls.append("preflight")
+        raise ValueError("HARD CONSTRAINT 270: bad anchor")
+
+    def csv_should_not_run(*a, **k):
+        calls.append("csv")
+        raise AssertionError("_read_cohort_csv must not run after preflight raise")
+
+    monkeypatch.setattr(t6, "_assert_cost_anchor_15bps_spot", boom)
+    monkeypatch.setattr(t6, "_read_cohort_csv", csv_should_not_run)
+    with pytest.raises(ValueError, match="HARD CONSTRAINT 270"):
+        t6.evaluate_cohort(out_dir=None, n_sims=0, write=False)
+    assert "csv" not in calls  # CSV read never reached after preflight raise
+
+
 # --- A12: cost-anchor preflight (HARD CONSTRAINT 270-271) ---
 def test_cost_anchor_preflight_passes_on_real_summary():
     summary = json.loads((t6.HOLDOUT_DIR / "holdout_summary.json").read_text())
@@ -678,10 +770,31 @@ def test_cost_anchor_preflight_passes_on_real_summary():
     t6._assert_cost_anchor_15bps_spot(summary)
 
 
-def test_cost_anchor_preflight_accepts_both_known_15bps_configs():
+def test_cost_anchor_preflight_accepts_both_known_15bps_configs(monkeypatch):
+    # FIX MINOR-3: airtight — assert the YAML body-check actually ran for each
+    # allowlisted config (wrap yaml.safe_load with a counting spy). If someone
+    # adds an early-return after the filename allowlist check, the body would
+    # never be loaded and this counter assertion fails.
+    import yaml as _yaml
+
+    body_loads = []
+    real_safe_load = _yaml.safe_load
+
+    def spy_safe_load(stream):
+        body_loads.append(stream)
+        return real_safe_load(stream)
+
+    monkeypatch.setattr(t6.yaml, "safe_load", spy_safe_load)
     for cfg in ("config/execution_phase4_15bps.yaml",
                 "config/execution_phaseb_spot_15bps.yaml"):
+        before = len(body_loads)
         t6._assert_cost_anchor_15bps_spot({"execution_config_path": cfg})
+        # the body of THIS config must have been loaded (not short-circuited
+        # after the filename allowlist check).
+        assert len(body_loads) == before + 1, (
+            f"yaml body for {cfg} was not loaded — filename-only allowlist "
+            f"short-circuit would let a relabelled 7bps body through"
+        )
 
 
 def test_cost_anchor_preflight_rejects_7bps_effective_model():
