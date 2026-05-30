@@ -1621,7 +1621,13 @@ class TestT1_4_Pc9BaselineGate:
         # neither a t1_4 nor a t1_5 subtraction target, so its +72 lands wholly in
         # pre_t1_x_baseline = total − t1_4 − t1_5. Advance BASELINE 2248 → 2320
         # (same expected-additive-cohort precedent as T1.5 + B-C-narrow cohorts).
-        BASELINE = 2320
+        # Tier 6 DSR chunk-3 hardening (tier6-dsr-evaluation branch): adds +3 new
+        # test methods in tests/test_tier6_dsr.py (FIX HIGH yaml.YAMLError guard
+        # test + FIX MED-1 abs-path acceptance test + FIX MINOR-3 logging
+        # idempotency test). Purely additive to the same tier6 cohort, neither a
+        # t1_4 nor a t1_5 subtraction target. Advance BASELINE 2320 → 2323 (+3,
+        # same expected-additive-cohort precedent).
+        BASELINE = 2323
         assert pre_t1_x_baseline == BASELINE, (
             f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
             f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "

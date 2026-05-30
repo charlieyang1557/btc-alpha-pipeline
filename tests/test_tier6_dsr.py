@@ -711,6 +711,36 @@ def test_cost_anchor_preflight_rejects_relabel_with_7bps_body(tmp_path):
         t6._assert_cost_anchor_15bps_spot({"execution_config_path": str(sneaky)})
 
 
+def test_cost_anchor_preflight_raises_value_error_on_malformed_yaml(tmp_path):
+    # FIX HIGH: a malformed/corrupt anchor YAML raises yaml.YAMLError (subclass
+    # of Exception, NOT OSError/ValueError). The preflight must catch it and
+    # re-raise as a clean ValueError("HARD CONSTRAINT 270 ...") so the
+    # capital-adjacent gate fails loud + clean, NOT leak a yaml.YAMLError
+    # traceback past main()'s `except (ValueError, OSError)`.
+    bad = tmp_path / "execution_phase4_15bps.yaml"
+    bad.write_text("a: b: c:\n  - [unterminated")
+    with pytest.raises(ValueError, match="HARD CONSTRAINT 270"):
+        t6._assert_cost_anchor_15bps_spot({"execution_config_path": str(bad)})
+
+
+def test_cost_anchor_preflight_accepts_absolute_path_to_valid_15bps_body(tmp_path):
+    # FIX MED-1: the absolute-path ACCEPTANCE branch (only the rejection branch
+    # was covered via tmp absolute paths). An allowlisted-name config at an
+    # ABSOLUTE path whose cost_model body sums to 15.0bps/side
+    # (default_fee_bps 10.0 + slippage_bps 5.0, matching the real
+    # config/execution_phase4_15bps.yaml schema) must NOT raise.
+    cfg = tmp_path / "execution_phase4_15bps.yaml"
+    cfg.write_text(
+        "cost_model:\n"
+        "  name: phase4_realistic_base_15bps\n"
+        "  default_fee_bps: 10.0\n"
+        "  slippage_bps: 5.0\n"
+    )
+    assert cfg.is_absolute()
+    # must not raise
+    t6._assert_cost_anchor_15bps_spot({"execution_config_path": str(cfg)})
+
+
 def test_cost_anchor_preflight_is_invoked_by_evaluate_cohort(monkeypatch):
     # The preflight is wired into evaluate_cohort before consumption.
     seen = []
@@ -756,6 +786,15 @@ def test_main_cohort_arg_resolves_non_default_dir(monkeypatch):
 def test_logging_formatter_uses_utc():
     fmt = t6._build_log_formatter()
     assert fmt.converter is time.gmtime
+
+
+def test_configure_logging_is_idempotent_no_duplicate_handlers():
+    # FIX MINOR-3: pin the existing idempotency guard in _configure_logging().
+    # Calling it twice (e.g. two main() invocations in one process) must NOT
+    # accumulate duplicate handlers on the module logger.
+    t6._configure_logging()
+    t6._configure_logging()
+    assert len(logging.getLogger("tier6_dsr").handlers) <= 1
 
 
 # --- CLI main() ---

@@ -741,9 +741,14 @@ def _assert_cost_anchor_15bps_spot(summary_dict: dict) -> None:
     resolved = cfg_path if cfg_path.is_absolute() else PROJECT_ROOT / cfg_path
     try:
         cfg = yaml.safe_load(resolved.read_text())
-    except OSError as exc:
+    except (OSError, yaml.YAMLError) as exc:
+        # OSError: unreadable/missing file. yaml.YAMLError: malformed/corrupt
+        # YAML (subclass of Exception, NOT OSError/ValueError) — without this
+        # branch a corrupt anchor config would escape both this preflight and
+        # main()'s `except (ValueError, OSError)` as a raw traceback. We re-raise
+        # as ValueError so the capital-adjacent gate fails loud + clean.
         raise ValueError(
-            f"HARD CONSTRAINT 270: cannot read execution config {resolved} "
+            f"HARD CONSTRAINT 270: cannot read/parse execution config {resolved} "
             f"to verify the 15bps/side spot cost anchor: {exc}. Refusing per "
             f"CLAUDE.md Conservative-Anchor Gate Integrity."
         ) from exc
