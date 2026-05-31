@@ -1832,7 +1832,47 @@ class TestT1_4_Pc9BaselineGate:
         # normalization (FIX 2); build_features.main() funding diagnostic (FIX 3).
         # Sealed tier6_dsr_v1/ untouched. Advance BASELINE 2687 → 2694 (same
         # expected-additive-cohort precedent; 2-leg adversarial-review fixes).
-        BASELINE = 2694
+        # Path A Phase C funding verdict HARNESS, Tasks C4-C7 (patha-funding-scoping
+        # branch): adapts the pathb_* verdict harness to patha_* retargeted at the 3
+        # LOCKed funding hypotheses + funding feature columns, plus the genuinely-new
+        # C5 tiered mechanism-sanity / C6 fenced funding-marginal diagnostic / C7
+        # hypothesis-class floors / the Phase-D-GATED run script. Adds +60 collected
+        # items across 10 NEW test files, none a t1_4/t1_5 subtraction target, so the
+        # +60 lands wholly in pre_t1_x_baseline = total − t1_4 − t1_5:
+        #   tests/test_patha_holdout_producer.py (+3: dead-18-layout, PATHA_BUILD git
+        #     sha default, degenerate-equity None-gamma guard — mocked engine),
+        #   tests/test_patha_moments.py (+2: tier6 integrity-gate roundtrip + sha256
+        #     tamper, reusing load_candidate_moments),
+        #   tests/test_patha_dsr_fwer.py (+5: PATHA_N_STAR==3==PATHB_N_STAR, per-
+        #     candidate evaluate_candidate loop, pass_B survivors, no evaluate_cohort),
+        #   tests/test_patha_earned_negative.py (+9: funding taxonomy + the advisor-F4
+        #     verdict_rests_on_weak_sane_only tier threading + pinned funding tempers),
+        #   tests/test_patha_escalation.py (+6: advisor-F3 n_dsr_pass==0 prong — Path A
+        #     has NO Step-0; warranted/not-warranted across the taxonomy),
+        #   tests/test_patha_perleg.py (+10: C5 classify_leg strong/weak/refuted at
+        #     24h+72h for H1-NEGATIVE/H3-POSITIVE + classify_h2_leg two-population +
+        #     compute_per_leg_tiers driver),
+        #   tests/test_patha_marginal.py (+5: C6 fenced funding-marginal Sharpe delta,
+        #     promotion_affecting/in_n_star always False, identical-bar guard),
+        #   tests/test_patha_orchestrator.py (+4: advisory-pipeline compose, process-
+        #     refuted+zero-DSR escalation, floors + fenced-marginal threading),
+        #   tests/test_patha_floors.py (+9: C7 count_flat_exit_episodes + H1 >=200
+        #     flat-exit-episodes floor + H2/H3 zero_fraction<0.50 AND >=200 trades
+        #     floor + under-floor INDETERMINATE),
+        #   tests/test_patha_run_verdict.py (+7: Phase-D GATE refusal ×2 [main returns
+        #     non-zero + run_verdict never reached] + PHASE_D_AUTHORIZED default False +
+        #     two-horizon train frame + sealed-out-dir refusal + mocked-engine
+        #     integration + sealed tier6_dsr_v1 sha256 4/4 byte-invariance).
+        # Production changes: the additive backtest/patha_{holdout_producer,moments,
+        # dsr_fwer,earned_negative,escalation,perleg_mechanism,marginal_diagnostic,
+        # orchestrator,train_sanity}.py modules + the GATED scripts/patha_run_verdict.py
+        # (main() refuses while PHASE_D_AUTHORIZED is False — the real forward_2026 run
+        # is a separate Phase-D Charlie register). The harness REUSES tier6_dsr's
+        # evaluate_candidate/Form B/Z_PASS + load_candidate_moments integrity gate
+        # UNCHANGED; sealed tier6_dsr_v1/ sha256 4/4 byte-unchanged (asserted in
+        # test_patha_run_verdict.py). Advance BASELINE 2694 → 2754 (same expected-
+        # additive-cohort precedent; per Charlie C4-C7 register 2026-05-31).
+        BASELINE = 2754
         assert pre_t1_x_baseline == BASELINE, (
             f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
             f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "
