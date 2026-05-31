@@ -5,6 +5,7 @@ validator, archive-before-overwrite reconcile, and CCXT incremental update.
 All UTC. Mirrors the OHLCV ingestion test conventions.
 """
 
+import sys
 import yaml
 from pathlib import Path
 
@@ -156,8 +157,13 @@ class _FakeFundingExchange:
     def fetch_funding_rate_history(self, symbol=None, since=None, limit=None, params=None):
         self.calls.append({"symbol": symbol, "since": since, "limit": limit})
         if since is None:
-            return list(self._rows)
-        return [r for r in self._rows if r["timestamp"] >= since]
+            out = list(self._rows)
+        else:
+            out = [r for r in self._rows if r["timestamp"] >= since]
+        # Respect the page-size cap so pagination is exercised realistically.
+        if limit is not None:
+            out = out[:limit]
+        return out
 
 
 def test_fetch_funding_history_normalizes_to_schema():
@@ -203,3 +209,181 @@ def test_fetch_with_funding_backoff_retries_then_succeeds(monkeypatch):
     )
     assert ex.attempts == 3
     assert out[0]["fundingRate"] == 0.0001
+
+
+# ---------------------------------------------------------------------------
+# B2 review fix #1: CCXT None/NaN fundingRate guard in to_dataframe
+# ---------------------------------------------------------------------------
+
+
+def test_funding_history_to_dataframe_drops_none_funding_rate():
+    # Binance returns fundingRate=None during outages; must not crash, must drop.
+    rows = [
+        {"timestamp": 1577836800000, "fundingRate": 0.0001},
+        {"timestamp": 1577865600000, "fundingRate": None},
+        {"timestamp": 1577894400000, "fundingRate": -0.00005},
+    ]
+    df = funding_incremental_update.funding_history_to_dataframe(rows)
+    assert len(df) == 2
+    assert df["funding_rate"].tolist() == [0.0001, -0.00005]
+    assert df["funding_rate"].isna().sum() == 0
+
+
+def test_funding_history_to_dataframe_all_none_returns_empty_schema():
+    rows = [
+        {"timestamp": 1577836800000, "fundingRate": None},
+        {"timestamp": 1577865600000, "fundingRate": float("nan")},
+    ]
+    df = funding_incremental_update.funding_history_to_dataframe(rows)
+    assert len(df) == 0
+    assert list(df.columns) == [
+        "open_time_utc", "funding_rate", "funding_interval_hours",
+        "ingested_at_utc", "source",
+    ]
+
+
+# ---------------------------------------------------------------------------
+# B2 review fix #4 + #10: pagination must not skip a settlement between page
+# boundaries (advance cursor by last_ts + 1ms, not + 8h).
+# ---------------------------------------------------------------------------
+
+
+def test_fetch_all_funding_does_not_skip_mid_interval_settlement():
+    # FUNDING_LIMIT settlements 8h apart, then a settlement at last_ts + 4h
+    # (between page boundaries). The +8h cursor advance would skip it; the
+    # +1ms advance must fetch it.
+    limit = funding_incremental_update.FUNDING_LIMIT
+    base = 1577836800000
+    eight_h = funding_incremental_update.EIGHT_HOURS_MS
+    rows = [{"timestamp": base + i * eight_h, "fundingRate": 0.0001} for i in range(limit)]
+    last_full = rows[-1]["timestamp"]
+    mid = last_full + eight_h // 2  # +4h between page boundaries
+    rows.append({"timestamp": mid, "fundingRate": 0.0002})
+
+    ex = _FakeFundingExchange(rows)
+    out = funding_incremental_update.fetch_all_funding(ex, symbol="BTC/USDT:USDT", since_ms=base)
+    fetched_ts = {r["timestamp"] for r in out}
+    assert mid in fetched_ts, "settlement at last_ts + 4h was skipped (off-by-8h pagination)"
+    assert len(out) == limit + 1
+
+
+# ---------------------------------------------------------------------------
+# B2 review fix #11: non-BTCUSDT pair is rejected (Phase A is BTCUSDT only)
+# ---------------------------------------------------------------------------
+
+
+def test_incremental_main_rejects_non_btcusdt_pair(monkeypatch):
+    import pytest as _pytest
+    monkeypatch.setattr(sys, "argv", ["funding_incremental_update", "--pair", "ETHUSDT"])
+    with _pytest.raises(ValueError):
+        funding_incremental_update.main()
+
+
+# ---------------------------------------------------------------------------
+# B2 review fix #5: reconcile write is atomic (staging -> replace)
+# ---------------------------------------------------------------------------
+
+
+def test_reconcile_main_writes_atomically(tmp_path, monkeypatch):
+    existing = tmp_path / "btcusdt_funding_8h.parquet"
+    update = tmp_path / "btcusdt_funding_8h_update.parquet"
+    pd.DataFrame([_funding_row(1577836800000, 0.0001, "binance_vision")]).to_parquet(
+        existing, engine="pyarrow", index=False
+    )
+    pd.DataFrame([_funding_row(1577865600000, 0.0002, "binance_vision")]).to_parquet(
+        update, engine="pyarrow", index=False
+    )
+
+    captured = {}
+    real_replace = Path.replace
+
+    def _spy_replace(self, target):
+        captured["staging"] = str(self)
+        captured["target"] = str(target)
+        return real_replace(self, target)
+
+    monkeypatch.setattr(Path, "replace", _spy_replace)
+    monkeypatch.setattr(funding_reconcile, "QUALITY_DIR", tmp_path / "quality")
+    monkeypatch.setattr(funding_reconcile, "ARCHIVE_DIR", tmp_path / "archive")
+    monkeypatch.setattr(
+        sys, "argv",
+        ["funding_reconcile", "--existing", str(existing), "--new", str(update)],
+    )
+    rc = funding_reconcile.main()
+    assert rc == 0
+    assert captured.get("staging", "").endswith(".staging")
+    assert captured.get("target") == str(existing)
+    merged = pd.read_parquet(existing)
+    assert len(merged) == 2
+    # no leftover staging file
+    assert not (tmp_path / "btcusdt_funding_8h.parquet.staging").exists()
+
+
+# ---------------------------------------------------------------------------
+# B2 review fix #2, #3, #6, #8, #9: validator negative + gap cases
+# ---------------------------------------------------------------------------
+
+
+def test_validate_funding_rejects_null_source():
+    df = _good()
+    df.loc[1, "source"] = None
+    report = validate_funding(df)
+    assert report["ok"] is False
+    assert any("null" in e.lower() and "source" in e.lower() for e in report["errors"])
+
+
+def test_validate_funding_rejects_unrecognized_source():
+    df = _good()
+    df["source"] = ["binance_vision", "ftx_dead"]
+    report = validate_funding(df)
+    assert report["ok"] is False
+    assert any("invalid" in e.lower() for e in report["errors"])
+
+
+def test_validate_funding_rejects_nonpositive_interval():
+    df = _good()
+    df.loc[1, "funding_interval_hours"] = 0
+    report = validate_funding(df)
+    assert report["ok"] is False
+    assert any("funding_interval_hours" in e for e in report["errors"])
+
+
+def test_validate_funding_rejects_nan_interval():
+    df = _good()
+    df["funding_interval_hours"] = df["funding_interval_hours"].astype("float64")
+    df.loc[1, "funding_interval_hours"] = float("nan")
+    report = validate_funding(df)
+    assert report["ok"] is False
+    assert any("funding_interval_hours" in e for e in report["errors"])
+
+
+def test_validate_funding_rejects_missing_required_column():
+    df = _good().drop(columns=["funding_rate"])
+    report = validate_funding(df)
+    assert report["ok"] is False
+    assert any("Missing columns" in e for e in report["errors"])
+
+
+def test_validate_funding_rejects_nan_funding_rate():
+    df = _good()
+    df.loc[1, "funding_rate"] = float("nan")
+    report = validate_funding(df)
+    assert report["ok"] is False
+    assert any("funding_rate" in e for e in report["errors"])
+
+
+def test_validate_funding_flags_gap_even_when_error_present():
+    # A gap (24h between two settlements) AND an error (bad source) coexist.
+    # Gap must still be flagged as a warning (no_forward_fill rule).
+    df = pd.DataFrame({
+        "open_time_utc": pd.to_datetime(
+            [1577836800000, 1577836800000 + 24 * 3_600_000], unit="ms", utc=True
+        ).as_unit("ms"),
+        "funding_rate": [0.0001, -0.00005],
+        "funding_interval_hours": [8, 8],
+        "source": ["binance_vision", "ftx_dead"],  # invalid -> error
+        "ingested_at_utc": pd.to_datetime([0, 0], unit="ms", utc=True).as_unit("ms"),
+    })
+    report = validate_funding(df)
+    assert report["ok"] is False  # error present
+    assert any("gap" in w.lower() for w in report["warnings"])  # but gap still flagged

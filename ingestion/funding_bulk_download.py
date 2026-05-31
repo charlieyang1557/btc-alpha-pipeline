@@ -52,6 +52,39 @@ VISION_PREFIX = "data/futures/um/monthly/fundingRate/BTCUSDT/"
 BASE_URL = "https://data.binance.vision"
 
 
+def _normalize_funding_raw(raw: pd.DataFrame, name: str) -> pd.DataFrame:
+    """Normalize a raw fundingRate frame into the canonical funding schema.
+
+    Shared by parse_funding_csv (headered file) and _parse_funding_buffer
+    (headered/headerless in-memory buffer). Expects columns calc_time,
+    funding_interval_hours, last_funding_rate.
+
+    Output schema: open_time_utc(datetime64[ms,UTC] PK), funding_rate(float64),
+      funding_interval_hours(int64), source(string), ingested_at_utc(datetime64[ms,UTC]).
+    Null policy: rows with NaN calc_time/last_funding_rate are dropped + counted (logged).
+
+    Args:
+        raw: Raw parsed CSV frame.
+        name: Source name (file/CSV) for logging.
+
+    Returns:
+        DataFrame matching the canonical funding schema (sorted, source=binance_vision).
+    """
+    n_in = len(raw)
+    raw = raw.dropna(subset=["calc_time", "last_funding_rate"])     # drop + count NaN rows
+    n_dropped = n_in - len(raw)
+    if n_dropped:
+        logger.info("_normalize_funding_raw: dropped %d NaN row(s) from %s", n_dropped, name)
+    df = pd.DataFrame({
+        "open_time_utc": pd.to_datetime(raw["calc_time"], unit="ms", utc=True).astype("datetime64[ms, UTC]"),
+        "funding_rate": raw["last_funding_rate"].astype("float64"),
+        "funding_interval_hours": raw["funding_interval_hours"].astype("int64"),
+    })
+    df["source"] = pd.array(["binance_vision"] * len(df), dtype="string")   # schema 'string', not object
+    df["ingested_at_utc"] = pd.Timestamp(datetime.now(timezone.utc)).as_unit("ms")
+    return df.sort_values("open_time_utc").reset_index(drop=True)
+
+
 def parse_funding_csv(path: Path) -> pd.DataFrame:
     """Parse one Binance Vision fundingRate CSV into the canonical funding schema.
 
@@ -61,19 +94,7 @@ def parse_funding_csv(path: Path) -> pd.DataFrame:
     Null policy: rows with NaN calc_time/last_funding_rate are dropped + counted (logged).
     """
     raw = pd.read_csv(path)
-    n_in = len(raw)
-    raw = raw.dropna(subset=["calc_time", "last_funding_rate"])     # drop + count NaN rows
-    n_dropped = n_in - len(raw)
-    if n_dropped:
-        logger.info("parse_funding_csv: dropped %d NaN row(s) from %s", n_dropped, path.name)
-    df = pd.DataFrame({
-        "open_time_utc": pd.to_datetime(raw["calc_time"], unit="ms", utc=True).astype("datetime64[ms, UTC]"),
-        "funding_rate": raw["last_funding_rate"].astype("float64"),
-        "funding_interval_hours": raw["funding_interval_hours"].astype("int64"),
-    })
-    df["source"] = pd.array(["binance_vision"] * len(df), dtype="string")   # schema 'string', not object
-    df["ingested_at_utc"] = pd.Timestamp(datetime.now(timezone.utc)).as_unit("ms")
-    return df.sort_values("open_time_utc").reset_index(drop=True)
+    return _normalize_funding_raw(raw, path.name)
 
 
 def generate_month_keys(start: str, end: str | None = None) -> list[str]:
@@ -177,19 +198,7 @@ def _parse_funding_buffer(buf: io.BytesIO, name: str) -> pd.DataFrame:
             names=["calc_time", "funding_interval_hours", "last_funding_rate"],
         )
 
-    n_in = len(raw)
-    raw = raw.dropna(subset=["calc_time", "last_funding_rate"])
-    n_dropped = n_in - len(raw)
-    if n_dropped:
-        logger.info("_parse_funding_buffer: dropped %d NaN row(s) from %s", n_dropped, name)
-    df = pd.DataFrame({
-        "open_time_utc": pd.to_datetime(raw["calc_time"], unit="ms", utc=True).astype("datetime64[ms, UTC]"),
-        "funding_rate": raw["last_funding_rate"].astype("float64"),
-        "funding_interval_hours": raw["funding_interval_hours"].astype("int64"),
-    })
-    df["source"] = pd.array(["binance_vision"] * len(df), dtype="string")
-    df["ingested_at_utc"] = pd.Timestamp(datetime.now(timezone.utc)).as_unit("ms")
-    return df.sort_values("open_time_utc").reset_index(drop=True)
+    return _normalize_funding_raw(raw, name)
 
 
 def process_dataframe(df: pd.DataFrame) -> pd.DataFrame:

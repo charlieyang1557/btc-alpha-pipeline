@@ -186,7 +186,10 @@ def main() -> int:
     # Archive current file only after validation passes.
     archive_file(existing_path)
 
-    merged_df.to_parquet(existing_path, engine="pyarrow", index=False)
+    # Atomic-promote: write to staging, then rename (mirrors funding_bulk_download).
+    staging_path = existing_path.with_suffix(existing_path.suffix + ".staging")
+    merged_df.to_parquet(staging_path, engine="pyarrow", index=False)
+    staging_path.replace(existing_path)
     logger.info("Saved %d rows to %s", len(merged_df), existing_path)
 
     return 0

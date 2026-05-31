@@ -169,8 +169,12 @@ def fetch_all_funding(
         if len(page) < FUNDING_LIMIT:
             break
 
+        # Advance the cursor by +1ms past the last seen settlement (NOT +8h):
+        # advancing by a hardcoded 8h could skip a settlement that lands between
+        # last_ts and last_ts + 8h. The `seen` dedup set absorbs the boundary
+        # row if the CCXT API treats `since` inclusively.
         last_ts = max(int(r["timestamp"]) for r in page)
-        current_since = last_ts + EIGHT_HOURS_MS
+        current_since = last_ts + 1
 
     all_rows.sort(key=lambda r: int(r["timestamp"]))
     return all_rows
@@ -198,6 +202,30 @@ def _row_interval_hours(row: dict) -> int:
     return DEFAULT_FUNDING_INTERVAL_HOURS
 
 
+_FUNDING_SCHEMA_COLUMNS = [
+    "open_time_utc", "funding_rate", "funding_interval_hours",
+    "ingested_at_utc", "source",
+]
+
+
+def _funding_rate_or_none(row: dict) -> float | None:
+    """Return the row's fundingRate as float, or None if missing/None/NaN.
+
+    Binance returns fundingRate=None during exchange outages; such rows must be
+    dropped (not coerced) since funding_rate is schema-declared nullable: false.
+    """
+    raw = row.get("fundingRate")
+    if raw is None:
+        return None
+    try:
+        val = float(raw)
+    except (ValueError, TypeError):
+        return None
+    if val != val:  # NaN
+        return None
+    return val
+
+
 def funding_history_to_dataframe(rows: list[dict]) -> pd.DataFrame:
     """Convert CCXT funding-rate-history dicts to a schema-compliant DataFrame.
 
@@ -205,19 +233,29 @@ def funding_history_to_dataframe(rows: list[dict]) -> pd.DataFrame:
         rows: List of CCXT funding-rate-history dicts (timestamp ms, fundingRate).
 
     Returns:
-        DataFrame matching the funding schema with source="ccxt_binance".
+        DataFrame matching the funding schema with source="ccxt_binance". Rows
+        whose fundingRate is None/NaN (Binance returns None during outages) are
+        dropped + counted + logged; funding_rate is schema nullable: false. If
+        every row drops, an empty frame with the correct schema columns is
+        returned.
     """
+    n_in = len(rows)
+    rows = [r for r in rows if _funding_rate_or_none(r) is not None]
+    n_dropped = n_in - len(rows)
+    if n_dropped:
+        logger.info(
+            "funding_history_to_dataframe: dropped %d row(s) with None/NaN fundingRate",
+            n_dropped,
+        )
+
     if not rows:
-        return pd.DataFrame(columns=[
-            "open_time_utc", "funding_rate", "funding_interval_hours",
-            "ingested_at_utc", "source",
-        ])
+        return pd.DataFrame(columns=_FUNDING_SCHEMA_COLUMNS)
 
     df = pd.DataFrame({
         "open_time_utc": pd.to_datetime(
             [int(r["timestamp"]) for r in rows], unit="ms", utc=True
         ).as_unit("ms"),
-        "funding_rate": [float(r["fundingRate"]) for r in rows],
+        "funding_rate": [_funding_rate_or_none(r) for r in rows],
         "funding_interval_hours": [_row_interval_hours(r) for r in rows],
     })
     df["funding_rate"] = df["funding_rate"].astype("float64")
@@ -243,8 +281,13 @@ def main() -> int:
     parser.add_argument("--dry-run", action="store_true", help="Show what would be fetched")
     args = parser.parse_args()
 
-    # Unified perpetual symbol: BTCUSDT -> BTC/USDT:USDT
-    symbol = DEFAULT_SYMBOL if args.pair == "BTCUSDT" else f"{args.pair[:3]}/{args.pair[3:]}:{args.pair[3:]}"
+    # Phase A is BTCUSDT-only. Refuse any other pair rather than silently
+    # building a malformed unified symbol from the naive [:3]/[3:] split.
+    if args.pair != "BTCUSDT":
+        raise ValueError(
+            f"Phase A funding ingestion supports only --pair BTCUSDT, got {args.pair!r}"
+        )
+    symbol = DEFAULT_SYMBOL
 
     if not CANONICAL_PATH.exists():
         logger.error("Canonical funding file not found: %s", CANONICAL_PATH)
@@ -255,7 +298,10 @@ def main() -> int:
     latest = existing["open_time_utc"].max()
     logger.info("Existing funding: %d rows, latest = %s", len(existing), latest)
 
-    since_ms = int(latest.timestamp() * 1000) + EIGHT_HOURS_MS
+    # Advance +1ms past the latest existing settlement (NOT +8h): a hardcoded
+    # 8h step could skip a settlement landing between latest and latest + 8h.
+    # Reconcile dedups on the PK, so re-fetching the boundary row is harmless.
+    since_ms = int(latest.timestamp() * 1000) + 1
     since_ts = pd.Timestamp(since_ms, unit="ms", tz="UTC")
     logger.info("Fetching new settlements from %s", since_ts)
 

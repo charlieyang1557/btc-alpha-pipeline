@@ -633,11 +633,13 @@ def validate_funding(df: pd.DataFrame) -> dict[str, Any]:
     - open_time_utc is timezone-aware UTC
     - open_time_utc has no duplicates (unique primary key)
     - open_time_utc is strictly ascending (sorted)
-    - funding_interval_hours > 0 for every row
+    - funding_rate has no NaN (schema nullable: false)
+    - funding_interval_hours is > 0 and not NaN for every row
     - source values are within FUNDING_ALLOWED_SOURCES, populated (no null/empty)
 
     Warnings (do NOT set ok=False):
-    - settlement gaps (spacing != 8h) — flagged, never interpolated/removed
+    - settlement gaps (spacing != 8h) — flagged always (even alongside an
+      error), never interpolated/removed
 
     Args:
         df: The funding DataFrame to validate.
@@ -673,11 +675,16 @@ def validate_funding(df: pd.DataFrame) -> dict[str, Any]:
     if not pk.is_monotonic_increasing or dupe_count > 0:
         errors.append("open_time_utc is not strictly ascending (sorted_pk)")
 
-    # funding_interval_hours > 0 per row
-    if "funding_interval_hours" in df.columns:
-        nonpos = int((df["funding_interval_hours"] <= 0).sum())
-        if nonpos > 0:
-            errors.append(f"funding_interval_hours has {nonpos} row(s) <= 0")
+    # funding_rate present (schema nullable: false — no NaN allowed)
+    nan_rate = int(df["funding_rate"].isna().sum())
+    if nan_rate > 0:
+        errors.append(f"funding_rate has {nan_rate} NaN value(s)")
+
+    # funding_interval_hours > 0 per row (NaN is also invalid; NaN is not <= 0)
+    interval = df["funding_interval_hours"]
+    bad_interval = int((interval.isna() | (interval <= 0)).sum())
+    if bad_interval > 0:
+        errors.append(f"funding_interval_hours has {bad_interval} row(s) NaN or <= 0")
 
     # source populated + allowed
     src = df["source"]
@@ -691,8 +698,10 @@ def validate_funding(df: pd.DataFrame) -> dict[str, Any]:
     if invalid_values:
         errors.append(f"source has invalid value(s): {sorted(invalid_values)}")
 
-    # Gap detection (warning only; flagged, never interpolated)
-    if len(df) >= 2 and not errors:
+    # Gap detection (warning only; flagged, never interpolated). Always run per
+    # the schema's no_forward_fill "flag missing settlements" rule — gaps are
+    # flagged even when an error is also present.
+    if len(df) >= 2:
         sorted_pk = pk.sort_values().reset_index(drop=True)
         diffs = sorted_pk.diff()[1:]
         gap_count = int((diffs != EIGHT_HOURS).sum())
@@ -713,7 +722,8 @@ def save_report(report: dict[str, Any], report_dir: Path, prefix: str = "validat
     """Save a validation report as JSON.
 
     Args:
-        report: The validation report dict from validate_ohlcv().
+        report: The validation report dict from validate_ohlcv() or
+            validate_funding().
         report_dir: Directory to save the report in.
         prefix: Filename prefix (default: "validation").
 
