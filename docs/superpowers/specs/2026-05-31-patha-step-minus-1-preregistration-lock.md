@@ -2,6 +2,7 @@
 
 **Date:** 2026-05-31 (UTC)
 **Status:** **LOCKED** at a Charlie register-event 2026-05-31. This file is committed **BEFORE** any funding data is ingested or peeked, any factor build, and any evaluation — its commit-order is the anti-hindsight evidence (METHODOLOGY_NOTES §3.3: pre-register expectations before running; commit-order so post-hoc rationalization is impossible). Only the Binance Vision file *listing* was verified (funding history starts 2020-01); no funding *values* have been observed.
+**Amended:** 2026-05-31 (Amendment A1, appended below — H1 time-stop removal; Charlie-registered; pre-data). The original Pre-registration 1 text is retained byte-intact and marked SUPERSEDED at the affected value.
 
 **Authority:** Charlie register (plain-text, 2026-05-31): "register, 实施计划走2 leg review" — registering the a-priori values presented in chat (Q1 funding-only, Q2 N\*=3, Q3 forward_2026 gate, Q4 scope-only + full ingestion design, Q5 all long/flat).
 
@@ -17,7 +18,7 @@
 
 | Hyp | Family | Locked parameters |
 |---|---|---|
-| **H1** `funding_extreme_fade` | crowded-long reversal (long-biased de-risk overlay) | **flat** when `funding_pct_rank_270 ≥ 0.90` AND `funding_sign > 0`; **long** otherwise (the complement). `max_hold_bars = 72`. Sizing: vol-CDF ternary on `cdf_realized_vol_720` — `1.0` in band `[0.3, 0.8]`, else `0.5`; `0` when flat. |
+| **H1** `funding_extreme_fade` | crowded-long reversal (long-biased de-risk overlay) | **flat** when `funding_pct_rank_270 ≥ 0.90` AND `funding_sign > 0`; **long** otherwise (the complement). ~~`max_hold_bars = 72`~~ **(SUPERSEDED by Amendment A1 — H1 has NO time-stop; exit only via the tail-gate)**. Sizing: vol-CDF ternary on `cdf_realized_vol_720` — `1.0` in band `[0.3, 0.8]`, else `0.5`; `0` when flat. |
 | **H2** `funding_sign_regime_switch` | regime-gate on a price-trend book (state-class) | regime axis = causal rolling-270 percentile of `funding_ewm_30` (`adjust=False`). **DE-RISK (flat)** when that percentile `≥ 0.80`; **PERMISSIVE** otherwise → **long** when `decay_linear_close_48 > decay_linear_close_168`. Exit: enter de-risk regime / trend roll-over (`48 < 168`) / `max_hold_bars = 24`. Same vol-CDF ternary sizing. |
 | **H3** `funding_momentum_continuation` | moderate-persistence trend confirm (state-class) | **long** when `funding_ewm_60 > 0` (`adjust=False`) AND `funding_pct_rank_270 ≤ 0.90` (excludes H1's tail → non-overlapping populations) AND `decay_linear_close_48 > decay_linear_close_168`. Exit: `funding_ewm_60 ≤ 0` / trend roll-over / `funding_pct_rank_270 > 0.90` / `max_hold_bars = 48`. Same vol-CDF ternary sizing. |
 
@@ -57,3 +58,20 @@
 - **Ingestion / build / run each remain a separate downstream Charlie register-event** — this lock authorizes none of them; it freezes the pre-registration only.
 - **Per-task commits await Charlie authorization** (only Charlie-register authorizes operational fires).
 - The next crypto-native axes (open interest, perp-spot basis, liquidations), short legs, and continuous/funding-scaled sizing remain conditional, separately-registered successors — **not scoped here** (anti-pre-emption).
+
+---
+
+## Amendment A1 — H1 time-stop removal (2026-05-31, Charlie-registered)
+
+**Authority:** Charlie register (plain-text, 2026-05-31): "(1) 修正(推荐):去掉 H1 的时间止损".
+
+**Change:** Pre-registration 1, hypothesis **H1** `funding_extreme_fade` — the `max_hold_bars = 72` time-stop is **REMOVED**. H1 exits to flat **only** via its tail-gate (`funding_pct_rank_270 ≥ 0.90 AND funding_sign > 0`) and re-enters long when the tail clears. No time-based forced exit.
+
+**Rationale (recorded per METHODOLOGY_NOTES §36.2 amendment discipline):**
+- H1 is a *long-biased de-risk overlay* (long on the ~90% complement of the extreme-funding tail), structurally opposite Path B's sparse *event-class* H1 (for which a short `max_hold` was appropriate). The `max_hold = 72` was mis-applied from Path B's archetype.
+- For a near-always-long book, a 72-bar time-stop force-closes the position ~35 times over forward_2026 (~2528 bars), each a 30 bps round trip → ~10% **non-mechanistic churn cost drag** that would depress H1's forward Sharpe *by artifact*, confounding attribution to the funding mechanism.
+- Discovered in the implementation-plan 2-leg B2 (advisor Finding F2), **before any funding data was ingested or peeked** — a pre-data correction of a pre-registration specification error, NOT a data-driven reverse-fit. Commit-order anti-hindsight integrity is preserved (no funding values observed at amendment time).
+
+**Honest §36.2 disclosure (NOT outcome-invariant):** removing the time-stop is expected to *improve* H1's performance (it eliminates a cost drag), so this amendment is **not strictly outcome-invariant**. It is justified as removing a non-mechanistic confound (the churn is unrelated to the funding signal), registered by Charlie as the authority with this tension disclosed. It changes **only H1**; H2/H3 retain `max_hold` 24/48 (appropriate backstops for their condition-based exits). **N\* = 3 is unchanged; no variant added.**
+
+**Scope:** amends only H1's exit. All other Pre-registration 1–4 values stand. The original `max_hold_bars = 72` text in Pre-registration 1 is retained above and struck-through/marked SUPERSEDED for audit.
