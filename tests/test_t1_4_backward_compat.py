@@ -1780,7 +1780,31 @@ class TestT1_4_Pc9BaselineGate:
         # the additive factors/funding{,_align}.py modules. Sealed tier6_dsr_v1/ sha256
         # 4/4 unchanged. Advance BASELINE 2625 → 2664 (same expected-additive-cohort
         # precedent; per Charlie Phase B register 2026-05-31).
-        BASELINE = 2664
+        # Path A Phase C funding hypothesis DSL builders, Tasks C1-C3 (patha-funding-
+        # scoping branch): adds +23 collected items, none a t1_4/t1_5 subtraction
+        # target, so +23 lands wholly in pre_t1_x_baseline = total − t1_4 − t1_5:
+        #   tests/test_patha_gauntlet.py (+16, NEW file: C1 H1 De-Morgan-complement
+        #     entry / tail-gate exit / no-time-stop[Amendment A1] / vol-CDF ternary
+        #     sizing, C2 H2 permissive-entry / de-risk-exit / sizing, C3 H3 entry /
+        #     exit-groups / max_hold / H1-H3 tail complementarity, build_all_hypotheses
+        #     N*=3, referenced_factors sizing-walk),
+        #   tests/test_funding_factors.py (+3: the C2 funding_ewm_30_pctrank_270
+        #     factor — causal+bounded known-value, delete-future invariance, G1-AST-safe;
+        #     17→20),
+        #   tests/test_factors.py (+1: the EXPECTED_FACTORS-parametrized forensic
+        #     invariance test auto-grew 27→28 as the new funding factor is picked up;
+        #     149→150),
+        #   tests/test_leakage_guards.py (+3: the registry-auto-parametrized G2
+        #     truncation + G2 reversal + G4a invariance sentinels grew 27→28, i.e.
+        #     3 sentinels × the 1 new funding factor; 102→105).
+        # Production changes: the additive backtest/patha_eval_gauntlet.py DSL builders
+        # + the additive funding_ewm_30_pctrank_270 factor in factors/funding.py
+        # (registered in factors/registry.py). The new factor bumps feature_version,
+        # so the stale gitignored data/compiled_strategies/*.json manifest was deleted
+        # (it regenerates — same Phase B pattern). Sealed tier6_dsr_v1/ sha256 4/4
+        # unchanged. Advance BASELINE 2664 → 2687 (same expected-additive-cohort
+        # precedent; per Charlie Phase B register 2026-05-31).
+        BASELINE = 2687
         assert pre_t1_x_baseline == BASELINE, (
             f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
             f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "
