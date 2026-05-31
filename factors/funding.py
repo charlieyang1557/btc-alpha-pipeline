@@ -31,3 +31,32 @@ def funding_sign(df: pd.DataFrame) -> pd.Series:
     Null policy: NaN ``funding_rate`` -> NaN (``np.sign`` propagates NaN).
     """
     return np.sign(df["funding_rate"]).astype("float64")
+
+
+def funding_ewm_30(df: pd.DataFrame) -> pd.Series:
+    """Causal EWM of settled funding, span=30 settlements (~10 days), adjust=False.
+
+    Inputs: ``funding_rate``.
+    Computation: ``funding_rate.ewm(span=30, adjust=False).mean()`` — the classic
+        recursive form ``y[N] = alpha * x[N] + (1 - alpha) * y[N-1]``. Strictly
+        backward-looking (each settlement reads only itself and prior state).
+        ``adjust=False`` is required (matches the LOCK and Path B EMA convention).
+    Warmup: 30 settlements (declared for stability; pandas returns non-NaN from
+        settlement 0, but the EMA has not converged until ~1 span has elapsed).
+    Output dtype: float64.
+    Null policy: ``nan_before_warmup_only`` — post-warmup must not be NaN.
+    """
+    return df["funding_rate"].ewm(span=30, adjust=False).mean()
+
+
+def funding_ewm_60(df: pd.DataFrame) -> pd.Series:
+    """Causal EWM of settled funding, span=60 settlements (~20 days), adjust=False.
+
+    Inputs: ``funding_rate``.
+    Computation: ``funding_rate.ewm(span=60, adjust=False).mean()`` — same classic
+        recursive form as ``funding_ewm_30`` with span 60. Strictly causal.
+    Warmup: 60 settlements (declared for stability; see ``funding_ewm_30``).
+    Output dtype: float64.
+    Null policy: ``nan_before_warmup_only`` — post-warmup must not be NaN.
+    """
+    return df["funding_rate"].ewm(span=60, adjust=False).mean()
