@@ -1872,7 +1872,33 @@ class TestT1_4_Pc9BaselineGate:
         # UNCHANGED; sealed tier6_dsr_v1/ sha256 4/4 byte-unchanged (asserted in
         # test_patha_run_verdict.py). Advance BASELINE 2694 → 2754 (same expected-
         # additive-cohort precedent; per Charlie C4-C7 register 2026-05-31).
-        BASELINE = 2754
+        # Path A Phase C4-C7 verdict-harness 2-leg adversarial-review fixes (patha-
+        # funding-scoping branch): adds +8 collected items, none a t1_4/t1_5
+        # subtraction target, so the +8 lands wholly in pre_t1_x_baseline = total −
+        # t1_4 − t1_5:
+        #   tests/test_patha_orchestrator.py (+2: FIX 1 floors gate n_tier5_pass —
+        #     an under-floor candidate with holdout_sharpe>0 does NOT count + is
+        #     marked INDETERMINATE; floors=None legacy-count regression),
+        #   tests/test_patha_run_verdict.py (+2: FIX 2 run_verdict refuses the real
+        #     engine without Phase-D authorization; FIX 5 assert_not_sealed refuses a
+        #     CHILD of a sealed dir [os.sep boundary, sibling-prefix not refused]),
+        #   tests/test_patha_holdout_producer.py (+2: FIX 3 warmup-feed prepend —
+        #     feed start pushed back by WARMUP_BARS so the holdout evaluates the FULL
+        #     forward window, not window − warmup; WARMUP_BARS=0 no-prepend regression),
+        #   tests/test_patha_marginal.py (+2: FIX 4 funding_marginal rejects a
+        #     same-length Series pair on a MISALIGNED DatetimeIndex; accepts an
+        #     aligned-index pair).
+        # Production changes: backtest/patha_orchestrator.py floors gate n_tier5_pass
+        # (LOCK "floors before ranking"; under-floor → INDETERMINATE + excluded);
+        # scripts/patha_run_verdict.py real-engine gate inside run_verdict (real
+        # engine reachable only via the PHASE_D_AUTHORIZED main() gate) + child-path
+        # sealed guard + dead log1p deletion + floors/funding-marginal CONTRACT GAPs;
+        # backtest/patha_holdout_producer.py WARMUP_BARS-derived feed prepend + window
+        # crop + window-recomputed metrics; backtest/patha_marginal_diagnostic.py
+        # identical-Series-index requirement. Sealed tier6_dsr_v1/ sha256 4/4
+        # byte-unchanged. Advance BASELINE 2754 → 2762 (same expected-additive-cohort
+        # precedent; 2-leg adversarial-review fixes, patha-funding-scoping branch).
+        BASELINE = 2762
         assert pre_t1_x_baseline == BASELINE, (
             f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
             f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "
