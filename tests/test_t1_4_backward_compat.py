@@ -1652,7 +1652,18 @@ class TestT1_4_Pc9BaselineGate:
         # commit-gate authorization for the Path B arc). Note: 11 of the 75 are skips
         # (G3 ternary-sizing tests, skipif-pending Section C SizingSpec/_compile_sizing)
         # — pytest --collect-only counts skipped items, so the +75 is correct.
-        BASELINE = 2435
+        # Path B Section B (5 factors + 2 unregistered primitives): adds factor
+        # tests to tests/test_factors.py (TestComputePrimitives, TestIntrabarPush,
+        # TestRangeOverAtr, TestCdfRealizedVol720, TestDecayLinearClose,
+        # TestNewFactorPresence, TestFeatureVersionSensitivity,
+        # TestForceRebuildFeatureVersion) AND expands the existing
+        # EXPECTED_FACTORS-parametrized tests (18→23 names) in test_factors.py +
+        # the registry-auto-parametrized G2/G4a sentinels in test_leakage_guards.py
+        # (18→23). Both files are neither t1_4 nor t1_5 subtraction targets, so the
+        # net +58 lands wholly in pre_t1_x_baseline = total − t1_4 − t1_5. Advance
+        # BASELINE 2435 → 2493 (same expected-additive-cohort precedent; per Charlie
+        # per-section commit-gate authorization for the Path B arc).
+        BASELINE = 2493
         assert pre_t1_x_baseline == BASELINE, (
             f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
             f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "

@@ -29,6 +29,7 @@ from factors.registry import (
     get_registry,
     reset_registry,
 )
+from factors.operators import decay_linear, rolling_backward_percentile
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 PARQUET_PATH = PROJECT_ROOT / "data" / "raw" / "btcusdt_1h.parquet"
@@ -69,7 +70,7 @@ def synthetic_1000():
 
 @pytest.fixture
 def registry():
-    """Fresh registry with all 14 core factors."""
+    """Fresh registry with all 23 core factors (18 original + 5 Path B arc additions)."""
     r = FactorRegistry()
     from factors.registry import _bootstrap_core_factors
     _bootstrap_core_factors(r)
@@ -154,19 +155,38 @@ class TestRegistration:
 
 
 # ---------------------------------------------------------------------------
-# Core factors — 18 registered (14 original D1 + 4 D5 retroactive additions)
+# Core factors — 23 registered (18 original + 5 Path B arc additions)
 # ---------------------------------------------------------------------------
 
 EXPECTED_FACTORS = [
-    "atr_14", "bb_upper_24_2", "close", "day_of_week", "ema_12", "ema_26",
-    "hour_of_day", "macd_hist", "realized_vol_24h", "return_168h",
-    "return_1h", "return_24h", "rsi_14", "sma_20", "sma_24", "sma_50",
-    "volume_zscore_24h", "zscore_48",
+    "atr_14",
+    "bb_upper_24_2",
+    "cdf_realized_vol_720",
+    "close",
+    "day_of_week",
+    "decay_linear_close_168",
+    "decay_linear_close_48",
+    "ema_12",
+    "ema_26",
+    "hour_of_day",
+    "intrabar_push",
+    "macd_hist",
+    "range_over_atr",
+    "realized_vol_24h",
+    "return_168h",
+    "return_1h",
+    "return_24h",
+    "rsi_14",
+    "sma_20",
+    "sma_24",
+    "sma_50",
+    "volume_zscore_24h",
+    "zscore_48",
 ]
 
 
 class TestCoreFactors:
-    """All 18 core factors are registered and computable."""
+    """All 23 core factors are registered and computable."""
 
     def test_all_registered(self, registry):
         assert registry.list_names() == EXPECTED_FACTORS
@@ -327,7 +347,10 @@ class TestMaxWarmup:
         assert registry.max_warmup([]) == 0
 
     def test_all_factors(self, registry):
-        assert registry.max_warmup(registry.list_names()) == 168
+        # cdf_realized_vol_720 has warmup=743 (720-bar rolling realized vol +
+        # ATR shift inside); updated from 168 when the Path B arc added the
+        # 5 new factors.
+        assert registry.max_warmup(registry.list_names()) == 743
 
 
 # ---------------------------------------------------------------------------
@@ -659,3 +682,371 @@ class TestMenuForPrompt:
     def test_contains_warmup(self, registry):
         menu = registry.menu_for_prompt()
         assert "warmup=" in menu
+
+
+# ---------------------------------------------------------------------------
+# Compute primitives (factors/operators.py)
+# ---------------------------------------------------------------------------
+
+
+class TestComputePrimitives:
+    """factors/operators.py primitives are causal building blocks, NOT
+    registered factors (so the G1 future-ops scanner never reaches them)."""
+
+    def test_decay_linear_weights_are_linear_and_trailing(self):
+        # Linearly increasing series: with linear weights 1..w (newest heaviest),
+        # the weighted MA of a perfectly linear ramp is computable in closed form.
+        s = pd.Series([float(i) for i in range(10)])
+        out = decay_linear(s, window=4)
+        # First 3 positions are warmup (window-1) -> NaN.
+        assert out.iloc[:3].isna().all()
+        assert out.iloc[3:].notna().all()
+        # At position 3 the window is [0,1,2,3], weights [1,2,3,4] (sum 10):
+        # (0*1 + 1*2 + 2*3 + 3*4) / 10 = (0+2+6+12)/10 = 2.0
+        assert out.iloc[3] == pytest.approx(2.0)
+        # At position 9 the window is [6,7,8,9], weights [1,2,3,4]:
+        # (6+14+24+36)/10 = 80/10 = 8.0
+        assert out.iloc[9] == pytest.approx(8.0)
+
+    def test_decay_linear_is_causal_window_1_is_identity(self):
+        s = pd.Series([3.0, 1.0, 4.0, 1.0, 5.0])
+        out = decay_linear(s, window=1)
+        # window=1 -> single weight -> identity, no warmup.
+        pd.testing.assert_series_equal(out, s, check_names=False)
+
+    def test_rolling_backward_percentile_rank_of_last(self):
+        # Strictly increasing series: the last value is always the max within
+        # any trailing window -> percentile rank == 1.0 once warmed up.
+        s = pd.Series([float(i) for i in range(10)])
+        out = rolling_backward_percentile(s, window=5)
+        assert out.iloc[:4].isna().all()       # warmup = window-1
+        # NOTE: `pd.Series == pytest.approx(scalar)` compares element-wise against
+        # the ApproxScalar object (all-False); extract .values and use np.allclose.
+        assert np.allclose(out.iloc[4:].values, 1.0)
+
+    def test_rolling_backward_percentile_min_is_zero(self):
+        # Strictly decreasing -> last value is the min within the window -> 0.0.
+        s = pd.Series([float(9 - i) for i in range(10)])
+        out = rolling_backward_percentile(s, window=5)
+        assert out.iloc[:4].isna().all()
+        # NOTE: `pd.Series == pytest.approx(scalar)` compares element-wise against
+        # the ApproxScalar object (all-False); extract .values and use np.allclose.
+        assert np.allclose(out.iloc[4:].values, 0.0, atol=1e-9)
+
+    def test_rolling_backward_percentile_midpoint(self):
+        # Window [last is the median of 5 distinct ascending values then a dip]:
+        # window=5 ending at a value that is the 3rd-smallest of 5 -> rank 0.5.
+        s = pd.Series([10.0, 20.0, 30.0, 40.0, 25.0])
+        out = rolling_backward_percentile(s, window=5)
+        # Within [10,20,30,40,25] the last value 25 has 2 strictly-below
+        # (10,20) out of (5-1)=4 others -> 2/4 = 0.5.
+        assert out.iloc[4] == pytest.approx(0.5)
+
+    def test_rolling_backward_percentile_window_1_is_zero(self):
+        # window=1: no other values to rank against; the (w-1) divisor guard
+        # returns 0.0 for every bar (contrast decay_linear(window=1) = identity).
+        s = pd.Series([3.0, 1.0, 4.0, 1.0, 5.0])
+        out = rolling_backward_percentile(s, window=1)
+        assert (out == 0.0).all()
+
+    def test_primitives_not_in_registry(self):
+        # Contract: primitives are never registered (G1 never scans them).
+        from factors.registry import get_registry
+        names = get_registry().list_names()
+        assert "decay_linear" not in names
+        assert "rolling_backward_percentile" not in names
+
+
+class TestIntrabarPush:
+    def test_known_value(self):
+        from factors.price import compute_intrabar_push
+        df = pd.DataFrame({
+            "open":  [100.0, 50.0],
+            "high":  [110.0, 60.0],
+            "low":   [ 90.0, 40.0],
+            "close": [105.0, 45.0],
+        })
+        out = compute_intrabar_push(df)
+        # bar0: (105-100)/((110-90)+1e-9) = 5/20.000000001 ~ 0.25
+        assert out.iloc[0] == pytest.approx(0.25, abs=1e-7)
+        # bar1: (45-50)/((60-40)+1e-9) = -5/20 ~ -0.25
+        assert out.iloc[1] == pytest.approx(-0.25, abs=1e-7)
+
+    def test_zero_range_does_not_divide_by_zero(self):
+        from factors.price import compute_intrabar_push
+        # Frozen-price bar (O=H=L=C): numerator 0, denom 1e-9 -> 0.0, not NaN/inf.
+        df = pd.DataFrame({
+            "open": [50.0], "high": [50.0], "low": [50.0], "close": [50.0],
+        })
+        out = compute_intrabar_push(df)
+        assert out.iloc[0] == pytest.approx(0.0)
+        assert np.isfinite(out.iloc[0])
+
+    def test_spec_registered_warmup_zero(self):
+        from factors.registry import get_registry
+        spec = get_registry().get("intrabar_push")
+        assert spec.warmup_bars == 0
+        assert sorted(spec.inputs) == ["close", "high", "low", "open"]
+        assert spec.category == "price"
+
+
+class TestRangeOverAtr:
+    def test_warmup_then_finite(self):
+        from factors.volatility import compute_range_over_atr
+        rng = np.random.default_rng(7)
+        n = 60
+        df = pd.DataFrame({
+            "high":  100 + rng.random(n) * 5 + 2,
+            "low":   100 + rng.random(n) * 5 - 2,
+            "close": 100 + rng.random(n) * 5,
+        })
+        # ensure high>=low
+        df["high"] = np.maximum(df["high"], df["low"] + 0.5)
+        out = compute_range_over_atr(df)
+        # ATR-14 warmup is 14 (1 to shift + 13 to rolling) -> NaN at 0..13.
+        assert out.iloc[:14].isna().all()
+        assert out.iloc[14:].notna().all()
+        assert np.isfinite(out.iloc[14:]).all()
+
+    def test_matches_independent_atr_recompute(self):
+        from factors.volatility import compute_range_over_atr, compute_atr_14
+        rng = np.random.default_rng(11)
+        n = 40
+        df = pd.DataFrame({
+            "high":  100 + rng.random(n) * 5 + 2,
+            "low":   100 + rng.random(n) * 5 - 2,
+            "close": 100 + rng.random(n) * 5,
+        })
+        df["high"] = np.maximum(df["high"], df["low"] + 0.5)
+        # range_over_atr must equal (high-low)/atr_14 using the SAME causal ATR.
+        atr = compute_atr_14(df)
+        expected = (df["high"] - df["low"]) / atr
+        out = compute_range_over_atr(df)
+        pd.testing.assert_series_equal(
+            out.iloc[14:], expected.iloc[14:], check_names=False,
+        )
+
+    def test_spec_registered(self):
+        from factors.registry import get_registry
+        spec = get_registry().get("range_over_atr")
+        assert spec.warmup_bars == 14
+        assert sorted(spec.inputs) == ["close", "high", "low"]
+        assert spec.category == "volatility"
+
+
+class TestCdfRealizedVol720:
+    def test_warmup_boundary(self):
+        from factors.volatility import compute_cdf_realized_vol_720
+        rng = np.random.default_rng(3)
+        n = 760
+        df = pd.DataFrame({"close": 100 + np.cumsum(rng.standard_normal(n)) * 0.5})
+        out = compute_cdf_realized_vol_720(df)
+        # warmup = 24 (realized_vol) + 719 (percentile window-1) = 743.
+        assert out.iloc[:743].isna().all()
+        assert out.iloc[743:].notna().all()
+        # Percentile output is bounded [0, 1].
+        post = out.iloc[743:]
+        assert (post >= 0.0).all() and (post <= 1.0).all()
+
+    def test_equals_primitive_composition(self):
+        from factors.volatility import compute_cdf_realized_vol_720
+        from factors.operators import rolling_backward_percentile
+        rng = np.random.default_rng(99)
+        n = 760
+        df = pd.DataFrame({"close": 100 + np.cumsum(rng.standard_normal(n)) * 0.5})
+        rv = df["close"].pct_change(1).rolling(24).std()
+        expected = rolling_backward_percentile(rv, 720)
+        out = compute_cdf_realized_vol_720(df)
+        pd.testing.assert_series_equal(
+            out.iloc[743:], expected.iloc[743:], check_names=False,
+        )
+
+    def test_spec_registered(self):
+        from factors.registry import get_registry
+        spec = get_registry().get("cdf_realized_vol_720")
+        assert spec.warmup_bars == 743
+        assert spec.inputs == ["close"]
+        assert spec.category == "volatility"
+
+
+class TestDecayLinearClose:
+    def test_48_warmup_and_value(self):
+        from factors.moving_averages import compute_decay_linear_close_48
+        from factors.operators import decay_linear
+        rng = np.random.default_rng(5)
+        df = pd.DataFrame({"close": 100 + np.cumsum(rng.standard_normal(200)) * 0.3})
+        out = compute_decay_linear_close_48(df)
+        assert out.iloc[:47].isna().all()
+        assert out.iloc[47:].notna().all()
+        expected = decay_linear(df["close"], 48)
+        pd.testing.assert_series_equal(
+            out.iloc[47:], expected.iloc[47:], check_names=False,
+        )
+
+    def test_168_warmup(self):
+        from factors.moving_averages import compute_decay_linear_close_168
+        rng = np.random.default_rng(6)
+        df = pd.DataFrame({"close": 100 + np.cumsum(rng.standard_normal(300)) * 0.3})
+        out = compute_decay_linear_close_168(df)
+        assert out.iloc[:167].isna().all()
+        assert out.iloc[167:].notna().all()
+
+    def test_specs_registered(self):
+        from factors.registry import get_registry
+        reg = get_registry()
+        s48 = reg.get("decay_linear_close_48")
+        s168 = reg.get("decay_linear_close_168")
+        assert s48.warmup_bars == 47
+        assert s168.warmup_bars == 167
+        assert s48.inputs == ["close"] and s168.inputs == ["close"]
+        # NOTE: real category is "moving_averages" (plural) — plan said "moving_average"
+        # (singular); using the real convention from existing SPEC_SMA_20 etc.
+        assert s48.category == "moving_averages" and s168.category == "moving_averages"
+
+
+# ---------------------------------------------------------------------------
+# Task 4b — presence guard: 5 new Path B arc factors
+# ---------------------------------------------------------------------------
+
+NEW_FACTORS_THIS_ARC = [
+    "intrabar_push",
+    "range_over_atr",
+    "cdf_realized_vol_720",
+    "decay_linear_close_48",
+    "decay_linear_close_168",
+]
+
+
+class TestNewFactorPresence:
+    """Task 4b presence guard: the 5 new factors are registered and the
+    library now has exactly 23 factors, alphabetically ordered."""
+
+    def test_expected_factors_has_23(self):
+        assert len(EXPECTED_FACTORS) == 23
+
+    def test_expected_factors_is_alphabetical(self):
+        assert EXPECTED_FACTORS == sorted(EXPECTED_FACTORS)
+
+    def test_five_new_factors_registered(self, registry):
+        names = set(registry.list_names())
+        for n in NEW_FACTORS_THIS_ARC:
+            assert n in names, f"new factor {n!r} not registered"
+
+    def test_total_is_23_and_matches_expected(self, registry):
+        names = registry.list_names()
+        assert len(names) == 23
+        assert names == EXPECTED_FACTORS
+
+
+# ---------------------------------------------------------------------------
+# Task 11 — feature_version sensitivity: adding/removing factors bumps hash
+# ---------------------------------------------------------------------------
+
+
+class TestFeatureVersionSensitivity:
+    """compute_feature_version is module-level (in factors.registry); there is
+    NO FactorRegistry.feature_version() method."""
+
+    def _subset_registry(self, drop: list[str]) -> FactorRegistry:
+        """A fresh registry holding every core factor EXCEPT `drop`."""
+        full = get_registry()
+        sub = FactorRegistry()
+        for name in full.list_names():
+            if name not in drop:
+                sub.register(full.get(name))
+        return sub
+
+    def test_full_differs_from_subset_missing_new_factors(self):
+        full = get_registry()
+        sub = self._subset_registry(drop=NEW_FACTORS_THIS_ARC)
+        assert len(sub.list_names()) == 18
+        assert len(full.list_names()) == 23
+        # Adding the 5 new factors MUST change the feature_version hash.
+        assert compute_feature_version(full) != compute_feature_version(sub)
+
+    def test_version_is_deterministic(self):
+        full = get_registry()
+        assert compute_feature_version(full) == compute_feature_version(full)
+
+    def test_dropping_one_new_factor_changes_version(self):
+        full = get_registry()
+        sub = self._subset_registry(drop=["intrabar_push"])
+        assert len(sub.list_names()) == 22
+        assert compute_feature_version(full) != compute_feature_version(sub)
+
+
+# ---------------------------------------------------------------------------
+# Task 12 — build_features_df stamps the 23-factor feature_version
+# ---------------------------------------------------------------------------
+
+
+class TestForceRebuildFeatureVersion:
+    """build_features_df stamps the live 23-factor feature_version; the
+    full `--force-rebuild` over the canonical dataset is slow because
+    cdf_realized_vol_720 is O(N*720) — exercised on a synthetic frame here."""
+
+    def _synthetic_raw(self, n: int) -> pd.DataFrame:
+        rng = np.random.default_rng(123)
+        close = 100 + np.cumsum(rng.standard_normal(n)) * 0.5
+        idx = pd.date_range("2020-01-01", periods=n, freq="h", tz="UTC")
+        return pd.DataFrame({
+            "open_time_utc": idx,
+            "open": close,
+            "high": close + np.abs(rng.standard_normal(n)) * 0.5,
+            "low": close - np.abs(rng.standard_normal(n)) * 0.5,
+            "close": close,
+            "volume": rng.random(n) * 10 + 1,
+        })
+
+    def test_rebuilt_features_carry_23_factor_version(self):
+        from factors.build_features import build_features_df
+        from factors.registry import compute_feature_version, get_registry
+
+        raw = self._synthetic_raw(800)  # > 743 warmup for cdf_realized_vol_720
+        reg = get_registry()
+        out = build_features_df(raw, reg)
+        # All 23 factors present as columns (plus open_time_utc).
+        for name in EXPECTED_FACTORS:
+            assert name in out.columns
+        # build_features_df returns open_time_utc + one column per factor.
+        assert len(out.columns) == 1 + 23
+
+        live_version = compute_feature_version(reg)
+
+        # The 18-factor (pre-arc) hash must differ -> rebuild is required.
+        sub = FactorRegistry()
+        for name in reg.list_names():
+            if name not in NEW_FACTORS_THIS_ARC:
+                sub.register(reg.get(name))
+        old_version = compute_feature_version(sub)
+        assert live_version != old_version
+
+    def test_force_rebuild_roundtrips_version_via_parquet(self, tmp_path):
+        from factors.build_features import (
+            build_features_df,
+            read_feature_version,
+            write_features_parquet,
+        )
+        from factors.registry import compute_feature_version, get_registry
+
+        raw = self._synthetic_raw(800)
+        reg = get_registry()
+        out = build_features_df(raw, reg)
+        live_version = compute_feature_version(reg)
+
+        # Write a synthetic raw parquet so write_features_parquet has a real
+        # source_parquet path to embed (mirrors TestBuildFeatures.built_parquet).
+        raw_path = tmp_path / "raw.parquet"
+        raw.to_parquet(raw_path, index=False)
+
+        parquet_path = tmp_path / "features.parquet"
+        write_features_parquet(out, parquet_path, live_version, raw_path)
+
+        stored = read_feature_version(parquet_path)
+        assert stored == live_version
+
+        sub = FactorRegistry()
+        for name in reg.list_names():
+            if name not in NEW_FACTORS_THIS_ARC:
+                sub.register(reg.get(name))
+        assert stored != compute_feature_version(sub)

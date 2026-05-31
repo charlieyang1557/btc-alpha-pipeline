@@ -224,9 +224,14 @@ _SENTINEL_NAMES = _SENTINEL_REG.list_names()
 #       MUST remain reversal-tested — they correctly stay out of this set.
 _REVERSAL_EXEMPT = frozenset(
     {
+        # pointwise / calendar factors (per-bar, no temporal window → reversal-
+        # invariant by construction; causality covered by truncation-invariance)
         "close",
         "hour_of_day",
         "day_of_week",
+        "intrabar_push",  # (close-open)/((high-low)+1e-9) — per-bar/pointwise, warmup=0 -> reversal-invariant
+        # ORDER-INVARIANT (commutative) window aggregates: mean/std over a fixed
+        # window are independent of element order, so forward==reversed.
         "sma_20",
         "sma_24",
         "sma_50",
@@ -240,12 +245,16 @@ class TestG2FutureBarInvarianceSentinel:
 
     @pytest.mark.parametrize("name", _SENTINEL_NAMES)
     def test_truncation_invariance(self, name):
-        df = _synthetic_ohlcv(n=800)
+        df = _synthetic_ohlcv(n=1500)
         spec = _SENTINEL_REG.get(name)
-        k = 600  # well past every factor's warmup
+        k = 1200  # well past every factor's warmup (incl. cdf_realized_vol_720 warmup=743)
         full = spec.compute(df).to_numpy()
         truncated = spec.compute(df.iloc[:k].copy()).to_numpy()
         warmup = spec.warmup_bars
+        assert k > warmup, (
+            f"{name}: truncation test vacuous — k={k} <= warmup={warmup}; "
+            f"raise n/k above the factor's warmup."
+        )
         np.testing.assert_allclose(
             truncated[warmup:k],
             full[warmup:k],
@@ -484,14 +493,19 @@ class TestG4aFutureBarInvariance:
 
     @pytest.mark.parametrize("name", _G4_NAMES)
     def test_future_bar_invariance(self, name):
-        # Larger sample than G2 (n=900/k=700) so every long-lookback factor
-        # warms up well before the truncation boundary k.
-        df = _synthetic_ohlcv(n=900)
+        # Larger sample than G2 (n=1500/k=1200) so every long-lookback factor
+        # warms up well before the truncation boundary k (incl. cdf_realized_vol_720
+        # warmup=743; k=1200 leaves ~457 post-warmup bars to compare).
+        df = _synthetic_ohlcv(n=1500)
         spec = _G4_REG.get(name)
-        k = 700
+        k = 1200
         full = spec.compute(df).to_numpy()
         trunc = spec.compute(df.iloc[:k].copy()).to_numpy()
         w = spec.warmup_bars
+        assert k > w, (
+            f"{name}: truncation test vacuous — k={k} <= warmup={w}; "
+            f"raise n/k above the factor's warmup."
+        )
         np.testing.assert_allclose(
             trunc[w:k], full[w:k], rtol=1e-9, atol=1e-9,
             err_msg=f"{name}: prefix output changed when tail was truncated.",

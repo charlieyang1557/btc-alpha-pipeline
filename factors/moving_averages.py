@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import pandas as pd
 
+from factors.operators import decay_linear
 from factors.registry import FactorSpec
 
 
@@ -125,4 +126,57 @@ SPEC_EMA_26 = FactorSpec(
     output_dtype="float64",
     compute=compute_ema_26,
     docstring=compute_ema_26.__doc__ or "",
+)
+
+
+def compute_decay_linear_close_48(df: pd.DataFrame) -> pd.Series:
+    """Linearly-decay-weighted moving average of close over 48 bars.
+
+    Thin wrapper over ``factors.operators.decay_linear(close, 48)``: the
+    most recent of the trailing 48 closes gets weight 48, the oldest gets
+    weight 1, normalized by ``sum(1..48)``. Strictly causal (trailing
+    window, no center, no future bar).
+
+    Inputs: ``close``.
+    Warmup: 47 bars (``decay_linear`` is NaN until its first full 48-bar
+        window; first valid at position 47).
+    Output dtype: float64.
+    Null policy: NaN only at positions 0..46.
+    """
+    return decay_linear(df["close"], 48).astype("float64")
+
+
+def compute_decay_linear_close_168(df: pd.DataFrame) -> pd.Series:
+    """Linearly-decay-weighted moving average of close over 168 bars (1 week).
+
+    Thin wrapper over ``factors.operators.decay_linear(close, 168)``. 168 =
+    7 days of hourly bars, so this is a week-scale decay-weighted trend.
+    Strictly causal.
+
+    Inputs: ``close``.
+    Warmup: 167 bars (first valid at position 167).
+    Output dtype: float64.
+    Null policy: NaN only at positions 0..166.
+    """
+    return decay_linear(df["close"], 168).astype("float64")
+
+
+SPEC_DECAY_LINEAR_CLOSE_48 = FactorSpec(
+    name="decay_linear_close_48",
+    category="moving_averages",
+    warmup_bars=47,
+    inputs=["close"],
+    output_dtype="float64",
+    compute=compute_decay_linear_close_48,
+    docstring=compute_decay_linear_close_48.__doc__ or "",
+)
+
+SPEC_DECAY_LINEAR_CLOSE_168 = FactorSpec(
+    name="decay_linear_close_168",
+    category="moving_averages",
+    warmup_bars=167,
+    inputs=["close"],
+    output_dtype="float64",
+    compute=compute_decay_linear_close_168,
+    docstring=compute_decay_linear_close_168.__doc__ or "",
 )
