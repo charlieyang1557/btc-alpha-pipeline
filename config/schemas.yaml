@@ -84,6 +84,50 @@ ohlcv:
       check: "volume > 0 or flagged in quality report"
       severity: "warning"
 
+# Mirrors the existing `ohlcv` block structure exactly: columns is a NAME-KEYED
+# MAPPING (not a list), source allowed values live under the source column's
+# allowed_values, validation_rules is a list of {name, check, severity?}.
+funding:
+  description: "Binance USDT-M perpetual funding rate, 8h settlement series for BTCUSDT"
+  primary_key: "open_time_utc"
+  sort_order: "open_time_utc ASC"
+  file_pattern: "data/raw/btcusdt_funding_8h.parquet"
+  columns:
+    open_time_utc:
+      dtype: "datetime64[ms, UTC]"
+      nullable: false
+      description: "Settlement time (calc_time), UTC tz-aware, unique, sorted ascending"
+    funding_rate:
+      dtype: "float64"
+      nullable: false
+      description: "last_funding_rate (settled realized rate) for the interval ending at open_time_utc"
+    funding_interval_hours:
+      dtype: "int64"
+      nullable: false
+      constraints: "> 0"
+      description: "Funding interval hours, read per-row (8 for BTCUSDT over the window; never hardcoded)"
+    ingested_at_utc:
+      dtype: "datetime64[ms, UTC]"
+      nullable: false
+      description: "Timestamp when this row was written"
+    source:
+      dtype: "string"
+      nullable: false
+      allowed_values: ["binance_vision", "ccxt_binance"]
+      description: "Provenance: binance_vision (bulk) | ccxt_binance (incremental)"
+  validation_rules:
+    - name: "no_duplicates"
+      check: "open_time_utc is unique"
+    - name: "sorted_pk"
+      check: "open_time_utc strictly ascending"
+    - name: "utc_tz_aware"
+      check: "open_time_utc is timezone-aware UTC"
+    - name: "positive_interval"
+      check: "funding_interval_hours > 0"
+    - name: "no_forward_fill"
+      check: "missing settlements flagged in the quality report, never interpolated"
+      severity: "warning"
+
 # Binance Vision CSV column mapping (raw download format)
 binance_vision_csv:
   description: "Column mapping for Binance Vision kline CSV files"
