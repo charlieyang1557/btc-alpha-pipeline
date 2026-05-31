@@ -18,6 +18,8 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
+from factors.registry import FactorSpec
+
 
 def funding_sign(df: pd.DataFrame) -> pd.Series:
     """Sign of the settled funding rate.
@@ -84,3 +86,52 @@ def funding_pct_rank_270(df: pd.DataFrame) -> pd.Series:
         return count / len(window)
 
     return df["funding_rate"].rolling(window=270, min_periods=270).apply(_rank, raw=True)
+
+
+# ---------------------------------------------------------------------------
+# FactorSpec registrations (input_source="funding" — routed onto the 8h frame)
+# ---------------------------------------------------------------------------
+
+SPEC_FUNDING_SIGN = FactorSpec(
+    name="funding_sign",
+    category="funding",
+    warmup_bars=0,
+    inputs=["funding_rate"],
+    output_dtype="float64",
+    compute=funding_sign,
+    docstring=funding_sign.__doc__ or "",
+    input_source="funding",
+)
+
+SPEC_FUNDING_EWM_30 = FactorSpec(
+    name="funding_ewm_30",
+    category="funding",
+    warmup_bars=30,
+    inputs=["funding_rate"],
+    output_dtype="float64",
+    compute=funding_ewm_30,
+    docstring=funding_ewm_30.__doc__ or "",
+    input_source="funding",
+)
+
+SPEC_FUNDING_EWM_60 = FactorSpec(
+    name="funding_ewm_60",
+    category="funding",
+    warmup_bars=60,
+    inputs=["funding_rate"],
+    output_dtype="float64",
+    compute=funding_ewm_60,
+    docstring=funding_ewm_60.__doc__ or "",
+    input_source="funding",
+)
+
+SPEC_FUNDING_PCT_RANK_270 = FactorSpec(
+    name="funding_pct_rank_270",
+    category="funding",
+    warmup_bars=270,
+    inputs=["funding_rate"],
+    output_dtype="float64",
+    compute=funding_pct_rank_270,
+    docstring=funding_pct_rank_270.__doc__ or "",
+    input_source="funding",
+)

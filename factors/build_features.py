@@ -45,6 +45,7 @@ logger = logging.getLogger(__name__)
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_RAW_PATH = PROJECT_ROOT / "data" / "raw" / "btcusdt_1h.parquet"
 DEFAULT_FEATURES_PATH = PROJECT_ROOT / "data" / "features" / "btcusdt_1h_features.parquet"
+DEFAULT_FUNDING_PATH = PROJECT_ROOT / "data" / "raw" / "btcusdt_funding_8h.parquet"
 
 METADATA_KEY_FEATURE_VERSION = b"feature_version"
 METADATA_KEY_BUILT_AT = b"built_at_utc"
@@ -75,9 +76,29 @@ def load_raw_ohlcv(path: Path) -> pd.DataFrame:
     return df
 
 
+def load_funding(path: Path) -> pd.DataFrame:
+    """Load the canonical 8h funding settlement parquet (read-only).
+
+    Returns the funding settlement frame sorted by ``open_time_utc`` ascending,
+    with a UTC-aware ``open_time_utc`` column and a ``funding_rate`` column.
+    Raises if the file is missing or mis-typed.
+    """
+    df = pd.read_parquet(path)
+    if "open_time_utc" not in df.columns:
+        raise ValueError(f"Funding parquet at {path} missing 'open_time_utc' column")
+    if "funding_rate" not in df.columns:
+        raise ValueError(f"Funding parquet at {path} missing 'funding_rate' column")
+    if not isinstance(df["open_time_utc"].dtype, pd.DatetimeTZDtype):
+        raise ValueError(
+            f"Funding parquet at {path} has non-timezone-aware 'open_time_utc'"
+        )
+    return df.sort_values("open_time_utc").reset_index(drop=True)
+
+
 def build_features_df(
     raw_df: pd.DataFrame,
     registry: FactorRegistry,
+    funding_df: pd.DataFrame | None = None,
 ) -> pd.DataFrame:
     """Compute all registered factors over the full raw DataFrame.
 
@@ -85,17 +106,58 @@ def build_features_df(
     ``open_time_utc`` plus one column per factor. The ``open_time_utc``
     column is preserved so downstream consumers can join back to the raw
     feed on the primary key.
+
+    Routing (Path A Phase B): OHLCV factors (``input_source="ohlcv"``) compute
+    on ``raw_df``. Funding factors (``input_source="funding"``) do NOT compute
+    on ``raw_df`` (it has no ``funding_rate`` column) — they compute on the 8h
+    ``funding_df`` settlement frame and are carried onto the 1h grid by a
+    backward as-of join (``factors.funding_align.carry_funding_to_bars``). If
+    ``funding_df`` is None, funding factors are skipped (no funding columns are
+    produced) so callers that only have OHLCV continue to work unchanged.
     """
-    factor_names = registry.list_names()
+    ohlcv_names = registry.list_names(input_source="ohlcv")
+    funding_names = registry.list_names(input_source="funding")
     logger.info(
-        "Computing %d factors over %d bars (%s -> %s)",
-        len(factor_names),
+        "Computing %d OHLCV factors over %d bars (%s -> %s)",
+        len(ohlcv_names),
         len(raw_df),
         raw_df["open_time_utc"].iloc[0].isoformat(),
         raw_df["open_time_utc"].iloc[-1].isoformat(),
     )
-    factor_df = registry.compute_all(raw_df, factor_names)
+    factor_df = registry.compute_all(raw_df, ohlcv_names)
     out = pd.concat([raw_df[["open_time_utc"]], factor_df], axis=1)
+
+    if funding_names:
+        if funding_df is None:
+            # OHLCV-only consumers (e.g. DSL-compiler unit tests that reference
+            # only OHLCV factors) may call without a funding frame. Funding
+            # factors are SKIPPED, not computed on the OHLCV frame — they have
+            # no funding_rate column. The production build (:func:`build_features`)
+            # raises if the funding parquet is missing, so a real build never
+            # silently drops funding columns.
+            logger.warning(
+                "build_features_df: %d funding factor(s) registered (%s) but no "
+                "funding_df provided — SKIPPING funding factors (OHLCV-only "
+                "frame). The production build requires the funding parquet.",
+                len(funding_names),
+                funding_names,
+            )
+            return out
+        from factors.funding_align import carry_funding_to_bars  # noqa: PLC0415
+
+        logger.info(
+            "Computing %d funding factors over %d settlements then carrying "
+            "onto the 1h grid",
+            len(funding_names),
+            len(funding_df),
+        )
+        funding_feat = registry.compute_all(
+            funding_df, funding_names, input_source="funding"
+        )
+        funding_feat = pd.concat(
+            [funding_df[["open_time_utc"]], funding_feat], axis=1
+        )
+        out = carry_funding_to_bars(out, funding_feat, funding_names)
     return out
 
 
@@ -150,16 +212,35 @@ def build_features(
     raw_path: Path = DEFAULT_RAW_PATH,
     output_path: Path = DEFAULT_FEATURES_PATH,
     registry: FactorRegistry | None = None,
+    funding_path: Path | None = DEFAULT_FUNDING_PATH,
 ) -> Path:
     """Build the full-coverage factor parquet. Returns the written path.
 
     Always computes over the entire raw dataset — no date-range slicing.
+
+    When funding factors are registered, ``funding_path`` (the 8h settlement
+    parquet) is loaded and its factors are carried onto the 1h grid. Passing
+    ``funding_path=None`` skips the funding load — callers with no funding data
+    must also have no funding factors registered, else ``build_features_df``
+    raises.
     """
     if registry is None:
         registry = get_registry()
 
     raw_df = load_raw_ohlcv(raw_path)
-    features_df = build_features_df(raw_df, registry)
+    funding_df = None
+    if registry.list_names(input_source="funding"):
+        # Production build MUST include funding columns when funding factors are
+        # registered — never silently drop them.
+        if funding_path is None or not Path(funding_path).exists():
+            raise ValueError(
+                f"Funding factors are registered but the funding parquet "
+                f"({funding_path}) is missing; the production build cannot "
+                f"silently drop funding columns. Run the funding ingestion "
+                f"first or pass an explicit funding_path."
+            )
+        funding_df = load_funding(funding_path)
+    features_df = build_features_df(raw_df, registry, funding_df=funding_df)
     feature_version = compute_feature_version(registry)
     write_features_parquet(features_df, output_path, feature_version, raw_path)
     return output_path
@@ -169,12 +250,14 @@ def load_features_or_rebuild(
     raw_path: Path = DEFAULT_RAW_PATH,
     features_path: Path = DEFAULT_FEATURES_PATH,
     registry: FactorRegistry | None = None,
+    funding_path: Path | None = DEFAULT_FUNDING_PATH,
 ) -> pd.DataFrame:
     """Read the feature parquet, rebuilding first if feature_version is stale.
 
     This is the canonical consumer-side entrypoint. No silent "use stale
     data" fallback is permitted: if the stored version doesn't match the
-    live registry hash, we rebuild before returning the DataFrame.
+    live registry hash, we rebuild before returning the DataFrame. ``funding_path``
+    is forwarded to :func:`build_features` for the funding-factor routing.
     """
     if registry is None:
         registry = get_registry()
@@ -188,7 +271,7 @@ def load_features_or_rebuild(
             (stored_version or "<none>")[:12],
             live_version[:12],
         )
-        build_features(raw_path, features_path, registry)
+        build_features(raw_path, features_path, registry, funding_path=funding_path)
 
     return pd.read_parquet(features_path)
 
@@ -231,6 +314,13 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Path to write the factor parquet",
     )
     parser.add_argument(
+        "--funding",
+        type=Path,
+        default=DEFAULT_FUNDING_PATH,
+        help="Path to the 8h funding settlement parquet (carried onto 1h bars "
+        "when funding factors are registered)",
+    )
+    parser.add_argument(
         "--force-rebuild",
         action="store_true",
         help="Rebuild even if the stored feature_version matches the live one",
@@ -259,7 +349,10 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     raw_df = load_raw_ohlcv(args.raw)
-    features_df = build_features_df(raw_df, registry)
+    funding_df = None
+    if args.funding is not None and registry.list_names(input_source="funding"):
+        funding_df = load_funding(args.funding)
+    features_df = build_features_df(raw_df, registry, funding_df=funding_df)
 
     if args.dry_run:
         logger.info(

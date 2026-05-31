@@ -1758,7 +1758,29 @@ class TestT1_4_Pc9BaselineGate:
         # validate_funding extension in ingestion/validators.py; sealed tier6_dsr_v1/
         # sha256 4/4 unchanged.) Advance BASELINE 2602 → 2625 (same expected-additive-
         # cohort precedent; per Charlie Phase A register 2026-05-31).
-        BASELINE = 2625
+        # Path A Phase B funding-feature pipeline (patha-funding-scoping branch):
+        # adds +39 collected items, none a t1_4/t1_5 subtraction target, so +39
+        # lands wholly in pre_t1_x_baseline = total − t1_4 − t1_5:
+        #   tests/test_funding_factors.py (+17: B1 funding_sign, B2 ewm_30/60,
+        #     B3 pct_rank_270 known/bounds/causality/G1-AST-safe, B5 registration +
+        #     input_source routing + warmups + G1 scan + feature_version + compute_all
+        #     routing + build integration),
+        #   tests/test_funding_align.py (+5: B4 backward-asof carry + pre-first-
+        #     settlement NaN + row/order preservation + multi-col + the dedicated
+        #     delete/reverse/shuffle causality sentinel),
+        #   tests/test_factors.py (+1: test_dropping_one_funding_factor_changes_version;
+        #     plus the EXPECTED_FACTORS-parametrized forensic invariance test grew
+        #     23→27 = +4 as the 4 funding factors are auto-picked-up),
+        #   tests/test_leakage_guards.py (+12: the registry-auto-parametrized G2
+        #     truncation + G2 reversal + G4a invariance sentinels grew 23→27, i.e.
+        #     3 sentinels × 4 funding factors; funding_sign is reversal-exempt so its
+        #     G2-reversal case skips but is still collected).
+        # Production changes: FactorSpec.input_source routing field + compute_all/
+        # list_names input_source filter + build_features funding-carry integration +
+        # the additive factors/funding{,_align}.py modules. Sealed tier6_dsr_v1/ sha256
+        # 4/4 unchanged. Advance BASELINE 2625 → 2664 (same expected-additive-cohort
+        # precedent; per Charlie Phase B register 2026-05-31).
+        BASELINE = 2664
         assert pre_t1_x_baseline == BASELINE, (
             f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
             f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "

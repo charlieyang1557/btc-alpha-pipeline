@@ -59,6 +59,14 @@ class FactorSpec:
         docstring: Non-empty human docstring. Excluded from feature_version
             hash.
         null_policy: Only ``"nan_before_warmup_only"`` permitted in D1.
+        input_source: Which input frame the compute function reads. ``"ohlcv"``
+            (default) factors compute on the 1h OHLCV bar frame; ``"funding"``
+            (Path A Phase B) factors compute on the 8h funding settlement frame
+            and are carried onto the 1h grid downstream. The build and the
+            leakage guards route a factor to its matching frame by this field.
+            It is a routing concern only — deliberately EXCLUDED from
+            ``canonical_metadata`` / ``feature_version`` (the factor's identity
+            comes from its name + compute source + warmup + inputs + dtype).
     """
 
     name: str
@@ -69,6 +77,7 @@ class FactorSpec:
     compute: Callable[[pd.DataFrame], pd.Series]
     docstring: str
     null_policy: NullPolicy = "nan_before_warmup_only"
+    input_source: str = "ohlcv"
 
     def __post_init__(self) -> None:
         if not self.name:
@@ -90,6 +99,11 @@ class FactorSpec:
             raise ValueError(
                 f"Factor {self.name!r}: null_policy must be "
                 f"'nan_before_warmup_only' in D1, got {self.null_policy!r}"
+            )
+        if self.input_source not in {"ohlcv", "funding"}:
+            raise ValueError(
+                f"Factor {self.name!r}: input_source must be 'ohlcv' or "
+                f"'funding', got {self.input_source!r}"
             )
         _assert_top_level_callable(self.compute, self.name)
 
@@ -293,8 +307,14 @@ class FactorRegistry:
             raise KeyError(f"Unknown factor: {name!r}")
         return self._specs[name]
 
-    def list_names(self) -> list[str]:
-        return sorted(self._specs.keys())
+    def list_names(self, input_source: str | None = None) -> list[str]:
+        """Sorted factor names. When ``input_source`` is given, return only
+        factors tagged with that source (e.g. ``"ohlcv"`` or ``"funding"``);
+        when ``None`` (default), return every registered factor."""
+        names = sorted(self._specs.keys())
+        if input_source is None:
+            return names
+        return [n for n in names if self._specs[n].input_source == input_source]
 
     def max_warmup(self, names: list[str]) -> int:
         """Maximum warmup bars across the given factor names.
@@ -309,17 +329,28 @@ class FactorRegistry:
         self,
         df: pd.DataFrame,
         names: list[str] | None = None,
+        input_source: str = "ohlcv",
     ) -> pd.DataFrame:
-        """Compute the listed factors (or all) on ``df``.
+        """Compute the listed factors (or all of one ``input_source``) on ``df``.
 
         The input DataFrame is not mutated. The returned DataFrame has the
         same index as ``df`` and one column per factor.
+
+        Routing: when ``names`` is ``None``, compute only factors whose
+        ``input_source`` matches the ``input_source`` argument (default
+        ``"ohlcv"``). This keeps the OHLCV build/test path computing exactly the
+        OHLCV factors — funding factors (``input_source="funding"``) never reach
+        an OHLCV frame, which has no ``funding_rate`` column. Pass
+        ``input_source="funding"`` with the 8h settlement frame to compute the
+        funding factors. When ``names`` is given explicitly, those exact factors
+        are computed regardless of ``input_source`` (caller's responsibility to
+        pass a frame they can read).
 
         Post-warmup NaN is a build failure: raises ValueError naming the
         offending factor.
         """
         if names is None:
-            names = self.list_names()
+            names = self.list_names(input_source=input_source)
 
         out: dict[str, pd.Series] = {}
         n_rows = len(df)
@@ -510,6 +541,7 @@ def _bootstrap_core_factors(registry: FactorRegistry) -> None:
     """
     # Local imports guarded inside the function — see docstring.
     from factors import (  # noqa: PLC0415
+        funding,
         momentum,
         moving_averages,
         price,
@@ -543,5 +575,11 @@ def _bootstrap_core_factors(registry: FactorRegistry) -> None:
         volume.SPEC_VOLUME_ZSCORE_24H,
         structural.SPEC_HOUR_OF_DAY,
         structural.SPEC_DAY_OF_WEEK,
+        # Path A Phase B funding factors (input_source="funding"; computed on
+        # the 8h settlement frame and carried onto the 1h grid by the build).
+        funding.SPEC_FUNDING_SIGN,
+        funding.SPEC_FUNDING_EWM_30,
+        funding.SPEC_FUNDING_EWM_60,
+        funding.SPEC_FUNDING_PCT_RANK_270,
     ):
         registry.register(spec)

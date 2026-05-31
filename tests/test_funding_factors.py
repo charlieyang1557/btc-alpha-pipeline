@@ -26,6 +26,22 @@ def _funding_df(values) -> pd.DataFrame:
     return pd.DataFrame({"funding_rate": pd.Series(values, dtype="float64")})
 
 
+def _funding_compute_v1(df: pd.DataFrame) -> pd.Series:
+    """Funding compute fn v1 (module-level for the feature_version test).
+
+    Inputs: funding_rate. Warmup: 0. Output dtype: float64. Null policy: none.
+    """
+    return df["funding_rate"].ewm(span=30, adjust=False).mean()
+
+
+def _funding_compute_v2(df: pd.DataFrame) -> pd.Series:
+    """Funding compute fn v2 — same shape, different span (must bump the hash).
+
+    Inputs: funding_rate. Warmup: 0. Output dtype: float64. Null policy: none.
+    """
+    return df["funding_rate"].ewm(span=31, adjust=False).mean()
+
+
 # ---------------------------------------------------------------------------
 # Task B1: funding_sign
 # ---------------------------------------------------------------------------
@@ -116,3 +132,148 @@ def test_funding_pct_rank_is_g1_ast_safe():
     # CRITICAL: must NOT use bare .mean()/.std()/.sum() on a window (the G1 AST
     # scanner bans those). An explicit count loop is required.
     _assert_no_future_ops(funding_pct_rank_270, "funding_pct_rank_270")  # no raise
+
+
+# ---------------------------------------------------------------------------
+# Task B5: registration + input_source routing + build integration
+# ---------------------------------------------------------------------------
+
+FUNDING_FACTORS = [
+    "funding_ewm_30",
+    "funding_ewm_60",
+    "funding_pct_rank_270",
+    "funding_sign",
+]
+
+
+def _fresh_registry():
+    from factors.registry import FactorRegistry, _bootstrap_core_factors
+
+    reg = FactorRegistry()
+    _bootstrap_core_factors(reg)
+    return reg
+
+
+def test_funding_factors_registered_with_funding_input_source():
+    reg = _fresh_registry()
+    names = set(reg.list_names())
+    for f in FUNDING_FACTORS:
+        assert f in names, f"funding factor {f!r} not registered"
+        spec = reg.get(f)
+        assert spec.input_source == "funding", (
+            f"{f}: input_source must be 'funding' so the build routes it onto "
+            f"the 8h settlement frame, not the OHLCV frame"
+        )
+        assert spec.null_policy == "nan_before_warmup_only"
+        assert spec.inputs == ["funding_rate"]
+
+
+def test_ohlcv_factors_keep_default_input_source():
+    reg = _fresh_registry()
+    # Every non-funding factor must keep the default "ohlcv" input_source.
+    for name in reg.list_names():
+        if name not in FUNDING_FACTORS:
+            assert reg.get(name).input_source == "ohlcv"
+
+
+def test_funding_factor_warmups_declared():
+    reg = _fresh_registry()
+    assert reg.get("funding_sign").warmup_bars == 0
+    assert reg.get("funding_ewm_30").warmup_bars == 30
+    assert reg.get("funding_ewm_60").warmup_bars == 60
+    assert reg.get("funding_pct_rank_270").warmup_bars == 270
+
+
+def test_funding_factors_pass_g1_ast_scan():
+    reg = _fresh_registry()
+    for f in FUNDING_FACTORS:
+        spec = reg.get(f)
+        _assert_no_future_ops(spec.compute, f)  # no raise
+
+
+def test_feature_version_changes_when_funding_compute_changes():
+    # Editing a funding compute body must bump the feature_version hash.
+    # Compute fns are module-level (the registry rejects nested/local callables
+    # because inspect.getsource is unstable on them).
+    from factors.registry import (
+        FactorRegistry,
+        FactorSpec,
+        compute_feature_version,
+    )
+
+    r1 = FactorRegistry()
+    r1.register(FactorSpec(
+        name="x", category="funding", warmup_bars=0, inputs=["funding_rate"],
+        output_dtype="float64", compute=_funding_compute_v1, docstring="d",
+        input_source="funding",
+    ))
+    r2 = FactorRegistry()
+    r2.register(FactorSpec(
+        name="x", category="funding", warmup_bars=0, inputs=["funding_rate"],
+        output_dtype="float64", compute=_funding_compute_v2, docstring="d",
+        input_source="funding",
+    ))
+    assert compute_feature_version(r1) != compute_feature_version(r2)
+
+
+def test_compute_all_ohlcv_default_excludes_funding():
+    # The default compute_all path computes ONLY ohlcv-source factors, so it
+    # never tries to read funding_rate from an OHLCV frame.
+    from tests.test_factors import EXPECTED_OHLCV_FACTORS, _make_synthetic
+
+    reg = _fresh_registry()
+    ohlcv = _make_synthetic(300)
+    out = reg.compute_all(ohlcv)  # default input_source="ohlcv"
+    assert set(out.columns) == set(EXPECTED_OHLCV_FACTORS)
+    for f in FUNDING_FACTORS:
+        assert f not in out.columns
+
+
+def test_compute_all_funding_source_computes_funding_factors():
+    reg = _fresh_registry()
+    # 8h settlement frame.
+    times = pd.date_range("2020-01-01", periods=400, freq="8h", tz="UTC")
+    rng = np.random.default_rng(31)
+    funding = pd.DataFrame({
+        "open_time_utc": times,
+        "funding_rate": rng.normal(0, 1e-4, 400),
+    })
+    out = reg.compute_all(funding, input_source="funding")
+    assert set(out.columns) == set(FUNDING_FACTORS)
+    # Post-warmup (max funding warmup = 270) must be free of NaN.
+    assert not out.iloc[270:].isna().any().any()
+
+
+def test_build_integration_carries_funding_onto_bars():
+    # The build routes funding factors onto the 8h frame then carries them onto
+    # the 1h feature frame; the resulting frame has the funding columns.
+    from factors.build_features import build_features_df
+
+    reg = _fresh_registry()
+    # Small synthetic OHLCV + funding frames spanning the same window.
+    n_bars = 2400
+    bar_times = pd.date_range("2020-01-01", periods=n_bars, freq="1h", tz="UTC")
+    rng = np.random.default_rng(41)
+    close = 30000.0 + np.cumsum(rng.normal(0, 50, n_bars))
+    raw = pd.DataFrame({
+        "open_time_utc": bar_times,
+        "open": close - rng.normal(0, 20, n_bars),
+        "high": close + np.abs(rng.normal(0, 30, n_bars)),
+        "low": close - np.abs(rng.normal(0, 30, n_bars)),
+        "close": close,
+        "volume": np.abs(rng.normal(1000, 200, n_bars)),
+    })
+    n_settle = n_bars // 8
+    funding = pd.DataFrame({
+        "open_time_utc": pd.date_range("2020-01-01", periods=n_settle, freq="8h", tz="UTC"),
+        "funding_rate": rng.normal(0, 1e-4, n_settle),
+    })
+
+    out = build_features_df(raw, reg, funding_df=funding)
+    # All funding factors are present as carried columns on the 1h grid.
+    for f in FUNDING_FACTORS:
+        assert f in out.columns
+    assert len(out) == n_bars
+    # The carried funding columns are non-NaN well past warmup (270 settlements
+    # = 2160 bars); check the final bars.
+    assert not out[FUNDING_FACTORS].iloc[-1].isna().any()

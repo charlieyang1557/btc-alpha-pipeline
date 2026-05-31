@@ -200,6 +200,37 @@ def _synthetic_ohlcv(n: int = 800, seed: int = 7) -> pd.DataFrame:
     )
 
 
+def _synthetic_funding(n: int = 800, seed: int = 7) -> pd.DataFrame:
+    """Synthetic 8h funding settlement frame for the funding-source factors.
+
+    Funding factors are tagged ``input_source="funding"`` and read a
+    ``funding_rate`` column on the 8h settlement frame, NOT the OHLCV frame.
+    The leakage sentinels route a factor to its matching input by this field
+    (mirroring the build's routing) — without weakening any invariance check.
+    """
+    rng = np.random.default_rng(seed)
+    idx = pd.date_range("2021-01-01", periods=n, freq="8h", tz="UTC")
+    return pd.DataFrame(
+        {
+            "open_time_utc": idx,
+            "funding_rate": rng.normal(0, 1e-4, n),
+        }
+    )
+
+
+def _synthetic_input_for(spec) -> pd.DataFrame:
+    """Return the synthetic input frame matching a factor spec's input_source.
+
+    Routes funding-source factors to the 8h settlement frame and OHLCV-source
+    factors to the OHLCV frame, mirroring ``factors.build_features`` so the
+    sentinels run each factor against an input it can read.
+    """
+    n = 1500  # large enough that every factor warms up before any truncation k
+    if getattr(spec, "input_source", "ohlcv") == "funding":
+        return _synthetic_funding(n=n)
+    return _synthetic_ohlcv(n=n)
+
+
 _SENTINEL_REG = FactorRegistry()
 _bootstrap_core_factors(_SENTINEL_REG)
 _SENTINEL_NAMES = _SENTINEL_REG.list_names()
@@ -230,6 +261,7 @@ _REVERSAL_EXEMPT = frozenset(
         "hour_of_day",
         "day_of_week",
         "intrabar_push",  # (close-open)/((high-low)+1e-9) — per-bar/pointwise, warmup=0 -> reversal-invariant
+        "funding_sign",  # np.sign(funding_rate) — per-settlement/pointwise, warmup=0 -> reversal-invariant
         # ORDER-INVARIANT (commutative) window aggregates: mean/std over a fixed
         # window are independent of element order, so forward==reversed.
         "sma_20",
@@ -238,6 +270,9 @@ _REVERSAL_EXEMPT = frozenset(
         "bb_upper_24_2",
     }
 )
+# NOTE: funding_ewm_30/60 (recency-weighted) and funding_pct_rank_270 (current
+# value enters at the window edge) are ORDER-SENSITIVE and correctly stay OUT of
+# this set — they must remain reversal-tested (routed onto the funding frame).
 
 
 class TestG2FutureBarInvarianceSentinel:
@@ -245,8 +280,8 @@ class TestG2FutureBarInvarianceSentinel:
 
     @pytest.mark.parametrize("name", _SENTINEL_NAMES)
     def test_truncation_invariance(self, name):
-        df = _synthetic_ohlcv(n=1500)
         spec = _SENTINEL_REG.get(name)
+        df = _synthetic_input_for(spec)  # route OHLCV vs funding-source factors
         k = 1200  # well past every factor's warmup (incl. cdf_realized_vol_720 warmup=743)
         full = spec.compute(df).to_numpy()
         truncated = spec.compute(df.iloc[:k].copy()).to_numpy()
@@ -280,8 +315,8 @@ class TestG2FutureBarInvarianceSentinel:
                 "reversal-invariant by design (pointwise or window-symmetric); "
                 "causality covered by test_truncation_invariance"
             )
-        df = _synthetic_ohlcv(n=800)
         spec = _SENTINEL_REG.get(name)
+        df = _synthetic_input_for(spec)  # route OHLCV vs funding-source factors
         normal = spec.compute(df).to_numpy()
         rev_df = df.iloc[::-1].reset_index(drop=True).copy()
         reversed_out = spec.compute(rev_df).to_numpy()
@@ -496,8 +531,8 @@ class TestG4aFutureBarInvariance:
         # Larger sample than G2 (n=1500/k=1200) so every long-lookback factor
         # warms up well before the truncation boundary k (incl. cdf_realized_vol_720
         # warmup=743; k=1200 leaves ~457 post-warmup bars to compare).
-        df = _synthetic_ohlcv(n=1500)
         spec = _G4_REG.get(name)
+        df = _synthetic_input_for(spec)  # route OHLCV vs funding-source factors
         k = 1200
         full = spec.compute(df).to_numpy()
         trunc = spec.compute(df.iloc[:k].copy()).to_numpy()

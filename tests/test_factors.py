@@ -58,6 +58,16 @@ def _make_synthetic(n: int, seed: int = 42) -> pd.DataFrame:
     })
 
 
+def _make_synthetic_funding(n: int, seed: int = 7) -> pd.DataFrame:
+    """Create an n-settlement synthetic 8h funding frame aligned to 2020-01-01."""
+    rng = np.random.RandomState(seed)
+    times = pd.date_range("2020-01-01", periods=n, freq="8h", tz="UTC")
+    return pd.DataFrame({
+        "open_time_utc": times,
+        "funding_rate": rng.randn(n) * 1e-4,
+    })
+
+
 @pytest.fixture
 def synthetic_200():
     return _make_synthetic(200)
@@ -155,10 +165,17 @@ class TestRegistration:
 
 
 # ---------------------------------------------------------------------------
-# Core factors — 23 registered (18 original + 5 Path B arc additions)
+# Core factors — 27 registered:
+#   - 23 OHLCV-source factors (18 original + 5 Path B arc additions), computed
+#     on the 1h OHLCV frame (``input_source="ohlcv"``).
+#   - 4 funding-source factors (Path A Phase B), computed on the 8h funding
+#     settlement frame and carried onto the 1h grid (``input_source="funding"``).
+# EXPECTED_FACTORS is the full registry set (used wherever list_names() is
+# compared). EXPECTED_OHLCV_FACTORS / EXPECTED_FUNDING_FACTORS are the per-source
+# splits used by the routing-specific assertions (compute_all, build, warmup).
 # ---------------------------------------------------------------------------
 
-EXPECTED_FACTORS = [
+EXPECTED_OHLCV_FACTORS = [
     "atr_14",
     "bb_upper_24_2",
     "cdf_realized_vol_720",
@@ -184,21 +201,31 @@ EXPECTED_FACTORS = [
     "zscore_48",
 ]
 
+EXPECTED_FUNDING_FACTORS = [
+    "funding_ewm_30",
+    "funding_ewm_60",
+    "funding_pct_rank_270",
+    "funding_sign",
+]
+
+# Full registry set, alphabetically sorted (the list_names() projection).
+EXPECTED_FACTORS = sorted(EXPECTED_OHLCV_FACTORS + EXPECTED_FUNDING_FACTORS)
+
 
 class TestCoreFactors:
-    """All 23 core factors are registered and computable."""
+    """All 27 core factors are registered and computable (23 OHLCV + 4 funding)."""
 
     def test_all_registered(self, registry):
         assert registry.list_names() == EXPECTED_FACTORS
 
-    @pytest.mark.parametrize("name", EXPECTED_FACTORS)
+    @pytest.mark.parametrize("name", EXPECTED_OHLCV_FACTORS)
     def test_computes_without_error(self, registry, synthetic_200, name):
         spec = registry.get(name)
         result = spec.compute(synthetic_200)
         assert isinstance(result, pd.Series)
         assert len(result) == 200
 
-    @pytest.mark.parametrize("name", EXPECTED_FACTORS)
+    @pytest.mark.parametrize("name", EXPECTED_OHLCV_FACTORS)
     def test_null_policy_compliance(self, registry, synthetic_200, name):
         """NaN only before warmup; none after."""
         spec = registry.get(name)
@@ -360,9 +387,11 @@ class TestMaxWarmup:
 
 class TestComputeAll:
     def test_returns_dataframe(self, registry, synthetic_200):
+        # Default input_source="ohlcv" -> only OHLCV factors compute on an
+        # OHLCV frame (funding factors route onto the 8h settlement frame).
         result = registry.compute_all(synthetic_200)
         assert isinstance(result, pd.DataFrame)
-        assert set(result.columns) == set(EXPECTED_FACTORS)
+        assert set(result.columns) == set(EXPECTED_OHLCV_FACTORS)
 
     def test_row_count_matches(self, registry, synthetic_200):
         result = registry.compute_all(synthetic_200)
@@ -482,8 +511,16 @@ class TestForensicFutureBarInvariance:
     @pytest.mark.parametrize("name", EXPECTED_FACTORS)
     def test_future_bar_invariance(self, registry, synthetic_1000, name):
         spec = registry.get(name)
-        full_result = spec.compute(synthetic_1000)
-        partial_df = synthetic_1000.iloc[: self.SPLIT + 1].copy().reset_index(drop=True)
+        # Route the input frame by input_source: funding factors read the 8h
+        # settlement frame (which has 'funding_rate'), OHLCV factors read the
+        # OHLCV frame. The split-at-500 invariance assertion is identical for
+        # both — a future bar/settlement must never change an earlier value.
+        if spec.input_source == "funding":
+            source_df = _make_synthetic_funding(1000)
+        else:
+            source_df = synthetic_1000
+        full_result = spec.compute(source_df)
+        partial_df = source_df.iloc[: self.SPLIT + 1].copy().reset_index(drop=True)
         partial_result = spec.compute(partial_df)
 
         full_prefix = full_result.iloc[: self.SPLIT + 1].reset_index(drop=True)
@@ -519,14 +556,20 @@ class TestBuildFeatures:
 
     @pytest.fixture
     def built_parquet(self, tmp_path, registry):
-        """Build a small feature parquet from synthetic raw data."""
+        """Build a small feature parquet from synthetic raw data.
+
+        The registry includes funding factors (input_source="funding"), so the
+        build is given a synthetic 8h funding frame spanning the 300-bar window;
+        funding columns are carried onto the 1h grid by the routed build.
+        """
         from factors.build_features import (
             build_features_df,
             write_features_parquet,
         )
 
         raw_df = _make_synthetic(300)
-        features_df = build_features_df(raw_df, registry)
+        funding_df = _make_synthetic_funding(50)  # 50 settlements = 400h > 300 bars
+        features_df = build_features_df(raw_df, registry, funding_df=funding_df)
         version = compute_feature_version(registry)
         out_path = tmp_path / "features.parquet"
         raw_path = tmp_path / "raw.parquet"
@@ -587,10 +630,18 @@ class TestFullDatasetCoverage:
     """build_features produces parquet covering the full OHLCV range."""
 
     def test_first_last_index_match(self, tmp_path, registry):
-        from factors.build_features import build_features_df, load_raw_ohlcv
+        from factors.build_features import (
+            DEFAULT_FUNDING_PATH,
+            build_features_df,
+            load_funding,
+            load_raw_ohlcv,
+        )
 
         raw_df = load_raw_ohlcv(PARQUET_PATH)
-        features_df = build_features_df(raw_df, registry)
+        funding_df = (
+            load_funding(DEFAULT_FUNDING_PATH) if DEFAULT_FUNDING_PATH.exists() else None
+        )
+        features_df = build_features_df(raw_df, registry, funding_df=funding_df)
 
         assert features_df["open_time_utc"].iloc[0] == raw_df["open_time_utc"].iloc[0]
         assert features_df["open_time_utc"].iloc[-1] == raw_df["open_time_utc"].iloc[-1]
@@ -616,14 +667,22 @@ class TestStaleParquetForceRebuild:
         raw_path = tmp_path / "raw.parquet"
         raw_df.to_parquet(raw_path, index=False)
 
-        features_df = build_features_df(raw_df, registry)
+        # Synthetic funding parquet covering the 100-bar window (hermetic; no
+        # dependency on the real funding data).
+        funding_df = _make_synthetic_funding(20)  # 20 settlements = 160h > 100 bars
+        funding_path = tmp_path / "funding.parquet"
+        funding_df.to_parquet(funding_path, index=False)
+
+        features_df = build_features_df(raw_df, registry, funding_df=funding_df)
         out_path = tmp_path / "features.parquet"
 
         # Write with a FAKE stale version.
         write_features_parquet(features_df, out_path, "stale_version_abc", raw_path)
 
         # Now load_features_or_rebuild should detect mismatch and rebuild.
-        result = load_features_or_rebuild(raw_path, out_path, registry)
+        result = load_features_or_rebuild(
+            raw_path, out_path, registry, funding_path=funding_path
+        )
 
         # After rebuild, stored version must match live.
         from factors.build_features import read_feature_version
@@ -643,12 +702,18 @@ class TestStaleParquetForceRebuild:
         raw_df.to_parquet(raw_path, index=False)
         out_path = tmp_path / "features.parquet"
 
-        build_features(raw_path, out_path, registry)
+        funding_df = _make_synthetic_funding(20)
+        funding_path = tmp_path / "funding.parquet"
+        funding_df.to_parquet(funding_path, index=False)
+
+        build_features(raw_path, out_path, registry, funding_path=funding_path)
         mtime_1 = out_path.stat().st_mtime
 
         # Build again — should detect up-to-date and return early.
         from factors.build_features import load_features_or_rebuild
-        load_features_or_rebuild(raw_path, out_path, registry)
+        load_features_or_rebuild(
+            raw_path, out_path, registry, funding_path=funding_path
+        )
         mtime_2 = out_path.stat().st_mtime
 
         # File shouldn't have been rewritten.
@@ -918,11 +983,14 @@ NEW_FACTORS_THIS_ARC = [
 
 
 class TestNewFactorPresence:
-    """Task 4b presence guard: the 5 new factors are registered and the
-    library now has exactly 23 factors, alphabetically ordered."""
+    """Presence guard: the 5 Path B arc factors plus the 4 Path A funding
+    factors are registered; the library now has 27 factors total (23 OHLCV +
+    4 funding), alphabetically ordered."""
 
-    def test_expected_factors_has_23(self):
-        assert len(EXPECTED_FACTORS) == 23
+    def test_expected_factors_has_27(self):
+        assert len(EXPECTED_FACTORS) == 27
+        assert len(EXPECTED_OHLCV_FACTORS) == 23
+        assert len(EXPECTED_FUNDING_FACTORS) == 4
 
     def test_expected_factors_is_alphabetical(self):
         assert EXPECTED_FACTORS == sorted(EXPECTED_FACTORS)
@@ -932,9 +1000,9 @@ class TestNewFactorPresence:
         for n in NEW_FACTORS_THIS_ARC:
             assert n in names, f"new factor {n!r} not registered"
 
-    def test_total_is_23_and_matches_expected(self, registry):
+    def test_total_is_27_and_matches_expected(self, registry):
         names = registry.list_names()
-        assert len(names) == 23
+        assert len(names) == 27
         assert names == EXPECTED_FACTORS
 
 
@@ -959,8 +1027,9 @@ class TestFeatureVersionSensitivity:
     def test_full_differs_from_subset_missing_new_factors(self):
         full = get_registry()
         sub = self._subset_registry(drop=NEW_FACTORS_THIS_ARC)
-        assert len(sub.list_names()) == 18
-        assert len(full.list_names()) == 23
+        # 27 full - 5 Path B arc factors = 22 (still includes the 4 funding).
+        assert len(sub.list_names()) == 22
+        assert len(full.list_names()) == 27
         # Adding the 5 new factors MUST change the feature_version hash.
         assert compute_feature_version(full) != compute_feature_version(sub)
 
@@ -971,7 +1040,13 @@ class TestFeatureVersionSensitivity:
     def test_dropping_one_new_factor_changes_version(self):
         full = get_registry()
         sub = self._subset_registry(drop=["intrabar_push"])
-        assert len(sub.list_names()) == 22
+        assert len(sub.list_names()) == 26
+        assert compute_feature_version(full) != compute_feature_version(sub)
+
+    def test_dropping_one_funding_factor_changes_version(self):
+        full = get_registry()
+        sub = self._subset_registry(drop=["funding_sign"])
+        assert len(sub.list_names()) == 26
         assert compute_feature_version(full) != compute_feature_version(sub)
 
 
@@ -998,18 +1073,20 @@ class TestForceRebuildFeatureVersion:
             "volume": rng.random(n) * 10 + 1,
         })
 
-    def test_rebuilt_features_carry_23_factor_version(self):
+    def test_rebuilt_features_carry_27_factor_version(self):
         from factors.build_features import build_features_df
         from factors.registry import compute_feature_version, get_registry
 
         raw = self._synthetic_raw(800)  # > 743 warmup for cdf_realized_vol_720
+        funding = _make_synthetic_funding(120)  # 120 settlements = 960h > 800 bars
         reg = get_registry()
-        out = build_features_df(raw, reg)
-        # All 23 factors present as columns (plus open_time_utc).
+        out = build_features_df(raw, reg, funding_df=funding)
+        # All 27 factors present as columns (23 OHLCV + 4 carried funding,
+        # plus open_time_utc).
         for name in EXPECTED_FACTORS:
             assert name in out.columns
         # build_features_df returns open_time_utc + one column per factor.
-        assert len(out.columns) == 1 + 23
+        assert len(out.columns) == 1 + 27
 
         live_version = compute_feature_version(reg)
 
@@ -1030,8 +1107,9 @@ class TestForceRebuildFeatureVersion:
         from factors.registry import compute_feature_version, get_registry
 
         raw = self._synthetic_raw(800)
+        funding = _make_synthetic_funding(120)
         reg = get_registry()
-        out = build_features_df(raw, reg)
+        out = build_features_df(raw, reg, funding_df=funding)
         live_version = compute_feature_version(reg)
 
         # Write a synthetic raw parquet so write_features_parquet has a real
