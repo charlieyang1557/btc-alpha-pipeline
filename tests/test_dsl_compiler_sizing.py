@@ -408,3 +408,36 @@ def test_canonical_dsl_differs_on_sizing_change():
 
 def test_d3_hash_differs_on_sizing_change():
     assert hash_dsl(_dsl_with_default(0.5)) != hash_dsl(_dsl_with_default(0.6))
+
+
+# ---------------------------------------------------------------------------
+# FIX 1 regression (2-leg B2 CRITICAL HARD CONSTRAINT): the funding-warmup
+# bar-equivalent conversion (input_period_bars) must leave OHLCV-only strategies'
+# WARMUP_BARS BYTE-UNCHANGED. OHLCV factors default to input_period_bars=1, so
+# their bar-equivalent warmup is identical to warmup_bars.
+# ---------------------------------------------------------------------------
+
+
+def _ohlcv_only_sma_dsl() -> StrategyDSL:
+    """A simple OHLCV-only long/flat DSL: sma_20 vs sma_50 (factor-vs-factor).
+
+    Its max warmup factor is sma_50 (warmup_bars=49), so WARMUP_BARS must be 49
+    both before and after the input_period_bars fix — OHLCV factors are
+    input_period_bars=1 (no bar-equivalent inflation).
+    """
+    return StrategyDSL(
+        name="ohlcv_only_sma_warmup_regression",
+        description="OHLCV-only sma_20 vs sma_50 long/flat; WARMUP_BARS-unchanged regression for the funding bar-equivalent fix.",
+        entry=[ConditionGroup(conditions=[Condition(factor="sma_20", op=">", value="sma_50")])],
+        exit=[ConditionGroup(conditions=[Condition(factor="sma_20", op="<=", value="sma_50")])],
+        position_sizing="full_equity",
+    )
+
+
+def test_ohlcv_only_warmup_bars_unchanged_by_funding_fix():
+    cls = compile_dsl_to_strategy(_ohlcv_only_sma_dsl(), write_manifest=False)
+    # sma_50 warmup_bars=49 (0-indexed registry convention) * input_period_bars=1.
+    assert cls.WARMUP_BARS == 49, (
+        f"OHLCV-only WARMUP_BARS must stay 49 (sma_50); got {cls.WARMUP_BARS}. "
+        f"The funding input_period_bars conversion leaked into OHLCV factors."
+    )

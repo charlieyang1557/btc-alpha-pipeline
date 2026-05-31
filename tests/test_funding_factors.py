@@ -221,6 +221,9 @@ def test_ohlcv_factors_keep_default_input_source():
 
 def test_funding_factor_warmups_declared():
     reg = _fresh_registry()
+    # warmup_bars are declared in 8h-SETTLEMENT units (the frame the factors are
+    # computed on); these are UNCHANGED by the FIX 1 bar-equivalent conversion —
+    # the conversion lives in input_period_bars, not warmup_bars.
     assert reg.get("funding_sign").warmup_bars == 0
     assert reg.get("funding_ewm_30").warmup_bars == 30
     assert reg.get("funding_ewm_60").warmup_bars == 60
@@ -228,11 +231,53 @@ def test_funding_factor_warmups_declared():
     assert reg.get("funding_ewm_30_pctrank_270").warmup_bars == 270
 
 
+def test_funding_factor_input_period_bars_is_8():
+    """FIX 1: funding factors carry 8h settlements onto the 1h grid, so each
+    settlement of declared warmup spans 8 1h bars. input_period_bars=8 lets the
+    compiler convert the settlement-unit warmup into a bar-equivalent warmup.
+    OHLCV factors keep the default input_period_bars=1."""
+    reg = _fresh_registry()
+    for f in FUNDING_FACTORS:
+        assert reg.get(f).input_period_bars == 8, (
+            f"{f}: input_period_bars must be 8 (BTCUSDT 8h funding / 1h bars)"
+        )
+    for name in reg.list_names():
+        if name not in FUNDING_FACTORS:
+            assert reg.get(name).input_period_bars == 1, (
+                f"{name}: OHLCV factor input_period_bars must default to 1"
+            )
+
+
 def test_funding_factors_pass_g1_ast_scan():
     reg = _fresh_registry()
     for f in FUNDING_FACTORS:
         spec = reg.get(f)
         _assert_no_future_ops(spec.compute, f)  # no raise
+
+
+def test_input_period_bars_excluded_from_feature_version():
+    """FIX 1: input_period_bars is a routing/warmup-unit concern (like
+    input_source) — it MUST be excluded from canonical_metadata/feature_version.
+    Two registries differing ONLY in input_period_bars hash identically."""
+    from factors.registry import (
+        FactorRegistry,
+        FactorSpec,
+        compute_feature_version,
+    )
+
+    r1 = FactorRegistry()
+    r1.register(FactorSpec(
+        name="x", category="funding", warmup_bars=0, inputs=["funding_rate"],
+        output_dtype="float64", compute=_funding_compute_v1, docstring="d",
+        input_source="funding", input_period_bars=1,
+    ))
+    r2 = FactorRegistry()
+    r2.register(FactorSpec(
+        name="x", category="funding", warmup_bars=0, inputs=["funding_rate"],
+        output_dtype="float64", compute=_funding_compute_v1, docstring="d",
+        input_source="funding", input_period_bars=8,
+    ))
+    assert compute_feature_version(r1) == compute_feature_version(r2)
 
 
 def test_feature_version_changes_when_funding_compute_changes():

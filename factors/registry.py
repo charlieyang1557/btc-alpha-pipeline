@@ -67,6 +67,18 @@ class FactorSpec:
             It is a routing concern only — deliberately EXCLUDED from
             ``canonical_metadata`` / ``feature_version`` (the factor's identity
             comes from its name + compute source + warmup + inputs + dtype).
+        input_period_bars: How many 1h bars one row of the factor's input frame
+            spans on the carried 1h grid. ``1`` (default) for OHLCV factors
+            (computed natively on the 1h grid). For funding factors computed on
+            the 8h settlement series and CARRIED onto the 1h grid, one settlement
+            row spans 8 1h bars, so ``input_period_bars=8`` (BTCUSDT 8h funding /
+            1h bars). The compiler's bar-equivalent warmup for a factor is
+            ``warmup_bars * input_period_bars`` — a 270-settlement funding warmup
+            is NaN on the 1h grid until ~270*8 = 2160 bars. Like ``input_source``
+            this is a routing/warmup-unit concern only and is deliberately
+            EXCLUDED from ``canonical_metadata`` / ``feature_version`` (it does
+            not change the factor's computed values, only the carried-grid
+            warmup accounting).
     """
 
     name: str
@@ -78,6 +90,7 @@ class FactorSpec:
     docstring: str
     null_policy: NullPolicy = "nan_before_warmup_only"
     input_source: str = "ohlcv"
+    input_period_bars: int = 1
 
     def __post_init__(self) -> None:
         if not self.name:
@@ -104,6 +117,11 @@ class FactorSpec:
             raise ValueError(
                 f"Factor {self.name!r}: input_source must be 'ohlcv' or "
                 f"'funding', got {self.input_source!r}"
+            )
+        if self.input_period_bars < 1:
+            raise ValueError(
+                f"Factor {self.name!r}: input_period_bars must be >= 1, got "
+                f"{self.input_period_bars}"
             )
         _assert_top_level_callable(self.compute, self.name)
 
@@ -317,13 +335,24 @@ class FactorRegistry:
         return [n for n in names if self._specs[n].input_source == input_source]
 
     def max_warmup(self, names: list[str]) -> int:
-        """Maximum warmup bars across the given factor names.
+        """Maximum BAR-EQUIVALENT warmup across the given factor names.
+
+        The bar-equivalent warmup of a factor is ``warmup_bars *
+        input_period_bars``. For OHLCV factors (``input_period_bars=1``) this is
+        just ``warmup_bars``, unchanged. For funding factors computed on the 8h
+        settlement series and carried onto the 1h grid
+        (``input_period_bars=8``), a 270-settlement warmup is NaN on the 1h grid
+        until ~270*8 = 2160 bars, so the compiler must gate trading until the
+        carried column is warm. Returning the bar-equivalent here is what makes
+        the compiled ``WARMUP_BARS`` reflect the carried-grid warmup.
 
         Returns 0 for an empty list. Unknown names raise KeyError.
         """
         if not names:
             return 0
-        return max(self.get(n).warmup_bars for n in names)
+        return max(
+            self.get(n).warmup_bars * self.get(n).input_period_bars for n in names
+        )
 
     def compute_all(
         self,

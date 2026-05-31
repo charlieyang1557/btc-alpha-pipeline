@@ -122,6 +122,15 @@ def funding_ewm_30_pctrank_270(df: pd.DataFrame) -> pd.Series:
 # FactorSpec registrations (input_source="funding" — routed onto the 8h frame)
 # ---------------------------------------------------------------------------
 
+# BTCUSDT funding settles every 8h on the 1h bar grid, so one settlement row of
+# declared warmup spans 8 1h bars once the feature is carried onto the 1h grid
+# (factors.funding_align.carry_funding_to_bars). The compiler's bar-equivalent
+# warmup for a funding factor is warmup_bars * input_period_bars (e.g. the
+# 270-settlement funding_pct_rank_270 -> 2160 carried-bar warmup). This is
+# conservative: were the funding interval ever SHORTER than 8h, one settlement
+# would span fewer bars, so 8 would over-state (never under-state) the warmup.
+FUNDING_BARS_PER_SETTLEMENT = 8
+
 SPEC_FUNDING_SIGN = FactorSpec(
     name="funding_sign",
     category="funding",
@@ -131,6 +140,7 @@ SPEC_FUNDING_SIGN = FactorSpec(
     compute=funding_sign,
     docstring=funding_sign.__doc__ or "",
     input_source="funding",
+    input_period_bars=FUNDING_BARS_PER_SETTLEMENT,
 )
 
 SPEC_FUNDING_EWM_30 = FactorSpec(
@@ -142,6 +152,7 @@ SPEC_FUNDING_EWM_30 = FactorSpec(
     compute=funding_ewm_30,
     docstring=funding_ewm_30.__doc__ or "",
     input_source="funding",
+    input_period_bars=FUNDING_BARS_PER_SETTLEMENT,
 )
 
 SPEC_FUNDING_EWM_60 = FactorSpec(
@@ -153,6 +164,7 @@ SPEC_FUNDING_EWM_60 = FactorSpec(
     compute=funding_ewm_60,
     docstring=funding_ewm_60.__doc__ or "",
     input_source="funding",
+    input_period_bars=FUNDING_BARS_PER_SETTLEMENT,
 )
 
 SPEC_FUNDING_PCT_RANK_270 = FactorSpec(
@@ -164,6 +176,7 @@ SPEC_FUNDING_PCT_RANK_270 = FactorSpec(
     compute=funding_pct_rank_270,
     docstring=funding_pct_rank_270.__doc__ or "",
     input_source="funding",
+    input_period_bars=FUNDING_BARS_PER_SETTLEMENT,
 )
 
 SPEC_FUNDING_EWM_30_PCTRANK_270 = FactorSpec(
@@ -175,4 +188,5 @@ SPEC_FUNDING_EWM_30_PCTRANK_270 = FactorSpec(
     compute=funding_ewm_30_pctrank_270,
     docstring=funding_ewm_30_pctrank_270.__doc__ or "",
     input_source="funding",
+    input_period_bars=FUNDING_BARS_PER_SETTLEMENT,
 )

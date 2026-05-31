@@ -206,3 +206,31 @@ def test_referenced_factors_includes_sizing_factor():
     # referenced_factors must walk position_sizing too (the sizing factor).
     for build in (build_h1_dsl, build_h2_dsl, build_h3_dsl):
         assert "cdf_realized_vol_720" in referenced_factors(build())
+
+
+# ---------------------------------------------------------------------------
+# FIX 1 (2-leg B2 CRITICAL): funding-factor warmups are declared in 8h-settlement
+# units but the factors are CARRIED onto the 1h bar grid. A funding factor with
+# warmup_bars=270 settlements is NaN on the 1h grid until ~270*8 = 2160 bars.
+# The compiled WARMUP_BARS must reflect that bar-equivalent so a funding-gated
+# strategy is not declared "post-warmup" while its carried funding column is
+# still NaN (which would let H1's De Morgan [funding_sign <= 0] entry branch fire
+# on un-warmed funding features in the train window).
+# ---------------------------------------------------------------------------
+
+# 270 settlements * 8 (BTCUSDT 8h funding / 1h bars) = 2160 carried-bar warmup.
+_FUNDING_RANK_270_BAR_WARMUP = 270 * 8
+
+
+def test_h1_h2_h3_warmup_covers_carried_funding_bar_warmup():
+    """H1/H2/H3 each reference a 270-settlement funding factor
+    (funding_pct_rank_270 / funding_ewm_30_pctrank_270), carried onto the 1h
+    grid. The compiled WARMUP_BARS must be >= 2160 so the strategy is not
+    post-warmup while the carried funding column is still NaN."""
+    for build in (build_h1_dsl, build_h2_dsl, build_h3_dsl):
+        cls = compile_dsl_to_strategy(build(), write_manifest=False)
+        assert cls.WARMUP_BARS >= _FUNDING_RANK_270_BAR_WARMUP, (
+            f"{build.__name__}: WARMUP_BARS={cls.WARMUP_BARS} < "
+            f"{_FUNDING_RANK_270_BAR_WARMUP} (carried funding_*_270 warmup); the "
+            f"compiler treats 8h-settlement warmups as 1h bars."
+        )
