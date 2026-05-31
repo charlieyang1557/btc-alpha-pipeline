@@ -1748,7 +1748,17 @@ class TestT1_4_Pc9BaselineGate:
         # Adds +1: test_compiled_sizing_fractional_at_btc_price (the BTC-price
         # regression the original price=100 engine test missed), not a t1_4/t1_5
         # subtraction target. Advance BASELINE 2601 -> 2602.
-        BASELINE = 2602
+        # Path A Phase A funding ingestion (patha-funding-scoping branch): adds
+        # tests/test_funding_ingestion.py (+23 collected — A1 schema, A2 parse,
+        # A3 validate_funding, A4 reconcile, A5 CCXT incremental, the B2-review
+        # negative/edge cases, and the A6 jitter-is-not-a-gap + real-missing-
+        # settlement regressions). New file, neither a t1_4 nor a t1_5 subtraction
+        # target, so the +23 lands wholly in pre_t1_x_baseline = total − t1_4 − t1_5.
+        # (Production changes are the additive ingestion/funding_*.py modules + the
+        # validate_funding extension in ingestion/validators.py; sealed tier6_dsr_v1/
+        # sha256 4/4 unchanged.) Advance BASELINE 2602 → 2625 (same expected-additive-
+        # cohort precedent; per Charlie Phase A register 2026-05-31).
+        BASELINE = 2625
         assert pre_t1_x_baseline == BASELINE, (
             f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
             f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "
