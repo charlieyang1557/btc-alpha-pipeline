@@ -46,3 +46,35 @@ def test_parse_funding_csv_real_format(tmp_path):
     assert df["funding_interval_hours"].tolist() == [8, 8]
     assert str(df["open_time_utc"].dtype) == "datetime64[ms, UTC]"
     assert (df["source"] == "binance_vision").all()
+
+
+# ---------------------------------------------------------------------------
+# Task A3: funding validator
+# ---------------------------------------------------------------------------
+
+from ingestion.validators import validate_funding
+
+
+def _good():
+    return pd.DataFrame({
+        "open_time_utc": pd.to_datetime([1577836800000, 1577865600000], unit="ms", utc=True).as_unit("ms"),
+        "funding_rate": [0.0001, -0.00005], "funding_interval_hours": [8, 8],
+        "source": ["binance_vision"] * 2, "ingested_at_utc": pd.to_datetime([0, 0], unit="ms", utc=True).as_unit("ms"),
+    })
+
+
+def test_validate_funding_accepts_good():
+    report = validate_funding(_good())
+    assert report["ok"] is True
+
+
+def test_validate_funding_rejects_duplicate_pk():
+    df = _good(); df.loc[1, "open_time_utc"] = df.loc[0, "open_time_utc"]
+    report = validate_funding(df)
+    assert report["ok"] is False and "duplicate" in report["errors"][0].lower()
+
+
+def test_validate_funding_rejects_unsorted():
+    df = _good().iloc[::-1].reset_index(drop=True)
+    report = validate_funding(df)
+    assert report["ok"] is False

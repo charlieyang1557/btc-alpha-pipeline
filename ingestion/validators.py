@@ -604,6 +604,111 @@ def validate_ohlcv(df: pd.DataFrame) -> dict[str, Any]:
     return report
 
 
+# ---------------------------------------------------------------------------
+# Funding-rate validation (Path A — 8h settlement series)
+# ---------------------------------------------------------------------------
+
+# Allowed source labels for the funding settlement series.
+# "binance_vision" = bulk historical archive; "ccxt_binance" = live incremental.
+# (Funding is a separate file from OHLCV, so binanceus is not a valid source here.)
+FUNDING_ALLOWED_SOURCES = {"binance_vision", "ccxt_binance"}
+
+FUNDING_REQUIRED_COLUMNS = [
+    "open_time_utc",
+    "funding_rate",
+    "funding_interval_hours",
+    "ingested_at_utc",
+    "source",
+]
+
+# Expected 8h settlement spacing for BTCUSDT over the window (gaps flagged only).
+EIGHT_HOURS = pd.Timedelta(hours=8)
+
+
+def validate_funding(df: pd.DataFrame) -> dict[str, Any]:
+    """Validate the funding-rate settlement series against the funding schema.
+
+    Checks (errors -> ok=False):
+    - required columns present
+    - open_time_utc is timezone-aware UTC
+    - open_time_utc has no duplicates (unique primary key)
+    - open_time_utc is strictly ascending (sorted)
+    - funding_interval_hours > 0 for every row
+    - source values are within FUNDING_ALLOWED_SOURCES, populated (no null/empty)
+
+    Warnings (do NOT set ok=False):
+    - settlement gaps (spacing != 8h) — flagged, never interpolated/removed
+
+    Args:
+        df: The funding DataFrame to validate.
+
+    Returns:
+        dict with keys "ok" (bool), "errors" (list[str]), "warnings" (list[str]),
+        and "rows" (int).
+    """
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    # Required columns
+    missing = [c for c in FUNDING_REQUIRED_COLUMNS if c not in df.columns]
+    if missing:
+        errors.append(f"Missing columns: {missing}")
+        # Without the PK column we cannot run the remaining checks meaningfully.
+        return {"ok": False, "errors": errors, "warnings": warnings, "rows": len(df)}
+
+    pk = df["open_time_utc"]
+
+    # UTC tz-aware
+    if not hasattr(pk.dtype, "tz") or pk.dt.tz is None:
+        errors.append("open_time_utc is not timezone-aware")
+    elif str(pk.dt.tz) != "UTC":
+        errors.append(f"open_time_utc timezone is {pk.dt.tz}, expected UTC")
+
+    # Unique PK (no duplicates)
+    dupe_count = int(pk.duplicated().sum())
+    if dupe_count > 0:
+        errors.append(f"open_time_utc has {dupe_count} duplicate value(s)")
+
+    # Strictly ascending (sorted)
+    if not pk.is_monotonic_increasing or dupe_count > 0:
+        errors.append("open_time_utc is not strictly ascending (sorted_pk)")
+
+    # funding_interval_hours > 0 per row
+    if "funding_interval_hours" in df.columns:
+        nonpos = int((df["funding_interval_hours"] <= 0).sum())
+        if nonpos > 0:
+            errors.append(f"funding_interval_hours has {nonpos} row(s) <= 0")
+
+    # source populated + allowed
+    src = df["source"]
+    null_count = int(src.isna().sum())
+    empty_count = int((src == "").sum())
+    invalid_values = set(src.dropna().unique()) - FUNDING_ALLOWED_SOURCES
+    if null_count > 0:
+        errors.append(f"source has {null_count} null value(s)")
+    if empty_count > 0:
+        errors.append(f"source has {empty_count} empty value(s)")
+    if invalid_values:
+        errors.append(f"source has invalid value(s): {sorted(invalid_values)}")
+
+    # Gap detection (warning only; flagged, never interpolated)
+    if len(df) >= 2 and not errors:
+        sorted_pk = pk.sort_values().reset_index(drop=True)
+        diffs = sorted_pk.diff()[1:]
+        gap_count = int((diffs != EIGHT_HOURS).sum())
+        if gap_count > 0:
+            warnings.append(
+                f"{gap_count} settlement gap(s) (spacing != 8h) flagged — not interpolated"
+            )
+
+    return {
+        "ok": len(errors) == 0,
+        "errors": errors,
+        "warnings": warnings,
+        "rows": len(df),
+    }
+
+
 def save_report(report: dict[str, Any], report_dir: Path, prefix: str = "validation") -> Path:
     """Save a validation report as JSON.
 
@@ -636,12 +741,46 @@ def main() -> int:
     Returns:
         Exit code: 0 on PASS/WARNING, 1 on FAIL.
     """
-    parser = argparse.ArgumentParser(description="Validate OHLCV parquet data")
-    parser.add_argument("--file", type=str, required=True, help="Path to parquet file")
+    parser = argparse.ArgumentParser(description="Validate OHLCV or funding parquet data")
+    parser.add_argument("--file", type=str, default=None, help="Path to OHLCV parquet file")
+    parser.add_argument(
+        "--funding", type=str, default=None,
+        help="Path to funding parquet file (validates the funding schema instead of OHLCV)",
+    )
     parser.add_argument("--report", type=str, default=None, help="Directory to save report")
     parser.add_argument("--dry-run", action="store_true", help="Print report but don't save")
     args = parser.parse_args()
 
+    if (args.file is None) == (args.funding is None):
+        logger.error("Provide exactly one of --file (OHLCV) or --funding")
+        return 1
+
+    # Funding-validation path
+    if args.funding is not None:
+        file_path = Path(args.funding)
+        if not file_path.exists():
+            logger.error("File not found: %s", file_path)
+            return 1
+        logger.info("Loading funding %s ...", file_path)
+        df = pd.read_parquet(file_path)
+        logger.info("Loaded %d rows", len(df))
+
+        report = validate_funding(df)
+        report["file_checked"] = str(file_path)
+        logger.info("Funding validation ok: %s", report["ok"])
+        for err in report["errors"]:
+            logger.error("  ERROR: %s", err)
+        for warn in report["warnings"]:
+            logger.warning("  WARN: %s", warn)
+
+        if args.dry_run:
+            print(json.dumps(report, indent=2, default=str))
+        elif args.report:
+            save_report(report, Path(args.report), prefix="funding_validation")
+
+        return 0 if report["ok"] else 1
+
+    # OHLCV-validation path
     file_path = Path(args.file)
     if not file_path.exists():
         logger.error("File not found: %s", file_path)
