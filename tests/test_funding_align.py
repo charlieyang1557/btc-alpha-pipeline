@@ -64,6 +64,56 @@ def test_carry_preserves_bar_rows_and_order():
     assert "funding_sign" in out.columns
 
 
+# ---------------------------------------------------------------------------
+# FIX 2 (2-leg B2 HIGH): the as-of join must key on the bar's CLOSE, not its
+# OPEN. Real funding calc_time jitters a few ms off the nominal 8h boundary; a
+# settlement at 08:00:00.001 is KNOWN well before the 08:00 bar's close
+# (08:59:59.999), so it must be carried to the 08:00 bar — NOT delayed to 09:00.
+# Conversely a settlement at the next bar's open (09:00:00.000) settles AFTER
+# the 08:00 bar's close and must NOT reach the 08:00 bar (leak-free).
+# ---------------------------------------------------------------------------
+
+
+def test_settlement_jittered_just_after_open_carries_to_same_bar():
+    """A settlement at 08:00:00.001 IS carried to the 08:00 bar (whose close is
+    08:59:59.999), not delayed to the 09:00 bar."""
+    feat = pd.DataFrame({
+        "open_time_utc": pd.to_datetime(
+            ["2020-01-01 00:00:00.000", "2020-01-01 08:00:00.001"], utc=True
+        ),
+        "funding_ewm_30": [0.1, 0.2],
+    })
+    bars = pd.DataFrame({"open_time_utc": pd.to_datetime(
+        ["2020-01-01 07:00:00", "2020-01-01 08:00:00", "2020-01-01 09:00:00"],
+        utc=True,
+    )})
+    out = carry_funding_to_bars(bars, feat, ["funding_ewm_30"])
+    # 07:00 bar: only the 00:00 settlement is <= its close (07:59:59.999) -> 0.1.
+    # 08:00 bar: the 08:00:00.001 settlement IS <= its close (08:59:59.999) -> 0.2.
+    # 09:00 bar: still 0.2.
+    assert out["funding_ewm_30"].tolist() == [0.1, 0.2, 0.2]
+    # Row count + open_time_utc preserved (the close key is internal only).
+    assert out["open_time_utc"].tolist() == bars["open_time_utc"].tolist()
+
+
+def test_settlement_at_next_bar_open_does_not_leak_into_prior_bar():
+    """A settlement at exactly 09:00:00.000 settles AFTER the 08:00 bar's close
+    (08:59:59.999), so it must NOT be available to the 08:00 bar — leak-free."""
+    feat = pd.DataFrame({
+        "open_time_utc": pd.to_datetime(
+            ["2020-01-01 00:00:00.000", "2020-01-01 09:00:00.000"], utc=True
+        ),
+        "funding_ewm_30": [0.1, 0.9],
+    })
+    bars = pd.DataFrame({"open_time_utc": pd.to_datetime(
+        ["2020-01-01 08:00:00", "2020-01-01 09:00:00"], utc=True,
+    )})
+    out = carry_funding_to_bars(bars, feat, ["funding_ewm_30"])
+    # 08:00 bar (close 08:59:59.999): only the 00:00 settlement qualifies -> 0.1.
+    # 09:00 bar (close 09:59:59.999): the 09:00:00.000 settlement qualifies -> 0.9.
+    assert out["funding_ewm_30"].tolist() == [0.1, 0.9]
+
+
 def test_carry_multiple_columns():
     feat = pd.DataFrame({
         "open_time_utc": pd.to_datetime(
@@ -87,7 +137,11 @@ def test_carry_multiple_columns():
 
 def _random_settlements(n: int, seed: int) -> pd.DataFrame:
     rng = np.random.default_rng(seed)
-    times = pd.date_range("2020-01-01", periods=n, freq="8h", tz="UTC")
+    # FIX 2: jitter the nominal 8h boundary by +1ms so the carry's bar-CLOSE
+    # keying is exercised (a settlement landing 1ms into a bar must be available
+    # to THAT bar, not delayed to the next). Real funding calc_time jitters off
+    # the nominal boundary; the carry must remain causal under that jitter.
+    times = pd.date_range("2020-01-01", periods=n, freq="8h", tz="UTC") + pd.Timedelta("1ms")
     return pd.DataFrame({
         "open_time_utc": times,
         "funding_feat": rng.normal(0, 1e-4, n),
@@ -102,10 +156,14 @@ def _bar_grid(n_settlements: int) -> pd.DataFrame:
 
 def test_causality_sentinel_delete_reverse_shuffle_future_settlements():
     """For every bar, the carried value is bit-identical when settlements
-    strictly AFTER that bar are deleted, reversed, or shuffled.
+    strictly after that bar's CLOSE are deleted, reversed, or shuffled.
 
     This is the carry-layer analogue of Path B's G2 future-bar invariance
     sentinel: a future settlement must never change an earlier bar's value.
+    FIX 2: settlements jitter +1ms off the boundary and the carry keys on the
+    bar's CLOSE, so "the future" is everything with calc_time strictly greater
+    than the bar's close (open + 1h - 1ms) — NOT the bar's open. A settlement
+    landing within the bar (e.g. open+1ms) is legitimately available to it.
     """
     n_settle = 50
     feat = _random_settlements(n_settle, seed=7)
@@ -117,12 +175,14 @@ def test_causality_sentinel_delete_reverse_shuffle_future_settlements():
 
     # Test a representative spread of cut points across the grid.
     for cut_idx in range(0, len(bars), 7):
-        cut_time = bars["open_time_utc"].iloc[cut_idx]
+        # The bar's close is its open + 1h - 1ms (1h bar grid). Settlements at
+        # or before the bar's close are the only ones that may legitimately
+        # affect it; everything strictly after the close is "the future".
+        bar_open = bars["open_time_utc"].iloc[cut_idx]
+        bar_close = bar_open + pd.Timedelta(hours=1) - pd.Timedelta("1ms")
 
-        # Settlements at or before the bar's close are the only ones that may
-        # legitimately affect it; everything strictly after is "the future".
-        past = feat[feat["open_time_utc"] <= cut_time]
-        future = feat[feat["open_time_utc"] > cut_time]
+        past = feat[feat["open_time_utc"] <= bar_close]
+        future = feat[feat["open_time_utc"] > bar_close]
 
         # (1) delete future settlements
         deleted = past.reset_index(drop=True)
