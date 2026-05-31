@@ -6,11 +6,13 @@ evaluate_cohort hard-requires the locked 18/21 partition via derive_cohort
 this module loops evaluate_candidate(cm, n_star=PATHB_N_STAR) per candidate and
 selects survivors = rows with pass_B is True (the authoritative Form B gate).
 
-CandidateMoments are constructed UPSTREAM (in the eval harness) from Path B's
-OWN per-bar validation returns (sr_per_bar / gamma3 / gamma4 / T) — NOT via
-load_candidate_moments, which loads the sealed cohort's holdout artifacts. Path
-B owns its candidates, builds its own moments, and never reads the dead-18
-cohort here.
+CandidateMoments are built UPSTREAM by backtest.pathb_moments.load_pathb_moments
+from Path B's OWN forward_2026 holdout artifacts (sr_per_bar / gamma3 / gamma4 /
+T). That loader REUSES tier6 load_candidate_moments (the sha256 + moment-recompute
+integrity gate, Decision 3) but with holdout_dir pointed at Path B's OWN namespace
+— so Path B's moments meet the SAME integrity bar as the dead-18 cohort while
+NEVER reading the sealed cohort's artifacts. This module only does the
+per-candidate DSR math on already-built moments.
 
 PATHB_N_STAR is Step -1 LOCK: N* = 3 (minimal grid — 3 hypotheses × 1 variant
 each, no sweep); referenced symbolically.

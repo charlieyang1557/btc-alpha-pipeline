@@ -54,8 +54,10 @@ def compute_per_leg_mechanism(
 
     Args:
         df: Train artifact frame with columns ``zscore_48``,
-            ``realized_vol_24h``, ``intrabar_push``, ``volume_zscore_24h`` and
-            ``fwd_col``.
+            ``cdf_realized_vol_720``, ``intrabar_push``, ``decay_linear_close_48``,
+            ``decay_linear_close_168`` and ``fwd_col``.
+            Note: ``realized_vol_24h`` and ``volume_zscore_24h`` are no longer
+            required; regime split uses ``cdf_realized_vol_720 < 0.5`` (F5 fix).
         fwd_col: Forward-return column (default ``"fwd_ret"``).
 
     Returns:
@@ -72,10 +74,14 @@ def compute_per_leg_mechanism(
             cross driver (decay_linear_close_48 > decay_linear_close_168); sane
             iff the conditional mean forward return is POSITIVE (trend continues UP).
     """
-    vol_med = df["realized_vol_24h"].median()
-
-    low_mask = (df["zscore_48"] < THETA_Z_LOW) & (df["realized_vol_24h"] <= vol_med)
-    high_mask = (df["zscore_48"] > THETA_Z_HIGH) & (df["realized_vol_24h"] > vol_med)
+    # Regime split on the TRADED gate cdf_realized_vol_720 < 0.5 (F5: the
+    # per-leg KILL is an earned-negative verdict input, so the sanity table
+    # must partition the regime exactly as the backtested DSL does — NOT by
+    # realized_vol_24h global median).
+    low_regime = df["cdf_realized_vol_720"] < 0.5
+    high_regime = df["cdf_realized_vol_720"] >= 0.5
+    low_mask = low_regime & (df["zscore_48"] < THETA_Z_LOW)
+    high_mask = high_regime & (df["zscore_48"] > THETA_Z_HIGH)
 
     low_nonempty, low_pos = _leg_mean_sign(df, low_mask, fwd_col)
     high_nonempty, high_pos = _leg_mean_sign(df, high_mask, fwd_col)

@@ -17,7 +17,9 @@ def _train_frame() -> pd.DataFrame:
     return pd.DataFrame({
         "open_time_utc": pd.date_range("2020-01-01", periods=n, freq="h"),
         "zscore_48": rng.normal(0, 1, n),
-        "realized_vol_24h": np.abs(rng.normal(0.02, 0.01, n)),
+        "realized_vol_24h": np.abs(rng.normal(0.02, 0.01, n)),  # kept (harmless)
+        # cdf_realized_vol_720: uniformly spread [0,1) so ~50% < 0.5 (regime gate)
+        "cdf_realized_vol_720": np.linspace(0.0, 1.0, n, endpoint=False),
         "fwd_ret": rng.normal(0, 0.01, n),
         "intrabar_push": rng.normal(0, 0.3, n),     # H1 driver
         "volume_zscore_24h": rng.normal(0, 1, n),   # kept (harmless)
@@ -36,12 +38,12 @@ def test_per_leg_booleans_present_and_independent():
     assert "h1_sane" in out and "h3_sane" in out
 
 
-def test_low_leg_uses_zscore_below_neg1_and_low_vol_only():
+def test_low_leg_uses_zscore_below_neg1_and_low_cdf_only():
+    # F5: regime is gated by cdf_realized_vol_720 < 0.5 (not realized_vol_24h.median()).
     df = _train_frame()
     out = pm.compute_per_leg_mechanism(df)
-    vol_med = df["realized_vol_24h"].median()
-    low_mask = (df["zscore_48"] < pm.THETA_Z_LOW) & (df["realized_vol_24h"] <= vol_med)
-    high_mask = (df["zscore_48"] > pm.THETA_Z_HIGH) & (df["realized_vol_24h"] > vol_med)
+    low_mask = (df["cdf_realized_vol_720"] < 0.5) & (df["zscore_48"] < pm.THETA_Z_LOW)
+    high_mask = (df["cdf_realized_vol_720"] >= 0.5) & (df["zscore_48"] > pm.THETA_Z_HIGH)
     # No overlap between leg masks (disjoint conditional populations).
     assert not (low_mask & high_mask).any()
     # The reported low-leg sign equals the sign of mean fwd_ret over the low mask.
@@ -50,13 +52,13 @@ def test_low_leg_uses_zscore_below_neg1_and_low_vol_only():
 
 
 def test_high_leg_sane_requires_positive_continuation():
-    # H2 HIGH is a TREND (sign-flip) leg: long when z>+1 in high-vol, so it is
-    # sane iff the conditional mean forward return is POSITIVE (continuation UP).
-    # This regression guards against the v2 sign-inversion bug.
+    # H2 HIGH is a TREND (sign-flip) leg: long when z>+1 in cdf>=0.5 (high-vol), so it
+    # is sane iff the conditional mean forward return is POSITIVE (continuation UP).
+    # F5: regime is gated by cdf_realized_vol_720 >= 0.5 (not realized_vol_24h.median()).
+    # This regression also guards against the v2 sign-inversion bug.
     df = _train_frame()
     out = pm.compute_per_leg_mechanism(df)
-    vol_med = df["realized_vol_24h"].median()
-    high_mask = (df["zscore_48"] > pm.THETA_Z_HIGH) & (df["realized_vol_24h"] > vol_med)
+    high_mask = (df["cdf_realized_vol_720"] >= 0.5) & (df["zscore_48"] > pm.THETA_Z_HIGH)
     expected = bool(high_mask.any() and df.loc[high_mask, "fwd_ret"].mean() > 0)
     assert out["h2_high_leg_sane"] == expected
 
@@ -73,6 +75,7 @@ def test_h1_fades_down_push_expects_reversion_not_continuation():
 
 
 def test_empty_leg_population_is_not_sane():
+    # _train_frame() already has cdf_realized_vol_720; zeroing zscore empties both legs.
     df = _train_frame()
     df["zscore_48"] = 0.0  # no bar satisfies < -1 or > +1
     out = pm.compute_per_leg_mechanism(df)
@@ -80,15 +83,57 @@ def test_empty_leg_population_is_not_sane():
     assert out["h2_high_leg_sane"] is False
 
 
+def test_regime_split_uses_cdf_factor_not_global_median():
+    # Construct a frame where realized_vol_24h global-median split and
+    # cdf_realized_vol_720<0.5 split DISAGREE, and assert the LOW population
+    # count follows the cdf gate (not the realized_vol_24h median).
+    #
+    # Design: realized_vol_24h DECREASING (0.05 -> 0.01) so the OLD
+    # realized_vol_24h-median split labels rows 100-199 as "low vol"
+    # (low value = low vol), while cdf_realized_vol_720<0.5 labels rows 0-119
+    # as "low vol". zscore<-1 is placed at rows 100-199 (linspace -3 to 3 but
+    # index offset: first 100 rows z>0, last 100 rows z<-1), so the two splits
+    # produce different populations: old count = 100, new count = 20
+    # (rows 100-119 satisfy both cdf<0.5 AND zscore<-1).
+    n = 200
+    zscore = np.r_[np.full(100, 0.0), np.linspace(-1.1, -3.0, 100)]  # rows 0-99: z=0; rows 100-199: z<-1
+    df = pd.DataFrame({
+        "zscore_48": zscore,
+        # realized_vol_24h DECREASING: median is around index 100; rows 100-199 <= median
+        "realized_vol_24h": np.linspace(0.05, 0.01, n),
+        # cdf_realized_vol_720: first 120 rows = 0.2 (<0.5), last 80 = 0.8
+        "cdf_realized_vol_720": np.r_[np.full(120, 0.2), np.full(80, 0.8)],
+        "intrabar_push": np.zeros(n),
+        "decay_linear_close_48": np.ones(n),
+        "decay_linear_close_168": np.zeros(n),
+        "fwd_ret": np.zeros(n),
+    })
+    out = pm.compute_per_leg_mechanism(df)
+    # Under NEW (cdf) split: low = rows 0-119 (cdf<0.5) AND zscore<-1 = rows 100-119 = 20
+    expected_low_new = int(((df["cdf_realized_vol_720"] < 0.5) & (df["zscore_48"] < -1.0)).sum())
+    # Under OLD (realized_vol_24h) split: low = rows 100-199 (vol<=median) AND zscore<-1 = rows 100-199 = 100
+    vol_med = df["realized_vol_24h"].median()
+    expected_low_old = int(((df["realized_vol_24h"] <= vol_med) & (df["zscore_48"] < -1.0)).sum())
+    # Sanity: the two methods MUST disagree on this frame; if they agree, the fixture is broken.
+    assert expected_low_new != expected_low_old, (
+        f"fixture broken: both splits give same count {expected_low_new}; redesign data"
+    )
+    # The implementation must follow the CDF gate, not the realized_vol median.
+    assert out["h2_low_leg_population"] == expected_low_new
+
+
 def test_sane_true_paths_with_crafted_positive_means():
     # Closes the True-path vacuity gap: with crafted data each leg's conditional
     # population has a POSITIVE mean forward return, so every *_sane must be True.
-    # rows 0-3: H2-high (z>1, high-vol) + H1 (push<-0.6) + H3 (fast>slow), all +fwd.
-    # rows 4-7: H2-low (z<-1, low-vol), +fwd. rows 8-11: neutral filler.
+    # rows 0-3: H2-high (z>1, cdf>=0.5) + H1 (push<-0.6) + H3 (fast>slow), all +fwd.
+    # rows 4-7: H2-low (z<-1, cdf<0.5), +fwd. rows 8-11: neutral filler.
+    # F5: regime is gated by cdf_realized_vol_720 (< 0.5 = low, >= 0.5 = high).
     df = pd.DataFrame({
         "open_time_utc": pd.date_range("2020-01-01", periods=12, freq="h"),
         "zscore_48":              [2, 2, 2, 2,  -2, -2, -2, -2,  0, 0, 0, 0],
         "realized_vol_24h":       [0.9, 0.9, 0.9, 0.9,  0.1, 0.1, 0.1, 0.1,  0.5, 0.5, 0.5, 0.5],
+        # cdf_realized_vol_720: rows 0-3 = 0.8 (high-vol, >=0.5); rows 4-7 = 0.2 (low-vol, <0.5)
+        "cdf_realized_vol_720":   [0.8, 0.8, 0.8, 0.8,  0.2, 0.2, 0.2, 0.2,  0.5, 0.5, 0.5, 0.5],
         "fwd_ret":                [0.02, 0.02, 0.02, 0.02,  0.03, 0.03, 0.03, 0.03,  0.0, 0.0, 0.0, 0.0],
         "intrabar_push":          [-1.0, -1.0, -1.0, -1.0,  0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0],
         "volume_zscore_24h":      [1.0, 1.0, 1.0, 1.0,  0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0],
@@ -97,9 +142,9 @@ def test_sane_true_paths_with_crafted_positive_means():
         "decay_linear_close_168": [1.0, 1.0, 1.0, 1.0,  0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0],
     })
     out = pm.compute_per_leg_mechanism(df)
-    # vol_med = 0.5; high_mask = rows 0-3 (z=2,vol=0.9>0.5), mean fwd 0.02>0 -> True
+    # high_mask = rows 0-3 (z=2, cdf=0.8>=0.5), mean fwd 0.02>0 -> True
     assert out["h2_high_leg_sane"] is True
-    # low_mask = rows 4-7 (z=-2,vol=0.1<=0.5), mean fwd 0.03>0 -> True
+    # low_mask = rows 4-7 (z=-2, cdf=0.2<0.5), mean fwd 0.03>0 -> True
     assert out["h2_low_leg_sane"] is True
     # h1_mask = rows 0-3 (push=-1.0 < -0.6), mean fwd 0.02>0 -> True (reversion UP)
     assert out["h1_sane"] is True

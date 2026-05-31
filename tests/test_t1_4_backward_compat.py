@@ -1718,7 +1718,23 @@ class TestT1_4_Pc9BaselineGate:
         # count change: PATHB_N_STAR 18→3 to match the Step −1 LOCK, and H3's
         # mechanism driver volume_zscore→decay_linear_close_48>_168 to match the
         # design spec — both advisor findings.) Advance BASELINE 2580 → 2582.
-        BASELINE = 2582
+        # Path B verdict-run BUILD (pathb-mechanism-first-rethink branch): closes
+        # the harness verdict-run build gaps. Adds +16 collected test items across
+        # 4 new files + 2 extended files, none a t1_4/t1_5 subtraction target, so
+        # +16 lands wholly in pre_t1_x_baseline = total − t1_4 − t1_5:
+        #   test_pathb_dsl_builders.py (+7: H1 LOCK-fix/H2/H3 builders + compiles +
+        #     build_all_hypotheses), test_pathb_holdout_producer.py (+2: dead-18-
+        #     layout + degenerate-equity None-gamma guard), test_pathb_moments.py
+        #     (+2: integrity-gate roundtrip + sha256-tamper), test_pathb_orchestrator.py
+        #     (+3: 2 advisory-pipeline scenarios + CLI sealed-dir smoke);
+        #   test_pathb_perleg_mechanism.py (+1: F5 cdf-split regime test) and
+        #     test_pathb_earned_negative.py (+1: pinned approximation_tempers).
+        # Production changes are the H1 LOCK conformance fix (F6) + F5 regime-split
+        # reconciliation + the additive pathb producer/moments/orchestrator modules;
+        # sealed tier6_dsr_v1/ + phase4_forward_2026 byte-untouched. Advance BASELINE
+        # 2582 → 2598 (same expected-additive-cohort precedent; per Charlie per-section
+        # commit-gate authorization for the Path B arc).
+        BASELINE = 2598
         assert pre_t1_x_baseline == BASELINE, (
             f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
             f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "

@@ -1,5 +1,5 @@
 # tests/test_pathb_eval_gauntlet.py
-"""build_hypothesis_dsl + EVAL_GAUNTLET stage->guard routing + Path B namespace."""
+"""build_h1_dsl + EVAL_GAUNTLET stage->guard routing + Path B namespace."""
 from __future__ import annotations
 
 import pytest
@@ -9,8 +9,8 @@ from strategies.dsl import StrategyDSL
 from strategies.dsl_compiler import compile_dsl_to_strategy
 
 
-def test_build_hypothesis_dsl_uses_value_and_description_and_compiles():
-    dsl = eg.build_hypothesis_dsl()
+def test_build_h1_dsl_uses_value_and_description_and_compiles():
+    dsl = eg.build_h1_dsl()
     assert isinstance(dsl, StrategyDSL)
     assert len(dsl.description) >= 1            # description is REQUIRED
     cond = dsl.entry[0].conditions[0]

@@ -26,6 +26,19 @@ re-score is read-only).
 from __future__ import annotations
 
 MECHANISM_REFUTED = "mechanism_refuted"
+
+# Pinned BEFORE any data-touch (these describe build-pinned approximations of
+# the Step -1 LOCK, not results). Surfaced in the advisory bundle so Charlie's
+# §9 earned-negative read sees every conclusiveness temper in ONE place rather
+# than buried in spec prose (advisor Points 2/5; METHODOLOGY_NOTES §6).
+APPROXIMATION_TEMPERS = (
+    # Decision 1: LOCK named a 2-factor sizing; realized single-factor cdf ladder.
+    "sizing_single_factor_cdf_vs_locked_2factor",
+    # H2 exit: regime-flip cross only (+ time-stop); the spec §5.2 natural
+    # OR-exit's zscore-reverts leg was approximated away; 15bps cdf-0.5
+    # boundary-whipsaw is a known downward pressure on H2 holdout_sharpe.
+    "h2_exit_regime_flip_only_vs_natural_or_zscore_reverts",
+)
 PROCESS_REFUTED_FOR_GRID = "process_refuted_for_this_grid"
 B_POSITIVE = "b_positive"
 
@@ -57,8 +70,15 @@ def assemble_evidence(
     Returns:
         An advisory dict: ``advisory_taxonomy`` (one of the 3 constants),
         ``is_earned_negative`` (bool), ``b_positive_strength`` (or None), the
-        echoed inputs, and ``verdict_authority`` naming Charlie as the binding
-        decider. It NEVER returns a fired action.
+        echoed inputs, ``verdict_authority`` naming Charlie as the binding
+        decider, and ``approximation_tempers`` (the pinned build-approximation
+        tempers; data-independent, set at build time per METHODOLOGY_NOTES §6).
+        It NEVER returns a fired action.
+
+        Note: A B-negative result (especially process-refuted) under the
+        current approximation tempers is marginally less conclusive (F3 temper),
+        as both the sizing (single-factor vs LOCK's 2-factor) and the H2 exit
+        (regime-flip only vs natural OR-zscore-reverts) are approximated.
 
     Raises:
         ValueError: If ``step0_promotion_side_effect`` is True.
@@ -92,4 +112,8 @@ def assemble_evidence(
         "n_tier5_pass": int(n_tier5_pass),
         "n_dsr_pass": int(n_dsr_pass),
         "verdict_authority": "charlie_register_at_earned_negative_gate",
+        # Build-pinned approximation tempers (data-independent; carried for the
+        # §9 advisory read so Charlie sees every conclusiveness caveat in one
+        # place — METHODOLOGY_NOTES §6 + B2 advisor Points 2/5).
+        "approximation_tempers": list(APPROXIMATION_TEMPERS),
     }

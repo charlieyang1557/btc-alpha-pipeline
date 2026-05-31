@@ -58,3 +58,12 @@ def test_bundle_is_advisory_not_a_fired_decision():
     ev = _ev({"h1_sane": True}, n_tier5_pass=0, n_dsr_pass=0)
     assert "escalate" not in ev  # no fired action
     assert ev["verdict_authority"] == "charlie_register_at_earned_negative_gate"
+
+
+def test_assemble_evidence_carries_pinned_tempers():
+    from backtest.pathb_earned_negative import APPROXIMATION_TEMPERS
+    out = _ev({"h1_sane": True}, n_tier5_pass=0, n_dsr_pass=0)
+    # the pinned, data-independent build approximations must be in the bundle
+    assert out["approximation_tempers"] == list(APPROXIMATION_TEMPERS)
+    assert any("sizing" in t for t in out["approximation_tempers"])
+    assert any("exit" in t for t in out["approximation_tempers"])
