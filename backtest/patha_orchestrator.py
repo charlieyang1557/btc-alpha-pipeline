@@ -119,8 +119,10 @@ def run_patha_verdict(
             to ``run_dsr_fwer``.
         per_leg: Zero-arg callable returning the per-leg tier dict (produced on
             train-only data by ``compute_per_leg_tiers``).
-        floors: Optional Task C7 per-hypothesis eligibility-floor dict (recorded;
-            an under-floored variant's INDETERMINATE status rides along).
+        floors: Optional Task C7 per-hypothesis eligibility-floor dict. When
+            provided, an under-floored (``eligible=False``) candidate is marked
+            ``INDETERMINATE`` and EXCLUDED from ``n_tier5_pass`` (LOCK "floors before
+            ranking"); when None, the count is the raw positive-Sharpe count.
         funding_marginal: Optional fenced funding-marginal diagnostic dict
             (recorded; NEVER feeds N* or promotion — it rides along only).
 
@@ -130,7 +132,24 @@ def run_patha_verdict(
         ``funding_marginal``.
     """
     holdouts = {key: run_gauntlet(key, dsl) for key, dsl in hypotheses.items()}
-    n_tier5_pass = sum(1 for h in holdouts.values() if h["holdout_sharpe"] > 0)
+
+    # LOCK Pre-registration 3 "floors applied BEFORE ranking": when a floors dict is
+    # provided, an UNDER-FLOOR (ineligible) candidate is NOT a Tier-5 pass/fail — it
+    # is INDETERMINATE and EXCLUDED from n_tier5_pass (and from DSR/taxonomy pass
+    # counting, which key off n_tier5_pass / the DSR survivors). The under-floor
+    # status rides on the holdout record so the advisory bundle records WHY a
+    # positive-Sharpe candidate was not counted. When floors is None (build phase,
+    # before TRAIN-window floors are computed at Phase D) the count is the raw
+    # positive-Sharpe count — byte-identical to pre-fix behavior.
+    n_tier5_pass = 0
+    for key, h in holdouts.items():
+        eligible = True
+        if floors is not None:
+            eligible = bool(floors.get(key, {}).get("eligible", True))
+            if not eligible:
+                h["tier5_status"] = INDETERMINATE
+        if eligible and h["holdout_sharpe"] > 0:
+            n_tier5_pass += 1
 
     cms = build_moments(holdouts)
     dsr = run_dsr(cms) if cms else {"survivors": [], "rows": [], "n_star": PATHA_N_STAR, "n_candidates": 0}

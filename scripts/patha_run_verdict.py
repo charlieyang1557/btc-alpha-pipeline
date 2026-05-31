@@ -218,7 +218,24 @@ def run_verdict(
         # floors (C7) + funding_marginal (C6) are computed from the forward_2026 run
         # position/equity series at Phase-D fire-time; the build wiring leaves them
         # None (the orchestrator records None until Phase D fills them).
+        #
+        # CONTRACT GAP: Phase D MUST compute TRAIN-window eligibility floors before
+        # scoring and pass them in here (NOT None) — else under-floor candidates
+        # mis-score as Tier-5 pass/fail instead of INDETERMINATE (LOCK Pre-registration
+        # 3, "floors applied before ranking"). The TRAIN-window floors are: H1 =
+        # count_flat_exit_episodes(H1_train_position) >= 200; H2/H3 = zero_fraction <
+        # 0.50 AND >= 200 trades over TRAIN (backtest.patha_orchestrator.{h1_floor,
+        # h2h3_floor}). The real train-floor computation (running each compiled
+        # strategy over the TRAIN window to extract its position/trade series) is
+        # Phase-D-gated and is NOT wired now; this marker records the obligation.
         floors=None,
+        # CONTRACT GAP: Phase D must compute the fenced funding-marginal diagnostic
+        # on the forward bars (the funding-gated equity vs the IDENTICAL no-funding
+        # baseline equity, per backtest.patha_marginal_diagnostic.funding_marginal)
+        # and pass it into the evidence bundle here (NOT None). It is fenced
+        # diagnostic-only (promotion_affecting=False, in_n_star=False) and never feeds
+        # N* or promotion; it rides along so a B-result attributes to funding's
+        # marginal contribution. Not wired now — Phase-D-gated.
         funding_marginal=None,
     )
 

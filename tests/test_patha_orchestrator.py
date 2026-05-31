@@ -63,6 +63,57 @@ def test_orchestrator_threads_floors_when_provided():
     assert out["floors"] == floors
 
 
+def test_orchestrator_floors_gate_under_floor_candidate_from_tier5_count():
+    # LOCK "floors before ranking": an under-floor candidate with holdout_sharpe>0
+    # must NOT count as a Tier-5 pass and must be marked INDETERMINATE — even though
+    # its raw Sharpe is positive. Only the ELIGIBLE positive-Sharpe candidate counts.
+    from backtest.patha_orchestrator import INDETERMINATE
+
+    floors = {"H1": {"eligible": False, "status": INDETERMINATE},  # under-floor
+              "H2": {"eligible": True, "status": "ELIGIBLE"},
+              "H3": {"eligible": True, "status": "ELIGIBLE"}}
+    fake_holdout = {
+        "H1": {"holdout_sharpe": 0.9},   # positive but UNDER-FLOOR -> excluded
+        "H2": {"holdout_sharpe": 0.4},   # positive + eligible -> counts
+        "H3": {"holdout_sharpe": -0.3},  # negative -> not a pass
+    }
+    out = run_patha_verdict(
+        hypotheses={"H1": object(), "H2": object(), "H3": object()},
+        run_gauntlet=lambda key, dsl: fake_holdout[key],
+        build_moments=lambda h: [],
+        run_dsr=lambda cms: {"survivors": [], "rows": [], "n_star": 3},
+        per_leg=lambda: {"H1": _leg("strong_sane"), "H2": _leg("strong_sane"),
+                          "H3": _leg("strong_sane")},
+        floors=floors,
+    )
+    # Only the eligible positive-Sharpe candidate counts; the under-floor one is excluded.
+    assert out["n_tier5_pass"] == 1
+    # The under-floor candidate carries an INDETERMINATE status in the holdout record.
+    assert out["holdouts"]["H1"]["tier5_status"] == INDETERMINATE
+    # Eligible positive candidate is NOT marked INDETERMINATE.
+    assert out["holdouts"]["H2"].get("tier5_status") != INDETERMINATE
+
+
+def test_orchestrator_floors_none_keeps_legacy_tier5_count():
+    # When floors is None (build phase / no train-window floors yet), the count is
+    # the raw positive-Sharpe count — byte-identical to pre-fix behavior.
+    fake_holdout = {
+        "H1": {"holdout_sharpe": 0.9}, "H2": {"holdout_sharpe": 0.4},
+        "H3": {"holdout_sharpe": -0.3},
+    }
+    out = run_patha_verdict(
+        hypotheses={"H1": object(), "H2": object(), "H3": object()},
+        run_gauntlet=lambda key, dsl: fake_holdout[key],
+        build_moments=lambda h: [],
+        run_dsr=lambda cms: {"survivors": [], "rows": [], "n_star": 3},
+        per_leg=lambda: {"H1": _leg("strong_sane"), "H2": _leg("strong_sane"),
+                          "H3": _leg("strong_sane")},
+        floors=None,
+    )
+    assert out["n_tier5_pass"] == 2  # both positive-Sharpe candidates count
+    assert "tier5_status" not in out["holdouts"]["H1"]
+
+
 def test_orchestrator_threads_marginal_diagnostic_fenced():
     marginal = {"H1": {"funding_marginal_sharpe": -0.5, "promotion_affecting": False,
                         "in_n_star": False}}
