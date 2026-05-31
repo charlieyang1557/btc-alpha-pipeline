@@ -621,9 +621,6 @@ FUNDING_REQUIRED_COLUMNS = [
     "source",
 ]
 
-# Expected 8h settlement spacing for BTCUSDT over the window (gaps flagged only).
-EIGHT_HOURS = pd.Timedelta(hours=8)
-
 
 def validate_funding(df: pd.DataFrame) -> dict[str, Any]:
     """Validate the funding-rate settlement series against the funding schema.
@@ -698,16 +695,29 @@ def validate_funding(df: pd.DataFrame) -> dict[str, Any]:
     if invalid_values:
         errors.append(f"source has invalid value(s): {sorted(invalid_values)}")
 
-    # Gap detection (warning only; flagged, never interpolated). Always run per
-    # the schema's no_forward_fill "flag missing settlements" rule — gaps are
-    # flagged even when an error is also present.
+    # Gap detection (warning only; flagged, never interpolated). A "gap" is a
+    # MISSING settlement: spacing >= 1.5x the per-row funding interval. Binance
+    # calc_time jitters a few ms off the nominal 00/08/16 boundary, so consecutive
+    # spacings are 8h +/- a few ms — that sub-minute jitter is NOT a gap and must
+    # not be flagged. Uses the per-row funding_interval_hours (never hardcodes 8h).
+    # Always run per the schema's no_forward_fill "flag missing settlements" rule
+    # — flagged even when an error is also present.
     if len(df) >= 2:
-        sorted_pk = pk.sort_values().reset_index(drop=True)
-        diffs = sorted_pk.diff()[1:]
-        gap_count = int((diffs != EIGHT_HOURS).sum())
+        s = df.sort_values("open_time_utc").reset_index(drop=True)
+        diffs = s["open_time_utc"].diff().iloc[1:].reset_index(drop=True)
+        expected = pd.to_timedelta(
+            s["funding_interval_hours"].iloc[1:].reset_index(drop=True), unit="h"
+        )
+        # Skip rows whose interval is non-positive or NaN (already flagged as an
+        # error above) so the gap computation cannot divide by zero / NaT.
+        valid = expected > pd.Timedelta(0)
+        gap_mask = valid & (diffs >= expected * 1.5)
+        gap_count = int(gap_mask.sum())
         if gap_count > 0:
+            missing = int(((diffs[gap_mask] / expected[gap_mask]).round() - 1).sum())
             warnings.append(
-                f"{gap_count} settlement gap(s) (spacing != 8h) flagged — not interpolated"
+                f"{gap_count} settlement gap(s) (missing settlements; spacing >= 1.5x "
+                f"interval, ~{missing} missing) flagged — not interpolated"
             )
 
     return {

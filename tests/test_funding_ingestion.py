@@ -387,3 +387,37 @@ def test_validate_funding_flags_gap_even_when_error_present():
     report = validate_funding(df)
     assert report["ok"] is False  # error present
     assert any("gap" in w.lower() for w in report["warnings"])  # but gap still flagged
+
+
+def test_validate_funding_jitter_is_not_a_gap():
+    # A6 regression: Binance calc_time jitters a few ms off the nominal 8h
+    # boundary (8h +/- 1-2ms). Sub-minute jitter must NOT be flagged as a gap.
+    # (An exact-8h comparison spuriously flagged ~61% of real settlements.)
+    base = 1577836800000
+    ms = [base, base + 8 * 3_600_000 + 1, base + 16 * 3_600_000 - 1, base + 24 * 3_600_000 + 2]
+    df = pd.DataFrame({
+        "open_time_utc": pd.to_datetime(ms, unit="ms", utc=True).as_unit("ms"),
+        "funding_rate": [0.0001, -0.00005, 0.0002, 0.0],
+        "funding_interval_hours": [8, 8, 8, 8],
+        "source": ["binance_vision"] * 4,
+        "ingested_at_utc": pd.to_datetime([0, 0, 0, 0], unit="ms", utc=True).as_unit("ms"),
+    })
+    report = validate_funding(df)
+    assert report["ok"] is True
+    assert not any("gap" in w.lower() for w in report["warnings"])  # jitter != gap
+
+
+def test_validate_funding_flags_real_missing_settlement():
+    # A real missing settlement: 16h spacing (2x the 8h interval) IS a gap.
+    base = 1577836800000
+    ms = [base, base + 16 * 3_600_000]  # the 8h-mark settlement is missing
+    df = pd.DataFrame({
+        "open_time_utc": pd.to_datetime(ms, unit="ms", utc=True).as_unit("ms"),
+        "funding_rate": [0.0001, -0.00005],
+        "funding_interval_hours": [8, 8],
+        "source": ["binance_vision"] * 2,
+        "ingested_at_utc": pd.to_datetime([0, 0], unit="ms", utc=True).as_unit("ms"),
+    })
+    report = validate_funding(df)
+    assert report["ok"] is True  # gap is a warning, not an error
+    assert any("gap" in w.lower() for w in report["warnings"])
