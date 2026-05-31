@@ -75,3 +75,9 @@
 **Honest §36.2 disclosure (NOT outcome-invariant):** removing the time-stop is expected to *improve* H1's performance (it eliminates a cost drag), so this amendment is **not strictly outcome-invariant**. It is justified as removing a non-mechanistic confound (the churn is unrelated to the funding signal), registered by Charlie as the authority with this tension disclosed. It changes **only H1**; H2/H3 retain `max_hold` 24/48 (appropriate backstops for their condition-based exits). **N\* = 3 is unchanged; no variant added.**
 
 **Scope:** amends only H1's exit. All other Pre-registration 1–4 values stand. The original `max_hold_bars = 72` text in Pre-registration 1 is retained above and struck-through/marked SUPERSEDED for audit.
+
+---
+
+## Clarification C1 — sizing-band boundary notation (2026-05-31, documentation-only; NO value/behavior change)
+
+Pre-registration 1's vol-CDF sizing band is written "`1.0` in band `[0.3, 0.8]`" but is implemented — and was always intended — as the **half-open** `[0.3, 0.8)` per the inherited Path B `SizingBand` convention (`lower <= cdf_realized_vol_720 < upper`; at exactly `cdf == 0.8` the size is the default `0.5`). This boundary is **measure-zero** on a continuous CDF and changes no realized behavior. Recorded so a future reader does not mis-flag the half-open implementation as a deviation. Surfaced by the Phase B/C 2-leg B2 (both legs). **No value changed; this is a notation clarification, not an amendment.** (Likewise the H1≥0.90 / H3≤0.90 funding-tail boundary overlaps only at exactly `0.90` — measure-zero; H1's flat-gate takes precedence there and H3 additionally requires `funding_ewm_60>0` + trend, so it is immaterial; LOCK `≤`/`≥` kept.)
