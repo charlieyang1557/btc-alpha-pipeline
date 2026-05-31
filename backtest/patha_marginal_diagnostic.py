@@ -50,8 +50,23 @@ def funding_marginal(
         ``promotion_affecting=False`` and ``in_n_star=False``.
 
     Raises:
-        ValueError: If the two equity curves do not cover an identical bar count.
+        ValueError: If the two equity curves do not cover an identical bar count,
+            or (when pandas Series are passed) do not share an IDENTICAL index — two
+            same-length curves on DIFFERENT timestamps are NOT the "same bars".
     """
+    # When pandas Series are passed, require an IDENTICAL index BEFORE the np.asarray
+    # conversion drops it. Otherwise two same-length curves on different/misaligned
+    # timestamps would silently pass the bar-count check as "identical bars" and the
+    # marginal Sharpe delta would compare unrelated bars (the diagnostic is only
+    # meaningful on the SAME bars). np.ndarray inputs (no index) skip this check.
+    if isinstance(gated_equity, pd.Series) and isinstance(baseline_equity, pd.Series):
+        if not gated_equity.index.equals(baseline_equity.index):
+            raise ValueError(
+                "funding_marginal: gated and baseline Series must share an IDENTICAL "
+                "index (same timestamps) — two same-length curves on DIFFERENT bars "
+                "are not the SAME bars; the marginal is only meaningful on aligned bars."
+            )
+
     gated = np.asarray(gated_equity, dtype=np.float64)
     baseline = np.asarray(baseline_equity, dtype=np.float64)
     if gated.shape[0] != baseline.shape[0]:

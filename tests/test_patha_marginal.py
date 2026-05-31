@@ -10,6 +10,7 @@ in_n_star=False). The baseline is the SAME strategy WITHOUT the funding gate
 from __future__ import annotations
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from backtest.patha_marginal_diagnostic import funding_marginal
@@ -48,6 +49,29 @@ def test_marginal_requires_identical_bar_count():
     with pytest.raises(ValueError, match="identical"):
         funding_marginal("H2", gated_equity=np.array([1.0, 1.1]),
                          baseline_equity=np.array([1.0, 1.1, 1.2]))
+
+
+def test_marginal_rejects_same_length_misaligned_series_index():
+    # FIX 4: two SAME-LENGTH Series on DIFFERENT timestamps must be rejected — the
+    # marginal is only meaningful when both curves cover the IDENTICAL bars. The
+    # bare np.asarray path would silently drop the index and pass these as "same
+    # bars"; a DatetimeIndex mismatch must raise.
+    idx_a = pd.date_range("2026-01-01", periods=4, freq="h", tz="UTC")
+    idx_b = pd.date_range("2026-01-01 01:00", periods=4, freq="h", tz="UTC")  # shifted
+    gated = pd.Series([1.0, 1.01, 1.02, 1.03], index=idx_a)
+    baseline = pd.Series([1.0, 1.005, 1.01, 1.015], index=idx_b)
+    with pytest.raises(ValueError, match="(?i)index|align|identical bars"):
+        funding_marginal("H2", gated_equity=gated, baseline_equity=baseline)
+
+
+def test_marginal_accepts_aligned_series_index():
+    # Same length AND identical DatetimeIndex -> accepted (the legitimate path).
+    idx = pd.date_range("2026-01-01", periods=4, freq="h", tz="UTC")
+    gated = pd.Series([1.0, 1.01, 1.00, 1.02], index=idx)
+    baseline = pd.Series([1.0, 1.02, 1.03, 1.05], index=idx)
+    out = funding_marginal("H2", gated_equity=gated, baseline_equity=baseline)
+    assert out["funding_marginal_sharpe"] < 0
+    assert out["promotion_affecting"] is False and out["in_n_star"] is False
 
 
 def test_fenced_flags_are_always_false():
