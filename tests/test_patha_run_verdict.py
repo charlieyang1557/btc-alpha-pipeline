@@ -113,12 +113,29 @@ def test_build_train_frame_has_both_forward_horizons(tmp_path):
 # ---------------------------------------------------------------------------
 
 
-def test_run_verdict_refuses_sealed_out_dir():
+def test_run_verdict_refuses_sealed_out_dir(tmp_path):
     with pytest.raises(ValueError, match="sealed"):
-        rv.run_verdict(rv.SEALED_DIRS[0])
+        rv.run_verdict(rv.SEALED_DIRS[0], _run_backtest=_fake_backtest_result)
+
+
+def test_run_verdict_refuses_real_engine_without_phase_d_authorization():
+    # Defense-in-depth: the public real-run path (no injected engine) must NOT
+    # reach the real backtest.engine.run_backtest / write artifacts while Phase D
+    # is unauthorized. run_verdict requires an injected engine; the ONLY place the
+    # REAL engine is wired is behind the PHASE_D_AUTHORIZED gate in main().
+    assert rv.PHASE_D_AUTHORIZED is False  # precondition for this guard to fire
+    with pytest.raises((AssertionError, RuntimeError, ValueError),
+                       match="(?i)phase.?d|authoriz|inject"):
+        rv.run_verdict(rv.PATHA_VERDICT_DIR)  # no _run_backtest -> must refuse
 
 
 def test_run_verdict_integration_mocked_engine(tmp_path):
+    # This injects a MOCK engine (_run_backtest), which is the LEGITIMATE unit-test
+    # path — it exercises the DSL compile + producer + integrity gate + orchestrator
+    # + sealed-sha256 invariant WITHOUT touching the real engine / forward_2026 data.
+    # It does NOT bless a real-engine bypass: the real engine is reached only via the
+    # PHASE_D_AUTHORIZED gate in main() (see
+    # test_run_verdict_refuses_real_engine_without_phase_d_authorization).
     out = tmp_path / "patha_verdict_v1"
     bundle = rv.run_verdict(
         out,

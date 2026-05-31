@@ -161,11 +161,33 @@ def run_verdict(
     with mocks; production (Phase D) passes the real engine. Building + unit-testing
     this is the C4-C7 scope; main() gates the actual Phase-D run.
 
+    DEFENSE-IN-DEPTH (2-leg-review HIGH): ``run_verdict`` is a public function that
+    could be called directly (bypassing the ``main()`` Phase-D gate). The REAL
+    engine (``backtest.engine.run_backtest``) — which writes per-bar artifacts and
+    runs the forward_2026 backtest — is NEVER wired internally here. ``run_verdict``
+    REQUIRES an injected ``_run_backtest`` callable: unit tests inject a MOCK, and the
+    ONLY place the real engine is wired is behind the ``PHASE_D_AUTHORIZED`` assertion
+    in ``main()``. Calling ``run_verdict()`` with ``_run_backtest=None`` while Phase D
+    is unauthorized raises rather than reaching the real engine.
+
     Raises:
+        RuntimeError: If ``_run_backtest`` is None and Phase D is not authorized —
+            the real-engine path must be reached only through the gated ``main()``.
         ValueError: On a sealed-dir write attempt or a sealed-artifact sha256 change
             across the run.
     """
-    from backtest.engine import run_backtest
+    # DEFENSE-IN-DEPTH: refuse the real-engine path unless an engine is injected.
+    # The real engine is wired only by main() behind PHASE_D_AUTHORIZED; a direct
+    # run_verdict() call with no injected engine must NOT reach backtest.engine.
+    if _run_backtest is None and not PHASE_D_AUTHORIZED:
+        raise RuntimeError(
+            "patha_run_verdict.run_verdict: REFUSING — the REAL forward_2026 engine "
+            "is Phase-D gated and reachable only via the authorized main() gate. "
+            "Pass an injected _run_backtest (a MOCK) for unit testing, or fire the "
+            "Phase-D Charlie register (flip PHASE_D_AUTHORIZED) before a real run. "
+            "Do NOT bypass the gate by calling run_verdict() directly."
+        )
+
     from backtest.patha_eval_gauntlet import build_all_hypotheses
     from backtest.patha_holdout_producer import produce_candidate_holdout
     from backtest.patha_moments import build_cohort_csv, load_patha_moments
@@ -175,7 +197,13 @@ def run_verdict(
     from strategies.dsl import compute_dsl_hash
     from strategies.dsl_compiler import compile_dsl_to_strategy
 
-    run_backtest_fn = _run_backtest or run_backtest
+    # When Phase D IS authorized and no mock was injected, main() is responsible for
+    # wiring the real engine; resolve it here only on that authorized path.
+    if _run_backtest is not None:
+        run_backtest_fn = _run_backtest
+    else:
+        from backtest.engine import run_backtest  # reached only under PHASE_D_AUTHORIZED
+        run_backtest_fn = run_backtest
 
     out_dir = Path(out_dir)
     assert_not_sealed(out_dir)
@@ -284,6 +312,10 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 2
 
+    # Real-engine path: authorized ONLY here, behind the PHASE_D_AUTHORIZED gate
+    # above. run_verdict(_run_backtest=None) resolves the real engine internally and
+    # re-asserts the gate (defense-in-depth) before any real run / artifact write.
+    assert PHASE_D_AUTHORIZED, "unreachable: gate checked above"
     bundle = run_verdict(Path(args.out_dir))
     tax = bundle["taxonomy"]
     esc = bundle["escalation"]
