@@ -1663,7 +1663,21 @@ class TestT1_4_Pc9BaselineGate:
         # net +58 lands wholly in pre_t1_x_baseline = total − t1_4 − t1_5. Advance
         # BASELINE 2435 → 2493 (same expected-additive-cohort precedent; per Charlie
         # per-section commit-gate authorization for the Path B arc).
-        BASELINE = 2493
+        # Path B Section C (ternary sizing node): adds 3 new test files —
+        # tests/test_dsl_sizing.py (10: SizingBand/SizingSpec schema + D2
+        # canonicalize recursion), tests/test_hypothesis_hash_sizing.py (6: D3
+        # _canonical_position_sizing + band-order-swap dedup guard), and
+        # tests/test_dsl_compiler_sizing.py (10: _compile_sizing/_extract_factor_names
+        # units + compiled-through-engine size-ladder/N+1-open/zero-default-no-op +
+        # manifest/D3-hash drift). All three are new files, neither t1_4 nor t1_5
+        # subtraction targets, so the +26 lands wholly in pre_t1_x_baseline =
+        # total − t1_4 − t1_5. (The 4 G3 ternary-sizing tests in
+        # test_leakage_guards.py un-skipped this section — skipped→passing — but
+        # collection count is unchanged because pytest --collect-only counts skips,
+        # so they were already in the 2435 Section-A count; no double-count.)
+        # Advance BASELINE 2493 → 2519 (same expected-additive-cohort precedent;
+        # per Charlie per-section commit-gate authorization for the Path B arc).
+        BASELINE = 2519
         assert pre_t1_x_baseline == BASELINE, (
             f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
             f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "

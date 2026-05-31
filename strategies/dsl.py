@@ -8,7 +8,8 @@ happens at schema-parse time for:
   ``description`` > 300 chars).
 - Unknown factor names (LHS or RHS), resolved against the live
   :class:`factors.registry.FactorRegistry`.
-- Position sizing other than ``"full_equity"`` (Phase 2 restriction).
+- Position sizing: ``"full_equity"`` or a validated :class:`SizingSpec`
+  ladder (the sizing factor must be a registered factor name).
 
 The compiler (``strategies/dsl_compiler.py``) is a pure code-path dispatcher;
 it trusts that whatever DSL it receives has already passed this schema.
@@ -157,6 +158,72 @@ class Condition(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# SizingBand + SizingSpec
+# ---------------------------------------------------------------------------
+
+
+class SizingBand(BaseModel):
+    """One half-open sizing band ``[lower, upper)`` mapping a sizing-factor
+    value to an equity fraction.
+
+    ``size`` is the fraction of equity to target while the sizing factor's
+    current value falls in this band. Bands are evaluated in declaration
+    order by the compiler; the first band whose ``[lower, upper)`` contains
+    the value wins. Values outside every band fall through to
+    ``SizingSpec.default_size``.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    lower: float
+    upper: float
+    size: float = Field(ge=0.0, le=1.0)
+
+    @model_validator(mode="after")
+    def _validate_band_order(self) -> "SizingBand":
+        if not (math.isfinite(self.lower) and math.isfinite(self.upper)):
+            raise ValueError("band lower/upper must be finite floats")
+        if self.lower >= self.upper:
+            raise ValueError(
+                f"band lower ({self.lower}) must be < upper ({self.upper})"
+            )
+        return self
+
+
+class SizingSpec(BaseModel):
+    """Factor-conditioned (ternary/laddered) position sizing.
+
+    ``factor`` is a registered factor name whose current-bar value selects
+    an equity fraction from ``bands`` (first containing band wins), falling
+    back to ``default_size`` when no band matches. All sizes are equity
+    fractions in ``[0, 1]``; the compiler emits them via
+    ``self.order_target_percent`` so they bypass the configured
+    ``PercentSizer`` (see ``strategies/dsl_compiler.py::_compile_sizing``).
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    factor: str
+    # max 8 bands: a sizing ladder denser than this is overfit risk on 1h bars
+    bands: list[SizingBand] = Field(min_length=1, max_length=8)
+    default_size: float = Field(ge=0.0, le=1.0)
+
+    @field_validator("factor")
+    @classmethod
+    def _validate_sizing_factor(cls, v: str, info: ValidationInfo) -> str:
+        if not v:
+            raise ValueError("sizing factor must be a non-empty string")
+        reg = _registry_from_info(info)
+        known = set(reg.list_names())
+        if v not in known:
+            raise ValueError(
+                f"unknown sizing factor {v!r}; registered factors: "
+                f"{sorted(known)}"
+            )
+        return v
+
+
+# ---------------------------------------------------------------------------
 # ConditionGroup
 # ---------------------------------------------------------------------------
 
@@ -216,7 +283,8 @@ class StrategyDSL(BaseModel):
         description: One-sentence human-readable rationale (1..300 chars).
         entry: 1..3 OR-connected ConditionGroup objects for entry.
         exit: 1..3 OR-connected ConditionGroup objects for exit.
-        position_sizing: Phase 2 restricts this to ``"full_equity"``.
+        position_sizing: Either ``"full_equity"`` or a :class:`SizingSpec`
+            factor-conditioned ladder.
         max_hold_bars: Optional hard cap on holding time in bars
             (1..720 ≈ 30 days of 1h bars). ``None`` means "no cap".
 
@@ -230,18 +298,17 @@ class StrategyDSL(BaseModel):
     description: str = Field(min_length=1, max_length=300)
     entry: list[ConditionGroup] = Field(min_length=1, max_length=3)
     exit: list[ConditionGroup] = Field(min_length=1, max_length=3)
-    # CONTRACT GAP: ``position_sizing`` is currently a
-    # ``Literal["full_equity"]`` so there is nothing to discriminate on.
-    # Once D4+ relaxes this to support alternative sizings (e.g.
-    # ``"half_equity"``, ``"kelly"``), D3's
-    # ``agents.hypothesis_hash.canonicalize_for_hash`` already includes
-    # this field — a strategy that differs only in its sizing will then
-    # hash distinctly, which is the intended behavior. The dedup test
-    # suite has a matching TODO marker (see agents/hypothesis_hash.py
-    # ``CONTRACT GAP: position_sizing``). DO NOT remove
-    # ``position_sizing`` from D3's canonical payload; removing it would
-    # silently collapse different sizings into the same dedup key.
-    position_sizing: Literal["full_equity"]
+    # CONTRACT GAP: ``position_sizing`` is a live union
+    # (``Literal["full_equity"] | SizingSpec``) as of Path B Section C.
+    # D3's ``agents.hypothesis_hash.canonicalize_for_hash`` lowers it to a
+    # JSON-safe canonical form via ``_canonical_position_sizing`` so two
+    # strategies differing only in their sizing hash distinctly. OPEN gap:
+    # any future union member added here MUST get a matching branch in
+    # ``_canonical_position_sizing`` (it raises ``TypeError`` as a tripwire
+    # until then). DO NOT remove ``position_sizing`` from D3's canonical
+    # payload; removing it would silently collapse different sizings into
+    # the same dedup key.
+    position_sizing: Literal["full_equity"] | SizingSpec
     max_hold_bars: int | None = Field(default=None, ge=1, le=720)
 
 
@@ -293,6 +360,8 @@ __all__ = [
     "ALL_OPS",
     "Condition",
     "ConditionGroup",
+    "SizingBand",
+    "SizingSpec",
     "StrategyDSL",
     "OpLiteral",
     "canonicalize_dsl",

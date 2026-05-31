@@ -95,6 +95,7 @@ from factors.registry import FactorRegistry, compute_feature_version, get_regist
 from strategies.dsl import (
     Condition,
     ConditionGroup,
+    SizingSpec,
     StrategyDSL,
     canonicalize_dsl,
     compute_dsl_hash,
@@ -290,7 +291,12 @@ def _extract_factor_names(dsl: StrategyDSL) -> list[str]:
     """Return sorted list of all distinct factor names referenced by the DSL.
 
     Includes both LHS ``factor`` fields and string-typed RHS ``value``
-    fields. Registry validation has already happened at schema time.
+    fields from entry/exit conditions, plus ``position_sizing.factor`` when
+    ``position_sizing`` is a :class:`SizingSpec` (so its warmup contributes
+    to ``effective_minperiod`` and its column is present in ``factor_index``
+    at compile time).
+
+    Registry validation has already happened at schema time.
     """
     names: set[str] = set()
     for groups in (dsl.entry, dsl.exit):
@@ -299,6 +305,8 @@ def _extract_factor_names(dsl: StrategyDSL) -> list[str]:
                 names.add(c.factor)
                 if isinstance(c.value, str):
                     names.add(c.value)
+    if isinstance(dsl.position_sizing, SizingSpec):
+        names.add(dsl.position_sizing.factor)
     return sorted(names)
 
 
@@ -392,6 +400,43 @@ def _compile_groups(
         return False
 
     return eval_groups
+
+
+def _compile_sizing(
+    spec: SizingSpec,
+    factor_index: dict[str, int],
+) -> Callable[[tuple, tuple], float]:
+    """Compile a SizingSpec to a closure ``(cur_row, prev_row) -> float``.
+
+    Reads the sizing factor's current-bar value from ``cur_row`` (a tuple
+    keyed by ``factor_index``) and returns the equity fraction for the
+    first band whose half-open ``[lower, upper)`` contains it, falling
+    back to ``spec.default_size``. ``prev_row`` is accepted for signature
+    symmetry with condition closures but is unused (sizing is a
+    current-bar decision).
+
+    Bands are not validated for mutual non-overlap; if two bands contain the
+    same value, the first in declaration order wins.
+
+    NaN policy: if the factor value is NaN, return ``default_size`` — a NaN
+    never falls inside any band (mirrors the comparison helpers'
+    NaN-is-never-True rule). This keeps sizing well-defined during the
+    factor-NaN warmup window.
+    """
+    idx = factor_index[spec.factor]
+    bands = tuple((b.lower, b.upper, b.size) for b in spec.bands)
+    default_size = spec.default_size
+
+    def eval_sizing(cur_row: tuple, prev_row: tuple) -> float:
+        val = cur_row[idx]
+        if math.isnan(val):
+            return default_size
+        for lower, upper, size in bands:
+            if lower <= val < upper:
+                return size
+        return default_size
+
+    return eval_sizing
 
 
 # ---------------------------------------------------------------------------
@@ -667,6 +712,12 @@ def compile_dsl_to_strategy(
     entry_eval = _compile_groups(dsl.entry, factor_index)
     exit_eval = _compile_groups(dsl.exit, factor_index)
 
+    sizing_spec = dsl.position_sizing
+    if isinstance(sizing_spec, SizingSpec):
+        sizing_eval = _compile_sizing(sizing_spec, factor_index)
+    else:
+        sizing_eval = None  # "full_equity" path keeps self.buy()
+
     strategy_name = dsl.name
     max_hold_bars = dsl.max_hold_bars
 
@@ -738,7 +789,23 @@ def compile_dsl_to_strategy(
 
             if not self.position:
                 if entry_eval(cur_row, prev_row):
-                    self.buy()
+                    if sizing_eval is None:
+                        self.buy()
+                    else:
+                        frac = sizing_eval(cur_row, prev_row)
+                        # order_target_percent computes its own size,
+                        # bypassing the configured PercentSizer. Fills at
+                        # N+1 open (coc/coo False).
+                        # target=0.0 places no order and opens no position;
+                        # _entry_bar is stamped but is only read in the
+                        # in-position branch (unreachable while flat), so the
+                        # stale stamp is harmless. Effect: the entry is
+                        # silently declined for this bar. Level-triggered
+                        # conditions re-evaluate next bar; cross operators
+                        # (crosses_above/below) permanently miss the
+                        # transition. This is the intended semantics of a
+                        # zero-size band: decline the entry.
+                        self.order_target_percent(target=frac)
                     # Stamp on the signal bar. The 1-bar next-open fill
                     # lag is symmetric on entry and exit, so signal-bar
                     # counting == fill-to-fill duration. See module

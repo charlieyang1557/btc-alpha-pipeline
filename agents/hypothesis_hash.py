@@ -16,7 +16,9 @@ Canonical form rules (from PHASE2_BLUEPRINT D3):
        colliding with a factor literally named e.g. ``"30.000000"``.
     4. ``name`` and ``description`` excluded (cosmetic only).
     5. ``max_hold_bars`` included.
-    6. ``position_sizing`` included (see CONTRACT GAP below).
+    6. ``position_sizing`` included, lowered to a JSON-safe canonical form
+       via :func:`_canonical_position_sizing` (``"full_equity"`` or a
+       ``SizingSpec`` ladder; band order is load-bearing, not sorted).
     7. Hash = first 16 hex chars of SHA256 of the canonical JSON.
 
 CONTRACT BOUNDARY: this module is deliberately separate from D2's
@@ -45,8 +47,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+from typing import Literal
 
-from strategies.dsl import StrategyDSL
+from strategies.dsl import SizingSpec, StrategyDSL
 
 
 # ---------------------------------------------------------------------------
@@ -90,6 +93,46 @@ def _canonical_group_sort_key(group: list[dict]) -> str:
     return json.dumps(group, sort_keys=True, separators=(",", ":"))
 
 
+def _canonical_position_sizing(
+    position_sizing: Literal["full_equity"] | SizingSpec,
+) -> "str | dict":
+    """Lower ``StrategyDSL.position_sizing`` to a deterministic JSON-safe form.
+
+    - ``"full_equity"`` -> the literal string ``"full_equity"``.
+    - :class:`SizingSpec` -> a dict with ``kind="sizing_spec"``, the factor
+      name, and bands/default_size whose numeric edges are tagged at
+      6-decimal precision via :func:`_canonical_value` (mirroring condition
+      scalars). Band ORDER is preserved (first-match-wins is part of the
+      strategy's semantics; reordering bands changes behavior, so it must
+      change the dedup hash).
+
+    Raises:
+        TypeError: if ``position_sizing`` is neither the literal nor a
+            SizingSpec (defends against a future union member added without
+            updating this canonicalizer).
+    """
+    if position_sizing == "full_equity":
+        return "full_equity"
+    if isinstance(position_sizing, SizingSpec):
+        return {
+            "kind": "sizing_spec",
+            "factor": position_sizing.factor,
+            "bands": [
+                {
+                    "lower": _canonical_value(b.lower),
+                    "upper": _canonical_value(b.upper),
+                    "size": _canonical_value(b.size),
+                }
+                for b in position_sizing.bands
+            ],
+            "default_size": _canonical_value(position_sizing.default_size),
+        }
+    raise TypeError(
+        f"unhandled position_sizing type {type(position_sizing).__name__}; "
+        f"add a canonical lowering before widening the DSL union."
+    )
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -104,14 +147,15 @@ def canonicalize_for_hash(dsl: StrategyDSL) -> str:
           themselves sorted by compact-JSON (OR-commutativity).
         - ``exit``: same shape as ``entry``.
         - ``max_hold_bars``: included verbatim (None or 1..720).
-        - ``position_sizing``: included verbatim. CONTRACT GAP:
-          currently always ``"full_equity"`` per D2's ``Literal``
-          restriction, so it contributes zero entropy today. It is
-          nevertheless included so that D4+, when sizing widens, does
-          not require a dedup-hash schema bump. A strategy that differs
-          only in sizing will then hash distinctly. The mirror-side
-          marker lives in ``strategies/dsl.py`` on the ``position_sizing``
-          field; keep them in sync.
+        - ``position_sizing``: lowered via :func:`_canonical_position_sizing`
+          to a JSON-safe form. ``"full_equity"`` maps to the literal string;
+          a :class:`SizingSpec` maps to a dict with ``kind="sizing_spec"``,
+          the factor name, and bands/default_size tagged at 6-decimal
+          precision. Band order is preserved (load-bearing: first-match-wins
+          semantics mean reordering changes behaviour and must change the
+          hash). Two strategies differing only in sizing hash distinctly.
+          The mirror-side marker lives in ``strategies/dsl.py`` on the
+          ``position_sizing`` field; keep them in sync.
 
     Contract — fields EXCLUDED from the canonical payload:
         - ``name``: cosmetic label. Two DSLs differing only in name
@@ -146,7 +190,7 @@ def canonicalize_for_hash(dsl: StrategyDSL) -> str:
         "entry": canonicalize_groups(dsl.entry),
         "exit": canonicalize_groups(dsl.exit),
         "max_hold_bars": dsl.max_hold_bars,
-        "position_sizing": dsl.position_sizing,
+        "position_sizing": _canonical_position_sizing(dsl.position_sizing),
     }
     return json.dumps(payload, sort_keys=True, separators=(",", ":"))
 
