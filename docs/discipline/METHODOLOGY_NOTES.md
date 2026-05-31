@@ -7546,3 +7546,27 @@ The extraction pattern generalizes: any module extraction that moves logic + res
 - B-C-extended Scope-B cycle T1.2 SEAL (bundled within `12dffde` T1.1 SEAL bundle per R3.1d sequencing 1→3→4) — concrete extraction instance (validation logic moved from `wf_lineage.py` to `artifact_schema.py`)
 
 ---
+
+## §36 Cross-cycle findings codified at the Path B verdict cycle SEAL boundary
+
+Codified at the Path B mechanism-first OHLCV re-mine **verdict** cycle SEAL (2026-05-31; arc tag `pathb-mechanism-first-verdict-v1`). Three lessons from the verdict RUN + its 2-leg B2s.
+
+### §36.1 Statistical significance, not the point estimate, gates "a real edge exists"
+
+A gate whose purpose is "did we find a REAL edge" must use **statistical significance** (DSR `pass_B` / PSR ≥ 0.95), not a **point estimate** (`deflated_z_B > 0` / `excess > 0`). A point-estimate excess above the bar that is not significant cannot establish profitability over large samples — it is consistent with zero. The failure mode is acute at **low trade counts**, where the point estimate is dominated by sampling noise + fat-tail moment instability (the Path B Step-0 re-score's top "lift" had PSR 0.84 on **5 trades**, kurtosis 257 — noise, not an edge). **Empirical surface:** the §9 A-escalation second prong ("Step-0 lifted no candidate above 0") was pre-registered AND coded as point-estimate-OR-significance; the verdict exposed that the point-estimate arm would have blocked a warranted escalation on 4 noise-level point estimates. **Rule:** when a criterion's job is "is there a real survivor," pre-register it as a significance test, not a point-estimate threshold.
+
+### §36.2 Criterion amendments must be recorded AS amendments, not as "reading it correctly"
+
+When the binding read tightens/changes a criterion whose **pre-registered text AND code** said otherwise, record it explicitly as an **amendment** by the registered authority — never frame it as "the criterion always meant this." (Advisor Finding A: the LOCK/spec/code literally said point-estimate suffices; Charlie's significance reading is a tightening, not a re-reading.) An amendment is **clean** iff: (a) the criterion is advisory-by-design / the amender is its named authority, (b) it does not void the inferential family (adds no variant — N\* intact), and (c) it is **outcome-invariant in the relevant sense** — here, both readings yield 0 deployable strategies, so it cannot be cherry-picking, and it *tightens* (more rigor). **Rule:** a post-result criterion change is legitimate only when it is on the record as an amendment, is advisory/authoritative, and cannot rescue a desired outcome.
+
+### §36.3 Test fixtures must use realistic value scales; mid-run instrument-repair vs reverse-fitting
+
+(a) **Fixture-scale realism.** The Section-C ternary-sizing engine test used synthetic `price=100`, which never exercised the fractional-unit sizing path; a real-scale (BTC ~$78k) run exposed a latent `order_target_percent → int(cash//price) = 0` integer-floor bug that zeroed **all** trades. A fixture at a scale that does not match production can hide an entire bug class. **Rule:** include a realistic-production-scale regression case for any value-/price-sensitive path.
+(b) **Mid-run instrument-repair is legitimate, distinct from reverse-fitting.** When a run surfaces a *harness/instrument* bug (not a result), fixing it before the verdict is clean IFF: the fix is the principled/unbiased one (mirrors a proven path — here fractional `self.buy` byte-equal to the `full_equity` PercentSizer at `frac=1.0`), **LOCK-frozen params are untouched**, it lifts all candidates **symmetrically**, and it is **disclosed before the re-run** with no frozen element changed in response to any seen value. **Rule:** "fix the broken meter" (instrument-repair) is allowed and must be disclosed; "saw a result, changed the harness/params" (reverse-fitting) voids the cycle. The line is: frozen DoF untouched + symmetric + principled + disclosed.
+
+### Cross-references
+- [[project_alpha_source_binding_constraint]] — the strategic memory the Path B verdict empirically earns (alpha source is the binding constraint; now proven on OHLCV).
+- [[feedback_reviewer_suggestion_adjudication]] — the citation-verification discipline that adjudicated the verdict's 2-leg B2s (advisor Finding A on the amendment; Codex confirming the numbers).
+- §3.3 pre-register expectations before running (commit-order anti-hindsight) — the Step −1 LOCK + the mid-run-repair/amendment disclosures committed before the re-run.
+
+---
