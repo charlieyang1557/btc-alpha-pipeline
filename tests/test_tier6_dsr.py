@@ -7,6 +7,7 @@ No real-cohort PASS/FAIL outcome is asserted here.
 from __future__ import annotations
 
 import math
+import os
 
 import numpy as np
 import pandas as pd
@@ -882,7 +883,7 @@ def test_main_cohort_arg_resolves_non_default_dir(monkeypatch):
     # holdout_dir evaluate_cohort is called with.
     captured = {}
 
-    def fake_eval(*, out_dir, n_sims, write, holdout_dir):
+    def fake_eval(*, out_dir, n_sims, write, holdout_dir, n_star=t6.N_STAR):
         captured["holdout_dir"] = holdout_dir
         return {"promotion_list": [], "degenerate_count": 0,
                 "authoritative": [], "companion": []}
@@ -940,3 +941,337 @@ def test_main_returns_nonzero_on_validation_failure(monkeypatch):
     monkeypatch.setattr(t6, "evaluate_cohort", boom)
     rc = t6.main(["--n-sims", "0", "--dry-run"])
     assert rc != 0
+
+
+# ==========================================================================
+# Section D (Tasks 19-22): N* plumbing through evaluate_cohort + CLI
+# ==========================================================================
+def test_evaluate_cohort_threads_non_default_n_star_into_rows_and_mc():
+    # Task 19: a non-default n_star must flow into (a) every per-candidate row's
+    # "n_star" field, (b) the MC validation block's "n_star", and (c) the
+    # top-level out["n_star"]. Probe value 7 != N_STAR=18 (NOT the Step -1
+    # locked PATHB_N_STAR capital value; purely a plumbing probe). Writes to a
+    # tmp dir so the sealed tier6_dsr_v1/ is untouched.
+    probe = 7
+    assert probe != t6.N_STAR
+    out = t6.evaluate_cohort(out_dir=None, n_sims=500, write=False, n_star=probe)
+    for r in (*out["authoritative"], *out["companion"]):
+        assert r["n_star"] == probe, f"row {r['hypothesis_hash']} kept n_star={r['n_star']}"
+    assert out["mc_validation"]["n_star"] == probe
+    assert out["n_star"] == probe
+
+
+def test_evaluate_cohort_default_n_star_is_18():
+    out = t6.evaluate_cohort(out_dir=None, n_sims=0, write=False)
+    assert out["n_star"] == 18
+    assert all(r["n_star"] == 18 for r in out["authoritative"])
+    assert all(r["n_star"] == 18 for r in out["companion"])
+
+
+def test_degenerate_fail_row_threads_non_default_n_star(monkeypatch):
+    probe = 7
+    df = t6._read_cohort_csv()
+    locked, _ = t6.derive_cohort(df)
+    degenerate_hash = locked[0]
+    real_loader = t6.load_candidate_moments
+
+    def fake_loader(hypothesis_hash, frame, **kwargs):
+        if hypothesis_hash == degenerate_hash:
+            # term = 1 - 5*2 + 0 = -9 < 0 -> mertens_variance raises ValueError
+            return t6.CandidateMoments(
+                hypothesis_hash, "synthetic_degenerate", "test",
+                sr_per_bar=2.0, gamma3=5.0, gamma4=1.0, T=100, trades=None)
+        return real_loader(hypothesis_hash, frame)
+
+    monkeypatch.setattr(t6, "load_candidate_moments", fake_loader)
+    out = t6.evaluate_cohort(out_dir=None, n_sims=0, write=False, n_star=probe)
+    degen_rows = [r for r in out["authoritative"]
+                  if r["mertens_degenerate_flag"] is True]
+    assert degen_rows, "expected at least one injected degenerate row"
+    for r in degen_rows:
+        assert r["n_star"] == probe, (
+            f"degenerate row kept hardcoded n_star={r['n_star']} (want {probe})")
+
+
+def test_degenerate_fail_row_helper_accepts_n_star_kwarg():
+    cm = t6.CandidateMoments(
+        "deadbeefdeadbeef", "synthetic_degenerate", "test",
+        sr_per_bar=2.0, gamma3=5.0, gamma4=1.0, T=100, trades=None)
+    exc = ValueError("non-positive Mertens variance term")
+    row_default = t6._degenerate_fail_row("deadbeefdeadbeef", cm, exc)
+    assert row_default["n_star"] == t6.N_STAR
+    row_probe = t6._degenerate_fail_row("deadbeefdeadbeef", cm, exc, n_star=7)
+    assert row_probe["n_star"] == 7
+
+
+# ==========================================================================
+# Task 20: CSV n_star column carries a non-18 value end-to-end
+# ==========================================================================
+def test_results_and_companion_csv_carry_non_default_n_star(tmp_path):
+    # Task 20: written CSVs must carry the non-default n_star end-to-end
+    # (not a hardcoded 18). Probe 7 != N_STAR; writes to tmp (sealed dir safe).
+    probe = 7
+    assert probe != t6.N_STAR
+    t6.evaluate_cohort(out_dir=tmp_path, n_sims=0, n_star=probe)
+    res_df = pd.read_csv(tmp_path / "tier6_dsr_results.csv")
+    comp_df = pd.read_csv(tmp_path / "tier6_dsr_companion.csv")
+    assert len(res_df) == 18
+    assert len(comp_df) == 21
+    assert "n_star" in res_df.columns
+    assert "n_star" in comp_df.columns
+    assert (res_df["n_star"] == probe).all()
+    assert (comp_df["n_star"] == probe).all()
+    promo = json.loads((tmp_path / "tier6_promotion_list.json").read_text())
+    assert promo["n_star"] == probe
+
+
+def test_results_csv_default_n_star_still_18(tmp_path):
+    # Task 20: omitting n_star keeps the sealed default in the CSV.
+    t6.evaluate_cohort(out_dir=tmp_path, n_sims=0)
+    res_df = pd.read_csv(tmp_path / "tier6_dsr_results.csv")
+    assert (res_df["n_star"] == 18).all()
+
+
+# ==========================================================================
+# Task 21: CLI --n-star safety guard (sealed-artifact protection)
+# ==========================================================================
+def test_main_n_star_flag_threads_into_cohort(monkeypatch):
+    captured = {}
+
+    def spy(out_dir, n_sims, write, holdout_dir, n_star):
+        captured["n_star"] = n_star
+        captured["out_dir"] = out_dir
+        return {
+            "authoritative": [], "companion": [], "promotion_list": [],
+            "degenerate_count": 0, "mc_validation": {}, "n_star": n_star,
+            "alpha": t6.ALPHA, "authoritative_form": "B", "companion_form": "B",
+        }
+
+    monkeypatch.setattr(t6, "evaluate_cohort", spy)
+    rc = t6.main(["--n-star", "7", "--out-dir", "/tmp/pathb_probe", "--n-sims", "0"])
+    assert rc == 0
+    assert captured["n_star"] == 7
+
+
+def test_main_n_star_default_is_18(monkeypatch):
+    captured = {}
+
+    def spy(out_dir, n_sims, write, holdout_dir, n_star):
+        captured["n_star"] = n_star
+        return {
+            "authoritative": [], "companion": [], "promotion_list": [],
+            "degenerate_count": 0, "mc_validation": {}, "n_star": n_star,
+            "alpha": t6.ALPHA, "authoritative_form": "B", "companion_form": "B",
+        }
+
+    monkeypatch.setattr(t6, "evaluate_cohort", spy)
+    rc = t6.main(["--out-dir", "/tmp/pathb_probe", "--n-sims", "0"])
+    assert rc == 0
+    assert captured["n_star"] == 18
+
+
+def test_main_rejects_non_default_n_star_without_out_dir(monkeypatch):
+    def boom(*a, **k):
+        raise AssertionError("evaluate_cohort must NOT run when the guard fires")
+
+    monkeypatch.setattr(t6, "evaluate_cohort", boom)
+    rc = t6.main(["--n-star", "7", "--n-sims", "0"])
+    assert rc == 1
+
+
+def test_main_non_default_n_star_allowed_with_dry_run(monkeypatch):
+    captured = {}
+
+    def spy(out_dir, n_sims, write, holdout_dir, n_star):
+        captured["write"] = write
+        captured["n_star"] = n_star
+        return {
+            "authoritative": [], "companion": [], "promotion_list": [],
+            "degenerate_count": 0, "mc_validation": {}, "n_star": n_star,
+            "alpha": t6.ALPHA, "authoritative_form": "B", "companion_form": "B",
+        }
+
+    monkeypatch.setattr(t6, "evaluate_cohort", spy)
+    rc = t6.main(["--n-star", "7", "--dry-run", "--n-sims", "0"])
+    assert rc == 0
+    assert captured["write"] is False
+    assert captured["n_star"] == 7
+
+
+def test_main_default_n_star_without_out_dir_is_allowed(monkeypatch):
+    captured = {}
+
+    def spy(out_dir, n_sims, write, holdout_dir, n_star):
+        captured["out_dir"] = out_dir
+        captured["n_star"] = n_star
+        return {
+            "authoritative": [], "companion": [], "promotion_list": [],
+            "degenerate_count": 0, "mc_validation": {}, "n_star": n_star,
+            "alpha": t6.ALPHA, "authoritative_form": "B", "companion_form": "B",
+        }
+
+    monkeypatch.setattr(t6, "evaluate_cohort", spy)
+    rc = t6.main(["--n-sims", "0"])  # default n_star=18, default out_dir, real write
+    assert rc == 0
+    assert captured["out_dir"] == t6.DEFAULT_OUT_DIR
+    assert captured["n_star"] == 18
+
+
+def test_main_rejects_non_default_n_star_with_explicit_sealed_out_dir(monkeypatch):
+    # Task 21 hardening: even an EXPLICIT --out-dir pointing at the sealed
+    # tier6_dsr_v1 directory must be refused for a non-default n_star (the
+    # guard resolves out_dir against DEFAULT_OUT_DIR, not just `is None`).
+    def boom(*a, **k):
+        raise AssertionError("evaluate_cohort must NOT run when the guard fires")
+
+    monkeypatch.setattr(t6, "evaluate_cohort", boom)
+    rc = t6.main([
+        "--n-star", "7",
+        "--out-dir", str(t6.DEFAULT_OUT_DIR),
+        "--n-sims", "0",
+    ])
+    assert rc == 1
+
+
+def test_main_allows_default_n_star_with_explicit_sealed_out_dir(monkeypatch):
+    # The sealed REPRODUCTION path (n_star=18) is still allowed even when the
+    # sealed dir is named explicitly — the guard keys on a NON-default n_star.
+    captured = {}
+
+    def spy(out_dir, n_sims, write, holdout_dir, n_star):
+        captured["n_star"] = n_star
+        captured["out_dir"] = out_dir
+        return {
+            "authoritative": [], "companion": [], "promotion_list": [],
+            "degenerate_count": 0, "mc_validation": {}, "n_star": n_star,
+            "alpha": t6.ALPHA, "authoritative_form": "B", "companion_form": "B",
+        }
+
+    monkeypatch.setattr(t6, "evaluate_cohort", spy)
+    rc = t6.main(["--out-dir", str(t6.DEFAULT_OUT_DIR), "--n-sims", "0"])
+    assert rc == 0
+    assert captured["n_star"] == 18
+
+
+def test_main_rejects_non_default_n_star_via_symlink_to_sealed_dir(tmp_path, monkeypatch):
+    # Task 21 hardening: the guard keys on inode identity (os.path.samefile),
+    # not string equality, so a path that is NOT string-equal to DEFAULT_OUT_DIR
+    # but points at the same directory (here via a symlink) is still refused.
+    def boom(*a, **k):
+        raise AssertionError("evaluate_cohort must NOT run when the guard fires")
+
+    monkeypatch.setattr(t6, "evaluate_cohort", boom)
+    link = tmp_path / "sealed_link"
+    os.symlink(t6.DEFAULT_OUT_DIR, link)
+    rc = t6.main(["--n-star", "7", "--out-dir", str(link), "--n-sims", "0"])
+    assert rc == 1
+
+
+# --- Task 22: sealed-artifact byte-regression (n_star=18 reproduces v1) ---
+SEALED_V1_DIR = t6.PROJECT_ROOT / "data/phase2c_evaluation_gate/tier6_dsr_v1"
+
+
+def test_default_n_star_reproduces_sealed_deterministic_artifacts_byte_identical(tmp_path):
+    # Task 22: a default-path (n_star=N_STAR=18) re-run must reproduce the three
+    # DETERMINISTIC sealed artifacts byte-for-byte. Writes ONLY into tmp_path;
+    # the sealed dir is read-only here. Proves the n_star plumbing (Tasks 19-21)
+    # did not perturb the sealed numeric output.
+    if not SEALED_V1_DIR.exists():
+        pytest.skip("sealed tier6_dsr_v1 dir not present in this checkout")
+
+    # MC json depends on (n_sims, seed); reproduce with the sealed default
+    # n_sims so all four files match. n_star omitted -> defaults to N_STAR=18.
+    t6.evaluate_cohort(out_dir=tmp_path, n_sims=100_000)
+
+    deterministic = (
+        "tier6_dsr_results.csv",
+        "tier6_dsr_companion.csv",
+        "tier6_promotion_list.json",
+    )
+    for fn in deterministic:
+        sealed_bytes = (SEALED_V1_DIR / fn).read_bytes()
+        fresh_bytes = (tmp_path / fn).read_bytes()
+        assert fresh_bytes == sealed_bytes, (
+            f"{fn} differs from sealed tier6_dsr_v1 — the n_star plumbing "
+            f"perturbed deterministic output"
+        )
+
+
+def test_default_n_star_reproduces_sealed_mc_validation(tmp_path):
+    # Task 22: the seeded MC json (default n_sims=100000, default seed) is also
+    # reproduced byte-identical under the default n_star path.
+    if not (SEALED_V1_DIR / "tier6_mc_validation.json").exists():
+        pytest.skip("sealed tier6_mc_validation.json not present")
+    t6.evaluate_cohort(out_dir=tmp_path, n_sims=100_000)
+    sealed = (SEALED_V1_DIR / "tier6_mc_validation.json").read_bytes()
+    fresh = (tmp_path / "tier6_mc_validation.json").read_bytes()
+    assert fresh == sealed, (
+        "tier6_mc_validation.json differs — the n_star plumbing perturbed the "
+        "seeded Monte-Carlo expected-max output"
+    )
+
+
+def test_sealed_v1_dir_is_not_written_by_default_run(tmp_path):
+    # Task 22 (safety): a fresh run targeting tmp_path must NOT mutate the
+    # sealed dir. Snapshot sealed mtimes before/after; assert unchanged.
+    if not SEALED_V1_DIR.exists():
+        pytest.skip("sealed tier6_dsr_v1 dir not present in this checkout")
+    before = {p.name: p.stat().st_mtime_ns for p in SEALED_V1_DIR.iterdir()}
+    t6.evaluate_cohort(out_dir=tmp_path, n_sims=0)
+    after = {p.name: p.stat().st_mtime_ns for p in SEALED_V1_DIR.iterdir()}
+    assert before == after, "sealed tier6_dsr_v1 dir was mutated by a tmp-dir run"
+
+
+# ==========================================================================
+# Producer-layer sealed-dir guard (Codex B2 finding)
+# ==========================================================================
+def test_evaluate_cohort_refuses_non_default_n_star_into_sealed_dir(tmp_path, monkeypatch):
+    # Producer-layer guard (Codex B2): a DIRECT evaluate_cohort call with a
+    # non-default n_star + write into the SEALED dir must RAISE before any
+    # write — the main() CLI guard is not in the call path here.
+    #
+    # SAFETY: we monkeypatch DEFAULT_OUT_DIR to a tmp directory so this test
+    # can NEVER write into the REAL sealed dir — not even if the guard is one
+    # day removed by a regression (in which case the write would land in tmp,
+    # and the test would fail loudly, instead of clobbering the sealed
+    # artifacts). The guard logic (samefile against DEFAULT_OUT_DIR) is
+    # identical regardless of which directory DEFAULT_OUT_DIR names.
+    fake_sealed = tmp_path / "fake_sealed"
+    fake_sealed.mkdir()
+    monkeypatch.setattr(t6, "DEFAULT_OUT_DIR", fake_sealed)
+    probe = 7
+    assert probe != t6.N_STAR
+    with pytest.raises(ValueError, match="SEALED|REFUS"):
+        t6.evaluate_cohort(out_dir=fake_sealed, n_sims=0, write=True, n_star=probe)
+
+
+def test_evaluate_cohort_allows_default_n_star_into_sealed_dir(tmp_path, monkeypatch):
+    # The sealed REPRODUCTION path (n_star=18, write into the sealed default
+    # dir) must NOT be blocked by the producer guard. To avoid actually writing
+    # the sealed dir in the test, redirect the writers to tmp by monkeypatching
+    # DEFAULT_OUT_DIR is NOT safe (guard compares against it); instead assert the
+    # guard does not raise for n_star=18 by calling with write=False targeting
+    # the sealed dir (no write happens, guard must still not fire on default).
+    t6.evaluate_cohort(out_dir=t6.DEFAULT_OUT_DIR, n_sims=0, write=False, n_star=t6.N_STAR)
+    # also: non-default n_star with write=False into sealed dir is allowed
+    # (nothing is written, so no clobber risk).
+    t6.evaluate_cohort(out_dir=t6.DEFAULT_OUT_DIR, n_sims=0, write=False, n_star=7)
+
+
+def test_evaluate_cohort_allows_non_default_n_star_into_nonsealed_dir(tmp_path):
+    # Non-default n_star into a NON-sealed dir is the intended Path-B use — allowed.
+    out = t6.evaluate_cohort(out_dir=tmp_path, n_sims=0, write=True, n_star=7)
+    assert out["n_star"] == 7
+
+
+def test_z_pass_frozen_matches_analytic():
+    # Z_PASS is frozen as a literal (not float(norm.ppf(1 - ALPHA))) for
+    # scipy-version-independent byte-reproduction of the sealed tier6_dsr_v1/
+    # artifacts (it feeds the gate-relevant dsr_statistic/pass columns). Assert
+    # the frozen literal still equals the analytic z(1 - ALPHA) within tolerance:
+    # tolerates cross-scipy-version ULP drift, but catches a typo in the literal
+    # or an ALPHA change that was not reflected here.
+    from scipy.stats import norm
+
+    assert t6.Z_PASS == 1.644853626951472
+    assert abs(t6.Z_PASS - float(norm.ppf(1.0 - t6.ALPHA))) < 1e-12

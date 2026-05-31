@@ -1677,7 +1677,33 @@ class TestT1_4_Pc9BaselineGate:
         # so they were already in the 2435 Section-A count; no double-count.)
         # Advance BASELINE 2493 → 2519 (same expected-additive-cohort precedent;
         # per Charlie per-section commit-gate authorization for the Path B arc).
-        BASELINE = 2519
+        # Path B Section D (N* plumbing + sealed-dir guard): adds 17 new test
+        # methods to tests/test_tier6_dsr.py — Task 19 n_star threading (4),
+        # Task 20 CSV n_star carry (2), Task 21 --n-star CLI flag + HARD
+        # sealed-dir guard incl. explicit-sealed-path + inode-identity symlink
+        # hardening (8), Task 22 sealed-artifact byte-regression (3).
+        # test_tier6_dsr.py is neither a t1_4 nor a t1_5 subtraction target, so
+        # the +17 lands wholly in pre_t1_x_baseline = total − t1_4 − t1_5.
+        # (Production change is the default-path-byte-invariant n_star plumbing;
+        # the sealed tier6_dsr_v1/ artifacts are proven byte-identical by the
+        # Task 22 regression — sha256-unchanged.) Advance BASELINE 2519 → 2536
+        # (same expected-additive-cohort precedent; per Charlie per-section
+        # commit-gate authorization for the Path B arc).
+        # Section D B2 hardening (Codex 2-leg finding): the producer-layer
+        # sealed-dir guard inside evaluate_cohort() (blocks a DIRECT
+        # evaluate_cohort(n_star!=N_STAR, write=True) into the sealed dir,
+        # complementing the main() CLI mirror) adds +3 test methods to
+        # test_tier6_dsr.py (refuses-into-sealed + allows-default-into-sealed +
+        # allows-nondefault-into-nonsealed). Same additive cohort. Advance
+        # BASELINE 2536 → 2539.
+        # Section D B2 advisory-note fix (Charlie-authorized): Z_PASS frozen as
+        # a literal (was float(norm.ppf(1-ALPHA))) for scipy-version-independent
+        # byte-reproduction of the sealed tier6_dsr_v1/ artifacts; adds +1 test
+        # (test_z_pass_frozen_matches_analytic) enforcing the literal still
+        # equals the analytic z(1-ALPHA) within 1e-12. Sealed sha256 unchanged
+        # (the literal is bit-identical to the env's norm.ppf value). Advance
+        # BASELINE 2539 → 2540.
+        BASELINE = 2540
         assert pre_t1_x_baseline == BASELINE, (
             f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
             f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "

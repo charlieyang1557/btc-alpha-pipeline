@@ -16,6 +16,7 @@ import hashlib
 import json
 import logging
 import math
+import os
 import sys
 import time
 from dataclasses import dataclass
@@ -258,7 +259,16 @@ def expected_max_ratio_form_b(n_star: int) -> float:
 # --------------------------------------------------------------------------
 # Task 4: Mertens variance + SR* + deflated-z + DSR/PSR + pass rule
 # --------------------------------------------------------------------------
-Z_PASS = float(norm.ppf(1.0 - ALPHA))  # one-sided z(0.95) = 1.6449
+# Z_PASS is the one-sided pass threshold z(1 - ALPHA) = z(0.95) = 1.6449.
+# FROZEN as a literal (not float(norm.ppf(1 - ALPHA))) so it is independent of
+# the installed scipy version: scipy builds can differ by ~1 ULP at norm.ppf,
+# which would perturb the gate-relevant ``dsr_statistic`` / ``pass`` columns and
+# break the sealed tier6_dsr_v1/ byte-reproduction across environments. This
+# literal is the exact value used when tier6_dsr_v1/ was sealed (verified
+# bit-identical to scipy 1.17.1's float(norm.ppf(0.95))). If ALPHA ever changes,
+# re-derive this literal; the sanity test test_z_pass_frozen_matches_analytic
+# enforces it stays equal to norm.ppf(1 - ALPHA) within 1e-12.
+Z_PASS = 1.644853626951472  # one-sided z(1 - ALPHA) = z(0.95)
 
 
 def mertens_variance(sr: float, gamma3: float, gamma4: float, T: int) -> float:
@@ -560,7 +570,8 @@ def _read_cohort_csv(holdout_dir: Path = HOLDOUT_DIR) -> pd.DataFrame:
 
 
 def _degenerate_fail_row(
-    hypothesis_hash: str, cm: CandidateMoments | None, exc: Exception
+    hypothesis_hash: str, cm: CandidateMoments | None, exc: Exception,
+    n_star: int = N_STAR,
 ) -> dict:
     """Build a flagged auto-fail row for a candidate whose evaluation raised.
 
@@ -580,6 +591,9 @@ def _degenerate_fail_row(
         hypothesis_hash: The candidate identifier.
         cm: The loaded moments if available (for identifying fields), else None.
         exc: The captured exception (its ``str`` becomes ``failure_reason``).
+        n_star: Effective multiplicity in force for this cohort run (defaults to
+            ``N_STAR=18``, the sealed value); threaded from ``_evaluate_one`` so
+            a degenerate row records the multiplicity actually in force.
 
     Returns:
         A result dict with ``pass_B = pass_A = False``,
@@ -605,7 +619,7 @@ def _degenerate_fail_row(
         "er_A": nan, "sr_star_A": nan, "deflated_z_A": nan,
         "psr_A": nan, "dsr_statistic_A": nan,
         # MINOR-1: self-describing context fields carried even on degenerate rows.
-        "n_star": N_STAR,
+        "n_star": n_star,
         "z_pass": Z_PASS,
         "pass_B": False,
         "pass_A": False,
@@ -663,7 +677,7 @@ def _evaluate_one(
         return row
     except ValueError as exc:
         # ONLY Mertens math degeneracy is caught here.
-        return _degenerate_fail_row(hypothesis_hash, cm, exc)
+        return _degenerate_fail_row(hypothesis_hash, cm, exc, n_star=n_star)
 
 
 def _write_csv(path: Path, rows: list[dict], extra: tuple[str, ...] = ()) -> None:
@@ -801,6 +815,7 @@ def evaluate_cohort(
     n_sims: int = 100_000,
     write: bool = True,
     holdout_dir: Path = HOLDOUT_DIR,
+    n_star: int = N_STAR,
 ) -> dict:
     """Evaluate the locked-18 (authoritative) + companion-21 (quarantined) cohort.
 
@@ -821,6 +836,12 @@ def evaluate_cohort(
             default ``--cohort`` resolves to a different directory and flows
             through to the CSV read, the lineage guard, the cost-anchor
             preflight, and the per-candidate moment loader.
+        n_star: Effective multiplicity threaded into every ``evaluate_candidate``
+            call, the MC validation, and the output/JSON metadata (defaults to
+            ``N_STAR=18``, the sealed value). A non-default value is only used
+            by an explicit Path-B re-eval and MUST target a NON-sealed
+            ``out_dir``; ``main()`` hard-refuses a non-default ``n_star`` aimed
+            at the sealed default out_dir.
 
     Returns:
         A dict with ``authoritative`` (18 rows), ``companion`` (21 rows),
@@ -835,6 +856,29 @@ def evaluate_cohort(
             preflight (A12) rejects the execution config, or propagated from a
             per-candidate data-integrity failure (A2/A8 in the loader).
     """
+    # PRODUCER-LAYER HARD GUARD (invariant-level closure): refuse to WRITE a
+    # non-default-multiplicity result into the SEALED tier6_dsr_v1 directory,
+    # regardless of caller. main() has a mirror guard for the CLI, but a direct
+    # evaluate_cohort(n_star != N_STAR, write=True) targeting the sealed dir
+    # must also be blocked — the sealed N*=18 (R6.1-locked) artifacts feed a
+    # capital decision and must never be clobbered. n_star == N_STAR (the sealed
+    # reproduction path) and write=False are exempt. Inode-identity (samefile)
+    # catches case-variant / symlink / relative aliases; OSError fallback to
+    # resolve()-equality handles a not-yet-existent out_dir (which cannot be the
+    # existing sealed dir).
+    if n_star != N_STAR and write and out_dir is not None:
+        try:
+            _targets_sealed = os.path.samefile(out_dir, DEFAULT_OUT_DIR)
+        except OSError:
+            _targets_sealed = Path(out_dir).resolve() == DEFAULT_OUT_DIR.resolve()
+        if _targets_sealed:
+            raise ValueError(
+                f"REFUSING: evaluate_cohort(n_star={n_star} != sealed "
+                f"N_STAR={N_STAR}, write=True) targeting the SEALED "
+                f"{DEFAULT_OUT_DIR} would overwrite the R6.1-locked Tier-6 "
+                f"artifacts. Use a NON-sealed out_dir (or write=False)."
+            )
+
     # DESIGN INVARIANT (IMPORTANT-2, honors A2 "before consuming"): the
     # wf_lineage evaluation-semantics consumption guard (A2) + cost-anchor
     # preflight (A12) fire on the aggregate holdout_summary.json BEFORE ANY
@@ -859,13 +903,13 @@ def evaluate_cohort(
 
     authoritative: list[dict] = []
     for h in locked:
-        row = _evaluate_one(h, df, holdout_dir=holdout_dir)
+        row = _evaluate_one(h, df, n_star=n_star, holdout_dir=holdout_dir)
         row["non_authoritative"] = False
         authoritative.append(row)
 
     companion_rows: list[dict] = []
     for h in companion:
-        row = _evaluate_one(h, df, holdout_dir=holdout_dir)
+        row = _evaluate_one(h, df, n_star=n_star, holdout_dir=holdout_dir)
         row["non_authoritative"] = True
         # Resolve the name for monday_flag from the cohort frame (the row's
         # `name` may be None on a degenerate auto-fail).
@@ -874,7 +918,7 @@ def evaluate_cohort(
         companion_rows.append(row)
 
     promotion_list = [r for r in authoritative if r["pass_B"] is True]
-    mc = mc_expected_max_ratio(N_STAR, n_sims=n_sims) if n_sims else {}
+    mc = mc_expected_max_ratio(n_star, n_sims=n_sims) if n_sims else {}
 
     # MED-2: count Mertens-degenerate flagged-fail rows across both partitions.
     degenerate_count = sum(
@@ -888,7 +932,7 @@ def evaluate_cohort(
         "promotion_list": promotion_list,
         "degenerate_count": degenerate_count,
         "mc_validation": mc,
-        "n_star": N_STAR,
+        "n_star": n_star,
         "alpha": ALPHA,
         "authoritative_form": "B",
         "companion_form": "B",
@@ -903,7 +947,7 @@ def evaluate_cohort(
         )
         (out_dir / "tier6_promotion_list.json").write_text(json.dumps(
             {
-                "n_star": N_STAR,
+                "n_star": n_star,
                 "alpha": ALPHA,
                 "form": "B",
                 "promoted": [r["hypothesis_hash"] for r in promotion_list],
@@ -994,6 +1038,16 @@ def main(argv: list[str] | None = None) -> int:
         "--dry-run", action="store_true",
         help="Compute the cohort but write NO artifacts.",
     )
+    parser.add_argument(
+        "--n-star", type=int, default=N_STAR,
+        help=(
+            "Effective number of independent trials (multiplicity N*) for the "
+            f"DSR benchmark (default: {N_STAR}, the sealed Tier 6 value). A "
+            "non-default value REQUIRES an explicit --out-dir (or --dry-run) so "
+            "the sealed data/phase2c_evaluation_gate/tier6_dsr_v1 artifacts are "
+            "never overwritten."
+        ),
+    )
     args = parser.parse_args(argv)
 
     _configure_logging()
@@ -1002,9 +1056,38 @@ def main(argv: list[str] | None = None) -> int:
     out_dir = Path(args.out_dir) if args.out_dir is not None else DEFAULT_OUT_DIR
     write = not args.dry_run
 
+    # HARD SAFETY GUARD: a non-default n_star must NEVER write into the SEALED
+    # tier6_dsr_v1 directory (DEFAULT_OUT_DIR) — whether reached implicitly (no
+    # --out-dir) or by explicitly typing the sealed path (in any case variant on
+    # a case-insensitive filesystem). The sealed cohort is N*=18 (R6.1-locked);
+    # refuse to clobber it with non-sealed-multiplicity artifacts. n_star ==
+    # N_STAR is always allowed (the sealed reproduction path). --dry-run writes
+    # nothing, so it is exempt. Fires BEFORE evaluate_cohort so not a single
+    # artifact byte is touched.
+    #
+    # Identity is checked with os.path.samefile (inode-level) so a case-variant
+    # path on a case-insensitive volume (e.g. macOS APFS, where the sealed
+    # artifact lives) cannot bypass a pure-string/resolve() comparison. samefile
+    # raises OSError if out_dir does not exist yet; in that case it cannot be the
+    # (existing) sealed dir, so fall back to resolve()-equality (False).
+    try:
+        targets_sealed = os.path.samefile(out_dir, DEFAULT_OUT_DIR)
+    except OSError:
+        targets_sealed = out_dir.resolve() == DEFAULT_OUT_DIR.resolve()
+    if args.n_star != N_STAR and not args.dry_run and targets_sealed:
+        logger.error(
+            "REFUSING: --n-star=%d (!= sealed N_STAR=%d) targeting the SEALED "
+            "%s would overwrite it with non-sealed-multiplicity artifacts. "
+            "Re-run with --out-dir pointing at a NON-sealed directory (or "
+            "--dry-run).",
+            args.n_star, N_STAR, DEFAULT_OUT_DIR,
+        )
+        return 1
+
     logger.info(
-        "tier6_dsr start: cohort=%s holdout_dir=%s out_dir=%s n_sims=%d dry_run=%s",
-        args.cohort, holdout_dir, out_dir, args.n_sims, args.dry_run,
+        "tier6_dsr start: cohort=%s holdout_dir=%s out_dir=%s n_sims=%d "
+        "n_star=%d dry_run=%s",
+        args.cohort, holdout_dir, out_dir, args.n_sims, args.n_star, args.dry_run,
     )
 
     try:
@@ -1013,6 +1096,7 @@ def main(argv: list[str] | None = None) -> int:
             n_sims=args.n_sims,
             write=write,
             holdout_dir=holdout_dir,
+            n_star=args.n_star,
         )
     except (ValueError, OSError) as exc:
         logger.error("tier6_dsr FAILED (validation/lineage/cost-anchor): %s", exc)
