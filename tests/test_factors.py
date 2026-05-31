@@ -376,10 +376,17 @@ class TestMaxWarmup:
         assert registry.max_warmup([]) == 0
 
     def test_all_factors(self, registry):
-        # cdf_realized_vol_720 has warmup=743 (720-bar rolling realized vol +
-        # ATR shift inside); updated from 168 when the Path B arc added the
-        # 5 new factors.
-        assert registry.max_warmup(registry.list_names()) == 743
+        # FIX 1 (funding bar-equivalent warmup): max_warmup returns
+        # warmup_bars * input_period_bars. OHLCV factors are input_period_bars=1,
+        # so the OHLCV-only max is still cdf_realized_vol_720's 743 (720-bar
+        # rolling realized vol + ATR shift inside; updated from 168 when the
+        # Path B arc added 5 new factors). The funding factors are
+        # input_period_bars=8 (8h settlements carried onto 1h bars), so
+        # funding_pct_rank_270's 270-settlement warmup is 270*8 = 2160 carried
+        # bars — now the registry-wide max.
+        ohlcv_names = registry.list_names(input_source="ohlcv")
+        assert registry.max_warmup(ohlcv_names) == 743
+        assert registry.max_warmup(registry.list_names()) == 2160
 
 
 # ---------------------------------------------------------------------------
@@ -614,6 +621,38 @@ class TestBuildFeatures:
         max_w = registry.max_warmup(registry.list_names())
         post = features_df[EXPECTED_FACTORS].iloc[max_w:]
         assert not post.isna().any().any()
+
+    def test_cli_missing_funding_parquet_logs_and_returns_nonzero(
+        self, tmp_path, caplog
+    ):
+        """FIX 3: build_features.main() must mirror the production build_features()
+        diagnostic when funding factors are registered but the funding parquet is
+        missing — log an actionable error and return non-zero, NOT raise a bare
+        FileNotFoundError. The global registry has funding factors registered."""
+        import logging
+
+        from factors import build_features as bf
+
+        raw_df = _make_synthetic(100)
+        raw_path = tmp_path / "raw.parquet"
+        raw_df.to_parquet(raw_path, index=False)
+        out_path = tmp_path / "features.parquet"
+        missing_funding = tmp_path / "does_not_exist_funding.parquet"
+        assert not missing_funding.exists()
+
+        with caplog.at_level(logging.ERROR):
+            rc = bf.main([
+                "--raw", str(raw_path),
+                "--output", str(out_path),
+                "--funding", str(missing_funding),
+                "--force-rebuild",
+            ])
+        assert rc != 0, "CLI must return non-zero when funding parquet is missing"
+        assert not out_path.exists(), "CLI must not write output on the funding error"
+        msg = caplog.text.lower()
+        assert "funding" in msg and "missing" in msg, (
+            f"CLI must log an actionable missing-funding diagnostic; got: {caplog.text!r}"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -989,7 +1028,7 @@ class TestNewFactorPresence:
     factors are registered; the library now has 28 factors total (23 OHLCV +
     5 funding), alphabetically ordered."""
 
-    def test_expected_factors_has_27(self):
+    def test_expected_factors_has_28(self):
         assert len(EXPECTED_FACTORS) == 28
         assert len(EXPECTED_OHLCV_FACTORS) == 23
         assert len(EXPECTED_FUNDING_FACTORS) == 5
@@ -1002,7 +1041,7 @@ class TestNewFactorPresence:
         for n in NEW_FACTORS_THIS_ARC:
             assert n in names, f"new factor {n!r} not registered"
 
-    def test_total_is_27_and_matches_expected(self, registry):
+    def test_total_is_28_and_matches_expected(self, registry):
         names = registry.list_names()
         assert len(names) == 28
         assert names == EXPECTED_FACTORS
@@ -1053,14 +1092,15 @@ class TestFeatureVersionSensitivity:
 
 
 # ---------------------------------------------------------------------------
-# Task 12 — build_features_df stamps the 23-factor feature_version
+# Task 12 — build_features_df stamps the 28-factor feature_version
 # ---------------------------------------------------------------------------
 
 
 class TestForceRebuildFeatureVersion:
-    """build_features_df stamps the live 23-factor feature_version; the
-    full `--force-rebuild` over the canonical dataset is slow because
-    cdf_realized_vol_720 is O(N*720) — exercised on a synthetic frame here."""
+    """build_features_df stamps the live 28-factor feature_version (23 OHLCV +
+    5 funding); the full `--force-rebuild` over the canonical dataset is slow
+    because cdf_realized_vol_720 is O(N*720) — exercised on a synthetic frame
+    here."""
 
     def _synthetic_raw(self, n: int) -> pd.DataFrame:
         rng = np.random.default_rng(123)
@@ -1075,7 +1115,7 @@ class TestForceRebuildFeatureVersion:
             "volume": rng.random(n) * 10 + 1,
         })
 
-    def test_rebuilt_features_carry_27_factor_version(self):
+    def test_rebuilt_features_carry_28_factor_version(self):
         from factors.build_features import build_features_df
         from factors.registry import compute_feature_version, get_registry
 

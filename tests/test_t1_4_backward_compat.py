@@ -1804,7 +1804,35 @@ class TestT1_4_Pc9BaselineGate:
         # (it regenerates — same Phase B pattern). Sealed tier6_dsr_v1/ sha256 4/4
         # unchanged. Advance BASELINE 2664 → 2687 (same expected-additive-cohort
         # precedent; per Charlie Phase B register 2026-05-31).
-        BASELINE = 2687
+        # Path A Phase B/C 2-leg adversarial-review fixes (patha-funding-scoping
+        # branch): adds +7 collected items, none a t1_4/t1_5 subtraction target,
+        # so +7 lands wholly in pre_t1_x_baseline = total − t1_4 − t1_5:
+        #   tests/test_patha_gauntlet.py (+1: FIX 1 H1/H2/H3 WARMUP_BARS >= 2160
+        #     carried-funding bar-equivalent warmup),
+        #   tests/test_funding_factors.py (+2: FIX 1 input_period_bars==8 on funding
+        #     factors / ==1 on OHLCV, and input_period_bars excluded from
+        #     feature_version),
+        #   tests/test_dsl_compiler_sizing.py (+1: FIX 1 OHLCV-only WARMUP_BARS
+        #     unchanged regression — the HARD CONSTRAINT that the funding bar-
+        #     equivalent conversion does not leak into OHLCV factors),
+        #   tests/test_funding_align.py (+2: FIX 2 settlement jittered +1ms after
+        #     bar-open carries to the SAME bar via bar-close keying, and a next-bar-
+        #     open settlement does NOT leak into the prior bar; the existing
+        #     delete/reverse/shuffle causality sentinel was tightened to cut on the
+        #     bar CLOSE + given jittered settlements but remains 1 collected test),
+        #   tests/test_factors.py (+1: FIX 3 build_features.main() missing-funding
+        #     CLI diagnostic logs + returns non-zero instead of a bare
+        #     FileNotFoundError). FIX 4 renamed _has_27/_is_27/_carry_27 tests to
+        #     _28 and TestMaxWarmup::test_all_factors was strengthened (OHLCV max
+        #     still 743, full-registry max now 2160) — renames/edits, NOT new
+        #     collected items.
+        # Production changes: FactorSpec.input_period_bars routing field (excluded
+        # from feature_version) + max_warmup bar-equivalent + funding factor
+        # input_period_bars=8 (FIX 1); carry_funding_to_bars bar-close key + dtype
+        # normalization (FIX 2); build_features.main() funding diagnostic (FIX 3).
+        # Sealed tier6_dsr_v1/ untouched. Advance BASELINE 2687 → 2694 (same
+        # expected-additive-cohort precedent; 2-leg adversarial-review fixes).
+        BASELINE = 2694
         assert pre_t1_x_baseline == BASELINE, (
             f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
             f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "

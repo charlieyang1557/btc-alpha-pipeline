@@ -350,7 +350,19 @@ def main(argv: list[str] | None = None) -> int:
 
     raw_df = load_raw_ohlcv(args.raw)
     funding_df = None
-    if args.funding is not None and registry.list_names(input_source="funding"):
+    if registry.list_names(input_source="funding"):
+        # Mirror the production build_features() diagnostic: never emit a bare
+        # FileNotFoundError when funding factors are registered but the funding
+        # parquet is missing. Log an actionable error and return non-zero.
+        if args.funding is None or not Path(args.funding).exists():
+            logger.error(
+                "Funding factors are registered but the funding parquet (%s) "
+                "is missing; the build cannot silently drop funding columns. "
+                "Run the funding ingestion first or pass an explicit --funding "
+                "path.",
+                args.funding,
+            )
+            return 1
         funding_df = load_funding(args.funding)
     features_df = build_features_df(raw_df, registry, funding_df=funding_df)
 
