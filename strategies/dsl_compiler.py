@@ -439,6 +439,27 @@ def _compile_sizing(
     return eval_sizing
 
 
+# Default PercentSizer equity fraction (matches execution_model's sizer_pct
+# headroom). Read at runtime when available; this literal is only the fallback.
+_DEFAULT_SIZER_FRACTION = 0.99
+
+
+def _sizer_fraction(strategy) -> float:
+    """Equity fraction of the configured PercentSizer (e.g. 0.99), read at runtime.
+
+    The full_equity path calls ``self.buy()`` which sizes via the configured
+    ``PercentSizer(percents=sizer_pct, retint=False)`` -> ``pct * cash / close``
+    (FRACTIONAL). The ternary path emits an explicit size scaled by ``frac``; to
+    make ``frac == 1.0`` equal full_equity it must use the same ``pct``. Falls
+    back to ``_DEFAULT_SIZER_FRACTION`` if no percents-style sizer is installed.
+    """
+    sizer = getattr(strategy, "sizer", None)
+    percents = getattr(getattr(sizer, "p", None), "percents", None)
+    if percents is None:
+        percents = getattr(getattr(sizer, "params", None), "percents", None)
+    return (float(percents) / 100.0) if percents is not None else _DEFAULT_SIZER_FRACTION
+
+
 # ---------------------------------------------------------------------------
 # Manifest
 # ---------------------------------------------------------------------------
@@ -793,19 +814,30 @@ def compile_dsl_to_strategy(
                         self.buy()
                     else:
                         frac = sizing_eval(cur_row, prev_row)
-                        # order_target_percent computes its own size,
-                        # bypassing the configured PercentSizer. Fills at
-                        # N+1 open (coc/coo False).
-                        # target=0.0 places no order and opens no position;
-                        # _entry_bar is stamped but is only read in the
-                        # in-position branch (unreachable while flat), so the
-                        # stale stamp is harmless. Effect: the entry is
-                        # silently declined for this bar. Level-triggered
+                        # FRACTIONAL sizing. order_target_percent routes through
+                        # CommInfoBase.getsize = int(cash // price), which floors a
+                        # sub-1-unit target to ZERO whole units for high-unit-value
+                        # assets (BTC ~$78k with modest cash) -> no order ever. BTC
+                        # trades in fractional units, so emit an explicit fractional
+                        # size mirroring the full_equity PercentSizer(retint=False):
+                        # frac * pct * cash / close[0]. close[0] is the CURRENT bar
+                        # (causal; the fill still lands at N+1 open under coc/coo
+                        # False), exactly what self.buy()/PercentSizer reads.
+                        size = (
+                            frac
+                            * _sizer_fraction(self)
+                            * self.broker.getcash()
+                            / float(self.data.close[0])
+                        )
+                        if size > 0.0:
+                            self.buy(size=size)
+                        # frac == 0.0 (or size 0) -> decline the entry, stay flat.
+                        # _entry_bar is stamped below but only read in the
+                        # in-position branch (unreachable while flat), so a stale
+                        # stamp on a declined entry is harmless. Level-triggered
                         # conditions re-evaluate next bar; cross operators
-                        # (crosses_above/below) permanently miss the
-                        # transition. This is the intended semantics of a
-                        # zero-size band: decline the entry.
-                        self.order_target_percent(target=frac)
+                        # permanently miss the transition (intended zero-band
+                        # semantics).
                     # Stamp on the signal bar. The 1-bar next-open fill
                     # lag is symmetric on entry and exit, so signal-bar
                     # counting == fill-to-fill duration. See module

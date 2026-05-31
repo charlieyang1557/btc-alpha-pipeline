@@ -99,20 +99,26 @@ def test_compile_sizing_nan_uses_default():
 # ---------------------------------------------------------------------------
 
 
-def _synthetic_ohlcv(n_bars: int) -> pd.DataFrame:
+def _synthetic_ohlcv(n_bars: int, base_price: float = 100.0) -> pd.DataFrame:
     """Deterministic hourly OHLCV; an up-then-down ramp so intrabar_push
     and rsi_14 both vary enough to exercise the entry + sizing ladder.
+
+    ``base_price`` scales the level (drift/range are proportional, so the
+    oscillation is meaningful at any scale). At the default 100.0 the output
+    is byte-identical to the original generator (3.0 == 100*0.03, 1.0 ==
+    100*0.01); a BTC-scale ``base_price`` (e.g. 78_000) exercises the
+    fractional-unit sizing path.
     """
     start = datetime(2024, 1, 1, tzinfo=timezone.utc)
     rows = []
-    price = 100.0
+    price = base_price
     for i in range(n_bars):
         # Oscillate so RSI dips below threshold periodically.
-        drift = math.sin(i / 5.0) * 3.0
+        drift = math.sin(i / 5.0) * (base_price * 0.03)
         o = price
         c = price + drift
-        h = max(o, c) + 1.0
-        low = min(o, c) - 1.0
+        h = max(o, c) + base_price * 0.01
+        low = min(o, c) - base_price * 0.01
         rows.append(
             {
                 "open_time_utc": start + timedelta(hours=i),
@@ -187,12 +193,67 @@ def test_compiled_sizing_runs_through_engine(tmp_path):
 
     # At least one buy executed.
     assert len(captured["sizes"]) >= 1
-    # Position notional well below full-equity: order_target_percent at
-    # <= 0.75 bypasses the 99% PercentSizer. Full-equity (~99%) would buy
-    # ~ cash / price units; a 0.75 target buys at most ~0.76 of that.
+    # Position notional well below full-equity: the fractional self.buy emit at
+    # frac <= 0.75 scales the 99% sizing. Full-equity (~99%) would buy
+    # ~ cash / price units; a 0.75 band buys ~0.75 * 0.99 of that.
     first_size, first_price = captured["sizes"][0]
     full_equity_units = 100_000.0 / first_price
     assert 0 < first_size < 0.80 * full_equity_units
+
+
+def test_compiled_sizing_fractional_at_btc_price(tmp_path):
+    """Regression for the bug Section-C's price=100 engine test missed: a
+    SizingSpec must produce FRACTIONAL trades at BTC-scale unit prices.
+
+    order_target_percent routed sizing through CommInfoBase.getsize =
+    int(cash // price), which floors a sub-1-unit target to ZERO whole units
+    at BTC prices (~$78k) with modest cash ($10k) -> NO trades at all. The
+    fractional self.buy emit fixes it (BTC trades in fractional units).
+    """
+    registry = get_registry()
+    raw = _synthetic_ohlcv(900, base_price=78_000.0)  # BTC-scale price
+    raw_path = tmp_path / "raw.parquet"
+    raw.to_parquet(raw_path, index=False)
+    features_df = build_features_df(raw, registry)
+
+    dsl = StrategyDSL(
+        name="ternary_btc",
+        description="ternary sizing at BTC-scale price (fractional units)",
+        entry=[ConditionGroup(conditions=[
+            Condition(factor="rsi_14", op="<", value=55.0)])],
+        exit=[ConditionGroup(conditions=[
+            Condition(factor="rsi_14", op=">", value=60.0)])],
+        position_sizing=SizingSpec(
+            factor="intrabar_push",
+            bands=[{"lower": -10.0, "upper": 10.0, "size": 0.5}],
+            default_size=0.5,
+        ),
+        max_hold_bars=24,
+    )
+    strat_cls = compile_dsl_to_strategy(dsl, registry=registry, write_manifest=False)
+
+    cerebro = bt.Cerebro()
+    configure_cerebro(cerebro, cash=10_000.0)  # modest cash -> sub-1-unit BTC targets
+    cerebro.adddata(ParquetFeed.from_parquet(raw_path))
+
+    captured = {"sizes": []}
+
+    class _Rec(bt.Analyzer):
+        def notify_order(self, order):
+            if order.status == order.Completed and order.isbuy():
+                captured["sizes"].append(
+                    (float(order.executed.size), float(order.executed.price))
+                )
+
+    cerebro.addstrategy(strat_cls, features_df_override=features_df)
+    cerebro.addanalyzer(_Rec, _name="rec")
+    cerebro.run()
+
+    # The whole point: fractional sizing trades at BTC prices (int-floor gave 0).
+    assert len(captured["sizes"]) >= 1, "fractional sizing must trade at BTC prices"
+    first_size, first_price = captured["sizes"][0]
+    assert first_price > 1_000.0           # BTC-scale price confirmed
+    assert 0.0 < first_size < 1.0          # a fractional BTC unit (not int-floored to 0)
 
 
 def test_compiled_sizing_fills_at_next_open(tmp_path):
@@ -207,7 +268,7 @@ def test_compiled_sizing_fills_at_next_open(tmp_path):
     enforced upstream by ``configure_cerebro`` (``set_coc(False)`` /
     ``set_coo(False)``) and is regression-covered by the engine/execution
     test suite; this case adds a sizing-path-specific smoke check that the
-    sizing emit (``order_target_percent``) still fills on a bar boundary.
+    sizing emit (fractional ``self.buy``) still fills on a bar boundary.
     A future cleanup could decouple opens from closes in the generator to
     make this assertion independently discriminating.
     """
@@ -254,10 +315,10 @@ def test_compiled_sizing_fills_at_next_open(tmp_path):
 
 
 def test_compiled_sizing_zero_default_is_safe_noop(tmp_path):
-    """default_size=0.0 with a band that never matches -> every entry emits
-    order_target_percent(target=0.0), which places NO order. Verify the run
-    completes, no fill occurs, and capital is unchanged (the stamped
-    _entry_bar is harmless while the position stays flat).
+    """default_size=0.0 with a band that never matches -> frac=0.0 at every
+    entry, which emits NO order (the fractional self.buy is guarded by
+    ``size > 0.0``). Verify the run completes, no fill occurs, and capital is
+    unchanged (the stamped _entry_bar is harmless while the position stays flat).
     """
     registry = get_registry()
     raw = _synthetic_ohlcv(900)

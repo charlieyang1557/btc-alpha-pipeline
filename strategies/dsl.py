@@ -196,9 +196,14 @@ class SizingSpec(BaseModel):
     ``factor`` is a registered factor name whose current-bar value selects
     an equity fraction from ``bands`` (first containing band wins), falling
     back to ``default_size`` when no band matches. All sizes are equity
-    fractions in ``[0, 1]``; the compiler emits them via
-    ``self.order_target_percent`` so they bypass the configured
-    ``PercentSizer`` (see ``strategies/dsl_compiler.py::_compile_sizing``).
+    fractions in ``[0, 1]``; the compiler emits them as an explicit FRACTIONAL
+    ``self.buy(size = frac * pct * cash / close)`` (``pct`` = the configured
+    PercentSizer's fraction), so the ternary path matches the full_equity
+    sizing while trading fractional units. ``order_target_percent`` is NOT used:
+    it routes through ``int(cash // price)`` and floors sub-1-unit targets to 0
+    for high-unit-value assets like BTC (see
+    ``strategies/dsl_compiler.py::_compile_sizing`` + the size emit in
+    ``CompiledStrategy.next``).
     """
 
     model_config = ConfigDict(extra="forbid", frozen=True)

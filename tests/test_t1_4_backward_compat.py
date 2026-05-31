@@ -1740,7 +1740,15 @@ class TestT1_4_Pc9BaselineGate:
         # in the new tests/test_pathb_run_verdict.py (step0_lifted_any key logic +
         # sealed-out-dir refusal + mocked-engine integration), neither a t1_4 nor a
         # t1_5 subtraction target. Advance BASELINE 2598 -> 2601.
-        BASELINE = 2601
+        # Path B fractional-sizing fix: the verdict RUN surfaced a real Section-C
+        # bug — the ternary SizingSpec path emitted order_target_percent, which
+        # routes through int(cash//price) and floors sub-1-unit targets to 0 whole
+        # units at BTC prices -> 0 trades. Fixed _compile_sizing's emit to a
+        # fractional self.buy (mirrors full_equity PercentSizer(retint=False)).
+        # Adds +1: test_compiled_sizing_fractional_at_btc_price (the BTC-price
+        # regression the original price=100 engine test missed), not a t1_4/t1_5
+        # subtraction target. Advance BASELINE 2601 -> 2602.
+        BASELINE = 2602
         assert pre_t1_x_baseline == BASELINE, (
             f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
             f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "
