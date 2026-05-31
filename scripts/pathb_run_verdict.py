@@ -134,29 +134,29 @@ def build_train_frame(
 
 
 def _step0_lifted_any(step0_rows: list[dict]) -> bool:
-    """Did the Step-0 re-score lift any dead candidate's excess Sharpe above 0?
+    """Did the Step-0 re-score lift any dead candidate to a SIGNIFICANT edge?
 
-    The §9 A-escalation second prong. 'Lifted above 0' = the candidate's
-    deflated z-stat (SR_hat − SR*) is positive (it beat its multiplicity bar
-    in excess), or it passes DSR-FWER (pass_B). Read defensively against
-    whichever keys evaluate_candidate emits.
+    The §9 A-escalation second prong, under the Charlie-registered AMENDMENT
+    (2026-05-31): 'lifted ... net excess Sharpe above 0' is TIGHTENED from a
+    POINT ESTIMATE (deflated_z_B > 0) to DSR-SIGNIFICANCE (pass_B, i.e.
+    deflated_z_B >= Z_PASS ~1.6449 / PSR >= 0.95).
+
+    Rationale: an excess-Sharpe point estimate > 0 that is not statistically
+    significant cannot establish a real edge over large samples (the top Step-0
+    lift had PSR 0.84 on 5 trades, kurtosis 257 — sampling noise on a low trade
+    count). The LOCK (line 44), spec §9, and the prior code all read 'above 0'
+    as point-estimate-OR-significance; this is an ON-RECORD amendment by the
+    advisory trigger's registered authority. It is clean because it TIGHTENS the
+    bar (more rigor), it cannot cherry-pick (both readings yield 0 deployable
+    strategies), and it adds no variant to the inferential family (N* intact).
 
     Args:
         step0_rows: Rows from scripts.pathb_step0_diagnostic.run_step0.
 
     Returns:
-        True iff any candidate's excess Sharpe was lifted above 0.
+        True iff any candidate passes DSR-FWER (pass_B) — a SIGNIFICANT lift.
     """
-    for r in step0_rows:
-        if r.get("pass_B") is True:
-            return True
-        # evaluate_candidate emits FORM-SUFFIXED keys (deflated_z_B / pass_B);
-        # Form B is authoritative. deflated_z_B > 0 means SR_hat > SR* — the
-        # candidate's excess Sharpe was lifted above 0 under the N*=3 re-score.
-        v = r.get("deflated_z_B")
-        if isinstance(v, (int, float)) and v > 0:
-            return True
-    return False
+    return any(r.get("pass_B") is True for r in step0_rows)
 
 
 def run_verdict(

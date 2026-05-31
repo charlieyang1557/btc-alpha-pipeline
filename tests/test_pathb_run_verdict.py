@@ -78,11 +78,13 @@ def _tiny_features(tmp_path) -> str:
 
 
 def test_step0_lifted_any_logic():
-    # evaluate_candidate emits FORM-SUFFIXED keys (deflated_z_B / pass_B).
+    # AMENDMENT (Charlie register 2026-05-31): a 'lift' requires DSR-SIGNIFICANCE
+    # (pass_B), NOT a mere point-estimate excess (deflated_z_B > 0).
     assert rv._step0_lifted_any([{"pass_B": False, "deflated_z_B": -1.0}]) is False
     assert rv._step0_lifted_any([{"pass_B": True, "deflated_z_B": -1.0}]) is True
-    assert rv._step0_lifted_any([{"pass_B": False, "deflated_z_B": 0.3}]) is True
-    # the OLD bare key must NOT trigger a lift (regression guard for the dead-key bug)
+    # point-estimate excess > 0 but NOT significant -> NOT a lift (the amendment)
+    assert rv._step0_lifted_any([{"pass_B": False, "deflated_z_B": 0.3}]) is False
+    # an insignificant point estimate never lifts, regardless of key naming
     assert rv._step0_lifted_any([{"pass_B": False, "deflated_z": 0.3}]) is False
 
 

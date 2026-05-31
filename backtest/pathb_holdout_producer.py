@@ -114,7 +114,13 @@ def produce_candidate_holdout(
         "forward_window_metadata": {
             "forward_window_start_utc": start.isoformat(),
             "forward_window_end_utc": end.isoformat(),
-            "forward_bar_count": int(per_bar["T_obs"]),
+            # forward_bar_count = nominal window span in 1h bars (matches the
+            # dead-18 producer's len(forward) convention; 2026 has no gaps).
+            "forward_bar_count": int((end - start).total_seconds() // 3600) + 1,
+            # T_obs = post-warmup finite per-bar returns (cdf_realized_vol_720's
+            # ~743-bar warmup is consumed from inside the window), distinct from
+            # the nominal span above.
+            "forward_post_warmup_obs": int(per_bar["T_obs"]),
         },
         **_eval_lineage_metadata(current_git_sha),
     }
