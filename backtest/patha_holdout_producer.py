@@ -21,15 +21,31 @@ tier6_dsr_v1/ cohort; Path A owns its own namespace. The forward features must b
 fully warmed — funding features are built on FULL history then sliced to the
 window (full-dataset-build rule), enforced upstream in factors.build_features, so
 forward_2026 carried-funding columns are not NaN inside the window.
+
+WARMUP-FEED PREPEND (2-leg-review HIGH): run_backtest crops the feed to
+[start, end] (fromdate/todate), and the compiled funding strategy enforces a
+~2160-bar WARMUP_BARS. If we ran the engine on the forward window directly, ~2160
+of ~2528 forward bars would be consumed as IN-WINDOW warmup (the engine's equity
+curve only begins after the strategy's minperiod), leaving only ~368 evaluable
+bars. So we extend the feed start back by WARMUP_BARS bars (derived from the
+compiled strategy's WARMUP_BARS, NOT hardcoded) so the warmup completes BEFORE the
+window, then crop the equity curve / metrics / per-bar artifact to the forward
+window ONLY. The prepend bars are warmup-only — they warm the strategy but are
+NEVER evaluated/metric'd, so this does NOT "spend" the pre-window (2025) data as a
+test. (Path B's producer consumed warmup from inside its much-smaller ~743-bar
+window; the funding axis's ~2160-bar warmup makes the prepend necessary here.)
 """
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Callable
 
+import pandas as pd
+
 from backtest.engine import run_backtest, write_per_bar_artifact
+from backtest.metrics import compute_all_metrics
 from backtest.wf_lineage import (
     CORRECTED_WF_ENGINE_COMMIT,
     ENGINE_CORRECTED_LINEAGE_TAG,
@@ -97,15 +113,31 @@ def produce_candidate_holdout(
     cand_dir = Path(cohort_dir) / hypothesis_hash
     cand_dir.mkdir(parents=True, exist_ok=True)
 
+    # WARMUP-FEED PREPEND: extend the feed start back by WARMUP_BARS bars (derived
+    # from the compiled strategy, NOT hardcoded) so the funding warmup completes
+    # BEFORE the forward window; then crop everything to the window. WARMUP_BARS=0
+    # (or no attribute) -> no prepend (byte-identical to pre-fix for OHLCV-only).
+    warmup_bars = int(getattr(strategy_cls, "WARMUP_BARS", 0) or 0)
+    feed_start = start - timedelta(hours=warmup_bars)
+
     result = _run_backtest(
         strategy_cls=strategy_cls,
-        start_date=start,
+        start_date=feed_start,
         end_date=end,
         execution_config_path=Path(execution_config_path),
         write_registry=False,
     )
+
+    # Crop the equity curve to the forward window only — the prepend bars warmed the
+    # strategy but are NEVER evaluated/metric'd. The per-bar artifact + holdout
+    # metrics are computed on the window slice (the dead-18 / DSR consumption layer
+    # reads returns_per_bar.parquet, so it must contain window bars only).
+    window_equity = _crop_to_window(result.equity_curve, start, end)
+    window_trades = _crop_trades_to_window(getattr(result, "trades", None), start, end)
+    window_metrics = _window_metrics(window_equity, window_trades, result)
+
     per_bar = _write_per_bar(
-        equity_curve=result.equity_curve,
+        equity_curve=window_equity,
         artifact_dir=cand_dir,
         run_id=result.run_id,
     )
@@ -145,7 +177,66 @@ def produce_candidate_holdout(
         "gamma3": per_bar["gamma3"],
         "gamma4": per_bar["gamma4"],
         "returns_per_bar_sha256": per_bar["returns_per_bar_sha256"],
-        "holdout_total_trades": int(result.metrics.get("total_trades", 0)),
-        "holdout_sharpe": float(result.metrics["sharpe_ratio"]),
+        "holdout_total_trades": int(window_metrics["total_trades"]),
+        "holdout_sharpe": float(window_metrics["sharpe_ratio"]),
     }
-    return {"holdout_sharpe": float(result.metrics["sharpe_ratio"]), "row": row}
+    return {"holdout_sharpe": float(window_metrics["sharpe_ratio"]), "row": row}
+
+
+def _crop_to_window(equity_curve: "pd.Series", start: datetime, end: datetime) -> "pd.Series":
+    """Crop an equity curve to the forward window [start, end] (inclusive).
+
+    The prepend region (index < start) warmed the strategy and is dropped. When the
+    index is tz-naive (Backtrader convention) the window bounds are compared
+    tz-naively; UTC-aware indices compare directly.
+    """
+    eq = equity_curve
+    idx = eq.index
+    lo, hi = start, end
+    if getattr(idx, "tz", None) is None:
+        # Backtrader produces tz-naive datetimes; compare against naive bounds.
+        lo = pd.Timestamp(start).tz_localize(None)
+        hi = pd.Timestamp(end).tz_localize(None)
+    return eq[(idx >= lo) & (idx <= hi)]
+
+
+def _crop_trades_to_window(
+    trades: list[dict[str, Any]] | None, start: datetime, end: datetime
+) -> list[dict[str, Any]]:
+    """Keep only trades whose entry_time_utc falls within the forward window.
+
+    With the warmup prepend the strategy is already warm in the prepend region, so
+    trades CAN occur there; those pre-window trades are not part of the holdout and
+    are dropped (the holdout is evaluated on the forward window only).
+    """
+    if not trades:
+        return []
+    lo = pd.Timestamp(start).tz_localize(None)
+    hi = pd.Timestamp(end).tz_localize(None)
+    kept = []
+    for t in trades:
+        et = t.get("entry_time_utc")
+        if et is None:
+            kept.append(t)  # no timestamp -> keep (can't crop; conservative)
+            continue
+        ts = pd.Timestamp(et)
+        ts = ts.tz_localize(None) if ts.tz is not None else ts
+        if lo <= ts <= hi:
+            kept.append(t)
+    return kept
+
+
+def _window_metrics(
+    window_equity: "pd.Series", window_trades: list[dict[str, Any]], result: Any
+) -> dict[str, Any]:
+    """Recompute holdout metrics on the forward-window slice ONLY.
+
+    The engine's ``result.metrics`` covers the engine's post-warmup curve over the
+    extended feed; we recompute Sharpe / trade count on the cropped window slice so
+    the holdout attributes to the forward window only. Initial capital is taken from
+    the engine's reported initial_capital when present, else the window's first bar.
+    """
+    initial_capital = float(result.metrics.get("initial_capital", 0.0)) or (
+        float(window_equity.iloc[0]) if len(window_equity) > 0 else 10_000.0
+    )
+    return compute_all_metrics(window_equity, window_trades, initial_capital)
