@@ -1703,7 +1703,22 @@ class TestT1_4_Pc9BaselineGate:
         # equals the analytic z(1-ALPHA) within 1e-12. Sealed sha256 unchanged
         # (the literal is bit-identical to the env's norm.ppf value). Advance
         # BASELINE 2539 → 2540.
-        BASELINE = 2540
+        # Path B Section E (Tasks 23-30, evaluation harness + earned-negative
+        # taxonomy): adds 8 new test modules (test_pathb_{step0_diagnostic,
+        # cost_equivalence,train_sanity,perleg_mechanism,eval_gauntlet,dsr_fwer,
+        # earned_negative,escalation}) = +40 test methods (3+2+8+6+5+4+6+6; the
+        # perleg module's 6 includes a True-path companion test added in the
+        # in-loop review to close a sane=True vacuity gap). All 8 are new files,
+        # neither t1_4 nor t1_5 subtraction targets, so the +40 lands wholly in
+        # pre_t1_x_baseline = total − t1_4 − t1_5. Advance BASELINE 2540 → 2580.
+        # Section E cycle-SEAL B2 fixes: +2 tests — a Step-0 sealed-dir write
+        # guard test (Codex finding: --out-dir could target a sealed dir) and a
+        # train-window end-of-day regression test (Codex finding: intraday bars
+        # on a window's last day were wrongly excluded). (Also corrected, no test
+        # count change: PATHB_N_STAR 18→3 to match the Step −1 LOCK, and H3's
+        # mechanism driver volume_zscore→decay_linear_close_48>_168 to match the
+        # design spec — both advisor findings.) Advance BASELINE 2580 → 2582.
+        BASELINE = 2582
         assert pre_t1_x_baseline == BASELINE, (
             f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
             f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "
