@@ -12,7 +12,13 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from factors.funding import funding_ewm_30, funding_ewm_60, funding_sign
+from factors.funding import (
+    funding_ewm_30,
+    funding_ewm_60,
+    funding_pct_rank_270,
+    funding_sign,
+)
+from factors.registry import _assert_no_future_ops
 
 
 def _funding_df(values) -> pd.DataFrame:
@@ -70,3 +76,43 @@ def test_funding_ewm_is_causal_delete_future_invariant():
     full = funding_ewm_30(_funding_df(s))
     trunc = funding_ewm_30(_funding_df(s.iloc[:80]))
     np.testing.assert_array_equal(trunc.to_numpy(), full.iloc[:80].to_numpy())
+
+
+# ---------------------------------------------------------------------------
+# Task B3: funding_pct_rank_270
+# ---------------------------------------------------------------------------
+
+
+def test_funding_pct_rank_causal_and_bounded():
+    s = pd.Series(np.r_[np.zeros(299), [5.0]])  # 300 rows; last value is max of its window
+    out = funding_pct_rank_270(_funding_df(s))
+    assert out.iloc[-1] == 1.0
+    assert out.iloc[:269].isna().all()  # warmup: indices 0..268 NaN (min_periods=270)
+    assert not np.isnan(out.iloc[269])  # first valid value at index 269
+    # causality: truncating future rows leaves earlier values unchanged
+    trunc = funding_pct_rank_270(_funding_df(s.iloc[:280]))
+    assert trunc.iloc[270] == out.iloc[270]
+
+
+def test_funding_pct_rank_bounded_unit_interval():
+    rng = np.random.default_rng(21)
+    s = pd.Series(rng.normal(0, 1e-4, 400), dtype="float64")
+    out = funding_pct_rank_270(_funding_df(s))
+    post = out.iloc[269:]
+    assert (post >= 0.0).all() and (post <= 1.0).all()
+
+
+def test_funding_pct_rank_known_midpoint():
+    # Final window = 270 values where the last is the 136th-smallest of 270:
+    # 135 strictly-below + itself -> count 136 -> 136/270.
+    window = list(range(269)) + [134.5]
+    s = pd.Series([float(v) for v in window], dtype="float64")
+    out = funding_pct_rank_270(_funding_df(s))
+    # values 0..134 (135 of them) are < 134.5; itself counts (<=) -> 136/270.
+    assert out.iloc[-1] == 136.0 / 270.0
+
+
+def test_funding_pct_rank_is_g1_ast_safe():
+    # CRITICAL: must NOT use bare .mean()/.std()/.sum() on a window (the G1 AST
+    # scanner bans those). An explicit count loop is required.
+    _assert_no_future_ops(funding_pct_rank_270, "funding_pct_rank_270")  # no raise

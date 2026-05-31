@@ -60,3 +60,27 @@ def funding_ewm_60(df: pd.DataFrame) -> pd.Series:
     Null policy: ``nan_before_warmup_only`` — post-warmup must not be NaN.
     """
     return df["funding_rate"].ewm(span=60, adjust=False).mean()
+
+
+def funding_pct_rank_270(df: pd.DataFrame) -> pd.Series:
+    """Causal rolling percentile rank of the settled funding rate over the
+    trailing 270 settlements (~90 days).
+
+    Inputs: ``funding_rate``.
+    Computation: at settlement N, the fraction of the trailing window
+        ``[N-269, N]`` whose value is ``<= value[N]`` (right-closed, strictly
+        backward-looking). Implemented with an explicit count loop inside
+        ``rolling(270, min_periods=270).apply(..., raw=True)``.
+        NOTE: uses an explicit count loop, NOT ``.mean()``, so the G1 AST
+        scanner (which bans bare ``.mean()/.std()/.sum()`` on a window) does
+        not reject it.
+    Warmup: 270 settlements (NaN before the window fills; ``min_periods=270``).
+    Output dtype: float64 in [0.0, 1.0].
+    Null policy: ``nan_before_warmup_only`` — NaN only at settlements 0..268.
+    """
+    def _rank(window: np.ndarray) -> float:
+        last = window[-1]
+        count = sum(1 for v in window if v <= last)
+        return count / len(window)
+
+    return df["funding_rate"].rolling(window=270, min_periods=270).apply(_rank, raw=True)
