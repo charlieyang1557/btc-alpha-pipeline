@@ -38,6 +38,13 @@ APPROXIMATION_TEMPERS = (
     # OR-exit's zscore-reverts leg was approximated away; 15bps cdf-0.5
     # boundary-whipsaw is a known downward pressure on H2 holdout_sharpe.
     "h2_exit_regime_flip_only_vs_natural_or_zscore_reverts",
+    # Mechanism-sanity uses a uniform 1-bar forward-return horizon for all legs:
+    # apt for the reversion legs (H1, H2-LOW) but conservative-to-pessimistic for
+    # the trend legs (H2-HIGH, H3) whose edge accrues over the 24/48-bar hold (a
+    # 1-bar conditional sign can under-credit a real trend; advisor MED). Bounded:
+    # MECHANISM_REFUTED needs ALL legs to fail, so a sane reversion leg downgrades
+    # to PROCESS_REFUTED; mechanism sanity never gates Tier-5.
+    "mechanism_sanity_uniform_1bar_horizon_pessimistic_for_trend_legs",
 )
 PROCESS_REFUTED_FOR_GRID = "process_refuted_for_this_grid"
 B_POSITIVE = "b_positive"

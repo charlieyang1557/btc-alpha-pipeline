@@ -1734,7 +1734,13 @@ class TestT1_4_Pc9BaselineGate:
         # sealed tier6_dsr_v1/ + phase4_forward_2026 byte-untouched. Advance BASELINE
         # 2582 → 2598 (same expected-additive-cohort precedent; per Charlie per-section
         # commit-gate authorization for the Path B arc).
-        BASELINE = 2598
+        # Path B verdict-RUN wiring (pathb-mechanism-first-rethink branch): wires
+        # scripts/pathb_run_verdict.py main() to the real engine stages (run_verdict
+        # + build_train_frame + sealed-sha256 before/after guards). Adds +3 collected
+        # in the new tests/test_pathb_run_verdict.py (step0_lifted_any key logic +
+        # sealed-out-dir refusal + mocked-engine integration), neither a t1_4 nor a
+        # t1_5 subtraction target. Advance BASELINE 2598 -> 2601.
+        BASELINE = 2601
         assert pre_t1_x_baseline == BASELINE, (
             f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
             f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "
