@@ -69,13 +69,17 @@ _SEALED_TIER6_FILES = [
 
 
 def assert_not_sealed(out_dir: Path) -> None:
-    """Raise if out_dir is (inode-identical to) any sealed artifact dir.
+    """Raise if out_dir is (inode-identical to) or a CHILD of any sealed artifact dir.
 
-    Two-layer check: os.path.samefile inode identity (both must exist) + resolved
-    path string equality (catches a not-yet-created namespace).
+    Three-layer check: os.path.samefile inode identity (both must exist) + resolved
+    path string equality (catches a not-yet-created namespace) + a child-path guard
+    (a write into a sub-path UNDER a sealed dir is refused; the sha256 check is the
+    backstop). The child check uses the os.sep boundary so a sibling sharing only the
+    sealed dir's name PREFIX is not falsely refused.
 
     Raises:
-        ValueError: If ``out_dir`` resolves to / is inode-identical to a SEALED_DIR.
+        ValueError: If ``out_dir`` resolves to / is inode-identical to / is a child of
+            a SEALED_DIR.
     """
     out = Path(out_dir)
     for sealed in SEALED_DIRS:
@@ -87,6 +91,11 @@ def assert_not_sealed(out_dir: Path) -> None:
                 pass
         if str(out.resolve()) == str(sealed.resolve()):
             raise ValueError(f"refusing to write sealed dir {sealed}")
+        # Child-path guard (defense-in-depth): refuse a write into a CHILD of a
+        # sealed dir. The os.sep suffix makes this a path-boundary check, so a
+        # sibling like ".../tier6_dsr_v1_sibling" is NOT falsely refused.
+        if str(out.resolve()).startswith(str(sealed.resolve()) + os.sep):
+            raise ValueError(f"refusing to write a child of sealed dir {sealed}")
 
 
 def _sealed_fingerprint() -> dict[str, str]:
@@ -131,7 +140,6 @@ def build_train_frame(
     def _fwd_cum(group: pd.Series, horizon: int) -> pd.Series:
         # cumulative return over the next `horizon` bars, computed within-segment:
         # prod(1+r[i+1..i+horizon]) - 1; the last `horizon` bars get NaN (dropped).
-        log1p = (1.0 + group).apply(lambda x: pd.NA if x <= 0 else x)
         # use simple shifted rolling product on (1+r) over a forward window.
         fwd = (1.0 + group).shift(-1).rolling(window=horizon, min_periods=horizon).apply(
             lambda w: w.prod(), raw=True

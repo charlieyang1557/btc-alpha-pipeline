@@ -118,6 +118,21 @@ def test_run_verdict_refuses_sealed_out_dir(tmp_path):
         rv.run_verdict(rv.SEALED_DIRS[0], _run_backtest=_fake_backtest_result)
 
 
+def test_assert_not_sealed_refuses_child_of_sealed_dir():
+    # FIX 5: a write into a CHILD of a sealed dir must be refused (defense-in-depth;
+    # the sha256 check is the backstop). The bare path-equality check only caught the
+    # sealed dir itself, not a sub-path under it.
+    import os as _os
+
+    child = rv.SEALED_DIRS[0] / "subdir" / "candidate"
+    with pytest.raises(ValueError, match="sealed"):
+        rv.assert_not_sealed(child)
+    # A sibling that merely shares the sealed dir's name PREFIX (not a path child)
+    # must NOT be refused (os.sep boundary check, not str startswith).
+    sibling = rv.SEALED_DIRS[0].parent / (rv.SEALED_DIRS[0].name + "_sibling")
+    rv.assert_not_sealed(sibling)  # must not raise
+
+
 def test_run_verdict_refuses_real_engine_without_phase_d_authorization():
     # Defense-in-depth: the public real-run path (no injected engine) must NOT
     # reach the real backtest.engine.run_backtest / write artifacts while Phase D
