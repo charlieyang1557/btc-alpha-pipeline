@@ -132,3 +132,74 @@ def test_reconcile_archives_before_overwrite(tmp_path):
     assert archived.suffix == ".parquet"
     # original is preserved (copy, not move)
     assert canonical.exists()
+
+
+# ---------------------------------------------------------------------------
+# Task A5: CCXT incremental funding update
+# ---------------------------------------------------------------------------
+
+from ingestion import funding_incremental_update
+
+
+class _FakeFundingExchange:
+    """Minimal CCXT-shaped stub exposing fetch_funding_rate_history (snake_case).
+
+    Returns the standard CCXT unified funding-rate-history shape: a list of
+    dicts with `timestamp` (ms) and `fundingRate`. Paginates by `since` and
+    stops once the window is exhausted (mirrors how the real client behaves).
+    """
+
+    def __init__(self, rows):
+        self._rows = rows
+        self.calls = []
+
+    def fetch_funding_rate_history(self, symbol=None, since=None, limit=None, params=None):
+        self.calls.append({"symbol": symbol, "since": since, "limit": limit})
+        if since is None:
+            return list(self._rows)
+        return [r for r in self._rows if r["timestamp"] >= since]
+
+
+def test_fetch_funding_history_normalizes_to_schema():
+    rows = [
+        {"timestamp": 1577836800000, "fundingRate": 0.0001, "symbol": "BTC/USDT:USDT"},
+        {"timestamp": 1577865600000, "fundingRate": -0.00005, "symbol": "BTC/USDT:USDT"},
+    ]
+    ex = _FakeFundingExchange(rows)
+    df = funding_incremental_update.fetch_all_funding(
+        ex, symbol="BTC/USDT:USDT", since_ms=1577836800000
+    )
+    df = funding_incremental_update.funding_history_to_dataframe(df)
+
+    assert list(df["open_time_utc"]) == [
+        pd.Timestamp("2020-01-01 00:00:00", tz="UTC"),
+        pd.Timestamp("2020-01-01 08:00:00", tz="UTC"),
+    ]
+    assert df["funding_rate"].tolist() == [0.0001, -0.00005]
+    assert (df["source"] == "ccxt_binance").all()
+    assert str(df["open_time_utc"].dtype) == "datetime64[ms, UTC]"
+    assert (df["funding_interval_hours"] == 8).all()
+    # the implementation called the snake_case CCXT method
+    assert ex.calls and ex.calls[0]["symbol"] == "BTC/USDT:USDT"
+
+
+def test_fetch_with_funding_backoff_retries_then_succeeds(monkeypatch):
+    import ccxt
+
+    class _FlakyExchange:
+        def __init__(self):
+            self.attempts = 0
+
+        def fetch_funding_rate_history(self, symbol=None, since=None, limit=None, params=None):
+            self.attempts += 1
+            if self.attempts < 3:
+                raise ccxt.NetworkError("transient")
+            return [{"timestamp": 1577836800000, "fundingRate": 0.0001}]
+
+    monkeypatch.setattr(funding_incremental_update.time, "sleep", lambda *_: None)
+    ex = _FlakyExchange()
+    out = funding_incremental_update.fetch_funding_with_backoff(
+        ex, symbol="BTC/USDT:USDT", since=0
+    )
+    assert ex.attempts == 3
+    assert out[0]["fundingRate"] == 0.0001
