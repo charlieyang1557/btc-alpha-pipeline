@@ -581,5 +581,8 @@ def _bootstrap_core_factors(registry: FactorRegistry) -> None:
         funding.SPEC_FUNDING_EWM_30,
         funding.SPEC_FUNDING_EWM_60,
         funding.SPEC_FUNDING_PCT_RANK_270,
+        # Path A Phase C: the H2 funding regime axis (rolling-270 percentile of
+        # the span-30 funding EWM); input_source="funding" like the rest.
+        funding.SPEC_FUNDING_EWM_30_PCTRANK_270,
     ):
         registry.register(spec)

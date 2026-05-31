@@ -14,6 +14,7 @@ import pandas as pd
 
 from factors.funding import (
     funding_ewm_30,
+    funding_ewm_30_pctrank_270,
     funding_ewm_60,
     funding_pct_rank_270,
     funding_sign,
@@ -135,11 +136,53 @@ def test_funding_pct_rank_is_g1_ast_safe():
 
 
 # ---------------------------------------------------------------------------
+# Task C2: funding_ewm_30_pctrank_270 (causal rolling-270 percentile of funding_ewm_30)
+# ---------------------------------------------------------------------------
+
+
+def test_funding_ewm_30_pctrank_causal_and_bounded():
+    # The factor first computes funding_ewm_30 (causal EWM, non-NaN from row 0),
+    # then a causal rolling-270 percentile of THAT series. With a constant input
+    # series the ewm is constant, so the percentile is 1.0 at every full window.
+    s = pd.Series(np.r_[np.zeros(299), [5.0]])  # 300 rows
+    out = funding_ewm_30_pctrank_270(_funding_df(s))
+    # The ewm of the spike at the end is still the largest value of its window.
+    assert out.iloc[-1] == 1.0
+    assert out.iloc[:269].isna().all()  # warmup: 270-settlement percentile window
+    assert not np.isnan(out.iloc[269])  # first valid value at index 269
+    # bounded [0, 1] post-warmup
+    post = out.iloc[269:]
+    assert (post >= 0.0).all() and (post <= 1.0).all()
+
+
+def test_funding_ewm_30_pctrank_is_delete_future_invariant():
+    # Causality: value at row N independent of rows > N. Truncating the future
+    # leaves earlier valid values bit-identical. (Both the ewm and the rolling
+    # percentile are strictly backward-looking.)
+    rng = np.random.default_rng(51)
+    s = pd.Series(rng.normal(0, 1e-4, 360), dtype="float64")
+    full = funding_ewm_30_pctrank_270(_funding_df(s))
+    trunc = funding_ewm_30_pctrank_270(_funding_df(s.iloc[:330]))
+    np.testing.assert_array_equal(
+        trunc.iloc[269:].to_numpy(), full.iloc[269:330].to_numpy()
+    )
+
+
+def test_funding_ewm_30_pctrank_is_g1_ast_safe():
+    # CRITICAL: must NOT use bare .mean()/.std()/.sum() on a window for the
+    # percentile (the G1 AST scanner bans those). An explicit count loop is
+    # required, same pattern as funding_pct_rank_270. (The inner funding_ewm_30
+    # uses ewm(...).mean(), which IS a windowed reducer and is allowed.)
+    _assert_no_future_ops(funding_ewm_30_pctrank_270, "funding_ewm_30_pctrank_270")  # no raise
+
+
+# ---------------------------------------------------------------------------
 # Task B5: registration + input_source routing + build integration
 # ---------------------------------------------------------------------------
 
 FUNDING_FACTORS = [
     "funding_ewm_30",
+    "funding_ewm_30_pctrank_270",
     "funding_ewm_60",
     "funding_pct_rank_270",
     "funding_sign",
@@ -182,6 +225,7 @@ def test_funding_factor_warmups_declared():
     assert reg.get("funding_ewm_30").warmup_bars == 30
     assert reg.get("funding_ewm_60").warmup_bars == 60
     assert reg.get("funding_pct_rank_270").warmup_bars == 270
+    assert reg.get("funding_ewm_30_pctrank_270").warmup_bars == 270
 
 
 def test_funding_factors_pass_g1_ast_scan():

@@ -88,6 +88,36 @@ def funding_pct_rank_270(df: pd.DataFrame) -> pd.Series:
     return df["funding_rate"].rolling(window=270, min_periods=270).apply(_rank, raw=True)
 
 
+def funding_ewm_30_pctrank_270(df: pd.DataFrame) -> pd.Series:
+    """Causal rolling percentile rank of the smoothed funding EWM (span 30) over
+    the trailing 270 settlements (~90 days). The H2 funding regime axis.
+
+    Inputs: ``funding_rate``.
+    Computation: first compute ``funding_ewm_30`` (the causal span-30 EWM, classic
+        recursive ``adjust=False`` form — a windowed ``ewm(...).mean()`` reducer
+        that the G1 AST scanner permits); then, at settlement N, the fraction of
+        the trailing window ``[N-269, N]`` of the EWM series whose value is
+        ``<= ewm[N]`` (right-closed, strictly backward-looking). Implemented with
+        an explicit count loop inside ``rolling(270, min_periods=270).apply(...,
+        raw=True)``.
+        NOTE: the OUTER percentile uses an explicit count loop, NOT ``.mean()``,
+        so the G1 AST scanner (which bans bare ``.mean()/.std()/.sum()`` on a
+        window) does not reject it. The INNER ``ewm(span=30, adjust=False).mean()``
+        is a windowed reducer and is allowed.
+    Warmup: 270 settlements (NaN before the percentile window fills;
+        ``min_periods=270`` on the percentile dominates the EWM's own warmup).
+    Output dtype: float64 in [0.0, 1.0].
+    Null policy: ``nan_before_warmup_only`` — NaN only at settlements 0..268.
+    """
+    def _rank(window: np.ndarray) -> float:
+        last = window[-1]
+        count = sum(1 for v in window if v <= last)
+        return count / len(window)
+
+    ewm = df["funding_rate"].ewm(span=30, adjust=False).mean()
+    return ewm.rolling(window=270, min_periods=270).apply(_rank, raw=True)
+
+
 # ---------------------------------------------------------------------------
 # FactorSpec registrations (input_source="funding" — routed onto the 8h frame)
 # ---------------------------------------------------------------------------
@@ -133,5 +163,16 @@ SPEC_FUNDING_PCT_RANK_270 = FactorSpec(
     output_dtype="float64",
     compute=funding_pct_rank_270,
     docstring=funding_pct_rank_270.__doc__ or "",
+    input_source="funding",
+)
+
+SPEC_FUNDING_EWM_30_PCTRANK_270 = FactorSpec(
+    name="funding_ewm_30_pctrank_270",
+    category="funding",
+    warmup_bars=270,
+    inputs=["funding_rate"],
+    output_dtype="float64",
+    compute=funding_ewm_30_pctrank_270,
+    docstring=funding_ewm_30_pctrank_270.__doc__ or "",
     input_source="funding",
 )

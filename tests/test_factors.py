@@ -165,10 +165,11 @@ class TestRegistration:
 
 
 # ---------------------------------------------------------------------------
-# Core factors — 27 registered:
+# Core factors — 28 registered:
 #   - 23 OHLCV-source factors (18 original + 5 Path B arc additions), computed
 #     on the 1h OHLCV frame (``input_source="ohlcv"``).
-#   - 4 funding-source factors (Path A Phase B), computed on the 8h funding
+#   - 5 funding-source factors (Path A Phase B + the Path A Phase C H2
+#     funding_ewm_30_pctrank_270 regime axis), computed on the 8h funding
 #     settlement frame and carried onto the 1h grid (``input_source="funding"``).
 # EXPECTED_FACTORS is the full registry set (used wherever list_names() is
 # compared). EXPECTED_OHLCV_FACTORS / EXPECTED_FUNDING_FACTORS are the per-source
@@ -203,6 +204,7 @@ EXPECTED_OHLCV_FACTORS = [
 
 EXPECTED_FUNDING_FACTORS = [
     "funding_ewm_30",
+    "funding_ewm_30_pctrank_270",
     "funding_ewm_60",
     "funding_pct_rank_270",
     "funding_sign",
@@ -213,7 +215,7 @@ EXPECTED_FACTORS = sorted(EXPECTED_OHLCV_FACTORS + EXPECTED_FUNDING_FACTORS)
 
 
 class TestCoreFactors:
-    """All 27 core factors are registered and computable (23 OHLCV + 4 funding)."""
+    """All 28 core factors are registered and computable (23 OHLCV + 5 funding)."""
 
     def test_all_registered(self, registry):
         assert registry.list_names() == EXPECTED_FACTORS
@@ -983,14 +985,14 @@ NEW_FACTORS_THIS_ARC = [
 
 
 class TestNewFactorPresence:
-    """Presence guard: the 5 Path B arc factors plus the 4 Path A funding
-    factors are registered; the library now has 27 factors total (23 OHLCV +
-    4 funding), alphabetically ordered."""
+    """Presence guard: the 5 Path B arc factors plus the 5 Path A funding
+    factors are registered; the library now has 28 factors total (23 OHLCV +
+    5 funding), alphabetically ordered."""
 
     def test_expected_factors_has_27(self):
-        assert len(EXPECTED_FACTORS) == 27
+        assert len(EXPECTED_FACTORS) == 28
         assert len(EXPECTED_OHLCV_FACTORS) == 23
-        assert len(EXPECTED_FUNDING_FACTORS) == 4
+        assert len(EXPECTED_FUNDING_FACTORS) == 5
 
     def test_expected_factors_is_alphabetical(self):
         assert EXPECTED_FACTORS == sorted(EXPECTED_FACTORS)
@@ -1002,7 +1004,7 @@ class TestNewFactorPresence:
 
     def test_total_is_27_and_matches_expected(self, registry):
         names = registry.list_names()
-        assert len(names) == 27
+        assert len(names) == 28
         assert names == EXPECTED_FACTORS
 
 
@@ -1027,9 +1029,9 @@ class TestFeatureVersionSensitivity:
     def test_full_differs_from_subset_missing_new_factors(self):
         full = get_registry()
         sub = self._subset_registry(drop=NEW_FACTORS_THIS_ARC)
-        # 27 full - 5 Path B arc factors = 22 (still includes the 4 funding).
-        assert len(sub.list_names()) == 22
-        assert len(full.list_names()) == 27
+        # 28 full - 5 Path B arc factors = 23 (still includes the 5 funding).
+        assert len(sub.list_names()) == 23
+        assert len(full.list_names()) == 28
         # Adding the 5 new factors MUST change the feature_version hash.
         assert compute_feature_version(full) != compute_feature_version(sub)
 
@@ -1040,13 +1042,13 @@ class TestFeatureVersionSensitivity:
     def test_dropping_one_new_factor_changes_version(self):
         full = get_registry()
         sub = self._subset_registry(drop=["intrabar_push"])
-        assert len(sub.list_names()) == 26
+        assert len(sub.list_names()) == 27
         assert compute_feature_version(full) != compute_feature_version(sub)
 
     def test_dropping_one_funding_factor_changes_version(self):
         full = get_registry()
         sub = self._subset_registry(drop=["funding_sign"])
-        assert len(sub.list_names()) == 26
+        assert len(sub.list_names()) == 27
         assert compute_feature_version(full) != compute_feature_version(sub)
 
 
@@ -1081,12 +1083,12 @@ class TestForceRebuildFeatureVersion:
         funding = _make_synthetic_funding(120)  # 120 settlements = 960h > 800 bars
         reg = get_registry()
         out = build_features_df(raw, reg, funding_df=funding)
-        # All 27 factors present as columns (23 OHLCV + 4 carried funding,
+        # All 28 factors present as columns (23 OHLCV + 5 carried funding,
         # plus open_time_utc).
         for name in EXPECTED_FACTORS:
             assert name in out.columns
         # build_features_df returns open_time_utc + one column per factor.
-        assert len(out.columns) == 1 + 27
+        assert len(out.columns) == 1 + 28
 
         live_version = compute_feature_version(reg)
 
