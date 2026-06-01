@@ -1963,7 +1963,14 @@ class TestT1_4_Pc9BaselineGate:
         # (test_markprice_ingestion.py; neither a t1_4 nor t1_5 subtraction target);
         # CCXT method form: fetch_ohlcv(symbol, timeframe, since, params={"price":"mark"|"index"});
         # mock uses exact same method. advance BASELINE 2788 → 2792.
-        BASELINE = 2792
+        # Path C Phase A header-parse fix: +1 headed-CSV test
+        # (test_parse_markprice_kline_with_header_row) fixing real-data bug where
+        # newer Binance Vision monthly kline CSVs with a header row caused the whole
+        # month to be silently dropped (pd.to_datetime("open_time") raises). Mirrors
+        # the header-autodetection approach from bulk_download.py. Lands wholly in
+        # pre_t1_x_baseline (test_markprice_ingestion.py; neither a t1_4 nor t1_5
+        # subtraction target). Advance BASELINE 2792 → 2793.
+        BASELINE = 2793
         assert pre_t1_x_baseline == BASELINE, (
             f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
             f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "

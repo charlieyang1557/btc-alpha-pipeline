@@ -59,10 +59,16 @@ _KLINE_COLS = [
 
 
 def _parse_kline_buffer(buf: io.BytesIO, close_col_name: str) -> pd.DataFrame:
-    """Parse a 12-col headerless kline CSV from an in-memory buffer.
+    """Parse a Binance Vision *PriceKlines CSV from an in-memory buffer.
 
-    Inputs: an io.BytesIO of a headerless Binance Vision *PriceKlines CSV
-      (open_time ms epoch, open, high, low, close, volume, close_time,
+    Handles both older (headerless) and newer (with header row) monthly CSVs from
+    Binance Vision. Mirrors the header-autodetection approach in bulk_download.py:
+    peek at the first field of the first line — if it is not numeric, the file has
+    a header row and we read with header=0 and select columns by name; otherwise
+    we fall back to the positional headerless path.
+
+    Inputs: an io.BytesIO of a Binance Vision *PriceKlines CSV (12 columns:
+      open_time ms epoch, open, high, low, close, volume, close_time,
       quote_volume, count, taker_base, taker_quote, ignore).
     Output: open_time_utc(datetime64[ms,UTC] PK), <close_col_name>(float64),
       source(string), ingested_at_utc(datetime64[ms,UTC]).
@@ -76,7 +82,39 @@ def _parse_kline_buffer(buf: io.BytesIO, close_col_name: str) -> pd.DataFrame:
     Returns:
         DataFrame with open_time_utc, <close_col_name>, source, ingested_at_utc.
     """
-    raw = pd.read_csv(buf, header=None, names=_KLINE_COLS)
+    # Peek at the first line to detect whether this CSV has a header row.
+    # Must seek(0) after peeking so the subsequent read_csv gets the full file.
+    first_line = buf.readline().decode("utf-8", errors="replace")
+    buf.seek(0)
+
+    first_field = first_line.strip().split(",")[0]
+    has_header = not first_field.replace(".", "").replace("-", "").isdigit()
+
+    if has_header:
+        # Header row present: read with pandas and select columns by name.
+        # Handle common Binance Vision header name variants for open_time and close.
+        df_raw = pd.read_csv(buf, header=0)
+        col_lower = {c.strip().lower(): c for c in df_raw.columns}
+        # Resolve open_time column
+        open_time_col = next(
+            (col_lower[k] for k in ("open_time", "open time") if k in col_lower),
+            None,
+        )
+        # Resolve close column
+        close_col = next(
+            (col_lower[k] for k in ("close",) if k in col_lower),
+            None,
+        )
+        if open_time_col is None or close_col is None:
+            raise ValueError(
+                f"_parse_kline_buffer: could not resolve open_time/close from "
+                f"header columns {list(df_raw.columns)}"
+            )
+        raw = df_raw[[open_time_col, close_col]].rename(
+            columns={open_time_col: "open_time", close_col: "close"}
+        )
+    else:
+        raw = pd.read_csv(buf, header=None, names=_KLINE_COLS)
     n_in = len(raw)
     raw = raw.dropna(subset=["open_time", "close"])
     n_dropped = n_in - len(raw)

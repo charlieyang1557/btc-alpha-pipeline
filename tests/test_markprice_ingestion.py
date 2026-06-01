@@ -33,6 +33,26 @@ def test_parse_markprice_kline_real_format(tmp_path):
     assert str(df["ingested_at_utc"].dtype) == "datetime64[ms, UTC]"
 
 
+def test_parse_markprice_kline_with_header_row(tmp_path):
+    # Newer Binance Vision monthly kline CSVs include a header row as the first line.
+    # parse_kline_csv must detect and skip it, not crash or silently drop all rows.
+    csv = tmp_path / "BTCUSDT-1h-2022-06.csv"
+    csv.write_text(
+        "open_time,open,high,low,close,volume,close_time,quote_volume,count,taker_base,taker_quote,ignore\n"
+        "1577836800000,7000,7010,6990,7005,0,1577840399999,0,0,0,0,0\n"
+        "1577840400000,7005,7020,7000,7012,0,1577843999999,0,0,0,0,0\n"
+    )
+    df = parse_kline_csv(csv, close_col_name="mark_close")
+    assert len(df) == 2, f"Expected 2 rows after header skip, got {len(df)}"
+    assert list(df["open_time_utc"]) == [
+        pd.Timestamp("2020-01-01 00:00:00", tz="UTC"),
+        pd.Timestamp("2020-01-01 01:00:00", tz="UTC"),
+    ]
+    assert df["mark_close"].tolist() == [7005.0, 7012.0]
+    assert str(df["open_time_utc"].dtype) == "datetime64[ms, UTC]"
+    assert (df["source"] == "binance_vision").all()
+
+
 from ingestion.validators import validate_markprice  # noqa: E402
 
 
