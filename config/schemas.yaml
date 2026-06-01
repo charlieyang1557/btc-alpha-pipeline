@@ -128,6 +128,49 @@ funding:
       check: "missing settlements flagged in the quality report, never interpolated"
       severity: "warning"
 
+# Mirrors the existing `ohlcv` block structure exactly: columns is a NAME-KEYED
+# MAPPING (not a list), source allowed values live under the source column's
+# allowed_values, validation_rules is a list of {name, check, severity?}.
+markprice:
+  description: "Binance USDT-M perpetual mark price + index price, 1h klines for BTCUSDT (basis axis)"
+  primary_key: "open_time_utc"
+  sort_order: "open_time_utc ASC"
+  file_pattern: "data/raw/btcusdt_markprice_1h.parquet"
+  columns:
+    open_time_utc:
+      dtype: "datetime64[ms, UTC]"
+      nullable: false
+      description: "Kline open time, UTC tz-aware, unique, sorted ascending, hour-aligned"
+    mark_close:
+      dtype: "float64"
+      nullable: false
+      description: "markPriceKlines close (smoothed perp fair value) for the 1h bar ending at open_time_utc+1h"
+    index_close:
+      dtype: "float64"
+      nullable: false
+      description: "indexPriceKlines close (multi-venue spot index); cross-check only, not a signal"
+    ingested_at_utc:
+      dtype: "datetime64[ms, UTC]"
+      nullable: false
+      description: "Timestamp when this row was written"
+    source:
+      dtype: "string"
+      nullable: false
+      allowed_values: ["binance_vision", "ccxt_binance"]
+      description: "Provenance: binance_vision (bulk) | ccxt_binance (incremental)"
+  validation_rules:
+    - name: "no_duplicates"
+      check: "open_time_utc is unique"
+    - name: "sorted_pk"
+      check: "open_time_utc strictly ascending"
+    - name: "utc_tz_aware"
+      check: "open_time_utc is timezone-aware UTC"
+    - name: "hour_aligned_1h"
+      check: "consecutive open_time_utc differ by exactly 3600000 ms (±0 tolerance; ms-jitter handled at parse)"
+    - name: "no_forward_fill"
+      check: "missing bars flagged in the quality report, never interpolated"
+      severity: "warning"
+
 # Binance Vision CSV column mapping (raw download format)
 binance_vision_csv:
   description: "Column mapping for Binance Vision kline CSV files"
