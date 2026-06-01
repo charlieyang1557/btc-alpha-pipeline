@@ -2129,7 +2129,33 @@ class TestT1_4_Pc9BaselineGate:
         # tier6_dsr_v1/ sha256 4/4 byte-unchanged; PHASE_D_AUTHORIZED untouched.
         # Advance BASELINE 2953 → 2968 (same expected-additive-cohort precedent;
         # per Charlie Task C6 register, pathc-basis-scoping branch).
-        BASELINE = 2968
+        # Path C Task C7 — hypothesis-class floors (deterministic-θ rule + frozen-θ
+        # H1 floor + H2 de-risk occupancy): adds +17 collected items in NEW
+        # tests/test_pathc_floors.py, none a t1_4/t1_5 subtraction target, so the
+        # +17 lands wholly in pre_t1_x_baseline = total − t1_4 − t1_5:
+        #   test_deterministic_theta_and_frozen_floor (task-spec required, 4 asserts),
+        #   test_h2_derisk_occupancy_floor (task-spec required, 2 asserts),
+        #   resolve_theta boundary cases ×3 (exact-boundary-0.90, 199-fallback, zero),
+        #   h1_floor_eligible boundary cases ×3 (exact-200-eligible, 199-ineligible,
+        #     zero-ineligible),
+        #   h2_derisk_occupancy_eligible boundary cases ×3 (exact-0.10, just-below,
+        #     zero),
+        #   h2h3_floor state-class floor ×5 (eligible-both, zero_fraction-too-high,
+        #     too-few-trades, both-fail, zero_fraction-boundary-strict, trade-count-
+        #     boundary).
+        # Production changes: backtest/pathc_orchestrator.py — resolve_theta renamed
+        # param h1_episodes → episodes_at_090 (canonical LOCK name) + docstring
+        # updated from "stub" to "full C7 implementation"; h2_derisk_occupancy_eligible
+        # renamed param zero_fraction_derisk → occupancy + docstring updated from stub
+        # to full implementation; NEW h1_floor_eligible() function (episodes >=
+        # H1_MIN_FLAT_EXIT_EPISODES=200 at the frozen θ). All three functions implement
+        # the LOCKed values (200/0.90/0.85/0.10) exactly. The C4-ii stubs for
+        # resolve_theta and h2_derisk_occupancy_eligible are now fully implemented;
+        # h1_floor_eligible is net-new. Sealed tier6_dsr_v1/ sha256 4/4 byte-unchanged;
+        # PHASE_D_AUTHORIZED untouched. Advance BASELINE 2968 → 2985 (same expected-
+        # additive-cohort precedent; per Charlie Task C7 register, pathc-basis-scoping
+        # branch).
+        BASELINE = 2985
         assert pre_t1_x_baseline == BASELINE, (
             f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
             f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "

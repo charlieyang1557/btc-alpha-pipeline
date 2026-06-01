@@ -58,50 +58,72 @@ ELIGIBLE = "ELIGIBLE"
 # C7 integration stubs (Task C7 will refine to deterministic-θ + h2-occupancy)
 # ---------------------------------------------------------------------------
 
-def resolve_theta(h1_episodes: int) -> float:
-    """C7 stub: resolve θ_basis_hi per the deterministic fallback rule.
+def resolve_theta(episodes_at_090: int) -> float:
+    """Resolve θ_basis_hi per the deterministic fallback rule (LOCK Pre-reg 1, Task C7).
 
-    LOCK Pre-registration 1: θ_basis_hi = 0.90; if H1 flat-exit episodes < 200
-    (the floor threshold), θ_basis_hi = 0.85 (the fixed fallback). H1 and H3
-    JOINTLY share this boundary (exact partition at the pct-rank boundary).
+    θ_basis_hi := 0.90; if the train count of H1 defensive-flat-exit episodes at
+    θ=0.90 is < 200, then θ_basis_hi := 0.85 (fixed fallback — never tuned toward
+    Sharpe). Evaluated ONCE on train; the resulting θ is frozen for H1 and H3
+    JOINTLY (they share the tail boundary as an exact partition at the pct-rank
+    boundary, B2 Codex Finding 2e).
 
-    Task C7 will implement the full deterministic rule (evaluate once on train,
-    freeze for H1+H3 jointly). This stub passes through to 0.90 and is
-    replaced by C7 without changing the orchestrator's call signature.
+    DESIGN INVARIANT (C7 integration): the fallback threshold is the same as
+    H1_MIN_FLAT_EXIT_EPISODES (200). The caller passes in the episode count
+    measured at θ=0.90; this function encapsulates the deterministic rule so
+    compute_train_floors (or its caller) invokes resolve_theta(measured_count)
+    rather than inlining the if/else.
 
     Args:
-        h1_episodes: The H1 defensive flat-exit episode count over TRAIN.
+        episodes_at_090: The H1 defensive flat-exit episode count over TRAIN,
+            measured at θ=0.90 (the default threshold used for the initial count).
 
     Returns:
-        0.90 (default) or 0.85 (fallback when h1_episodes < 200).
+        0.90 if ``episodes_at_090 >= 200``; 0.85 (fallback) otherwise.
     """
-    from backtest.pathc_eval_gauntlet import H1_TAIL_RANK_DEFAULT
-    # DESIGN INVARIANT (C7 integration): the fallback threshold is the same as
-    # H1_MIN_FLAT_EXIT_EPISODES (200). C7 passes in the measured count;
-    # this function encapsulates the deterministic rule so patha_run_verdict
-    # (or its pathc equivalent) calls resolve_theta(measured_h1_episodes)
-    # rather than inlining the if/else.
-    if h1_episodes < H1_MIN_FLAT_EXIT_EPISODES:
+    if int(episodes_at_090) < H1_MIN_FLAT_EXIT_EPISODES:
         return 0.85
-    return float(H1_TAIL_RANK_DEFAULT)
+    return 0.90
 
 
-def h2_derisk_occupancy_eligible(zero_fraction_derisk: float) -> bool:
-    """C7 stub: B2 Finding 6 >= 10% de-risk-cell occupancy check.
+def h1_floor_eligible(episodes_at_frozen_theta: int) -> bool:
+    """H1 event-class eligibility floor: >= 200 defensive flat-exit episodes at the FROZEN θ.
+
+    The floor is always judged at the FROZEN θ (LOCK Pre-reg 1, B2 advisor Finding 6):
+    if the fallback fired (θ=0.85 instead of 0.90), episodes are recounted at 0.85
+    and the floor is judged at that count — the strategy and its eligibility floor always
+    share one θ. The caller is responsible for passing the episode count at the correct
+    (already-frozen) θ.
+
+    Args:
+        episodes_at_frozen_theta: Defensive flat-exit episode count over TRAIN, measured
+            at whichever θ ``resolve_theta`` resolved to.
+
+    Returns:
+        True if ``episodes_at_frozen_theta >= 200``, else False.
+    """
+    return int(episodes_at_frozen_theta) >= H1_MIN_FLAT_EXIT_EPISODES
+
+
+def h2_derisk_occupancy_eligible(occupancy: float) -> bool:
+    """H2 de-risk-cell occupancy floor: >= 10% of evaluated train bars in de-risk cell.
 
     The 0.80 band gives ~20% de-risk occupancy by construction (causal
-    rolling-2160 percentile > 0.80 corresponds to ~20% of bars); this check
-    verifies the conditional-separation kill remains powered. Task C7 will
-    implement the full check against the measured de-risk fraction.
+    rolling-2160 percentile of basis_ewm_240 >= 0.80 corresponds to ~20% of bars),
+    comfortably above this floor. The check verifies the conditional-separation kill
+    remains powered (B2 Finding 6, LOCK Pre-reg 1 H2 row).
+
+    H2 ALSO requires the H2/H3 state-class floor (zero_fraction < 0.50 AND >= 200 trades
+    over train) — see h2h3_floor(). This function covers only the de-risk-occupancy
+    prong, which is H2-specific (H3 has no de-risk cell).
 
     Args:
-        zero_fraction_derisk: Fraction of train bars in the de-risk regime
-            (basis_ewm_240_pctrank_2160 >= 0.80).
+        occupancy: Fraction of evaluated train bars where the basis de-risk condition
+            holds (basis_ewm_240_pctrank_2160 >= 0.80).
 
     Returns:
-        True if occupancy >= 0.10, else False.
+        True if ``occupancy >= 0.10``, else False.
     """
-    return float(zero_fraction_derisk) >= 0.10
+    return float(occupancy) >= 0.10
 
 
 # ---------------------------------------------------------------------------
