@@ -2155,7 +2155,13 @@ class TestT1_4_Pc9BaselineGate:
         # PHASE_D_AUTHORIZED untouched. Advance BASELINE 2968 → 2985 (same expected-
         # additive-cohort precedent; per Charlie Task C7 register, pathc-basis-scoping
         # branch).
-        BASELINE = 2985
+        # GAP 1/2/3 (C7+C6+C5) gated run-script wiring closed: +20 new tests across
+        # test_pathc_run_verdict.py (+13), test_pathc_orchestrator.py (+3),
+        # test_pathc_earned_negative.py (+4). θ-resolution + frozen-θ floors; dual-
+        # orthogonalization D1/D2 → basis_marginal; F3 headline caveat. Sealed
+        # tier6_dsr_v1/ sha256 4/4 byte-unchanged; PHASE_D_AUTHORIZED untouched.
+        # Advance BASELINE 2985 → 3005 (same expected-additive-cohort precedent).
+        BASELINE = 3005
         assert pre_t1_x_baseline == BASELINE, (
             f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
             f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "

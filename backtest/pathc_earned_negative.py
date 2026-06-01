@@ -168,9 +168,26 @@ def assemble_evidence(
         is_earned_negative = True
         strength = None
 
+    # GAP 3 (F3 headline caveat, B2 advisor Finding 3): when any leg is under-determined,
+    # the headline 'is_earned_negative' is power-limited on those legs. Flag this
+    # explicitly so a reader of 'is_earned_negative' ALSO sees the power-gap caveat.
+    # This flag does NOT change the taxonomy decision — it adds clarity only.
+    earned_negative_power_limited = bool(under_determined_legs)
+    if earned_negative_power_limited:
+        power_limited_note = (
+            "One or more legs are UNDER-DETERMINED (floor-ineligible with a thin-sample "
+            "non-negative forward Sharpe). 'is_earned_negative' applies to the eligible "
+            "legs only; the under-determined legs are power-gap flagged and NOT counted "
+            "as substantive negatives. See 'under_determined_legs' for detail."
+        )
+    else:
+        power_limited_note = None
+
     return {
         "advisory_taxonomy": taxonomy,
         "is_earned_negative": is_earned_negative,
+        "earned_negative_power_limited": earned_negative_power_limited,
+        "earned_negative_power_limited_note": power_limited_note,
         "c_positive_strength": strength,
         "any_mechanism_sane": any_mechanism_sane,
         "verdict_rests_on_weak_sane_only": verdict_rests_on_weak_sane_only,

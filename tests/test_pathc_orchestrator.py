@@ -169,3 +169,56 @@ def test_orchestrator_f3_under_floor_measured_loss_not_under_determined():
         floors=floors,
     )
     assert not out["under_determined_legs"].get("H2", False)
+
+
+# ---------------------------------------------------------------------------
+# GAP 1 (C7 CLOSED): resolve_theta deterministic rule
+# ---------------------------------------------------------------------------
+
+def test_resolve_theta_returns_090_when_episodes_gte_200():
+    """GAP 1: resolve_theta must return 0.90 when H1 train episodes >= 200."""
+    from backtest.pathc_orchestrator import resolve_theta
+    assert resolve_theta(200) == 0.90
+    assert resolve_theta(201) == 0.90
+    assert resolve_theta(999) == 0.90
+
+
+def test_resolve_theta_returns_085_when_episodes_lt_200():
+    """GAP 1: resolve_theta must return 0.85 (fallback) when H1 train episodes < 200."""
+    from backtest.pathc_orchestrator import resolve_theta
+    assert resolve_theta(0) == 0.85
+    assert resolve_theta(150) == 0.85
+    assert resolve_theta(199) == 0.85
+
+
+def test_resolve_theta_boundary_at_200():
+    """GAP 1: the threshold is >= 200, so exactly 200 episodes → 0.90 (not fallback)."""
+    from backtest.pathc_orchestrator import resolve_theta
+    assert resolve_theta(200) == 0.90  # boundary: >=200 stays at 0.90
+    assert resolve_theta(199) == 0.85  # just below: falls back
+
+
+# ---------------------------------------------------------------------------
+# GAP 3 (F3 headline caveat): orchestrator surfaces earned_negative_power_limited
+# ---------------------------------------------------------------------------
+
+def test_orchestrator_f3_taxonomy_carries_power_limited_flag_when_under_determined():
+    """GAP 3: when under_determined_legs is non-empty, taxonomy must carry
+    earned_negative_power_limited=True."""
+    floors = {"H1": {"eligible": False, "status": INDETERMINATE}}
+    fake_holdout = {
+        "H1": {"holdout_sharpe": 0.05, "holdout_total_trades": 2},  # thin + non-negative
+    }
+    out = run_pathc_verdict(
+        hypotheses={"H1": object()},
+        run_gauntlet=lambda key, dsl: fake_holdout[key],
+        build_moments=lambda h: [],
+        run_dsr=lambda cms: {"survivors": [], "rows": [], "n_star": 3},
+        per_leg=lambda: {"H1": _leg("refuted")},
+        floors=floors,
+    )
+    # H1 is under-determined (thin + non-negative + floor-ineligible).
+    assert out["under_determined_legs"].get("H1") is True
+    # Taxonomy must carry the power-limited caveat flag.
+    assert out["taxonomy"]["earned_negative_power_limited"] is True
+    assert out["taxonomy"]["earned_negative_power_limited_note"] is not None

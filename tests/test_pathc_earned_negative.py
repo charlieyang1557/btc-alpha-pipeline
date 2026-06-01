@@ -163,3 +163,63 @@ def test_f3_under_determined_legs_empty_when_no_flags():
 
 def test_f3_threshold_constant_is_preregistered():
     assert en.UNDER_DETERMINED_TRADE_THRESHOLD == 10
+
+
+# ---------------------------------------------------------------------------
+# GAP 3 (F3 headline caveat): earned_negative_power_limited flag
+# ---------------------------------------------------------------------------
+
+def test_earned_negative_power_limited_true_when_any_under_determined():
+    """GAP 3: assemble_evidence sets earned_negative_power_limited=True and provides
+    a non-None note when at least one leg is under_determined."""
+    ev = _ev(
+        {"H1": _leg("strong_sane"), "H2": _leg("refuted")},
+        n_tier5_pass=0, n_dsr_pass=0,
+        under_determined_flags={"H2": True},
+    )
+    assert ev["earned_negative_power_limited"] is True
+    assert ev["earned_negative_power_limited_note"] is not None
+    assert len(ev["earned_negative_power_limited_note"]) > 0
+
+
+def test_earned_negative_power_limited_false_when_no_under_determined():
+    """GAP 3: assemble_evidence sets earned_negative_power_limited=False and note=None
+    when no legs are under-determined."""
+    ev = _ev(
+        {"H1": _leg("strong_sane"), "H2": _leg("refuted")},
+        n_tier5_pass=0, n_dsr_pass=0,
+        under_determined_flags={"H2": False},
+    )
+    assert ev["earned_negative_power_limited"] is False
+    assert ev["earned_negative_power_limited_note"] is None
+
+
+def test_earned_negative_power_limited_false_when_flags_empty():
+    """GAP 3: with no under_determined_flags at all, flag must be False."""
+    ev = _ev(
+        {"H1": _leg("strong_sane")},
+        n_tier5_pass=0, n_dsr_pass=0,
+    )
+    assert ev["earned_negative_power_limited"] is False
+    assert ev["earned_negative_power_limited_note"] is None
+
+
+def test_earned_negative_power_limited_does_not_change_taxonomy():
+    """GAP 3: the power-limited flag must NEVER change the advisory_taxonomy decision.
+    It is a clarity flag only — the taxonomy is driven by n_tier5_pass and mechanism-sanity."""
+    # Without under-determined flag.
+    ev_clean = _ev(
+        {"H1": _leg("strong_sane"), "H2": _leg("refuted")},
+        n_tier5_pass=0, n_dsr_pass=0,
+    )
+    # With under-determined flag on H2.
+    ev_flagged = _ev(
+        {"H1": _leg("strong_sane"), "H2": _leg("refuted")},
+        n_tier5_pass=0, n_dsr_pass=0,
+        under_determined_flags={"H2": True},
+    )
+    # Taxonomy must be identical; only the power-limited flags differ.
+    assert ev_clean["advisory_taxonomy"] == ev_flagged["advisory_taxonomy"]
+    assert ev_clean["is_earned_negative"] == ev_flagged["is_earned_negative"]
+    assert ev_flagged["earned_negative_power_limited"] is True
+    assert ev_clean["earned_negative_power_limited"] is False
