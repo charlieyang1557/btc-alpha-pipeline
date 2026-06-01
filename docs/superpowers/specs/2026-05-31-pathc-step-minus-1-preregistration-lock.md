@@ -86,3 +86,21 @@
 ## Note A — H1 inherits Path A's Amendment-A1 no-time-stop correction (by design, not a new amendment)
 
 Path A's LOCK originally mis-applied a `max_hold = 72` to H1, then removed it (Amendment A1) on the pre-data recognition that H1 is a near-always-long de-risk overlay (long on the ~90% complement of the extreme tail), for which a time-stop imposes ~non-mechanistic churn drag (~35 forced round-trips over forward_2026 at 30 bps ≈ 10% artifact drag) that would confound attribution. Path C's H1 is the same archetype, so it adopts the **corrected** design from the outset: **no time-stop**, exit only via the tail-gate. This is not a Path C amendment — it is the inherited, already-corrected baseline. H2/H3 retain `max_hold` 24/48 (appropriate backstops for their condition-based exits).
+
+---
+
+## Ratification Clarification R1 — diagnostic/taxonomy operationalization values (2026-06-01, Charlie-ratified; PRE-RUN / anti-hindsight)
+
+**Status:** Charlie-ratified at the Phase D register ENTRY, **before** the `PHASE_D_AUTHORIZED` fire and before any forward_2026 basis value was computed or observed (the gate remains `False` in the repo; no `pathc_verdict_v1/` artifact exists at ratification time). These values were pre-committed in code during the Phase C build, surfaced at a 2-leg PFR (Codex + advisor), and the advisor confirmed they govern **diagnostic / taxonomy LABELING only — never promotion** (promotion is Tier-5 `holdout_sharpe > 0` + DSR `pass_B`, which these do not touch). Ratifying them now is therefore anti-hindsight-clean (pre-data, direction-orthogonal). They are frozen for the Path C cycle alongside Pre-registrations 1–4.
+
+| Value / choice | Ratified | Role (labeling-only; not promotion) |
+|---|---|---|
+| `UNDER_DETERMINED_TRADE_THRESHOLD` | **10** | F3 carve-out: a floor-INELIGIBLE leg with `< 10` forward trades AND `holdout_sharpe >= 0` is tagged **under-determined** (power gap) and NOT folded into the earned-negative. Directionally conservative (can only PREVENT over-claiming a negative). |
+| `D2_AGREES_TOLERANCE` | **0.10** (Sharpe) | `redundancy_read`: `|d2_marginal_sharpe| <= 0.10` ⇒ basis-gated ≈ funding-gated ("agree"). ~measurement noise on a ~100-trade forward window. |
+| `D1_NONINERT_THRESHOLD` | **0.10** (Sharpe) | `redundancy_read`: `|d1_marginal_sharpe| > 0.10` ⇒ the basis gate is "non-inert". A "vacuous" read (agreement under a jointly-inert D1) is a plausible, honest outcome and is the correctly-humble result, not a harness failure. |
+| D2 hypothesis correspondence | **same-index** (basis-Hi ↔ funding-Hi) | D2 compares each basis hypothesis to the same-archetype Path A funding hypothesis (H1↔H1 / H2↔H2 / H3↔H3) — the documented funding-twin mapping (§3 / design spec). |
+| F3 design | **retain the `=10` trade-count threshold** | (vs "floor-ineligible + sign-of-Sharpe alone") — distinguishes a barely-under-floor decent sample from a genuinely thin one. |
+
+**Clarification R1b — H2 trend-rollover exit operator (PFR Q3, documentation accuracy).** Pre-registration 1's H2 prose writes the trend-rollover exit as "`48 < 168`". The compiled DSL (and the vetted/sealed Path A H2 it mirrors) uses `decay_linear_close_48 <= decay_linear_close_168` — the **exact logical complement** of the H2 entry confirm `decay_linear_close_48 > decay_linear_close_168`. At the measure-zero boundary `48 == 168` the strategy is flat either way (the entry `>` already excludes equality), so the `<=` vs `<` distinction is **behaviorally immaterial**; the prose `<` is loose shorthand for "trend has rolled over" (= `<=`). No code change; the implementation is correct and Path-A-faithful. *(PFR Codex Q1 — EWM factors omit `min_periods` — was reviewed as a benign early-bar calibration matter, not look-ahead, matching Path A; no change.)*
+
+**The gate is unchanged:** `PHASE_D_AUTHORIZED` stays `False`. The actual forward_2026 verdict run remains a separate, explicit Charlie data-touch register-event.
