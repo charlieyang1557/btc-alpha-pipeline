@@ -182,6 +182,49 @@ def test_basis_rel_raises_when_non_shared_fraction_exceeds_threshold():
         derive_basis_rel(mark, spot)
 
 
+def test_basis_rel_zero_spot_close_is_nan():
+    """spot_close == 0 on one bar -> that bar's basis_rel is NaN (not inf).
+
+    Guards the div-by-zero case: (mark - 0) / 0 must not silently produce inf.
+    """
+    out = derive_basis_rel(
+        _mark(["2020-01-01 00:00", "2020-01-01 01:00"], [7005.0, 7012.0]),
+        _spot(["2020-01-01 00:00", "2020-01-01 01:00"], [7000.0, 0.0]),
+    )
+    # Bar 0: normal computation
+    assert out["basis_rel"].iloc[0] == pytest.approx((7005 - 7000) / 7000)
+    # Bar 1: spot_close == 0 -> NaN (not inf)
+    assert pd.isna(out["basis_rel"].iloc[1]), (
+        f"Expected NaN for spot_close==0 bar, got {out['basis_rel'].iloc[1]!r}"
+    )
+
+
+def test_basis_rel_boundary_exactly_five_percent():
+    """Non-shared fraction == exactly 0.05 PASSES (threshold is strict >).
+
+    Constructs union of 100 timestamps with exactly 5 non-shared (all spot-only)
+    -> non_shared_fraction = 5/100 = 0.05 -> no raise, returns 95 shared bars.
+    A just-above-5% case (6/101 union with 6 non-shared = ~5.94%) raises.
+    """
+    t = pd.date_range("2020-01-01", periods=100, freq="1h", tz="UTC")
+    # mark: first 95 bars (95 shared with spot's first 95)
+    # spot: all 100 bars
+    # union = 100, non-shared = 5 spot-only -> 5/100 = 0.05 exactly
+    mark = _mark(list(t[:95].astype(str)), list(np.full(95, 7005.0)))
+    spot = _spot(list(t.astype(str)), list(np.full(100, 7000.0)))
+
+    # Must NOT raise at exactly 5%
+    out = derive_basis_rel(mark, spot)
+    assert len(out) == 95, f"Expected 95 shared bars, got {len(out)}"
+
+    # Just above 5%: 6 non-shared out of 101 union bars = ~5.94% -> must raise
+    t2 = pd.date_range("2020-01-01", periods=101, freq="1h", tz="UTC")
+    mark2 = _mark(list(t2[:95].astype(str)), list(np.full(95, 7005.0)))
+    spot2 = _spot(list(t2.astype(str)), list(np.full(101, 7000.0)))
+    with pytest.raises(ValueError, match="cross-stream"):
+        derive_basis_rel(mark2, spot2)
+
+
 # ---------------------------------------------------------------------------
 # Step 5: causality sentinel (mirror Path A/B G2)
 # ---------------------------------------------------------------------------

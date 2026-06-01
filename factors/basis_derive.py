@@ -11,8 +11,8 @@ Non-shared bar policy:
 - Inner-join on the shared ``open_time_utc`` grid (bars missing in either
   stream are silently dropped).
 - The non-shared fraction = (markprice-only count + spot-only count) /
-  (size of the union of open_times over the overlap window) is logged at INFO
-  and compared against ``CROSS_STREAM_DROP_TOL`` (5%).
+  (size of the full union of both streams' ``open_time_utc`` sets) is logged
+  at INFO and compared against ``CROSS_STREAM_DROP_TOL`` (5%).
 - Raise ``ValueError("cross-stream ...")`` if fraction > 5% OR if there is
   zero overlap (no shared timestamps). This catches gross alignment bugs
   (unit/timezone errors) while passing legitimate small exchange-outage
@@ -47,9 +47,9 @@ def derive_basis_rel(
             columns (spot 1h bar-close values).
     Computation:
         1. Sort both inputs on ``open_time_utc``.
-        2. Compute the union of open_times over the overlap window (min of
-           both max times — min of both min times) to determine the
-           non-shared fraction for the sanity check.
+        2. Compute the non-shared fraction = (markprice-only count +
+           spot-only count) / (size of the full union of both streams'
+           ``open_time_utc`` sets) for the sanity check.
         3. Log the count of markprice-only and spot-only bars at INFO.
         4. Raise ``ValueError("cross-stream ...")`` if there is zero overlap
            (no shared timestamp) or if non-shared fraction > CROSS_STREAM_DROP_TOL.
@@ -61,6 +61,7 @@ def derive_basis_rel(
     Null policy:
         No NaNs introduced by construction (inner join on shared bars only;
         any NaN in ``mark_close`` or ``close`` propagates to ``basis_rel``).
+        ``spot_close == 0`` yields ``basis_rel = NaN`` (not inf).
     Causality:
         Trivially causal: same-grid join with no rolling window or shift.
         ``basis_rel[t]`` depends only on ``mark_close[t]`` and
@@ -122,6 +123,7 @@ def derive_basis_rel(
         how="inner",
     )
     merged = merged.sort_values("open_time_utc").reset_index(drop=True)
-    merged["basis_rel"] = (merged["mark_close"] - merged["close"]) / merged["close"]
+    spot_close = merged["close"].replace(0, float("nan"))
+    merged["basis_rel"] = (merged["mark_close"] - spot_close) / spot_close
 
     return merged[["open_time_utc", "basis_rel"]]

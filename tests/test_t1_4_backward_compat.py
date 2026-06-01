@@ -1983,7 +1983,11 @@ class TestT1_4_Pc9BaselineGate:
         # 4/4 byte-unchanged; PHASE_D_AUTHORIZED untouched. Advance BASELINE
         # 2793 → 2805 (same expected-additive-cohort precedent; per Charlie Path C
         # Phase B B0 register, pathc-basis-scoping branch).
-        BASELINE = 2805
+        # Path C Phase B B0 review fixes: +2 tests (test_basis_rel_zero_spot_close_is_nan,
+        # test_basis_rel_boundary_exactly_five_percent) in tests/test_basis_derive.py;
+        # land wholly in pre_t1_x_baseline (same file; neither a t1_4 nor t1_5
+        # subtraction target). Advance BASELINE 2805 → 2807.
+        BASELINE = 2807
         assert pre_t1_x_baseline == BASELINE, (
             f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
             f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "
