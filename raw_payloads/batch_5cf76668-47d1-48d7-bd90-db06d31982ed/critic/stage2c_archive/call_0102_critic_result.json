@@ -1,0 +1,60 @@
+{
+  "critic_version": "d7_v1",
+  "critic_status": "ok",
+  "d7b_mode": "live",
+  "d7a_rule_scores": {
+    "theme_coherence": 0.4286,
+    "structural_novelty": 0.5,
+    "default_momentum_fallback": 0.5,
+    "complexity_appropriateness": 0.4
+  },
+  "d7a_supporting_measures": {
+    "factor_set_prior_occurrences": 1,
+    "n_factors": 7,
+    "n_conditions": 8,
+    "description_length": 229,
+    "max_hold_bars": 120,
+    "n_entry_groups": 1,
+    "n_exit_groups": 2
+  },
+  "d7a_rule_flags": [
+    "n_conditions_heavy"
+  ],
+  "d7b_llm_scores": {
+    "semantic_plausibility": 0.25,
+    "semantic_theme_alignment": 0.4,
+    "structural_variant_risk": 0.95
+  },
+  "d7b_reasoning": "The strategy contains a critical internal contradiction: the description states entry occurs when price crosses above the *lower* Bollinger band during oversold conditions, but the DSL entry condition specifies crosses_above bb_upper_24_2 (the upper band). This creates incoherent logic—crossing above the upper band typically signals overbought breakout conditions, directly contradicting the oversold mean-reversion narrative and the accompanying RSI < 35 filter. The exit logic (price crossing above SMA or achieving positive return/zscore) is structurally sensible for mean reversion. Theme alignment is moderate: the strategy uses Bollinger bands, moving averages, and zscore which are standard mean-reversion factors from the hint vocabulary, but the fundamental entry contradiction undermines the economic intuition. Structural variant risk is very high: the factor set {bb_upper_24_2, close, realized_vol_24h, rsi_14, sma_24, zscore_48, return_24h} appears nearly identical to prior entry #21 and extremely similar to entries #17, #60, and #64, differing only in threshold values or minor operator tweaks rather than representing a genuinely distinct structural hypothesis.",
+  "d7b_raw_response_path": "raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0102_response.json",
+  "d7b_cost_actual_usd": 0.016586999999999998,
+  "d7b_input_tokens": 3894,
+  "d7b_output_tokens": 327,
+  "d7b_retry_count": 0,
+  "d7b_scan_results": {
+    "forbidden_language_scan": {
+      "status": "pass",
+      "hits": [],
+      "terms_checked_count": 21
+    },
+    "refusal_scan": {
+      "status": "pass",
+      "hits": [],
+      "patterns_checked": [
+        "\\bi cannot\\b",
+        "\\bi can't\\b",
+        "\\bunable to\\b",
+        "\\brefuse to\\b",
+        "\\bdecline to\\b",
+        "\\bcannot evaluate\\b",
+        "\\bcan not evaluate\\b"
+      ]
+    }
+  },
+  "critic_timing_ms": {
+    "d7a_ms": 0.13,
+    "d7b_ms": 10326.782
+  },
+  "critic_error_signature": null,
+  "critic_error_full_path": null
+}

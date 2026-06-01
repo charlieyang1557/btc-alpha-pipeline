@@ -1,0 +1,32 @@
+```json
+{
+  "name": "macd_acceleration_vol_compression",
+  "description": "Enter long when MACD histogram crosses above zero during volatility compression (realized vol below threshold and ATR declining), capturing momentum ignition at regime transition where reduced volatility indicates consolidation breakout and histogram crossover confirms accelerating directional conviction.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "macd_hist", "op": "crosses_above", "value": 0.0},
+        {"factor": "realized_vol_24h", "op": "<", "value": 0.016},
+        {"factor": "atr_14", "op": "<", "value": "sma_24"},
+        {"factor": "close", "op": ">", "value": "ema_26"}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "macd_hist", "op": "crosses_below", "value": 0.0},
+        {"factor": "rsi_14", "op": ">", "value": 72.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.05},
+        {"factor": "realized_vol_24h", "op": ">", "value": 0.024}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 168
+}
+```

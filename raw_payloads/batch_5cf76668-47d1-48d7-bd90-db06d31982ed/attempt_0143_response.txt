@@ -1,0 +1,31 @@
+```json
+{
+  "name": "volatility_regime_breakout_143",
+  "description": "Enter long when realized volatility exceeds two standard deviations while price breaks above 20-period moving average, capturing momentum expansion where volatility regime shifts signal directional moves as institutional positioning drives sustained breakouts.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": ">", "value": 0.035},
+        {"factor": "close", "op": "crosses_above", "value": "sma_20"},
+        {"factor": "volume_zscore_24h", "op": ">", "value": 1.0},
+        {"factor": "return_24h", "op": ">", "value": 0.01}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_below", "value": "sma_20"},
+        {"factor": "realized_vol_24h", "op": "<", "value": 0.02}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_168h", "op": ">", "value": 0.08}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 168
+}
+```

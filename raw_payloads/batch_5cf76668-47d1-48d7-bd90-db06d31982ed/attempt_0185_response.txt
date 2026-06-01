@@ -1,0 +1,31 @@
+```json
+{
+  "name": "monday_oversold_bounce_185",
+  "description": "Enter long on Mondays when RSI is oversold and close is below SMA(20), capturing institutional repositioning after weekend selloffs as market makers step in to provide liquidity at attractive levels during the week's start.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "==", "value": 0},
+        {"factor": "rsi_14", "op": "<", "value": 35.0},
+        {"factor": "close", "op": "<", "value": "sma_20"},
+        {"factor": "return_24h", "op": "<", "value": -0.01}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "rsi_14", "op": ">", "value": 60.0},
+        {"factor": "close", "op": "crosses_above", "value": "sma_20"}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "==", "value": 4}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 120
+}
+```

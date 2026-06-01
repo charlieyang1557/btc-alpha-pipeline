@@ -1,0 +1,25 @@
+```json
+{
+  "name": "volume_divergence_breakout",
+  "description": "Enter long when volume surges above 2 standard deviations while price momentum is positive, exit when volume normalizes or momentum reverses.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "volume_zscore_24h", "op": ">", "value": 2.0},
+        {"factor": "return_24h", "op": ">", "value": 0.0},
+        {"factor": "close", "op": ">", "value": "ema_12"}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "volume_zscore_24h", "op": "<", "value": 0.5},
+        {"factor": "macd_hist", "op": "<", "value": 0.0}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 240
+}
+```

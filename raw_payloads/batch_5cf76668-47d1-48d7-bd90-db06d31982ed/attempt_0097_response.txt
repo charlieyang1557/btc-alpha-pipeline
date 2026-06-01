@@ -1,0 +1,32 @@
+```json
+{
+  "name": "bb_zscore_extreme_mean_revert",
+  "description": "Enter long when price touches upper Bollinger Band while 48-bar z-score signals extreme deviation, capturing mean reversion as overextended momentum exhausts and prices gravitate back toward statistical equilibrium.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "close", "op": ">=", "value": "bb_upper_24_2"},
+        {"factor": "zscore_48", "op": ">", "value": 1.8},
+        {"factor": "rsi_14", "op": ">", "value": 68.0},
+        {"factor": "return_24h", "op": ">", "value": 0.02}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "zscore_48", "op": "<", "value": 0.5},
+        {"factor": "close", "op": "crosses_below", "value": "sma_24"}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": "<", "value": -0.015},
+        {"factor": "rsi_14", "op": "<", "value": 45.0}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 120
+}
+```

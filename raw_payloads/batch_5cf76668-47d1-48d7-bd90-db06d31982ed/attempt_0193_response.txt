@@ -1,0 +1,31 @@
+```json
+{
+  "name": "volatility_breakout_expansion_193",
+  "description": "Enter long when realized volatility expands sharply above recent average (high vol z-score) with positive momentum and price breaking above SMA20, capturing regime shift from compression to expansion as volatility clustering drives sustained directional moves.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": ">", "value": 0.025},
+        {"factor": "volume_zscore_24h", "op": ">", "value": 1.2},
+        {"factor": "close", "op": "crosses_above", "value": "sma_20"},
+        {"factor": "macd_hist", "op": ">", "value": 0.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": "<", "value": 0.015},
+        {"factor": "rsi_14", "op": ">", "value": 70.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.04}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 120
+}
+```

@@ -1,0 +1,30 @@
+```json
+{
+  "name": "macd_histogram_divergence_momentum",
+  "description": "Enter long when MACD histogram crosses above zero while price remains below SMA-20 and RSI is oversold below 45, capturing momentum divergence where histogram recovery signals trend reversal before price confirms the breakout.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "macd_hist", "op": "crosses_above", "value": 0.0},
+        {"factor": "close", "op": "<", "value": "sma_20"},
+        {"factor": "rsi_14", "op": "<", "value": 45.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_above", "value": "sma_20"},
+        {"factor": "rsi_14", "op": ">", "value": 60.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "macd_hist", "op": "crosses_below", "value": 0.0}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 168
+}
+```

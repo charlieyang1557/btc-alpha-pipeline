@@ -1,0 +1,29 @@
+```json
+{
+  "name": "macd_histogram_momentum_reversal",
+  "description": "Enter long when MACD histogram crosses above zero while RSI is between 45-55, capturing early momentum shift from negative to positive where histogram crossover signals strengthening trend and neutral RSI validates non-overbought entry timing.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "macd_hist", "op": "crosses_above", "value": 0.0},
+        {"factor": "rsi_14", "op": ">", "value": 45.0},
+        {"factor": "rsi_14", "op": "<", "value": 55.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "macd_hist", "op": "crosses_below", "value": 0.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.025}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 168
+}
+```

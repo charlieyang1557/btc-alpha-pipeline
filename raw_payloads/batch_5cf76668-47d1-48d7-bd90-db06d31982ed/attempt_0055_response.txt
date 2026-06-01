@@ -1,0 +1,32 @@
+```json
+{
+  "name": "weekday_momentum_continuation_entry",
+  "description": "Enter long on Monday through Wednesday (days 0-2) when price crosses above EMA-26 with positive 24h return and RSI above 48, capturing calendar-driven institutional re-entry after weekend as early-week flows often sustain momentum initiated in prior sessions.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "<=", "value": 2},
+        {"factor": "close", "op": "crosses_above", "value": "ema_26"},
+        {"factor": "return_24h", "op": ">", "value": 0.008},
+        {"factor": "rsi_14", "op": ">", "value": 48.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": ">=", "value": 5},
+        {"factor": "rsi_14", "op": ">", "value": 70.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_below", "value": "ema_26"},
+        {"factor": "return_1h", "op": "<", "value": -0.012}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 168
+}
+```

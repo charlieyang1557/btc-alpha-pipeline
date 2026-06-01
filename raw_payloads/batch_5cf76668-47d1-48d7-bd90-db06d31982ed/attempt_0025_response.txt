@@ -1,0 +1,32 @@
+```json
+{
+  "name": "monday_dip_buy_reversal",
+  "description": "Enter long on Monday morning (hours 0-11 UTC) when price drops below SMA(20) with oversold RSI, capturing calendar-driven sentiment reversals as weekend uncertainty resolves into mean reversion opportunities at the week's start.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "==", "value": 0},
+        {"factor": "hour_of_day", "op": "<=", "value": 11},
+        {"factor": "close", "op": "<", "value": "sma_20"},
+        {"factor": "rsi_14", "op": "<", "value": 40.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "rsi_14", "op": ">", "value": 58.0},
+        {"factor": "close", "op": "crosses_above", "value": "sma_20"}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": ">=", "value": 2},
+        {"factor": "return_24h", "op": ">", "value": 0.01}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 168
+}
+```

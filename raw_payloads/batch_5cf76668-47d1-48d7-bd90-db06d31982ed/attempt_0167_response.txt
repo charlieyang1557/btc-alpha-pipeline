@@ -1,0 +1,31 @@
+```json
+{
+  "name": "bollinger_squeeze_mean_revert_167",
+  "description": "Enter long when price drops below Bollinger lower band with ATR declining and RSI oversold while volume is subdued, capturing mean-reversion setups as compressed volatility and exhausted selling pressure create high-probability bounces back toward the mean.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "<", "value": "bb_upper_24_2"},
+        {"factor": "zscore_48", "op": "<", "value": -1.5},
+        {"factor": "rsi_14", "op": "<", "value": 35.0},
+        {"factor": "volume_zscore_24h", "op": "<", "value": 0.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "zscore_48", "op": ">", "value": 0.5},
+        {"factor": "rsi_14", "op": ">", "value": 55.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.03}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 144
+}
+```

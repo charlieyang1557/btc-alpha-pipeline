@@ -227,7 +227,14 @@ def build_features_df(
             # Left-join basis columns onto the OHLCV feature frame by open_time_utc.
             # OHLCV bars NOT in the shared mark/spot grid → NaN basis values
             # (correct; do NOT drop OHLCV rows).
-            out = out.merge(basis_feat, on="open_time_utc", how="left")
+            # validate="one_to_one" guards against duplicate open_time_utc in either
+            # frame, which would silently row-multiply out and corrupt ALL factors.
+            n_rows_before = len(out)
+            out = out.merge(basis_feat, on="open_time_utc", how="left", validate="one_to_one")
+            assert len(out) == n_rows_before, (
+                f"basis left-join multiplied rows: {n_rows_before} → {len(out)}. "
+                f"Duplicate open_time_utc in basis_feat?"
+            )
 
     return out
 

@@ -1,0 +1,32 @@
+```json
+{
+  "name": "low_vol_breakout_ema_cross",
+  "description": "Enter long when EMA(12) crosses above EMA(26) during a low-realized-volatility regime, capturing early momentum as volatility compression resolves into directional breakouts with favorable risk-reward.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "ema_12", "op": "crosses_above", "value": "ema_26"},
+        {"factor": "realized_vol_24h", "op": "<", "value": 0.025},
+        {"factor": "rsi_14", "op": ">", "value": 50.0},
+        {"factor": "close", "op": ">", "value": "sma_50"}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "ema_12", "op": "crosses_below", "value": "ema_26"},
+        {"factor": "rsi_14", "op": ">", "value": 70.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": ">", "value": 0.05},
+        {"factor": "return_1h", "op": "<", "value": -0.025}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 240
+}
+```

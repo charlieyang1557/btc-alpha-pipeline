@@ -1,0 +1,32 @@
+```json
+{
+  "name": "volume_divergence_momentum_fade",
+  "description": "Enter long when price rises 24h while volume z-score falls below -0.5, capturing exhaustion reversals as weak volume on rallies signals distribution and imminent mean reversion.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.01},
+        {"factor": "volume_zscore_24h", "op": "<", "value": -0.5},
+        {"factor": "rsi_14", "op": ">", "value": 55.0},
+        {"factor": "macd_hist", "op": ">", "value": 0.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": "<", "value": -0.02},
+        {"factor": "volume_zscore_24h", "op": ">", "value": 0.5}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "rsi_14", "op": "<", "value": 45.0},
+        {"factor": "macd_hist", "op": "crosses_below", "value": 0.0}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 120
+}
+```

@@ -1,0 +1,32 @@
+```json
+{
+  "name": "low_volatility_breakout_entry",
+  "description": "Enter long when realized volatility drops below 0.015 signaling compression period then price crosses above 20-bar SMA with positive 24h return, capturing breakouts from low-volatility regimes as sustained compression historically precedes directional expansion favoring trend continuation.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": "<", "value": 0.015},
+        {"factor": "close", "op": "crosses_above", "value": "sma_20"},
+        {"factor": "return_24h", "op": ">", "value": 0.005},
+        {"factor": "rsi_14", "op": ">", "value": 50.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": ">", "value": 0.035},
+        {"factor": "rsi_14", "op": ">", "value": 75.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_below", "value": "sma_20"},
+        {"factor": "return_1h", "op": "<", "value": -0.01}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 240
+}
+```

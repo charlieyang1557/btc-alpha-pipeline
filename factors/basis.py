@@ -49,12 +49,15 @@ def basis_ewm_240(df: pd.DataFrame) -> pd.Series:
         recursive form ``y[N] = alpha * x[N] + (1 - alpha) * y[N-1]``. Strictly
         backward-looking (each bar reads only itself and prior state).
         ``adjust=False`` is required (matches the LOCK and Path A/B EMA convention).
+        The EWM output is then masked to NaN at bars where ``basis_rel`` is NaN,
+        so that a missing input bar does not carry forward a stale EWM value.
     Warmup: ~240 bars (declared for stability; pandas returns non-NaN from bar 0,
         but the EWM has not converged until ~1 span has elapsed).
     Output dtype: float64.
-    Null policy: NaN propagates; post-warmup must not be NaN.
+    Null policy: NaN ``basis_rel`` → NaN output at that bar.
     """
-    return df["basis_rel"].ewm(span=240, adjust=False).mean()
+    ewm_out = df["basis_rel"].ewm(span=240, adjust=False).mean()
+    return ewm_out.where(df["basis_rel"].notna())
 
 
 def basis_ewm_480(df: pd.DataFrame) -> pd.Series:
@@ -64,11 +67,14 @@ def basis_ewm_480(df: pd.DataFrame) -> pd.Series:
     Inputs: ``basis_rel``.
     Computation: ``basis_rel.ewm(span=480, adjust=False).mean()`` — same classic
         recursive form as ``basis_ewm_240`` with span 480. Strictly causal.
+        The EWM output is masked to NaN at bars where ``basis_rel`` is NaN,
+        so that a missing input bar does not carry forward a stale EWM value.
     Warmup: ~480 bars (declared for stability; see ``basis_ewm_240``).
     Output dtype: float64.
-    Null policy: NaN propagates; post-warmup must not be NaN.
+    Null policy: NaN ``basis_rel`` → NaN output at that bar.
     """
-    return df["basis_rel"].ewm(span=480, adjust=False).mean()
+    ewm_out = df["basis_rel"].ewm(span=480, adjust=False).mean()
+    return ewm_out.where(df["basis_rel"].notna())
 
 
 def basis_pct_rank_2160(df: pd.DataFrame) -> pd.Series:
@@ -100,10 +106,11 @@ def basis_ewm_240_pctrank_2160(df: pd.DataFrame) -> pd.Series:
 
     Inputs: ``basis_rel``.
     Computation: first compute the causal span-240 EWM of ``basis_rel``
-        (``adjust=False``); then, at bar N, the fraction of the trailing window
-        ``[N-2159, N]`` of the EWM series whose value is ``<= ewm[N]``
-        (right-closed, strictly backward-looking). Implemented with an explicit
-        count loop inside ``rolling(2160, min_periods=2160).apply(..., raw=True)``.
+        (``adjust=False``), masked to NaN where ``basis_rel`` is NaN; then, at
+        bar N, the fraction of the trailing window ``[N-2159, N]`` of the
+        (masked) EWM series whose value is ``<= ewm[N]`` (right-closed,
+        strictly backward-looking). Implemented with an explicit count loop
+        inside ``rolling(2160, min_periods=2160).apply(..., raw=True)``.
         NOTE: the OUTER percentile uses an explicit count loop, NOT ``.mean()``,
         so the G1 AST scanner (which bans bare ``.mean()/.std()/.sum()`` on a
         window) does not reject it. The INNER ``ewm(span=240, adjust=False).mean()``
@@ -111,14 +118,17 @@ def basis_ewm_240_pctrank_2160(df: pd.DataFrame) -> pd.Series:
     Warmup: 2160 bars (NaN before the percentile window fills;
         ``min_periods=2160`` on the percentile dominates the EWM's own warmup).
     Output dtype: float64 in [0.0, 1.0].
-    Null policy: ``nan_before_warmup_only`` — NaN only at bars 0..2158.
+    Null policy: NaN ``basis_rel`` → NaN EWM at that bar → NaN percentile for
+        any window that contains that bar (``min_periods`` propagates NaN
+        through ``apply``); ``nan_before_warmup_only`` on no-NaN inputs.
     """
     def _rank(window: np.ndarray) -> float:
         last = window[-1]
         count = sum(1 for v in window if v <= last)
         return count / len(window)
 
-    ewm = df["basis_rel"].ewm(span=240, adjust=False).mean()
+    ewm_out = df["basis_rel"].ewm(span=240, adjust=False).mean()
+    ewm = ewm_out.where(df["basis_rel"].notna())
     return ewm.rolling(window=2160, min_periods=2160).apply(_rank, raw=True)
 
 

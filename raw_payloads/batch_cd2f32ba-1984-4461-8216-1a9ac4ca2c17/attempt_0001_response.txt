@@ -1,0 +1,25 @@
+```json
+{
+  "name": "momentum_surge_rsi_breakout",
+  "description": "Buy when RSI breaks above 50 and recent hourly momentum is positive, expecting continuation of upward price momentum.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "rsi_14", "op": "crosses_above", "value": 50},
+        {"factor": "return_1h", "op": ">", "value": 0},
+        {"factor": "macd_hist", "op": ">", "value": 0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "rsi_14", "op": "crosses_below", "value": 45},
+        {"factor": "return_1h", "op": "<", "value": -0.005}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 168
+}
+```

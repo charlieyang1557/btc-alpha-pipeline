@@ -1,0 +1,31 @@
+```json
+{
+  "name": "macd_histogram_acceleration_entry",
+  "description": "Enter long when MACD histogram crosses above zero while price is above EMA-26 and RSI remains below 70, capturing early momentum acceleration as histogram turn signals trend strengthening before overbought conditions develop.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "macd_hist", "op": "crosses_above", "value": 0.0},
+        {"factor": "close", "op": ">", "value": "ema_26"},
+        {"factor": "rsi_14", "op": "<", "value": 70.0},
+        {"factor": "return_24h", "op": ">", "value": 0.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "macd_hist", "op": "crosses_below", "value": 0.0},
+        {"factor": "rsi_14", "op": ">", "value": 72.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.04}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 168
+}
+```

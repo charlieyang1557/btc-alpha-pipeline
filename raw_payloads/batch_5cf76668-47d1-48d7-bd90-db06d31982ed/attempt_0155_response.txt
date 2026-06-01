@@ -1,0 +1,31 @@
+```json
+{
+  "name": "monday_mean_reversion_155",
+  "description": "Enter long on Mondays when price is oversold and below moving average, capturing calendar-driven mean-reversion as systematic Monday buying pressure following weekend sentiment reset reverses Friday-driven weakness.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "==", "value": 0},
+        {"factor": "rsi_14", "op": "<", "value": 40.0},
+        {"factor": "close", "op": "<", "value": "sma_20"},
+        {"factor": "zscore_48", "op": "<", "value": -1.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "rsi_14", "op": ">", "value": 60.0},
+        {"factor": "close", "op": "crosses_above", "value": "sma_20"}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.025}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 168
+}
+```

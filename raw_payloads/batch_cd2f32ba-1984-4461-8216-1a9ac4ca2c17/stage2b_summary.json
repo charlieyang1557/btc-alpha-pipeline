@@ -1,0 +1,206 @@
+{
+  "batch_id": "cd2f32ba-1984-4461-8216-1a9ac4ca2c17",
+  "dry_run": false,
+  "batch_size": 5,
+  "batch_cap_usd": 3.0,
+  "hypotheses_attempted": 5,
+  "unissued_slots": 0,
+  "truncated": false,
+  "truncated_at_call": null,
+  "lifecycle_counts": {
+    "pending_backtest": 5
+  },
+  "lifecycle_invariant_ok": true,
+  "total_estimated_cost_usd": 0.062289,
+  "total_actual_cost_usd": 0.04401,
+  "cost_ratio": 1.4153374233128833,
+  "cumulative_monthly_spend_usd": 0.061188,
+  "factor_usage": {
+    "rsi_14": 4,
+    "return_1h": 2,
+    "macd_hist": 1,
+    "bb_upper_24_2": 1,
+    "sma_24": 1,
+    "close": 2,
+    "zscore_48": 2,
+    "realized_vol_24h": 1,
+    "return_24h": 2,
+    "ema_26": 1,
+    "sma_50": 1,
+    "volume_zscore_24h": 1,
+    "return_168h": 1,
+    "day_of_week": 1
+  },
+  "cardinality_distribution": {
+    "single_object": 5
+  },
+  "theme_adherence_distribution": {
+    "Yes": 1,
+    "Partial": 4
+  },
+  "error_breakdown": [],
+  "approved_examples_trace": [
+    {
+      "call_k": 1,
+      "count_in_prompt": 0,
+      "logic_notes": []
+    },
+    {
+      "call_k": 2,
+      "count_in_prompt": 1,
+      "logic_notes": [
+        "Buy when price crosses below lower Bollinger Band with low RSI, expecting mean reversion back to the band center.",
+        "Buy when RSI breaks above 50 and recent hourly momentum is positive, expecting continuation of upward price momentum."
+      ]
+    },
+    {
+      "call_k": 3,
+      "count_in_prompt": 2,
+      "logic_notes": [
+        "Buy when volatility compresses below average and price crosses above SMA(50), expecting a sustained trend continuation in a calmer regime.",
+        "Buy when price crosses below lower Bollinger Band with low RSI, expecting mean reversion back to the band center.",
+        "Buy when RSI breaks above 50 and recent hourly momentum is positive, expecting continuation of upward price momentum."
+      ]
+    },
+    {
+      "call_k": 4,
+      "count_in_prompt": 3,
+      "logic_notes": [
+        "Buy when volume surges above 2 standard deviations with positive hourly return, expecting increased liquidity to drive continuation of upward momentum.",
+        "Buy when volatility compresses below average and price crosses above SMA(50), expecting a sustained trend continuation in a calmer regime.",
+        "Buy when price crosses below lower Bollinger Band with low RSI, expecting mean reversion back to the band center."
+      ]
+    },
+    {
+      "call_k": 5,
+      "count_in_prompt": 3,
+      "logic_notes": [
+        "Buy on Sunday when price has declined over the week and RSI is oversold, expecting mean reversion as institutional traders return Monday.",
+        "Buy when volume surges above 2 standard deviations with positive hourly return, expecting increased liquidity to drive continuation of upward momentum.",
+        "Buy when volatility compresses below average and price crosses above SMA(50), expecting a sustained trend continuation in a calmer regime."
+      ]
+    }
+  ],
+  "calls": [
+    {
+      "position": 1,
+      "theme": "momentum",
+      "truncated_by_cap": false,
+      "lifecycle_state": "pending_backtest",
+      "hypothesis_hash": "2e41e74c0a798332",
+      "input_tokens": 1304,
+      "output_tokens": 249,
+      "estimated_cost_usd": 0.011474999999999999,
+      "actual_cost_usd": 0.007646999999999999,
+      "approved_examples_count_in_prompt_before_call": 0,
+      "approved_example_logic_notes": [],
+      "theme_adherence": "Yes",
+      "cardinality": "single_object",
+      "retry_count": 0,
+      "error_info": null,
+      "prompt_file": "raw_payloads/batch_cd2f32ba-1984-4461-8216-1a9ac4ca2c17/attempt_0001_prompt.txt",
+      "response_file": "raw_payloads/batch_cd2f32ba-1984-4461-8216-1a9ac4ca2c17/attempt_0001_response.txt",
+      "prompt_file_exists": true,
+      "response_file_exists": true
+    },
+    {
+      "position": 2,
+      "theme": "mean_reversion",
+      "truncated_by_cap": false,
+      "lifecycle_state": "pending_backtest",
+      "hypothesis_hash": "9ffba3930e100085",
+      "input_tokens": 1473,
+      "output_tokens": 253,
+      "estimated_cost_usd": 0.011994,
+      "actual_cost_usd": 0.008214,
+      "approved_examples_count_in_prompt_before_call": 1,
+      "approved_example_logic_notes": [
+        "Buy when price crosses below lower Bollinger Band with low RSI, expecting mean reversion back to the band center.",
+        "Buy when RSI breaks above 50 and recent hourly momentum is positive, expecting continuation of upward price momentum."
+      ],
+      "theme_adherence": "Partial",
+      "cardinality": "single_object",
+      "retry_count": 0,
+      "error_info": null,
+      "prompt_file": "raw_payloads/batch_cd2f32ba-1984-4461-8216-1a9ac4ca2c17/attempt_0002_prompt.txt",
+      "response_file": "raw_payloads/batch_cd2f32ba-1984-4461-8216-1a9ac4ca2c17/attempt_0002_response.txt",
+      "prompt_file_exists": true,
+      "response_file_exists": true
+    },
+    {
+      "position": 3,
+      "theme": "volatility_regime",
+      "truncated_by_cap": false,
+      "lifecycle_state": "pending_backtest",
+      "hypothesis_hash": "5c4429fa5fff2149",
+      "input_tokens": 1645,
+      "output_tokens": 259,
+      "estimated_cost_usd": 0.012537,
+      "actual_cost_usd": 0.00882,
+      "approved_examples_count_in_prompt_before_call": 2,
+      "approved_example_logic_notes": [
+        "Buy when volatility compresses below average and price crosses above SMA(50), expecting a sustained trend continuation in a calmer regime.",
+        "Buy when price crosses below lower Bollinger Band with low RSI, expecting mean reversion back to the band center.",
+        "Buy when RSI breaks above 50 and recent hourly momentum is positive, expecting continuation of upward price momentum."
+      ],
+      "theme_adherence": "Partial",
+      "cardinality": "single_object",
+      "retry_count": 0,
+      "error_info": null,
+      "prompt_file": "raw_payloads/batch_cd2f32ba-1984-4461-8216-1a9ac4ca2c17/attempt_0003_prompt.txt",
+      "response_file": "raw_payloads/batch_cd2f32ba-1984-4461-8216-1a9ac4ca2c17/attempt_0003_response.txt",
+      "prompt_file_exists": true,
+      "response_file_exists": true
+    },
+    {
+      "position": 4,
+      "theme": "volume_divergence",
+      "truncated_by_cap": false,
+      "lifecycle_state": "pending_backtest",
+      "hypothesis_hash": "dc50c4c91ddf340c",
+      "input_tokens": 1821,
+      "output_tokens": 262,
+      "estimated_cost_usd": 0.013128,
+      "actual_cost_usd": 0.009393,
+      "approved_examples_count_in_prompt_before_call": 3,
+      "approved_example_logic_notes": [
+        "Buy when volume surges above 2 standard deviations with positive hourly return, expecting increased liquidity to drive continuation of upward momentum.",
+        "Buy when volatility compresses below average and price crosses above SMA(50), expecting a sustained trend continuation in a calmer regime.",
+        "Buy when price crosses below lower Bollinger Band with low RSI, expecting mean reversion back to the band center."
+      ],
+      "theme_adherence": "Partial",
+      "cardinality": "single_object",
+      "retry_count": 0,
+      "error_info": null,
+      "prompt_file": "raw_payloads/batch_cd2f32ba-1984-4461-8216-1a9ac4ca2c17/attempt_0004_prompt.txt",
+      "response_file": "raw_payloads/batch_cd2f32ba-1984-4461-8216-1a9ac4ca2c17/attempt_0004_response.txt",
+      "prompt_file_exists": true,
+      "response_file_exists": true
+    },
+    {
+      "position": 5,
+      "theme": "calendar_effect",
+      "truncated_by_cap": false,
+      "lifecycle_state": "pending_backtest",
+      "hypothesis_hash": "d352876b38294d93",
+      "input_tokens": 1827,
+      "output_tokens": 297,
+      "estimated_cost_usd": 0.013155,
+      "actual_cost_usd": 0.009936,
+      "approved_examples_count_in_prompt_before_call": 3,
+      "approved_example_logic_notes": [
+        "Buy on Sunday when price has declined over the week and RSI is oversold, expecting mean reversion as institutional traders return Monday.",
+        "Buy when volume surges above 2 standard deviations with positive hourly return, expecting increased liquidity to drive continuation of upward momentum.",
+        "Buy when volatility compresses below average and price crosses above SMA(50), expecting a sustained trend continuation in a calmer regime."
+      ],
+      "theme_adherence": "Partial",
+      "cardinality": "single_object",
+      "retry_count": 0,
+      "error_info": null,
+      "prompt_file": "raw_payloads/batch_cd2f32ba-1984-4461-8216-1a9ac4ca2c17/attempt_0005_prompt.txt",
+      "response_file": "raw_payloads/batch_cd2f32ba-1984-4461-8216-1a9ac4ca2c17/attempt_0005_response.txt",
+      "prompt_file_exists": true,
+      "response_file_exists": true
+    }
+  ]
+}

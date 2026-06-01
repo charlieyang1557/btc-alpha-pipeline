@@ -1,0 +1,31 @@
+```json
+{
+  "name": "macd_momentum_surge_with_vol_confirm",
+  "description": "Enter long when MACD histogram crosses above zero with elevated volume, capturing early momentum acceleration as both price momentum and volume expansion signal strong directional conviction.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "macd_hist", "op": "crosses_above", "value": 0.0},
+        {"factor": "volume_zscore_24h", "op": ">", "value": 0.8},
+        {"factor": "rsi_14", "op": ">", "value": 48.0},
+        {"factor": "close", "op": ">", "value": "sma_20"}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "macd_hist", "op": "crosses_below", "value": 0.0},
+        {"factor": "rsi_14", "op": ">", "value": 70.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": "<", "value": -0.035}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 240
+}
+```

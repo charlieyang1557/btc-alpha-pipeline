@@ -1,0 +1,32 @@
+```json
+{
+  "name": "momentum_exhaustion_rsi_divergence",
+  "description": "Enter long when strong prior week momentum (return_168h > 3%) coincides with RSI pullback below 45, capturing tactical reversals as overextended trends pause before continuation.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "return_168h", "op": ">", "value": 0.03},
+        {"factor": "rsi_14", "op": "<", "value": 45.0},
+        {"factor": "close", "op": ">", "value": "ema_26"},
+        {"factor": "macd_hist", "op": "crosses_above", "value": 0.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "rsi_14", "op": ">", "value": 62.0},
+        {"factor": "return_24h", "op": ">", "value": 0.02}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_below", "value": "ema_26"},
+        {"factor": "macd_hist", "op": "<", "value": 0.0}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 168
+}
+```

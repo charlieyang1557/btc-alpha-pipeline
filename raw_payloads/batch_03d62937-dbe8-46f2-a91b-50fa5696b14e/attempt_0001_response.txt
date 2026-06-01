@@ -1,0 +1,56 @@
+```json
+{
+  "hypothesis_id": "momentum_rsi_macd_convergence_v1",
+  "description": "Enter long when RSI crosses above oversold threshold while MACD histogram turns positive, capturing momentum regime shifts; exit when RSI becomes overbought or MACD reverses negative.",
+  "entry_conditions": [
+    {
+      "condition_group_id": "rsi_oversold_cross",
+      "conditions": [
+        {
+          "left_factor": "rsi_14",
+          "operator": "crosses_above",
+          "right_value": 35.0
+        }
+      ],
+      "join_operator": "AND"
+    },
+    {
+      "condition_group_id": "macd_positive",
+      "conditions": [
+        {
+          "left_factor": "macd_hist",
+          "operator": ">",
+          "right_value": 0.0
+        }
+      ],
+      "join_operator": "AND"
+    }
+  ],
+  "exit_conditions": [
+    {
+      "condition_group_id": "rsi_overbought",
+      "conditions": [
+        {
+          "left_factor": "rsi_14",
+          "operator": ">",
+          "right_value": 70.0
+        }
+      ],
+      "join_operator": "OR"
+    },
+    {
+      "condition_group_id": "macd_negative",
+      "conditions": [
+        {
+          "left_factor": "macd_hist",
+          "operator": "<",
+          "right_value": 0.0
+        }
+      ],
+      "join_operator": "OR"
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 168
+}
+```

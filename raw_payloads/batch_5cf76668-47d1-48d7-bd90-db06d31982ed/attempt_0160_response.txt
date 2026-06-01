@@ -1,0 +1,31 @@
+```json
+{
+  "name": "monday_mean_reversion_160",
+  "description": "Enter long on Mondays when price declines 24h and RSI is oversold, capturing weekend sentiment reset as Monday oversold conditions reverse during week when systematic calendar effect drives early-week recovery.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "==", "value": 0},
+        {"factor": "return_24h", "op": "<", "value": -0.015},
+        {"factor": "rsi_14", "op": "<", "value": 40.0},
+        {"factor": "close", "op": ">", "value": "sma_50"}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "==", "value": 4},
+        {"factor": "rsi_14", "op": ">", "value": 55.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.03}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 168
+}
+```

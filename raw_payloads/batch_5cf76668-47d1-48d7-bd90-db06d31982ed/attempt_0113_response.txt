@@ -1,0 +1,32 @@
+```json
+{
+  "name": "vol_regime_shift_momentum_entry",
+  "description": "Enter long when realized volatility crosses below its 24-bar average while RSI rebounds from oversold and MACD turns positive, capturing regime shifts from high-vol panic to stabilization where momentum reversals emerge as volatility mean-reverts and risk appetite returns.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": "<", "value": 0.015},
+        {"factor": "rsi_14", "op": "crosses_above", "value": 32.0},
+        {"factor": "macd_hist", "op": ">", "value": 0.0},
+        {"factor": "close", "op": ">", "value": "ema_12"}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "rsi_14", "op": ">", "value": 68.0},
+        {"factor": "return_24h", "op": ">", "value": 0.04}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": ">", "value": 0.025},
+        {"factor": "macd_hist", "op": "crosses_below", "value": 0.0}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 144
+}
+```

@@ -1,0 +1,31 @@
+```json
+{
+  "name": "vol_regime_breakout_183",
+  "description": "Enter long when realized volatility drops below 2% after sustained elevation while close crosses above SMA(50), capturing post-consolidation breakouts as volatility compression resolves upward with momentum confirmation.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": "<", "value": 0.02},
+        {"factor": "close", "op": "crosses_above", "value": "sma_50"},
+        {"factor": "rsi_14", "op": ">", "value": 55.0},
+        {"factor": "macd_hist", "op": ">", "value": 0.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_below", "value": "sma_50"},
+        {"factor": "rsi_14", "op": "<", "value": 45.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": ">", "value": 0.035}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 504
+}
+```

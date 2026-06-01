@@ -1,0 +1,31 @@
+```json
+{
+  "name": "weekend_volatility_fade_180",
+  "description": "Enter long on Saturday or Sunday when realized volatility exceeds 3% and RSI is oversold, capturing mean-reversion as elevated weekend volatility with thin liquidity often reverses during Monday institutional re-entry.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": ">=", "value": 5},
+        {"factor": "realized_vol_24h", "op": ">", "value": 0.03},
+        {"factor": "rsi_14", "op": "<", "value": 40.0},
+        {"factor": "return_24h", "op": "<", "value": -0.015}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "==", "value": 0},
+        {"factor": "rsi_14", "op": ">", "value": 50.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_168h", "op": ">", "value": 0.05}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 168
+}
+```

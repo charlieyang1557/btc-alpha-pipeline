@@ -1,0 +1,30 @@
+```json
+{
+  "name": "monday_dip_buy",
+  "description": "Enter long on Monday when price dips below 24-hour average with low RSI, exploiting the calendar anomaly where weekend sell-offs reverse during early-week institutional re-entry.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "==", "value": 0},
+        {"factor": "close", "op": "<", "value": "sma_24"},
+        {"factor": "rsi_14", "op": "<", "value": 45.0},
+        {"factor": "return_24h", "op": "<", "value": -0.01}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_above", "value": "sma_24"}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "==", "value": 3}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 72
+}
+```

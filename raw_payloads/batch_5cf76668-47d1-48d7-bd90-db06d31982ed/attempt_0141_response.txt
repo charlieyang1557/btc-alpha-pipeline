@@ -1,0 +1,30 @@
+```json
+{
+  "name": "macd_histogram_reversal_momentum",
+  "description": "Enter long when MACD histogram crosses above zero from negative territory while RSI is oversold below 40, capturing momentum inflection where short-term price acceleration reverses prior downtrend as buyers regain control from exhausted sellers.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "macd_hist", "op": "crosses_above", "value": 0.0},
+        {"factor": "rsi_14", "op": "<", "value": 40.0},
+        {"factor": "return_24h", "op": ">", "value": -0.02}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "macd_hist", "op": "crosses_below", "value": 0.0},
+        {"factor": "rsi_14", "op": ">", "value": 65.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_168h", "op": ">", "value": 0.05}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 120
+}
+```

@@ -1,0 +1,77 @@
+You are a quantitative researcher proposing BTC trading hypotheses.
+Respond ONLY with valid JSON matching the StrategyDSL schema.
+Your strategy MUST:
+  - Reference only factors from the menu provided by the caller.
+  - Use only these operators: <, <=, >, >=, ==, crosses_above, crosses_below.
+  - Include a one-sentence economic rationale in `description`.
+  - Use long/flat positions only (`position_sizing: "full_equity"`).
+  - Respect the complexity budget: entry/exit each ≤ 3 condition groups, each group ≤ 4 conditions, max_hold_bars ≤ 720.
+
+You MAY NOT propose new factors, new operators, inline arithmetic, or any grammar outside the schema. Registry and grammar are frozen for this batch; factor or operator additions require explicit human review outside this loop.
+
+Your output must be a JSON object matching EXACTLY this shape:
+
+{
+  "name": "short_strategy_name",
+  "description": "one-sentence economic rationale",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "<factor_name>", "op": "<operator>", "value": <number or factor_name>}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "<factor_name>", "op": "<operator>", "value": <number or factor_name>}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": <integer or null>
+}
+
+Use these EXACT field names. Do NOT use synonyms or alternative names such as:
+  - "hypothesis_id" (use "name")
+  - "entry_conditions" / "exit_conditions" (use "entry" / "exit")
+  - "left_factor" / "right_value" (use "factor" / "value")
+  - "operator" (use "op")
+  - "condition_group_id", "join_operator" (do not add these fields)
+
+Respond with raw JSON only. Do NOT wrap the output in markdown code fences (triple backticks).
+Batch context:
+  - batch_id: 5cf76668-47d1-48d7-bd90-db06d31982ed
+  - position: 187/200
+  - theme (rotating): mean_reversion
+
+Recent batch signal (compact, no raw metrics):
+  - dedup rate so far: n/a
+  - top factors by frequency: (no signal yet)
+  - critic rejections in last 50: n/a
+  - up to 3 example approved hypotheses (DSL only, no metrics):
+  - {"name":"momentum_continuation_surge_186","description":"Enter long when strong 24h momentum persists with MACD histogram expanding positively and RSI above 60, capturing trend continuation as momentum accelerates through breakout confirmation before exhaustion sets in.","entry":[{"conditions":[{"factor":"return_24h","op":">","value":0.03},{"factor":"macd_hist","op":">","value":0.0},{"factor":"rsi_14","op":">","value":60.0},{"factor":"close","op":">","value":"ema_26"}]}],"exit":[{"conditions":[{"factor":"macd_hist","op":"crosses_below","value":0.0},{"factor":"rsi_14","op":"<","value":50.0}]},{"conditions":[{"factor":"return_24h","op":"<","value":-0.02}]}],"position_sizing":"full_equity","max_hold_bars":168}
+  - {"name":"monday_oversold_bounce_185","description":"Enter long on Mondays when RSI is oversold and close is below SMA(20), capturing institutional repositioning after weekend selloffs as market makers step in to provide liquidity at attractive levels during the week's start.","entry":[{"conditions":[{"factor":"day_of_week","op":"==","value":0.0},{"factor":"rsi_14","op":"<","value":35.0},{"factor":"close","op":"<","value":"sma_20"},{"factor":"return_24h","op":"<","value":-0.01}]}],"exit":[{"conditions":[{"factor":"rsi_14","op":">","value":60.0},{"factor":"close","op":"crosses_above","value":"sma_20"}]},{"conditions":[{"factor":"day_of_week","op":"==","value":4.0}]}],"position_sizing":"full_equity","max_hold_bars":120}
+  - {"name":"volume_divergence_reversal_184","description":"Enter long when price makes new 24h low while volume z-score falls below -1, capturing bullish divergence as declining volume on downmoves signals seller exhaustion and impending mean-reversion with momentum confirmation from oversold RSI.","entry":[{"conditions":[{"factor":"zscore_48","op":"<","value":-1.8},{"factor":"volume_zscore_24h","op":"<","value":-1.0},{"factor":"rsi_14","op":"<","value":40.0},{"factor":"return_24h","op":"<","value":-0.015}]}],"exit":[{"conditions":[{"factor":"rsi_14","op":">","value":60.0},{"factor":"close","op":"crosses_above","value":"sma_24"}]},{"conditions":[{"factor":"return_168h","op":">","value":0.05}]}],"position_sizing":"full_equity","max_hold_bars":336}
+
+Propose hypothesis #187.
+# Available factors
+
+- atr_14 [volatility, warmup=14]: Average True Range over 14 bars (simple rolling mean of TR).
+- bb_upper_24_2 [volatility, warmup=23]: Bollinger upper band: SMA(close, 24) + 2 * StdDev(close, 24).
+- close [price, warmup=0]: Identity factor: return close price verbatim.
+- day_of_week [structural, warmup=0]: Day of week (0=Monday..6=Sunday), read from ``open_time_utc``.
+- ema_12 [moving_averages, warmup=12]: Exponential moving average of close, span=12, ``adjust=False``.
+- ema_26 [moving_averages, warmup=26]: Exponential moving average of close, span=26, ``adjust=False``.
+- hour_of_day [structural, warmup=0]: Hour of day in UTC (0..23), read from ``open_time_utc``.
+- macd_hist [momentum, warmup=35]: MACD histogram: (EMA(12) - EMA(26)) minus signal=EMA(9) of MACD.
+- realized_vol_24h [volatility, warmup=24]: Rolling 24-bar standard deviation of 1-bar log/arithmetic returns.
+- return_168h [returns, warmup=168]: Return over 168 bars (1 week): (close[T] - close[T-168]) / close[T-168].
+- return_1h [returns, warmup=1]: Return over 1 bar: (close[T] - close[T-1]) / close[T-1].
+- return_24h [returns, warmup=24]: Return over 24 bars: (close[T] - close[T-24]) / close[T-24].
+- rsi_14 [momentum, warmup=14]: 14-bar RSI using rolling means of up/down moves (Cutler's variant).
+- sma_20 [moving_averages, warmup=19]: Simple moving average of close over 20 bars.
+- sma_24 [moving_averages, warmup=23]: Simple moving average of close over 24 bars.
+- sma_50 [moving_averages, warmup=49]: Simple moving average of close over 50 bars.
+- volume_zscore_24h [volume, warmup=23]: Rolling 24-bar z-score of volume.
+- zscore_48 [volatility, warmup=47]: 48-bar z-score of close: (close - SMA(48)) / StdDev(48).

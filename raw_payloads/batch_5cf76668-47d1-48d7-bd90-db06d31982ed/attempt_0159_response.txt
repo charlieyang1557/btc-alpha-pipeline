@@ -1,0 +1,31 @@
+```json
+{
+  "name": "volume_divergence_159",
+  "description": "Enter long when volume z-score exceeds 2.0 while price declines 24h but RSI remains above 50, capturing bullish volume divergence as institutional accumulation during price weakness signals impending reversal when momentum stays resilient.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "volume_zscore_24h", "op": ">", "value": 2.0},
+        {"factor": "return_24h", "op": "<", "value": -0.01},
+        {"factor": "rsi_14", "op": ">", "value": 50.0},
+        {"factor": "close", "op": ">", "value": "sma_50"}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "volume_zscore_24h", "op": "<", "value": 0.0},
+        {"factor": "rsi_14", "op": "<", "value": 45.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.025}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 120
+}
+```

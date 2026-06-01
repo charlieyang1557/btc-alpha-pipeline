@@ -1,0 +1,32 @@
+```json
+{
+  "name": "low_vol_regime_ema_crossover_entry",
+  "description": "Enter long when fast EMA crosses above slow EMA during low realized volatility regime, capturing trend inception in stable conditions where momentum breakouts exhibit stronger follow-through and reduced whipsaw risk.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "ema_12", "op": "crosses_above", "value": "ema_26"},
+        {"factor": "realized_vol_24h", "op": "<", "value": 0.025},
+        {"factor": "rsi_14", "op": ">", "value": 52.0},
+        {"factor": "close", "op": ">", "value": "sma_50"}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "ema_12", "op": "crosses_below", "value": "ema_26"},
+        {"factor": "rsi_14", "op": "<", "value": 45.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": ">", "value": 0.045},
+        {"factor": "return_1h", "op": "<", "value": -0.015}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 240
+}
+```

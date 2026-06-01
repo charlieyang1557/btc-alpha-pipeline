@@ -1,0 +1,30 @@
+```json
+{
+  "name": "monday_dip_buy_calendar_effect",
+  "description": "Enter long on Monday when price crosses below EMA-26 and RSI is oversold, capturing calendar-driven weekly dip-buying where institutional flows resume after weekend pause and systematic Monday weakness offers contrarian entry.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "==", "value": 0},
+        {"factor": "close", "op": "crosses_below", "value": "ema_26"},
+        {"factor": "rsi_14", "op": "<", "value": 35.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_above", "value": "ema_26"},
+        {"factor": "rsi_14", "op": ">", "value": 55.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.03}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 168
+}
+```

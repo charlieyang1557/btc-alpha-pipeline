@@ -1,0 +1,31 @@
+```json
+{
+  "name": "volume_div_breakout",
+  "description": "Enter long when price breaks above 50-day SMA with elevated volume while MACD histogram is positive, exploiting volume-confirmed breakouts that signal institutional accumulation and trend continuation.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_above", "value": "sma_50"},
+        {"factor": "volume_zscore_24h", "op": ">", "value": 1.2},
+        {"factor": "macd_hist", "op": ">", "value": 0.0},
+        {"factor": "return_24h", "op": ">", "value": 0.01}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_below", "value": "sma_50"}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "volume_zscore_24h", "op": "<", "value": -0.5},
+        {"factor": "return_168h", "op": ">", "value": 0.08}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 240
+}
+```

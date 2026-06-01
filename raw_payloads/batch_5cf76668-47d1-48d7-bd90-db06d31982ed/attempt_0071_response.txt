@@ -1,0 +1,31 @@
+```json
+{
+  "name": "momentum_acceleration_rsi_surge",
+  "description": "Enter long when RSI crosses above 60 with positive 24h return and MACD histogram rising above zero while price exceeds EMA(12), capturing momentum acceleration as overbought strength with positive histogram historically signals continuation rather than reversal in trending crypto markets.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "rsi_14", "op": "crosses_above", "value": 60.0},
+        {"factor": "return_24h", "op": ">", "value": 0.01},
+        {"factor": "macd_hist", "op": ">", "value": 0.0},
+        {"factor": "close", "op": ">", "value": "ema_12"}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "rsi_14", "op": "crosses_below", "value": 50.0},
+        {"factor": "macd_hist", "op": "<", "value": 0.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": "<", "value": -0.02}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 168
+}
+```

@@ -1,0 +1,31 @@
+```json
+{
+  "name": "bollinger_squeeze_reversion_182",
+  "description": "Enter long when close falls below Bollinger lower band while RSI is oversold and realized volatility is elevated, capturing mean-reversion as extreme deviations from the band typically revert to the mean amid panic selling exhaustion.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "<", "value": "bb_upper_24_2"},
+        {"factor": "rsi_14", "op": "<", "value": 35.0},
+        {"factor": "realized_vol_24h", "op": ">", "value": 0.025},
+        {"factor": "zscore_48", "op": "<", "value": -1.5}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_above", "value": "sma_24"},
+        {"factor": "rsi_14", "op": ">", "value": 55.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_168h", "op": ">", "value": 0.04}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 336
+}
+```

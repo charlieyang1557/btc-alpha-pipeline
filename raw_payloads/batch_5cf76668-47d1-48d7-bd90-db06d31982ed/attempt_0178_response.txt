@@ -1,0 +1,31 @@
+```json
+{
+  "name": "vol_contraction_breakout_178",
+  "description": "Enter long when realized volatility drops below 0.5 StdDev of its mean while price crosses above SMA(50) and ATR is declining, capturing breakout from volatility contraction as compressed ranges typically precede directional expansion favoring upside momentum.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": "<", "value": 0.015},
+        {"factor": "close", "op": "crosses_above", "value": "sma_50"},
+        {"factor": "atr_14", "op": "<", "value": 1200.0},
+        {"factor": "rsi_14", "op": ">", "value": 45.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": ">", "value": 0.035},
+        {"factor": "close", "op": "crosses_below", "value": "sma_20"}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_168h", "op": ">", "value": 0.08}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 336
+}
+```

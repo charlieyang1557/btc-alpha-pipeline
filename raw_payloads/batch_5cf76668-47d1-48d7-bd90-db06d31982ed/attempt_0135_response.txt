@@ -1,0 +1,30 @@
+```json
+{
+  "name": "monday_gap_fade_mean_reversion",
+  "description": "Enter long on Monday when price shows negative 24h return below -1% while RSI is oversold, capturing weekend gap-down mean reversion where institutional absence creates Monday mispricings that correct as liquidity returns.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "==", "value": 0},
+        {"factor": "return_24h", "op": "<", "value": -0.01},
+        {"factor": "rsi_14", "op": "<", "value": 35.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "return_1h", "op": ">", "value": 0.015},
+        {"factor": "rsi_14", "op": ">", "value": 55.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "==", "value": 2}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 48
+}
+```

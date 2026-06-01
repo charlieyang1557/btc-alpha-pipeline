@@ -2015,7 +2015,17 @@ class TestT1_4_Pc9BaselineGate:
         #     4/4 byte-unchanged; PHASE_D_AUTHORIZED untouched. Advance BASELINE
         #     2830 → 2856 (same expected-additive-cohort precedent; per Charlie
         #     Path C Phase B Task B5 register, pathc-basis-scoping branch).
-        BASELINE = 2856
+        # Path C Phase B review fixes (pathc-basis-scoping branch): FIX 1 adds
+        # test_basis_rel_raises_on_duplicate_timestamp (+1) in
+        # tests/test_basis_derive.py; FIX 2 adds TestBasisEwmNanPolicy with
+        # test_basis_ewm_propagates_nan + test_basis_ewm_480_propagates_nan (+2)
+        # in tests/test_basis_factors.py. Both land wholly in pre_t1_x_baseline
+        # (existing files; neither a t1_4 nor t1_5 subtraction target). FIX 3
+        # (test_funding_factors.py edit), FIX 4 (manifest isolation in
+        # test_t1_1_artifact_writer.py + test_phase2c_evaluation_gate_runner.py),
+        # FIX 5+6 (markprice_incremental_update.py security) add no new collected
+        # items. Advance BASELINE 2856 → 2859.
+        BASELINE = 2859
         assert pre_t1_x_baseline == BASELINE, (
             f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
             f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "

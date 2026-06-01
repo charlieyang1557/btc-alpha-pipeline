@@ -1,0 +1,31 @@
+```json
+{
+  "name": "volatility_contraction_breakout_153",
+  "description": "Enter long when realized volatility drops below 2% while price exceeds EMA(12) and MACD histogram is positive, capturing breakout acceleration as volatility compression systematically precedes directional expansion when momentum and trend alignment confirm regime transition.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": "<", "value": 0.02},
+        {"factor": "close", "op": ">", "value": "ema_12"},
+        {"factor": "macd_hist", "op": ">", "value": 0.0},
+        {"factor": "rsi_14", "op": ">", "value": 45.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": ">", "value": 0.04},
+        {"factor": "macd_hist", "op": "crosses_below", "value": 0.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.03}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 168
+}
+```

@@ -1,0 +1,24 @@
+```json
+{
+  "name": "bb_mean_reversion_vol_spike",
+  "description": "Buy when price falls below Bollinger lower band during elevated volatility, expecting mean reversion to the moving average.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "<", "value": "bb_upper_24_2"},
+        {"factor": "realized_vol_24h", "op": ">", "value": 0.015},
+        {"factor": "zscore_48", "op": "<", "value": -1.5}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_above", "value": "sma_24"}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 72
+}
+```

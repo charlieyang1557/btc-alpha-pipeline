@@ -1,0 +1,32 @@
+```json
+{
+  "name": "weekend_momentum_continuation_mon_entry",
+  "description": "Enter long on Monday when strong weekly momentum persists and RSI shows room to run, capturing systematic continuation patterns as weekend positioning effects resolve into trend resumption at week open.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "==", "value": 0},
+        {"factor": "return_168h", "op": ">", "value": 0.04},
+        {"factor": "rsi_14", "op": ">", "value": 55.0},
+        {"factor": "close", "op": ">", "value": "sma_50"}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "rsi_14", "op": ">", "value": 72.0},
+        {"factor": "return_24h", "op": ">", "value": 0.035}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_below", "value": "sma_20"},
+        {"factor": "return_1h", "op": "<", "value": -0.012}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 120
+}
+```

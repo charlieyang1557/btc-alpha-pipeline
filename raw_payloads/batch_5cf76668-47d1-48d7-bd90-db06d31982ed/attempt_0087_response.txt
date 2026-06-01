@@ -1,0 +1,31 @@
+```json
+{
+  "name": "bb_lower_breach_vol_compression_reversal",
+  "description": "Enter long when price closes below lower Bollinger band during compressed volatility period, capturing mean reversion as extreme deviations from mean during low volatility environments typically snap back rapidly.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "<", "value": "bb_upper_24_2"},
+        {"factor": "realized_vol_24h", "op": "<", "value": 0.025},
+        {"factor": "rsi_14", "op": "<", "value": 35.0},
+        {"factor": "zscore_48", "op": "<", "value": -1.8}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "zscore_48", "op": ">", "value": 0.0},
+        {"factor": "rsi_14", "op": ">", "value": 52.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.04}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 120
+}
+```

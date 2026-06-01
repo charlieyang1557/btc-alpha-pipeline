@@ -1,0 +1,32 @@
+```json
+{
+  "name": "volume_divergence_downtrend_reversal",
+  "description": "Enter long when price makes lower lows but volume zscore declines, capturing bullish divergence as diminishing selling pressure during downtrend signals exhaustion and potential reversal.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": "<", "value": -0.02},
+        {"factor": "volume_zscore_24h", "op": "<", "value": -0.8},
+        {"factor": "rsi_14", "op": "<", "value": 38.0},
+        {"factor": "close", "op": "<", "value": "sma_50"}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.03},
+        {"factor": "rsi_14", "op": ">", "value": 58.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "volume_zscore_24h", "op": ">", "value": 1.5},
+        {"factor": "return_1h", "op": "<", "value": -0.01}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 168
+}
+```

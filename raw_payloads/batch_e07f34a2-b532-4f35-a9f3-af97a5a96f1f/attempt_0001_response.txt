@@ -1,0 +1,23 @@
+```json
+{
+  "name": "momentum_rsi_oversold_reversal",
+  "description": "Buy when RSI signals oversold conditions and price crosses above short-term EMA, capturing momentum reversal from extreme selling pressure.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "rsi_14", "op": "<", "value": 30},
+        {"factor": "close", "op": "crosses_above", "value": "ema_12"}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "rsi_14", "op": ">", "value": 70}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 168
+}
+```

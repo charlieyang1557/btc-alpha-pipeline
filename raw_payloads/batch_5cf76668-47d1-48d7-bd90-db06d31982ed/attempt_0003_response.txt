@@ -1,0 +1,26 @@
+```json
+{
+  "name": "low_vol_trend_continuation",
+  "description": "Enter long when realized volatility drops below historical average while price maintains positive momentum, exit when volatility spikes or momentum reverses.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": "<", "value": 0.015},
+        {"factor": "return_24h", "op": ">", "value": 0.0},
+        {"factor": "ema_12", "op": ">", "value": "ema_26"},
+        {"factor": "close", "op": ">", "value": "sma_50"}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": ">", "value": 0.03},
+        {"factor": "macd_hist", "op": "<", "value": 0.0}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 336
+}
+```

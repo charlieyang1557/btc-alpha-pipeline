@@ -1,0 +1,31 @@
+```json
+{
+  "name": "weekend_momentum_fade_monday",
+  "description": "Enter long on Monday when weekend momentum is negative and RSI oversold, capturing mean reversion as Monday sessions often reverse weekend selloffs due to renewed institutional participation.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "==", "value": 0},
+        {"factor": "return_24h", "op": "<", "value": -0.018},
+        {"factor": "rsi_14", "op": "<", "value": 42.0},
+        {"factor": "close", "op": "<", "value": "sma_50"}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.025},
+        {"factor": "rsi_14", "op": ">", "value": 55.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "==", "value": 2}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 72
+}
+```

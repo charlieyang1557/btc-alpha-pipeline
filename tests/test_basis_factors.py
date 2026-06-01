@@ -158,6 +158,48 @@ class TestBasisEwm480:
 
 
 # ---------------------------------------------------------------------------
+# EWM NaN-policy (FIX 2 — null-policy violation guard)
+# ---------------------------------------------------------------------------
+
+
+class TestBasisEwmNanPolicy:
+    """FIX 2: EWM factors must output NaN at bars where basis_rel is NaN, not
+    carry forward the prior EWM state (which would violate the null policy)."""
+
+    def test_basis_ewm_propagates_nan(self) -> None:
+        """Input [0.01]*240 + [nan] + [0.02] → the EWM output at the NaN bar is NaN,
+        not a carry-forward of the pre-NaN EWM value.
+
+        Specifically tests basis_ewm_240 (the primary EWM factor). The masked
+        implementation uses .where(basis_rel.notna()) to zero out the carry-forward.
+        """
+        vals = [0.01] * 240 + [float("nan")] + [0.02]
+        df = _df(vals)
+        result_240 = basis_ewm_240(df)
+        nan_idx = 240
+        assert pd.isna(result_240.iloc[nan_idx]), (
+            f"basis_ewm_240: expected NaN at the NaN basis_rel bar (index {nan_idx}), "
+            f"got {result_240.iloc[nan_idx]!r} (carry-forward violates null policy)."
+        )
+        # Also verify the bar after NaN is non-NaN (the EWM resumes from there).
+        assert not pd.isna(result_240.iloc[nan_idx + 1]), (
+            f"basis_ewm_240: bar after NaN should be non-NaN, "
+            f"got {result_240.iloc[nan_idx + 1]!r}"
+        )
+
+    def test_basis_ewm_480_propagates_nan(self) -> None:
+        """basis_ewm_480 also outputs NaN at a NaN basis_rel bar."""
+        vals = [0.01] * 240 + [float("nan")] + [0.02]
+        df = _df(vals)
+        result_480 = basis_ewm_480(df)
+        nan_idx = 240
+        assert pd.isna(result_480.iloc[nan_idx]), (
+            f"basis_ewm_480: expected NaN at the NaN basis_rel bar (index {nan_idx}), "
+            f"got {result_480.iloc[nan_idx]!r} (carry-forward violates null policy)."
+        )
+
+
+# ---------------------------------------------------------------------------
 # basis_pct_rank_2160
 # ---------------------------------------------------------------------------
 

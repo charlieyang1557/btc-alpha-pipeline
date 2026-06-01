@@ -1,0 +1,31 @@
+```json
+{
+  "name": "volume_divergence_breakout_164",
+  "description": "Enter long when price crosses above SMA(20) with volume z-score exceeding 1.5 while RSI remains below 65, capturing volume-confirmed breakouts as elevated volume validates price strength without overbought conditions signaling institutional accumulation.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_above", "value": "sma_20"},
+        {"factor": "volume_zscore_24h", "op": ">", "value": 1.5},
+        {"factor": "rsi_14", "op": "<", "value": 65.0},
+        {"factor": "ema_12", "op": ">", "value": "ema_26"}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "volume_zscore_24h", "op": "<", "value": -0.5},
+        {"factor": "rsi_14", "op": ">", "value": 70.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.035}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 168
+}
+```

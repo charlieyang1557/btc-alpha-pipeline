@@ -1,0 +1,31 @@
+```json
+{
+  "name": "weekend_positioning_fade_190",
+  "description": "Enter long on Sunday (day 6) when price has declined over the week and RSI is oversold, capturing calendar-driven mean reversion as institutional buying resumes Monday morning with retail weekend fear subsiding.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "==", "value": 6},
+        {"factor": "return_168h", "op": "<", "value": -0.03},
+        {"factor": "rsi_14", "op": "<", "value": 38.0},
+        {"factor": "close", "op": "<", "value": "sma_50"}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "==", "value": 1},
+        {"factor": "close", "op": "crosses_above", "value": "sma_20"}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.025}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 72
+}
+```

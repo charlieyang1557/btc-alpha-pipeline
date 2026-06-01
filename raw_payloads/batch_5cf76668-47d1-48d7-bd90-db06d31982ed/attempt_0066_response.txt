@@ -1,0 +1,31 @@
+```json
+{
+  "name": "macd_histogram_momentum_surge",
+  "description": "Enter long when MACD histogram crosses above zero while price trades above both EMA(12) and EMA(26) with positive 24h return, capturing momentum acceleration as histogram zero-line crossovers historically signal trend strength continuation in crypto markets.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "macd_hist", "op": "crosses_above", "value": 0.0},
+        {"factor": "close", "op": ">", "value": "ema_12"},
+        {"factor": "close", "op": ">", "value": "ema_26"},
+        {"factor": "return_24h", "op": ">", "value": 0.01}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "macd_hist", "op": "crosses_below", "value": 0.0},
+        {"factor": "close", "op": "crosses_below", "value": "ema_12"}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_168h", "op": ">", "value": 0.08}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 168
+}
+```

@@ -1,0 +1,32 @@
+```json
+{
+  "name": "volume_surge_divergence_entry",
+  "description": "Enter long when volume z-score exceeds 2.0 while price remains below SMA(20) and RSI under 50, capturing institutional accumulation as volume spikes without immediate price response historically precede delayed upward moves in crypto markets.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "volume_zscore_24h", "op": ">", "value": 2.0},
+        {"factor": "close", "op": "<", "value": "sma_20"},
+        {"factor": "rsi_14", "op": "<", "value": 50.0},
+        {"factor": "return_24h", "op": "<", "value": 0.005}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_above", "value": "sma_20"},
+        {"factor": "rsi_14", "op": ">", "value": 60.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "volume_zscore_24h", "op": "<", "value": -1.0},
+        {"factor": "return_1h", "op": "<", "value": -0.015}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 120
+}
+```

@@ -1,0 +1,31 @@
+```json
+{
+  "name": "weekday_momentum_mean_reversion",
+  "description": "Enter long on Monday or Tuesday when price is oversold below SMA-50 with negative 24h return, capturing calendar-driven accumulation where institutional buying resumes early-week after weekend dips and sentiment resets.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "<=", "value": 1.0},
+        {"factor": "close", "op": "<", "value": "sma_50"},
+        {"factor": "return_24h", "op": "<", "value": -0.02},
+        {"factor": "rsi_14", "op": "<", "value": 40.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_above", "value": "sma_50"},
+        {"factor": "rsi_14", "op": ">", "value": 55.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.03}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 120
+}
+```

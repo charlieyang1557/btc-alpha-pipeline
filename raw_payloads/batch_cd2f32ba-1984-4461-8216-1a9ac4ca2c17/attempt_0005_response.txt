@@ -1,0 +1,27 @@
+```json
+{
+  "name": "weekend_momentum_fade",
+  "description": "Buy on Sunday when price has declined over the week and RSI is oversold, expecting mean reversion as institutional traders return Monday.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "==", "value": 6},
+        {"factor": "return_168h", "op": "<", "value": -0.02},
+        {"factor": "rsi_14", "op": "<", "value": 35.0},
+        {"factor": "zscore_48", "op": "<", "value": -1.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "==", "value": 1},
+        {"factor": "return_24h", "op": ">", "value": 0.015},
+        {"factor": "rsi_14", "op": ">", "value": 50.0}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 72
+}
+```

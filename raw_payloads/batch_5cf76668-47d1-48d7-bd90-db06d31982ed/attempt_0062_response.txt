@@ -1,0 +1,31 @@
+```json
+{
+  "name": "bb_mean_reversion_oversold",
+  "description": "Enter long when price crosses below lower Bollinger band while RSI shows oversold conditions below 35, capturing mean reversion as extreme volatility-adjusted deviations historically reverse toward the mean in crypto markets.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "<", "value": "bb_upper_24_2"},
+        {"factor": "rsi_14", "op": "<", "value": 35.0},
+        {"factor": "zscore_48", "op": "<", "value": -1.5},
+        {"factor": "return_24h", "op": "<", "value": -0.02}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_above", "value": "sma_24"},
+        {"factor": "rsi_14", "op": ">", "value": 55.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_1h", "op": ">", "value": 0.025}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 72
+}
+```

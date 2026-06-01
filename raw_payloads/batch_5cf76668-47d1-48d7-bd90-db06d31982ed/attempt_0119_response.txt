@@ -1,0 +1,32 @@
+```json
+{
+  "name": "volume_surge_momentum_continuation",
+  "description": "Enter long when volume z-score exceeds 1.8 while MACD histogram is positive and price is above SMA-20, capturing momentum continuation where abnormal volume confirms institutional accumulation and directional conviction in uptrends.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "volume_zscore_24h", "op": ">", "value": 1.8},
+        {"factor": "macd_hist", "op": ">", "value": 0.0},
+        {"factor": "close", "op": ">", "value": "sma_20"},
+        {"factor": "rsi_14", "op": ">", "value": 50.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "volume_zscore_24h", "op": "<", "value": -0.5},
+        {"factor": "macd_hist", "op": "crosses_below", "value": 0.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.045},
+        {"factor": "rsi_14", "op": ">", "value": 75.0}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 168
+}
+```

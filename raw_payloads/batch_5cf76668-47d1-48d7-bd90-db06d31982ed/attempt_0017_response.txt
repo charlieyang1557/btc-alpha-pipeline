@@ -1,0 +1,32 @@
+```json
+{
+  "name": "bb_mean_revert_oversold",
+  "description": "Enter long when price closes below the lower Bollinger Band with low RSI, capturing mean-reversion as volatility contracts and price gravitates back toward the 24-bar average.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "<", "value": "bb_upper_24_2"},
+        {"factor": "zscore_48", "op": "<", "value": -1.5},
+        {"factor": "rsi_14", "op": "<", "value": 35.0},
+        {"factor": "realized_vol_24h", "op": ">", "value": 0.015}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "zscore_48", "op": ">", "value": 0.5},
+        {"factor": "rsi_14", "op": ">", "value": 60.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_above", "value": "sma_24"},
+        {"factor": "return_24h", "op": ">", "value": 0.03}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 168
+}
+```

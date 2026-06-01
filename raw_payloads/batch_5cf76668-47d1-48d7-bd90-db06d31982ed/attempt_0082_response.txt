@@ -1,0 +1,31 @@
+```json
+{
+  "name": "bb_upper_reversion_oversold_rsi",
+  "description": "Enter long when price touches Bollinger upper band but RSI shows oversold conditions, capturing mean reversion as overbought price extremes revert while underlying momentum remains weak.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "close", "op": ">=", "value": "bb_upper_24_2"},
+        {"factor": "rsi_14", "op": "<", "value": 40.0},
+        {"factor": "return_24h", "op": "<", "value": -0.015},
+        {"factor": "zscore_48", "op": ">", "value": 1.2}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "<", "value": "sma_24"},
+        {"factor": "rsi_14", "op": ">", "value": 52.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.025}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 120
+}
+```

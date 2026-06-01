@@ -1,0 +1,31 @@
+```json
+{
+  "name": "low_volatility_regime_breakout",
+  "description": "Enter long when realized volatility drops below 0.015 and price crosses above SMA(50) with positive MACD histogram, capturing trend-following breakouts as low-volatility compression historically precedes sustained directional moves in crypto markets.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": "<", "value": 0.015},
+        {"factor": "close", "op": "crosses_above", "value": "sma_50"},
+        {"factor": "macd_hist", "op": ">", "value": 0.0},
+        {"factor": "return_24h", "op": ">", "value": 0.005}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": ">", "value": 0.035},
+        {"factor": "close", "op": "crosses_below", "value": "sma_50"}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_168h", "op": ">", "value": 0.1}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 240
+}
+```

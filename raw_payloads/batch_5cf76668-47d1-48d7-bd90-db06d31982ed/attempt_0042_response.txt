@@ -1,0 +1,31 @@
+```json
+{
+  "name": "bb_mean_reversion_oversold_bounce",
+  "description": "Enter long when price crosses below Bollinger lower band with RSI oversold, capturing mean reversion as extreme deviations typically reverse to the mean within 24-48 hours due to profit-taking by short-term traders.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "<", "value": "bb_upper_24_2"},
+        {"factor": "zscore_48", "op": "<", "value": -1.5},
+        {"factor": "rsi_14", "op": "<", "value": 35.0},
+        {"factor": "return_24h", "op": "<", "value": -0.015}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "zscore_48", "op": ">", "value": 0.0},
+        {"factor": "return_24h", "op": ">", "value": 0.02}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "rsi_14", "op": ">", "value": 60.0}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 72
+}
+```

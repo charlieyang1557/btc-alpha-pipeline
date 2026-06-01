@@ -1,0 +1,29 @@
+```json
+{
+  "name": "oversold_bb_reversion",
+  "description": "Enter long when price touches lower Bollinger band with oversold RSI, exploiting mean reversion as extreme volatility-adjusted deviations tend to reverse in range-bound crypto markets.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "<", "value": "bb_upper_24_2"},
+        {"factor": "zscore_48", "op": "<", "value": -1.8},
+        {"factor": "rsi_14", "op": "<", "value": 35.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "zscore_48", "op": ">", "value": 0.5}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "rsi_14", "op": ">", "value": 65.0}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 96
+}
+```

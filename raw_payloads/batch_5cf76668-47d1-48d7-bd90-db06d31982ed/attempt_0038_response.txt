@@ -1,0 +1,32 @@
+```json
+{
+  "name": "vol_contraction_breakout_atr",
+  "description": "Enter long when realized volatility compresses below 1-month average while price breaks above 20-day moving average, capturing breakouts as volatility contraction followed by directional move typically signals regime shift to trending phase.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": "<", "value": 0.015},
+        {"factor": "close", "op": "crosses_above", "value": "sma_20"},
+        {"factor": "atr_14", "op": "<", "value": 800.0},
+        {"factor": "return_24h", "op": ">", "value": 0.005}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": ">", "value": 0.035},
+        {"factor": "return_24h", "op": "<", "value": 0.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_below", "value": "sma_20"},
+        {"factor": "rsi_14", "op": "<", "value": 45.0}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 336
+}
+```

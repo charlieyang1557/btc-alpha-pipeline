@@ -1,0 +1,32 @@
+```json
+{
+  "name": "macd_hist_positive_acceleration",
+  "description": "Enter long when MACD histogram turns positive with rising RSI momentum above 50, capturing early-stage trend acceleration as short-term momentum builds strength relative to longer-term moving averages.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "macd_hist", "op": "crosses_above", "value": 0.0},
+        {"factor": "rsi_14", "op": ">", "value": 50.0},
+        {"factor": "rsi_14", "op": "<", "value": 70.0},
+        {"factor": "return_24h", "op": ">", "value": 0.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "macd_hist", "op": "crosses_below", "value": 0.0},
+        {"factor": "rsi_14", "op": "<", "value": 45.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "rsi_14", "op": ">", "value": 75.0},
+        {"factor": "return_24h", "op": ">", "value": 0.03}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 336
+}
+```

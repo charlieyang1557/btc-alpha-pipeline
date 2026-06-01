@@ -1,0 +1,30 @@
+```json
+{
+  "name": "bb_mean_reversion_vol_confirm",
+  "description": "Enter long when price crosses below the lower Bollinger band with declining realized volatility, capturing oversold mean reversion opportunities where price extremes coincide with stabilizing market conditions.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_below", "value": "bb_upper_24_2"},
+        {"factor": "realized_vol_24h", "op": "<", "value": 0.025},
+        {"factor": "rsi_14", "op": "<", "value": 40.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_above", "value": "sma_24"},
+        {"factor": "rsi_14", "op": ">", "value": 55.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.04}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 120
+}
+```

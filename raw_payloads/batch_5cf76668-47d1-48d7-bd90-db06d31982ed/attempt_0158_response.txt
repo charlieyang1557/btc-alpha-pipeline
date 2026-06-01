@@ -1,0 +1,31 @@
+```json
+{
+  "name": "vol_regime_breakout_158",
+  "description": "Enter long when realized volatility spikes above 2% while price crosses above SMA(50) and RSI exceeds 60, capturing high-volatility regime breakouts as elevated volatility accelerates trend-following momentum when trend and momentum align.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": ">", "value": 0.02},
+        {"factor": "close", "op": "crosses_above", "value": "sma_50"},
+        {"factor": "rsi_14", "op": ">", "value": 60.0},
+        {"factor": "macd_hist", "op": ">", "value": 0.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": "<", "value": 0.01},
+        {"factor": "rsi_14", "op": "<", "value": 50.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.035}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 168
+}
+```

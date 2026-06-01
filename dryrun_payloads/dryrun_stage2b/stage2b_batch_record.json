@@ -1,0 +1,810 @@
+{
+  "stage_label": "d7_stage2b",
+  "record_version": "1.0",
+  "batch_uuid": "5cf76668-47d1-48d7-bd90-db06d31982ed",
+  "fire_script_command": "python scripts/run_d7_stage2b_batch.py --stub",
+  "fire_timestamp_utc_start": "2026-04-18T13:11:43.970306Z",
+  "fire_timestamp_utc_end": "2026-04-18T13:12:04.078612Z",
+  "d7b_prompt_template_sha256": "f2d6e9d5856be025a2109a1440f8980a3d786bc5cdd284f4d414d06a4680eda7",
+  "selection_json_sha256": "88ef1dc3a3928b9f44c103c81ed72da6a6a5ea266374e85c214f06aa83d2ee1f",
+  "expectations_file_sha256": "5a2c51a0f0f31b00adc1300cbee86f9e355872175eb857e375f12d2a1ba32a83",
+  "selection_commit_timestamp_utc": "2026-04-18T12:24:47Z",
+  "expectations_commit_timestamp_utc": "2026-04-18T13:11:31Z",
+  "selection_tier": 0,
+  "selection_warnings_count": 0,
+  "sequence_aborted": false,
+  "abort_reason": null,
+  "abort_at_call_index": null,
+  "completed_call_count": 5,
+  "total_wall_clock_seconds": 20.108,
+  "inter_call_sleep_seconds": 5,
+  "total_actual_cost_usd": 0.0,
+  "total_estimated_cost_usd": 0.0,
+  "total_input_tokens": 0,
+  "total_output_tokens": 0,
+  "reasoning_lengths_in_call_order": [
+    295,
+    295,
+    295,
+    295,
+    295
+  ],
+  "actual_costs_in_call_order": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "estimated_costs_in_call_order": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "input_tokens_in_call_order": [
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "output_tokens_in_call_order": [
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "wall_clock_seconds_in_call_order": [
+    0.012,
+    0.012,
+    0.017,
+    0.016,
+    0.015
+  ],
+  "critic_statuses_in_call_order": [
+    "ok",
+    "ok",
+    "ok",
+    "ok",
+    "ok"
+  ],
+  "d7b_error_categories_in_call_order": [
+    null,
+    null,
+    null,
+    null,
+    null
+  ],
+  "d7a_scores_by_call": {
+    "1": {
+      "theme_coherence": 0.4286,
+      "structural_novelty": 1.0,
+      "default_momentum_fallback": 0.5,
+      "complexity_appropriateness": 0.4
+    },
+    "2": {
+      "theme_coherence": 0.2,
+      "structural_novelty": 1.0,
+      "default_momentum_fallback": 0.8,
+      "complexity_appropriateness": 0.7
+    },
+    "3": {
+      "theme_coherence": 0.2,
+      "structural_novelty": 1.0,
+      "default_momentum_fallback": 0.8,
+      "complexity_appropriateness": 0.7
+    },
+    "4": {
+      "theme_coherence": 0.5,
+      "structural_novelty": 0.5,
+      "default_momentum_fallback": 0.5,
+      "complexity_appropriateness": 0.4
+    },
+    "5": {
+      "theme_coherence": 0.2,
+      "structural_novelty": 1.0,
+      "default_momentum_fallback": 0.8,
+      "complexity_appropriateness": 0.7
+    }
+  },
+  "d7b_scores_by_call": {
+    "1": {
+      "semantic_plausibility": 0.5,
+      "semantic_theme_alignment": 0.5,
+      "structural_variant_risk": 0.5
+    },
+    "2": {
+      "semantic_plausibility": 0.5,
+      "semantic_theme_alignment": 0.5,
+      "structural_variant_risk": 0.5
+    },
+    "3": {
+      "semantic_plausibility": 0.5,
+      "semantic_theme_alignment": 0.5,
+      "structural_variant_risk": 0.5
+    },
+    "4": {
+      "semantic_plausibility": 0.5,
+      "semantic_theme_alignment": 0.5,
+      "structural_variant_risk": 0.5
+    },
+    "5": {
+      "semantic_plausibility": 0.5,
+      "semantic_theme_alignment": 0.5,
+      "structural_variant_risk": 0.5
+    }
+  },
+  "agreement_divergence_reconciliation_by_call": {
+    "1": {
+      "pre_registered_label": "divergence_expected",
+      "d7b_structural_variant_risk": 0.5,
+      "observed_consistent_with_label": false,
+      "rationale": "divergence_expected with D7b structural_variant_risk 0.5000 = high (>= 0.5) contradicts pre-registered label"
+    },
+    "2": {
+      "pre_registered_label": "divergence_expected",
+      "d7b_structural_variant_risk": 0.5,
+      "observed_consistent_with_label": false,
+      "rationale": "divergence_expected with D7b structural_variant_risk 0.5000 = high (>= 0.5) contradicts pre-registered label"
+    },
+    "3": {
+      "pre_registered_label": "divergence_expected",
+      "d7b_structural_variant_risk": 0.5,
+      "observed_consistent_with_label": false,
+      "rationale": "divergence_expected with D7b structural_variant_risk 0.5000 = high (>= 0.5) contradicts pre-registered label"
+    },
+    "4": {
+      "pre_registered_label": "agreement_expected",
+      "d7b_structural_variant_risk": 0.5,
+      "observed_consistent_with_label": true,
+      "rationale": "agreement_expected with D7b structural_variant_risk 0.5000 = high (>= 0.5) supports pre-registered label"
+    },
+    "5": {
+      "pre_registered_label": "neutral",
+      "d7b_structural_variant_risk": 0.5,
+      "observed_consistent_with_label": null,
+      "rationale": "neutral label has no structural_variant_risk prediction; not reconciled"
+    }
+  },
+  "per_call_records": [
+    {
+      "request_timestamp_utc": "2026-04-18T13:11:43.973301Z",
+      "response_timestamp_utc": "2026-04-18T13:11:43.984886Z",
+      "wall_clock_seconds": 0.012,
+      "retry_count": 0,
+      "d7b_mode": "stub",
+      "critic_result": {
+        "critic_version": "d7_v1",
+        "critic_status": "ok",
+        "d7b_mode": "stub",
+        "d7a_rule_scores": {
+          "theme_coherence": 0.4286,
+          "structural_novelty": 1.0,
+          "default_momentum_fallback": 0.5,
+          "complexity_appropriateness": 0.4
+        },
+        "d7a_supporting_measures": {
+          "factor_set_prior_occurrences": 0,
+          "n_factors": 7,
+          "n_conditions": 8,
+          "description_length": 175,
+          "max_hold_bars": 168,
+          "n_entry_groups": 1,
+          "n_exit_groups": 2
+        },
+        "d7a_rule_flags": [
+          "n_conditions_heavy"
+        ],
+        "d7b_llm_scores": {
+          "semantic_plausibility": 0.5,
+          "semantic_theme_alignment": 0.5,
+          "structural_variant_risk": 0.5
+        },
+        "d7b_reasoning": "[STUB REASONING — D7b is in stub mode, no live LLM critic was invoked. All scores are fixed at 0.5. This text is NOT generated by any model. Stage 1 uses this stub to establish the D7 orchestration contract without introducing an LLM confounder. Stage 2 replaces this with a live Sonnet critic.]",
+        "d7b_raw_response_path": null,
+        "d7b_cost_actual_usd": 0.0,
+        "d7b_input_tokens": 0,
+        "d7b_output_tokens": 0,
+        "d7b_retry_count": 0,
+        "d7b_scan_results": {
+          "forbidden_language_scan": {
+            "status": "pass",
+            "hits": [],
+            "terms_checked_count": 21
+          },
+          "refusal_scan": {
+            "status": "pass",
+            "hits": [],
+            "patterns_checked": [
+              "\\bi cannot\\b",
+              "\\bi can't\\b",
+              "\\bunable to\\b",
+              "\\brefuse to\\b",
+              "\\bdecline to\\b",
+              "\\bcannot evaluate\\b",
+              "\\bcan not evaluate\\b"
+            ]
+          }
+        },
+        "critic_timing_ms": {
+          "d7a_ms": 0.061,
+          "d7b_ms": 0.135
+        },
+        "critic_error_signature": null,
+        "critic_error_full_path": null
+      },
+      "ledger_row": {
+        "row_id": "0faf72c1-fff9-46b6-a06e-12b525cc8655",
+        "batch_id": "5cf76668-47d1-48d7-bd90-db06d31982ed",
+        "api_call_kind": "d7b_critic_stub",
+        "backend_kind": "d7b_critic",
+        "call_role": "critique",
+        "estimated_cost_usd": 0.0,
+        "actual_cost_usd": 0.0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      "raw_payload_paths": {
+        "prompt": "dryrun_payloads/dryrun_stage2b/raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0017_prompt.txt",
+        "response": null,
+        "traceback": null,
+        "critic_result": "dryrun_payloads/dryrun_stage2b/raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0017_critic_result.json"
+      },
+      "cost": {
+        "estimated_usd": 0.0,
+        "actual_usd": 0.0,
+        "ratio": null
+      },
+      "leakage_audit_result": {
+        "status": "pass",
+        "violations": [],
+        "protected_terms_checked_count": 28
+      },
+      "forbidden_language_scan_result": {
+        "status": "pass",
+        "hits": [],
+        "terms_checked_count": 21
+      },
+      "refusal_scan_result": {
+        "status": "pass",
+        "hits": [],
+        "patterns_checked": [
+          "\\bi cannot\\b",
+          "\\bi can't\\b",
+          "\\bunable to\\b",
+          "\\brefuse to\\b",
+          "\\bdecline to\\b",
+          "\\bcannot evaluate\\b",
+          "\\bcan not evaluate\\b"
+        ]
+      },
+      "firing_order": 1,
+      "candidate_position": 17,
+      "candidate_theme": "mean_reversion",
+      "candidate_hypothesis_hash": "17396a8e291dae75",
+      "pre_registered_label": "divergence_expected",
+      "prior_factor_sets_count": 16,
+      "theme_hint_factor_count": 5,
+      "prompt_chars": 5810,
+      "prompt_sha256": "daa986f7e28454f88dae2a793fe74ee7338504e23372684d2991e437a5c1dc24",
+      "call_index_in_sequence": 1,
+      "inter_call_sleep_elapsed_seconds": 0.0,
+      "critic_status": "ok",
+      "critic_error_signature": null,
+      "actual_cost_usd": 0.0,
+      "d7b_error_category": null
+    },
+    {
+      "request_timestamp_utc": "2026-04-18T13:11:48.991487Z",
+      "response_timestamp_utc": "2026-04-18T13:11:49.003929Z",
+      "wall_clock_seconds": 0.012,
+      "retry_count": 0,
+      "d7b_mode": "stub",
+      "critic_result": {
+        "critic_version": "d7_v1",
+        "critic_status": "ok",
+        "d7b_mode": "stub",
+        "d7a_rule_scores": {
+          "theme_coherence": 0.2,
+          "structural_novelty": 1.0,
+          "default_momentum_fallback": 0.8,
+          "complexity_appropriateness": 0.7
+        },
+        "d7a_supporting_measures": {
+          "factor_set_prior_occurrences": 0,
+          "n_factors": 5,
+          "n_conditions": 6,
+          "description_length": 225,
+          "max_hold_bars": 336,
+          "n_entry_groups": 1,
+          "n_exit_groups": 2
+        },
+        "d7a_rule_flags": [
+          "n_conditions_heavy"
+        ],
+        "d7b_llm_scores": {
+          "semantic_plausibility": 0.5,
+          "semantic_theme_alignment": 0.5,
+          "structural_variant_risk": 0.5
+        },
+        "d7b_reasoning": "[STUB REASONING — D7b is in stub mode, no live LLM critic was invoked. All scores are fixed at 0.5. This text is NOT generated by any model. Stage 1 uses this stub to establish the D7 orchestration contract without introducing an LLM confounder. Stage 2 replaces this with a live Sonnet critic.]",
+        "d7b_raw_response_path": null,
+        "d7b_cost_actual_usd": 0.0,
+        "d7b_input_tokens": 0,
+        "d7b_output_tokens": 0,
+        "d7b_retry_count": 0,
+        "d7b_scan_results": {
+          "forbidden_language_scan": {
+            "status": "pass",
+            "hits": [],
+            "terms_checked_count": 21
+          },
+          "refusal_scan": {
+            "status": "pass",
+            "hits": [],
+            "patterns_checked": [
+              "\\bi cannot\\b",
+              "\\bi can't\\b",
+              "\\bunable to\\b",
+              "\\brefuse to\\b",
+              "\\bdecline to\\b",
+              "\\bcannot evaluate\\b",
+              "\\bcan not evaluate\\b"
+            ]
+          }
+        },
+        "critic_timing_ms": {
+          "d7a_ms": 0.163,
+          "d7b_ms": 0.326
+        },
+        "critic_error_signature": null,
+        "critic_error_full_path": null
+      },
+      "ledger_row": {
+        "row_id": "9a5c259b-de74-423a-86e1-4ccf30376f98",
+        "batch_id": "5cf76668-47d1-48d7-bd90-db06d31982ed",
+        "api_call_kind": "d7b_critic_stub",
+        "backend_kind": "d7b_critic",
+        "call_role": "critique",
+        "estimated_cost_usd": 0.0,
+        "actual_cost_usd": 0.0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      "raw_payload_paths": {
+        "prompt": "dryrun_payloads/dryrun_stage2b/raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0073_prompt.txt",
+        "response": null,
+        "traceback": null,
+        "critic_result": "dryrun_payloads/dryrun_stage2b/raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0073_critic_result.json"
+      },
+      "cost": {
+        "estimated_usd": 0.0,
+        "actual_usd": 0.0,
+        "ratio": null
+      },
+      "leakage_audit_result": {
+        "status": "pass",
+        "violations": [],
+        "protected_terms_checked_count": 28
+      },
+      "forbidden_language_scan_result": {
+        "status": "pass",
+        "hits": [],
+        "terms_checked_count": 21
+      },
+      "refusal_scan_result": {
+        "status": "pass",
+        "hits": [],
+        "patterns_checked": [
+          "\\bi cannot\\b",
+          "\\bi can't\\b",
+          "\\bunable to\\b",
+          "\\brefuse to\\b",
+          "\\bdecline to\\b",
+          "\\bcannot evaluate\\b",
+          "\\bcan not evaluate\\b"
+        ]
+      },
+      "firing_order": 2,
+      "candidate_position": 73,
+      "candidate_theme": "volatility_regime",
+      "candidate_hypothesis_hash": "ab3c1725e1cf4890",
+      "pre_registered_label": "divergence_expected",
+      "prior_factor_sets_count": 60,
+      "theme_hint_factor_count": 3,
+      "prompt_chars": 8429,
+      "prompt_sha256": "c08de31afaec8085832f5e1b2df2610fefd3974ed6452b5069377ae85aab8f14",
+      "call_index_in_sequence": 2,
+      "inter_call_sleep_elapsed_seconds": 5.005,
+      "critic_status": "ok",
+      "critic_error_signature": null,
+      "actual_cost_usd": 0.0,
+      "d7b_error_category": null
+    },
+    {
+      "request_timestamp_utc": "2026-04-18T13:11:54.010333Z",
+      "response_timestamp_utc": "2026-04-18T13:11:54.027344Z",
+      "wall_clock_seconds": 0.017,
+      "retry_count": 0,
+      "d7b_mode": "stub",
+      "critic_result": {
+        "critic_version": "d7_v1",
+        "critic_status": "ok",
+        "d7b_mode": "stub",
+        "d7a_rule_scores": {
+          "theme_coherence": 0.2,
+          "structural_novelty": 1.0,
+          "default_momentum_fallback": 0.8,
+          "complexity_appropriateness": 0.7
+        },
+        "d7a_supporting_measures": {
+          "factor_set_prior_occurrences": 0,
+          "n_factors": 5,
+          "n_conditions": 6,
+          "description_length": 185,
+          "max_hold_bars": 240,
+          "n_entry_groups": 1,
+          "n_exit_groups": 2
+        },
+        "d7a_rule_flags": [
+          "n_conditions_heavy"
+        ],
+        "d7b_llm_scores": {
+          "semantic_plausibility": 0.5,
+          "semantic_theme_alignment": 0.5,
+          "structural_variant_risk": 0.5
+        },
+        "d7b_reasoning": "[STUB REASONING — D7b is in stub mode, no live LLM critic was invoked. All scores are fixed at 0.5. This text is NOT generated by any model. Stage 1 uses this stub to establish the D7 orchestration contract without introducing an LLM confounder. Stage 2 replaces this with a live Sonnet critic.]",
+        "d7b_raw_response_path": null,
+        "d7b_cost_actual_usd": 0.0,
+        "d7b_input_tokens": 0,
+        "d7b_output_tokens": 0,
+        "d7b_retry_count": 0,
+        "d7b_scan_results": {
+          "forbidden_language_scan": {
+            "status": "pass",
+            "hits": [],
+            "terms_checked_count": 21
+          },
+          "refusal_scan": {
+            "status": "pass",
+            "hits": [],
+            "patterns_checked": [
+              "\\bi cannot\\b",
+              "\\bi can't\\b",
+              "\\bunable to\\b",
+              "\\brefuse to\\b",
+              "\\bdecline to\\b",
+              "\\bcannot evaluate\\b",
+              "\\bcan not evaluate\\b"
+            ]
+          }
+        },
+        "critic_timing_ms": {
+          "d7a_ms": 0.195,
+          "d7b_ms": 0.398
+        },
+        "critic_error_signature": null,
+        "critic_error_full_path": null
+      },
+      "ledger_row": {
+        "row_id": "ff48aa27-c9ae-4560-99ab-b7a2f6b3f302",
+        "batch_id": "5cf76668-47d1-48d7-bd90-db06d31982ed",
+        "api_call_kind": "d7b_critic_stub",
+        "backend_kind": "d7b_critic",
+        "call_role": "critique",
+        "estimated_cost_usd": 0.0,
+        "actual_cost_usd": 0.0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      "raw_payload_paths": {
+        "prompt": "dryrun_payloads/dryrun_stage2b/raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0074_prompt.txt",
+        "response": null,
+        "traceback": null,
+        "critic_result": "dryrun_payloads/dryrun_stage2b/raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0074_critic_result.json"
+      },
+      "cost": {
+        "estimated_usd": 0.0,
+        "actual_usd": 0.0,
+        "ratio": null
+      },
+      "leakage_audit_result": {
+        "status": "pass",
+        "violations": [],
+        "protected_terms_checked_count": 28
+      },
+      "forbidden_language_scan_result": {
+        "status": "pass",
+        "hits": [],
+        "terms_checked_count": 21
+      },
+      "refusal_scan_result": {
+        "status": "pass",
+        "hits": [],
+        "patterns_checked": [
+          "\\bi cannot\\b",
+          "\\bi can't\\b",
+          "\\bunable to\\b",
+          "\\brefuse to\\b",
+          "\\bdecline to\\b",
+          "\\bcannot evaluate\\b",
+          "\\bcan not evaluate\\b"
+        ]
+      },
+      "firing_order": 3,
+      "candidate_position": 74,
+      "candidate_theme": "volume_divergence",
+      "candidate_hypothesis_hash": "eb019d8da279abb2",
+      "pre_registered_label": "divergence_expected",
+      "prior_factor_sets_count": 61,
+      "theme_hint_factor_count": 1,
+      "prompt_chars": 8422,
+      "prompt_sha256": "fcc0678e0e3a9081f575203c892b84cf567d98e9bf78895423203d79cf2fc1ea",
+      "call_index_in_sequence": 3,
+      "inter_call_sleep_elapsed_seconds": 5.003,
+      "critic_status": "ok",
+      "critic_error_signature": null,
+      "actual_cost_usd": 0.0,
+      "d7b_error_category": null
+    },
+    {
+      "request_timestamp_utc": "2026-04-18T13:11:59.036030Z",
+      "response_timestamp_utc": "2026-04-18T13:11:59.052330Z",
+      "wall_clock_seconds": 0.016,
+      "retry_count": 0,
+      "d7b_mode": "stub",
+      "critic_result": {
+        "critic_version": "d7_v1",
+        "critic_status": "ok",
+        "d7b_mode": "stub",
+        "d7a_rule_scores": {
+          "theme_coherence": 0.5,
+          "structural_novelty": 0.5,
+          "default_momentum_fallback": 0.5,
+          "complexity_appropriateness": 0.4
+        },
+        "d7a_supporting_measures": {
+          "factor_set_prior_occurrences": 1,
+          "n_factors": 6,
+          "n_conditions": 8,
+          "description_length": 215,
+          "max_hold_bars": 120,
+          "n_entry_groups": 1,
+          "n_exit_groups": 2
+        },
+        "d7a_rule_flags": [
+          "n_conditions_heavy"
+        ],
+        "d7b_llm_scores": {
+          "semantic_plausibility": 0.5,
+          "semantic_theme_alignment": 0.5,
+          "structural_variant_risk": 0.5
+        },
+        "d7b_reasoning": "[STUB REASONING — D7b is in stub mode, no live LLM critic was invoked. All scores are fixed at 0.5. This text is NOT generated by any model. Stage 1 uses this stub to establish the D7 orchestration contract without introducing an LLM confounder. Stage 2 replaces this with a live Sonnet critic.]",
+        "d7b_raw_response_path": null,
+        "d7b_cost_actual_usd": 0.0,
+        "d7b_input_tokens": 0,
+        "d7b_output_tokens": 0,
+        "d7b_retry_count": 0,
+        "d7b_scan_results": {
+          "forbidden_language_scan": {
+            "status": "pass",
+            "hits": [],
+            "terms_checked_count": 21
+          },
+          "refusal_scan": {
+            "status": "pass",
+            "hits": [],
+            "patterns_checked": [
+              "\\bi cannot\\b",
+              "\\bi can't\\b",
+              "\\bunable to\\b",
+              "\\brefuse to\\b",
+              "\\bdecline to\\b",
+              "\\bcannot evaluate\\b",
+              "\\bcan not evaluate\\b"
+            ]
+          }
+        },
+        "critic_timing_ms": {
+          "d7a_ms": 0.166,
+          "d7b_ms": 0.318
+        },
+        "critic_error_signature": null,
+        "critic_error_full_path": null
+      },
+      "ledger_row": {
+        "row_id": "f275bfeb-833f-45cc-8570-23b5ea0561a7",
+        "batch_id": "5cf76668-47d1-48d7-bd90-db06d31982ed",
+        "api_call_kind": "d7b_critic_stub",
+        "backend_kind": "d7b_critic",
+        "call_role": "critique",
+        "estimated_cost_usd": 0.0,
+        "actual_cost_usd": 0.0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      "raw_payload_paths": {
+        "prompt": "dryrun_payloads/dryrun_stage2b/raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0097_prompt.txt",
+        "response": null,
+        "traceback": null,
+        "critic_result": "dryrun_payloads/dryrun_stage2b/raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0097_critic_result.json"
+      },
+      "cost": {
+        "estimated_usd": 0.0,
+        "actual_usd": 0.0,
+        "ratio": null
+      },
+      "leakage_audit_result": {
+        "status": "pass",
+        "violations": [],
+        "protected_terms_checked_count": 28
+      },
+      "forbidden_language_scan_result": {
+        "status": "pass",
+        "hits": [],
+        "terms_checked_count": 21
+      },
+      "refusal_scan_result": {
+        "status": "pass",
+        "hits": [],
+        "patterns_checked": [
+          "\\bi cannot\\b",
+          "\\bi can't\\b",
+          "\\bunable to\\b",
+          "\\brefuse to\\b",
+          "\\bdecline to\\b",
+          "\\bcannot evaluate\\b",
+          "\\bcan not evaluate\\b"
+        ]
+      },
+      "firing_order": 4,
+      "candidate_position": 97,
+      "candidate_theme": "mean_reversion",
+      "candidate_hypothesis_hash": "1f8cbe2ba01c13a9",
+      "pre_registered_label": "agreement_expected",
+      "prior_factor_sets_count": 76,
+      "theme_hint_factor_count": 5,
+      "prompt_chars": 9663,
+      "prompt_sha256": "92db19662e199789ed2ee062f5843ce9bd5b5263ee76be6ef0d313458d13b090",
+      "call_index_in_sequence": 4,
+      "inter_call_sleep_elapsed_seconds": 5.005,
+      "critic_status": "ok",
+      "critic_error_signature": null,
+      "actual_cost_usd": 0.0,
+      "d7b_error_category": null
+    },
+    {
+      "request_timestamp_utc": "2026-04-18T13:12:04.060236Z",
+      "response_timestamp_utc": "2026-04-18T13:12:04.075347Z",
+      "wall_clock_seconds": 0.015,
+      "retry_count": 0,
+      "d7b_mode": "stub",
+      "critic_result": {
+        "critic_version": "d7_v1",
+        "critic_status": "ok",
+        "d7b_mode": "stub",
+        "d7a_rule_scores": {
+          "theme_coherence": 0.2,
+          "structural_novelty": 1.0,
+          "default_momentum_fallback": 0.8,
+          "complexity_appropriateness": 0.7
+        },
+        "d7a_supporting_measures": {
+          "factor_set_prior_occurrences": 0,
+          "n_factors": 5,
+          "n_conditions": 6,
+          "description_length": 249,
+          "max_hold_bars": 72,
+          "n_entry_groups": 1,
+          "n_exit_groups": 2
+        },
+        "d7a_rule_flags": [
+          "n_conditions_heavy"
+        ],
+        "d7b_llm_scores": {
+          "semantic_plausibility": 0.5,
+          "semantic_theme_alignment": 0.5,
+          "structural_variant_risk": 0.5
+        },
+        "d7b_reasoning": "[STUB REASONING — D7b is in stub mode, no live LLM critic was invoked. All scores are fixed at 0.5. This text is NOT generated by any model. Stage 1 uses this stub to establish the D7 orchestration contract without introducing an LLM confounder. Stage 2 replaces this with a live Sonnet critic.]",
+        "d7b_raw_response_path": null,
+        "d7b_cost_actual_usd": 0.0,
+        "d7b_input_tokens": 0,
+        "d7b_output_tokens": 0,
+        "d7b_retry_count": 0,
+        "d7b_scan_results": {
+          "forbidden_language_scan": {
+            "status": "pass",
+            "hits": [],
+            "terms_checked_count": 21
+          },
+          "refusal_scan": {
+            "status": "pass",
+            "hits": [],
+            "patterns_checked": [
+              "\\bi cannot\\b",
+              "\\bi can't\\b",
+              "\\bunable to\\b",
+              "\\brefuse to\\b",
+              "\\bdecline to\\b",
+              "\\bcannot evaluate\\b",
+              "\\bcan not evaluate\\b"
+            ]
+          }
+        },
+        "critic_timing_ms": {
+          "d7a_ms": 0.221,
+          "d7b_ms": 0.362
+        },
+        "critic_error_signature": null,
+        "critic_error_full_path": null
+      },
+      "ledger_row": {
+        "row_id": "259a628f-ec60-47a6-b7bf-87532d22aa04",
+        "batch_id": "5cf76668-47d1-48d7-bd90-db06d31982ed",
+        "api_call_kind": "d7b_critic_stub",
+        "backend_kind": "d7b_critic",
+        "call_role": "critique",
+        "estimated_cost_usd": 0.0,
+        "actual_cost_usd": 0.0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      "raw_payload_paths": {
+        "prompt": "dryrun_payloads/dryrun_stage2b/raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0138_prompt.txt",
+        "response": null,
+        "traceback": null,
+        "critic_result": "dryrun_payloads/dryrun_stage2b/raw_payloads/batch_5cf76668-47d1-48d7-bd90-db06d31982ed/critic/call_0138_critic_result.json"
+      },
+      "cost": {
+        "estimated_usd": 0.0,
+        "actual_usd": 0.0,
+        "ratio": null
+      },
+      "leakage_audit_result": {
+        "status": "pass",
+        "violations": [],
+        "protected_terms_checked_count": 28
+      },
+      "forbidden_language_scan_result": {
+        "status": "pass",
+        "hits": [],
+        "terms_checked_count": 21
+      },
+      "refusal_scan_result": {
+        "status": "pass",
+        "hits": [],
+        "patterns_checked": [
+          "\\bi cannot\\b",
+          "\\bi can't\\b",
+          "\\bunable to\\b",
+          "\\brefuse to\\b",
+          "\\bdecline to\\b",
+          "\\bcannot evaluate\\b",
+          "\\bcan not evaluate\\b"
+        ]
+      },
+      "firing_order": 5,
+      "candidate_position": 138,
+      "candidate_theme": "volatility_regime",
+      "candidate_hypothesis_hash": "9da35eee117da577",
+      "pre_registered_label": "neutral",
+      "prior_factor_sets_count": 99,
+      "theme_hint_factor_count": 3,
+      "prompt_chars": 11077,
+      "prompt_sha256": "d0140dba58858188d83ceb649b65ac6c6ddd87e2f197c71b297e2905d8a05545",
+      "call_index_in_sequence": 5,
+      "inter_call_sleep_elapsed_seconds": 5.005,
+      "critic_status": "ok",
+      "critic_error_signature": null,
+      "actual_cost_usd": 0.0,
+      "d7b_error_category": null
+    }
+  ],
+  "write_completed_at": "2026-04-18T13:12:04.079038Z"
+}

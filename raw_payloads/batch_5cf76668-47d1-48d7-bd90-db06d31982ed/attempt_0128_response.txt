@@ -1,0 +1,30 @@
+```json
+{
+  "name": "low_vol_regime_breakout",
+  "description": "Enter long when realized volatility drops below -1 z-score and price crosses above EMA-12, capturing breakouts from volatility compression where low-vol regimes precede directional moves as market uncertainty resolves.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": "<", "value": 0.015},
+        {"factor": "close", "op": "crosses_above", "value": "ema_12"},
+        {"factor": "volume_zscore_24h", "op": ">", "value": 0.5}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": ">", "value": 0.035},
+        {"factor": "close", "op": "crosses_below", "value": "ema_12"}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.05}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 168
+}
+```

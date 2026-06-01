@@ -1,0 +1,31 @@
+```json
+{
+  "name": "bb_squeeze_mean_reversion_197",
+  "description": "Enter long when price touches lower Bollinger band with low volatility (atr_14 declining) and oversold RSI, capturing mean reversion as compressed volatility at band extremes signals exhaustion and imminent snap-back to moving average.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "<=", "value": "bb_upper_24_2"},
+        {"factor": "zscore_48", "op": "<", "value": -1.2},
+        {"factor": "rsi_14", "op": "<", "value": 35.0},
+        {"factor": "realized_vol_24h", "op": "<", "value": 0.03}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_above", "value": "sma_24"},
+        {"factor": "rsi_14", "op": ">", "value": 55.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.02}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 144
+}
+```

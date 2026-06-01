@@ -1,0 +1,32 @@
+```json
+{
+  "name": "monday_low_vol_momentum_entry",
+  "description": "Enter long on Mondays when realized volatility is below 0.02 and MACD histogram turns positive with price above SMA(20), capturing calendar-anomaly momentum as Monday starts with compressed volatility historically precede weekly trend continuations in crypto markets.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "==", "value": 0},
+        {"factor": "realized_vol_24h", "op": "<", "value": 0.02},
+        {"factor": "macd_hist", "op": ">", "value": 0.0},
+        {"factor": "close", "op": ">", "value": "sma_20"}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": ">=", "value": 4},
+        {"factor": "return_24h", "op": ">", "value": 0.03}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "macd_hist", "op": "<", "value": 0.0},
+        {"factor": "close", "op": "crosses_below", "value": "sma_20"}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 168
+}
+```

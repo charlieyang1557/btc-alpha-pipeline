@@ -1,0 +1,30 @@
+```json
+{
+  "name": "volatility_expansion_breakout",
+  "description": "Enter long when realized volatility expands above 1.5 standard deviations while price crosses above 20-period SMA, capturing volatility regime shift where increased turbulence coincides with upward momentum breakout signaling directional conviction.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": ">", "value": 0.03},
+        {"factor": "close", "op": "crosses_above", "value": "sma_20"},
+        {"factor": "volume_zscore_24h", "op": ">", "value": 1.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": "<", "value": 0.015},
+        {"factor": "close", "op": "crosses_below", "value": "sma_20"}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.03}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 72
+}
+```

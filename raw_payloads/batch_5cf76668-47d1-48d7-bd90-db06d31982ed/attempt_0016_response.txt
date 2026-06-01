@@ -1,0 +1,32 @@
+```json
+{
+  "name": "macd_momentum_surge",
+  "description": "Enter long when MACD histogram turns positive and crosses above zero while price is above its 50-bar average, capturing the acceleration phase of momentum as short-term trend strengthens relative to medium-term trend.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "macd_hist", "op": "crosses_above", "value": 0.0},
+        {"factor": "close", "op": ">", "value": "sma_50"},
+        {"factor": "rsi_14", "op": ">", "value": 48.0},
+        {"factor": "rsi_14", "op": "<", "value": 70.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "macd_hist", "op": "crosses_below", "value": 0.0},
+        {"factor": "rsi_14", "op": ">", "value": 72.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_below", "value": "sma_20"},
+        {"factor": "return_1h", "op": "<", "value": -0.02}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 168
+}
+```

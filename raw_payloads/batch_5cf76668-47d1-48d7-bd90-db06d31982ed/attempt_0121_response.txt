@@ -1,0 +1,31 @@
+```json
+{
+  "name": "macd_rsi_dual_momentum_surge",
+  "description": "Enter long when MACD histogram crosses above zero while RSI exceeds 55, capturing early-stage momentum acceleration where MACD trend reversal confirms directional shift and RSI above neutral signals sustained buying pressure before overbought extremes.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "macd_hist", "op": "crosses_above", "value": 0.0},
+        {"factor": "rsi_14", "op": ">", "value": 55.0},
+        {"factor": "close", "op": ">", "value": "sma_50"}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "macd_hist", "op": "crosses_below", "value": 0.0},
+        {"factor": "rsi_14", "op": "<", "value": 45.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "rsi_14", "op": ">", "value": 78.0},
+        {"factor": "return_24h", "op": ">", "value": 0.04}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 168
+}
+```

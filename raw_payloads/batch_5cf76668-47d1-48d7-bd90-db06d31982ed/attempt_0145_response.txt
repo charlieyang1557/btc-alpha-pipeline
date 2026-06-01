@@ -1,0 +1,32 @@
+```json
+{
+  "name": "weekend_volatility_fade_145",
+  "description": "Enter long on Sunday when realized volatility exceeds 3.5% and price is below 20-period moving average, capturing mean reversion as weekend illiquidity amplifies volatility extremes that systematically normalize during weekday institutional trading sessions.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "==", "value": 6},
+        {"factor": "realized_vol_24h", "op": ">", "value": 0.035},
+        {"factor": "close", "op": "<", "value": "sma_20"},
+        {"factor": "rsi_14", "op": "<", "value": 40.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "==", "value": 1},
+        {"factor": "return_24h", "op": ">", "value": 0.015}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_above", "value": "sma_20"},
+        {"factor": "realized_vol_24h", "op": "<", "value": 0.025}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 72
+}
+```

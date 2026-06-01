@@ -1,0 +1,30 @@
+```json
+{
+  "name": "macd_histogram_momentum_surge",
+  "description": "Enter long when MACD histogram crosses above zero while RSI exceeds 50 and volume is elevated, capturing momentum acceleration where histogram crossover confirms trend strength and institutional participation validates directional conviction.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "macd_hist", "op": "crosses_above", "value": 0.0},
+        {"factor": "rsi_14", "op": ">", "value": 50.0},
+        {"factor": "volume_zscore_24h", "op": ">", "value": 0.5}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "macd_hist", "op": "crosses_below", "value": 0.0},
+        {"factor": "rsi_14", "op": "<", "value": 45.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.04}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 144
+}
+```

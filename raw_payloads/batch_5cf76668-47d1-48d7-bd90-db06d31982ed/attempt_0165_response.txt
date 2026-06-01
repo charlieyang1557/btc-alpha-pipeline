@@ -1,0 +1,31 @@
+```json
+{
+  "name": "weekend_momentum_fade_165",
+  "description": "Enter long on Sundays when RSI is oversold and price below SMA(20) while MACD histogram is positive, capturing weekend sentiment reversals as reduced weekend trading activity creates temporary mispricings that fade when institutional flow resumes Monday.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "==", "value": 6},
+        {"factor": "rsi_14", "op": "<", "value": 40.0},
+        {"factor": "close", "op": "<", "value": "sma_20"},
+        {"factor": "macd_hist", "op": ">", "value": 0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "rsi_14", "op": ">", "value": 55.0},
+        {"factor": "close", "op": "crosses_above", "value": "sma_20"}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.025}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 72
+}
+```

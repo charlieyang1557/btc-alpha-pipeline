@@ -1,0 +1,25 @@
+```json
+{
+  "name": "low_vol_breakout_continuation",
+  "description": "Buy when volatility compresses below average and price crosses above SMA(50), expecting a sustained trend continuation in a calmer regime.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": "<", "value": 0.015},
+        {"factor": "close", "op": "crosses_above", "value": "sma_50"},
+        {"factor": "return_24h", "op": ">", "value": 0.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_below", "value": "ema_26"},
+        {"factor": "realized_vol_24h", "op": ">", "value": 0.03}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 336
+}
+```

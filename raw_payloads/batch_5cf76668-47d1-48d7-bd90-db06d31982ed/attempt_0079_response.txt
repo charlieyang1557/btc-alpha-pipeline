@@ -1,0 +1,31 @@
+```json
+{
+  "name": "volume_divergence_momentum_breakout",
+  "description": "Enter long when price momentum is strong but volume z-score is declining, capturing breakouts that occur on lower relative volume which often precede sustained trend moves as late entrants chase price.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.02},
+        {"factor": "volume_zscore_24h", "op": "<", "value": -0.5},
+        {"factor": "ema_12", "op": ">", "value": "ema_26"},
+        {"factor": "rsi_14", "op": ">", "value": 55.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "volume_zscore_24h", "op": ">", "value": 1.5},
+        {"factor": "rsi_14", "op": ">", "value": 72.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_168h", "op": ">", "value": 0.10}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 336
+}
+```

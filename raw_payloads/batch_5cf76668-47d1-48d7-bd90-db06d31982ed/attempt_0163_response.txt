@@ -1,0 +1,31 @@
+```json
+{
+  "name": "volatility_regime_shift_163",
+  "description": "Enter long when realized volatility drops below 2% while price trades above SMA(50) and RSI remains neutral, capturing low-volatility regime stability as subdued volatility with established uptrend signals persistent accumulation before next directional move.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": "<", "value": 0.02},
+        {"factor": "close", "op": ">", "value": "sma_50"},
+        {"factor": "rsi_14", "op": ">", "value": 45.0},
+        {"factor": "rsi_14", "op": "<", "value": 60.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": ">", "value": 0.035},
+        {"factor": "rsi_14", "op": ">", "value": 70.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_168h", "op": ">", "value": 0.05}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 336
+}
+```

@@ -1,0 +1,32 @@
+```json
+{
+  "name": "bb_lower_bounce_rsi_vol_filter",
+  "description": "Enter long when price crosses above Bollinger lower band from oversold RSI levels while realized volatility remains elevated, capturing mean-reversion bounces where stretched price deviations combined with oversold momentum signal exhaustion and subsequent snapback to the mean.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_above", "value": "bb_upper_24_2"},
+        {"factor": "rsi_14", "op": "<", "value": 38.0},
+        {"factor": "realized_vol_24h", "op": ">", "value": 0.016},
+        {"factor": "zscore_48", "op": "<", "value": -1.2}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "rsi_14", "op": ">", "value": 60.0},
+        {"factor": "zscore_48", "op": ">", "value": 0.3}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.035},
+        {"factor": "macd_hist", "op": "crosses_below", "value": 0.0}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 168
+}
+```

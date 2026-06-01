@@ -1,0 +1,30 @@
+```json
+{
+  "name": "bollinger_squeeze_mean_reversion",
+  "description": "Enter long when price crosses below the lower Bollinger band while RSI is oversold below 30, capturing mean reversion where extreme deviation from the 24-bar moving average signals overextension and imminent snapback to the mean.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "<", "value": "bb_upper_24_2"},
+        {"factor": "zscore_48", "op": "<", "value": -1.5},
+        {"factor": "rsi_14", "op": "<", "value": 30.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_above", "value": "sma_24"},
+        {"factor": "rsi_14", "op": ">", "value": 50.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.04}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 144
+}
+```

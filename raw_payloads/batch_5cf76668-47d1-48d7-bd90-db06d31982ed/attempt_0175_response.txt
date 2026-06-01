@@ -1,0 +1,31 @@
+```json
+{
+  "name": "monday_weakness_reversal_175",
+  "description": "Enter long on Mondays when price is oversold (RSI<40) and close is below SMA(20), capturing calendar-based mean-reversion as weekend negative sentiment and Monday morning selling exhausts into classic week-start reversal patterns.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "==", "value": 0},
+        {"factor": "rsi_14", "op": "<", "value": 40.0},
+        {"factor": "close", "op": "<", "value": "sma_20"},
+        {"factor": "return_24h", "op": "<", "value": -0.015}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "rsi_14", "op": ">", "value": 55.0},
+        {"factor": "close", "op": "crosses_above", "value": "sma_20"}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_168h", "op": ">", "value": 0.05}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 168
+}
+```

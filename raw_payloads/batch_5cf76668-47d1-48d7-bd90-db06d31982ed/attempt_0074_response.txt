@@ -1,0 +1,30 @@
+```json
+{
+  "name": "volume_divergence_breakout",
+  "description": "Enter long when volume z-score exceeds 2.0 with price crossing above SMA(20) but RSI below 60, capturing early breakouts confirmed by unusual volume before momentum indicators saturate.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "volume_zscore_24h", "op": ">", "value": 2.0},
+        {"factor": "close", "op": "crosses_above", "value": "sma_20"},
+        {"factor": "rsi_14", "op": "<", "value": 60.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "volume_zscore_24h", "op": "<", "value": -0.5},
+        {"factor": "close", "op": "crosses_below", "value": "sma_20"}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_168h", "op": ">", "value": 0.1}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 240
+}
+```

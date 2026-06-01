@@ -188,6 +188,17 @@ FUNDING_FACTORS = [
     "funding_sign",
 ]
 
+# FIX 3: Path C Phase B added 5 basis factors with input_source="basis" — exclude
+# them from the ohlcv-default assertion so the test's intent (OHLCV factors keep
+# the default) is preserved without false failures on the new non-OHLCV sources.
+EXPECTED_BASIS_FACTORS = [
+    "basis_sign",
+    "basis_ewm_240",
+    "basis_ewm_480",
+    "basis_pct_rank_2160",
+    "basis_ewm_240_pctrank_2160",
+]
+
 
 def _fresh_registry():
     from factors.registry import FactorRegistry, _bootstrap_core_factors
@@ -213,10 +224,16 @@ def test_funding_factors_registered_with_funding_input_source():
 
 def test_ohlcv_factors_keep_default_input_source():
     reg = _fresh_registry()
-    # Every non-funding factor must keep the default "ohlcv" input_source.
+    # Every factor that is neither a funding factor nor a basis factor must keep
+    # the default "ohlcv" input_source. Basis factors have input_source="basis"
+    # (Path C Phase B Task B5) — they are explicitly excluded here so that adding
+    # new non-OHLCV sources does not require re-opening this test each time.
+    non_ohlcv = set(FUNDING_FACTORS) | set(EXPECTED_BASIS_FACTORS)
     for name in reg.list_names():
-        if name not in FUNDING_FACTORS:
-            assert reg.get(name).input_source == "ohlcv"
+        if name not in non_ohlcv:
+            assert reg.get(name).input_source == "ohlcv", (
+                f"{name}: expected input_source='ohlcv' for non-funding non-basis factor"
+            )
 
 
 def test_funding_factor_warmups_declared():

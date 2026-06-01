@@ -1,0 +1,32 @@
+```json
+{
+  "name": "low_vol_breakout_expansion",
+  "description": "Enter long when realized volatility contracts below 2% threshold then price breaks above SMA(50) with positive MACD, capturing breakout momentum as volatility regime shifts from compression to expansion.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": "<", "value": 0.02},
+        {"factor": "close", "op": "crosses_above", "value": "sma_50"},
+        {"factor": "macd_hist", "op": ">", "value": 0.0},
+        {"factor": "rsi_14", "op": ">", "value": 50.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": ">", "value": 0.05},
+        {"factor": "rsi_14", "op": ">", "value": 70.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_below", "value": "sma_50"},
+        {"factor": "macd_hist", "op": "crosses_below", "value": 0.0}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 240
+}
+```

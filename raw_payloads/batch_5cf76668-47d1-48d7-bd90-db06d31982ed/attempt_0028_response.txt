@@ -1,0 +1,32 @@
+```json
+{
+  "name": "vol_spike_fade_regime_shift",
+  "description": "Enter long when realized volatility spikes above 4% while price remains near moving average support, capturing mean-reversion as transient volatility shocks dissipate and regime stabilizes toward lower-vol equilibrium.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": ">", "value": 0.04},
+        {"factor": "close", "op": ">", "value": "sma_50"},
+        {"factor": "zscore_48", "op": "<", "value": 0.5},
+        {"factor": "rsi_14", "op": "<", "value": 50.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": "<", "value": 0.025},
+        {"factor": "return_24h", "op": ">", "value": 0.015}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_below", "value": "sma_50"},
+        {"factor": "rsi_14", "op": "<", "value": 35.0}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 240
+}
+```

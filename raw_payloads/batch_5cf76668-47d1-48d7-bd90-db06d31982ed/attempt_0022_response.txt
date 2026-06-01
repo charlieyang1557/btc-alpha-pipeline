@@ -1,0 +1,32 @@
+```json
+{
+  "name": "bb_reversion_oversold",
+  "description": "Enter long when price touches lower Bollinger band with RSI oversold, capturing mean reversion as extreme deviations from moving average normalize toward equilibrium.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "<", "value": "bb_upper_24_2"},
+        {"factor": "rsi_14", "op": "<", "value": 35.0},
+        {"factor": "zscore_48", "op": "<", "value": -1.5},
+        {"factor": "realized_vol_24h", "op": ">", "value": 0.025}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "rsi_14", "op": ">", "value": 55.0},
+        {"factor": "zscore_48", "op": ">", "value": 0.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_1h", "op": ">", "value": 0.02},
+        {"factor": "close", "op": "crosses_above", "value": "sma_24"}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 72
+}
+```

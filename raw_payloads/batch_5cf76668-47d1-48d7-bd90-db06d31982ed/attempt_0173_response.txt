@@ -1,0 +1,31 @@
+```json
+{
+  "name": "volatility_regime_breakout_173",
+  "description": "Enter long when realized volatility spikes above 2 standard deviations while price crosses above EMA(12) and MACD histogram is positive, capturing breakout continuation as elevated volatility regime signals increased directional momentum and trend acceleration rather than mean-reversion conditions.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": ">", "value": 0.05},
+        {"factor": "close", "op": "crosses_above", "value": "ema_12"},
+        {"factor": "macd_hist", "op": ">", "value": 0.0},
+        {"factor": "volume_zscore_24h", "op": ">", "value": 1.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_below", "value": "ema_12"},
+        {"factor": "macd_hist", "op": "<", "value": 0.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.06}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 72
+}
+```

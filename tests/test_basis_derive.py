@@ -226,6 +226,30 @@ def test_basis_rel_boundary_exactly_five_percent():
 
 
 # ---------------------------------------------------------------------------
+# Step 4b: duplicate timestamp guard (FIX 1 — silent row-multiplication)
+# ---------------------------------------------------------------------------
+
+
+def test_basis_rel_raises_on_duplicate_timestamp():
+    """A mark frame with a duplicated open_time_utc must raise ValueError, not
+    silently row-multiply the merged output.
+
+    Guards the intra-stream duplicate protection added in FIX 1: the 5%
+    cross-stream fraction guard uses set-union and does NOT catch INTRA-stream
+    duplicates — a duplicated timestamp in mark would previously produce 2 rows
+    for that bar in the inner join, corrupting all factors. The new guard raises
+    before the merge.
+    """
+    t = pd.date_range("2020-01-01", periods=5, freq="1h", tz="UTC")
+    # Duplicate the second timestamp in mark — simulates data corruption.
+    mark_times = list(t[[0, 1, 1, 3, 4]].astype(str))  # t[1] appears twice
+    mark = _mark(mark_times, [7005.0, 7006.0, 7006.5, 7007.0, 7008.0])
+    spot = _spot(list(t.astype(str)), [7000.0] * 5)
+    with pytest.raises(ValueError, match="cross-stream"):
+        derive_basis_rel(mark, spot)
+
+
+# ---------------------------------------------------------------------------
 # Step 5: causality sentinel (mirror Path A/B G2)
 # ---------------------------------------------------------------------------
 

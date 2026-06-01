@@ -1,0 +1,31 @@
+```json
+{
+  "name": "bollinger_mean_reversion_157",
+  "description": "Enter long when price crosses below Bollinger lower band while RSI is oversold, capturing mean-reversion as price deviation from statistical bounds combined with oversold momentum systematically reverses toward mean.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "<", "value": "bb_upper_24_2"},
+        {"factor": "rsi_14", "op": "<", "value": 35.0},
+        {"factor": "zscore_48", "op": "<", "value": -1.5},
+        {"factor": "realized_vol_24h", "op": ">", "value": 0.015}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "rsi_14", "op": ">", "value": 65.0},
+        {"factor": "zscore_48", "op": ">", "value": 0.5}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.025}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 120
+}
+```

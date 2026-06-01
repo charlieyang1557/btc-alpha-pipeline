@@ -1,0 +1,31 @@
+```json
+{
+  "name": "vol_regime_breakout",
+  "description": "Enter long when realized volatility spikes above 1.5 standard deviations while price breaks above 20-day SMA, exploiting high-volatility regime transitions that precede sustained directional moves in crypto markets.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": ">", "value": 0.015},
+        {"factor": "volume_zscore_24h", "op": ">", "value": 1.5},
+        {"factor": "close", "op": "crosses_above", "value": "sma_20"},
+        {"factor": "return_1h", "op": ">", "value": 0.002}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_below", "value": "sma_20"}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": "<", "value": 0.008},
+        {"factor": "return_24h", "op": ">", "value": 0.04}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 168
+}
+```

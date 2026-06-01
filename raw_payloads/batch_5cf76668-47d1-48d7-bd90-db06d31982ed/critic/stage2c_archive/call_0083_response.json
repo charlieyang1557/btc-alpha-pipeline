@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.8500,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy constructs a coherent narrative: it waits for realized volatility compression below 1.5%, then enters on a bullish SMA50 breakout confirmed by neutral-bullish RSI and elevated volume. Exit logic balances volatility expansion (>4.5%) with overbought RSI or trend reversal. This structure is economically defensible as a regime-shift play from consolidation to momentum. The theme alignment is strong—realized_vol_24h is central to both entry and exit, directly addressing volatility regime transitions, and the hint factor list explicitly includes it. However, structural variant risk is elevated: the factor set {close, realized_vol_24h, rsi_14, sma_50, volume_zscore_24h} closely matches prior #13 and #48, differing primarily in the absence of return_1h and sometimes sma_20. The operational logic (crosses_above vs. comparative operators, volatility thresholds) differs, but the fundamental factor combination has been explored multiple times in this batch, suggesting this is a threshold/operator variant rather than a structurally novel bet."
+}
+```

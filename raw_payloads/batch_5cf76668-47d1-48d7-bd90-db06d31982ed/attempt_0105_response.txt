@@ -1,0 +1,32 @@
+```json
+{
+  "name": "monday_dip_buy_rsi_recovery",
+  "description": "Enter long on Mondays when RSI is oversold below 40 and price is above 50-bar SMA, capturing weekend sentiment reset and early-week mean reversion as institutional flows typically resume after lower weekend liquidity.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "==", "value": 0},
+        {"factor": "rsi_14", "op": "<", "value": 40.0},
+        {"factor": "close", "op": ">", "value": "sma_50"},
+        {"factor": "return_24h", "op": "<", "value": -0.01}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "rsi_14", "op": ">", "value": 58.0},
+        {"factor": "return_24h", "op": ">", "value": 0.025}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "==", "value": 4},
+        {"factor": "hour_of_day", "op": ">=", "value": 16}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 120
+}
+```

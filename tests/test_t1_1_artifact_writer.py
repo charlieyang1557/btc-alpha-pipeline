@@ -1960,6 +1960,7 @@ class TestBCNarrowPhase0EngineExtension:
             db_path=tmp_path / "test_eq_curve.db",
             execution_config_path=Path("config/execution_phase4_15bps.yaml"),
             env_config=env_config_override_forward_2026,
+            manifest_dir=tmp_path / "manifests",
         )
         assert isinstance(result.equity_curve, pd.Series)
         assert len(result.equity_curve) > 0, (
@@ -2016,6 +2017,7 @@ class TestBCNarrowPhase0EngineExtension:
             db_path=db_path,
             execution_config_path=Path("config/execution_phase4_15bps.yaml"),
             env_config=env_config_override_forward_2026,
+            manifest_dir=tmp_path / "manifests",
             # 4 LC-b kwargs (cost_anchor_id NOT passed):
             run_id_override=run_id,
             source_batch_id="test-source-batch-lcb",
@@ -2147,6 +2149,7 @@ class TestBCNarrowPhase0EngineExtension:
             db_path=tmp_path / "test_call_order.db",
             execution_config_path=Path("config/execution_phase4_15bps.yaml"),
             env_config=env_config_override_forward_2026,
+            manifest_dir=tmp_path / "manifests",
             run_id_override="test_co_001",
             source_batch_id="test-co-bsi",
             parent_run_id_override="test-parent-override",
@@ -2187,6 +2190,7 @@ class TestBCNarrowPhase0EngineExtension:
             parquet_path=str(btc_parquet_path),
             db_path=tmp_path / "test_legacy.db",
             env_config=env_config_override_forward_2026,
+            manifest_dir=tmp_path / "manifests",
         )
         assert result.run_id is not None
         assert result.hypothesis_hash is not None and len(result.hypothesis_hash) == 64
@@ -2226,6 +2230,7 @@ class TestBCNarrowPhase0EngineExtension:
                 db_path=tmp_path / "test_empty_rid.db",
                 execution_config_path=Path("config/execution_phase4_15bps.yaml"),
                 env_config=env_config_override_forward_2026,
+                manifest_dir=tmp_path / "manifests",
                 run_id_override="",  # invalid empty
                 source_batch_id="test-bsi",
                 parent_run_id_override="test-prio",
@@ -2254,6 +2259,7 @@ class TestBCNarrowPhase0EngineExtension:
                 db_path=tmp_path / "test_empty_sbi.db",
                 execution_config_path=Path("config/execution_phase4_15bps.yaml"),
                 env_config=env_config_override_forward_2026,
+                manifest_dir=tmp_path / "manifests",
                 run_id_override="test-rid-valid",
                 source_batch_id="",
                 parent_run_id_override="test-prio",
@@ -2328,6 +2334,7 @@ class TestBCNarrowPhase0EngineExtension:
             parquet_path=str(btc_parquet_path),
             db_path=db_path,
             env_config=env_config_override_forward_2026,
+            manifest_dir=tmp_path / "manifests",
             run_id_override="test-rid",  # set but ignored without artifact_dir
             source_batch_id="test-bsi",  # set but ignored without artifact_dir
             parent_run_id_override="test-prio",  # set but ignored without artifact_dir
@@ -2384,6 +2391,7 @@ class TestBCNarrowPhase0EngineExtension:
             db_path=db_path,
             execution_config_path=Path("config/execution_phase4_15bps.yaml"),
             env_config=env_config_override_forward_2026,
+            manifest_dir=tmp_path / "manifests",
             run_id_override=run_id, source_batch_id="test-canon-bsi",
             parent_run_id_override="test-prio", artifact_dir=artifact_dir,
         )

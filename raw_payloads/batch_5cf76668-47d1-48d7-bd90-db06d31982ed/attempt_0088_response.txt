@@ -1,0 +1,32 @@
+```json
+{
+  "name": "volatility_expansion_momentum_breakout",
+  "description": "Enter long when realized volatility expands sharply above recent norms while price breaks above 20-day SMA, capturing trending moves as volatility regime shifts from compression to expansion often precede sustained directional runs.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": ">", "value": 0.035},
+        {"factor": "close", "op": "crosses_above", "value": "sma_20"},
+        {"factor": "volume_zscore_24h", "op": ">", "value": 1.0},
+        {"factor": "macd_hist", "op": ">", "value": 0.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": "<", "value": 0.022},
+        {"factor": "rsi_14", "op": ">", "value": 68.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_below", "value": "sma_20"},
+        {"factor": "return_24h", "op": "<", "value": -0.03}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 168
+}
+```

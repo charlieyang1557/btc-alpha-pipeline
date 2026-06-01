@@ -1,0 +1,32 @@
+```json
+{
+  "name": "bollinger_band_squeeze_vol_expansion_reversal",
+  "description": "Enter long when price touches lower Bollinger band during compressed volatility, capturing mean reversion as price extremes during low-volatility regimes typically snap back toward the mean when volatility expands.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "<", "value": "bb_upper_24_2"},
+        {"factor": "zscore_48", "op": "<", "value": -1.5},
+        {"factor": "realized_vol_24h", "op": "<", "value": 0.025},
+        {"factor": "rsi_14", "op": "<", "value": 38.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "zscore_48", "op": ">", "value": 0.5},
+        {"factor": "rsi_14", "op": ">", "value": 58.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": ">", "value": 0.045},
+        {"factor": "return_24h", "op": ">", "value": 0.025}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 168
+}
+```

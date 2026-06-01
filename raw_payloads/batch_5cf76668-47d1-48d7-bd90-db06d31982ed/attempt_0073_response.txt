@@ -1,0 +1,30 @@
+```json
+{
+  "name": "vol_regime_shift_breakout",
+  "description": "Enter long when realized volatility crosses above 0.025 with price breaking above SMA(50) and positive MACD histogram, capturing volatility regime shifts that historically precede sustained trend extensions in crypto markets.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": "crosses_above", "value": 0.025},
+        {"factor": "close", "op": ">", "value": "sma_50"},
+        {"factor": "macd_hist", "op": ">", "value": 0.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": "<", "value": 0.015},
+        {"factor": "close", "op": "crosses_below", "value": "sma_50"}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_168h", "op": ">", "value": 0.08}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 336
+}
+```

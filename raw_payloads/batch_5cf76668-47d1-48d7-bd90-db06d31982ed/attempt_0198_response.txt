@@ -1,0 +1,31 @@
+```json
+{
+  "name": "volatility_breakout_regime_198",
+  "description": "Enter long when realized volatility surges above 0.04 with positive MACD histogram and price above SMA50, capturing breakout continuation as elevated volatility regime with positive momentum signals sustained directional move rather than mean-reverting chop.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": ">", "value": 0.04},
+        {"factor": "macd_hist", "op": ">", "value": 0.0},
+        {"factor": "close", "op": ">", "value": "sma_50"},
+        {"factor": "return_24h", "op": ">", "value": 0.015}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": "<", "value": 0.025},
+        {"factor": "macd_hist", "op": "crosses_below", "value": 0.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": "<", "value": -0.03}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 240
+}
+```

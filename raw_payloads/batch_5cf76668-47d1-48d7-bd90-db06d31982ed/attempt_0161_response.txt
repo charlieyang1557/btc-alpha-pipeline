@@ -1,0 +1,31 @@
+```json
+{
+  "name": "momentum_continuation_161",
+  "description": "Enter long when price crosses above EMA(12), MACD histogram turns positive, and RSI exceeds 55, capturing momentum continuation as short-term trend alignment with positive momentum indicator signals sustained upward price movement.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_above", "value": "ema_12"},
+        {"factor": "macd_hist", "op": ">", "value": 0.0},
+        {"factor": "rsi_14", "op": ">", "value": 55.0},
+        {"factor": "ema_12", "op": ">", "value": "ema_26"}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "macd_hist", "op": "<", "value": 0.0},
+        {"factor": "rsi_14", "op": "<", "value": 45.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.04}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 144
+}
+```

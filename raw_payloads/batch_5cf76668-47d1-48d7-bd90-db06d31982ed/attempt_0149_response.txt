@@ -1,0 +1,31 @@
+```json
+{
+  "name": "volume_divergence_reversal_149",
+  "description": "Enter long when price makes new 24h low while volume z-score declines below -0.5, capturing bullish divergence where weakening selling pressure during price weakness systematically precedes mean-reversion rallies as exhaustion signals absorption.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": "<", "value": -0.015},
+        {"factor": "volume_zscore_24h", "op": "<", "value": -0.5},
+        {"factor": "rsi_14", "op": "<", "value": 40.0},
+        {"factor": "close", "op": ">", "value": "sma_50"}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "rsi_14", "op": ">", "value": 60.0},
+        {"factor": "volume_zscore_24h", "op": ">", "value": 1.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.025}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 168
+}
+```

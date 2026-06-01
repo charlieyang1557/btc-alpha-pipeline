@@ -1,0 +1,30 @@
+```json
+{
+  "name": "oversold_bbands_mean_reversion",
+  "description": "Enter long when price crosses below Bollinger lower band while RSI is oversold and realized volatility is elevated, capturing mean reversion where statistical extremes signal institutional overreaction and pending snapback to fair value.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_below", "value": "bb_upper_24_2"},
+        {"factor": "rsi_14", "op": "<", "value": 30.0},
+        {"factor": "realized_vol_24h", "op": ">", "value": 0.02}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_above", "value": "sma_24"},
+        {"factor": "rsi_14", "op": ">", "value": 50.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.025}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 96
+}
+```

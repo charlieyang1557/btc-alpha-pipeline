@@ -1,0 +1,32 @@
+```json
+{
+  "name": "monday_close_long",
+  "description": "Enter long at Monday close when RSI is neutral and price above SMA, exploiting the calendar-driven 'Monday effect' where institutional flows resume after the weekend and drive continuation into the week.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "==", "value": 0},
+        {"factor": "rsi_14", "op": ">", "value": 45.0},
+        {"factor": "rsi_14", "op": "<", "value": 60.0},
+        {"factor": "close", "op": ">", "value": "sma_50"}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "==", "value": 4},
+        {"factor": "rsi_14", "op": ">", "value": 65.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_below", "value": "sma_20"},
+        {"factor": "return_1h", "op": "<", "value": -0.015}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 120
+}
+```

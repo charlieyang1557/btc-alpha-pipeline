@@ -1,0 +1,32 @@
+```json
+{
+  "name": "volatility_regime_shift_breakout_capture",
+  "description": "Enter long when realized volatility expands above recent average while price breaks above 20-day SMA, capturing momentum acceleration as volatility regime shifts from compression to expansion typically precede sustained directional moves.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": ">", "value": 0.035},
+        {"factor": "close", "op": "crosses_above", "value": "sma_20"},
+        {"factor": "volume_zscore_24h", "op": ">", "value": 1.2},
+        {"factor": "rsi_14", "op": ">", "value": 52.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": "<", "value": 0.022},
+        {"factor": "rsi_14", "op": ">", "value": 68.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_below", "value": "sma_20"},
+        {"factor": "return_24h", "op": "<", "value": -0.025}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 96
+}
+```

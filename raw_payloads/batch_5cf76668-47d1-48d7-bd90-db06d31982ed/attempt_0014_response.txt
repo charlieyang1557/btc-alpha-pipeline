@@ -1,0 +1,32 @@
+```json
+{
+  "name": "volume_divergence_rally",
+  "description": "Enter long when price advances with declining volume z-score, capturing moves where smart money accumulates quietly before retail participation drives the next leg higher.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.02},
+        {"factor": "volume_zscore_24h", "op": "<", "value": -0.5},
+        {"factor": "rsi_14", "op": ">", "value": 50.0},
+        {"factor": "close", "op": ">", "value": "sma_50"}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "volume_zscore_24h", "op": ">", "value": 1.5},
+        {"factor": "rsi_14", "op": ">", "value": 72.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_below", "value": "sma_20"},
+        {"factor": "return_1h", "op": "<", "value": -0.02}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 120
+}
+```

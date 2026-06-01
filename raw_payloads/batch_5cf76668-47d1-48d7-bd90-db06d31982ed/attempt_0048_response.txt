@@ -1,0 +1,32 @@
+```json
+{
+  "name": "vol_regime_atr_expansion_entry",
+  "description": "Enter long when realized volatility drops below 24-bar average while ATR begins expanding, capturing the transition from low-vol compression to high-vol breakout as institutional positioning shifts ahead of momentum acceleration.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": "<", "value": 0.015},
+        {"factor": "atr_14", "op": "crosses_above", "value": "sma_20"},
+        {"factor": "return_24h", "op": ">", "value": 0.0},
+        {"factor": "rsi_14", "op": ">", "value": 48.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": ">", "value": 0.035},
+        {"factor": "return_24h", "op": ">", "value": 0.025}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "atr_14", "op": "crosses_below", "value": "sma_20"},
+        {"factor": "rsi_14", "op": "<", "value": 45.0}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 240
+}
+```

@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.7500,
+  "reasoning": "The strategy constructs a coherent breakout narrative: volume_zscore_24h exceeding 2.0 signals unusual activity, price crossing above sma_20 confirms directional momentum, and rsi_14 below 60 ensures the move hasn't already exhausted. Exit logic offers two paths—either volume normalization with price reversal, or a 10% profit target. The max_hold_bars parameter adds risk management. Theme alignment is strong; volume_zscore_24h is central to the volume_divergence theme and drives the entry logic. However, the factor set {close, return_168h, rsi_14, sma_20, volume_zscore_24h} closely resembles prior #55 {close, return_1h, return_24h, rsi_14, sma_20, volume_zscore_24h} and #19 {close, macd_hist, return_1h, rsi_14, sma_20, volume_zscore_24h}. While this substitutes return_168h for shorter-horizon returns and omits macd_hist, the core structure (close, rsi_14, sma_20, volume_zscore_24h, plus a return horizon) represents minor variation on an established pattern rather than a fundamentally new structural bet."
+}
+```

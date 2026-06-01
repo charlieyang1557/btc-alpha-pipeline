@@ -1,0 +1,31 @@
+```json
+{
+  "name": "volume_divergence_breakout_174",
+  "description": "Enter long when price crosses above SMA(50) with volume z-score below -0.5, capturing breakouts that occur on unusually low volume as divergence signals reduced selling pressure and potential for sustained move once institutional flows resume.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_above", "value": "sma_50"},
+        {"factor": "volume_zscore_24h", "op": "<", "value": -0.5},
+        {"factor": "rsi_14", "op": ">", "value": 45.0},
+        {"factor": "macd_hist", "op": ">", "value": 0.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_below", "value": "sma_50"},
+        {"factor": "rsi_14", "op": "<", "value": 40.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_168h", "op": ">", "value": 0.08}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 336
+}
+```

@@ -1,0 +1,30 @@
+```json
+{
+  "name": "monday_dip_buy_low_vol",
+  "description": "Enter long on Mondays when price is oversold (RSI<35) and volatility is subdued (realized_vol<0.02), capturing the calendar anomaly where institutional flows resume mid-week and reverse weekend sell-offs in low-volatility regimes.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "==", "value": 0},
+        {"factor": "rsi_14", "op": "<", "value": 35.0},
+        {"factor": "realized_vol_24h", "op": "<", "value": 0.02}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "rsi_14", "op": "crosses_above", "value": 55.0},
+        {"factor": "return_24h", "op": ">", "value": 0.03}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "==", "value": 4}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 96
+}
+```

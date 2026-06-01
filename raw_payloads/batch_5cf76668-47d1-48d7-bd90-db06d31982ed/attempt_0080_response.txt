@@ -1,0 +1,31 @@
+```json
+{
+  "name": "monday_mean_reversion_entry",
+  "description": "Enter long on Mondays when price is oversold and below short-term moving average, capturing systematic mean reversion after weekend sentiment reset often drives Monday recovery in crypto markets.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "==", "value": 0},
+        {"factor": "rsi_14", "op": "<", "value": 45.0},
+        {"factor": "close", "op": "<", "value": "sma_20"},
+        {"factor": "return_24h", "op": "<", "value": -0.01}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "rsi_14", "op": ">", "value": 58.0},
+        {"factor": "close", "op": ">", "value": "sma_20"}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.03}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 168
+}
+```

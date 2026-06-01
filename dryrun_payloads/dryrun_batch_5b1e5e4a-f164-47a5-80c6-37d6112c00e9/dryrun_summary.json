@@ -1,0 +1,11 @@
+{
+  "batch_uuid": "5b1e5e4a-f164-47a5-80c6-37d6112c00e9",
+  "position": 102,
+  "source": "synthetic",
+  "theme": "volatility",
+  "critic_status": "ok",
+  "d7b_mode": "stub",
+  "result_path": "dryrun_payloads/dryrun_batch_5b1e5e4a-f164-47a5-80c6-37d6112c00e9/dryrun_critic_result_0102.json",
+  "ledger_path": "dryrun_payloads/ledger_dryrun.db",
+  "ledger_row_id": "815dc1d5-01f4-43ab-b4d7-d87f9b414fbf"
+}

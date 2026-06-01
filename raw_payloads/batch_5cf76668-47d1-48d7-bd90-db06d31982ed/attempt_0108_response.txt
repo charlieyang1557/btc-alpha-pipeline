@@ -1,0 +1,32 @@
+```json
+{
+  "name": "vol_regime_shift_momentum_entry",
+  "description": "Enter long when realized volatility crosses above 2% threshold with positive MACD histogram and rising EMA-12, capturing regime shifts from low to high volatility that often precede sustained trending moves as increased volatility tends to persist and amplify directional momentum.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": "crosses_above", "value": 0.02},
+        {"factor": "macd_hist", "op": ">", "value": 0.0},
+        {"factor": "ema_12", "op": ">", "value": "ema_26"},
+        {"factor": "return_1h", "op": ">", "value": 0.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": "crosses_below", "value": 0.015},
+        {"factor": "macd_hist", "op": "<", "value": 0.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.05},
+        {"factor": "rsi_14", "op": ">", "value": 75.0}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 144
+}
+```

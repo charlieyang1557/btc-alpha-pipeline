@@ -1,0 +1,32 @@
+```json
+{
+  "name": "rsi_oversold_momentum_reversal",
+  "description": "Enter long when RSI-14 crosses above 30 from oversold with positive MACD histogram and price above EMA-12, capturing momentum reversals where oversold conditions resolve with improving technical momentum as mean-reversion combines with nascent trend formation.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "rsi_14", "op": "crosses_above", "value": 30.0},
+        {"factor": "macd_hist", "op": ">", "value": 0.0},
+        {"factor": "close", "op": ">", "value": "ema_12"},
+        {"factor": "return_1h", "op": ">", "value": 0.001}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "rsi_14", "op": ">", "value": 65.0},
+        {"factor": "return_24h", "op": ">", "value": 0.03}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "macd_hist", "op": "crosses_below", "value": 0.0},
+        {"factor": "close", "op": "<", "value": "ema_12"}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 168
+}
+```

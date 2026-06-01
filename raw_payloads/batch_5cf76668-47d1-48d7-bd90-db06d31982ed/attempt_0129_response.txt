@@ -1,0 +1,30 @@
+```json
+{
+  "name": "volume_divergence_momentum_shift",
+  "description": "Enter long when volume z-score crosses above 1.0 while price remains below EMA-26 and RSI is oversold below 40, capturing volume divergence where accumulation precedes price confirmation as institutional flows signal imminent trend reversal.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "volume_zscore_24h", "op": "crosses_above", "value": 1.0},
+        {"factor": "close", "op": "<", "value": "ema_26"},
+        {"factor": "rsi_14", "op": "<", "value": 40.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_above", "value": "ema_26"},
+        {"factor": "rsi_14", "op": ">", "value": 55.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "volume_zscore_24h", "op": "<", "value": -0.5}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 120
+}
+```

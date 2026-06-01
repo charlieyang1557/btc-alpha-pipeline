@@ -1,0 +1,31 @@
+```json
+{
+  "name": "monday_dip_reversal_170",
+  "description": "Enter long on Monday after a weekly decline when price is below SMA(50) and RSI is oversold, capturing calendar-driven mean-reversion as institutional flows and sentiment resets on week-start often reverse prior weekend/late-Friday selling pressure.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "==", "value": 0},
+        {"factor": "return_168h", "op": "<", "value": -0.03},
+        {"factor": "close", "op": "<", "value": "sma_50"},
+        {"factor": "rsi_14", "op": "<", "value": 38.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_above", "value": "sma_50"},
+        {"factor": "rsi_14", "op": ">", "value": 55.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.04}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 120
+}
+```

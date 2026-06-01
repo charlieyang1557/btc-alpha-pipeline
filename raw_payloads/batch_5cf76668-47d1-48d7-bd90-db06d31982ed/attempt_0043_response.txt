@@ -1,0 +1,32 @@
+```json
+{
+  "name": "volatility_breakout_expansion_trade",
+  "description": "Enter long when realized volatility expands above 3% and price crosses above SMA(20) with positive momentum, capturing volatility regime shifts as expansion from compressed levels signals institutional repositioning and trend acceleration.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": ">", "value": 0.03},
+        {"factor": "close", "op": "crosses_above", "value": "sma_20"},
+        {"factor": "macd_hist", "op": ">", "value": 0.0},
+        {"factor": "return_24h", "op": ">", "value": 0.01}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": "<", "value": 0.015},
+        {"factor": "return_24h", "op": ">", "value": 0.03}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_below", "value": "sma_20"},
+        {"factor": "macd_hist", "op": "<", "value": 0.0}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 168
+}
+```

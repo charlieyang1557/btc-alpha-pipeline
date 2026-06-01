@@ -1,0 +1,32 @@
+```json
+{
+  "name": "monday_dip_buy",
+  "description": "Enter long on Monday when price is oversold (RSI < 40) and below SMA(20), capturing calendar-driven mean reversion as weekend sentiment normalizes during weekly market reopening.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "==", "value": 0},
+        {"factor": "rsi_14", "op": "<", "value": 40.0},
+        {"factor": "close", "op": "<", "value": "sma_20"},
+        {"factor": "return_24h", "op": "<", "value": -0.02}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "rsi_14", "op": ">", "value": 55.0},
+        {"factor": "close", "op": "crosses_above", "value": "sma_20"}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": ">=", "value": 3},
+        {"factor": "return_1h", "op": ">", "value": 0.015}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 120
+}
+```

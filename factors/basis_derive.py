@@ -72,6 +72,20 @@ def derive_basis_rel(
     mark = mark.sort_values("open_time_utc").reset_index(drop=True)
     spot = spot.sort_values("open_time_utc").reset_index(drop=True)
 
+    # Guard against intra-stream duplicate timestamps, which would cause silent
+    # row-multiplication on the inner merge (the 5% cross-stream set-union guard
+    # does NOT catch INTRA-stream duplicates).
+    if not mark["open_time_utc"].is_unique:
+        raise ValueError(
+            "cross-stream: duplicate open_time_utc in markprice stream — "
+            "each timestamp must appear at most once."
+        )
+    if not spot["open_time_utc"].is_unique:
+        raise ValueError(
+            "cross-stream: duplicate open_time_utc in spot stream — "
+            "each timestamp must appear at most once."
+        )
+
     mark_times: pd.Index = pd.Index(mark["open_time_utc"])
     spot_times: pd.Index = pd.Index(spot["open_time_utc"])
 
@@ -116,11 +130,14 @@ def derive_basis_rel(
         )
 
     # Inner join: keep only the shared timestamps.
+    # validate="one_to_one" enforces that neither side has duplicate join keys,
+    # providing a second-layer guard even if the assertions above are somehow bypassed.
     merged = pd.merge(
         mark[["open_time_utc", "mark_close"]],
         spot[["open_time_utc", "close"]],
         on="open_time_utc",
         how="inner",
+        validate="one_to_one",
     )
     merged = merged.sort_values("open_time_utc").reset_index(drop=True)
     spot_close = merged["close"].replace(0, float("nan"))

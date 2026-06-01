@@ -1,0 +1,30 @@
+```json
+{
+  "name": "monday_effect_momentum_long",
+  "description": "Buy on Monday mornings when short-term momentum is positive, exploiting potential weekend sentiment reset and weekly capital inflow patterns in crypto markets.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "==", "value": 0},
+        {"factor": "hour_of_day", "op": ">=", "value": 8},
+        {"factor": "hour_of_day", "op": "<=", "value": 12},
+        {"factor": "return_24h", "op": ">", "value": 0.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "return_1h", "op": "<", "value": -0.01}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": ">", "value": 0}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 72
+}
+```

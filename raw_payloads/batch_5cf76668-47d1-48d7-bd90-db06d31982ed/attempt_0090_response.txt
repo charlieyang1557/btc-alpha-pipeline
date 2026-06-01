@@ -1,0 +1,32 @@
+```json
+{
+  "name": "monday_volatility_fade_calendar_mean_reversion",
+  "description": "Enter long on Mondays when volatility is compressed and price is oversold, capturing weekend sentiment resets as Monday sessions often exhibit mean-reverting behavior following elevated weekend risk aversion.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "==", "value": 0},
+        {"factor": "realized_vol_24h", "op": "<", "value": 0.028},
+        {"factor": "rsi_14", "op": "<", "value": 42.0},
+        {"factor": "zscore_48", "op": "<", "value": -1.2}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "rsi_14", "op": ">", "value": 55.0},
+        {"factor": "return_24h", "op": ">", "value": 0.02}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": ">=", "value": 3},
+        {"factor": "zscore_48", "op": ">", "value": 0.3}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 72
+}
+```

@@ -1,0 +1,32 @@
+```json
+{
+  "name": "volatility_expansion_breakout",
+  "description": "Enter long when realized volatility spikes above historical average with positive momentum, capturing directional breakouts as volatility regime shifts from compression to expansion typically precede sustained trends.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": ">", "value": 0.035},
+        {"factor": "volume_zscore_24h", "op": ">", "value": 1.5},
+        {"factor": "return_24h", "op": ">", "value": 0.015},
+        {"factor": "rsi_14", "op": ">", "value": 52.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": "<", "value": 0.02},
+        {"factor": "rsi_14", "op": "<", "value": 48.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": "<", "value": -0.025},
+        {"factor": "volume_zscore_24h", "op": "<", "value": -0.5}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 240
+}
+```

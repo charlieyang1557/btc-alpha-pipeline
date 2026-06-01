@@ -1,0 +1,32 @@
+```json
+{
+  "name": "vol_regime_shift_contraction_entry",
+  "description": "Enter long when realized volatility falls below 0.018 after elevated levels while price crosses above SMA-50 and RSI exceeds 50, capturing post-volatility-spike trend resumption as regime shift from high to low volatility typically precedes sustained directional moves with reduced noise.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": "<", "value": 0.018},
+        {"factor": "close", "op": "crosses_above", "value": "sma_50"},
+        {"factor": "rsi_14", "op": ">", "value": 50.0},
+        {"factor": "return_168h", "op": ">", "value": 0.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": ">", "value": 0.032},
+        {"factor": "rsi_14", "op": ">", "value": 75.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_below", "value": "sma_50"},
+        {"factor": "return_24h", "op": "<", "value": -0.025}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 336
+}
+```

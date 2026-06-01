@@ -72,23 +72,59 @@ _MARKPRICE_SCHEMA_COLUMNS = [
 ]
 
 
+def _redact_url(url: str) -> str:
+    """Strip userinfo (username:password) from a URL before logging.
+
+    ``http://user:pass@host:port/path`` → ``http://host:port/path``
+    ``http://host:port/path`` (no credentials) → unchanged.
+    """
+    try:
+        from urllib.parse import urlparse, urlunparse
+        parsed = urlparse(url)
+        # Replace netloc with host-only (drop user:pass@)
+        redacted = parsed._replace(netloc=parsed.hostname + (
+            f":{parsed.port}" if parsed.port else ""
+        ))
+        return urlunparse(redacted)
+    except Exception:
+        return "<proxy-url>"
+
+
+# Allowlist of CCXT exchange identifiers accepted by create_exchange.
+# Guards against arbitrary code execution via unvalidated --exchange CLI input.
+_ALLOWED_EXCHANGES = frozenset(ccxt.exchanges)
+
+
 def create_exchange(exchange_id: str = "binance", proxy: str | None = None) -> ccxt.Exchange:
     """Create a CCXT exchange instance with rate limiting enabled.
 
     Args:
         exchange_id: CCXT exchange identifier (default "binance").
+            Must be a known CCXT exchange (validated against ccxt.exchanges).
         proxy: Optional HTTP(S) proxy URL. Also read from CCXT_PROXY env var.
 
     Returns:
         Configured exchange instance with markets loaded.
+
+    Raises:
+        ValueError: If ``exchange_id`` is not in the CCXT exchange allowlist.
     """
     import os
+    # FIX 6 (security): validate exchange_id against ccxt.exchanges before
+    # getattr — prevents arbitrary attribute access on the ccxt module.
+    if exchange_id not in _ALLOWED_EXCHANGES:
+        raise ValueError(
+            f"exchange_id {exchange_id!r} is not a known CCXT exchange. "
+            f"Must be one of the exchanges listed in ccxt.exchanges."
+        )
+
     proxy_url = proxy or os.environ.get("CCXT_PROXY")
 
     config: dict = {"enableRateLimit": True, "options": {"defaultType": "future"}}
     if proxy_url:
         config["proxies"] = {"http": proxy_url, "https": proxy_url}
-        logger.info("Using proxy: %s", proxy_url)
+        # FIX 5 (security): redact credentials from proxy URL before logging.
+        logger.info("Using proxy: %s", _redact_url(proxy_url))
 
     exchange_class = getattr(ccxt, exchange_id)
     exchange = exchange_class(config)

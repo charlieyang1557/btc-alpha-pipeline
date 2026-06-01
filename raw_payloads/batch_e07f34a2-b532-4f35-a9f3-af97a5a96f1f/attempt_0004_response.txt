@@ -1,0 +1,29 @@
+```json
+{
+  "name": "volume_surge_momentum_fade",
+  "description": "Short when volume spikes above 2 standard deviations with overbought RSI, expecting mean reversion as abnormal volume participation exhausts buying pressure.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "volume_zscore_24h", "op": ">", "value": 2.0},
+        {"factor": "rsi_14", "op": ">", "value": 70.0},
+        {"factor": "close", "op": ">", "value": "sma_20"}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_below", "value": "sma_20"}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "rsi_14", "op": "<", "value": 50.0}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 96
+}
+```

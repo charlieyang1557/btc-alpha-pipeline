@@ -1,0 +1,32 @@
+```json
+{
+  "name": "vol_compression_breakout_prep",
+  "description": "Enter long when realized volatility drops below 1.2% while price remains above SMA-50 and MACD turns positive, capturing setups where volatility compression near uptrend support precedes institutional re-entry and momentum expansion as stability attracts directional capital deployment.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": "<", "value": 0.012},
+        {"factor": "close", "op": ">", "value": "sma_50"},
+        {"factor": "macd_hist", "op": "crosses_above", "value": 0.0},
+        {"factor": "rsi_14", "op": ">", "value": 45.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": ">", "value": 0.025},
+        {"factor": "return_24h", "op": "<", "value": -0.015}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_168h", "op": ">", "value": 0.08},
+        {"factor": "rsi_14", "op": ">", "value": 72.0}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 240
+}
+```

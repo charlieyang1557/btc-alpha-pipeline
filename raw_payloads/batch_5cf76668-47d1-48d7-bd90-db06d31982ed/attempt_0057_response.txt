@@ -1,0 +1,31 @@
+```json
+{
+  "name": "zscore_mean_reversion_oversold_entry",
+  "description": "Enter long when 48-bar z-score drops below -1.5 signaling price significantly below recent mean while RSI remains above 35 to avoid downtrend capitulation, capturing mean reversion as statistically extreme deviations historically correct toward equilibrium.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "zscore_48", "op": "<", "value": -1.5},
+        {"factor": "rsi_14", "op": ">", "value": 35.0},
+        {"factor": "close", "op": ">", "value": "sma_50"}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "zscore_48", "op": ">", "value": 0.5},
+        {"factor": "rsi_14", "op": ">", "value": 58.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "zscore_48", "op": "<", "value": -2.2},
+        {"factor": "return_1h", "op": "<", "value": -0.02}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 336
+}
+```

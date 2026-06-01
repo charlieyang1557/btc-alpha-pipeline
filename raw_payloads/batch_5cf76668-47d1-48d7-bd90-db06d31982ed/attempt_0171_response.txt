@@ -1,0 +1,30 @@
+```json
+{
+  "name": "macd_histogram_momentum_surge_171",
+  "description": "Enter long when MACD histogram crosses above zero while price is above EMA(26) and RSI confirms momentum above 50, capturing early-stage trend acceleration as histogram sign-flip signals strengthening bullish momentum before broader participation drives continuation.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "macd_hist", "op": "crosses_above", "value": 0.0},
+        {"factor": "close", "op": ">", "value": "ema_26"},
+        {"factor": "rsi_14", "op": ">", "value": 50.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "macd_hist", "op": "crosses_below", "value": 0.0},
+        {"factor": "rsi_14", "op": "<", "value": 45.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.05}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 96
+}
+```

@@ -1,0 +1,31 @@
+```json
+{
+  "name": "volatility_regime_breakout",
+  "description": "Enter long when realized volatility spikes above recent average while price breaks above Bollinger upper band, signaling a volatility regime shift with upward momentum.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": ">", "value": "atr_14"},
+        {"factor": "close", "op": "crosses_above", "value": "bb_upper_24_2"},
+        {"factor": "volume_zscore_24h", "op": ">", "value": 1.0},
+        {"factor": "rsi_14", "op": ">", "value": 50.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": "<", "value": "atr_14"},
+        {"factor": "close", "op": "crosses_below", "value": "sma_24"}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "rsi_14", "op": ">", "value": 75.0}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 120
+}
+```

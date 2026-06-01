@@ -1,0 +1,30 @@
+```json
+{
+  "name": "monday_mean_reversion_entry",
+  "description": "Enter long on Mondays when price is oversold below 48-bar mean by 1 standard deviation, capturing weekly calendar effect where institutional flows and retail psychology create predictable Monday recovery patterns from weekend weakness.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "==", "value": 0},
+        {"factor": "zscore_48", "op": "<", "value": -1.0},
+        {"factor": "rsi_14", "op": "<", "value": 45.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "zscore_48", "op": ">", "value": 0.5},
+        {"factor": "return_24h", "op": ">", "value": 0.015}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "==", "value": 4}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 120
+}
+```

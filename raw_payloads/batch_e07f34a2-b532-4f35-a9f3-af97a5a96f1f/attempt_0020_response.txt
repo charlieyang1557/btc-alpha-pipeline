@@ -1,0 +1,31 @@
+```json
+{
+  "name": "weekend_vol_fade",
+  "description": "Enter long on Sundays when RSI is oversold and volatility is elevated, exploiting weekend mean reversion as thin liquidity exaggerates moves that reverse during weekly open.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "==", "value": 6},
+        {"factor": "rsi_14", "op": "<", "value": 40.0},
+        {"factor": "realized_vol_24h", "op": ">", "value": 0.012},
+        {"factor": "return_24h", "op": "<", "value": -0.02}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "==", "value": 1},
+        {"factor": "return_1h", "op": ">", "value": 0.01}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "rsi_14", "op": ">", "value": 60.0}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 72
+}
+```

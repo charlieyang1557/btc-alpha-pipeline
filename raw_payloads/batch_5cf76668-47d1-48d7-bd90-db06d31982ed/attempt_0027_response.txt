@@ -1,0 +1,32 @@
+```json
+{
+  "name": "bb_squeeze_reversion_entry",
+  "description": "Enter long when price touches lower Bollinger band while RSI shows oversold conditions below 35, capturing mean-reversion opportunities as volatility compression signals imminent snapback toward the moving average center.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "<=", "value": "bb_upper_24_2"},
+        {"factor": "zscore_48", "op": "<", "value": -1.5},
+        {"factor": "rsi_14", "op": "<", "value": 35.0},
+        {"factor": "realized_vol_24h", "op": "<", "value": 0.03}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "rsi_14", "op": ">", "value": 55.0},
+        {"factor": "zscore_48", "op": ">", "value": 0.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.025},
+        {"factor": "close", "op": "crosses_above", "value": "sma_24"}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 168
+}
+```

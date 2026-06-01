@@ -1,0 +1,32 @@
+```json
+{
+  "name": "monday_open_gap_reversal",
+  "description": "Enter long on Monday when price opens below SMA-20 with elevated volatility and positive 1h momentum, capturing weekend gap-down reversals that tend to mean-revert as institutional flows resume and liquidity normalizes at market open.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "==", "value": 0},
+        {"factor": "close", "op": "<", "value": "sma_20"},
+        {"factor": "realized_vol_24h", "op": ">", "value": 0.018},
+        {"factor": "return_1h", "op": ">", "value": 0.002}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_above", "value": "sma_20"},
+        {"factor": "rsi_14", "op": ">", "value": 58.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.04},
+        {"factor": "day_of_week", "op": ">", "value": 2}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 96
+}
+```

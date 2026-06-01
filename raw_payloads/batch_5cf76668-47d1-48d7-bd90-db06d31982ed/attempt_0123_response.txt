@@ -1,0 +1,31 @@
+```json
+{
+  "name": "vol_regime_breakout_rsi_momentum",
+  "description": "Enter long when realized volatility drops below 24h average while RSI crosses above 50 and price exceeds EMA-12, capturing momentum ignition as volatility compression resolves into directional breakout with trend confirmation.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": "<", "value": "atr_14"},
+        {"factor": "rsi_14", "op": "crosses_above", "value": 50.0},
+        {"factor": "close", "op": ">", "value": "ema_12"}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "rsi_14", "op": "crosses_below", "value": 45.0},
+        {"factor": "close", "op": "crosses_below", "value": "ema_12"}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": ">", "value": "atr_14"},
+        {"factor": "return_24h", "op": ">", "value": 0.04}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 168
+}
+```

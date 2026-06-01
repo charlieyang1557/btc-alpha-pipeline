@@ -1,0 +1,8 @@
+```json
+{
+  "semantic_plausibility": 0.7500,
+  "semantic_theme_alignment": 0.9000,
+  "structural_variant_risk": 0.8500,
+  "reasoning": "The strategy presents coherent mean-reversion logic: entering when price falls below a Bollinger band threshold while RSI signals oversold conditions and z-score confirms deviation from mean, then exiting when RSI normalizes or price returns to moving average. The volatility filter (realized_vol_24h > 0.025) adds reasonable risk management by ensuring sufficient movement potential. Theme alignment is strong, employing canonical mean-reversion factors (bb_upper_24_2, zscore_48, sma_24, RSI) from the hint vocabulary. However, structural variant risk is very high. The factor set {bb_upper_24_2, close, realized_vol_24h, rsi_14, zscore_48, return_1h, sma_24} closely mirrors prior entry #12 {bb_upper_24_2, close, realized_vol_24h, return_1h, rsi_14, zscore_48}, differing only by adding sma_24 (which appears in exit via crosses_above). Entry #17 {bb_upper_24_2, close, realized_vol_24h, return_24h, rsi_14, sma_24, zscore_48} shares six of seven factors. The primary distinction lies in threshold values (RSI 35 vs potentially different values, z-score -1.5) and operator choices, representing threshold-tuning rather than a fundamentally different structural approach to mean reversion."
+}
+```

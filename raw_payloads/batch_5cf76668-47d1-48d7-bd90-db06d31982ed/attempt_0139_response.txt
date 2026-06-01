@@ -1,0 +1,30 @@
+```json
+{
+  "name": "volume_divergence_momentum_fade",
+  "description": "Enter long when price shows positive 24h return while volume z-score drops below -1, capturing divergence where upward price movement on declining volume signals weak rally vulnerable to continuation as smart money accumulates during low-participation advance.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.01},
+        {"factor": "volume_zscore_24h", "op": "<", "value": -1.0},
+        {"factor": "rsi_14", "op": ">", "value": 50.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "volume_zscore_24h", "op": ">", "value": 1.5},
+        {"factor": "return_1h", "op": "<", "value": -0.005}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.03}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 168
+}
+```

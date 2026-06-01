@@ -1,0 +1,31 @@
+```json
+{
+  "name": "volume_divergence_momentum_179",
+  "description": "Enter long when price makes a new 24-hour high while volume z-score falls below -0.5, capturing bullish divergence as rising price on declining volume often precedes institutional accumulation before continuation moves.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.03},
+        {"factor": "volume_zscore_24h", "op": "<", "value": -0.5},
+        {"factor": "rsi_14", "op": ">", "value": 55.0},
+        {"factor": "close", "op": ">", "value": "ema_26"}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "volume_zscore_24h", "op": ">", "value": 1.5},
+        {"factor": "rsi_14", "op": ">", "value": 75.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_168h", "op": ">", "value": 0.07}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 288
+}
+```

@@ -1,0 +1,32 @@
+```json
+{
+  "name": "rsi_momentum_surge_entry",
+  "description": "Enter long when RSI crosses above 55 from below with positive 24h return exceeding 1% while MACD histogram turns positive, capturing momentum acceleration as RSI breakouts from neutral zone with confirmed trend strength historically precede sustained uptrends in crypto markets.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "rsi_14", "op": "crosses_above", "value": 55.0},
+        {"factor": "return_24h", "op": ">", "value": 0.01},
+        {"factor": "macd_hist", "op": ">", "value": 0.0},
+        {"factor": "close", "op": ">", "value": "sma_50"}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "rsi_14", "op": ">", "value": 80.0},
+        {"factor": "return_1h", "op": "<", "value": -0.015}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "macd_hist", "op": "<", "value": 0.0},
+        {"factor": "rsi_14", "op": "<", "value": 45.0}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 168
+}
+```

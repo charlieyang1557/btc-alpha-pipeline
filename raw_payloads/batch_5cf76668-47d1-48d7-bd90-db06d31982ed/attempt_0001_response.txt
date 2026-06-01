@@ -1,0 +1,23 @@
+```json
+{
+  "name": "momentum_rsi_oversold_reversal",
+  "description": "Buy when RSI signals oversold conditions below 30 and recent 24h momentum turns positive, exit when RSI reaches overbought above 70.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "rsi_14", "op": "<", "value": 30},
+        {"factor": "return_24h", "op": ">", "value": 0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "rsi_14", "op": ">", "value": 70}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 168
+}
+```

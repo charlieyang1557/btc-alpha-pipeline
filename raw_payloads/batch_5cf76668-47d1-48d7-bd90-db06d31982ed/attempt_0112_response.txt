@@ -1,0 +1,32 @@
+```json
+{
+  "name": "bollinger_overshoot_vol_collapse",
+  "description": "Enter long when price crosses below lower Bollinger band with declining realized volatility and oversold RSI, capturing mean-reversion from volatility-driven extremes as markets stabilize and revert to fair value.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "<", "value": "bb_upper_24_2"},
+        {"factor": "zscore_48", "op": "<", "value": -1.8},
+        {"factor": "realized_vol_24h", "op": "<", "value": 0.015},
+        {"factor": "rsi_14", "op": "<", "value": 35.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "zscore_48", "op": ">", "value": 0.0},
+        {"factor": "rsi_14", "op": ">", "value": 55.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.035},
+        {"factor": "close", "op": "crosses_above", "value": "sma_24"}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 120
+}
+```

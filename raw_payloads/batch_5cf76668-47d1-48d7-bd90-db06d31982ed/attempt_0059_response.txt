@@ -1,0 +1,32 @@
+```json
+{
+  "name": "volume_divergence_momentum_entry",
+  "description": "Enter long when volume z-score exceeds 1.5 signaling unusual participation while MACD histogram turns positive and price remains above 50-bar SMA, capturing institutional accumulation as volume surges during momentum shifts historically precede sustained uptrends when trend structure intact.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "volume_zscore_24h", "op": ">", "value": 1.5},
+        {"factor": "macd_hist", "op": ">", "value": 0.0},
+        {"factor": "close", "op": ">", "value": "sma_50"},
+        {"factor": "rsi_14", "op": ">", "value": 48.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "volume_zscore_24h", "op": "<", "value": -0.5},
+        {"factor": "macd_hist", "op": "<", "value": 0.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "rsi_14", "op": ">", "value": 78.0},
+        {"factor": "return_1h", "op": "<", "value": -0.012}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 336
+}
+```

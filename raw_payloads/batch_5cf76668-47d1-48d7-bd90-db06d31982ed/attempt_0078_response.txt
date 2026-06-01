@@ -1,0 +1,31 @@
+```json
+{
+  "name": "vol_regime_shift_momentum",
+  "description": "Enter long when realized volatility crosses above its z-score threshold during price strength, capturing momentum acceleration that occurs when markets transition from low to high volatility regimes with positive trend confirmation.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": "crosses_above", "value": 0.03},
+        {"factor": "zscore_48", "op": ">", "value": 0.5},
+        {"factor": "ema_12", "op": ">", "value": "ema_26"},
+        {"factor": "return_24h", "op": ">", "value": 0.01}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": "crosses_below", "value": 0.02},
+        {"factor": "rsi_14", "op": ">", "value": 75.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_168h", "op": ">", "value": 0.08}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 240
+}
+```

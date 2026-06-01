@@ -1,0 +1,31 @@
+```json
+{
+  "name": "bollinger_band_mean_reversion_142",
+  "description": "Enter long when price closes below lower Bollinger band while RSI is oversold, capturing mean reversion where extreme volatility-adjusted deviations trigger systematic snap-back to the 24-period average as oversold conditions normalize.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "<", "value": "bb_upper_24_2"},
+        {"factor": "zscore_48", "op": "<", "value": -1.5},
+        {"factor": "rsi_14", "op": "<", "value": 35.0},
+        {"factor": "realized_vol_24h", "op": ">", "value": 0.02}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "zscore_48", "op": ">", "value": 0.0},
+        {"factor": "rsi_14", "op": ">", "value": 60.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.025}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 96
+}
+```

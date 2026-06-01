@@ -1,0 +1,31 @@
+```json
+{
+  "name": "volume_divergence_momentum_entry",
+  "description": "Enter long when volume z-score crosses above 1.5 while price momentum remains positive but RSI stays below 65, capturing institutional accumulation divergence where elevated volume precedes price breakout as smart money positions ahead of retail momentum.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "volume_zscore_24h", "op": "crosses_above", "value": 1.5},
+        {"factor": "return_24h", "op": ">", "value": 0.01},
+        {"factor": "rsi_14", "op": "<", "value": 65.0},
+        {"factor": "macd_hist", "op": ">", "value": 0.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "volume_zscore_24h", "op": "<", "value": -0.5},
+        {"factor": "rsi_14", "op": ">", "value": 70.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.05}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 240
+}
+```

@@ -1,0 +1,32 @@
+```json
+{
+  "name": "macd_rsi_momentum_alignment_entry",
+  "description": "Enter long when MACD histogram turns positive while RSI confirms bullish momentum above 50, capturing trend inception as dual momentum indicators align to signal strengthening directional bias with follow-through potential.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "macd_hist", "op": "crosses_above", "value": 0.0},
+        {"factor": "rsi_14", "op": ">", "value": 50.0},
+        {"factor": "close", "op": ">", "value": "sma_20"},
+        {"factor": "return_24h", "op": ">", "value": 0.008}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "rsi_14", "op": ">", "value": 70.0},
+        {"factor": "macd_hist", "op": "<", "value": 0.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_below", "value": "ema_12"},
+        {"factor": "return_1h", "op": "<", "value": -0.01}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 168
+}
+```

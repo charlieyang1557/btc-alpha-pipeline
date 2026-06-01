@@ -1,0 +1,31 @@
+```json
+{
+  "name": "volatility_breakout_expansion_188",
+  "description": "Enter long when realized volatility spikes above recent average while price crosses above EMA(12), capturing momentum acceleration as volatility regime shift confirms directional breakout with institutional flows entering the move.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": ">", "value": 0.025},
+        {"factor": "close", "op": "crosses_above", "value": "ema_12"},
+        {"factor": "volume_zscore_24h", "op": ">", "value": 1.0},
+        {"factor": "macd_hist", "op": ">", "value": 0.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": "<", "value": 0.015},
+        {"factor": "macd_hist", "op": "crosses_below", "value": 0.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": "<", "value": -0.025}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 336
+}
+```

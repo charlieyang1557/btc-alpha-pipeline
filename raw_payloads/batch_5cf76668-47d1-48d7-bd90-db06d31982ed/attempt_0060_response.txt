@@ -1,0 +1,32 @@
+```json
+{
+  "name": "monday_oversold_recovery_entry",
+  "description": "Enter long on Mondays when RSI signals oversold conditions below 42 and price remains above 50-bar SMA, capturing weekly cyclical recoveries as Monday sentiment reversals historically follow weekend consolidation in crypto markets with maintained trend structure.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "==", "value": 0},
+        {"factor": "rsi_14", "op": "<", "value": 42.0},
+        {"factor": "close", "op": ">", "value": "sma_50"},
+        {"factor": "return_24h", "op": ">", "value": -0.025}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "rsi_14", "op": ">", "value": 62.0},
+        {"factor": "return_1h", "op": ">", "value": 0.015}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "==", "value": 5},
+        {"factor": "return_168h", "op": ">", "value": 0.03}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 120
+}
+```

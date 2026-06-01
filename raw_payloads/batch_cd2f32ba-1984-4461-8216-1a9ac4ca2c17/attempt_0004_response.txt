@@ -1,0 +1,25 @@
+```json
+{
+  "name": "volume_spike_momentum_entry",
+  "description": "Buy when volume surges above 2 standard deviations with positive hourly return, expecting increased liquidity to drive continuation of upward momentum.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "volume_zscore_24h", "op": ">", "value": 2.0},
+        {"factor": "return_1h", "op": ">", "value": 0.0},
+        {"factor": "rsi_14", "op": ">", "value": 45.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "volume_zscore_24h", "op": "<", "value": -0.5},
+        {"factor": "return_1h", "op": "<", "value": -0.01}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 240
+}
+```

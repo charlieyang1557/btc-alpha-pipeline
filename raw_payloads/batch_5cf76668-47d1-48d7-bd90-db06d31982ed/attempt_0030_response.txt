@@ -1,0 +1,32 @@
+```json
+{
+  "name": "monday_accumulation_ema_cross",
+  "description": "Enter long on Monday when short EMA crosses above long EMA and RSI is neutral, capturing calendar-driven institutional accumulation patterns as weekly trading cycles begin with lower weekend liquidity effects dissipating.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "==", "value": 0},
+        {"factor": "ema_12", "op": "crosses_above", "value": "ema_26"},
+        {"factor": "rsi_14", "op": ">", "value": 45.0},
+        {"factor": "rsi_14", "op": "<", "value": 60.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "ema_12", "op": "crosses_below", "value": "ema_26"},
+        {"factor": "return_24h", "op": "<", "value": -0.01}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_168h", "op": ">", "value": 0.04},
+        {"factor": "rsi_14", "op": ">", "value": 68.0}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 504
+}
+```

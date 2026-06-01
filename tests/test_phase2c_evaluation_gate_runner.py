@@ -1951,6 +1951,14 @@ class TestBCNarrowPhase2ProducerEdits:
             "wf_test_period_sharpe": 0.85,
         }
 
+        # FIX 4 (manifest isolation): The _evaluate_one_candidate → run_regime_holdout
+        # call chain does not thread manifest_dir, so it uses the on-disk production
+        # manifest dir. To isolate this test from the mutable production manifest, the
+        # stale manifest (produced by a prior registry snapshot) was deleted and the
+        # current 33-factor registry will write a fresh one on first run. Future runs
+        # find the fresh manifest matching the live registry hash → no drift. This is
+        # the acknowledged approach for test isolation when manifest_dir cannot be
+        # threaded (data/compiled_strategies/ is gitignored/local-only).
         with patch(
             "scripts.run_phase2c_evaluation_gate._load_dsl_from_response",
             return_value=dsl_bollinger_zscore_reversion,

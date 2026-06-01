@@ -1,0 +1,30 @@
+```json
+{
+  "name": "monday_dip_buy",
+  "description": "Enter long on Monday mornings when price has declined over 24h and RSI is oversold, exploiting weekend sentiment reset and typical Monday recovery patterns in crypto markets.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "==", "value": 0},
+        {"factor": "hour_of_day", "op": ">=", "value": 8},
+        {"factor": "hour_of_day", "op": "<=", "value": 14},
+        {"factor": "return_24h", "op": "<", "value": -0.015}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "return_1h", "op": ">", "value": 0.02}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": ">", "value": 1}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 72
+}
+```

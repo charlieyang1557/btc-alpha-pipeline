@@ -1,0 +1,31 @@
+```json
+{
+  "name": "volatility_compression_breakout_148",
+  "description": "Enter long when realized volatility falls below 2% while price crosses above EMA(12), capturing momentum expansion as volatility compression regimes systematically precede trending breakouts when volatility mean-reverts higher.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": "<", "value": 0.02},
+        {"factor": "close", "op": "crosses_above", "value": "ema_12"},
+        {"factor": "rsi_14", "op": ">", "value": 45.0},
+        {"factor": "volume_zscore_24h", "op": ">", "value": 0.5}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "realized_vol_24h", "op": ">", "value": 0.04},
+        {"factor": "close", "op": "crosses_below", "value": "ema_12"}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": ">", "value": 0.03}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 240
+}
+```

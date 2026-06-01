@@ -1,0 +1,32 @@
+```json
+{
+  "name": "volume_divergence_breakout",
+  "description": "Enter long when price breaks above SMA(20) with elevated volume (z-score > 1.5) while MACD histogram is positive, capturing breakouts confirmed by institutional participation as volume surge validates directional conviction.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_above", "value": "sma_20"},
+        {"factor": "volume_zscore_24h", "op": ">", "value": 1.5},
+        {"factor": "macd_hist", "op": ">", "value": 0.0},
+        {"factor": "rsi_14", "op": ">", "value": 52.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "volume_zscore_24h", "op": "<", "value": -0.5},
+        {"factor": "macd_hist", "op": "crosses_below", "value": 0.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "close", "op": "crosses_below", "value": "sma_20"},
+        {"factor": "return_1h", "op": "<", "value": -0.015}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 168
+}
+```

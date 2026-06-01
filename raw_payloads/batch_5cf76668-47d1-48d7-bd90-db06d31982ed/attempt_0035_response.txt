@@ -1,0 +1,32 @@
+```json
+{
+  "name": "weekday_momentum_continuation",
+  "description": "Enter long on Monday through Wednesday when price shows positive 24-hour momentum above moving average, capturing continuation as institutional flows typically drive sustained trends early in the week.",
+  "entry": [
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": "<=", "value": 2},
+        {"factor": "return_24h", "op": ">", "value": 0.01},
+        {"factor": "close", "op": ">", "value": "sma_20"},
+        {"factor": "rsi_14", "op": ">", "value": 50.0}
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "conditions": [
+        {"factor": "day_of_week", "op": ">=", "value": 4},
+        {"factor": "return_24h", "op": "<", "value": 0.0}
+      ]
+    },
+    {
+      "conditions": [
+        {"factor": "return_24h", "op": "<", "value": -0.02},
+        {"factor": "rsi_14", "op": "<", "value": 45.0}
+      ]
+    }
+  ],
+  "position_sizing": "full_equity",
+  "max_hold_bars": 168
+}
+```
