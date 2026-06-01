@@ -235,6 +235,131 @@ def build_all_hypotheses() -> dict[str, StrategyDSL]:
     return {"H1": build_h1_dsl(), "H2": build_h2_dsl(), "H3": build_h3_dsl()}
 
 
+# ---------------------------------------------------------------------------
+# Task C6 no-basis baselines — the fenced dual-orthogonalization D1 counterfactual
+# (LOCK Pre-registration 3). Each baseline is the SAME strategy WITHOUT the basis
+# gate, run on the SAME forward bars, so any D1-result attributes to basis's
+# MARGINAL contribution and not Path B's already-dead decay-MA leg (H2/H3) or
+# buy-and-hold (H1). These never feed N* or promotion; they exist only to compute
+# basis_marginal_d1(gated, baseline) (DESIGN INVARIANT: backtest.pathc_marginal_diagnostic
+# fences the result with structural promotion_affecting=False / in_n_star=False flags).
+# ---------------------------------------------------------------------------
+
+# Always-true / never-true sentinels on the bounded [0, 1] vol CDF (the H1
+# baseline's "always-long" gate): cdf_realized_vol_720 in [0.0, 1.0], so
+# ``>= 0.0`` is always true (NaN during warmup -> False, the correct no-trade)
+# and ``> 1.0`` is never true. This keeps the baseline basis-free while satisfying
+# the DSL's min_length=1 entry/exit requirement.
+_VOL_CDF_FLOOR = 0.0   # cdf_realized_vol_720 >= 0.0 is always true on a CDF
+_VOL_CDF_CEIL = 1.0    # cdf_realized_vol_720 > 1.0 is never true on a CDF
+
+
+def build_h1_baseline_dsl() -> StrategyDSL:
+    """H1 no-basis baseline: ALWAYS-LONG (the H1 counterfactual minus the gate).
+
+    Strips H1's basis flat-gate entirely: entry is an always-true predicate on
+    the bounded vol CDF (``cdf_realized_vol_720 >= 0.0``) and exit is a never-true
+    one (``cdf_realized_vol_720 > 1.0``), so the book is long whenever it is
+    sizeable. Same vol-CDF ternary sizing; NO time-stop (mirrors H1's no-time-stop).
+
+    Inputs: cdf_realized_vol_720 (sizing; the only referenced factor — no basis factors).
+    Warmup: 720 bars (vol CDF min_periods=720 only; no basis warmup).
+    Output: long/flat signal; always-long during the evaluated window.
+    Null policy: NaN in any condition evaluates to False (DSL compiler invariant).
+    Diagnostic-only — never in N* / promotion.
+    """
+    entry_always = ConditionGroup(conditions=[
+        Condition(factor=VOL_SIZING_FACTOR, op=">=", value=_VOL_CDF_FLOOR),
+    ])
+    exit_never = ConditionGroup(conditions=[
+        Condition(factor=VOL_SIZING_FACTOR, op=">", value=_VOL_CDF_CEIL),
+    ])
+    return StrategyDSL(
+        name="pathc_h1_baseline",
+        description=(
+            "Path C H1 no-basis baseline: always-long (basis flat-gate stripped), "
+            "vol-CDF ternary sizing, no time-stop — the D1 basis-marginal counterfactual."
+        ),
+        entry=[entry_always],
+        exit=[exit_never],
+        position_sizing=_vol_cdf_ternary_sizing(),
+        max_hold_bars=None,
+    )
+
+
+def _price_trend_only_baseline(name: str, description: str, max_hold: int) -> StrategyDSL:
+    """Shared price-trend-only book for the H2/H3 no-basis baselines.
+
+    Entry = ``decay_linear_close_48 > decay_linear_close_168`` (the price-trend
+    confirm both H2 and H3 share); exit = the trend roll-over ``48 <= 168``. NO
+    basis condition. Same vol-CDF ternary sizing. ``max_hold`` is the gated
+    hypothesis's own backstop (H2=24 / H3=48) so the baseline is the SAME
+    strategy minus only the basis gate.
+
+    Inputs: decay_linear_close_48, decay_linear_close_168, cdf_realized_vol_720 (sizing).
+    Warmup: 168 bars (decay_linear_close_168 dominates; no basis warmup).
+    Output: long/flat signal; long whenever price-trend condition holds.
+    Null policy: NaN in any condition evaluates to False (DSL compiler invariant).
+    """
+    entry = ConditionGroup(conditions=[
+        Condition(factor=DECAY_FAST, op=">", value=DECAY_SLOW),
+    ])
+    exit_trend_roll = ConditionGroup(conditions=[
+        Condition(factor=DECAY_FAST, op="<=", value=DECAY_SLOW),
+    ])
+    return StrategyDSL(
+        name=name,
+        description=description,
+        entry=[entry],
+        exit=[exit_trend_roll],
+        position_sizing=_vol_cdf_ternary_sizing(),
+        max_hold_bars=max_hold,
+    )
+
+
+def build_h2_baseline_dsl() -> StrategyDSL:
+    """H2 no-basis baseline: the price-trend-only book (H2 minus the basis gate).
+
+    Strips the ``basis_ewm_240_pctrank_2160 < 0.80`` regime gate; retains the
+    ``decay_linear_close_48 > decay_linear_close_168`` entry + trend-rollover exit
+    + ``max_hold_bars = 24``. Diagnostic-only — never in N* / promotion.
+    """
+    return _price_trend_only_baseline(
+        name="pathc_h2_baseline",
+        description=(
+            "Path C H2 no-basis baseline: price-trend-only (basis regime-gate stripped), "
+            "vol-CDF ternary sizing, max_hold 24 — the D1 basis-marginal counterfactual."
+        ),
+        max_hold=H2_MAX_HOLD,
+    )
+
+
+def build_h3_baseline_dsl() -> StrategyDSL:
+    """H3 no-basis baseline: the price-trend-only book (H3 minus the basis gate).
+
+    Strips the ``basis_ewm_480 > 0`` AND ``basis_pct_rank_2160 < theta`` gates;
+    retains the ``decay_linear_close_48 > decay_linear_close_168`` entry + trend-
+    rollover exit + ``max_hold_bars = 48``. Diagnostic-only — never in N* / promotion.
+    """
+    return _price_trend_only_baseline(
+        name="pathc_h3_baseline",
+        description=(
+            "Path C H3 no-basis baseline: price-trend-only (basis momentum/tail gate stripped), "
+            "vol-CDF ternary sizing, max_hold 48 — the D1 basis-marginal counterfactual."
+        ),
+        max_hold=H3_MAX_HOLD,
+    )
+
+
+def build_all_baselines() -> dict[str, StrategyDSL]:
+    """The 3 no-basis baselines keyed by hypothesis id (Task C6 D1 counterfactual)."""
+    return {
+        "H1": build_h1_baseline_dsl(),
+        "H2": build_h2_baseline_dsl(),
+        "H3": build_h3_baseline_dsl(),
+    }
+
+
 def referenced_factors(dsl: StrategyDSL) -> set[str]:
     """Return the set of factor names a DSL references.
 

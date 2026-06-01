@@ -2106,7 +2106,30 @@ class TestT1_4_Pc9BaselineGate:
         # POSITIVE (continuation). Sealed tier6_dsr_v1/ sha256 4/4 byte-unchanged;
         # PHASE_D_AUTHORIZED untouched. Advance BASELINE 2943 → 2953 (same expected-
         # additive-cohort precedent; per Charlie Task C5 register, pathc-basis-scoping branch).
-        BASELINE = 2953
+        # Path C Task C6 — dual-orthogonalization diagnostic (D1 vs-momentum + D2
+        # vs-funding) + no-basis baselines: adds +15 collected items across 1 NEW test
+        # file + updates to backtest/pathc_eval_gauntlet.py + new
+        # backtest/pathc_marginal_diagnostic.py, none a t1_4/t1_5 subtraction target,
+        # so the +15 lands wholly in pre_t1_x_baseline = total − t1_4 − t1_5:
+        #   tests/test_pathc_marginal.py (+15 NEW file):
+        #     D1 fenced-diagnostic ×7 (fenced sign, positive, both-sharpes/hyp_id,
+        #       identical-bar-count, misaligned-series-index reject, aligned-series
+        #       accept, fenced-flags-always-false),
+        #     D2 fenced-diagnostic ×6 (fenced sign, positive, both-sharpes/hyp_id,
+        #       identical-bar-count, misaligned-series-index reject, fenced-flags-
+        #       always-false),
+        #     redundancy_read 3-branch inference + 4th vacuous combo ×1,
+        #     no-basis baselines compile ×1 (build_all_baselines → 3 DSLs compile).
+        # Production changes: additive backtest/pathc_marginal_diagnostic.py
+        # (basis_marginal_d1 / basis_marginal_d2 / d2_agrees / d1_noninert /
+        # redundancy_read; pre-registered tolerances D2_AGREES_TOLERANCE=0.10 /
+        # D1_NONINERT_THRESHOLD=0.10 FLAGGED for Charlie ratification at Phase-D
+        # register) + backtest/pathc_eval_gauntlet.py additive no-basis baseline
+        # builders (build_h1/h2/h3_baseline_dsl + build_all_baselines). Sealed
+        # tier6_dsr_v1/ sha256 4/4 byte-unchanged; PHASE_D_AUTHORIZED untouched.
+        # Advance BASELINE 2953 → 2968 (same expected-additive-cohort precedent;
+        # per Charlie Task C6 register, pathc-basis-scoping branch).
+        BASELINE = 2968
         assert pre_t1_x_baseline == BASELINE, (
             f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
             f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "
