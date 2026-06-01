@@ -125,3 +125,129 @@ def test_markprice_archive_before_overwrite(tmp_path):
     assert archived.suffix == ".parquet"
     # copy not move — original must still be present
     assert canonical.exists()
+
+
+# ---------------------------------------------------------------------------
+# Task A5: CCXT incremental markprice update
+# ---------------------------------------------------------------------------
+
+from ingestion import markprice_incremental_update  # noqa: E402
+
+
+class _FakeMarkpriceExchange:
+    """Minimal CCXT-shaped stub exposing fetch_ohlcv with a `price` param.
+
+    The implementation calls fetch_ohlcv(symbol, timeframe, since, params={"price":"mark"})
+    and fetch_ohlcv(symbol, timeframe, since, params={"price":"index"}).  This stub
+    routes on the `price` key and returns synthetic OHLCV rows for each series.
+
+    Each OHLCV row is: [timestamp_ms, open, high, low, close, volume].
+    Only `close` (index 4) is used by the normalizer.
+    """
+
+    def __init__(self, mark_rows: list[list], index_rows: list[list]):
+        self._mark = mark_rows
+        self._index = index_rows
+        self.calls: list[dict] = []
+
+    def fetch_ohlcv(
+        self,
+        symbol: str,
+        timeframe: str,
+        since: int | None = None,
+        limit: int | None = None,
+        params: dict | None = None,
+    ) -> list[list]:
+        price_type = (params or {}).get("price", "mark")
+        self.calls.append({"symbol": symbol, "timeframe": timeframe, "since": since, "price": price_type})
+        rows = self._mark if price_type == "mark" else self._index
+        if since is not None:
+            rows = [r for r in rows if r[0] >= since]
+        if limit is not None:
+            rows = rows[:limit]
+        return rows
+
+
+_T0 = 1577836800000   # 2020-01-01 00:00 UTC
+_T1 = 1577840400000   # 2020-01-01 01:00 UTC
+
+
+def _mark_rows() -> list[list]:
+    return [
+        [_T0, 7000.0, 7010.0, 6990.0, 7005.0, 0],
+        [_T1, 7005.0, 7020.0, 7000.0, 7012.0, 0],
+    ]
+
+
+def _index_rows() -> list[list]:
+    return [
+        [_T0, 6999.0, 7009.0, 6989.0, 7004.0, 0],
+        [_T1, 7004.0, 7019.0, 6999.0, 7011.0, 0],
+    ]
+
+
+def test_fetch_markprice_normalizes_to_schema():
+    """fetch_all_markprice + ohlcv_to_markprice_dataframe produce the correct schema."""
+    ex = _FakeMarkpriceExchange(_mark_rows(), _index_rows())
+    mark_raw, index_raw = markprice_incremental_update.fetch_all_markprice(
+        ex, symbol="BTC/USDT:USDT", timeframe="1h", since_ms=_T0
+    )
+    df = markprice_incremental_update.ohlcv_to_markprice_dataframe(mark_raw, index_raw)
+
+    assert list(df.columns) == ["open_time_utc", "mark_close", "index_close", "source", "ingested_at_utc"]
+    assert str(df["open_time_utc"].dtype) == "datetime64[ms, UTC]"
+    assert str(df["ingested_at_utc"].dtype) == "datetime64[ms, UTC]"
+    assert (df["source"] == "ccxt_binance").all()
+    assert df["mark_close"].tolist() == [7005.0, 7012.0]
+    assert df["index_close"].tolist() == [7004.0, 7011.0]
+    # verify exchange was called with price="mark" and price="index"
+    price_types = {c["price"] for c in ex.calls}
+    assert "mark" in price_types
+    assert "index" in price_types
+
+
+def test_fetch_markprice_with_backoff_retries_then_succeeds(monkeypatch):
+    """fetch_markprice_with_backoff retries on NetworkError and succeeds on attempt 3."""
+    import ccxt
+
+    class _FlakyExchange:
+        def __init__(self):
+            self.attempts = 0
+
+        def fetch_ohlcv(self, symbol, timeframe, since=None, limit=None, params=None):
+            self.attempts += 1
+            if self.attempts < 3:
+                raise ccxt.NetworkError("transient")
+            return [[_T0, 7000.0, 7010.0, 6990.0, 7005.0, 0]]
+
+    monkeypatch.setattr(markprice_incremental_update.time, "sleep", lambda *_: None)
+    ex = _FlakyExchange()
+    out = markprice_incremental_update.fetch_markprice_with_backoff(
+        ex, symbol="BTC/USDT:USDT", timeframe="1h", since=_T0, price_type="mark"
+    )
+    assert ex.attempts == 3
+    assert out[0][4] == 7005.0
+
+
+def test_fetch_markprice_inner_joins_mark_and_index():
+    """ohlcv_to_markprice_dataframe inner-joins: timestamps missing from either series are dropped."""
+    mark_raw = [
+        [_T0, 7000.0, 7010.0, 6990.0, 7005.0, 0],
+        [_T1, 7005.0, 7020.0, 7000.0, 7012.0, 0],
+    ]
+    # index missing _T1 → inner join drops _T1
+    index_raw = [
+        [_T0, 6999.0, 7009.0, 6989.0, 7004.0, 0],
+    ]
+    df = markprice_incremental_update.ohlcv_to_markprice_dataframe(mark_raw, index_raw)
+    assert len(df) == 1
+    assert df["open_time_utc"].iloc[0] == pd.Timestamp("2020-01-01 00:00:00", tz="UTC")
+    assert df["mark_close"].iloc[0] == 7005.0
+    assert df["index_close"].iloc[0] == 7004.0
+
+
+def test_ohlcv_to_markprice_dataframe_empty():
+    """ohlcv_to_markprice_dataframe on empty input returns empty schema-compliant DataFrame."""
+    df = markprice_incremental_update.ohlcv_to_markprice_dataframe([], [])
+    assert list(df.columns) == ["open_time_utc", "mark_close", "index_close", "source", "ingested_at_utc"]
+    assert len(df) == 0

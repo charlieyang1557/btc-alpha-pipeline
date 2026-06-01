@@ -1957,7 +1957,13 @@ class TestT1_4_Pc9BaselineGate:
         # test_markprice_reconcile_output_unique_sorted, test_markprice_archive_before_overwrite),
         # land wholly in pre_t1_x_baseline (test_markprice_ingestion.py; neither a t1_4 nor t1_5
         # subtraction target); advance BASELINE 2785 → 2788.
-        BASELINE = 2788
+        # Path C Phase A A5: +4 markprice incremental update tests (test_fetch_markprice_normalizes_to_schema,
+        # test_fetch_markprice_with_backoff_retries_then_succeeds, test_fetch_markprice_inner_joins_mark_and_index,
+        # test_ohlcv_to_markprice_dataframe_empty), land wholly in pre_t1_x_baseline
+        # (test_markprice_ingestion.py; neither a t1_4 nor t1_5 subtraction target);
+        # CCXT method form: fetch_ohlcv(symbol, timeframe, since, params={"price":"mark"|"index"});
+        # mock uses exact same method. advance BASELINE 2788 → 2792.
+        BASELINE = 2792
         assert pre_t1_x_baseline == BASELINE, (
             f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
             f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "
