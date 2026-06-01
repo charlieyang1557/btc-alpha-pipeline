@@ -1928,7 +1928,23 @@ class TestT1_4_Pc9BaselineGate:
         # PHASE_D_AUTHORIZED unchanged (False); sealed tier6_dsr_v1/ sha256 4/4
         # byte-unchanged. Advance BASELINE 2762 → 2778 (same expected-additive-cohort
         # precedent; per Charlie Phase D harness register, patha-funding-scoping branch).
-        BASELINE = 2778
+        # Path A Phase-D floor-computation code-review fixes (patha-funding-scoping
+        # branch): FIX 1 (MEDIUM) — compute_train_floors counts H1 defensive flat-exit
+        # episodes PER CONTIGUOUS TRAIN WINDOW so a long->flat transition manufactured
+        # across the excluded-2022 window gap (a trade entering in train but exiting in
+        # the 2022 holdout) no longer spuriously counts toward the H1 >=200 floor; FIX 2
+        # (LOW) — compute_train_floors git_sha marked reserved-for-parity + unused, and
+        # compute_funding_marginal's hypotheses param re-annotated Iterable[str]. Adds +2
+        # collected items in tests/test_patha_run_verdict.py (the FIX-1 window-gap
+        # boundary regression + the new H2/H3 eligible-true coverage test), neither a
+        # t1_4 nor a t1_5 subtraction target, so the +2 lands wholly in
+        # pre_t1_x_baseline = total − t1_4 − t1_5. Production change is the per-window
+        # H1 episode count (backtest/patha_orchestrator.h1_floor_from_episodes +
+        # scripts/patha_run_verdict.compute_train_floors); PHASE_D_AUTHORIZED unchanged
+        # (False); sealed tier6_dsr_v1/ sha256 4/4 byte-unchanged. Advance BASELINE
+        # 2778 → 2780 (same expected-additive-cohort precedent; per Charlie Phase-D
+        # floor-computation code-review-fix register, patha-funding-scoping branch).
+        BASELINE = 2780
         assert pre_t1_x_baseline == BASELINE, (
             f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
             f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "
