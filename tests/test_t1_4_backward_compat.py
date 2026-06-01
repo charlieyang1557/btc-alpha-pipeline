@@ -1994,7 +1994,28 @@ class TestT1_4_Pc9BaselineGate:
         # subtraction target); sealed tier6_dsr_v1/ sha256 4/4 byte-unchanged.
         # Advance BASELINE 2807 → 2830 (same expected-additive-cohort precedent;
         # per Charlie Path C Phase B B1-B4 register, pathc-basis-scoping branch).
-        BASELINE = 2830
+        # Path C Phase B Task B5 (registry + routing integration): adds +26
+        # collected items across 3 files, none a t1_4/t1_5 subtraction target:
+        #   tests/test_basis_build_routing.py (+6: 2 input_source contract-widen
+        #     tests [FactorSpec(basis) constructs + invalid still raises] + 4
+        #     routing integration tests [basis columns present, OHLCV unaffected,
+        #     missing-bar → NaN, OHLCV rows not dropped]),
+        #   tests/test_factors.py::TestForensicFutureBarInvariance
+        #     ::test_future_bar_invariance (+5: 5 basis factors parametrized),
+        #   tests/test_leakage_guards.py (+15: 3 parametrized test methods ×5
+        #     basis factors = TestG2FutureBarInvarianceSentinel:
+        #     test_truncation_invariance +5 + test_reversed_input_changes_output
+        #     +5 [basis_sign pytest.skip — counted by --collect-only]; and
+        #     TestG4aFutureBarInvariance::test_future_bar_invariance +5). Production
+        #   changes: factors/registry.py __post_init__ widen (ohlcv|funding|basis)
+        #     + _bootstrap_core_factors +5 basis SPECs + import basis; factors/basis.py
+        #     +5 SPEC_BASIS_* objects (FactorSpec); factors/build_features.py
+        #     load_markprice + DEFAULT_MARKPRICE_PATH + markprice_df routing +
+        #     left-join onto 1h OHLCV feature frame. Sealed tier6_dsr_v1/ sha256
+        #     4/4 byte-unchanged; PHASE_D_AUTHORIZED untouched. Advance BASELINE
+        #     2830 → 2856 (same expected-additive-cohort precedent; per Charlie
+        #     Path C Phase B Task B5 register, pathc-basis-scoping branch).
+        BASELINE = 2856
         assert pre_t1_x_baseline == BASELINE, (
             f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
             f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "

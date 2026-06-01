@@ -46,6 +46,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_RAW_PATH = PROJECT_ROOT / "data" / "raw" / "btcusdt_1h.parquet"
 DEFAULT_FEATURES_PATH = PROJECT_ROOT / "data" / "features" / "btcusdt_1h_features.parquet"
 DEFAULT_FUNDING_PATH = PROJECT_ROOT / "data" / "raw" / "btcusdt_funding_8h.parquet"
+DEFAULT_MARKPRICE_PATH = PROJECT_ROOT / "data" / "raw" / "btcusdt_markprice_1h.parquet"
 
 METADATA_KEY_FEATURE_VERSION = b"feature_version"
 METADATA_KEY_BUILT_AT = b"built_at_utc"
@@ -95,10 +96,30 @@ def load_funding(path: Path) -> pd.DataFrame:
     return df.sort_values("open_time_utc").reset_index(drop=True)
 
 
+def load_markprice(path: Path) -> pd.DataFrame:
+    """Load the canonical 1h markprice parquet (read-only).
+
+    Returns the markprice frame sorted by ``open_time_utc`` ascending,
+    with a UTC-aware ``open_time_utc`` column and a ``mark_close`` column.
+    Raises if the file is missing or mis-typed.
+    """
+    df = pd.read_parquet(path)
+    if "open_time_utc" not in df.columns:
+        raise ValueError(f"Markprice parquet at {path} missing 'open_time_utc' column")
+    if "mark_close" not in df.columns:
+        raise ValueError(f"Markprice parquet at {path} missing 'mark_close' column")
+    if not isinstance(df["open_time_utc"].dtype, pd.DatetimeTZDtype):
+        raise ValueError(
+            f"Markprice parquet at {path} has non-timezone-aware 'open_time_utc'"
+        )
+    return df.sort_values("open_time_utc").reset_index(drop=True)
+
+
 def build_features_df(
     raw_df: pd.DataFrame,
     registry: FactorRegistry,
     funding_df: pd.DataFrame | None = None,
+    markprice_df: pd.DataFrame | None = None,
 ) -> pd.DataFrame:
     """Compute all registered factors over the full raw DataFrame.
 
@@ -114,9 +135,21 @@ def build_features_df(
     backward as-of join (``factors.funding_align.carry_funding_to_bars``). If
     ``funding_df`` is None, funding factors are skipped (no funding columns are
     produced) so callers that only have OHLCV continue to work unchanged.
+
+    Routing (Path C Phase B Task B5): Basis factors (``input_source="basis"``)
+    do NOT compute on ``raw_df`` (it has no ``basis_rel`` column). Instead:
+    1. ``derive_basis_rel(markprice_df, raw_df)`` produces a ``basis_rel`` series
+       on the shared mark/spot grid (inner-join, NO carry).
+    2. Basis factors are computed on that frame.
+    3. Their columns are LEFT-JOINED onto ``out`` by ``open_time_utc``.
+    OHLCV bars absent from the mark/spot shared grid get NaN basis values —
+    correct and expected. If ``markprice_df`` is None, basis columns are added
+    with all-NaN values so the schema is consistent. The production build raises
+    if markprice is missing while basis factors are registered.
     """
     ohlcv_names = registry.list_names(input_source="ohlcv")
     funding_names = registry.list_names(input_source="funding")
+    basis_names = registry.list_names(input_source="basis")
     logger.info(
         "Computing %d OHLCV factors over %d bars (%s -> %s)",
         len(ohlcv_names),
@@ -142,22 +175,60 @@ def build_features_df(
                 len(funding_names),
                 funding_names,
             )
-            return out
-        from factors.funding_align import carry_funding_to_bars  # noqa: PLC0415
+        else:
+            from factors.funding_align import carry_funding_to_bars  # noqa: PLC0415
 
-        logger.info(
-            "Computing %d funding factors over %d settlements then carrying "
-            "onto the 1h grid",
-            len(funding_names),
-            len(funding_df),
-        )
-        funding_feat = registry.compute_all(
-            funding_df, funding_names, input_source="funding"
-        )
-        funding_feat = pd.concat(
-            [funding_df[["open_time_utc"]], funding_feat], axis=1
-        )
-        out = carry_funding_to_bars(out, funding_feat, funding_names)
+            logger.info(
+                "Computing %d funding factors over %d settlements then carrying "
+                "onto the 1h grid",
+                len(funding_names),
+                len(funding_df),
+            )
+            funding_feat = registry.compute_all(
+                funding_df, funding_names, input_source="funding"
+            )
+            funding_feat = pd.concat(
+                [funding_df[["open_time_utc"]], funding_feat], axis=1
+            )
+            out = carry_funding_to_bars(out, funding_feat, funding_names)
+
+    if basis_names:
+        if markprice_df is None:
+            # No markprice frame provided: add NaN columns for every basis factor
+            # so the schema stays consistent (same columns regardless of markprice
+            # availability). The production build raises when markprice is required.
+            logger.warning(
+                "build_features_df: %d basis factor(s) registered (%s) but no "
+                "markprice_df provided — adding NaN columns. The production build "
+                "requires the markprice parquet.",
+                len(basis_names),
+                basis_names,
+            )
+            for name in basis_names:
+                out[name] = float("nan")
+        else:
+            from factors.basis_derive import derive_basis_rel  # noqa: PLC0415
+
+            logger.info(
+                "Deriving basis_rel from markprice (%d bars) and spot (%d bars), "
+                "then computing %d basis factors on the shared grid",
+                len(markprice_df),
+                len(raw_df),
+                len(basis_names),
+            )
+            basis_rel_df = derive_basis_rel(markprice_df, raw_df)
+            # Compute factors on the shared-grid basis_rel frame.
+            basis_feat = registry.compute_all(
+                basis_rel_df, basis_names, input_source="basis"
+            )
+            basis_feat = pd.concat(
+                [basis_rel_df[["open_time_utc"]], basis_feat], axis=1
+            )
+            # Left-join basis columns onto the OHLCV feature frame by open_time_utc.
+            # OHLCV bars NOT in the shared mark/spot grid → NaN basis values
+            # (correct; do NOT drop OHLCV rows).
+            out = out.merge(basis_feat, on="open_time_utc", how="left")
+
     return out
 
 
@@ -213,6 +284,7 @@ def build_features(
     output_path: Path = DEFAULT_FEATURES_PATH,
     registry: FactorRegistry | None = None,
     funding_path: Path | None = DEFAULT_FUNDING_PATH,
+    markprice_path: Path | None = DEFAULT_MARKPRICE_PATH,
 ) -> Path:
     """Build the full-coverage factor parquet. Returns the written path.
 
@@ -223,6 +295,12 @@ def build_features(
     ``funding_path=None`` skips the funding load — callers with no funding data
     must also have no funding factors registered, else ``build_features_df``
     raises.
+
+    When basis factors are registered, ``markprice_path`` (the 1h markprice
+    parquet) is loaded and used to derive ``basis_rel`` via
+    ``factors.basis_derive.derive_basis_rel``. Basis factor columns are then
+    left-joined onto the 1h feature frame. Passing ``markprice_path=None``
+    or a path to a non-existent file raises when basis factors are registered.
     """
     if registry is None:
         registry = get_registry()
@@ -240,7 +318,25 @@ def build_features(
                 f"first or pass an explicit funding_path."
             )
         funding_df = load_funding(funding_path)
-    features_df = build_features_df(raw_df, registry, funding_df=funding_df)
+    markprice_df = None
+    if registry.list_names(input_source="basis") and markprice_path is not None:
+        # When a markprice_path is given, it must exist — never silently produce
+        # NaN basis columns on a misconfigured production path. Passing
+        # markprice_path=None is the explicit "no markprice available" signal
+        # that produces NaN basis columns (for OHLCV-only callers). The CLI
+        # always passes --markprice (defaults to DEFAULT_MARKPRICE_PATH) and
+        # enforces the not-exists guard separately.
+        if not Path(markprice_path).exists():
+            raise ValueError(
+                f"Basis factors are registered and markprice_path was supplied "
+                f"({markprice_path}) but the file does not exist; the production "
+                f"build cannot silently drop basis columns. Run the markprice "
+                f"ingestion first or pass markprice_path=None to accept NaN columns."
+            )
+        markprice_df = load_markprice(markprice_path)
+    features_df = build_features_df(
+        raw_df, registry, funding_df=funding_df, markprice_df=markprice_df
+    )
     feature_version = compute_feature_version(registry)
     write_features_parquet(features_df, output_path, feature_version, raw_path)
     return output_path
@@ -251,13 +347,15 @@ def load_features_or_rebuild(
     features_path: Path = DEFAULT_FEATURES_PATH,
     registry: FactorRegistry | None = None,
     funding_path: Path | None = DEFAULT_FUNDING_PATH,
+    markprice_path: Path | None = DEFAULT_MARKPRICE_PATH,
 ) -> pd.DataFrame:
     """Read the feature parquet, rebuilding first if feature_version is stale.
 
     This is the canonical consumer-side entrypoint. No silent "use stale
     data" fallback is permitted: if the stored version doesn't match the
     live registry hash, we rebuild before returning the DataFrame. ``funding_path``
-    is forwarded to :func:`build_features` for the funding-factor routing.
+    and ``markprice_path`` are forwarded to :func:`build_features` for the
+    funding-factor and basis-factor routing respectively.
     """
     if registry is None:
         registry = get_registry()
@@ -271,7 +369,13 @@ def load_features_or_rebuild(
             (stored_version or "<none>")[:12],
             live_version[:12],
         )
-        build_features(raw_path, features_path, registry, funding_path=funding_path)
+        build_features(
+            raw_path,
+            features_path,
+            registry,
+            funding_path=funding_path,
+            markprice_path=markprice_path,
+        )
 
     return pd.read_parquet(features_path)
 
@@ -321,6 +425,13 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "when funding factors are registered)",
     )
     parser.add_argument(
+        "--markprice",
+        type=Path,
+        default=DEFAULT_MARKPRICE_PATH,
+        help="Path to the 1h markprice parquet (used to derive basis_rel when "
+        "basis factors are registered; native-1h, no carry)",
+    )
+    parser.add_argument(
         "--force-rebuild",
         action="store_true",
         help="Rebuild even if the stored feature_version matches the live one",
@@ -364,7 +475,23 @@ def main(argv: list[str] | None = None) -> int:
             )
             return 1
         funding_df = load_funding(args.funding)
-    features_df = build_features_df(raw_df, registry, funding_df=funding_df)
+    markprice_df = None
+    if registry.list_names(input_source="basis"):
+        # Mirror the funding diagnostic: log an actionable error + return non-zero
+        # when basis factors are registered but the markprice parquet is missing.
+        if args.markprice is None or not Path(args.markprice).exists():
+            logger.error(
+                "Basis factors are registered but the markprice parquet (%s) "
+                "is missing; the build cannot silently drop basis columns. "
+                "Run the markprice ingestion first or pass an explicit --markprice "
+                "path.",
+                args.markprice,
+            )
+            return 1
+        markprice_df = load_markprice(args.markprice)
+    features_df = build_features_df(
+        raw_df, registry, funding_df=funding_df, markprice_df=markprice_df
+    )
 
     if args.dry_run:
         logger.info(

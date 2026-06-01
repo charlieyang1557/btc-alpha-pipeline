@@ -218,16 +218,38 @@ def _synthetic_funding(n: int = 800, seed: int = 7) -> pd.DataFrame:
     )
 
 
+def _synthetic_basis(n: int = 1500, seed: int = 17) -> pd.DataFrame:
+    """Synthetic native-1h basis_rel frame for the basis-source factors.
+
+    Basis factors are tagged ``input_source="basis"`` and read a ``basis_rel``
+    column on the 1h grid (derived from markprice + spot inner-join). The leakage
+    sentinels route a factor to its matching input by this field.
+    """
+    rng = np.random.default_rng(seed)
+    idx = pd.date_range("2021-01-01", periods=n, freq="h", tz="UTC")
+    return pd.DataFrame(
+        {
+            "open_time_utc": idx,
+            "basis_rel": rng.normal(0, 2e-4, n),
+        }
+    )
+
+
 def _synthetic_input_for(spec) -> pd.DataFrame:
     """Return the synthetic input frame matching a factor spec's input_source.
 
-    Routes funding-source factors to the 8h settlement frame and OHLCV-source
-    factors to the OHLCV frame, mirroring ``factors.build_features`` so the
-    sentinels run each factor against an input it can read.
+    Routes funding-source factors to the 8h settlement frame, basis-source factors
+    to the native-1h basis_rel frame, and OHLCV-source factors to the OHLCV frame,
+    mirroring ``factors.build_features`` so the sentinels run each factor against
+    an input it can read.
     """
-    n = 1500  # large enough that every factor warms up before any truncation k
+    n = 3000  # large enough that every factor warms up before any truncation k
+    # (basis_pct_rank_2160 and basis_ewm_240_pctrank_2160 have warmup_bars=2160;
+    # need n > 2160 + margin for the truncation k=1200→k=2500 check)
     if getattr(spec, "input_source", "ohlcv") == "funding":
         return _synthetic_funding(n=n)
+    if getattr(spec, "input_source", "ohlcv") == "basis":
+        return _synthetic_basis(n=n)
     return _synthetic_ohlcv(n=n)
 
 
@@ -262,6 +284,7 @@ _REVERSAL_EXEMPT = frozenset(
         "day_of_week",
         "intrabar_push",  # (close-open)/((high-low)+1e-9) — per-bar/pointwise, warmup=0 -> reversal-invariant
         "funding_sign",  # np.sign(funding_rate) — per-settlement/pointwise, warmup=0 -> reversal-invariant
+        "basis_sign",  # np.sign(basis_rel) — per-bar/pointwise, warmup=0 -> reversal-invariant
         # ORDER-INVARIANT (commutative) window aggregates: mean/std over a fixed
         # window are independent of element order, so forward==reversed.
         "sma_20",
@@ -273,6 +296,9 @@ _REVERSAL_EXEMPT = frozenset(
 # NOTE: funding_ewm_30/60 (recency-weighted) and funding_pct_rank_270 (current
 # value enters at the window edge) are ORDER-SENSITIVE and correctly stay OUT of
 # this set — they must remain reversal-tested (routed onto the funding frame).
+# Similarly basis_ewm_240/480 (recency-weighted) and basis_pct_rank_2160/
+# basis_ewm_240_pctrank_2160 (current bar enters at window edge) are
+# ORDER-SENSITIVE and stay OUT of this set (routed onto the basis_rel frame).
 
 
 class TestG2FutureBarInvarianceSentinel:
@@ -281,11 +307,15 @@ class TestG2FutureBarInvarianceSentinel:
     @pytest.mark.parametrize("name", _SENTINEL_NAMES)
     def test_truncation_invariance(self, name):
         spec = _SENTINEL_REG.get(name)
-        df = _synthetic_input_for(spec)  # route OHLCV vs funding-source factors
-        k = 1200  # well past every factor's warmup (incl. cdf_realized_vol_720 warmup=743)
+        df = _synthetic_input_for(spec)  # route OHLCV vs funding/basis-source factors
+        # k must exceed the factor's warmup. Basis pct-rank factors have warmup=2160;
+        # all OHLCV factors are <= 743; funding factors are <= 270 settlements.
+        # Use warmup + 100 as k (minimum margin = 100 bars/settlements past warmup).
+        # _synthetic_input_for provides n=3000 so this is always safe.
+        warmup = spec.warmup_bars
+        k = max(warmup + 100, 1200)
         full = spec.compute(df).to_numpy()
         truncated = spec.compute(df.iloc[:k].copy()).to_numpy()
-        warmup = spec.warmup_bars
         assert k > warmup, (
             f"{name}: truncation test vacuous — k={k} <= warmup={warmup}; "
             f"raise n/k above the factor's warmup."
@@ -528,15 +558,16 @@ class TestG4aFutureBarInvariance:
 
     @pytest.mark.parametrize("name", _G4_NAMES)
     def test_future_bar_invariance(self, name):
-        # Larger sample than G2 (n=1500/k=1200) so every long-lookback factor
-        # warms up well before the truncation boundary k (incl. cdf_realized_vol_720
-        # warmup=743; k=1200 leaves ~457 post-warmup bars to compare).
+        # Larger sample than G2 so every long-lookback factor warms up well before
+        # the truncation boundary k. Basis pct-rank factors have warmup=2160;
+        # use warmup+100 as k (min margin 100 past warmup) so the test is always
+        # non-vacuous. _synthetic_input_for provides n=3000 (safe for all factors).
         spec = _G4_REG.get(name)
-        df = _synthetic_input_for(spec)  # route OHLCV vs funding-source factors
-        k = 1200
+        df = _synthetic_input_for(spec)  # route OHLCV vs funding/basis-source factors
+        w = spec.warmup_bars
+        k = max(w + 100, 1200)
         full = spec.compute(df).to_numpy()
         trunc = spec.compute(df.iloc[:k].copy()).to_numpy()
-        w = spec.warmup_bars
         assert k > w, (
             f"{name}: truncation test vacuous — k={k} <= warmup={w}; "
             f"raise n/k above the factor's warmup."

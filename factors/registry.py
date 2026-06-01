@@ -113,10 +113,10 @@ class FactorSpec:
                 f"Factor {self.name!r}: null_policy must be "
                 f"'nan_before_warmup_only' in D1, got {self.null_policy!r}"
             )
-        if self.input_source not in {"ohlcv", "funding"}:
+        if self.input_source not in {"ohlcv", "funding", "basis"}:
             raise ValueError(
-                f"Factor {self.name!r}: input_source must be 'ohlcv' or "
-                f"'funding', got {self.input_source!r}"
+                f"Factor {self.name!r}: input_source must be 'ohlcv', "
+                f"'funding', or 'basis', got {self.input_source!r}"
             )
         if self.input_period_bars < 1:
             raise ValueError(
@@ -556,7 +556,7 @@ def reset_registry() -> None:
 
 
 def _bootstrap_core_factors(registry: FactorRegistry) -> None:
-    """Register the 23 core factors on the given registry.
+    """Register the 33 core factors on the given registry.
 
     The original D1 set had 14 factors. D5 (Baselines in DSL) promoted 4
     additional factors from the deferred list to support the
@@ -564,12 +564,16 @@ def _bootstrap_core_factors(registry: FactorRegistry) -> None:
     ``close``, ``sma_24``, ``bb_upper_24_2``, ``zscore_48``.
     Task 6 (Path B) added 5 factors: ``intrabar_push``, ``range_over_atr``,
     ``cdf_realized_vol_720``, ``decay_linear_close_48``, ``decay_linear_close_168``.
+    Task B5 (Path C) added 5 basis factors (``input_source="basis"``; native-1h,
+    NO carry): ``basis_sign``, ``basis_ewm_240``, ``basis_ewm_480``,
+    ``basis_pct_rank_2160``, ``basis_ewm_240_pctrank_2160``.
 
     Factor modules are imported here (not at top-level) to avoid import
     cycles with anything that may eventually import ``factors/__init__.py``.
     """
     # Local imports guarded inside the function — see docstring.
     from factors import (  # noqa: PLC0415
+        basis,
         funding,
         momentum,
         moving_averages,
@@ -613,5 +617,13 @@ def _bootstrap_core_factors(registry: FactorRegistry) -> None:
         # Path A Phase C: the H2 funding regime axis (rolling-270 percentile of
         # the span-30 funding EWM); input_source="funding" like the rest.
         funding.SPEC_FUNDING_EWM_30_PCTRANK_270,
+        # Path C Phase B (Task B5): 5 native-1h basis factors (input_source="basis";
+        # no carry — basis_rel is already on the 1h grid; windows are ×8 relative
+        # to the Path A funding analogs: 30/60/270 settlements → 240/480/2160 bars).
+        basis.SPEC_BASIS_SIGN,
+        basis.SPEC_BASIS_EWM_240,
+        basis.SPEC_BASIS_EWM_480,
+        basis.SPEC_BASIS_PCT_RANK_2160,
+        basis.SPEC_BASIS_EWM_240_PCTRANK_2160,
     ):
         registry.register(spec)

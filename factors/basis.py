@@ -7,12 +7,23 @@ invariance). Input: a DataFrame with a 'basis_rel' column on the 1h grid
 These factors are the exact analogs of the Path A funding factors (``factors.funding``),
 computed on ``basis_rel`` instead of ``funding_rate``, with windows scaled ×8:
 funding 30/60/270 settlements → basis 240/480/2160 bars.
+
+DESIGN INVARIANT: these factors are tagged ``input_source="basis"`` in the registry
+so the build routes them onto the native-1h basis_rel frame (NOT the OHLCV frame,
+which has no ``basis_rel`` column, and NOT the 8h funding frame). Unlike funding
+factors there is NO carry step — ``basis_rel`` is already native-1h. The build
+left-joins basis factor columns onto the OHLCV feature frame by ``open_time_utc``
+(same-grid join); bars present in the OHLCV frame but NOT in the shared mark/spot
+grid will have NaN basis factor values — that is correct and expected. See
+``factors/build_features.py``.
 """
 
 from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+
+from factors.registry import FactorSpec
 
 
 def basis_sign(df: pd.DataFrame) -> pd.Series:
@@ -109,3 +120,75 @@ def basis_ewm_240_pctrank_2160(df: pd.DataFrame) -> pd.Series:
 
     ewm = df["basis_rel"].ewm(span=240, adjust=False).mean()
     return ewm.rolling(window=2160, min_periods=2160).apply(_rank, raw=True)
+
+
+# ---------------------------------------------------------------------------
+# FactorSpec registrations (input_source="basis" — native-1h, NO carry)
+# ---------------------------------------------------------------------------
+
+# Basis factors are native-1h (NOT carried from a coarser grid), so
+# input_period_bars=1 and bar-equivalent warmup == declared warmup_bars.
+# The build routes these onto the basis_rel frame derived by
+# factors.basis_derive.derive_basis_rel, then left-joins the columns onto the
+# 1h OHLCV feature frame by open_time_utc. Windows are ×8 relative to the
+# Path A funding analogs (30/60/270 settlements → 240/480/2160 1h bars).
+
+SPEC_BASIS_SIGN = FactorSpec(
+    name="basis_sign",
+    category="basis",
+    warmup_bars=0,
+    inputs=["basis_rel"],
+    output_dtype="float64",
+    compute=basis_sign,
+    docstring=basis_sign.__doc__ or "",
+    input_source="basis",
+    input_period_bars=1,
+)
+
+SPEC_BASIS_EWM_240 = FactorSpec(
+    name="basis_ewm_240",
+    category="basis",
+    warmup_bars=240,
+    inputs=["basis_rel"],
+    output_dtype="float64",
+    compute=basis_ewm_240,
+    docstring=basis_ewm_240.__doc__ or "",
+    input_source="basis",
+    input_period_bars=1,
+)
+
+SPEC_BASIS_EWM_480 = FactorSpec(
+    name="basis_ewm_480",
+    category="basis",
+    warmup_bars=480,
+    inputs=["basis_rel"],
+    output_dtype="float64",
+    compute=basis_ewm_480,
+    docstring=basis_ewm_480.__doc__ or "",
+    input_source="basis",
+    input_period_bars=1,
+)
+
+SPEC_BASIS_PCT_RANK_2160 = FactorSpec(
+    name="basis_pct_rank_2160",
+    category="basis",
+    warmup_bars=2160,
+    inputs=["basis_rel"],
+    output_dtype="float64",
+    compute=basis_pct_rank_2160,
+    docstring=basis_pct_rank_2160.__doc__ or "",
+    input_source="basis",
+    input_period_bars=1,
+)
+
+SPEC_BASIS_EWM_240_PCTRANK_2160 = FactorSpec(
+    name="basis_ewm_240_pctrank_2160",
+    category="basis",
+    warmup_bars=2160,
+    inputs=["basis_rel"],
+    output_dtype="float64",
+    compute=basis_ewm_240_pctrank_2160,
+    docstring=basis_ewm_240_pctrank_2160.__doc__ or "",
+    input_source="basis",
+    input_period_bars=1,
+)

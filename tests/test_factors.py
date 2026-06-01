@@ -68,6 +68,20 @@ def _make_synthetic_funding(n: int, seed: int = 7) -> pd.DataFrame:
     })
 
 
+def _make_synthetic_basis(n: int, seed: int = 13) -> pd.DataFrame:
+    """Create an n-bar synthetic native-1h basis_rel frame aligned to 2020-01-01.
+
+    Path C Phase B Task B5: basis factors (input_source='basis') compute on a
+    frame that has a 'basis_rel' column on the 1h grid.
+    """
+    rng = np.random.RandomState(seed)
+    times = pd.date_range("2020-01-01", periods=n, freq="h", tz="UTC")
+    return pd.DataFrame({
+        "open_time_utc": times,
+        "basis_rel": rng.randn(n) * 2e-4,
+    })
+
+
 @pytest.fixture
 def synthetic_200():
     return _make_synthetic(200)
@@ -80,7 +94,7 @@ def synthetic_1000():
 
 @pytest.fixture
 def registry():
-    """Fresh registry with all 23 core factors (18 original + 5 Path B arc additions)."""
+    """Fresh registry with all 33 core factors (23 OHLCV + 5 funding + 5 basis)."""
     r = FactorRegistry()
     from factors.registry import _bootstrap_core_factors
     _bootstrap_core_factors(r)
@@ -165,15 +179,17 @@ class TestRegistration:
 
 
 # ---------------------------------------------------------------------------
-# Core factors — 28 registered:
+# Core factors — 33 registered:
 #   - 23 OHLCV-source factors (18 original + 5 Path B arc additions), computed
 #     on the 1h OHLCV frame (``input_source="ohlcv"``).
 #   - 5 funding-source factors (Path A Phase B + the Path A Phase C H2
 #     funding_ewm_30_pctrank_270 regime axis), computed on the 8h funding
 #     settlement frame and carried onto the 1h grid (``input_source="funding"``).
+#   - 5 basis-source factors (Path C Phase B Task B5), computed on the native-1h
+#     basis_rel frame and left-joined onto the 1h grid (``input_source="basis"``).
 # EXPECTED_FACTORS is the full registry set (used wherever list_names() is
-# compared). EXPECTED_OHLCV_FACTORS / EXPECTED_FUNDING_FACTORS are the per-source
-# splits used by the routing-specific assertions (compute_all, build, warmup).
+# compared). EXPECTED_OHLCV_FACTORS / EXPECTED_FUNDING_FACTORS / EXPECTED_BASIS_FACTORS
+# are the per-source splits used by the routing-specific assertions.
 # ---------------------------------------------------------------------------
 
 EXPECTED_OHLCV_FACTORS = [
@@ -210,12 +226,23 @@ EXPECTED_FUNDING_FACTORS = [
     "funding_sign",
 ]
 
+# Path C Phase B Task B5: 5 native-1h basis factors (input_source="basis").
+EXPECTED_BASIS_FACTORS = [
+    "basis_ewm_240",
+    "basis_ewm_240_pctrank_2160",
+    "basis_ewm_480",
+    "basis_pct_rank_2160",
+    "basis_sign",
+]
+
 # Full registry set, alphabetically sorted (the list_names() projection).
-EXPECTED_FACTORS = sorted(EXPECTED_OHLCV_FACTORS + EXPECTED_FUNDING_FACTORS)
+EXPECTED_FACTORS = sorted(
+    EXPECTED_OHLCV_FACTORS + EXPECTED_FUNDING_FACTORS + EXPECTED_BASIS_FACTORS
+)
 
 
 class TestCoreFactors:
-    """All 28 core factors are registered and computable (23 OHLCV + 5 funding)."""
+    """All 33 core factors are registered and computable (23 OHLCV + 5 funding + 5 basis)."""
 
     def test_all_registered(self, registry):
         assert registry.list_names() == EXPECTED_FACTORS
@@ -521,11 +548,14 @@ class TestForensicFutureBarInvariance:
     def test_future_bar_invariance(self, registry, synthetic_1000, name):
         spec = registry.get(name)
         # Route the input frame by input_source: funding factors read the 8h
-        # settlement frame (which has 'funding_rate'), OHLCV factors read the
-        # OHLCV frame. The split-at-500 invariance assertion is identical for
-        # both — a future bar/settlement must never change an earlier value.
+        # settlement frame (which has 'funding_rate'), basis factors read the
+        # native-1h basis_rel frame, OHLCV factors read the OHLCV frame.
+        # The split-at-500 invariance assertion is identical for all — a future
+        # bar must never change an earlier value.
         if spec.input_source == "funding":
             source_df = _make_synthetic_funding(1000)
+        elif spec.input_source == "basis":
+            source_df = _make_synthetic_basis(1000)
         else:
             source_df = synthetic_1000
         full_result = spec.compute(source_df)
@@ -721,8 +751,11 @@ class TestStaleParquetForceRebuild:
         write_features_parquet(features_df, out_path, "stale_version_abc", raw_path)
 
         # Now load_features_or_rebuild should detect mismatch and rebuild.
+        # markprice_path=None: no markprice in this hermetic test; basis columns
+        # will be all-NaN (correct behavior when markprice is not supplied).
         result = load_features_or_rebuild(
-            raw_path, out_path, registry, funding_path=funding_path
+            raw_path, out_path, registry, funding_path=funding_path,
+            markprice_path=None,
         )
 
         # After rebuild, stored version must match live.
@@ -747,13 +780,17 @@ class TestStaleParquetForceRebuild:
         funding_path = tmp_path / "funding.parquet"
         funding_df.to_parquet(funding_path, index=False)
 
-        build_features(raw_path, out_path, registry, funding_path=funding_path)
+        # markprice_path=None: no markprice in this hermetic test; basis columns
+        # will be all-NaN (correct behavior when markprice is not supplied).
+        build_features(raw_path, out_path, registry, funding_path=funding_path,
+                       markprice_path=None)
         mtime_1 = out_path.stat().st_mtime
 
         # Build again — should detect up-to-date and return early.
         from factors.build_features import load_features_or_rebuild
         load_features_or_rebuild(
-            raw_path, out_path, registry, funding_path=funding_path
+            raw_path, out_path, registry, funding_path=funding_path,
+            markprice_path=None,
         )
         mtime_2 = out_path.stat().st_mtime
 
@@ -1024,14 +1061,16 @@ NEW_FACTORS_THIS_ARC = [
 
 
 class TestNewFactorPresence:
-    """Presence guard: the 5 Path B arc factors plus the 5 Path A funding
-    factors are registered; the library now has 28 factors total (23 OHLCV +
-    5 funding), alphabetically ordered."""
+    """Presence guard: the 5 Path B arc factors + 5 Path A funding + 5 Path C basis
+    factors are registered; the library now has 33 factors total (23 OHLCV +
+    5 funding + 5 basis), alphabetically ordered."""
 
-    def test_expected_factors_has_28(self):
-        assert len(EXPECTED_FACTORS) == 28
+    def test_expected_factors_has_33(self):
+        # Path C Phase B Task B5: 5 basis factors added (2830→2834 BASELINE advance).
+        assert len(EXPECTED_FACTORS) == 33
         assert len(EXPECTED_OHLCV_FACTORS) == 23
         assert len(EXPECTED_FUNDING_FACTORS) == 5
+        assert len(EXPECTED_BASIS_FACTORS) == 5
 
     def test_expected_factors_is_alphabetical(self):
         assert EXPECTED_FACTORS == sorted(EXPECTED_FACTORS)
@@ -1041,9 +1080,10 @@ class TestNewFactorPresence:
         for n in NEW_FACTORS_THIS_ARC:
             assert n in names, f"new factor {n!r} not registered"
 
-    def test_total_is_28_and_matches_expected(self, registry):
+    def test_total_is_33_and_matches_expected(self, registry):
+        # Path C Phase B Task B5: 33 = 23 OHLCV + 5 funding + 5 basis.
         names = registry.list_names()
-        assert len(names) == 28
+        assert len(names) == 33
         assert names == EXPECTED_FACTORS
 
 
@@ -1068,9 +1108,9 @@ class TestFeatureVersionSensitivity:
     def test_full_differs_from_subset_missing_new_factors(self):
         full = get_registry()
         sub = self._subset_registry(drop=NEW_FACTORS_THIS_ARC)
-        # 28 full - 5 Path B arc factors = 23 (still includes the 5 funding).
-        assert len(sub.list_names()) == 23
-        assert len(full.list_names()) == 28
+        # 33 full - 5 Path B arc factors = 28 (still includes 5 funding + 5 basis).
+        assert len(sub.list_names()) == 28
+        assert len(full.list_names()) == 33
         # Adding the 5 new factors MUST change the feature_version hash.
         assert compute_feature_version(full) != compute_feature_version(sub)
 
@@ -1081,13 +1121,15 @@ class TestFeatureVersionSensitivity:
     def test_dropping_one_new_factor_changes_version(self):
         full = get_registry()
         sub = self._subset_registry(drop=["intrabar_push"])
-        assert len(sub.list_names()) == 27
+        # 33 - 1 = 32.
+        assert len(sub.list_names()) == 32
         assert compute_feature_version(full) != compute_feature_version(sub)
 
     def test_dropping_one_funding_factor_changes_version(self):
         full = get_registry()
         sub = self._subset_registry(drop=["funding_sign"])
-        assert len(sub.list_names()) == 27
+        # 33 - 1 = 32.
+        assert len(sub.list_names()) == 32
         assert compute_feature_version(full) != compute_feature_version(sub)
 
 
@@ -1097,8 +1139,8 @@ class TestFeatureVersionSensitivity:
 
 
 class TestForceRebuildFeatureVersion:
-    """build_features_df stamps the live 28-factor feature_version (23 OHLCV +
-    5 funding); the full `--force-rebuild` over the canonical dataset is slow
+    """build_features_df stamps the live 33-factor feature_version (23 OHLCV +
+    5 funding + 5 basis); the full `--force-rebuild` over the canonical dataset is slow
     because cdf_realized_vol_720 is O(N*720) — exercised on a synthetic frame
     here."""
 
@@ -1123,12 +1165,14 @@ class TestForceRebuildFeatureVersion:
         funding = _make_synthetic_funding(120)  # 120 settlements = 960h > 800 bars
         reg = get_registry()
         out = build_features_df(raw, reg, funding_df=funding)
-        # All 28 factors present as columns (23 OHLCV + 5 carried funding,
-        # plus open_time_utc).
+        # All factors present as columns (23 OHLCV + 5 carried funding + 5 basis,
+        # plus open_time_utc). Basis factors may have NaN on bars where the
+        # markprice stream has no overlap, but all columns must be present.
         for name in EXPECTED_FACTORS:
             assert name in out.columns
         # build_features_df returns open_time_utc + one column per factor.
-        assert len(out.columns) == 1 + 28
+        # Path C Phase B Task B5: 33 = 23 OHLCV + 5 funding + 5 basis.
+        assert len(out.columns) == 1 + 33
 
         live_version = compute_feature_version(reg)
 
