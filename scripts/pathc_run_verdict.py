@@ -179,7 +179,7 @@ def compute_train_floors(
     *,
     git_sha: str = "PATHC_BUILD",
 ) -> dict[str, dict]:
-    """CONTRACT GAP 1 (C7): per-hypothesis TRAIN-window eligibility floors (LOCK Pre-reg 3).
+    """Per-hypothesis TRAIN-window eligibility floors (LOCK Pre-reg 3).
 
     For each hypothesis, compile its gated DSL and run it over the TRAIN span via
     the INJECTED engine. Reconstruct the per-bar long/flat position series (from the
@@ -453,6 +453,7 @@ def run_verdict(
         )
 
     from backtest.pathc_eval_gauntlet import (
+        H2_DERISK_PCTRANK,
         build_all_hypotheses,
         build_h1_dsl,
         build_h3_dsl,
@@ -542,32 +543,28 @@ def run_verdict(
             "episodes_at_090": episodes_at_090,
         },
     }
+    # --- Train feature frame: needed for de-risk occupancy + per-leg sanity ---
+    train = build_train_frame(train_windows, features_path=features_path)
+
     # H2: add the de-risk-occupancy prong to the state-class floor.
+    # LOCK Pre-registration 1 H2 row: de-risk-cell occupancy = fraction of evaluated
+    # (post-warmup) TRAIN bars where basis_ewm_240_pctrank_2160 >= H2_DERISK_PCTRANK.
+    # Measured directly from the train feature frame; NaN warmup rows are already
+    # dropped by build_train_frame (dropna on fwd_ret_24h/72h excludes them).
     h2_floor = dict(floors_h2h3["H2"])
     h2_zf_ok = h2_floor.get("zero_fraction", 1.0) < 0.50
     h2_trades_ok = int(h2_floor.get("n_trades", 0)) >= 200
-    # De-risk occupancy is not directly measurable from the simple position series;
-    # derive a conservative estimate: fraction of flat bars approximates ~1 - occupancy.
-    # DONE_WITH_CONCERNS: the de-risk-occupancy prong here uses 1 - zero_fraction as a
-    # proxy for "fraction in long" (NOT "fraction in de-risk cell specifically"). The
-    # correct measurement requires the actual de-risk cell bars from the basis factor.
-    # Charlie should note this at Phase-D: if the H2 zero_fraction floor fails first
-    # (expected), the de-risk-occupancy prong is a secondary gate that does not change
-    # the verdict. If H2 unexpectedly clears zero_fraction, derisk_occupancy must be
-    # measured from the feature frame, not proxied here.
-    derisk_occupancy_proxy = float(h2_floor.get("zero_fraction", 1.0))  # fraction FLAT
-    # h2_derisk_occupancy_eligible checks occupancy >= 0.10 where occupancy = long fraction.
-    # The long fraction = 1 - zero_fraction (approx, when degenerate long bars dominate).
-    h2_derisk_ok = h2_derisk_occupancy_eligible(1.0 - derisk_occupancy_proxy)
+    derisk_occupancy = float(
+        (train["basis_ewm_240_pctrank_2160"] >= H2_DERISK_PCTRANK).mean()
+    )
+    h2_derisk_ok = h2_derisk_occupancy_eligible(derisk_occupancy)
     h2_eligible = h2_zf_ok and h2_trades_ok and h2_derisk_ok
     h2_floor["eligible"] = h2_eligible
     h2_floor["status"] = "ELIGIBLE" if h2_eligible else "INDETERMINATE"
-    h2_floor["derisk_occupancy_proxy"] = 1.0 - derisk_occupancy_proxy
+    h2_floor["derisk_occupancy"] = derisk_occupancy
+    h2_floor["derisk_occupancy_eligible"] = h2_derisk_ok
     floors["H2"] = h2_floor
     floors["H3"] = floors_h2h3["H3"]
-
-    # --- Train-only tiered per-leg mechanism sanity at the FROZEN θ ---
-    train = build_train_frame(train_windows, features_path=features_path)
     try:
         from backtest.pathc_perleg_mechanism import compute_per_leg_tiers  # type: ignore[import]
         # C5 (GAP 3 from original): pass the FROZEN θ (not the default 0.90).
@@ -637,6 +634,7 @@ def run_verdict(
         )
     else:
         bundle["earned_negative_power_limited"] = False
+        bundle["earned_negative_power_limited_note"] = None
 
     # --- Sealed-artifact invariant (after); HARD guard ---
     sealed_after = _sealed_fingerprint()

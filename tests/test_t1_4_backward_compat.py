@@ -2161,7 +2161,14 @@ class TestT1_4_Pc9BaselineGate:
         # orthogonalization D1/D2 → basis_marginal; F3 headline caveat. Sealed
         # tier6_dsr_v1/ sha256 4/4 byte-unchanged; PHASE_D_AUTHORIZED untouched.
         # Advance BASELINE 2985 → 3005 (same expected-additive-cohort precedent).
-        BASELINE = 3005
+        # FIX 1 (LOCK-conformance): H2 de-risk occupancy = actual regime-factor fraction
+        # (basis_ewm_240_pctrank_2160 >= H2_DERISK_PCTRANK) from the train feature frame,
+        # not 1-zero_fraction proxy; +1 new test (test_pathc_run_verdict.py). FIX 2:
+        # stale CONTRACT GAP docstring in compute_train_floors removed. FIX 3: bundle root
+        # always sets earned_negative_power_limited_note (None when not power-limited).
+        # Sealed tier6_dsr_v1/ sha256 4/4 byte-unchanged; PHASE_D_AUTHORIZED untouched.
+        # Advance BASELINE 3005 → 3006 (same expected-additive-cohort precedent).
+        BASELINE = 3006
         assert pre_t1_x_baseline == BASELINE, (
             f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
             f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "

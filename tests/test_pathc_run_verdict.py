@@ -736,3 +736,131 @@ def test_main_still_returns_2_when_gate_closed():
     """main() must still exit 2 (gate closed) after all wiring changes."""
     assert rv.PHASE_D_AUTHORIZED is False
     assert rv.main([]) == 2
+
+
+# ---------------------------------------------------------------------------
+# FIX 1: H2 de-risk occupancy = actual regime-factor fraction (LOCK-conformance)
+# ---------------------------------------------------------------------------
+
+def _features_with_split_derisk(tmp_path, derisk_fraction: float, long_fraction: float) -> str:
+    """Synthetic train-window feature frame where long_fraction != derisk_fraction.
+
+    ``basis_ewm_240_pctrank_2160 >= 0.80`` fires in exactly ``derisk_fraction`` of bars.
+    The mocked engine's position series will produce approximately ``long_fraction``
+    long bars (set via trade coverage), making the two quantities diverge.
+
+    Both values are in (0, 1) and differ, so the test can tell which quantity
+    ``compute_train_floors`` + ``run_verdict`` actually pass to
+    ``h2_derisk_occupancy_eligible``.
+    """
+    n = 800
+    idx = pd.date_range("2020-01-01", periods=n, freq="h", tz="UTC")
+    rng = np.random.default_rng(42)
+
+    # Construct basis_ewm_240_pctrank_2160 so that exactly floor(n * derisk_fraction)
+    # bars are >= 0.80.
+    n_derisk = int(n * derisk_fraction)
+    pctrank = np.full(n, 0.40)  # below 0.80
+    pctrank[:n_derisk] = 0.85   # above 0.80 in the first n_derisk rows
+
+    df = pd.DataFrame({
+        "open_time_utc": idx,
+        "return_1h": rng.normal(0, 0.01, n),
+        "basis_pct_rank_2160": rng.uniform(0, 1, n),
+        "basis_sign": rng.choice([-1.0, 0.0, 1.0], n),
+        "basis_ewm_240_pctrank_2160": pctrank,
+        "basis_ewm_480": rng.normal(0, 0.001, n),
+        "decay_linear_close_48": rng.normal(100, 5, n),
+        "decay_linear_close_168": rng.normal(100, 5, n),
+        "cdf_realized_vol_720": rng.uniform(0, 1, n),
+    })
+    p = tmp_path / "feat_split_derisk.parquet"
+    df.to_parquet(p)
+    return str(p)
+
+
+def test_h2_derisk_occupancy_uses_regime_factor_fraction_not_long_fraction(tmp_path):
+    """LOCK conformance: H2 de-risk occupancy = fraction of evaluated TRAIN bars
+    where ``basis_ewm_240_pctrank_2160 >= 0.80``, NOT ``1 - zero_fraction``.
+
+    Set up a scenario where:
+      - derisk_fraction = 0.05 (5% of bars have pctrank >= 0.80; below the 10% floor)
+      - The mock position series is 80% long (long_fraction = 0.80)
+
+    With the WRONG proxy (1 - zero_fraction):
+      ``occupancy = 1 - 0.20 = 0.80`` → eligible (>= 0.10)
+
+    With the CORRECT regime-factor fraction:
+      ``occupancy = 0.05`` → ineligible (< 0.10)
+
+    The fix must pass the CORRECT value, so h2_floor["derisk_occupancy"]
+    equals approximately 0.05, and h2_floor["derisk_occupancy_eligible"] is False.
+    """
+    out = tmp_path / "pathc_verdict_v1"
+    # Feature file: derisk_fraction = 0.05, well below the 10% floor.
+    feats = _features_with_split_derisk(tmp_path, derisk_fraction=0.05, long_fraction=0.80)
+
+    # Mock backtest: dispatches on start year — train runs return 300 trades (state-class
+    # floor would pass) + healthy equity; forward runs return a valid non-degenerate result.
+    def _mock_backtest(**kw):
+        start = kw.get("start_date")
+        is_train = start is not None and getattr(start, "year", 2026) <= 2024
+
+        class _R:
+            pass
+
+        r = _R()
+        if is_train:
+            idx_local = pd.date_range("2020-01-01", periods=4000, freq="h", tz="UTC")
+            rets = np.random.default_rng(7).normal(0, 0.005, 4000)
+            r.equity_curve = pd.Series(10_000.0 * np.cumprod(1.0 + rets), index=idx_local)
+            # 300 1-bar-long trades → zero_fraction < 0.50 (state-class floor would pass)
+            trades = []
+            for k in range(300):
+                if 2 * k + 1 >= 4000:
+                    break
+                trades.append({
+                    "entry_time_utc": idx_local[2 * k].strftime("%Y-%m-%dT%H:%M:%SZ"),
+                    "exit_time_utc": idx_local[2 * k + 1].strftime("%Y-%m-%dT%H:%M:%SZ"),
+                })
+            r.run_id = "split_derisk_train"
+            r.trades = trades
+            r.metrics = {"sharpe_ratio": 0.1, "total_trades": len(trades),
+                         "max_drawdown": 0.05, "total_return": 0.01}
+        else:
+            # Forward run: must produce a non-degenerate equity curve (>=2 bars).
+            rng = np.random.default_rng(99)
+            n = 320
+            idx_local = pd.date_range("2026-01-01", periods=n, freq="h", tz="UTC")
+            rets = rng.normal(0.0001, 0.012, n)
+            r.equity_curve = pd.Series(10_000.0 * np.cumprod(1.0 + rets), index=idx_local)
+            r.run_id = "split_derisk_fwd"
+            r.trades = []
+            r.metrics = {"sharpe_ratio": float(rng.normal(0.0, 0.3)),
+                         "total_trades": int(rng.integers(5, 30)),
+                         "max_drawdown": 0.08, "total_return": 0.02}
+        r.start_date = r.equity_curve.index[0].to_pydatetime()
+        r.end_date = r.equity_curve.index[-1].to_pydatetime()
+        return r
+
+    bundle = rv.run_verdict(
+        out,
+        features_path=tmp_path / "feat_split_derisk.parquet",
+        _run_backtest=_mock_backtest,
+    )
+
+    h2 = bundle["floors"]["H2"]
+    # The real derisk occupancy (from feature frame) must be stored in the bundle.
+    assert "derisk_occupancy" in h2, (
+        "H2 floor must carry 'derisk_occupancy' (regime-factor fraction), not just the proxy"
+    )
+    # The stored value must be the feature-frame fraction (~0.05), not the long fraction (~0.80).
+    stored = float(h2["derisk_occupancy"])
+    assert stored < 0.10, (
+        f"derisk_occupancy should be the regime-factor fraction (~0.05 from feature frame), "
+        f"got {stored:.4f}. If this is ~0.80, the fix is still using the long-fraction proxy."
+    )
+    # Eligibility for the de-risk prong must be False (0.05 < 0.10 floor).
+    assert h2.get("derisk_occupancy_eligible") is False, (
+        "H2 de-risk occupancy prong must be ineligible when regime-factor fraction < 0.10"
+    )
