@@ -157,6 +157,176 @@ def build_train_frame(
     return train
 
 
+def compute_train_floors(
+    hypotheses: dict[str, Any],
+    run_backtest_fn: Callable[..., Any],
+    train_windows: list[tuple[pd.Timestamp, pd.Timestamp]],
+    *,
+    git_sha: str = "PATHA_BUILD",
+) -> dict[str, dict]:
+    """CONTRACT GAP 1: per-hypothesis TRAIN-window eligibility floors (LOCK Pre-reg 3).
+
+    For each hypothesis, compile its gated DSL and run it over the TRAIN span via
+    the INJECTED engine (the SAME ``run_backtest_fn`` threaded through ``run_verdict``
+    — unit tests inject a MOCK; the real engine is reachable only behind the
+    PHASE_D_AUTHORIZED gate in ``main()``). Reconstruct the per-bar long/flat
+    position series (from the engine's trades over the equity index) restricted to
+    the TRAIN windows (2022 regime-holdout bars are filtered OUT of the counts),
+    then apply the per-class floor:
+
+      - **H1** (long-biased de-risk overlay): ``h1_floor`` on the flat-exit-episode
+        count (>= 200 defensive long->flat transitions over TRAIN — NOT occupancy).
+      - **H2 / H3** (state-class): ``h2h3_floor`` on ``zero_fraction < 0.50`` AND
+        ``>= 200`` TRAIN trades.
+
+    The engine is run over the full contiguous TRAIN span ``[min start, max end]``
+    with the compiled strategy's WARMUP_BARS prepended (full-history features so the
+    funding factors are warm), then the resulting position/trades are masked to the
+    TRAIN windows (``in_train_window``) so no 2022/validation bar enters a floor count.
+
+    Args:
+        hypotheses: Mapping of hypothesis id ("H1"/"H2"/"H3") -> gated DSL object.
+        run_backtest_fn: The injected engine callable (mock in tests; real only
+            behind the Phase-D gate).
+        train_windows: Train windows from ``load_train_windows`` (2020-2021 + 2023).
+        git_sha: Git sha to stamp (unused by the floor math; threaded for parity).
+
+    Returns:
+        ``{hyp_id: floor_dict}`` — H1 carries ``n_flat_exit_episodes``; H2/H3 carry
+        ``zero_fraction`` + ``n_trades``. Every dict carries ``eligible`` (bool) +
+        ``status`` (``ELIGIBLE`` / ``INDETERMINATE``).
+    """
+    from datetime import timedelta
+
+    from backtest.patha_orchestrator import (
+        h1_floor,
+        h2h3_floor,
+        position_series_from_trades,
+        zero_fraction_from_positions,
+    )
+    from strategies.dsl_compiler import compile_dsl_to_strategy
+
+    span_start = min(w[0] for w in train_windows)
+    span_end = max(w[1] for w in train_windows)
+    # end-day inclusive: extend to the end of the last train day.
+    span_end = pd.Timestamp(span_end) + pd.Timedelta(days=1) - pd.Timedelta(hours=1)
+
+    floors: dict[str, dict] = {}
+    for key, dsl in hypotheses.items():
+        strat = compile_dsl_to_strategy(dsl, write_manifest=False)
+        warmup_bars = int(getattr(strat, "WARMUP_BARS", 0) or 0)
+        feed_start = pd.Timestamp(span_start) - timedelta(hours=warmup_bars)
+        res = run_backtest_fn(
+            strategy_cls=strat,
+            start_date=feed_start.to_pydatetime(),
+            end_date=pd.Timestamp(span_end).to_pydatetime(),
+            execution_config_path=Path(ANCHOR),
+            write_registry=False,
+        )
+        # Restrict the bar index to TRAIN windows only (drops warmup-prepend +
+        # the interleaved 2022 regime-holdout + any post-span bars).
+        eq_idx = pd.DatetimeIndex(res.equity_curve.index)
+        train_mask = eq_idx.to_series().apply(
+            lambda t: in_train_window(pd.Timestamp(t), train_windows)
+        ).to_numpy()
+        train_idx = eq_idx[train_mask]
+        trades = list(getattr(res, "trades", []) or [])
+        # Keep only trades whose ENTRY falls in a train window (so a 2022 / pre-span
+        # warmup trade does not inflate the floor counts).
+        train_trades = [
+            t for t in trades
+            if t.get("entry_time_utc") is not None
+            and in_train_window(pd.Timestamp(t["entry_time_utc"]), train_windows)
+        ]
+        position = position_series_from_trades(train_idx, train_trades)
+
+        if key == "H1":
+            floor = h1_floor(position)
+            floors[key] = {
+                "eligible": floor["eligible"],
+                "n_flat_exit_episodes": floor["flat_exit_episodes"],
+                "threshold": floor["threshold"],
+                "status": floor["status"],
+            }
+        else:  # H2 / H3 state-class floor
+            zf = zero_fraction_from_positions(position)
+            floor = h2h3_floor(zero_fraction=zf, total_trades=len(train_trades))
+            floors[key] = {
+                "eligible": floor["eligible"],
+                "zero_fraction": floor["zero_fraction"],
+                "n_trades": floor["total_trades"],
+                "max_zero_fraction": floor["max_zero_fraction"],
+                "min_trades": floor["min_trades"],
+                "status": floor["status"],
+            }
+    return floors
+
+
+def compute_funding_marginal(
+    hypotheses: dict[str, Any],
+    gated_window_equities: dict[str, Any],
+    run_backtest_fn: Callable[..., Any],
+    *,
+    git_sha: str = "PATHA_BUILD",
+) -> dict[str, dict]:
+    """CONTRACT GAP 2: the fenced funding-marginal diagnostic on the forward bars.
+
+    For each hypothesis compute ``funding_marginal(hyp_id, gated_equity,
+    baseline_equity)`` on the forward_2026 bars, where ``baseline_equity`` is the
+    SAME strategy WITHOUT the funding gate (H2/H3 = the price-trend-only book; H1 =
+    always-long) run on the SAME forward window via the INJECTED engine. The gated
+    equity is reused from the gauntlet (``produce_candidate_holdout`` returns the
+    cropped ``window_equity``), so the gated forward run is NOT duplicated.
+
+    FENCED (DESIGN INVARIANT): every result carries ``promotion_affecting=False`` /
+    ``in_n_star=False`` (structural constants in ``funding_marginal``); it rides
+    along in the evidence bundle but NEVER feeds N* or promotion.
+
+    Args:
+        hypotheses: Mapping of hypothesis id -> gated DSL (used only for the keys
+            here; the baselines are built from ``build_*_baseline_dsl``).
+        gated_window_equities: ``{hyp_id: cropped forward-window equity Series}``
+            from the gauntlet runs.
+        run_backtest_fn: The injected engine callable (mock in tests; real only
+            behind the Phase-D gate).
+        git_sha: Git sha to stamp the baseline holdout artifacts.
+
+    Returns:
+        ``{hyp_id: marginal_dict}`` from ``funding_marginal`` (fenced).
+    """
+    import tempfile
+
+    from backtest.patha_eval_gauntlet import build_all_baselines
+    from backtest.patha_holdout_producer import produce_candidate_holdout
+    from backtest.patha_marginal_diagnostic import funding_marginal
+    from strategies.dsl import compute_dsl_hash
+    from strategies.dsl_compiler import compile_dsl_to_strategy
+
+    baselines = build_all_baselines()
+    marginal: dict[str, dict] = {}
+    # The baseline holdout artifacts are diagnostic-only; isolate them physically in
+    # a scratch dir (NEVER co-mingled with the gated cohort or any sealed dir).
+    with tempfile.TemporaryDirectory(prefix="patha_marginal_baseline_") as scratch:
+        scratch_dir = Path(scratch)
+        for key in hypotheses:
+            baseline_dsl = baselines[key]
+            h = compute_dsl_hash(baseline_dsl)
+            strat = compile_dsl_to_strategy(baseline_dsl, write_manifest=False)
+            res = produce_candidate_holdout(
+                hypothesis_hash=h, name=baseline_dsl.name, theme="patha_baseline",
+                strategy_cls=strat, window=FORWARD_WINDOW, cohort_dir=scratch_dir,
+                execution_config_path=ANCHOR, current_git_sha=git_sha,
+                _run_backtest=run_backtest_fn,
+            )
+            baseline_equity = res["window_equity"]
+            marginal[key] = funding_marginal(
+                hyp_id=key,
+                gated_equity=gated_window_equities[key],
+                baseline_equity=baseline_equity,
+            )
+    return marginal
+
+
 def run_verdict(
     out_dir: Path = PATHA_VERDICT_DIR,
     *,
@@ -229,6 +399,10 @@ def run_verdict(
 
     # --- Real engine-backed gauntlet stages (forward_2026 Tier-5 per hypothesis) ---
     hypotheses = build_all_hypotheses()
+    # Captured for the CONTRACT GAP 2 funding-marginal: the gated strategy's CROPPED
+    # forward-window equity per hypothesis (reused so the gated forward run is not
+    # re-executed for the diagnostic).
+    gated_window_equities: dict[str, Any] = {}
 
     def real_run_gauntlet(key: str, dsl) -> dict:
         h = compute_dsl_hash(dsl)
@@ -239,6 +413,7 @@ def run_verdict(
             execution_config_path=ANCHOR, current_git_sha=git_sha,
             _run_backtest=run_backtest_fn,
         )
+        gated_window_equities[key] = res["window_equity"]
         return {"holdout_sharpe": res["holdout_sharpe"], "row": res["row"], "hypothesis_hash": h}
 
     def real_build_moments(holdouts: dict) -> list:
@@ -246,34 +421,43 @@ def run_verdict(
         df = build_cohort_csv(rows, cohort_dir)
         return load_patha_moments([r["hypothesis_hash"] for r in rows], df, cohort_dir)
 
+    # CONTRACT GAP 1 (closed): TRAIN-window eligibility floors, computed BEFORE
+    # ranking (LOCK Pre-registration 3). Each gated strategy is run over the TRAIN
+    # span via the SAME injected engine; under-floor candidates are marked
+    # INDETERMINATE + excluded from n_tier5_pass by run_patha_verdict.
+    train_windows = load_train_windows()
+    floors = compute_train_floors(
+        hypotheses=hypotheses,
+        run_backtest_fn=run_backtest_fn,
+        train_windows=train_windows,
+        git_sha=git_sha,
+    )
+
     bundle = run_patha_verdict(
         hypotheses=hypotheses,
         run_gauntlet=real_run_gauntlet,
         build_moments=real_build_moments,
         per_leg=lambda: per_leg_result,
-        # floors (C7) + funding_marginal (C6) are computed from the forward_2026 run
-        # position/equity series at Phase-D fire-time; the build wiring leaves them
-        # None (the orchestrator records None until Phase D fills them).
-        #
-        # CONTRACT GAP: Phase D MUST compute TRAIN-window eligibility floors before
-        # scoring and pass them in here (NOT None) — else under-floor candidates
-        # mis-score as Tier-5 pass/fail instead of INDETERMINATE (LOCK Pre-registration
-        # 3, "floors applied before ranking"). The TRAIN-window floors are: H1 =
-        # count_flat_exit_episodes(H1_train_position) >= 200; H2/H3 = zero_fraction <
-        # 0.50 AND >= 200 trades over TRAIN (backtest.patha_orchestrator.{h1_floor,
-        # h2h3_floor}). The real train-floor computation (running each compiled
-        # strategy over the TRAIN window to extract its position/trade series) is
-        # Phase-D-gated and is NOT wired now; this marker records the obligation.
-        floors=None,
-        # CONTRACT GAP: Phase D must compute the fenced funding-marginal diagnostic
-        # on the forward bars (the funding-gated equity vs the IDENTICAL no-funding
-        # baseline equity, per backtest.patha_marginal_diagnostic.funding_marginal)
-        # and pass it into the evidence bundle here (NOT None). It is fenced
-        # diagnostic-only (promotion_affecting=False, in_n_star=False) and never feeds
-        # N* or promotion; it rides along so a B-result attributes to funding's
-        # marginal contribution. Not wired now — Phase-D-gated.
+        floors=floors,
+        # CONTRACT GAP 2 filled below (needs the gated_window_equities populated by
+        # the gauntlet inside run_patha_verdict); we recompute the bundle's
+        # funding_marginal after the gauntlet has run.
         funding_marginal=None,
     )
+
+    # CONTRACT GAP 2 (closed): the fenced funding-marginal diagnostic on the forward
+    # bars — the funding-gated equity (reused from the gauntlet) vs the IDENTICAL
+    # no-funding baseline equity (the same strategy minus the funding gate), per
+    # backtest.patha_marginal_diagnostic.funding_marginal. FENCED diagnostic-only
+    # (promotion_affecting=False, in_n_star=False) — it rides along so a B-result
+    # attributes to funding's MARGINAL contribution, and never feeds N*/promotion.
+    funding_marginal = compute_funding_marginal(
+        hypotheses=hypotheses,
+        gated_window_equities=gated_window_equities,
+        run_backtest_fn=run_backtest_fn,
+        git_sha=git_sha,
+    )
+    bundle["funding_marginal"] = funding_marginal
 
     # --- Sealed-artifact invariant (after); HARD guard ---
     sealed_after = _sealed_fingerprint()
@@ -292,7 +476,10 @@ def run_verdict(
         "scope_note": (
             "Path A funding verdict: forward_2026 Tier-5 gate + train-only tiered "
             "mechanism sanity (24h+72h) + DSR-FWER(N*=3); NO Step-0 (fresh funding "
-            "cohort). C6 funding-marginal + C7 floors filled at Phase-D fire-time."
+            "cohort). C7 TRAIN-window floors applied BEFORE ranking (under-floor -> "
+            "INDETERMINATE, excluded from n_tier5_pass); C6 fenced funding-marginal "
+            "diagnostic recorded (gated vs no-funding baseline on the forward bars; "
+            "NEVER in N*/promotion)."
         ),
     }
     out_dir.mkdir(parents=True, exist_ok=True)

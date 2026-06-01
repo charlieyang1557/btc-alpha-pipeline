@@ -1898,7 +1898,37 @@ class TestT1_4_Pc9BaselineGate:
         # identical-Series-index requirement. Sealed tier6_dsr_v1/ sha256 4/4
         # byte-unchanged. Advance BASELINE 2754 → 2762 (same expected-additive-cohort
         # precedent; 2-leg adversarial-review fixes, patha-funding-scoping branch).
-        BASELINE = 2762
+        # Path A Phase D harness CONTRACT GAP closure (patha-funding-scoping branch):
+        # wires the 2 CONTRACT GAP sites in scripts/patha_run_verdict.py so Phase D
+        # can run correctly — (1) TRAIN-window eligibility floors computed BEFORE
+        # ranking (LOCK Pre-reg 3) and threaded into run_patha_verdict (under-floor →
+        # INDETERMINATE + excluded from n_tier5_pass), (2) the fenced funding-marginal
+        # diagnostic on the forward bars (gated vs no-funding baseline; NEVER in
+        # N*/promotion). Adds +16 collected items, none a t1_4/t1_5 subtraction
+        # target, so the +16 lands wholly in pre_t1_x_baseline = total − t1_4 − t1_5:
+        #   tests/test_patha_gauntlet.py (+6: the 3 no-funding baseline DSL builders —
+        #     H1 always-long [always-true vol-CDF entry / never-true exit / no
+        #     time-stop], H2/H3 price-trend-only keeping their max_hold, compiles +
+        #     vol-CDF ternary sizing + distinct-from-gated hashes),
+        #   tests/test_patha_floors.py (+5: position_series_from_trades [half-open
+        #     interval, back-to-back no-flat-gap, empty] + zero_fraction_from_positions),
+        #   tests/test_patha_holdout_producer.py (+1: producer also RETURNS the cropped
+        #     window_equity so the gated forward run is reused by the marginal),
+        #   tests/test_patha_run_verdict.py (+4: compute_train_floors H1 eligible/
+        #     under-floor + H2/H3 zero_fraction+trade-count; compute_funding_marginal
+        #     pairs gated+baseline fenced; the integration test now asserts floors +
+        #     funding_marginal are non-None — the closed CONTRACT GAPs).
+        # Production changes: scripts/patha_run_verdict.py compute_train_floors +
+        # compute_funding_marginal helpers wired into run_verdict (threading the SAME
+        # injected _run_backtest — real engine reachable ONLY via the PHASE_D_AUTHORIZED
+        # main() gate, which STAYS False); backtest/patha_orchestrator.py
+        # position_series_from_trades + zero_fraction_from_positions pure helpers;
+        # backtest/patha_eval_gauntlet.py build_{h1,h2,h3}_baseline_dsl +
+        # build_all_baselines; backtest/patha_holdout_producer.py returns window_equity.
+        # PHASE_D_AUTHORIZED unchanged (False); sealed tier6_dsr_v1/ sha256 4/4
+        # byte-unchanged. Advance BASELINE 2762 → 2778 (same expected-additive-cohort
+        # precedent; per Charlie Phase D harness register, patha-funding-scoping branch).
+        BASELINE = 2778
         assert pre_t1_x_baseline == BASELINE, (
             f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
             f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "
