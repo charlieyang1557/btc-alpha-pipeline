@@ -182,6 +182,7 @@ def test_run_verdict_integration_mocked_engine(tmp_path):
     assert "approximation_tempers" in bundle["taxonomy"]
     assert "verdict_rests_on_weak_sane_only" in bundle["taxonomy"]
     assert bundle["escalation"]["authority"] == "charlie_register"
+    assert "verdict_headline" in bundle, "Q5: bundle root must carry verdict_headline"
     assert 0 <= bundle["n_tier5_pass"] <= 3
     assert len(bundle["holdouts"]) == 3
     # C7 CONTRACT GAP 1: TRAIN-window floors are computed (not None) and keyed

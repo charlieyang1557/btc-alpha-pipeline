@@ -636,6 +636,10 @@ def run_verdict(
         bundle["earned_negative_power_limited"] = False
         bundle["earned_negative_power_limited_note"] = None
 
+    # Q5: mirror verdict_headline at bundle root (already in bundle["taxonomy"]);
+    # makes the unmissable power-limited qualifier visible to readers of the top-level dict.
+    bundle["verdict_headline"] = bundle["taxonomy"].get("verdict_headline", "")
+
     # --- Sealed-artifact invariant (after); HARD guard ---
     sealed_after = _sealed_fingerprint()
     if sealed_after != sealed_before:

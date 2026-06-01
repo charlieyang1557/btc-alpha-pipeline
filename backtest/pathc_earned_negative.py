@@ -183,11 +183,30 @@ def assemble_evidence(
     else:
         power_limited_note = None
 
+    # Q5: verdict_headline — unmissable top-line summary combining taxonomy + power-limited
+    # qualifier. A reader of this single field cannot mistake a power-limited earned-negative
+    # for a clean one. This is PURELY ADDITIVE — taxonomy/is_earned_negative/tolerances
+    # are UNCHANGED.
+    ud_leg_ids = ", ".join(sorted(under_determined_legs))
+    if earned_negative_power_limited:
+        verdict_headline = (
+            f"{taxonomy.upper()} — EARNED-NEGATIVE IS POWER-LIMITED "
+            f"(under-determined legs: {ud_leg_ids}); "
+            f"not a clean negative — see under_determined_legs"
+        )
+    elif is_earned_negative:
+        verdict_headline = f"{taxonomy.upper()} (earned-negative)"
+    else:
+        # C_POSITIVE: never power-limited, not an earned-negative
+        strength_tag = f"; strength={strength}" if strength else ""
+        verdict_headline = f"{taxonomy.upper()}{strength_tag}"
+
     return {
         "advisory_taxonomy": taxonomy,
         "is_earned_negative": is_earned_negative,
         "earned_negative_power_limited": earned_negative_power_limited,
         "earned_negative_power_limited_note": power_limited_note,
+        "verdict_headline": verdict_headline,
         "c_positive_strength": strength,
         "any_mechanism_sane": any_mechanism_sane,
         "verdict_rests_on_weak_sane_only": verdict_rests_on_weak_sane_only,

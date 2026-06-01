@@ -2168,7 +2168,17 @@ class TestT1_4_Pc9BaselineGate:
         # always sets earned_negative_power_limited_note (None when not power-limited).
         # Sealed tier6_dsr_v1/ sha256 4/4 byte-unchanged; PHASE_D_AUTHORIZED untouched.
         # Advance BASELINE 3005 → 3006 (same expected-additive-cohort precedent).
-        BASELINE = 3006
+        # Q5 (pathc-basis-scoping branch): verdict_headline field — unmissable power-limited
+        # qualifier on the verdict headline (PFR Q5). Adds +2 new test functions in
+        # tests/test_pathc_earned_negative.py (test_verdict_headline_power_limited_case_*
+        # + test_verdict_headline_clean_case_*); +1 inline assertion in
+        # test_pathc_run_verdict.py::test_run_verdict_integration_mocked_engine (not a new
+        # test function). Production changes: backtest/pathc_earned_negative.py adds
+        # verdict_headline field to assemble_evidence return dict (purely additive;
+        # taxonomy/is_earned_negative/tolerances unchanged); scripts/pathc_run_verdict.py
+        # mirrors it at bundle root. Sealed tier6_dsr_v1/ sha256 4/4 byte-unchanged;
+        # PHASE_D_AUTHORIZED untouched. Advance BASELINE 3006 → 3008 (+2 new test functions).
+        BASELINE = 3008
         assert pre_t1_x_baseline == BASELINE, (
             f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
             f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "

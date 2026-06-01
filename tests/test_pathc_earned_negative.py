@@ -223,3 +223,36 @@ def test_earned_negative_power_limited_does_not_change_taxonomy():
     assert ev_clean["is_earned_negative"] == ev_flagged["is_earned_negative"]
     assert ev_flagged["earned_negative_power_limited"] is True
     assert ev_clean["earned_negative_power_limited"] is False
+
+
+# ---------------------------------------------------------------------------
+# Q5: verdict_headline — unmissable power-limited qualifier
+# ---------------------------------------------------------------------------
+
+def test_verdict_headline_power_limited_case_contains_power_limited_and_leg_id():
+    """Q5: a power-limited case (under_determined H2, mechanism-sane, no Tier-5 pass)
+    → verdict_headline contains 'POWER-LIMITED' and the leg id 'H2';
+    is_earned_negative still True; taxonomy still PROCESS_REFUTED_FOR_GRID."""
+    ev = _ev(
+        {"H1": _leg("strong_sane"), "H2": _leg("refuted"), "H3": _leg("refuted")},
+        n_tier5_pass=0, n_dsr_pass=0,
+        under_determined_flags={"H2": True},
+    )
+    assert "verdict_headline" in ev
+    assert "POWER-LIMITED" in ev["verdict_headline"]
+    assert "H2" in ev["verdict_headline"]
+    assert ev["is_earned_negative"] is True
+    assert ev["advisory_taxonomy"] == en.PROCESS_REFUTED_FOR_GRID
+
+
+def test_verdict_headline_clean_case_has_no_power_limited():
+    """Q5: a clean case (no under-determined legs) → verdict_headline contains no
+    'POWER-LIMITED'; reads as a clean earned-negative."""
+    ev = _ev(
+        {"H1": _leg("strong_sane"), "H2": _leg("refuted"), "H3": _leg("refuted")},
+        n_tier5_pass=0, n_dsr_pass=0,
+    )
+    assert "verdict_headline" in ev
+    assert "POWER-LIMITED" not in ev["verdict_headline"]
+    # Headline should contain the taxonomy name so it's clearly readable.
+    assert "PROCESS_REFUTED" in ev["verdict_headline"] or "process_refuted" in ev["verdict_headline"].lower()
