@@ -1,0 +1,298 @@
+{
+  "holdouts": {
+    "H1": {
+      "holdout_sharpe": -0.8675514207689904,
+      "row": {
+        "hypothesis_hash": "a9d15bad4ecd50f59ea232c23d79790eaba079035021b7bd832188123cb7bc23",
+        "name": "pathc_h1",
+        "theme": "pathc",
+        "T_obs": 2527,
+        "gamma3": 0.04807064418268273,
+        "gamma4": 8.411878925408667,
+        "returns_per_bar_sha256": "f4cfdc5d3791bda83ccce6e1795ee601f6d40660fd3847669d937aa91a45981d",
+        "holdout_total_trades": 19,
+        "holdout_sharpe": -0.8675514207689904
+      },
+      "hypothesis_hash": "a9d15bad4ecd50f59ea232c23d79790eaba079035021b7bd832188123cb7bc23",
+      "holdout_total_trades": 19
+    },
+    "H2": {
+      "holdout_sharpe": -2.8283736698043427,
+      "row": {
+        "hypothesis_hash": "f1482622dba0aa65897a7037e3a1e6d36a60d74ad40f5bc39322e2fdba8f2963",
+        "name": "pathc_h2",
+        "theme": "pathc",
+        "T_obs": 2527,
+        "gamma3": 0.8407623700047875,
+        "gamma4": 25.98574980351562,
+        "returns_per_bar_sha256": "2accb80b23018429da37fb7b89b07d076b03ed59d70e8e4132e800f597de5363",
+        "holdout_total_trades": 55,
+        "holdout_sharpe": -2.8283736698043427
+      },
+      "hypothesis_hash": "f1482622dba0aa65897a7037e3a1e6d36a60d74ad40f5bc39322e2fdba8f2963",
+      "holdout_total_trades": 55,
+      "tier5_status": "INDETERMINATE"
+    },
+    "H3": {
+      "holdout_sharpe": 0.0,
+      "row": {
+        "hypothesis_hash": "f287ef3e1de2ee731c4d252d4bd63c8227bac31b1d5a032b04e32806c241f131",
+        "name": "pathc_h3",
+        "theme": "pathc",
+        "T_obs": 2527,
+        "gamma3": null,
+        "gamma4": null,
+        "returns_per_bar_sha256": "ba9e6240f639873c6b7f211f53fb1ed3f7638cbd3b2191aacd15bde64de06d6d",
+        "holdout_total_trades": 0,
+        "holdout_sharpe": 0.0,
+        "degenerate": true
+      },
+      "hypothesis_hash": "f287ef3e1de2ee731c4d252d4bd63c8227bac31b1d5a032b04e32806c241f131",
+      "holdout_total_trades": 0,
+      "degenerate": true
+    }
+  },
+  "n_tier5_pass": 0,
+  "n_dsr_pass": 0,
+  "dsr": {
+    "rows": [
+      {
+        "hypothesis_hash": "a9d15bad4ecd50f59ea232c23d79790eaba079035021b7bd832188123cb7bc23",
+        "name": "pathc_h1",
+        "theme": "pathc",
+        "T": 2527,
+        "sr_per_bar": -0.009271054201899364,
+        "gamma3": 0.04807064418268273,
+        "gamma4": 8.411878925408667,
+        "trades": 19,
+        "var_sr_null": 0.000395882818685669,
+        "n_star": 3,
+        "z_pass": 1.644853626951472,
+        "er_B": 0.852804496150695,
+        "sr_star_B": 0.016968084108918487,
+        "deflated_z_B": -1.3183627453201294,
+        "psr_B": 0.09369112288154291,
+        "dsr_statistic_B": -2.963216372271601,
+        "pass_B": false,
+        "er_A": 1.4823038073675112,
+        "sr_star_A": 0.029493108668997417,
+        "deflated_z_A": -1.9476717404794688,
+        "psr_A": 0.02572712678911141,
+        "dsr_statistic_A": -3.592525367430941,
+        "pass_A": false
+      },
+      {
+        "hypothesis_hash": "f1482622dba0aa65897a7037e3a1e6d36a60d74ad40f5bc39322e2fdba8f2963",
+        "name": "pathc_h2",
+        "theme": "pathc",
+        "T": 2527,
+        "sr_per_bar": -0.030225304193194805,
+        "gamma3": 0.8407623700047875,
+        "gamma4": 25.98574980351562,
+        "trades": 55,
+        "var_sr_null": 0.000395882818685669,
+        "n_star": 3,
+        "z_pass": 1.644853626951472,
+        "er_B": 0.852804496150695,
+        "sr_star_B": 0.016968084108918487,
+        "deflated_z_B": -2.3358420321458344,
+        "psr_B": 0.009749738034356836,
+        "dsr_statistic_B": -3.9806956590973064,
+        "pass_B": false,
+        "er_A": 1.4823038073675112,
+        "sr_star_A": 0.029493108668997417,
+        "deflated_z_A": -2.955769523552107,
+        "psr_A": 0.0015594502936266074,
+        "dsr_statistic_A": -4.600623150503579,
+        "pass_A": false
+      }
+    ],
+    "survivors": [],
+    "n_candidates": 2,
+    "n_star": 3
+  },
+  "per_leg": {
+    "H1": {
+      "tier": "weak_sane",
+      "mean_24h": -0.00024890259242519474,
+      "mean_72h": 0.007172525052982973,
+      "sane_24h": true,
+      "sane_72h": false,
+      "sane_sign": "-"
+    },
+    "H2": {
+      "tier": "strong_sane",
+      "perm_24h": 0.003506614112407945,
+      "derisk_24h": 0.0031435397057443764,
+      "perm_72h": 0.011248461311905204,
+      "derisk_72h": 0.006683926874785552,
+      "sane_24h": true,
+      "sane_72h": true,
+      "sane_sign": "h2_permissive_beats_derisk_and_positive"
+    },
+    "H3": {
+      "tier": "strong_sane",
+      "mean_24h": 0.003848741419596635,
+      "mean_72h": 0.007842709312767331,
+      "sane_24h": true,
+      "sane_72h": true,
+      "sane_sign": "+"
+    }
+  },
+  "taxonomy": {
+    "advisory_taxonomy": "process_refuted_for_this_grid",
+    "is_earned_negative": true,
+    "earned_negative_power_limited": false,
+    "earned_negative_power_limited_note": null,
+    "verdict_headline": "PROCESS_REFUTED_FOR_THIS_GRID (earned-negative)",
+    "c_positive_strength": null,
+    "any_mechanism_sane": true,
+    "verdict_rests_on_weak_sane_only": false,
+    "leg_tiers": {
+      "H1": "weak_sane",
+      "H2": "strong_sane",
+      "H3": "strong_sane"
+    },
+    "n_tier5_pass": 0,
+    "n_dsr_pass": 0,
+    "under_determined_legs": {},
+    "verdict_authority": "charlie_register_at_earned_negative_gate",
+    "approximation_tempers": [
+      "dual_ortho_d1_d2_fenced_diagnostic_not_promotion_input",
+      "basis_native_1h_no_cross_cadence_carry_warmup_2160",
+      "mechanism_sanity_tiered_24h_72h_weak_sane_flagged",
+      "h2_h3_preregistered_expected_indeterminate_zero_fraction_f3_carve_out"
+    ]
+  },
+  "escalation": {
+    "c_escalation_warranted": true,
+    "reason": "process_refuted_and_no_dsr_pass_warrants_next_axis",
+    "authority": "charlie_register"
+  },
+  "floors": {
+    "H1": {
+      "eligible": true,
+      "n_flat_exit_episodes": 236,
+      "threshold": 200,
+      "status": "ELIGIBLE",
+      "frozen_theta": 0.9,
+      "episodes_at_090": 236
+    },
+    "H2": {
+      "eligible": false,
+      "zero_fraction": 0.6450047692116286,
+      "n_trades": 413,
+      "max_zero_fraction": 0.5,
+      "min_trades": 200,
+      "status": "INDETERMINATE",
+      "derisk_occupancy": 0.2764744154005128,
+      "derisk_occupancy_eligible": true
+    },
+    "H3": {
+      "eligible": true,
+      "zero_fraction": 0.19454236304068345,
+      "n_trades": 613,
+      "max_zero_fraction": 0.5,
+      "min_trades": 200,
+      "status": "ELIGIBLE"
+    }
+  },
+  "basis_marginal": {
+    "H1": {
+      "d1": {
+        "hyp_id": "H1",
+        "gated_sharpe": -0.8675514207689904,
+        "baseline_sharpe": -1.0912013400880016,
+        "d1_marginal_sharpe": 0.22364991931901124,
+        "promotion_affecting": false,
+        "in_n_star": false
+      },
+      "d2": {
+        "hyp_id": "H1",
+        "basis_sharpe": -0.8675514207689904,
+        "funding_sharpe": -1.618090959127725,
+        "d2_marginal_sharpe": 0.7505395383587347,
+        "promotion_affecting": false,
+        "in_n_star": false
+      },
+      "redundancy_read": "basis_adds_signal",
+      "promotion_affecting": false,
+      "in_n_star": false
+    },
+    "H2": {
+      "d1": {
+        "hyp_id": "H2",
+        "gated_sharpe": -2.8283736698043427,
+        "baseline_sharpe": -2.872338103480353,
+        "d1_marginal_sharpe": 0.043964433676010106,
+        "promotion_affecting": false,
+        "in_n_star": false
+      },
+      "d2": {
+        "hyp_id": "H2",
+        "basis_sharpe": -2.8283736698043427,
+        "funding_sharpe": -2.8805870338240767,
+        "d2_marginal_sharpe": 0.05221336401973398,
+        "promotion_affecting": false,
+        "in_n_star": false
+      },
+      "redundancy_read": "vacuous",
+      "promotion_affecting": false,
+      "in_n_star": false
+    },
+    "H3": {
+      "d1": {
+        "hyp_id": "H3",
+        "gated_sharpe": 0.0,
+        "baseline_sharpe": -1.998595321989798,
+        "d1_marginal_sharpe": 1.998595321989798,
+        "promotion_affecting": false,
+        "in_n_star": false
+      },
+      "d2": {
+        "hyp_id": "H3",
+        "basis_sharpe": 0.0,
+        "funding_sharpe": -1.4375283450814993,
+        "d2_marginal_sharpe": 1.4375283450814993,
+        "promotion_affecting": false,
+        "in_n_star": false
+      },
+      "redundancy_read": "basis_adds_signal",
+      "promotion_affecting": false,
+      "in_n_star": false
+    }
+  },
+  "under_determined_legs": {},
+  "degenerate_legs": {
+    "H3": true
+  },
+  "earned_negative_power_limited": false,
+  "earned_negative_power_limited_note": null,
+  "verdict_headline": "PROCESS_REFUTED_FOR_THIS_GRID (earned-negative)",
+  "meta": {
+    "git_sha": "fb805d1",
+    "forward_window": [
+      "2026-01-01T00:00:00+00:00",
+      "2026-04-16T07:00:00+00:00"
+    ],
+    "anchor": "config/execution_phaseb_spot_15bps.yaml",
+    "cost_equivalence": {
+      "fee_bps": 10.0,
+      "slippage_bps": 5.0,
+      "anchor_fee_bps": 10.0,
+      "anchor_slippage_bps": 5.0,
+      "per_side_bps": 15.0,
+      "equivalent": true
+    },
+    "sealed_sha256_invariant": {
+      "tier6_dsr_companion.csv": "0a7d98acfb5791c52c6a6d15bd6285a5a4450a4b6ccc113ac165035616666612",
+      "tier6_dsr_results.csv": "8eecc6cd50344e32b25880ac16db3489b24ef65e0095f249039841fbf801acac",
+      "tier6_mc_validation.json": "49646c303c9329ad2a9b15be819d5cf8a1101fc1e09b3997aa693c4c06ea2acd",
+      "tier6_promotion_list.json": "1803eb44812ba89e7c881e7dfec110d8403e08a232aa4e07acf4881b0093e699"
+    },
+    "frozen_theta": 0.9,
+    "episodes_at_090": 236,
+    "episodes_at_frozen_theta": 236,
+    "scope_note": "Path C basis verdict: forward_2026 Tier-5 gate + train-only tiered mechanism sanity (24h+72h) at FROZEN \u03b8 + DSR-FWER(N*=3); NO Step-0 (fresh basis cohort). C7 TRAIN-window floors applied BEFORE ranking (under-floor -> INDETERMINATE, excluded from n_tier5_pass); C6 fenced dual-orthogonalization D1/D2 diagnostics computed (diagnostic-only, NEVER in N*/promotion); C5 F3 power-limited headline flag added when under-determined legs exist."
+  }
+}

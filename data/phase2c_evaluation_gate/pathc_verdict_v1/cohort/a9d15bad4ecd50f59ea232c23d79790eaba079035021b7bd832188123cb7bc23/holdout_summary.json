@@ -1,0 +1,21 @@
+{
+ "hypothesis_hash": "a9d15bad4ecd50f59ea232c23d79790eaba079035021b7bd832188123cb7bc23",
+ "name": "pathc_h1",
+ "theme": "pathc",
+ "run_id": "b62496ad-56b3-4a3c-9d5b-bd94e3525e67",
+ "execution_config_path": "config/execution_phaseb_spot_15bps.yaml",
+ "forward_window_metadata": {
+  "forward_window_start_utc": "2026-01-01T00:00:00+00:00",
+  "forward_window_end_utc": "2026-04-16T07:00:00+00:00",
+  "forward_bar_count": 2528,
+  "forward_post_warmup_obs": 2527
+ },
+ "evaluation_semantics": "single_run_holdout_v1",
+ "engine_commit": "eb1c87f",
+ "engine_corrected_lineage": "wf-corrected-v1",
+ "lineage_check": "passed",
+ "current_git_sha": "fb805d1",
+ "artifact_schema_version": "phase2c_7_1",
+ "regime_key": "evaluation_regimes.forward_2026",
+ "regime_label": "forward_2026"
+}
