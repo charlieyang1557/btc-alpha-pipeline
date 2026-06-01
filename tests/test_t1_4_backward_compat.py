@@ -1944,7 +1944,14 @@ class TestT1_4_Pc9BaselineGate:
         # (False); sealed tier6_dsr_v1/ sha256 4/4 byte-unchanged. Advance BASELINE
         # 2778 → 2780 (same expected-additive-cohort precedent; per Charlie Phase-D
         # floor-computation code-review-fix register, patha-funding-scoping branch).
-        BASELINE = 2780
+        # Path C basis-axis Phase A ingestion (pathc-basis-scoping branch): A1 adds
+        # tests/test_markprice_ingestion.py::test_markprice_schema_block_exists (+1); A2
+        # adds ::test_parse_markprice_kline_real_format (+1). Both land wholly in
+        # pre_t1_x_baseline (new test file; neither a t1_4 nor a t1_5 subtraction target).
+        # No verdict-harness production-logic change; sealed tier6_dsr_v1/ sha256 4/4
+        # byte-unchanged; PHASE_D_AUTHORIZED untouched. Advance BASELINE 2780 → 2782
+        # (same expected-additive-cohort precedent; per Charlie Phase A ingestion register).
+        BASELINE = 2782
         assert pre_t1_x_baseline == BASELINE, (
             f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
             f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "
