@@ -1970,7 +1970,20 @@ class TestT1_4_Pc9BaselineGate:
         # the header-autodetection approach from bulk_download.py. Lands wholly in
         # pre_t1_x_baseline (test_markprice_ingestion.py; neither a t1_4 nor t1_5
         # subtraction target). Advance BASELINE 2792 → 2793.
-        BASELINE = 2793
+        # Path C Phase B Task B0: native-1h basis_rel derivation + cross-stream
+        # inner-join-and-log (factors/basis_derive.py). Adds +12 collected items in
+        # tests/test_basis_derive.py (NEW file): 4 basic-correctness tests
+        # (same-grid join, output-columns-only, zero-basis, sorted output); 3
+        # small-misalignment tests (inner-join + log at <5% non-shared; markprice
+        # missing bars; spot-only bars excluded); CROSS_STREAM_DROP_TOL constant;
+        # 3 gross-misalignment raise tests (disjoint grids, zero-overlap, fraction
+        # exceeds threshold); 1 causality sentinel (delete/reverse/shuffle future
+        # bars in both streams). Lands wholly in pre_t1_x_baseline (new test file;
+        # neither a t1_4 nor t1_5 subtraction target); sealed tier6_dsr_v1/ sha256
+        # 4/4 byte-unchanged; PHASE_D_AUTHORIZED untouched. Advance BASELINE
+        # 2793 → 2805 (same expected-additive-cohort precedent; per Charlie Path C
+        # Phase B B0 register, pathc-basis-scoping branch).
+        BASELINE = 2805
         assert pre_t1_x_baseline == BASELINE, (
             f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
             f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "
