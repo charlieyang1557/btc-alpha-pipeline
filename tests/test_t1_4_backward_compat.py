@@ -2038,7 +2038,26 @@ class TestT1_4_Pc9BaselineGate:
         # PHASE_D_AUTHORIZED untouched. Advance BASELINE 2859 → 2881 (same
         # expected-additive-cohort precedent; per Charlie Path C Phase C C1-C3
         # register, pathc-basis-scoping branch).
-        BASELINE = 2881
+        # Path C Task C4-i — patha→pathc pipeline harness port (holdout/moments/
+        # dsr_fwer N*=3/train_sanity): adds 21 collected items across 4 NEW test
+        # files, none a t1_4/t1_5 subtraction target, so +21 lands wholly in
+        # pre_t1_x_baseline = total − t1_4 − t1_5:
+        #   tests/test_pathc_holdout_producer.py (+6: dead-18-layout + window-equity
+        #     return + PATHC_BUILD git-sha default + warmup-feed prepend + zero-warmup
+        #     regression + degenerate-equity guard — mocked engine),
+        #   tests/test_pathc_moments.py (+2: tier6 integrity-gate roundtrip + sha256
+        #     tamper, reusing load_candidate_moments),
+        #   tests/test_pathc_dsr_fwer.py (+5: PATHC_N_STAR==3==PATHA_N_STAR, per-
+        #     candidate evaluate_candidate loop, pass_B survivors, no evaluate_cohort),
+        #   tests/test_pathc_train_sanity.py (+8: 2 window-parse + 1 in-window + 3
+        #     parametrized forbidden-dates + 1 require_train_only raise + 1 tz-aware
+        #     + 1 intraday-end-day regression).
+        # Production changes: additive backtest/pathc_{holdout_producer,moments,
+        # dsr_fwer,train_sanity}.py; PATHC_N_STAR=3; tier6 reused-not-modified; no
+        # C4-ii dependencies deferred. Sealed tier6_dsr_v1/ sha256 4/4 byte-unchanged.
+        # Advance BASELINE 2881 → 2902 (same expected-additive-cohort precedent;
+        # per Charlie Task C4-i register, pathc-basis-scoping branch).
+        BASELINE = 2902
         assert pre_t1_x_baseline == BASELINE, (
             f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
             f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "
