@@ -1987,7 +1987,14 @@ class TestT1_4_Pc9BaselineGate:
         # test_basis_rel_boundary_exactly_five_percent) in tests/test_basis_derive.py;
         # land wholly in pre_t1_x_baseline (same file; neither a t1_4 nor t1_5
         # subtraction target). Advance BASELINE 2805 → 2807.
-        BASELINE = 2807
+        # Path C Phase B B1-B4: +23 basis factor tests (basis_sign ×4,
+        # basis_ewm_240 ×4, basis_ewm_480 ×4, basis_pct_rank_2160 ×6,
+        # basis_ewm_240_pctrank_2160 ×5) in tests/test_basis_factors.py; land
+        # wholly in pre_t1_x_baseline (new test file; neither a t1_4 nor t1_5
+        # subtraction target); sealed tier6_dsr_v1/ sha256 4/4 byte-unchanged.
+        # Advance BASELINE 2807 → 2830 (same expected-additive-cohort precedent;
+        # per Charlie Path C Phase B B1-B4 register, pathc-basis-scoping branch).
+        BASELINE = 2830
         assert pre_t1_x_baseline == BASELINE, (
             f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
             f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "
