@@ -100,9 +100,12 @@ def produce_candidate_holdout(
         _write_per_bar: Injected artifact writer (default backtest.engine.write_per_bar_artifact).
 
     Returns:
-        Dict with ``holdout_sharpe`` (float) and ``row`` (dict) — the
+        Dict with ``holdout_sharpe`` (float), ``row`` (dict) — the
         holdout_results.csv row: hypothesis_hash, name, theme, T_obs, gamma3,
-        gamma4, returns_per_bar_sha256, holdout_total_trades, holdout_sharpe.
+        gamma4, returns_per_bar_sha256, holdout_total_trades, holdout_sharpe — and
+        ``window_equity`` (pd.Series): the CROPPED forward-window equity curve.
+        The fenced funding-marginal diagnostic (Task C6) reuses ``window_equity``
+        so the gated forward run is computed once (here) and not duplicated.
 
     Raises:
         ValueError: If the per-bar artifact has gamma3/gamma4 = None (degenerate
@@ -180,7 +183,11 @@ def produce_candidate_holdout(
         "holdout_total_trades": int(window_metrics["total_trades"]),
         "holdout_sharpe": float(window_metrics["sharpe_ratio"]),
     }
-    return {"holdout_sharpe": float(window_metrics["sharpe_ratio"]), "row": row}
+    return {
+        "holdout_sharpe": float(window_metrics["sharpe_ratio"]),
+        "row": row,
+        "window_equity": window_equity,
+    }
 
 
 def _crop_to_window(equity_curve: "pd.Series", start: datetime, end: datetime) -> "pd.Series":

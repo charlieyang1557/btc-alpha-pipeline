@@ -10,12 +10,15 @@ Under-floor -> INDETERMINATE (not a Tier-5 pass/fail).
 from __future__ import annotations
 
 import numpy as np
+import pandas as pd
 
 from backtest.patha_orchestrator import (
     INDETERMINATE,
     count_flat_exit_episodes,
     h1_floor,
     h2h3_floor,
+    position_series_from_trades,
+    zero_fraction_from_positions,
 )
 
 
@@ -90,3 +93,49 @@ def test_h2h3_floor_boundary_zero_fraction_half_is_under_floor():
     # zero_fraction < 0.50 strict; exactly 0.50 is NOT eligible.
     out = h2h3_floor(zero_fraction=0.50, total_trades=300)
     assert out["eligible"] is False
+
+
+# ---------------------------------------------------------------------------
+# position_series_from_trades: reconstruct a per-bar long/flat position series
+# from the engine's (entry_time_utc, exit_time_utc) trade records over an index.
+# Used to compute the H1 flat-exit-episode count + the H2/H3 zero_fraction over
+# the TRAIN window without an explicit per-bar position channel from the engine.
+# ---------------------------------------------------------------------------
+
+
+def test_position_series_marks_long_inside_trade_interval():
+    idx = pd.date_range("2020-01-01", periods=6, freq="h", tz="UTC")
+    # one trade: long on bars [1, 3) -> positions 0 1 1 0 0 0.
+    trades = [{"entry_time_utc": "2020-01-01T01:00:00Z",
+               "exit_time_utc": "2020-01-01T03:00:00Z"}]
+    pos = position_series_from_trades(idx, trades)
+    assert list(pos) == [0, 1, 1, 0, 0, 0]
+
+
+def test_position_series_back_to_back_trades_have_no_flat_gap():
+    idx = pd.date_range("2020-01-01", periods=6, freq="h", tz="UTC")
+    # trade A long [1,3), trade B long [3,5): bars 1..4 all long -> a SINGLE
+    # long->flat transition at bar 5 (no flat bar between the two trades).
+    trades = [
+        {"entry_time_utc": "2020-01-01T01:00:00Z", "exit_time_utc": "2020-01-01T03:00:00Z"},
+        {"entry_time_utc": "2020-01-01T03:00:00Z", "exit_time_utc": "2020-01-01T05:00:00Z"},
+    ]
+    pos = position_series_from_trades(idx, trades)
+    assert list(pos) == [0, 1, 1, 1, 1, 0]
+    assert count_flat_exit_episodes(pos) == 1  # only one defensive flat-exit
+
+
+def test_position_series_empty_trades_all_flat():
+    idx = pd.date_range("2020-01-01", periods=4, freq="h", tz="UTC")
+    pos = position_series_from_trades(idx, [])
+    assert list(pos) == [0, 0, 0, 0]
+
+
+def test_zero_fraction_counts_flat_bars():
+    pos = np.array([0, 1, 1, 0, 0, 0])  # 4 of 6 bars flat
+    assert zero_fraction_from_positions(pos) == 4 / 6
+
+
+def test_zero_fraction_empty_is_one():
+    # No bars -> degenerate: treat as fully inactive (zero_fraction 1.0, under-floor).
+    assert zero_fraction_from_positions(np.array([])) == 1.0

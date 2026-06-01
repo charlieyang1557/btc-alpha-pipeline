@@ -21,6 +21,7 @@ from __future__ import annotations
 from typing import Any, Callable
 
 import numpy as np
+import pandas as pd
 
 from backtest.patha_dsr_fwer import run_dsr_fwer, PATHA_N_STAR
 from backtest.patha_earned_negative import assemble_evidence
@@ -54,6 +55,73 @@ def count_flat_exit_episodes(position: np.ndarray) -> int:
     is_long = pos > 0.0
     # transition at bar i: was long at i-1, flat at i.
     return int(np.sum(is_long[:-1] & ~is_long[1:]))
+
+
+def position_series_from_trades(
+    index: "pd.DatetimeIndex", trades: list[dict]
+) -> np.ndarray:
+    """Reconstruct a per-bar long/flat (1/0) position series over ``index``.
+
+    The engine (backtest.engine.TradeCollector) records completed trades with
+    ``entry_time_utc`` / ``exit_time_utc`` ISO strings but exposes no explicit
+    per-bar position channel. For the TRAIN-window floors we reconstruct the
+    long/flat occupancy: a bar is LONG (1) iff it falls in some trade's half-open
+    ``[entry_time, exit_time)`` interval, else FLAT (0). The half-open interval is
+    the key DESIGN INVARIANT for back-to-back trades: when one trade's exit_time
+    equals the next trade's entry_time there is NO flat bar between them, so
+    ``count_flat_exit_episodes`` sees a SINGLE long->flat transition (the funding
+    signal fired once), not two — matching the LOCK's "defensive flat-exit
+    episodes" semantics.
+
+    Args:
+        index: The bar index (the train-window equity-curve DatetimeIndex).
+        trades: Completed-trade records, each with ``entry_time_utc`` /
+            ``exit_time_utc`` (ISO 8601 UTC strings, the engine's format).
+
+    Returns:
+        An int ndarray of 1 (long) / 0 (flat), aligned to ``index``.
+    """
+    idx = pd.DatetimeIndex(index)
+    pos = np.zeros(len(idx), dtype=np.int64)
+    if len(idx) == 0 or not trades:
+        return pos
+    # Normalize to tz-naive UTC wall-time once: the trade ISO strings carry a Z so
+    # they parse tz-aware; strip both sides so a tz-aware OR a Backtrader-naive
+    # index compares cleanly against the trade bounds.
+    bars = idx.tz_localize(None) if getattr(idx, "tz", None) is not None else idx
+    for t in trades:
+        ent = t.get("entry_time_utc")
+        ext = t.get("exit_time_utc")
+        if ent is None:
+            continue
+        lo = pd.Timestamp(ent)
+        lo = lo.tz_localize(None) if lo.tz is not None else lo
+        if ext is None:
+            # An open-at-window-end trade: long from entry to the last bar inclusive.
+            hi = bars[-1] + pd.Timedelta(hours=1)
+        else:
+            hi = pd.Timestamp(ext)
+            hi = hi.tz_localize(None) if hi.tz is not None else hi
+        mask = (bars >= lo) & (bars < hi)  # half-open [entry, exit)
+        pos[np.asarray(mask)] = 1
+    return pos
+
+
+def zero_fraction_from_positions(position: np.ndarray) -> float:
+    """Fraction of bars that are FLAT (position == 0) over the series.
+
+    Args:
+        position: Per-bar position series (>0 = long, <=0 = flat).
+
+    Returns:
+        ``count(flat bars) / len`` in [0, 1]. An EMPTY series returns 1.0 —
+        a degenerate no-bar strategy is treated as fully inactive (under the
+        H2/H3 ``zero_fraction < 0.50`` floor), never as spuriously active.
+    """
+    pos = np.asarray(position, dtype=np.float64)
+    if pos.shape[0] == 0:
+        return 1.0
+    return float(np.sum(pos <= 0.0) / pos.shape[0])
 
 
 def h1_floor(position: np.ndarray) -> dict:

@@ -65,6 +65,30 @@ def test_producer_writes_dead18_layout(tmp_path):
     assert "returns_per_bar_sha256" in out["row"]
 
 
+def test_producer_returns_window_equity_for_marginal_diagnostic(tmp_path):
+    # The fenced funding-marginal diagnostic (Task C6) needs the gated strategy's
+    # CROPPED forward-window equity curve to pair against the no-funding baseline's
+    # equity on the SAME bars. The producer already computes it internally; it must
+    # also RETURN it (the gauntlet reuses it so the gated forward run is not
+    # duplicated). With WARMUP_BARS=0 (object strategy) there is no prepend, so the
+    # returned window equity equals the full _fake_result curve.
+    fake = _fake_result()
+    out = produce_candidate_holdout(
+        hypothesis_hash="we1",
+        name="patha_h1",
+        theme="patha",
+        strategy_cls=object,
+        window=(datetime(2026, 1, 1, tzinfo=timezone.utc), datetime(2026, 4, 16, 7, tzinfo=timezone.utc)),
+        cohort_dir=tmp_path,
+        execution_config_path="config/execution_phaseb_spot_15bps.yaml",
+        _run_backtest=lambda **kw: fake,
+    )
+    assert "window_equity" in out
+    assert isinstance(out["window_equity"], pd.Series)
+    # full _fake_result curve is the window when WARMUP_BARS=0.
+    pd.testing.assert_series_equal(out["window_equity"], fake.equity_curve)
+
+
 def test_producer_default_git_sha_is_patha_build(tmp_path):
     out = produce_candidate_holdout(
         hypothesis_hash="g1",
