@@ -1951,7 +1951,9 @@ class TestT1_4_Pc9BaselineGate:
         # No verdict-harness production-logic change; sealed tier6_dsr_v1/ sha256 4/4
         # byte-unchanged; PHASE_D_AUTHORIZED untouched. Advance BASELINE 2780 → 2782
         # (same expected-additive-cohort precedent; per Charlie Phase A ingestion register).
-        BASELINE = 2782
+        # Path C Phase A A3: +3 markprice validator tests, land in pre_t1_x_baseline;
+        # no verdict-harness logic change; advance BASELINE 2782 → 2785.
+        BASELINE = 2785
         assert pre_t1_x_baseline == BASELINE, (
             f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
             f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "

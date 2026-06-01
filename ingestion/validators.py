@@ -728,6 +728,131 @@ def validate_funding(df: pd.DataFrame) -> dict[str, Any]:
     }
 
 
+# ---------------------------------------------------------------------------
+# Markprice validation (Path C — 1h mark + index price series)
+# ---------------------------------------------------------------------------
+
+# Allowed source labels for the markprice series. Mirrors OHLCV allowed sources,
+# minus ccxt_binanceus (markprice klines are USDT-M futures; no Binance.US source).
+MARKPRICE_ALLOWED_SOURCES = {"binance_vision", "ccxt_binance"}
+
+MARKPRICE_REQUIRED_COLUMNS = [
+    "open_time_utc",
+    "mark_close",
+    "index_close",
+    "source",
+    "ingested_at_utc",
+]
+
+# Maximum allowed (mark_close - index_close) / index_close ratio.
+# A benign perp premium is typically <0.1%; 5% bounds real ingestion bugs
+# without false-flagging legitimate divergences.
+MARK_INDEX_WEDGE_TOL = 0.05
+
+
+def validate_markprice(df: pd.DataFrame) -> dict[str, Any]:
+    """Validate the markprice 1h series (mark_close + index_close) against the markprice schema.
+
+    Inputs: DataFrame with open_time_utc(datetime64[ms,UTC] PK), mark_close(float64),
+      index_close(float64), source(string), ingested_at_utc(datetime64[ms,UTC]).
+    Computation: structural/PK checks + mark-vs-index cross-check.
+    Warmup period: none.
+    Output schema: {"ok": bool, "errors": list[str], "warnings": list[str], "rows": int}.
+    Null policy: NaN in mark_close / index_close does NOT raise here (ingestion layer
+      drops NaN rows before calling this function).
+
+    Checks (errors -> ok=False):
+    - required columns present
+    - open_time_utc is timezone-aware UTC
+    - open_time_utc has no duplicates (unique primary key)
+    - open_time_utc is strictly ascending (sorted)
+    - source values are within MARKPRICE_ALLOWED_SOURCES, populated (no null/empty)
+
+    Warnings (do NOT set ok=False):
+    - spacing gaps (consecutive spacing != 1h) — flagged, never interpolated/removed
+    - mark-vs-index wedge exceeding MARK_INDEX_WEDGE_TOL (5%) in any row
+
+    Args:
+        df: The markprice DataFrame to validate.
+
+    Returns:
+        dict with keys "ok" (bool), "errors" (list[str]), "warnings" (list[str]),
+        and "rows" (int).
+    """
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    # Required columns
+    missing = [c for c in MARKPRICE_REQUIRED_COLUMNS if c not in df.columns]
+    if missing:
+        errors.append(f"Missing columns: {missing}")
+        return {"ok": False, "errors": errors, "warnings": warnings, "rows": len(df)}
+
+    pk = df["open_time_utc"]
+
+    # UTC tz-aware
+    if not hasattr(pk.dtype, "tz") or pk.dt.tz is None:
+        errors.append("open_time_utc is not timezone-aware")
+    elif str(pk.dt.tz) != "UTC":
+        errors.append(f"open_time_utc timezone is {pk.dt.tz}, expected UTC")
+
+    # Unique PK (no duplicates)
+    dupe_count = int(pk.duplicated().sum())
+    if dupe_count > 0:
+        errors.append(f"open_time_utc has {dupe_count} duplicate value(s)")
+
+    # Strictly ascending (sorted)
+    if not pk.is_monotonic_increasing or dupe_count > 0:
+        errors.append("open_time_utc is not strictly ascending (sorted_pk)")
+
+    # source populated + allowed
+    src = df["source"]
+    null_count = int(src.isna().sum())
+    empty_count = int((src == "").sum())
+    invalid_values = set(src.dropna().unique()) - MARKPRICE_ALLOWED_SOURCES
+    if null_count > 0:
+        errors.append(f"source has {null_count} null value(s)")
+    if empty_count > 0:
+        errors.append(f"source has {empty_count} empty value(s)")
+    if invalid_values:
+        errors.append(f"source has invalid value(s): {sorted(invalid_values)}")
+
+    # Gap detection (warning only; flagged, never interpolated). Expected spacing is
+    # exactly 1h (ONE_HOUR_MS ms). A gap is spacing >= 1.5x that. Sub-ms jitter is
+    # handled at parse time so spacings here should be exact multiples of ONE_HOUR_MS.
+    if len(df) >= 2:
+        s = df.sort_values("open_time_utc").reset_index(drop=True)
+        diffs = s["open_time_utc"].diff().iloc[1:]
+        expected = pd.Timedelta(hours=1)
+        gap_mask = diffs >= expected * 1.5
+        gap_count = int(gap_mask.sum())
+        if gap_count > 0:
+            missing_hours = int(((diffs[gap_mask] / expected).round() - 1).sum())
+            warnings.append(
+                f"{gap_count} gap(s) in open_time_utc spacing (missing bars; ~{missing_hours} "
+                f"missing hour(s)) flagged — not interpolated"
+            )
+
+    # Mark-vs-index cross-check (warning only). A large wedge suggests a parse error
+    # or mismatched series rather than a real perp premium.
+    if "mark_close" in df.columns and "index_close" in df.columns:
+        index_safe = df["index_close"].replace(0, float("nan"))
+        wedge = ((df["mark_close"] - df["index_close"]) / index_safe).abs()
+        bad_count = int((wedge > MARK_INDEX_WEDGE_TOL).sum())
+        if bad_count > 0:
+            warnings.append(
+                f"{bad_count} row(s) exceed mark-vs-index cross-check tolerance "
+                f"({MARK_INDEX_WEDGE_TOL:.0%}): possible parse/alignment error"
+            )
+
+    return {
+        "ok": len(errors) == 0,
+        "errors": errors,
+        "warnings": warnings,
+        "rows": len(df),
+    }
+
+
 def save_report(report: dict[str, Any], report_dir: Path, prefix: str = "validation") -> Path:
     """Save a validation report as JSON.
 

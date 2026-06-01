@@ -309,14 +309,24 @@ def main() -> int:
             archive_path,
         )
 
-    # CONTRACT GAP: validate_markprice(joined) must be called here (blocking the
-    # write on failure) once Task A3 creates validate_markprice in
-    # ingestion/validators.py.  The mirror modules bulk_download.py and
-    # funding_bulk_download.py both validate before writing, honoring the HARD
-    # CONSTRAINT "NEVER skip validation steps when ingesting data".
-    # Trigger: when validate_markprice is added, wire it here and add a
-    # save_report call + early return on failure, matching funding_bulk_download.py
-    # lines 288-302.
+    # Validate before write (HARD CONSTRAINT: "NEVER skip validation steps when
+    # ingesting data"). Mirrors funding_bulk_download.py lines 288-302.
+    from ingestion.validators import save_report, validate_markprice
+
+    report = validate_markprice(joined)
+    report["file_checked"] = str(output_path)
+    logger.info("Validation ok: %s", report["ok"])
+    for err in report["errors"]:
+        logger.error("  ERROR: %s", err)
+    for warn in report["warnings"]:
+        logger.warning("  WARN: %s", warn)
+
+    QUALITY_DIR.mkdir(parents=True, exist_ok=True)
+    save_report(report, QUALITY_DIR, prefix="markprice_bulk_validation")
+
+    if not report["ok"]:
+        logger.error("Validation FAILED — refusing to write parquet. Review quality report.")
+        return 1
 
     # Atomic-promote: write to staging path, then rename.
     staging_path = output_path.with_suffix(output_path.suffix + ".staging")
