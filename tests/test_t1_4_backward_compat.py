@@ -1953,7 +1953,11 @@ class TestT1_4_Pc9BaselineGate:
         # (same expected-additive-cohort precedent; per Charlie Phase A ingestion register).
         # Path C Phase A A3: +3 markprice validator tests, land in pre_t1_x_baseline;
         # no verdict-harness logic change; advance BASELINE 2782 → 2785.
-        BASELINE = 2785
+        # Path C Phase A A4: +3 markprice reconcile tests (test_markprice_reconcile_dedup_prefers_binance_vision,
+        # test_markprice_reconcile_output_unique_sorted, test_markprice_archive_before_overwrite),
+        # land wholly in pre_t1_x_baseline (test_markprice_ingestion.py; neither a t1_4 nor t1_5
+        # subtraction target); advance BASELINE 2785 → 2788.
+        BASELINE = 2788
         assert pre_t1_x_baseline == BASELINE, (
             f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
             f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "

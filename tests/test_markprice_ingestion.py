@@ -59,3 +59,69 @@ def test_validate_markprice_flags_mark_index_wedge():
     df = _good(); df.loc[0, "mark_close"] = 7004.0 * 2.0
     r = validate_markprice(df)
     assert any("wedge" in w.lower() or "cross-check" in w.lower() for w in r["warnings"])
+
+
+# ---------------------------------------------------------------------------
+# Task A4: markprice reconcile + archive
+# ---------------------------------------------------------------------------
+
+from ingestion import markprice_reconcile  # noqa: E402
+
+
+def _mp_row(ts_ms: int, mark: float, source: str) -> dict:
+    return {
+        "open_time_utc": pd.to_datetime(ts_ms, unit="ms", utc=True),
+        "mark_close": mark,
+        "index_close": mark - 1.0,
+        "source": source,
+        "ingested_at_utc": pd.to_datetime(0, unit="ms", utc=True),
+    }
+
+
+def test_markprice_reconcile_dedup_prefers_binance_vision():
+    """Duplicate open_time_utc resolves to the binance_vision row."""
+    existing = pd.DataFrame([
+        _mp_row(1577836800000, 7000.0, "ccxt_binance"),
+        _mp_row(1577840400000, 7005.0, "ccxt_binance"),
+    ])
+    new = pd.DataFrame([
+        _mp_row(1577836800000, 7999.0, "binance_vision"),  # conflict
+        _mp_row(1577844000000, 7010.0, "binance_vision"),  # new PK
+    ])
+    merged, stats = markprice_reconcile.reconcile_markprice(existing, new)
+    assert merged["open_time_utc"].is_monotonic_increasing
+    assert merged["open_time_utc"].duplicated().sum() == 0
+    first = merged.iloc[0]
+    assert first["source"] == "binance_vision"
+    assert first["mark_close"] == 7999.0
+    assert len(merged) == 3
+
+
+def test_markprice_reconcile_output_unique_sorted():
+    """Output is unique on open_time_utc and sorted ascending."""
+    existing = pd.DataFrame([_mp_row(1577844000000, 7010.0, "binance_vision")])
+    new = pd.DataFrame([
+        _mp_row(1577836800000, 7000.0, "ccxt_binance"),
+        _mp_row(1577840400000, 7005.0, "ccxt_binance"),
+    ])
+    merged, _ = markprice_reconcile.reconcile_markprice(existing, new)
+    assert merged["open_time_utc"].is_monotonic_increasing
+    assert merged["open_time_utc"].duplicated().sum() == 0
+    assert len(merged) == 3
+
+
+def test_markprice_archive_before_overwrite(tmp_path):
+    """archive_file writes a timestamped snapshot to archive_dir; original preserved."""
+    archive_dir = tmp_path / "archive"
+    canonical = tmp_path / "btcusdt_markprice_1h.parquet"
+    df = pd.DataFrame([_mp_row(1577836800000, 7000.0, "binance_vision")])
+    df.to_parquet(canonical, engine="pyarrow", index=False)
+
+    archived = markprice_reconcile.archive_file(canonical, archive_dir=archive_dir)
+    assert archived is not None
+    assert archived.exists()
+    assert archived.parent == archive_dir
+    assert archived.name.startswith("btcusdt_markprice_1h_")
+    assert archived.suffix == ".parquet"
+    # copy not move — original must still be present
+    assert canonical.exists()
