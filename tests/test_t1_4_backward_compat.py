@@ -2094,7 +2094,19 @@ class TestT1_4_Pc9BaselineGate:
         # PHASE_D_AUTHORIZED is False. Sealed tier6_dsr_v1/ sha256 4/4 byte-unchanged
         # (re-verified). Advance BASELINE 2902 → 2943 (same expected-additive-cohort
         # precedent; per Charlie Task C4-ii register, pathc-basis-scoping branch).
-        BASELINE = 2943
+        # Path C Task C5 — tiered 24h+72h mechanism-sanity module (pathc_perleg_mechanism):
+        # adds +10 collected items in tests/test_pathc_perleg.py (NEW file):
+        # classify_leg strong/weak/refuted (H3-positive, H1-negative, record-both-signs,
+        # zero-mean-not-sane) ×4; classify_h2_leg two-population (strong, weak, refuted) ×3;
+        # compute_per_leg_tiers driver (all-three-with-tiers, h1-sane-sign, h1-strong-sane
+        # crafted-reversal) ×3. New file; neither a t1_4 nor a t1_5 subtraction target, so
+        # the +10 lands wholly in pre_t1_x_baseline = total − t1_4 − t1_5. Classification
+        # machinery is identical to patha_perleg_mechanism.py; basis sane-signs retargeted:
+        # H1 NEGATIVE (reversal), H2 separation (permissive>derisk AND permissive>0), H3
+        # POSITIVE (continuation). Sealed tier6_dsr_v1/ sha256 4/4 byte-unchanged;
+        # PHASE_D_AUTHORIZED untouched. Advance BASELINE 2943 → 2953 (same expected-
+        # additive-cohort precedent; per Charlie Task C5 register, pathc-basis-scoping branch).
+        BASELINE = 2953
         assert pre_t1_x_baseline == BASELINE, (
             f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
             f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "
