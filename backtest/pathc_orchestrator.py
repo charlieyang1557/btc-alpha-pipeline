@@ -356,6 +356,17 @@ def run_pathc_verdict(
     """
     holdouts = {key: run_gauntlet(key, dsl) for key, dsl in hypotheses.items()}
 
+    # --- Degenerate-leg detection ---
+    # A degenerate holdout (flat / zero-variance forward equity, gate didn't fire)
+    # is flagged ``degenerate=True`` by the producer. It cannot enter the DSR cohort
+    # (no testable return distribution). Record it in degenerate_legs, exclude it
+    # from build_moments, and do NOT count it as a Tier-5 pass (holdout_sharpe=0.0
+    # already fails the strict >0 gate, but we also never pass it to build_moments).
+    degenerate_legs: dict[str, bool] = {}
+    for key, h in holdouts.items():
+        if h.get("degenerate", False):
+            degenerate_legs[key] = True
+
     # LOCK "floors applied BEFORE ranking": when a floors dict is provided, an
     # UNDER-FLOOR (ineligible) candidate is NOT a Tier-5 pass/fail — it is
     # INDETERMINATE and EXCLUDED from n_tier5_pass.
@@ -380,7 +391,11 @@ def run_pathc_verdict(
         if eligible and h.get("holdout_sharpe", float("-inf")) > 0:
             n_tier5_pass += 1
 
-    cms = build_moments(holdouts)
+    # Pass only non-degenerate holdouts to build_moments — a flat series has no
+    # testable return distribution and must not enter the DSR cohort.
+    non_degenerate_holdouts = {k: v for k, v in holdouts.items()
+                                if not degenerate_legs.get(k, False)}
+    cms = build_moments(non_degenerate_holdouts)
     dsr = run_dsr(cms) if cms else {
         "survivors": [], "rows": [], "n_star": PATHC_N_STAR, "n_candidates": 0
     }
@@ -408,4 +423,5 @@ def run_pathc_verdict(
         "floors": floors,
         "basis_marginal": basis_marginal,
         "under_determined_legs": taxonomy.get("under_determined_legs", {}),
+        "degenerate_legs": degenerate_legs,
     }

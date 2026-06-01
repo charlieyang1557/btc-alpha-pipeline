@@ -587,16 +587,25 @@ def run_verdict(
             _run_backtest=run_backtest_fn,
         )
         gated_window_equities[key] = res["window_equity"]
-        return {
+        result = {
             "holdout_sharpe": res["holdout_sharpe"],
             "row": res["row"],
             "hypothesis_hash": h,
             "holdout_total_trades": int(res["row"].get("holdout_total_trades", 0)),
         }
+        # Thread degenerate flag through: the orchestrator uses it to exclude the
+        # leg from the DSR cohort and record it in degenerate_legs.
+        if res.get("degenerate", False):
+            result["degenerate"] = True
+        return result
 
     def real_build_moments(holdouts: dict) -> list:
+        # The orchestrator already filters degenerate holdouts before calling
+        # build_moments, so ``holdouts`` here contains only non-degenerate rows.
         rows = [h["row"] for h in holdouts.values()]
         df = build_cohort_csv(rows, cohort_dir)
+        if df.empty:
+            return []
         return load_pathc_moments([r["hypothesis_hash"] for r in rows], df, cohort_dir)
 
     bundle = run_pathc_verdict(

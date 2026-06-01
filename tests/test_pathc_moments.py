@@ -65,3 +65,54 @@ def test_integrity_gate_fires_on_tamper(tmp_path):
     (tmp_path / "h1bbb" / "returns_per_bar.parquet").write_bytes(b"corrupt")
     with pytest.raises(ValueError, match="sha256 integrity mismatch"):
         load_pathc_moments(["h1bbb"], df, tmp_path)
+
+
+def test_build_cohort_csv_excludes_degenerate_rows(tmp_path):
+    """Instrument repair: build_cohort_csv must exclude rows marked degenerate=True.
+
+    A degenerate row (flat equity, gamma3/gamma4=None) cannot enter the DSR cohort.
+    build_cohort_csv must skip it silently (log is acceptable) and NOT write it to
+    the cohort CSV, so load_pathc_moments never sees a None gamma value that would
+    crash the CandidateMoments construction.
+    """
+    normal_row = _write_candidate(tmp_path, "h1_normal")
+    # A degenerate row: mark it with degenerate=True and None gamma3/gamma4.
+    deg_row = {
+        "hypothesis_hash": "h1_degen",
+        "name": "pathc_h1",
+        "theme": "pathc",
+        "T_obs": 50,
+        "gamma3": None,
+        "gamma4": None,
+        "returns_per_bar_sha256": "fake_sha",
+        "holdout_total_trades": 0,
+        "degenerate": True,
+    }
+    df = build_cohort_csv([normal_row, deg_row], tmp_path)
+    # The CSV must contain only the non-degenerate row.
+    assert len(df) == 1
+    assert "h1_degen" not in df["hypothesis_hash"].values
+    assert "h1_normal" in df["hypothesis_hash"].values
+
+
+def test_load_pathc_moments_with_only_nondegenerate_rows(tmp_path):
+    """Instrument repair: load_pathc_moments on a CSV that had a degenerate row
+    excluded by build_cohort_csv must load cleanly (no crash, no None gamma)."""
+    normal_row = _write_candidate(tmp_path, "h1_nd")
+    deg_row = {
+        "hypothesis_hash": "h1_d",
+        "name": "pathc_h2",
+        "theme": "pathc",
+        "T_obs": 50,
+        "gamma3": None,
+        "gamma4": None,
+        "returns_per_bar_sha256": "fake_sha2",
+        "holdout_total_trades": 0,
+        "degenerate": True,
+    }
+    df = build_cohort_csv([normal_row, deg_row], tmp_path)
+    # Only the normal hash is in the filtered df.
+    hashes = df["hypothesis_hash"].tolist()
+    cms = load_pathc_moments(hashes, df, tmp_path)
+    assert len(cms) == 1
+    assert cms[0].T > 0

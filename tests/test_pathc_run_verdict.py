@@ -865,3 +865,96 @@ def test_h2_derisk_occupancy_uses_regime_factor_fraction_not_long_fraction(tmp_p
     assert h2.get("derisk_occupancy_eligible") is False, (
         "H2 de-risk occupancy prong must be ineligible when regime-factor fraction < 0.10"
     )
+
+
+# ---------------------------------------------------------------------------
+# Instrument repair: degenerate forward equity end-to-end through run_verdict
+# ---------------------------------------------------------------------------
+
+def test_run_verdict_survives_one_degenerate_forward_leg(tmp_path):
+    """Instrument repair (end-to-end): one hypothesis produces a flat/zero-variance
+    forward equity (gate never fired on forward_2026 — a valid per-strategy outcome).
+    run_verdict must:
+      - NOT crash
+      - record the degenerate leg in bundle["degenerate_legs"]
+      - exclude it from n_tier5_pass
+      - produce a coherent bundle with the sibling legs intact
+    """
+    out = tmp_path / "pathc_verdict_v1"
+
+    # Counter so each call to the mock produces a distinct result.
+    call_idx = itertools.count()
+
+    def _dispatch(**kw):
+        idx_n = next(call_idx)
+        start = kw.get("start_date")
+        is_train = start is not None and getattr(start, "year", 2026) <= 2024
+
+        class _R:
+            pass
+
+        r = _R()
+        if is_train:
+            # Train runs: return a healthy equity with plenty of trades.
+            n = 2000
+            idx = pd.date_range("2020-01-01", periods=n, freq="h", tz="UTC")
+            rng = np.random.default_rng(idx_n + 10)
+            r.equity_curve = pd.Series(10_000.0 * np.cumprod(1.0 + rng.normal(0, 0.005, n)), index=idx)
+            trades = []
+            for k in range(300):
+                e = idx[2 * k]
+                x = idx[2 * k + 1]
+                trades.append({
+                    "entry_time_utc": e.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                    "exit_time_utc": x.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                })
+            r.trades = trades
+            r.run_id = f"train_{idx_n}"
+            r.metrics = {"sharpe_ratio": 0.1, "total_trades": len(trades),
+                         "max_drawdown": 0.1, "total_return": 0.02}
+        else:
+            # Forward runs: make every OTHER forward call produce a FLAT equity
+            # (gate didn't fire). idx_n alternates: first forward call is flat.
+            fwd_call = idx_n % 2  # 0 = flat, 1 = normal
+            n = 320
+            idx = pd.date_range("2026-01-01", periods=n, freq="h", tz="UTC")
+            if fwd_call == 0:
+                # Flat equity (0 trades, gate never fired).
+                r.equity_curve = pd.Series(10_000.0, index=idx)
+                r.trades = []
+                r.metrics = {"sharpe_ratio": 0.0, "total_trades": 0,
+                             "max_drawdown": 0.0, "total_return": 0.0}
+            else:
+                rng = np.random.default_rng(idx_n + 99)
+                rets = rng.normal(0.0001, 0.012, n)
+                r.equity_curve = pd.Series(10_000.0 * np.cumprod(1.0 + rets), index=idx)
+                r.trades = []
+                r.metrics = {"sharpe_ratio": float(rng.normal(0.0, 0.3)),
+                             "total_trades": int(rng.integers(5, 55)),
+                             "max_drawdown": 0.1, "total_return": 0.02}
+            r.run_id = f"fwd_{idx_n}"
+        r.start_date = r.equity_curve.index[0].to_pydatetime()
+        r.end_date = r.equity_curve.index[-1].to_pydatetime()
+        return r
+
+    bundle = rv.run_verdict(
+        out,
+        features_path=_tiny_features(tmp_path),
+        _run_backtest=_dispatch,
+    )
+    # Run must complete without crash.
+    assert "taxonomy" in bundle
+    assert "holdouts" in bundle
+    # degenerate_legs must be present in the bundle.
+    assert "degenerate_legs" in bundle, (
+        "bundle must carry 'degenerate_legs' after instrument repair"
+    )
+    # Any degenerate leg must NOT count toward n_tier5_pass.
+    degen_keys = set(bundle["degenerate_legs"])
+    for key in degen_keys:
+        h = bundle["holdouts"].get(key, {})
+        assert float(h.get("holdout_sharpe", 0.0)) <= 0.0, (
+            f"degenerate leg {key} must have holdout_sharpe <= 0 (not a Tier-5 pass)"
+        )
+    # The gate stays intact.
+    assert rv.PHASE_D_AUTHORIZED is False

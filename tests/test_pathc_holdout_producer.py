@@ -197,7 +197,15 @@ def test_producer_zero_warmup_is_unchanged(tmp_path):
     assert seen["start_date"] == win_start  # no prepend when warmup is 0
 
 
-def test_producer_raises_on_degenerate_equity(tmp_path):
+def test_producer_degenerate_returns_flagged_not_raises(tmp_path):
+    """Instrument repair: a flat/zero-variance forward equity must NOT raise.
+
+    Instead produce_candidate_holdout must return a result dict with
+    ``degenerate=True``, ``holdout_sharpe=0.0``, and ``holdout_total_trades=0``
+    so the caller can exclude it from the DSR cohort and record it as a
+    degenerate leg. A flat equity -> Sharpe 0.0 -> correctly FAILS the strict
+    Tier-5 gate ``holdout_sharpe > 0``.
+    """
     idx = pd.date_range("2026-01-01", periods=50, freq="h", tz="UTC")
     flat = pd.Series(10_000.0, index=idx)  # zero-variance -> gamma None
 
@@ -210,14 +218,53 @@ def test_producer_raises_on_degenerate_equity(tmp_path):
     r.metrics = {"sharpe_ratio": 0.0, "total_trades": 0}
     r.start_date = idx[0].to_pydatetime()
     r.end_date = idx[-1].to_pydatetime()
-    with pytest.raises(ValueError, match="degenerate per-bar returns"):
-        produce_candidate_holdout(
-            hypothesis_hash="deg",
-            name="pathc_h1",
-            theme="pathc",
-            strategy_cls=object,
-            window=(r.start_date, r.end_date),
-            cohort_dir=tmp_path,
-            execution_config_path="config/execution_phaseb_spot_15bps.yaml",
-            _run_backtest=lambda **kw: r,
-        )
+    r.trades = []
+
+    out = produce_candidate_holdout(
+        hypothesis_hash="deg",
+        name="pathc_h1",
+        theme="pathc",
+        strategy_cls=object,
+        window=(r.start_date, r.end_date),
+        cohort_dir=tmp_path,
+        execution_config_path="config/execution_phaseb_spot_15bps.yaml",
+        _run_backtest=lambda **kw: r,
+    )
+    # Must flag as degenerate, NOT raise.
+    assert out["degenerate"] is True
+    # holdout_sharpe must be 0.0 (flat equity; undefined -> treat as 0) so it
+    # correctly fails the strict > 0 Tier-5 gate.
+    assert out["holdout_sharpe"] == 0.0
+    # row and window_equity must still be present.
+    assert "row" in out
+    assert isinstance(out["window_equity"], pd.Series)
+
+
+def test_producer_degenerate_sharpe_is_zero_and_fails_tier5_gate(tmp_path):
+    """Degenerate holdout_sharpe=0.0 must NOT pass the strict > 0 Tier-5 gate."""
+    idx = pd.date_range("2026-01-01", periods=50, freq="h", tz="UTC")
+    flat = pd.Series(10_000.0, index=idx)
+
+    class R:
+        pass
+
+    r = R()
+    r.run_id = "r2"
+    r.equity_curve = flat
+    r.metrics = {"sharpe_ratio": 0.0, "total_trades": 0}
+    r.start_date = idx[0].to_pydatetime()
+    r.end_date = idx[-1].to_pydatetime()
+    r.trades = []
+
+    out = produce_candidate_holdout(
+        hypothesis_hash="deg2",
+        name="pathc_h2",
+        theme="pathc",
+        strategy_cls=object,
+        window=(r.start_date, r.end_date),
+        cohort_dir=tmp_path,
+        execution_config_path="config/execution_phaseb_spot_15bps.yaml",
+        _run_backtest=lambda **kw: r,
+    )
+    # The strict > 0 gate must fail (0.0 is not > 0).
+    assert not (out["holdout_sharpe"] > 0)

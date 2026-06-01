@@ -21,17 +21,26 @@ from backtest.tier6_dsr import CandidateMoments, load_candidate_moments
 def build_cohort_csv(rows: list[dict], cohort_dir: Path) -> pd.DataFrame:
     """Assemble + persist the Path C holdout_results.csv from producer rows.
 
+    Degenerate rows (``degenerate=True``, gamma3/gamma4=None) are silently excluded:
+    a flat / zero-variance equity has no testable return distribution and cannot
+    enter the DSR cohort.  The caller (``run_pathc_verdict``) records excluded
+    candidates in ``degenerate_legs`` so they are never silently dropped from the
+    evidence bundle.
+
     Args:
         rows: List of holdout row dicts (from produce_candidate_holdout return
             value ``row`` fields), each with keys: hypothesis_hash, name, theme,
             T_obs, gamma3, gamma4, returns_per_bar_sha256, holdout_total_trades.
+            Rows with ``degenerate=True`` are excluded from the CSV.
         cohort_dir: Root path for Path C artifacts; CSV written as
             cohort_dir/holdout_results.csv.
 
     Returns:
-        The assembled DataFrame (also persisted to CSV).
+        The assembled DataFrame containing only non-degenerate rows (also
+        persisted to CSV).
     """
-    df = pd.DataFrame(rows)
+    non_degenerate = [r for r in rows if not r.get("degenerate", False)]
+    df = pd.DataFrame(non_degenerate) if non_degenerate else pd.DataFrame()
     (Path(cohort_dir) / "holdout_results.csv").write_text(df.to_csv(index=False))
     return df
 

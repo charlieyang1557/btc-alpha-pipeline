@@ -100,17 +100,20 @@ def produce_candidate_holdout(
         _write_per_bar: Injected artifact writer (default backtest.engine.write_per_bar_artifact).
 
     Returns:
-        Dict with ``holdout_sharpe`` (float), ``row`` (dict) — the
-        holdout_results.csv row: hypothesis_hash, name, theme, T_obs, gamma3,
-        gamma4, returns_per_bar_sha256, holdout_total_trades, holdout_sharpe — and
-        ``window_equity`` (pd.Series): the CROPPED forward-window equity curve.
-        The fenced basis-marginal diagnostic reuses ``window_equity``
-        so the gated forward run is computed once (here) and not duplicated.
+        Dict with ``holdout_sharpe`` (float), ``holdout_total_trades`` (int),
+        ``row`` (dict) — the holdout_results.csv row: hypothesis_hash, name, theme,
+        T_obs, gamma3, gamma4, returns_per_bar_sha256, holdout_total_trades,
+        holdout_sharpe — and ``window_equity`` (pd.Series): the CROPPED
+        forward-window equity curve.  The fenced basis-marginal diagnostic reuses
+        ``window_equity`` so the gated forward run is computed once (here) and not
+        duplicated.
 
-    Raises:
-        ValueError: If the per-bar artifact has gamma3/gamma4 = None (degenerate
-            zero-variance equity curve). Fail fast here so a degenerate candidate
-            surfaces as an explicit error, not a loader crash.
+        When the forward equity is flat / zero-variance (0 trades, gate didn't fire),
+        the returned dict also carries ``degenerate=True`` and ``holdout_sharpe=0.0``
+        (a flat equity has undefined skew/kurtosis, so gamma3/gamma4 are None in the
+        row; the caller must exclude this candidate from the moments/DSR cohort and
+        record it in ``degenerate_legs``). A Sharpe of 0.0 correctly FAILS the strict
+        ``holdout_sharpe > 0`` Tier-5 gate.
     """
     start, end = window
     cand_dir = Path(cohort_dir) / hypothesis_hash
@@ -162,15 +165,35 @@ def produce_candidate_holdout(
     (cand_dir / "holdout_summary.json").write_text(json.dumps(summary, indent=1))
 
     # Degenerate-equity guard: write_per_bar_artifact returns gamma3/gamma4 = None
-    # for a flat / zero-variance equity curve; load_candidate_moments does
-    # float(row["gamma3"]) -> TypeError on None. Fail fast here so a degenerate
-    # candidate surfaces as an explicit error, not a loader crash.
+    # for a flat / zero-variance equity curve (0-trade / flat / zero-variance equity).
+    # This is a LEGITIMATE per-strategy outcome (gate didn't fire on forward_2026) —
+    # NOT a wiring break. A flat equity has undefined skew/kurtosis so it cannot
+    # enter the DSR cohort; we return a flagged dict (degenerate=True, holdout_sharpe=0.0)
+    # so the caller can exclude it from the moments/DSR cohort and record it in the
+    # bundle's degenerate_legs. A Sharpe of 0.0 correctly FAILS the strict >0 Tier-5
+    # gate. Raising here (the old behavior) crashed the whole verdict run, which was
+    # the bug surfaced by the real Phase D run (T_obs=2527, one of three legs, not all).
     if per_bar["gamma3"] is None or per_bar["gamma4"] is None:
-        raise ValueError(
-            f"candidate {hypothesis_hash}: degenerate per-bar returns "
-            f"(gamma3/gamma4 is None; T_obs={per_bar['T_obs']}) — flat or "
-            f"zero-variance equity; cannot build CandidateMoments."
-        )
+        total_trades = int(window_metrics.get("total_trades", 0))
+        row: dict[str, Any] = {
+            "hypothesis_hash": hypothesis_hash,
+            "name": name,
+            "theme": theme,
+            "T_obs": int(per_bar["T_obs"]),
+            "gamma3": None,
+            "gamma4": None,
+            "returns_per_bar_sha256": per_bar["returns_per_bar_sha256"],
+            "holdout_total_trades": total_trades,
+            "holdout_sharpe": 0.0,
+            "degenerate": True,
+        }
+        return {
+            "holdout_sharpe": 0.0,
+            "holdout_total_trades": total_trades,
+            "row": row,
+            "window_equity": window_equity,
+            "degenerate": True,
+        }
 
     row = {
         "hypothesis_hash": hypothesis_hash,
@@ -185,6 +208,7 @@ def produce_candidate_holdout(
     }
     return {
         "holdout_sharpe": float(window_metrics["sharpe_ratio"]),
+        "holdout_total_trades": int(window_metrics["total_trades"]),
         "row": row,
         "window_equity": window_equity,
     }

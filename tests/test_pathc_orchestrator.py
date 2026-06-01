@@ -222,3 +222,74 @@ def test_orchestrator_f3_taxonomy_carries_power_limited_flag_when_under_determin
     # Taxonomy must carry the power-limited caveat flag.
     assert out["taxonomy"]["earned_negative_power_limited"] is True
     assert out["taxonomy"]["earned_negative_power_limited_note"] is not None
+
+
+# ---------------------------------------------------------------------------
+# Instrument repair: degenerate (flat / zero-variance) leg handling
+# ---------------------------------------------------------------------------
+
+def test_orchestrator_degenerate_leg_excluded_from_dsr_recorded_in_bundle():
+    """Instrument repair: a degenerate holdout result (degenerate=True) must be:
+    - excluded from the DSR cohort (build_moments sees only the non-degenerate rows)
+    - recorded in ``degenerate_legs`` (visible, never silently dropped)
+    - NOT counted in n_tier5_pass (holdout_sharpe=0.0 fails the >0 gate)
+    - run COMPLETES (no crash) with a coherent bundle.
+    """
+    # One degenerate leg (H2) + one normal leg (H1) with positive Sharpe.
+    fake_holdout = {
+        "H1": {"holdout_sharpe": 0.5, "holdout_total_trades": 20},
+        "H2": {"holdout_sharpe": 0.0, "holdout_total_trades": 0, "degenerate": True},
+    }
+    moments_input_keys = []
+
+    def _capture_moments(holdouts):
+        moments_input_keys.extend(holdouts.keys())
+        return []
+
+    out = run_pathc_verdict(
+        hypotheses={"H1": object(), "H2": object()},
+        run_gauntlet=lambda key, dsl: fake_holdout[key],
+        build_moments=_capture_moments,
+        run_dsr=lambda cms: {"survivors": [], "rows": [], "n_star": 3},
+        per_leg=lambda: {"H1": _leg("strong_sane"), "H2": _leg("refuted")},
+    )
+    # Bundle must complete without crash.
+    assert "holdouts" in out
+    assert "n_tier5_pass" in out
+    # Degenerate leg must NOT be passed to build_moments (excluded from DSR cohort).
+    assert "H2" not in moments_input_keys, (
+        "degenerate leg H2 must be excluded from the build_moments input"
+    )
+    # H1 (eligible, positive Sharpe) must count; H2 (degenerate) must NOT.
+    assert out["n_tier5_pass"] == 1
+    # degenerate_legs must record H2.
+    assert "degenerate_legs" in out
+    assert "H2" in out["degenerate_legs"]
+    assert out["degenerate_legs"]["H2"] is True
+
+
+def test_orchestrator_all_degenerate_no_crash():
+    """Instrument repair: all-degenerate cohort → run completes, n_dsr_pass=0,
+    taxonomy is coherent (no crash even when the DSR cohort is empty)."""
+    fake_holdout = {
+        "H1": {"holdout_sharpe": 0.0, "holdout_total_trades": 0, "degenerate": True},
+        "H2": {"holdout_sharpe": 0.0, "holdout_total_trades": 0, "degenerate": True},
+        "H3": {"holdout_sharpe": 0.0, "holdout_total_trades": 0, "degenerate": True},
+    }
+    out = run_pathc_verdict(
+        hypotheses={"H1": object(), "H2": object(), "H3": object()},
+        run_gauntlet=lambda key, dsl: fake_holdout[key],
+        build_moments=lambda holdouts: [],  # empty — all degenerate
+        run_dsr=lambda cms: {"survivors": [], "rows": [], "n_star": 3},
+        per_leg=lambda: {"H1": _leg("refuted"), "H2": _leg("refuted"),
+                          "H3": _leg("refuted")},
+    )
+    # Run must complete without crash.
+    assert "taxonomy" in out
+    assert out["n_dsr_pass"] == 0
+    assert out["n_tier5_pass"] == 0
+    # All three must be recorded in degenerate_legs.
+    assert "degenerate_legs" in out
+    assert set(out["degenerate_legs"]) >= {"H1", "H2", "H3"}
+    # Taxonomy must be coherent (not None or empty).
+    assert out["taxonomy"].get("advisory_taxonomy") is not None

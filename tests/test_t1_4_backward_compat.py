@@ -2178,7 +2178,15 @@ class TestT1_4_Pc9BaselineGate:
         # taxonomy/is_earned_negative/tolerances unchanged); scripts/pathc_run_verdict.py
         # mirrors it at bundle root. Sealed tier6_dsr_v1/ sha256 4/4 byte-unchanged;
         # PHASE_D_AUTHORIZED untouched. Advance BASELINE 3006 → 3008 (+2 new test functions).
-        BASELINE = 3008
+        # Instrument repair (pathc-basis-scoping branch): handle degenerate/flat forward
+        # equity gracefully (Tier-5 non-pass, excluded from DSR cohort, recorded in
+        # degenerate_legs). Changes: backtest/pathc_holdout_producer.py (degenerate=True
+        # return instead of raise), backtest/pathc_moments.py (filter degenerate rows in
+        # build_cohort_csv), backtest/pathc_orchestrator.py (degenerate_legs in bundle),
+        # scripts/pathc_run_verdict.py (thread degenerate flag + empty-cohort guard).
+        # Net new test functions: +1 holdout_producer (+2 replace +1) +2 moments +2
+        # orchestrator +1 run_verdict = +6. Advance BASELINE 3008 → 3014.
+        BASELINE = 3014
         assert pre_t1_x_baseline == BASELINE, (
             f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
             f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "
