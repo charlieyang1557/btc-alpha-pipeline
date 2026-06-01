@@ -58,8 +58,44 @@ _KLINE_COLS = [
 ]
 
 
+def _parse_kline_buffer(buf: io.BytesIO, close_col_name: str) -> pd.DataFrame:
+    """Parse a 12-col headerless kline CSV from an in-memory buffer.
+
+    Inputs: an io.BytesIO of a headerless Binance Vision *PriceKlines CSV
+      (open_time ms epoch, open, high, low, close, volume, close_time,
+      quote_volume, count, taker_base, taker_quote, ignore).
+    Output: open_time_utc(datetime64[ms,UTC] PK), <close_col_name>(float64),
+      source(string), ingested_at_utc(datetime64[ms,UTC]).
+    Warmup period: none (timestamp conversion only).
+    Null policy: rows with NaN open_time/close are dropped + counted (logged).
+
+    Args:
+        buf: In-memory bytes buffer of the CSV contents.
+        close_col_name: Column name to use for the close price (e.g. "mark_close").
+
+    Returns:
+        DataFrame with open_time_utc, <close_col_name>, source, ingested_at_utc.
+    """
+    raw = pd.read_csv(buf, header=None, names=_KLINE_COLS)
+    n_in = len(raw)
+    raw = raw.dropna(subset=["open_time", "close"])
+    n_dropped = n_in - len(raw)
+    if n_dropped:
+        logger.info("_parse_kline_buffer: dropped %d NaN row(s)", n_dropped)
+    df = pd.DataFrame({
+        "open_time_utc": pd.to_datetime(raw["open_time"], unit="ms", utc=True).astype("datetime64[ms, UTC]"),
+        close_col_name: raw["close"].astype("float64"),
+    })
+    df["source"] = pd.array(["binance_vision"] * len(df), dtype="string")
+    df["ingested_at_utc"] = pd.Timestamp(datetime.now(timezone.utc)).as_unit("ms")
+    df["ingested_at_utc"] = df["ingested_at_utc"].astype("datetime64[ms, UTC]")
+    return df.sort_values("open_time_utc").reset_index(drop=True)
+
+
 def parse_kline_csv(path: Path, close_col_name: str) -> pd.DataFrame:
     """Parse one Binance Vision 12-col headerless kline CSV, keeping only the close.
+
+    Thin wrapper around _parse_kline_buffer that reads the file into memory.
 
     Inputs: a headerless CSV with the 12 standard Binance Vision kline columns
       (open_time ms epoch, open, high, low, close, volume, close_time,
@@ -76,19 +112,7 @@ def parse_kline_csv(path: Path, close_col_name: str) -> pd.DataFrame:
     Returns:
         DataFrame with open_time_utc, <close_col_name>, source, ingested_at_utc.
     """
-    raw = pd.read_csv(path, header=None, names=_KLINE_COLS)
-    n_in = len(raw)
-    raw = raw.dropna(subset=["open_time", "close"])
-    n_dropped = n_in - len(raw)
-    if n_dropped:
-        logger.info("parse_kline_csv: dropped %d NaN row(s) from %s", n_dropped, path.name)
-    df = pd.DataFrame({
-        "open_time_utc": pd.to_datetime(raw["open_time"], unit="ms", utc=True).astype("datetime64[ms, UTC]"),
-        close_col_name: raw["close"].astype("float64"),
-    })
-    df["source"] = pd.array(["binance_vision"] * len(df), dtype="string")
-    df["ingested_at_utc"] = pd.Timestamp(datetime.now(timezone.utc)).as_unit("ms")
-    return df.sort_values("open_time_utc").reset_index(drop=True)
+    return _parse_kline_buffer(io.BytesIO(path.read_bytes()), close_col_name)
 
 
 def generate_month_keys(start: str, end: str | None = None) -> list[str]:
@@ -159,16 +183,7 @@ def _download_kline_month(prefix: str, pair: str, interval: str, month_key: str,
                 return None
             with zf.open(csv_names[0]) as csv_file:
                 buf = io.BytesIO(csv_file.read())
-        # Parse from the in-memory buffer using a temp Path workaround:
-        # write to a temp file so parse_kline_csv (which takes a Path) can read it.
-        import tempfile
-        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
-            tmp_path = Path(tmp.name)
-            tmp_path.write_bytes(buf.read())
-        try:
-            df = parse_kline_csv(tmp_path, close_col_name=close_col_name)
-        finally:
-            tmp_path.unlink(missing_ok=True)
+        df = _parse_kline_buffer(buf, close_col_name)
     except (zipfile.BadZipFile, Exception) as e:
         logger.warning("Error parsing %s: %s", filename, e)
         return None
@@ -293,6 +308,15 @@ def main() -> int:
             output_path,
             archive_path,
         )
+
+    # CONTRACT GAP: validate_markprice(joined) must be called here (blocking the
+    # write on failure) once Task A3 creates validate_markprice in
+    # ingestion/validators.py.  The mirror modules bulk_download.py and
+    # funding_bulk_download.py both validate before writing, honoring the HARD
+    # CONSTRAINT "NEVER skip validation steps when ingesting data".
+    # Trigger: when validate_markprice is added, wire it here and add a
+    # save_report call + early return on failure, matching funding_bulk_download.py
+    # lines 288-302.
 
     # Atomic-promote: write to staging path, then rename.
     staging_path = output_path.with_suffix(output_path.suffix + ".staging")

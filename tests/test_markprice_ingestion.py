@@ -30,3 +30,4 @@ def test_parse_markprice_kline_real_format(tmp_path):
     assert df["mark_close"].tolist() == [7005.0, 7012.0]
     assert str(df["open_time_utc"].dtype) == "datetime64[ms, UTC]"
     assert (df["source"] == "binance_vision").all()
+    assert str(df["ingested_at_utc"].dtype) == "datetime64[ms, UTC]"
