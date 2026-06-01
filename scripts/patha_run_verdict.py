@@ -29,6 +29,7 @@ import json
 import os
 import subprocess
 import sys
+from collections.abc import Iterable
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
@@ -199,13 +200,15 @@ def compute_train_floors(
     from datetime import timedelta
 
     from backtest.patha_orchestrator import (
-        h1_floor,
+        count_flat_exit_episodes,
+        h1_floor_from_episodes,
         h2h3_floor,
         position_series_from_trades,
         zero_fraction_from_positions,
     )
     from strategies.dsl_compiler import compile_dsl_to_strategy
 
+    _ = git_sha  # reserved for parity with compute_funding_marginal (unused by floor math)
     span_start = min(w[0] for w in train_windows)
     span_end = max(w[1] for w in train_windows)
     # end-day inclusive: extend to the end of the last train day.
@@ -241,7 +244,24 @@ def compute_train_floors(
         position = position_series_from_trades(train_idx, train_trades)
 
         if key == "H1":
-            floor = h1_floor(position)
+            # FIX (2-leg review MEDIUM): count flat-exit episodes PER CONTIGUOUS TRAIN
+            # WINDOW separately, never across the 2021->2023 discontinuity. A trade
+            # that ENTERS in train (e.g. late 2021) but EXITS in the excluded 2022
+            # holdout shows LONG through the last 2021 train bar; the next train bar
+            # (2023-01-01) is FLAT, manufacturing a spurious long->flat transition at
+            # the window-gap boundary. That flat is a window-gap artifact, NOT a real
+            # funding-tail-gate firing, so it must not count toward the H1 >=200 floor.
+            # Summing per-window counts (each window's position reconstructed over only
+            # its own bars) excludes the boundary transition while preserving every
+            # real within-window flat-exit episode.
+            episodes = 0
+            for w_lo, w_hi in train_windows:
+                w_idx = train_idx[train_idx.to_series().apply(
+                    lambda t, lo=w_lo, hi=w_hi: in_train_window(pd.Timestamp(t), [(lo, hi)])
+                ).to_numpy()]
+                w_position = position_series_from_trades(w_idx, train_trades)
+                episodes += count_flat_exit_episodes(w_position)
+            floor = h1_floor_from_episodes(episodes)
             floors[key] = {
                 "eligible": floor["eligible"],
                 "n_flat_exit_episodes": floor["flat_exit_episodes"],
@@ -263,7 +283,7 @@ def compute_train_floors(
 
 
 def compute_funding_marginal(
-    hypotheses: dict[str, Any],
+    hypotheses: Iterable[str],
     gated_window_equities: dict[str, Any],
     run_backtest_fn: Callable[..., Any],
     *,
@@ -283,8 +303,9 @@ def compute_funding_marginal(
     along in the evidence bundle but NEVER feeds N* or promotion.
 
     Args:
-        hypotheses: Mapping of hypothesis id -> gated DSL (used only for the keys
-            here; the baselines are built from ``build_*_baseline_dsl``).
+        hypotheses: An iterable of hypothesis ids (only the ids are consumed here;
+            the baselines are built from ``build_*_baseline_dsl``). A
+            ``dict[str, ...]`` still satisfies this since iterating a dict yields keys.
         gated_window_equities: ``{hyp_id: cropped forward-window equity Series}``
             from the gauntlet runs.
         run_backtest_fn: The injected engine callable (mock in tests; real only

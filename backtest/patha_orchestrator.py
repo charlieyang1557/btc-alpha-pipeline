@@ -124,8 +124,37 @@ def zero_fraction_from_positions(position: np.ndarray) -> float:
     return float(np.sum(pos <= 0.0) / pos.shape[0])
 
 
+def h1_floor_from_episodes(episodes: int) -> dict:
+    """H1 eligibility floor from a PRE-COUNTED flat-exit-episode total.
+
+    Lets the caller count episodes PER CONTIGUOUS TRAIN WINDOW and sum them (so a
+    long->flat transition manufactured across the excluded-2022 window gap is never
+    counted), then apply the >= 200 floor on that summed total.
+
+    Args:
+        episodes: The total defensive flat-exit-episode count over TRAIN.
+
+    Returns:
+        A dict: ``eligible`` (bool), ``flat_exit_episodes`` (int), ``status``
+        (``ELIGIBLE`` or ``INDETERMINATE``), ``threshold``.
+    """
+    eligible = episodes >= H1_MIN_FLAT_EXIT_EPISODES
+    return {
+        "eligible": eligible,
+        "flat_exit_episodes": int(episodes),
+        "threshold": H1_MIN_FLAT_EXIT_EPISODES,
+        "status": ELIGIBLE if eligible else INDETERMINATE,
+    }
+
+
 def h1_floor(position: np.ndarray) -> dict:
     """H1 eligibility floor: >= 200 defensive flat-exit episodes over TRAIN.
+
+    Counts episodes over the WHOLE supplied position series. For the TRAIN-window
+    floor the caller must instead count per contiguous window (via
+    ``h1_floor_from_episodes``) so a transition across the excluded-2022 window gap
+    is not spuriously counted; this single-series form is retained for callers whose
+    ``position`` is already a single contiguous window.
 
     Args:
         position: H1's per-bar TRAIN position series.
@@ -134,14 +163,7 @@ def h1_floor(position: np.ndarray) -> dict:
         A dict: ``eligible`` (bool), ``flat_exit_episodes`` (int), ``status``
         (``ELIGIBLE`` or ``INDETERMINATE``), ``threshold``.
     """
-    episodes = count_flat_exit_episodes(position)
-    eligible = episodes >= H1_MIN_FLAT_EXIT_EPISODES
-    return {
-        "eligible": eligible,
-        "flat_exit_episodes": episodes,
-        "threshold": H1_MIN_FLAT_EXIT_EPISODES,
-        "status": ELIGIBLE if eligible else INDETERMINATE,
-    }
+    return h1_floor_from_episodes(count_flat_exit_episodes(position))
 
 
 def h2h3_floor(zero_fraction: float, total_trades: int) -> dict:

@@ -300,6 +300,119 @@ def test_compute_train_floors_h2_uses_zero_fraction_and_trade_count():
         assert floors[k]["n_trades"] == 300
 
 
+def test_compute_train_floors_h2_eligible_when_mostly_long():
+    # FIX 2 LOW: exercise the H2/H3 eligible=TRUE path (the existing test only checks
+    # the FIELDS, not the eligible-true branch). A DENSE bar index where the strategy
+    # is long most of the time -> zero_fraction < 0.50 AND >= 200 trades -> eligible.
+    from backtest.patha_eval_gauntlet import build_h2_dsl, build_h3_dsl
+
+    def _dense_train_mock(**kw):
+        # ~300 back-to-back trades over a DENSE 2020 index: each trade is 3 bars long
+        # (long), separated by a single 1-bar flat -> ~75% long occupancy ->
+        # zero_fraction ~0.25 < 0.50; 300 trades >= 200. -> eligible=True.
+        n_trades = 300
+        n_bars = n_trades * 4 + 16  # dense, all within the 2020 train window
+        idx = pd.date_range("2020-01-01", periods=n_bars, freq="h", tz="UTC")
+        eq = pd.Series(10_000.0 * (1 + 1e-5) ** np.arange(n_bars), index=idx)
+        trades = []
+        for k2 in range(n_trades):
+            e = idx[4 * k2]
+            x = idx[4 * k2 + 3]  # 3-bar long [entry, exit) then 1 flat bar
+            trades.append({
+                "entry_time_utc": e.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "exit_time_utc": x.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            })
+
+        class _R:
+            pass
+
+        r = _R()
+        r.run_id = "dense_train"
+        r.equity_curve = eq
+        r.trades = trades
+        r.metrics = {"sharpe_ratio": 0.0, "total_trades": len(trades)}
+        r.start_date = idx[0].to_pydatetime()
+        r.end_date = idx[-1].to_pydatetime()
+        return r
+
+    floors = rv.compute_train_floors(
+        hypotheses={"H2": build_h2_dsl(), "H3": build_h3_dsl()},
+        run_backtest_fn=_dense_train_mock,
+        train_windows=rv.load_train_windows(),
+        git_sha="TEST",
+    )
+    for k in ("H2", "H3"):
+        assert floors[k]["eligible"] is True, (
+            f"{k} must be eligible: zero_fraction={floors[k]['zero_fraction']} (<0.50) "
+            f"AND n_trades={floors[k]['n_trades']} (>=200)"
+        )
+        assert floors[k]["zero_fraction"] < 0.50
+        assert floors[k]["n_trades"] == 300
+
+
+def test_compute_train_floors_h1_excludes_window_gap_boundary_episode():
+    # FIX 1 (MEDIUM): a long->flat transition that occurs ACROSS the 2021->2023
+    # train-window discontinuity (the excluded-2022 gap) is a window-gap ARTIFACT,
+    # NOT a real funding-tail-gate firing, so it must NOT count toward the H1 floor.
+    #
+    # Synthetic trades over the contiguous 2020->2023 span:
+    #   (a) a GENUINE within-2021 long->flat episode (a real defensive flat-exit that
+    #       occurs INSIDE a single train window) -> counts;
+    #   (b) a trade that ENTERS in late-2021 (train) but EXITS in 2022 (the excluded
+    #       holdout): its position is LONG through the last 2021 train bar, then the
+    #       next train bar (2023-01-01) is FLAT -> a spurious long->flat at the window
+    #       gap (must NOT count).
+    # Buggy code counts 2 (genuine + spurious); fixed code counts 1.
+    from backtest.patha_eval_gauntlet import build_h1_dsl
+
+    def _boundary_mock(**kw):
+        # Hourly bars across the full contiguous train span (incl. 2022, which the
+        # floor masks OUT). The equity index spans 2020-01-01 .. 2023-12-31.
+        idx = pd.date_range("2020-01-01", "2023-12-31 23:00", freq="h", tz="UTC")
+
+        def _iso(ts: str) -> str:
+            return pd.Timestamp(ts, tz="UTC").strftime("%Y-%m-%dT%H:%M:%SZ")
+
+        trades = [
+            # (a) genuine within-2021 long->flat: the trade exits mid-2021 inside the
+            # train window -> exactly 1 real defensive flat-exit episode.
+            {"entry_time_utc": _iso("2021-06-01 00:00"),
+             "exit_time_utc": _iso("2021-06-01 05:00")},   # long->flat at 2021-06-01 05:00
+            # (b) spurious boundary: enters late-2021 train, exits in 2022 holdout. The
+            # 2022 bars are masked out of train_idx, so the last 2021 bar is LONG and
+            # the next train bar 2023-01-01 00:00 is FLAT -> spurious gap transition.
+            {"entry_time_utc": _iso("2021-12-31 20:00"),
+             "exit_time_utc": _iso("2022-03-15 00:00")},
+        ]
+
+        class _R:
+            pass
+
+        r = _R()
+        r.run_id = "boundary"
+        r.equity_curve = pd.Series(
+            10_000.0 * (1 + 1e-6) ** np.arange(len(idx)), index=idx
+        )
+        r.trades = trades
+        r.metrics = {"sharpe_ratio": 0.0, "total_trades": len(trades)}
+        r.start_date = idx[0].to_pydatetime()
+        r.end_date = idx[-1].to_pydatetime()
+        return r
+
+    floors = rv.compute_train_floors(
+        hypotheses={"H1": build_h1_dsl()},
+        run_backtest_fn=_boundary_mock,
+        train_windows=rv.load_train_windows(),
+        git_sha="TEST",
+    )
+    # Only the genuine within-2021 long->flat episode counts; the 2021->2023
+    # window-gap artifact (trade (b) exiting in 2022) must NOT add an episode.
+    assert floors["H1"]["n_flat_exit_episodes"] == 1, (
+        "the across-window-gap long->flat transition (a trade exiting in the excluded "
+        "2022 holdout) must NOT count as an H1 defensive flat-exit episode"
+    )
+
+
 # ---------------------------------------------------------------------------
 # CONTRACT GAP 2 — compute_funding_marginal (fenced forward diagnostic)
 # ---------------------------------------------------------------------------
