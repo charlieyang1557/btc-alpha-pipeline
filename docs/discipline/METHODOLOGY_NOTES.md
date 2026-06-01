@@ -7570,3 +7570,31 @@ When the binding read tightens/changes a criterion whose **pre-registered text A
 - §3.3 pre-register expectations before running (commit-order anti-hindsight) — the Step −1 LOCK + the mid-run-repair/amendment disclosures committed before the re-run.
 
 ---
+
+## §37 Cross-cycle findings codified at the Path A funding-axis verdict cycle SEAL boundary
+
+Codified at the Path A funding-rate axis mechanism-first mine **verdict** cycle SEAL (2026-05-31; arc tag `patha-funding-mine-verdict-v1`). Four lessons from the funding-axis build + verdict RUN + its 2-leg B2s, extending the §36 Path B set with the crypto-native-axis-specific findings.
+
+### §37.1 Single-layer gates are insufficient for irreversible/consequential operations
+
+The Path A verdict-run gate lived only in the CLI `main()`, while `run_verdict()` itself retained a real-engine fallback path — so a **direct** call to `run_verdict()` (a fix-subagent's RED test that invoked it unmocked precisely to *prove* the gate hole) actually executed a real forward_2026 backtest, bypassing the CLI gate entirely. The lesson is defense-in-depth: gate the **function**, not just the entry point, and make the real-engine path reachable only behind an explicit authorization flag plus dependency injection (so tests inject a mock rather than touch the real engine). A subtle corollary: *testing* a single-layer gate can trigger the very operation it guards, because the act of demonstrating the hole runs the unguarded code. (No durable peek resulted here — the artifact was on-disk-only, never committed, and its values were never surfaced; verified — but the lesson stands independent of the lucky non-leak.) **Rule:** gate consequential/irreversible operations at the function boundary with an explicit authorization flag + injected dependency, never solely at the CLI.
+
+### §37.2 Cross-cadence factor warmup must be converted to the consumption grid
+
+A factor computed on a coarser source series (8h funding settlements) and carried onto a finer consumption grid (1h bars) has an **effective warmup of `declared_warmup × cadence_ratio`** — a 270-settlement declared warmup is 2160 bars on the 1h grid. The compiler/registry MUST perform this conversion (here via a `FactorSpec.input_period_bars` field); otherwise the strategy under-warms and trades on NaN/un-warmed features in the early evaluation window, corrupting train-window mechanism-sanity and floor counts. Declaring the warmup in the source-series unit while consuming it in the grid unit is a **silent unit bug**: nothing errors, the numbers just come out wrong. **Rule:** any factor whose source cadence differs from the consumption grid must carry an explicit bar-equivalent warmup, converted at the registry/compiler boundary, not left in source-series units.
+
+### §37.3 An all-under-floor earned-negative must verify the negative holds INDEPENDENT of the floor gate
+
+When every candidate is INDETERMINATE because it sits under the eligibility floors, `n_tier5_pass = 0` is **vacuously** true — it says nothing about whether the axis has edge, only that the test was under-powered. An earned-negative on such a cohort is sound only if it ALSO holds **substantively**: here all 3 forward Sharpes were negative regardless of the floors (a measured loss, not mere eligibility exclusion). This dual path — vacuous-pass AND substantive-loss — must be disclosed explicitly so the verdict is not misread as "never actually tested." The taxonomy name `process_refuted_for_this_grid` correctly hedges the two readings ("this grid under-powered the test" vs "the axis is dead") rather than overclaiming a clean kill. **Rule:** an all-under-floor `n_tier5_pass=0` verdict must separately report whether the negative is also substantive (measured loss) or only vacuous (eligibility exclusion), and the verdict name must hedge accordingly.
+
+### §37.4 Reviewer-leg specialization is load-bearing for correctness-critical harness code
+
+Across the Path A arc, Codex's adversarial leg repeatedly caught deep integration bugs that the quality/code-reviewer leg missed: the CCXT None-crash, the +8h pagination-skip, the funding-warmup-unit CRITICAL (§37.2), the carry bar-open-vs-close jitter-causality, the floors-not-gating-`n_tier5_pass` (§37.3), the holdout warmup-burn, and the gate-bypass (§37.1). The effective pairing is task-specialized: **Codex + code-reviewer for plumbing/integration** (where deep call-graph reasoning catches the silent bugs), **Codex + quant-research-advisor for verdict/methodology** (where the inferential soundness is the risk). When Codex stalls (a known background failure mode), adjudicate via the other leg plus own re-verification — but never skip the adversarial pass on consequential code, since the deep integration catches are exactly what the non-adversarial leg systematically misses. **Rule:** route 2-leg B2 by deliverable class (plumbing vs verdict), keep Codex on correctness-critical harness code, and never drop the adversarial leg on consequential code even under a Codex stall.
+
+### Cross-references
+- §36 Cross-cycle findings codified at the Path B verdict cycle SEAL boundary — the parent set; §37 extends it with the Path A crypto-native-axis findings (gate defense-in-depth, cross-cadence warmup, vacuous-vs-substantive negatives, reviewer-leg specialization).
+- [[project_alpha_source_binding_constraint]] — the strategic memory both verdicts feed: OHLCV (Path B) and now the funding axis (Path A) localized as "adds no rescue under this grid," not "dead in general."
+- [[feedback_reviewer_routing_subagent_default]] — the 2-leg reviewer routing routine that §37.4 specializes by deliverable class.
+- §3.3 pre-register expectations before running (commit-order anti-hindsight) — the Step −1 LOCK + Amendment A1 + Clarification C1, all committed before the verdict RUN.
+
+---
