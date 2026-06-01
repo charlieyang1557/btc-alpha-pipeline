@@ -2025,7 +2025,20 @@ class TestT1_4_Pc9BaselineGate:
         # test_t1_1_artifact_writer.py + test_phase2c_evaluation_gate_runner.py),
         # FIX 5+6 (markprice_incremental_update.py security) add no new collected
         # items. Advance BASELINE 2856 → 2859.
-        BASELINE = 2859
+        # Path C Phase C C1-C3: +22 basis DSL builder tests in
+        # tests/test_pathc_gauntlet.py (NEW file): H1 basis_extreme_fade ×5
+        # (De Morgan 2-group + no-time-stop + entry complement + tail-gate exit +
+        # sizing); H2 basis_regime_gate ×4 (compiles + permissive entry/max_hold +
+        # de-risk exit + sizing); H3 basis_momentum_continuation ×6 (compiles +
+        # strict-< pct-rank op + entry/max_hold + exit groups + exit-pct-rank +
+        # sizing); shared ×4 (H1/H3 exact-partition + build_all + sizing-factor +
+        # theta-param plumbing ×3 including fallback-0.85 threading). All land
+        # wholly in pre_t1_x_baseline (new test file; neither a t1_4 nor t1_5
+        # subtraction target); sealed tier6_dsr_v1/ sha256 4/4 byte-unchanged;
+        # PHASE_D_AUTHORIZED untouched. Advance BASELINE 2859 → 2881 (same
+        # expected-additive-cohort precedent; per Charlie Path C Phase C C1-C3
+        # register, pathc-basis-scoping branch).
+        BASELINE = 2881
         assert pre_t1_x_baseline == BASELINE, (
             f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
             f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "
