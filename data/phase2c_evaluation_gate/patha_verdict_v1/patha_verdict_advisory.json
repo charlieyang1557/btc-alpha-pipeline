@@ -1,0 +1,262 @@
+{
+  "holdouts": {
+    "H1": {
+      "holdout_sharpe": -1.7699223702893294,
+      "row": {
+        "hypothesis_hash": "1cb4b71bfbe43a71390f7233385869c928d97632c23ae90deca08e4c399d70d4",
+        "name": "patha_h1",
+        "theme": "patha",
+        "T_obs": 2527,
+        "gamma3": -0.2610878529389372,
+        "gamma4": 10.351377774470398,
+        "returns_per_bar_sha256": "fa69486bca07aeb415723a8d51f740017ef5acf5fd153d7b98fc6aef5359ff51",
+        "holdout_total_trades": 9,
+        "holdout_sharpe": -1.7699223702893294
+      },
+      "hypothesis_hash": "1cb4b71bfbe43a71390f7233385869c928d97632c23ae90deca08e4c399d70d4",
+      "tier5_status": "INDETERMINATE"
+    },
+    "H2": {
+      "holdout_sharpe": -2.981266187179422,
+      "row": {
+        "hypothesis_hash": "7f8cc3604508419fc22c3fcb1a5b5e8a9f5c615b8b53a8e4f632ffcd5f7a25a2",
+        "name": "patha_h2",
+        "theme": "patha",
+        "T_obs": 2527,
+        "gamma3": 0.8183474128558009,
+        "gamma4": 25.480709435619772,
+        "returns_per_bar_sha256": "1bd8cc7c64b458725ee16c8e5cad5a41dceca22f3a796eca2b676446d82c1061",
+        "holdout_total_trades": 54,
+        "holdout_sharpe": -2.981266187179422
+      },
+      "hypothesis_hash": "7f8cc3604508419fc22c3fcb1a5b5e8a9f5c615b8b53a8e4f632ffcd5f7a25a2",
+      "tier5_status": "INDETERMINATE"
+    },
+    "H3": {
+      "holdout_sharpe": -1.6205971377803847,
+      "row": {
+        "hypothesis_hash": "a4a35c81fea14dcad63e430930fc06bc5361a9292f07e8037648a5dd0834baad",
+        "name": "patha_h3",
+        "theme": "patha",
+        "T_obs": 2527,
+        "gamma3": 0.7084312040873153,
+        "gamma4": 65.55533533134658,
+        "returns_per_bar_sha256": "e8ecdcadf8ac1b51b5932a08cca884474535f5b059fc0dd667f658f8f24dc48f",
+        "holdout_total_trades": 21,
+        "holdout_sharpe": -1.6205971377803847
+      },
+      "hypothesis_hash": "a4a35c81fea14dcad63e430930fc06bc5361a9292f07e8037648a5dd0834baad",
+      "tier5_status": "INDETERMINATE"
+    }
+  },
+  "n_tier5_pass": 0,
+  "n_dsr_pass": 0,
+  "dsr": {
+    "rows": [
+      {
+        "hypothesis_hash": "1cb4b71bfbe43a71390f7233385869c928d97632c23ae90deca08e4c399d70d4",
+        "name": "patha_h1",
+        "theme": "patha",
+        "T": 2527,
+        "sr_per_bar": -0.018914205930942656,
+        "gamma3": -0.2610878529389372,
+        "gamma4": 10.351377774470398,
+        "trades": 9,
+        "var_sr_null": 0.000395882818685669,
+        "n_star": 3,
+        "z_pass": 1.644853626951472,
+        "er_B": 0.852804496150695,
+        "sr_star_B": 0.016968084108918487,
+        "deflated_z_B": -1.8071299189661458,
+        "psr_B": 0.03537101234343187,
+        "dsr_statistic_B": -3.451983545917618,
+        "pass_B": false,
+        "er_A": 1.4823038073675112,
+        "sr_star_A": 0.029493108668997417,
+        "deflated_z_A": -2.437924291152543,
+        "psr_A": 0.007385933708444836,
+        "dsr_statistic_A": -4.082777918104015,
+        "pass_A": false
+      },
+      {
+        "hypothesis_hash": "7f8cc3604508419fc22c3fcb1a5b5e8a9f5c615b8b53a8e4f632ffcd5f7a25a2",
+        "name": "patha_h2",
+        "theme": "patha",
+        "T": 2527,
+        "sr_per_bar": -0.031859184078254256,
+        "gamma3": 0.8183474128558009,
+        "gamma4": 25.480709435619772,
+        "trades": 54,
+        "var_sr_null": 0.000395882818685669,
+        "n_star": 3,
+        "z_pass": 1.644853626951472,
+        "er_B": 0.852804496150695,
+        "sr_star_B": 0.016968084108918487,
+        "deflated_z_B": -2.4153469392379208,
+        "psr_B": 0.007860114013928448,
+        "dsr_statistic_B": -4.060200566189392,
+        "pass_B": false,
+        "er_A": 1.4823038073675112,
+        "sr_star_A": 0.029493108668997417,
+        "deflated_z_A": -3.0349245002658773,
+        "psr_A": 0.0012029795362531624,
+        "dsr_statistic_A": -4.679778127217349,
+        "pass_A": false
+      },
+      {
+        "hypothesis_hash": "a4a35c81fea14dcad63e430930fc06bc5361a9292f07e8037648a5dd0834baad",
+        "name": "patha_h3",
+        "theme": "patha",
+        "T": 2527,
+        "sr_per_bar": -0.017318447695569672,
+        "gamma3": 0.7084312040873153,
+        "gamma4": 65.55533533134658,
+        "trades": 21,
+        "var_sr_null": 0.000395882818685669,
+        "n_star": 3,
+        "z_pass": 1.644853626951472,
+        "er_B": 0.852804496150695,
+        "sr_star_B": 0.016968084108918487,
+        "deflated_z_B": -1.7086629023076503,
+        "psr_B": 0.04375670482136571,
+        "dsr_statistic_B": -3.3535165292591222,
+        "pass_B": false,
+        "er_A": 1.4823038073675112,
+        "sr_star_A": 0.029493108668997417,
+        "deflated_z_A": -2.3328451595955584,
+        "psr_A": 0.009828136759054005,
+        "dsr_statistic_A": -3.9776987865470304,
+        "pass_A": false
+      }
+    ],
+    "survivors": [],
+    "n_candidates": 3,
+    "n_star": 3
+  },
+  "per_leg": {
+    "H1": {
+      "tier": "refuted",
+      "mean_24h": 0.0017379702045494756,
+      "mean_72h": 0.008461512743697969,
+      "sane_24h": false,
+      "sane_72h": false,
+      "sane_sign": "-"
+    },
+    "H2": {
+      "tier": "strong_sane",
+      "perm_24h": 0.003735970498486956,
+      "derisk_24h": 0.0029412141277067993,
+      "perm_72h": 0.012071779838905863,
+      "derisk_72h": 0.006296739251140103,
+      "sane_24h": true,
+      "sane_72h": true,
+      "sane_sign": "h2_permissive_beats_derisk_and_positive"
+    },
+    "H3": {
+      "tier": "strong_sane",
+      "mean_24h": 0.0045454460273338035,
+      "mean_72h": 0.011096236758720695,
+      "sane_24h": true,
+      "sane_72h": true,
+      "sane_sign": "+"
+    }
+  },
+  "taxonomy": {
+    "advisory_taxonomy": "process_refuted_for_this_grid",
+    "is_earned_negative": true,
+    "b_positive_strength": null,
+    "any_mechanism_sane": true,
+    "verdict_rests_on_weak_sane_only": false,
+    "leg_tiers": {
+      "H1": "refuted",
+      "H2": "strong_sane",
+      "H3": "strong_sane"
+    },
+    "n_tier5_pass": 0,
+    "n_dsr_pass": 0,
+    "verdict_authority": "charlie_register_at_earned_negative_gate",
+    "approximation_tempers": [
+      "funding_marginal_is_fenced_diagnostic_not_promotion_input",
+      "funding_8h_settlement_carry_to_1h_bars_warmup_2160",
+      "mechanism_sanity_tiered_24h_72h_weak_sane_flagged"
+    ]
+  },
+  "escalation": {
+    "a_escalation_warranted": true,
+    "reason": "process_refuted_and_no_dsr_pass_warrants_next_axis",
+    "authority": "charlie_register"
+  },
+  "floors": {
+    "H1": {
+      "eligible": false,
+      "n_flat_exit_episodes": 150,
+      "threshold": 200,
+      "status": "INDETERMINATE"
+    },
+    "H2": {
+      "eligible": false,
+      "zero_fraction": 0.6241861236677311,
+      "n_trades": 423,
+      "max_zero_fraction": 0.5,
+      "min_trades": 200,
+      "status": "INDETERMINATE"
+    },
+    "H3": {
+      "eligible": false,
+      "zero_fraction": 0.6717952971426202,
+      "n_trades": 269,
+      "max_zero_fraction": 0.5,
+      "min_trades": 200,
+      "status": "INDETERMINATE"
+    }
+  },
+  "funding_marginal": {
+    "H1": {
+      "hyp_id": "H1",
+      "gated_sharpe": -1.7699223702893294,
+      "baseline_sharpe": -1.0912013400880016,
+      "funding_marginal_sharpe": -0.6787210302013278,
+      "promotion_affecting": false,
+      "in_n_star": false
+    },
+    "H2": {
+      "hyp_id": "H2",
+      "gated_sharpe": -2.981266187179422,
+      "baseline_sharpe": -2.872338103480353,
+      "funding_marginal_sharpe": -0.10892808369906914,
+      "promotion_affecting": false,
+      "in_n_star": false
+    },
+    "H3": {
+      "hyp_id": "H3",
+      "gated_sharpe": -1.6205971377803847,
+      "baseline_sharpe": -1.998595321989798,
+      "funding_marginal_sharpe": 0.37799818420941333,
+      "promotion_affecting": false,
+      "in_n_star": false
+    }
+  },
+  "meta": {
+    "git_sha": "f00b848",
+    "forward_window": [
+      "2026-01-01T00:00:00+00:00",
+      "2026-04-16T07:00:00+00:00"
+    ],
+    "anchor": "config/execution_phaseb_spot_15bps.yaml",
+    "cost_equivalence": {
+      "fee_bps": 10.0,
+      "slippage_bps": 5.0,
+      "anchor_fee_bps": 10.0,
+      "anchor_slippage_bps": 5.0,
+      "per_side_bps": 15.0,
+      "equivalent": true
+    },
+    "sealed_sha256_invariant": {
+      "tier6_dsr_companion.csv": "0a7d98acfb5791c52c6a6d15bd6285a5a4450a4b6ccc113ac165035616666612",
+      "tier6_dsr_results.csv": "8eecc6cd50344e32b25880ac16db3489b24ef65e0095f249039841fbf801acac",
+      "tier6_mc_validation.json": "49646c303c9329ad2a9b15be819d5cf8a1101fc1e09b3997aa693c4c06ea2acd",
+      "tier6_promotion_list.json": "1803eb44812ba89e7c881e7dfec110d8403e08a232aa4e07acf4881b0093e699"
+    },
+    "scope_note": "Path A funding verdict: forward_2026 Tier-5 gate + train-only tiered mechanism sanity (24h+72h) + DSR-FWER(N*=3); NO Step-0 (fresh funding cohort). C7 TRAIN-window floors applied BEFORE ranking (under-floor -> INDETERMINATE, excluded from n_tier5_pass); C6 fenced funding-marginal diagnostic recorded (gated vs no-funding baseline on the forward bars; NEVER in N*/promotion)."
+  }
+}

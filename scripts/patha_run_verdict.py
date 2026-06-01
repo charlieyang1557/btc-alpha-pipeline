@@ -53,6 +53,8 @@ FWD_HORIZON_72H = 72
 
 # PHASE-D GATE: the forward_2026 RUN is a separate Charlie register-event. This
 # flag stays False until that register fires; main() refuses to run while False.
+# (Was transiently flipped True for the Charlie-registered Phase-D run 2026-05-31,
+# then reverted here — the committed repo keeps the gate closed.)
 PHASE_D_AUTHORIZED = False
 
 # Sealed dirs that must NEVER be written (inode-identity guard).
