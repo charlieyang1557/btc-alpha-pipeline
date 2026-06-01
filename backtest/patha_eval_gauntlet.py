@@ -191,6 +191,103 @@ def build_all_hypotheses() -> dict[str, StrategyDSL]:
     return {"H1": build_h1_dsl(), "H2": build_h2_dsl(), "H3": build_h3_dsl()}
 
 
+# ---------------------------------------------------------------------------
+# Task C6 no-funding baselines — the fenced funding-marginal-diagnostic
+# counterfactual (LOCK Pre-registration 3). Each baseline is the SAME strategy
+# WITHOUT the funding gate, run on the SAME forward bars, so any A-result
+# attributes to funding's MARGINAL contribution and not Path B's already-dead
+# decay-MA leg (H2/H3) or buy-and-hold (H1). These never feed N* or promotion;
+# they exist only to compute funding_marginal(gated, baseline) (DESIGN INVARIANT:
+# backtest.patha_marginal_diagnostic fences the result with the structural
+# promotion_affecting=False / in_n_star=False flags).
+# ---------------------------------------------------------------------------
+
+# Always-true / never-true sentinels on the bounded [0, 1] vol CDF (the H1
+# baseline's "always-long" gate): cdf_realized_vol_720 in [0.0, 1.0], so
+# ``>= 0.0`` is always true (NaN during warmup -> False, the correct no-trade)
+# and ``> 1.0`` is never true. This keeps the baseline funding-free (no funding
+# factor) while satisfying the DSL's min_length=1 entry/exit requirement.
+_VOL_CDF_FLOOR = 0.0   # cdf_realized_vol_720 >= 0.0 is always true on a CDF
+_VOL_CDF_CEIL = 1.0    # cdf_realized_vol_720 > 1.0 is never true on a CDF
+
+
+def build_h1_baseline_dsl() -> StrategyDSL:
+    """H1 no-funding baseline: ALWAYS-LONG (the H1 counterfactual minus the gate).
+
+    Strips H1's funding flat-gate entirely: entry is an always-true predicate on
+    the bounded vol CDF (``cdf_realized_vol_720 >= 0.0``) and exit is a never-true
+    one (``cdf_realized_vol_720 > 1.0``), so the book is long whenever it is
+    sizeable. Same vol-CDF ternary sizing; NO time-stop (mirrors H1 Amendment A1).
+    Diagnostic-only — never in N* / promotion.
+    """
+    entry_always = ConditionGroup(conditions=[
+        Condition(factor=VOL_SIZING_FACTOR, op=">=", value=_VOL_CDF_FLOOR),
+    ])
+    exit_never = ConditionGroup(conditions=[
+        Condition(factor=VOL_SIZING_FACTOR, op=">", value=_VOL_CDF_CEIL),
+    ])
+    return StrategyDSL(
+        name="patha_h1_baseline",
+        description="Path A H1 no-funding baseline: always-long (funding flat-gate stripped), vol-CDF ternary sizing, no time-stop — the funding-marginal counterfactual.",
+        entry=[entry_always],
+        exit=[exit_never],
+        position_sizing=_vol_cdf_ternary_sizing(),
+        max_hold_bars=None,
+    )
+
+
+def _price_trend_only_baseline(name: str, description: str, max_hold: int) -> StrategyDSL:
+    """Shared price-trend-only book for the H2/H3 no-funding baselines.
+
+    Entry = ``decay_linear_close_48 > decay_linear_close_168`` (the price-trend
+    confirm both H2 and H3 share); exit = the trend roll-over ``48 <= 168``. NO
+    funding condition. Same vol-CDF ternary sizing. ``max_hold`` is the gated
+    hypothesis's own backstop (H2=24 / H3=48) so the baseline is the SAME
+    strategy minus only the funding gate.
+    """
+    entry = ConditionGroup(conditions=[
+        Condition(factor=DECAY_FAST, op=">", value=DECAY_SLOW),
+    ])
+    exit_trend_roll = ConditionGroup(conditions=[
+        Condition(factor=DECAY_FAST, op="<=", value=DECAY_SLOW),
+    ])
+    return StrategyDSL(
+        name=name,
+        description=description,
+        entry=[entry],
+        exit=[exit_trend_roll],
+        position_sizing=_vol_cdf_ternary_sizing(),
+        max_hold_bars=max_hold,
+    )
+
+
+def build_h2_baseline_dsl() -> StrategyDSL:
+    """H2 no-funding baseline: the price-trend-only book (H2 minus the funding gate)."""
+    return _price_trend_only_baseline(
+        name="patha_h2_baseline",
+        description="Path A H2 no-funding baseline: price-trend-only (funding regime-gate stripped), vol-CDF ternary sizing, max_hold 24 — the funding-marginal counterfactual.",
+        max_hold=H2_MAX_HOLD,
+    )
+
+
+def build_h3_baseline_dsl() -> StrategyDSL:
+    """H3 no-funding baseline: the price-trend-only book (H3 minus the funding gate)."""
+    return _price_trend_only_baseline(
+        name="patha_h3_baseline",
+        description="Path A H3 no-funding baseline: price-trend-only (funding momentum/tail gate stripped), vol-CDF ternary sizing, max_hold 48 — the funding-marginal counterfactual.",
+        max_hold=H3_MAX_HOLD,
+    )
+
+
+def build_all_baselines() -> dict[str, StrategyDSL]:
+    """The 3 no-funding baselines keyed by hypothesis id (Task C6 counterfactual)."""
+    return {
+        "H1": build_h1_baseline_dsl(),
+        "H2": build_h2_baseline_dsl(),
+        "H3": build_h3_baseline_dsl(),
+    }
+
+
 def referenced_factors(dsl: StrategyDSL) -> set[str]:
     """Return the set of factor names a DSL references.
 

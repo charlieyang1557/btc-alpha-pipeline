@@ -17,8 +17,11 @@ from __future__ import annotations
 
 from backtest.patha_eval_gauntlet import (
     build_all_hypotheses,
+    build_h1_baseline_dsl,
     build_h1_dsl,
+    build_h2_baseline_dsl,
     build_h2_dsl,
+    build_h3_baseline_dsl,
     build_h3_dsl,
     referenced_factors,
 )
@@ -234,3 +237,87 @@ def test_h1_h2_h3_warmup_covers_carried_funding_bar_warmup():
             f"{_FUNDING_RANK_270_BAR_WARMUP} (carried funding_*_270 warmup); the "
             f"compiler treats 8h-settlement warmups as 1h bars."
         )
+
+
+# ---------------------------------------------------------------------------
+# Task C6 no-funding baselines (the fenced funding-marginal diagnostic counter-
+# factual): the SAME strategy WITHOUT the funding gate. H2/H3 = the price-trend-
+# only book (decay_48 > decay_168, same vol-CDF sizing, NO funding condition);
+# H1 = always-long (same sizing, no flat-gate). All run on the SAME forward bars.
+# ---------------------------------------------------------------------------
+
+
+def test_h1_baseline_is_always_long_no_funding():
+    dsl = build_h1_baseline_dsl()
+    # No funding factor anywhere — the baseline strips the funding gate.
+    facs = referenced_factors(dsl)
+    assert not any(f.startswith("funding_") for f in facs)
+    # Always-long: an always-true entry on the bounded [0,1] vol CDF, a never-true
+    # exit, and NO time-stop (mirrors H1's no-time-stop, Amendment A1).
+    assert dsl.max_hold_bars is None
+    entry_triples = {(c.factor, c.op, c.value) for g in dsl.entry for c in g.conditions}
+    assert ("cdf_realized_vol_720", ">=", 0.0) in entry_triples  # always true on a CDF
+    exit_triples = {(c.factor, c.op, c.value) for g in dsl.exit for c in g.conditions}
+    assert ("cdf_realized_vol_720", ">", 1.0) in exit_triples     # never true on a CDF
+
+
+def test_h1_baseline_compiles_and_keeps_vol_cdf_ternary_sizing():
+    dsl = build_h1_baseline_dsl()
+    cls = compile_dsl_to_strategy(dsl, write_manifest=False)
+    assert cls is not None
+    s = dsl.position_sizing
+    assert isinstance(s, SizingSpec)
+    assert s.factor == "cdf_realized_vol_720"
+    assert (s.bands[0].lower, s.bands[0].upper, s.bands[0].size) == (0.3, 0.8, 1.0)
+    assert s.default_size == 0.5
+
+
+def test_h2_baseline_is_price_trend_only_no_funding():
+    dsl = build_h2_baseline_dsl()
+    facs = referenced_factors(dsl)
+    assert not any(f.startswith("funding_") for f in facs)
+    # Price-trend-only: entry decay_48 > decay_168; exit decay_48 <= decay_168.
+    entry_triples = {(c.factor, c.op, c.value) for g in dsl.entry for c in g.conditions}
+    assert ("decay_linear_close_48", ">", "decay_linear_close_168") in entry_triples
+    exit_triples = {(c.factor, c.op, c.value) for g in dsl.exit for c in g.conditions}
+    assert ("decay_linear_close_48", "<=", "decay_linear_close_168") in exit_triples
+    # SAME strategy minus the funding gate -> H2 keeps its max_hold = 24.
+    assert dsl.max_hold_bars == 24
+
+
+def test_h3_baseline_is_price_trend_only_keeps_h3_max_hold():
+    dsl = build_h3_baseline_dsl()
+    facs = referenced_factors(dsl)
+    assert not any(f.startswith("funding_") for f in facs)
+    entry_triples = {(c.factor, c.op, c.value) for g in dsl.entry for c in g.conditions}
+    assert ("decay_linear_close_48", ">", "decay_linear_close_168") in entry_triples
+    exit_triples = {(c.factor, c.op, c.value) for g in dsl.exit for c in g.conditions}
+    assert ("decay_linear_close_48", "<=", "decay_linear_close_168") in exit_triples
+    # SAME strategy minus the funding gate -> H3 keeps its max_hold = 48.
+    assert dsl.max_hold_bars == 48
+
+
+def test_h2_h3_baselines_compile_with_vol_cdf_ternary_sizing():
+    for build in (build_h2_baseline_dsl, build_h3_baseline_dsl):
+        dsl = build()
+        cls = compile_dsl_to_strategy(dsl, write_manifest=False)
+        assert cls is not None
+        s = dsl.position_sizing
+        assert isinstance(s, SizingSpec)
+        assert s.factor == "cdf_realized_vol_720"
+        assert (s.bands[0].lower, s.bands[0].upper, s.bands[0].size) == (0.3, 0.8, 1.0)
+        assert s.default_size == 0.5
+
+
+def test_baseline_dsls_have_distinct_hashes_from_gated():
+    # Each baseline must be a DISTINCT DSL from its gated counterpart (no funding),
+    # so the diagnostic counterfactual is a real strip of the funding gate.
+    from strategies.dsl import compute_dsl_hash
+
+    pairs = [
+        (build_h1_dsl(), build_h1_baseline_dsl()),
+        (build_h2_dsl(), build_h2_baseline_dsl()),
+        (build_h3_dsl(), build_h3_baseline_dsl()),
+    ]
+    for gated, baseline in pairs:
+        assert compute_dsl_hash(gated) != compute_dsl_hash(baseline)
