@@ -2057,7 +2057,44 @@ class TestT1_4_Pc9BaselineGate:
         # C4-ii dependencies deferred. Sealed tier6_dsr_v1/ sha256 4/4 byte-unchanged.
         # Advance BASELINE 2881 → 2902 (same expected-additive-cohort precedent;
         # per Charlie Task C4-i register, pathc-basis-scoping branch).
-        BASELINE = 2902
+        # Path C Task C4-ii — verdict harness orchestration patha->pathc port
+        # (earned_negative+F3, escalation+n_dsr_pass, orchestrator, gated run script):
+        # adds 41 collected items across 4 NEW test files, none a t1_4/t1_5 subtraction
+        # target, so +41 lands wholly in pre_t1_x_baseline = total − t1_4 − t1_5:
+        #   tests/test_pathc_earned_negative.py (+14: mechanism_refuted + process-refuted
+        #     + c_positive + DSR-promoted + promotion_side_effect hard error + advisory
+        #     not-fired + pinned basis tempers + bare-string tiers + sub-fix 1d
+        #     weak-sane-only × 2 + sub-fix 1c F3 under-floor-measured-loss × 2 +
+        #     F3 under-floor-thin-nonneg + F3 empty-flags + threshold pre-registered),
+        #   tests/test_pathc_escalation.py (+6: sub-fix 1b n_dsr_pass==0 warranted +
+        #     n_dsr_pass>0 not warranted + mechanism_refuted + c_positive + advisory
+        #     never fires + unknown taxonomy raises),
+        #   tests/test_pathc_orchestrator.py (+11: advisory pipeline + process-refuted
+        #     zero-DSR escalation + floors thread + floors gate n_tier5_pass + floors
+        #     None legacy count + basis_marginal fenced + sub-fix 1c F3 under-floor
+        #     thin-nonneg is under_determined + sub-fix 1c F3 under-floor measured-loss
+        #     not under_determined; sub-fixes 1b/1c/1d all covered),
+        #   tests/test_pathc_run_verdict.py (+10: Phase-D gate [main refuses + never
+        #     calls run_verdict + PHASE_D_AUTHORIZED default False + §37.1 gate run_verdict
+        #     refuses real engine] + sealed-dir refusal + child-path sealed refusal +
+        #     build_train_frame two horizons + mocked-engine integration + H1-floor
+        #     eligible/under-floor + H2/H3 zero_fraction+trade-count + window-gap
+        #     boundary episode fix + sealed tier6_dsr_v1 sha256 4/4 byte-invariance).
+        # Production changes: additive backtest/pathc_{earned_negative,escalation,
+        # orchestrator}.py + scripts/pathc_run_verdict.py (PHASE_D_AUTHORIZED=False —
+        # the real forward_2026 run is a separate Phase-D Charlie register); sub-fixes
+        # 1b (c_escalation_advisory n_dsr_pass==0 prong), 1c (F3 under-determined
+        # carve-out in assemble_evidence + _is_under_determined in orchestrator), 1d
+        # (verdict_rests_on_weak_sane_only tier threading); C7 floor integration point
+        # (resolve_theta stub + h2_derisk_occupancy_eligible stub in orchestrator; C7
+        # will refine); C6 integration point (basis_marginal=None CONTRACT GAP 2 in
+        # run_verdict; C6 will fill); C5 integration point (try-import
+        # pathc_perleg_mechanism in run_verdict; graceful fallback). The §37.1 gate is
+        # a CONTRACT BOUNDARY: run_verdict(_run_backtest=None) raises while
+        # PHASE_D_AUTHORIZED is False. Sealed tier6_dsr_v1/ sha256 4/4 byte-unchanged
+        # (re-verified). Advance BASELINE 2902 → 2943 (same expected-additive-cohort
+        # precedent; per Charlie Task C4-ii register, pathc-basis-scoping branch).
+        BASELINE = 2943
         assert pre_t1_x_baseline == BASELINE, (
             f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
             f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "
