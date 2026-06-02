@@ -435,10 +435,12 @@ class TestMaxWarmup:
         # Path B arc added 5 new factors). The funding factors are
         # input_period_bars=8 (8h settlements carried onto 1h bars), so
         # funding_pct_rank_270's 270-settlement warmup is 270*8 = 2160 carried
-        # bars — now the registry-wide max.
+        # bars. Path D's oi_velocity_ewm_240_pctrank_2160 is 2161 (Codex B2: the
+        # inner log-change NaN at bar 0 shifts the first valid percentile to index
+        # 2160 = 2161 bars) — now the registry-wide max.
         ohlcv_names = registry.list_names(input_source="ohlcv")
         assert registry.max_warmup(ohlcv_names) == 743
-        assert registry.max_warmup(registry.list_names()) == 2160
+        assert registry.max_warmup(registry.list_names()) == 2161
 
 
 # ---------------------------------------------------------------------------

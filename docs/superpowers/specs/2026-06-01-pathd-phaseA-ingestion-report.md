@@ -37,4 +37,22 @@ This is the Phase A closeout artifact: what the first authorized OI ingestion ru
 
 ## Phase A status
 
-A1–A6 built + committed (TDD, per-task; A3 leakage-critical downsample adversarially review-APPROVED — no look-ahead); A7 run clean with 2 disclosed §38.1 instrument repairs. **Next: Phase A boundary 2-leg B2 (Codex + advisor), then STOP for the Phase B register.** No LOCKed value was altered in Phase A.
+A1–A6 built + committed (TDD, per-task; A3 leakage-critical downsample adversarially review-APPROVED — no look-ahead); A7 run clean with 2 disclosed §38.1 instrument repairs. Phase A boundary 2-leg B2 complete (Codex APPROVE + advisor PROCEED; folds at `7cd628e7`); integrity verified (only ingestion/docs/schemas/tests touched; sealed `tier6_dsr_v1` 4/4 unchanged). No LOCKed value was altered in Phase A.
+
+---
+
+## Phase B addendum — percentile-NaN power disclosure (advisor 2-leg-B2, 2026-06-02; anti-hindsight, pre-result)
+
+The Phase-B zero-poison NaN'ing (`OI<=0 → NaN`, the correct conservative handling) has a second-order **eval-power** effect the LOCK §49 under-power framing did not quantify: because the rolling-2160 percentile NaNs the **entire 90-day window** whenever it contains a zero-OI bar, each of the 43 zeros blows a ~90-day hole in `oi_pct_rank_2160` AND the H2 regime factor `oi_velocity_ewm_240_pctrank_2160`. Measured NaN fraction (a data-**coverage** statistic — NOT a signal-value peek; advisor-verified on the built features):
+
+| Window | `oi_pct_rank_2160` NaN | `oi_velocity_ewm_240_pctrank_2160` NaN |
+|---|---|---|
+| 2024 (validation) | ~48.5% | ~48.6% |
+| 2025 (test) | ~74.8% | ~74.8% |
+| **forward_2026 (Tier-5 gate)** | **0.0%** | **0.0%** |
+
+**Implication (pre-registered, anti-hindsight):** the verdict-deciding **forward_2026 gate is UNCONTAMINATED** (the last zero-OI bar is in 2025; the 90-day percentile window clears before 2026-01-01). But H2/H3 train/eval floor eligibility (`zero_fraction<0.50`, ≥200 trades, the H2 ≥10% de-risk-cell occupancy) computed on the non-NaN subset is at **materially higher INDETERMINATE risk** than LOCK §48–49 framed — compounding the pre-disclosed 2020-09 train handicap. This makes the §37.3 substantive-measured-loss path and/or the `UNDER_DETERMINED_TRADE_THRESHOLD=10` genuinely-under-determined tag the **more likely Phase-C/D outcome**. This is a power disclosure (data coverage), NOT a defect; the NaN'ing is the correct conservative choice (dropping breaks the native-1h grid; zero-filling fabricates a spurious all-time-low). Carry into the Phase C register.
+
+## Phase B status
+
+B1–B4 factor module (`44f63266`) + B5 registration/build-integration (`0d35bcea`); real-data feature build clean (`feature_version` regenerated, 37 factors, OI route `shared=49239 bars`, 22 gaps→NaN). Phase B boundary 2-leg B2: **Codex APPROVE-WITH-CHANGES + advisor PROCEED-WITH-CHANGES**; folds — coverage-guard docstrings corrected (the Codex HIGH adjudicated: per-bar integrity is enforced by the A3 causal downsample + the exact `validate="one_to_one"` join, not a per-bar raise that would false-positive on the 22 real gaps and miss a value-mislabel; advisor concurred), `oi_velocity_ewm_240_pctrank_2160` warmup 2160→2161 (inner log-change NaN at bar 0), this power disclosure. Pre-existing env-driven `test_tier6_dsr` byte-repro failure confirmed NOT Path D's (fails at base; sealed sha256 4/4 unchanged; no tier6 files touched). No LOCKed value altered in Phase B.

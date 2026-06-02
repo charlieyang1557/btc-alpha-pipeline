@@ -224,10 +224,16 @@ def build_features_df(
 
     Routing (Path D Phase B Task B5): OI factors (``input_source="oi"``) do NOT
     compute on ``raw_df`` (it has no ``sum_open_interest`` column). Instead:
-    1. ``_check_oi_coverage(raw_df, oi_df)`` asserts the OI 1h grid matches the
-       OHLCV grid over their overlap (raises on >=1 misaligned bar — never silently
-       mis-pair OI onto the wrong bar; CONTRACT BOUNDARY between this coverage guard
-       and the left-join below).
+    1. ``_check_oi_coverage(raw_df, oi_df)`` raises on ZERO/gross overlap loss
+       (completely disjoint grids / a tz or wrong-parquet error); it tolerates the
+       ~22 known intra-window OI gaps (→ NaN via the left-join). Per-bar causal
+       integrity (no OI@t paired with price@t±1 — LOCK §53) is enforced NOT by this
+       guard but by (a) the A3 causal 5min→1h downsample (adversarially verified —
+       row N uses only obs < N+1h) and (b) the exact ``validate="one_to_one"`` join
+       below, which makes row mis-pairing structurally impossible (a producer-side
+       shift degrades to NaN coverage loss, never a wrong-value mis-join). 2-leg-B2
+       adjudicated (Codex+advisor 2026-06-02): a per-bar-strict raise here would
+       false-positive on the 22 real gaps AND cannot detect a value-mislabel shift.
     2. OI factors are computed on ``oi_df`` directly (native-1h, no carry).
     3. Their columns are LEFT-JOINED onto ``out`` by ``open_time_utc``.
     If ``oi_df`` is None, OI columns are added with all-NaN values so the schema
@@ -339,11 +345,11 @@ def build_features_df(
             for name in oi_names:
                 out[name] = float("nan")
         else:
-            # CONTRACT BOUNDARY: _check_oi_coverage raises if the OI 1h grid
-            # disagrees with the OHLCV grid by >=1 bar in their overlap window.
-            # This guard fires BEFORE the left-join (producer-layer invariant);
-            # the left-join itself is a separate operation. Widening the allowed
-            # misalignment requires explicit human approval.
+            # CONTRACT BOUNDARY: _check_oi_coverage raises on ZERO/gross overlap loss
+            # (disjoint grids); it tolerates the ~22 known intra-window OI gaps (→ NaN
+            # via the left-join). Per-bar causal integrity is enforced by the A3 causal
+            # downsample + the exact validate="one_to_one" join below (mis-pairing is
+            # structurally impossible), NOT by a per-bar raise here (2-leg-B2 adjudicated).
             _check_oi_coverage(raw_df, oi_df)
             logger.info(
                 "Computing %d OI factors over %d OI bars, then left-joining "
@@ -608,7 +614,8 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         type=Path,
         default=DEFAULT_OI_PATH,
         help="Path to the 1h open-interest parquet (used when OI factors are "
-        "registered; native-1h, no carry; coverage guard raises on >=1 misaligned bar)",
+        "registered; native-1h, no carry; coverage guard raises on zero/gross overlap "
+        "loss, tolerates the ~22 known gaps via NaN; per-bar integrity via the exact join)",
     )
     parser.add_argument(
         "--force-rebuild",

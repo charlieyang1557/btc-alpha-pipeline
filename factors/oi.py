@@ -231,7 +231,10 @@ SPEC_OI_PCT_RANK_2160 = FactorSpec(
 SPEC_OI_VELOCITY_EWM_240_PCTRANK_2160 = FactorSpec(
     name="oi_velocity_ewm_240_pctrank_2160",
     category="oi",
-    warmup_bars=2160,
+    # 2161, not 2160 (Codex B2): the inner log-change is NaN at bar 0, so the first
+    # NaN-free 2160-bar percentile window ends at index 2160 -> first valid output at
+    # index 2160 = 2161 bars of data required (vs 2160 for the level-percentile).
+    warmup_bars=2161,
     inputs=["sum_open_interest"],
     output_dtype="float64",
     compute=oi_velocity_ewm_240_pctrank_2160,

@@ -178,7 +178,9 @@ class TestOiRegistration:
             "oi_sign": 1,
             "oi_velocity_ewm_240": 240,
             "oi_pct_rank_2160": 2160,
-            "oi_velocity_ewm_240_pctrank_2160": 2160,
+            # 2161 (Codex B2): inner log-change NaN at bar 0 -> first valid percentile
+            # at index 2160 = 2161 bars (vs the level-percentile's 2160).
+            "oi_velocity_ewm_240_pctrank_2160": 2161,
         }
         for name, warmup in expected.items():
             spec = small_registry.get(name)
