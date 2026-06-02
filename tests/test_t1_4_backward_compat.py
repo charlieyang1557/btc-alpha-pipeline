@@ -2186,7 +2186,15 @@ class TestT1_4_Pc9BaselineGate:
         # scripts/pathc_run_verdict.py (thread degenerate flag + empty-cohort guard).
         # Net new test functions: +1 holdout_producer (+2 replace +1) +2 moments +2
         # orchestrator +1 run_verdict = +6. Advance BASELINE 3008 → 3014.
-        BASELINE = 3014
+        # Path D Phase B Tasks B1-B4 (pathd-oi-scoping branch): OI factor module
+        # (factors/oi.py) + test suite (tests/test_oi_factors.py). 32 new test
+        # functions covering _oi_log_change helper + 4 factors (oi_sign,
+        # oi_velocity_ewm_240, oi_pct_rank_2160, oi_velocity_ewm_240_pctrank_2160)
+        # with zero-poison, causality, G1-AST, known-value, and firewall checks.
+        # Branch pre-existing gap was +28 (from prior pathc arc commits merged into
+        # this branch); our 32 new tests bring pre-T1.x = 3042 + 32 = 3074.
+        # Advance BASELINE 3014 → 3074.
+        BASELINE = 3074
         assert pre_t1_x_baseline == BASELINE, (
             f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
             f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "
