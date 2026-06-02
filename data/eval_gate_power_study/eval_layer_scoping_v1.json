@@ -1,0 +1,79 @@
+{
+  "schema": "eval_gate_power_study/eval_layer_scoping_v1",
+  "generated_at_utc": "2026-06-02T23:44:02.490566Z",
+  "spec": "docs/superpowers/specs/2026-06-02-bayesian-eval-layer-scoping-design.md",
+  "constants": {
+    "Z_PASS": 1.644853626951472,
+    "Z_POWER": 0.8416,
+    "forward_T": 2527,
+    "forward_ppy": 8760,
+    "deployable_sharpe": 1.5,
+    "cohort_mean": -2.54671925067013
+  },
+  "spot_checks": {
+    "SV1": {
+      "full_kelly_fraction": 2.5,
+      "quarter_kelly_fraction": 0.625,
+      "se_ann": 1.8622388385184274,
+      "prob_sharpe_le_zero": 0.2102707736522505,
+      "no_power_gain": true,
+      "note": "P(SR<=0)~21% at se_ann~1.86; size-by-evidence on a straddling-zero posterior puts capital on noise. Decision-value modest-to-negative for a solo with no candidate book."
+    },
+    "SV2": {
+      "sharpe_ann": 1.5,
+      "T": 2527,
+      "m": 2000,
+      "detection_fixed_T": 0.2055,
+      "detection_sequential": 0.001,
+      "only_via_time": true,
+      "note": "sequential anytime-valid detection <= fixed-horizon at matched T; Bayes/e-process adds no fixed-horizon power. Axis-1=only-via-time."
+    },
+    "SV3": {
+      "cohort_mean": -2.54671925067013,
+      "cohort_obs_var": 4.527015124179723,
+      "per_leg_se2": 3.4679334916864617,
+      "tau2_raw": 4.527015124179723,
+      "tau2_denoised": 1.0590816324932613,
+      "posterior_mean_raw": -0.25532750679609606,
+      "posterior_mean_denoised": -1.6000013995743267,
+      "deploy_line_low": 1.0,
+      "backfires": true,
+      "note": "pooling borrows 'strength' = evidence of no edge; both posteriors are negative, far below the deploy line. Axis-1 = backfires."
+    },
+    "SV4": {
+      "posterior_mean": 0.3357256778309409,
+      "posterior_mean_skeptical_zero": 0.3357256778309409,
+      "posterior_mean_skeptical_cohort": -1.640994208388299,
+      "data_only_estimate": 1.5,
+      "only_tightens": true,
+      "raises_power": false,
+      "note": "skeptical location lowers the posterior below y; Axis-1=no-power-gain, Axis-2=modest (honesty)."
+    },
+    "SV5": {
+      "expected_log_lr_over_forward_T": 0.3245291095890411,
+      "e_value_over_forward_T": 1.383379072642944,
+      "log_e_threshold": 2.995732273553991,
+      "bars_to_threshold": 23326.768636740406,
+      "years_to_threshold": 2.6628731320479915,
+      "only_via_time": true,
+      "note": "e ~ 1.38 over the forward window vs the 20 needed; ~2.7 yr of fresh hourly tape to cross. Axis-1=only-via-time; Axis-2 (anytime-valid monitoring) judged in the memo."
+    },
+    "SV6": {
+      "power_sharpe_hourly": 0.20055568375498067,
+      "power_sign_hourly": 0.15815435382670062,
+      "are_sign_vs_sharpe": 0.6366470211933708,
+      "kurtosis_crossover_hourly": 8892.295911515652,
+      "are_daily_g4_60": 0.69307919401393,
+      "sign_overtakes_daily_g4_60": false,
+      "hit_rate_excess_hourly": 0.006393382393705127,
+      "raises_power": false,
+      "note": "directional estimand is LESS powerful (ARE~0.637) at the modest hourly edge; heavy-tail rescue needs absurd kurtosis. Axis-1=no-power-gain (mild loss). Cost gate moot."
+    },
+    "SV7": {
+      "shrinkage_factor": 0.2238171185539606,
+      "per_leg_se2": 3.4679334916864617,
+      "in_scope_now": false,
+      "note": "EB winner's-curse correction across a FUTURE batch (not the dead cycles); conditional on a future candidate batch being registered."
+    }
+  }
+}
