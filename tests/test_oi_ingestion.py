@@ -71,3 +71,60 @@ def test_parse_oi_metrics_missing_required_column_raises(tmp_path):
     )
     with pytest.raises(ValueError, match="missing required columns"):
         parse_metrics_csv(csv)
+
+
+# ---------------------------------------------------------------------------
+# A3: downsample_oi_to_1h tests
+# ---------------------------------------------------------------------------
+
+import numpy as np
+from ingestion.oi_bulk_download import downsample_oi_to_1h
+
+
+def test_downsample_bar_close_is_last_obs_within_bar():
+    # row N (bar [N, N+1h)) = the LAST 5-min obs WITHIN the bar (the mark_close analog),
+    # stamped at N to align with the OHLCV open_time grid. label='left', closed='left'.
+    ts = pd.date_range("2020-09-01 00:00", "2020-09-01 02:00", freq="5min", tz="UTC")
+    df5 = pd.DataFrame({"open_time_utc": ts,
+                        "sum_open_interest": np.arange(len(ts), dtype="float64"),
+                        "sum_open_interest_value": np.arange(len(ts), dtype="float64") * 10.0,
+                        "source": "binance_vision"})
+    out = downsample_oi_to_1h(df5)
+    # bar [01:00, 02:00) -> last within-bar obs is 01:55 (index 23) -> value 23.0
+    row01 = out.loc[out.open_time_utc == pd.Timestamp("2020-09-01 01:00", tz="UTC")]
+    assert row01["sum_open_interest"].iloc[0] == 23.0
+    assert str(out["open_time_utc"].dtype) == "datetime64[ms, UTC]"
+    assert (out["open_time_utc"].diff().dropna() == pd.Timedelta("1h")).all()
+
+
+def test_downsample_row_depends_only_on_within_bar_obs():
+    # Causality: row 01:00 (bar [01:00,02:00)) is unchanged when obs at/after the NEXT
+    # bar boundary (02:00) are deleted -> it never reads a future bar.
+    ts = pd.date_range("2020-09-01 00:00", "2020-09-01 03:00", freq="5min", tz="UTC")
+    df5 = pd.DataFrame({"open_time_utc": ts, "sum_open_interest": np.arange(len(ts), dtype="float64"),
+                        "sum_open_interest_value": np.zeros(len(ts)), "source": "binance_vision"})
+    full = downsample_oi_to_1h(df5)
+    truncated = downsample_oi_to_1h(df5[df5.open_time_utc < pd.Timestamp("2020-09-01 02:00", tz="UTC")])
+    key = pd.Timestamp("2020-09-01 01:00", tz="UTC")
+    v_full = full.loc[full.open_time_utc == key, "sum_open_interest"].iloc[0]
+    v_trunc = truncated.loc[truncated.open_time_utc == key, "sum_open_interest"].iloc[0]
+    assert v_full == v_trunc
+
+
+def test_downsample_gap_within_hour_yields_no_row():
+    # If an entire 1h window has no OI observations, that 1h bar is absent from output
+    # (gap NOT filled/interpolated). The surrounding bars are unaffected.
+    ts_before = pd.date_range("2020-09-01 00:00", "2020-09-01 00:55", freq="5min", tz="UTC")
+    # Skip all of 01:xx (the entire 01:00 hour)
+    ts_after = pd.date_range("2020-09-01 02:00", "2020-09-01 02:55", freq="5min", tz="UTC")
+    ts = ts_before.append(ts_after)
+    vals = np.arange(len(ts), dtype="float64")
+    df5 = pd.DataFrame({"open_time_utc": ts, "sum_open_interest": vals,
+                        "sum_open_interest_value": vals * 10.0, "source": "binance_vision"})
+    out = downsample_oi_to_1h(df5)
+    out_times = list(out["open_time_utc"])
+    # The 01:00 bar must be absent
+    assert pd.Timestamp("2020-09-01 01:00", tz="UTC") not in out_times
+    # The 00:00 and 02:00 bars must be present
+    assert pd.Timestamp("2020-09-01 00:00", tz="UTC") in out_times
+    assert pd.Timestamp("2020-09-01 02:00", tz="UTC") in out_times

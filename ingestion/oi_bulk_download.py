@@ -222,6 +222,61 @@ def _download_day(pair: str, day_key: str) -> pd.DataFrame | None:
     return df
 
 
+OUTPUT_PATH = PROJECT_ROOT / "data" / "raw" / "btcusdt_oi_1h.parquet"
+
+
+def downsample_oi_to_1h(df5: pd.DataFrame) -> pd.DataFrame:
+    """Causally downsample a ~5-min OI frame to the 1h grid: each 1h bar N (covering
+    [N, N+1h)) takes the LAST 5-min observation WITHIN the bar (timestamps strictly
+    < N+1h) = the bar-N-close OI (the mark_close analog). Strictly causal — row N uses
+    only observations with timestamp < N+1h. No future read; gaps NOT interpolated.
+
+    Inputs:
+        df5: 5-min frame with columns open_time_utc (UTC tz-aware datetime),
+            sum_open_interest (float64), sum_open_interest_value (float64), source (str).
+    Computation:
+        1. Sort by open_time_utc, set as index.
+        2. resample("1h", label="left", closed="left").last(): each 1h bin is [N, N+1h),
+           stamped at N. closed="left" excludes the N+1h boundary obs from bar N.
+           label="left" stamps the bin at N (the OHLCV open_time_utc grid convention).
+           .last() takes the final obs within [N, N+1h) = the bar-N-close OI.
+        3. Drop any 1h bins where sum_open_interest is NaN (hour-gaps; NOT interpolated).
+        4. Restore open_time_utc as a datetime64[ms, UTC] column; attach source +
+           ingested_at_utc from the input frame (or now() if absent).
+    Output:
+        1h frame with columns (open_time_utc, sum_open_interest, sum_open_interest_value,
+        source, ingested_at_utc), sorted ascending by open_time_utc.
+    Warmup period: N/A (aggregation only; no rolling window).
+    Null policy: 1h bins with no within-bar obs yield NaN and are dropped (flagged
+        downstream by the validator). No interpolation or forward-fill.
+
+    Args:
+        df5: ~5-min OI DataFrame as produced by parse_metrics_csv / concat.
+
+    Returns:
+        1h aligned DataFrame, open_time_utc on the OHLCV open_time grid.
+    """
+    s = df5.sort_values("open_time_utc").set_index("open_time_utc")
+    # label='left', closed='left' -> each 1h bin is [N, N+1h), stamped at N.
+    # .last() takes the final obs WITHIN the bar (= bar-N-close OI, the mark_close analog).
+    # Causal: row N uses only obs with timestamp in [N, N+1h); N+1h obs go to bar N+1.
+    agg = s[["sum_open_interest", "sum_open_interest_value"]].resample(
+        "1h", label="left", closed="left"
+    ).last()
+    # Drop hours with no within-bar observations (gaps not interpolated).
+    agg = agg.dropna(subset=["sum_open_interest"])
+    agg = agg.reset_index().rename(columns={"open_time_utc": "open_time_utc"})
+    agg["open_time_utc"] = agg["open_time_utc"].astype("datetime64[ms, UTC]")
+    agg["source"] = pd.array(["binance_vision"] * len(agg), dtype="string")
+    if "ingested_at_utc" in df5.columns:
+        ingested_at = df5["ingested_at_utc"].iloc[0]
+    else:
+        ingested_at = pd.Timestamp(datetime.now(timezone.utc)).as_unit("ms")
+    agg["ingested_at_utc"] = ingested_at
+    agg["ingested_at_utc"] = agg["ingested_at_utc"].astype("datetime64[ms, UTC]")
+    return agg.sort_values("open_time_utc").reset_index(drop=True)
+
+
 def main() -> int:
     """CLI entry point: download daily metrics ZIPs, parse to 5-min frame, log rows.
 
@@ -277,8 +332,19 @@ def main() -> int:
         combined["open_time_utc"].iloc[0],
         combined["open_time_utc"].iloc[-1],
     )
-    # NOTE: downsample to 1h + parquet write is wired in Task A3 (downsample_oi_to_1h).
-    logger.info("main() complete — 5-min frame assembled. Downsample+write deferred to Task A3.")
+
+    logger.info("Downsampling 5-min frame to 1h ...")
+    df1h = downsample_oi_to_1h(combined)
+    logger.info(
+        "1h frame: %d rows, %s to %s",
+        len(df1h),
+        df1h["open_time_utc"].iloc[0],
+        df1h["open_time_utc"].iloc[-1],
+    )
+
+    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    df1h.to_parquet(OUTPUT_PATH, index=False)
+    logger.info("Written 1h OI parquet: %s", OUTPUT_PATH)
     return 0
 
 
