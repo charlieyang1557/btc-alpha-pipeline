@@ -241,10 +241,15 @@ def assemble_evidence(
     # Q5: verdict_headline — unmissable top-line summary.
     ud_leg_ids = ", ".join(sorted(under_determined_legs))
     if negative_is_vacuous_only:
+        # Vacuity can be degeneracy-driven (0-trade flat legs) OR under-determination-driven
+        # (floor-ineligible thin-sample non-negative). Point the reader at BOTH bundle fields
+        # generically (advisor B2) — an all-degenerate cohort leaves under_determined_legs
+        # empty, so don't direct solely there. (assemble_evidence does not receive
+        # degenerate_legs; the orchestrator's bundle carries both fields.)
         verdict_headline = (
             f"{taxonomy.upper()} — VACUOUS-ONLY: no measured forward loss on any leg "
-            f"(all legs under-powered/under-determined); OI NOT actually tested on this "
-            f"grid — see under_determined_legs for detail"
+            f"(all legs degenerate and/or under-determined); OI NOT actually tested on this "
+            f"grid — see the bundle's degenerate_legs + under_determined_legs for the vacuity source"
         )
     elif earned_negative_power_limited:
         verdict_headline = (

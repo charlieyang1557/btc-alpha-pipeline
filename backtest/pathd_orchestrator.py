@@ -377,7 +377,9 @@ def run_pathd_verdict(
             the raw positive-Sharpe count.
         oi_marginal: Optional fenced OI-marginal diagnostic dict (D1-only; recorded;
             NEVER feeds N* or promotion — it rides along only). Contains per-hypothesis
-            D1 + contamination_correlations. NO D2 field (OI is independent axis).
+            D1 only; the contamination_correlations set lives at root
+            ``bundle["contamination_correlations"]`` (also fenced). NO D2 field (OI is
+            the independent axis).
 
     Returns:
         Evidence bundle with keys: ``holdouts``, ``n_tier5_pass``, ``n_dsr_pass``,

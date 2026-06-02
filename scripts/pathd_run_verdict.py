@@ -196,9 +196,11 @@ def compute_train_floors(
       - **H2 / H3** (state-class): ``h2h3_floor`` on ``zero_fraction < 0.50`` AND
         ``>= 200`` TRAIN trades.
 
-    NOTE: OI factors are heavily NaN in 2024/2025; the floor computation uses the
-    trade-derived position series (which correctly reflects NaN-driven inactive bars)
-    and trade counts (which count only actually-executed trades). NaN warmup bars
+    NOTE: OI factors are heavily NaN in 2024/2025 — this is data-driven zero-OI-glitch
+    gap-propagation (each zero-OI bar NaNs the entire rolling-2160 ~90d percentile window
+    containing it), NOT a front-loaded warmup burn-in (forward_2026, the gate, is 0% NaN).
+    The floor computation uses the trade-derived position series (which correctly reflects
+    NaN-driven inactive bars) and trade counts (only actually-executed trades). NaN bars
     produce flat positions — they correctly count toward zero_fraction.
 
     Args:

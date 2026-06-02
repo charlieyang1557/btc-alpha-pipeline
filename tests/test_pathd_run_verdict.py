@@ -597,9 +597,14 @@ def test_contamination_does_not_change_n_tier5_pass_or_dsr(tmp_path):
         and bundle["floors"].get(k, {}).get("eligible", True)
     )
     assert bundle["n_tier5_pass"] == n_positive_eligible
-    # contamination_correlations is present AND DSR unchanged.
-    assert bundle.get("contamination_correlations") is not None
-    assert bundle["n_dsr_pass"] >= 0  # sanity: non-negative
+    # contamination_correlations is present AND FENCED (diagnostic-only -> cannot affect
+    # DSR/promotion; it is attached AFTER n_dsr_pass/n_tier5_pass are computed). Asserting
+    # the fence + the bounded DSR count is the meaningful "DSR unchanged" proof.
+    cc = bundle.get("contamination_correlations")
+    assert cc is not None
+    assert cc["promotion_affecting"] is False and cc["in_n_star"] is False
+    assert "forward" in cc and "train" in cc
+    assert isinstance(bundle["n_dsr_pass"], int) and 0 <= bundle["n_dsr_pass"] <= 3
 
 
 # ---------------------------------------------------------------------------
