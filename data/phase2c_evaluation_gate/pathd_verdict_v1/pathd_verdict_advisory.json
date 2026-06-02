@@ -1,0 +1,336 @@
+{
+  "holdouts": {
+    "H1": {
+      "holdout_sharpe": -0.7508226746898683,
+      "row": {
+        "hypothesis_hash": "35a4d70b969b5265f80d44a128349831449974c9e5b3a1802ababfc23e44015a",
+        "name": "pathd_h1",
+        "theme": "pathd",
+        "T_obs": 2527,
+        "gamma3": 0.14035995729323292,
+        "gamma4": 11.30944218498533,
+        "returns_per_bar_sha256": "15dff6a963d9df34f55074d86ca2ee11b72877a956e787002912c3145f0a9187",
+        "holdout_total_trades": 22,
+        "holdout_sharpe": -0.7508226746898683
+      },
+      "hypothesis_hash": "35a4d70b969b5265f80d44a128349831449974c9e5b3a1802ababfc23e44015a",
+      "holdout_total_trades": 22,
+      "tier5_status": "INDETERMINATE"
+    },
+    "H2": {
+      "holdout_sharpe": -2.505268495035567,
+      "row": {
+        "hypothesis_hash": "714afa3515c4d97e8b9fc2605852037ff0a612cfd9e0237151d2e4f02c3b327c",
+        "name": "pathd_h2",
+        "theme": "pathd",
+        "T_obs": 2527,
+        "gamma3": 1.2133820347869388,
+        "gamma4": 34.10555192267094,
+        "returns_per_bar_sha256": "fa7868ea114a9e6b0ee727649b8f75fcdc87b35597ffbeec4873141ed849b736",
+        "holdout_total_trades": 55,
+        "holdout_sharpe": -2.505268495035567
+      },
+      "hypothesis_hash": "714afa3515c4d97e8b9fc2605852037ff0a612cfd9e0237151d2e4f02c3b327c",
+      "holdout_total_trades": 55,
+      "tier5_status": "INDETERMINATE"
+    },
+    "H3": {
+      "holdout_sharpe": -3.5540893055627825,
+      "row": {
+        "hypothesis_hash": "9d4bce26963dbfeb5b443097aa96da0fb099528684cab7bc06d721518bdc3738",
+        "name": "pathd_h3",
+        "theme": "pathd",
+        "T_obs": 2527,
+        "gamma3": 2.4865840769294407,
+        "gamma4": 59.18684119145808,
+        "returns_per_bar_sha256": "81b7f4dc1d74956fbcb360f6d323da27a6a793f6cd53c96fa1fa4769503f0f7d",
+        "holdout_total_trades": 50,
+        "holdout_sharpe": -3.5540893055627825
+      },
+      "hypothesis_hash": "9d4bce26963dbfeb5b443097aa96da0fb099528684cab7bc06d721518bdc3738",
+      "holdout_total_trades": 50,
+      "tier5_status": "INDETERMINATE"
+    }
+  },
+  "n_tier5_pass": 0,
+  "n_dsr_pass": 0,
+  "dsr": {
+    "rows": [
+      {
+        "hypothesis_hash": "35a4d70b969b5265f80d44a128349831449974c9e5b3a1802ababfc23e44015a",
+        "name": "pathd_h1",
+        "theme": "pathd",
+        "T": 2527,
+        "sr_per_bar": -0.008023637039167919,
+        "gamma3": 0.14035995729323292,
+        "gamma4": 11.30944218498533,
+        "trades": 22,
+        "var_sr_null": 0.000395882818685669,
+        "n_star": 3,
+        "z_pass": 1.644853626951472,
+        "er_B": 0.8528044961506949,
+        "sr_star_B": 0.016968084108918483,
+        "deflated_z_B": -1.2552563857526668,
+        "psr_B": 0.10469285119413274,
+        "dsr_statistic_B": -2.900110012704139,
+        "pass_B": false,
+        "er_A": 1.4823038073675112,
+        "sr_star_A": 0.029493108668997417,
+        "deflated_z_A": -1.8843493948970933,
+        "psr_A": 0.029758865057908448,
+        "dsr_statistic_A": -3.5292030218485655,
+        "pass_A": false
+      },
+      {
+        "hypothesis_hash": "714afa3515c4d97e8b9fc2605852037ff0a612cfd9e0237151d2e4f02c3b327c",
+        "name": "pathd_h2",
+        "theme": "pathd",
+        "T": 2527,
+        "sr_per_bar": -0.026772453426677386,
+        "gamma3": 1.2133820347869388,
+        "gamma4": 34.10555192267094,
+        "trades": 55,
+        "var_sr_null": 0.000395882818685669,
+        "n_star": 3,
+        "z_pass": 1.644853626951472,
+        "er_B": 0.8528044961506949,
+        "sr_star_B": 0.016968084108918483,
+        "deflated_z_B": -2.1573211622304056,
+        "psr_B": 0.015490324615418641,
+        "dsr_statistic_B": -3.8021747891818776,
+        "pass_B": false,
+        "er_A": 1.4823038073675112,
+        "sr_star_A": 0.029493108668997417,
+        "deflated_z_A": -2.7750662120923257,
+        "psr_A": 0.0027595235184640376,
+        "dsr_statistic_A": -4.419919839043798,
+        "pass_A": false
+      },
+      {
+        "hypothesis_hash": "9d4bce26963dbfeb5b443097aa96da0fb099528684cab7bc06d721518bdc3738",
+        "name": "pathd_h3",
+        "theme": "pathd",
+        "T": 2527,
+        "sr_per_bar": -0.037980635846410905,
+        "gamma3": 2.4865840769294407,
+        "gamma4": 59.18684119145808,
+        "trades": 50,
+        "var_sr_null": 0.000395882818685669,
+        "n_star": 3,
+        "z_pass": 1.644853626951472,
+        "er_B": 0.8528044961506949,
+        "sr_star_B": 0.016968084108918483,
+        "deflated_z_B": -2.614892584489047,
+        "psr_B": 0.004462776028544625,
+        "dsr_statistic_B": -4.259746211440519,
+        "pass_B": false,
+        "er_A": 1.4823038073675112,
+        "sr_star_A": 0.029493108668997417,
+        "deflated_z_A": -3.2109318347085067,
+        "psr_A": 0.0006615265727912366,
+        "dsr_statistic_A": -4.855785461659979,
+        "pass_A": false
+      }
+    ],
+    "survivors": [],
+    "n_candidates": 3,
+    "n_star": 3
+  },
+  "per_leg": {
+    "H1": {
+      "tier": "strong_sane",
+      "mean_24h": -0.005380365868713007,
+      "mean_72h": -0.015861939401290423,
+      "sane_24h": true,
+      "sane_72h": true,
+      "sane_sign": "-"
+    },
+    "H2": {
+      "tier": "refuted",
+      "perm_24h": 0.0026318345478605555,
+      "derisk_24h": 0.004109856821395811,
+      "perm_72h": 0.007698362675264782,
+      "derisk_72h": 0.01204077086328463,
+      "sane_24h": false,
+      "sane_72h": false,
+      "sane_sign": "h2_permissive_beats_derisk_and_positive"
+    },
+    "H3": {
+      "tier": "strong_sane",
+      "mean_24h": 0.00607325318955516,
+      "mean_72h": 0.0214604598341229,
+      "sane_24h": true,
+      "sane_72h": true,
+      "sane_sign": "+"
+    }
+  },
+  "taxonomy": {
+    "advisory_taxonomy": "process_refuted_for_this_grid",
+    "is_earned_negative": true,
+    "earned_negative_power_limited": false,
+    "earned_negative_power_limited_note": null,
+    "verdict_headline": "PROCESS_REFUTED_FOR_THIS_GRID (earned-negative)",
+    "d_positive_strength": null,
+    "any_mechanism_sane": true,
+    "verdict_rests_on_weak_sane_only": false,
+    "leg_tiers": {
+      "H1": "strong_sane",
+      "H2": "refuted",
+      "H3": "strong_sane"
+    },
+    "n_tier5_pass": 0,
+    "n_dsr_pass": 0,
+    "under_determined_legs": {},
+    "n_substantive_loss_legs": 3,
+    "negative_has_substantive_basis": true,
+    "negative_is_vacuous_only": false,
+    "consistent_with_momentum_or_vol_leakage": false,
+    "verdict_authority": "charlie_register_at_earned_negative_gate",
+    "approximation_tempers": [
+      "d1_only_no_d2_oi_is_independent_axis",
+      "oi_factors_nan_in_2024_2025_floor_on_nonnull_subset",
+      "mechanism_sanity_tiered_24h_72h_weak_sane_flagged",
+      "generic_under_determined_carve_out_any_floor_h3_leakage_annotation",
+      "h2_h3_expected_indeterminate_zero_fraction_generic_f3_carve_out"
+    ]
+  },
+  "escalation": {
+    "d_escalation_warranted": true,
+    "reason": "process_refuted_and_no_dsr_pass_warrants_next_axis",
+    "authority": "charlie_register"
+  },
+  "floors": {
+    "H1": {
+      "eligible": false,
+      "n_flat_exit_episodes": 102,
+      "threshold": 200,
+      "status": "INDETERMINATE",
+      "frozen_theta": 0.85,
+      "episodes_at_090": 94
+    },
+    "H2": {
+      "eligible": false,
+      "zero_fraction": 0.7484240212342402,
+      "n_trades": 412,
+      "max_zero_fraction": 0.5,
+      "min_trades": 200,
+      "status": "INDETERMINATE",
+      "derisk_occupancy": 0.20847962901623054,
+      "derisk_occupancy_eligible": true
+    },
+    "H3": {
+      "eligible": false,
+      "zero_fraction": 0.839588603657778,
+      "n_trades": 308,
+      "max_zero_fraction": 0.5,
+      "min_trades": 200,
+      "status": "INDETERMINATE"
+    }
+  },
+  "oi_marginal": {
+    "H1": {
+      "d1": {
+        "hyp_id": "H1",
+        "gated_sharpe": -0.7508226746898683,
+        "baseline_sharpe": -1.0912013400880016,
+        "d1_marginal_sharpe": 0.34037866539813333,
+        "promotion_affecting": false,
+        "in_n_star": false
+      },
+      "promotion_affecting": false,
+      "in_n_star": false
+    },
+    "H2": {
+      "d1": {
+        "hyp_id": "H2",
+        "gated_sharpe": -2.505268495035567,
+        "baseline_sharpe": -2.872338103480353,
+        "d1_marginal_sharpe": 0.367069608444786,
+        "promotion_affecting": false,
+        "in_n_star": false
+      },
+      "promotion_affecting": false,
+      "in_n_star": false
+    },
+    "H3": {
+      "d1": {
+        "hyp_id": "H3",
+        "gated_sharpe": -3.5540893055627825,
+        "baseline_sharpe": -1.998595321989798,
+        "d1_marginal_sharpe": -1.5554939835729844,
+        "promotion_affecting": false,
+        "in_n_star": false
+      },
+      "promotion_affecting": false,
+      "in_n_star": false
+    }
+  },
+  "under_determined_legs": {},
+  "degenerate_legs": {},
+  "consistent_with_momentum_or_vol_leakage": false,
+  "contamination_correlations": {
+    "forward": {
+      "pearson": {
+        "return_1h": -0.010232452710485165,
+        "abs_return_1h": -0.15524626207184455,
+        "realized_vol_24h": -0.36521478332867185,
+        "cdf_realized_vol_720": -0.3149696032837277
+      },
+      "spearman": {
+        "return_1h": -0.0023137304224901565,
+        "abs_return_1h": -0.14233098904936584,
+        "realized_vol_24h": -0.374564681617815,
+        "cdf_realized_vol_720": -0.294415591719601
+      },
+      "promotion_affecting": false,
+      "in_n_star": false
+    },
+    "train": {
+      "pearson": {
+        "return_1h": -0.0010233970620333649,
+        "abs_return_1h": -0.06274839708284764,
+        "realized_vol_24h": -0.20818876218373827,
+        "cdf_realized_vol_720": -0.2696863163914399
+      },
+      "spearman": {
+        "return_1h": -0.006568812281008843,
+        "abs_return_1h": 0.019686219334456898,
+        "realized_vol_24h": -0.030828833891249924,
+        "cdf_realized_vol_720": -0.21761103985042163
+      },
+      "promotion_affecting": false,
+      "in_n_star": false
+    },
+    "promotion_affecting": false,
+    "in_n_star": false
+  },
+  "earned_negative_power_limited": false,
+  "earned_negative_power_limited_note": null,
+  "verdict_headline": "PROCESS_REFUTED_FOR_THIS_GRID (earned-negative)",
+  "meta": {
+    "git_sha": "6d611cb2",
+    "forward_window": [
+      "2026-01-01T00:00:00+00:00",
+      "2026-04-16T07:00:00+00:00"
+    ],
+    "anchor": "config/execution_phaseb_spot_15bps.yaml",
+    "cost_equivalence": {
+      "fee_bps": 10.0,
+      "slippage_bps": 5.0,
+      "anchor_fee_bps": 10.0,
+      "anchor_slippage_bps": 5.0,
+      "per_side_bps": 15.0,
+      "equivalent": true
+    },
+    "sealed_sha256_invariant": {
+      "tier6_dsr_companion.csv": "0a7d98acfb5791c52c6a6d15bd6285a5a4450a4b6ccc113ac165035616666612",
+      "tier6_dsr_results.csv": "8eecc6cd50344e32b25880ac16db3489b24ef65e0095f249039841fbf801acac",
+      "tier6_mc_validation.json": "49646c303c9329ad2a9b15be819d5cf8a1101fc1e09b3997aa693c4c06ea2acd",
+      "tier6_promotion_list.json": "1803eb44812ba89e7c881e7dfec110d8403e08a232aa4e07acf4881b0093e699"
+    },
+    "frozen_theta": 0.85,
+    "episodes_at_090": 94,
+    "episodes_at_frozen_theta": 102,
+    "scope_note": "Path D OI verdict: forward_2026 Tier-5 gate + train-only tiered mechanism sanity (24h+72h) at FROZEN \u03b8 + DSR-FWER(N*=3); NO Step-0 (fresh OI cohort). C7 TRAIN-window floors applied BEFORE ranking (under-floor -> INDETERMINATE, excluded from n_tier5_pass); GENERIC F3 under-determined carve-out (any floor, not zero_fraction-specific); D1-ONLY OI-marginal diagnostic (no D2 \u2014 OI is independent axis). contamination_correlations fenced diagnostic IS PRESENT in this bundle (bundle['contamination_correlations']): Pearson+Spearman of oi_velocity_ewm_240 vs return/vol series, reported on FORWARD and TRAIN bars separately; promotion_affecting=False, in_n_star=False. OI NaN-power disclosure: OI factors are NaN-heavy in 2024/2025 (scattered zero-OI-glitch gap-propagation \u2014 each zero-OI bar NaNs the entire rolling-2160 (~90d) percentile window containing it, so the NaN is data-driven, not a front-loaded burn-in; forward_2026 is 0% NaN); floor eligibility on non-NaN subset."
+  }
+}
