@@ -171,6 +171,49 @@ markprice:
       check: "missing bars flagged in the quality report, never interpolated"
       severity: "warning"
 
+# Mirrors the existing `ohlcv` block structure exactly: columns is a NAME-KEYED
+# MAPPING (not a list), source allowed values live under the source column's
+# allowed_values, validation_rules is a list of {name, check, severity?}.
+oi:
+  description: "Binance USDT-M perpetual open interest, causally downsampled to 1h for BTCUSDT (OI positioning axis)"
+  primary_key: "open_time_utc"
+  sort_order: "open_time_utc ASC"
+  file_pattern: "data/raw/btcusdt_oi_1h.parquet"
+  columns:
+    open_time_utc:
+      dtype: "datetime64[ms, UTC]"
+      nullable: false
+      description: "1h bar open time, UTC tz-aware, unique, sorted ascending, hour-aligned (bar-close OI = last OI obs <= this bar's close)"
+    sum_open_interest:
+      dtype: "float64"
+      nullable: false
+      description: "Total open interest in CONTRACTS (base/coin-denominated). THE SIGNAL SERIES (firewall-critical: NOT notional)."
+    sum_open_interest_value:
+      dtype: "float64"
+      nullable: true
+      description: "Total open interest in USDT notional. Cross-check / contamination-diagnostic ONLY; never the signal (notional velocity embeds price return)."
+    ingested_at_utc:
+      dtype: "datetime64[ms, UTC]"
+      nullable: false
+      description: "Timestamp when this row was written"
+    source:
+      dtype: "string"
+      nullable: false
+      allowed_values: ["binance_vision", "ccxt_binance"]
+      description: "Provenance: binance_vision (bulk) | ccxt_binance (incremental)"
+  validation_rules:
+    - name: "no_duplicates"
+      check: "open_time_utc is unique"
+    - name: "sorted_pk"
+      check: "open_time_utc strictly ascending"
+    - name: "utc_tz_aware"
+      check: "open_time_utc is timezone-aware UTC"
+    - name: "hour_aligned_1h"
+      check: "consecutive open_time_utc differ by exactly 3600000 ms (gaps flagged, not interpolated)"
+    - name: "no_forward_fill"
+      check: "missing bars flagged in the quality report, never interpolated"
+      severity: "warning"
+
 # Binance Vision CSV column mapping (raw download format)
 binance_vision_csv:
   description: "Column mapping for Binance Vision kline CSV files"
