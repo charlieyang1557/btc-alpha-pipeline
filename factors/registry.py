@@ -113,11 +113,15 @@ class FactorSpec:
                 f"Factor {self.name!r}: null_policy must be "
                 f"'nan_before_warmup_only' in D1, got {self.null_policy!r}"
             )
-        if self.input_source not in {"ohlcv", "funding", "basis"}:
+        if self.input_source not in {"ohlcv", "funding", "basis", "oi"}:
             raise ValueError(
                 f"Factor {self.name!r}: input_source must be 'ohlcv', "
-                f"'funding', or 'basis', got {self.input_source!r}"
+                f"'funding', 'basis', or 'oi', got {self.input_source!r}"
             )
+        # CONTRACT GAP: widening this Literal/set requires updating the
+        # build_features_df routing branch and the test_oi_build_routing.py
+        # contract-widen test in the same PR. (Path D Phase B Task B5 widens
+        # to add "oi"; a future axis "X" must add a routing branch for X.)
         if self.input_period_bars < 1:
             raise ValueError(
                 f"Factor {self.name!r}: input_period_bars must be >= 1, got "
@@ -556,7 +560,7 @@ def reset_registry() -> None:
 
 
 def _bootstrap_core_factors(registry: FactorRegistry) -> None:
-    """Register the 33 core factors on the given registry.
+    """Register the 37 core factors on the given registry.
 
     The original D1 set had 14 factors. D5 (Baselines in DSL) promoted 4
     additional factors from the deferred list to support the
@@ -567,6 +571,10 @@ def _bootstrap_core_factors(registry: FactorRegistry) -> None:
     Task B5 (Path C) added 5 basis factors (``input_source="basis"``; native-1h,
     NO carry): ``basis_sign``, ``basis_ewm_240``, ``basis_ewm_480``,
     ``basis_pct_rank_2160``, ``basis_ewm_240_pctrank_2160``.
+    Task B5 (Path D) added 4 OI factors (``input_source="oi"``; native-1h,
+    NO carry): ``oi_sign``, ``oi_velocity_ewm_240``, ``oi_pct_rank_2160``,
+    ``oi_velocity_ewm_240_pctrank_2160``. ``oi_sign`` is LOCK-registered for
+    factor-family completeness but referenced by NO hypothesis.
 
     Factor modules are imported here (not at top-level) to avoid import
     cycles with anything that may eventually import ``factors/__init__.py``.
@@ -577,6 +585,7 @@ def _bootstrap_core_factors(registry: FactorRegistry) -> None:
         funding,
         momentum,
         moving_averages,
+        oi,
         price,
         returns,
         structural,
@@ -625,5 +634,14 @@ def _bootstrap_core_factors(registry: FactorRegistry) -> None:
         basis.SPEC_BASIS_EWM_480,
         basis.SPEC_BASIS_PCT_RANK_2160,
         basis.SPEC_BASIS_EWM_240_PCTRANK_2160,
+        # Path D Phase B (Task B5): 4 native-1h OI factors (input_source="oi";
+        # no carry — OI is native-1h; windows follow the Path C basis convention:
+        # 240/2160 bars match the basis_ewm_240/basis_pct_rank_2160 analogs).
+        # oi_sign is LOCK-registered for factor-family completeness but referenced
+        # by NO hypothesis (per the Task B5 LOCK rationale in CLAUDE.md).
+        oi.SPEC_OI_SIGN,
+        oi.SPEC_OI_VELOCITY_EWM_240,
+        oi.SPEC_OI_PCT_RANK_2160,
+        oi.SPEC_OI_VELOCITY_EWM_240_PCTRANK_2160,
     ):
         registry.register(spec)

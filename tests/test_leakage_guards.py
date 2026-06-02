@@ -235,21 +235,43 @@ def _synthetic_basis(n: int = 1500, seed: int = 17) -> pd.DataFrame:
     )
 
 
+def _synthetic_oi(n: int = 3000, seed: int = 23) -> pd.DataFrame:
+    """Synthetic native-1h OI (contracts) frame for the OI-source factors.
+
+    OI factors are tagged ``input_source="oi"`` and read a ``sum_open_interest``
+    column on the 1h grid (from data/raw/btcusdt_oi_1h.parquet). The leakage
+    sentinels route a factor to its matching input by this field.
+
+    All values are strictly > 0 (no zero-poison bars in this helper — zero-poison
+    behaviour is tested separately in test_oi_factors.py).
+    """
+    rng = np.random.default_rng(seed)
+    idx = pd.date_range("2021-01-01", periods=n, freq="h", tz="UTC")
+    return pd.DataFrame(
+        {
+            "open_time_utc": idx,
+            "sum_open_interest": np.abs(rng.normal(5e6, 5e5, n)) + 1e5,  # strictly > 0
+        }
+    )
+
+
 def _synthetic_input_for(spec) -> pd.DataFrame:
     """Return the synthetic input frame matching a factor spec's input_source.
 
     Routes funding-source factors to the 8h settlement frame, basis-source factors
-    to the native-1h basis_rel frame, and OHLCV-source factors to the OHLCV frame,
-    mirroring ``factors.build_features`` so the sentinels run each factor against
-    an input it can read.
+    to the native-1h basis_rel frame, OI-source factors to the native-1h OI frame,
+    and OHLCV-source factors to the OHLCV frame, mirroring ``factors.build_features``
+    so the sentinels run each factor against an input it can read.
     """
     n = 3000  # large enough that every factor warms up before any truncation k
-    # (basis_pct_rank_2160 and basis_ewm_240_pctrank_2160 have warmup_bars=2160;
+    # (basis_pct_rank_2160 and oi_velocity_ewm_240_pctrank_2160 have warmup_bars=2160;
     # need n > 2160 + margin for the truncation k=1200→k=2500 check)
     if getattr(spec, "input_source", "ohlcv") == "funding":
         return _synthetic_funding(n=n)
     if getattr(spec, "input_source", "ohlcv") == "basis":
         return _synthetic_basis(n=n)
+    if getattr(spec, "input_source", "ohlcv") == "oi":
+        return _synthetic_oi(n=n)
     return _synthetic_ohlcv(n=n)
 
 

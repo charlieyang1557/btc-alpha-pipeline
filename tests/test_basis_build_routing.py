@@ -127,7 +127,7 @@ def _make_markprice(ohlcv_df: pd.DataFrame, seed: int = 99) -> pd.DataFrame:
 
 @pytest.fixture
 def small_registry() -> FactorRegistry:
-    """Fresh registry with all 33 core factors."""
+    """Fresh registry with all 37 core factors."""
     r = FactorRegistry()
     _bootstrap_core_factors(r)
     return r

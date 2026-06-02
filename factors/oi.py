@@ -27,6 +27,8 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
+from factors.registry import FactorSpec
+
 
 # ---------------------------------------------------------------------------
 # Private helper — NOT registered as a factor
@@ -174,3 +176,66 @@ def oi_velocity_ewm_240_pctrank_2160(df: pd.DataFrame) -> pd.Series:
         return count / len(window)
 
     return ewm.rolling(window=2160, min_periods=2160).apply(_rank, raw=True)
+
+
+# ---------------------------------------------------------------------------
+# FactorSpec registrations (input_source="oi" — native-1h, NO carry)
+# ---------------------------------------------------------------------------
+
+# OI factors are native-1h (NOT carried from a coarser grid), so
+# input_period_bars=1 and bar-equivalent warmup == declared warmup_bars.
+# The build routes these onto the OI frame (``data/raw/btcusdt_oi_1h.parquet``),
+# then left-joins the columns onto the 1h OHLCV feature frame by
+# open_time_utc. Windows follow the Path C basis convention (×8 relative to
+# Path A funding analogs): 240/2160 bars match basis_ewm_240/basis_pct_rank_2160.
+#
+# NOTE: oi_sign is LOCK-registered for factor-family completeness but
+# referenced by NO hypothesis — register it anyway per the LOCK.
+
+SPEC_OI_SIGN = FactorSpec(
+    name="oi_sign",
+    category="oi",
+    warmup_bars=1,
+    inputs=["sum_open_interest"],
+    output_dtype="float64",
+    compute=oi_sign,
+    docstring=oi_sign.__doc__ or "",
+    input_source="oi",
+    input_period_bars=1,
+)
+
+SPEC_OI_VELOCITY_EWM_240 = FactorSpec(
+    name="oi_velocity_ewm_240",
+    category="oi",
+    warmup_bars=240,
+    inputs=["sum_open_interest"],
+    output_dtype="float64",
+    compute=oi_velocity_ewm_240,
+    docstring=oi_velocity_ewm_240.__doc__ or "",
+    input_source="oi",
+    input_period_bars=1,
+)
+
+SPEC_OI_PCT_RANK_2160 = FactorSpec(
+    name="oi_pct_rank_2160",
+    category="oi",
+    warmup_bars=2160,
+    inputs=["sum_open_interest"],
+    output_dtype="float64",
+    compute=oi_pct_rank_2160,
+    docstring=oi_pct_rank_2160.__doc__ or "",
+    input_source="oi",
+    input_period_bars=1,
+)
+
+SPEC_OI_VELOCITY_EWM_240_PCTRANK_2160 = FactorSpec(
+    name="oi_velocity_ewm_240_pctrank_2160",
+    category="oi",
+    warmup_bars=2160,
+    inputs=["sum_open_interest"],
+    output_dtype="float64",
+    compute=oi_velocity_ewm_240_pctrank_2160,
+    docstring=oi_velocity_ewm_240_pctrank_2160.__doc__ or "",
+    input_source="oi",
+    input_period_bars=1,
+)

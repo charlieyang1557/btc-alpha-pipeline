@@ -47,6 +47,7 @@ DEFAULT_RAW_PATH = PROJECT_ROOT / "data" / "raw" / "btcusdt_1h.parquet"
 DEFAULT_FEATURES_PATH = PROJECT_ROOT / "data" / "features" / "btcusdt_1h_features.parquet"
 DEFAULT_FUNDING_PATH = PROJECT_ROOT / "data" / "raw" / "btcusdt_funding_8h.parquet"
 DEFAULT_MARKPRICE_PATH = PROJECT_ROOT / "data" / "raw" / "btcusdt_markprice_1h.parquet"
+DEFAULT_OI_PATH = PROJECT_ROOT / "data" / "raw" / "btcusdt_oi_1h.parquet"
 
 METADATA_KEY_FEATURE_VERSION = b"feature_version"
 METADATA_KEY_BUILT_AT = b"built_at_utc"
@@ -115,11 +116,85 @@ def load_markprice(path: Path) -> pd.DataFrame:
     return df.sort_values("open_time_utc").reset_index(drop=True)
 
 
+def load_oi(path: Path) -> pd.DataFrame:
+    """Load the canonical 1h open-interest parquet (read-only).
+
+    Returns the OI frame sorted by ``open_time_utc`` ascending, with a
+    UTC-aware ``open_time_utc`` column and a ``sum_open_interest`` column.
+    Raises if the file is missing or mis-typed.
+    """
+    df = pd.read_parquet(path)
+    if "open_time_utc" not in df.columns:
+        raise ValueError(f"OI parquet at {path} missing 'open_time_utc' column")
+    if "sum_open_interest" not in df.columns:
+        raise ValueError(f"OI parquet at {path} missing 'sum_open_interest' column")
+    if not isinstance(df["open_time_utc"].dtype, pd.DatetimeTZDtype):
+        raise ValueError(
+            f"OI parquet at {path} has non-timezone-aware 'open_time_utc'"
+        )
+    return df.sort_values("open_time_utc").reset_index(drop=True)
+
+
+def _check_oi_coverage(ohlcv_df: pd.DataFrame, oi_df: pd.DataFrame) -> None:
+    """Guard: the OI frame must have meaningful overlap with the OHLCV frame.
+
+    Raises ValueError on GROSS misalignment — completely disjoint grids (no shared
+    timestamps), or an empty OI frame. Small known gaps in OI data (exchange outages)
+    are accepted; the left-join maps those OHLCV bars to NaN OI values (correct).
+
+    This guard uses the same semantics as ``basis_derive._check_oi_coverage``:
+    raise only on zero-overlap (which would indicate a timezone error, unit error,
+    or completely wrong parquet). The join itself (``on="open_time_utc"``, exact
+    match) is what prevents silent mis-pairing onto the wrong bar — the guard is a
+    pre-flight sanity check, not a per-bar completeness check.
+
+    Detailed gap diagnostics (count of OHLCV bars outside OI window, count of
+    intra-window gaps) are logged at INFO for transparency.
+    """
+    ohlcv_times = pd.Index(ohlcv_df["open_time_utc"])
+    oi_times = pd.Index(oi_df["open_time_utc"])
+
+    if len(oi_times) == 0:
+        raise ValueError(
+            "coverage guard: OI frame is empty — cannot align with OHLCV bars."
+        )
+
+    shared = ohlcv_times.intersection(oi_times)
+    n_shared = len(shared)
+
+    if n_shared == 0:
+        raise ValueError(
+            "coverage guard: zero shared open_time_utc timestamps between OI and OHLCV. "
+            "Check for timezone or unit mismatch (e.g. milliseconds vs timestamps). "
+            "OI join will produce all-NaN output."
+        )
+
+    oi_min, oi_max = oi_times.min(), oi_times.max()
+    ohlcv_in_window = ohlcv_times[(ohlcv_times >= oi_min) & (ohlcv_times <= oi_max)]
+    n_intra_gap = len(pd.Index(ohlcv_in_window).difference(oi_times))
+    n_before = int((ohlcv_times < oi_min).sum())
+    n_after = int((ohlcv_times > oi_max).sum())
+
+    logger.info(
+        "_check_oi_coverage: shared=%d bars, OI window [%s, %s], "
+        "OHLCV bars outside window=%d (before=%d, after=%d), "
+        "intra-window OHLCV gaps in OI=%d (known data gaps → NaN via left-join)",
+        n_shared,
+        oi_min,
+        oi_max,
+        n_before + n_after,
+        n_before,
+        n_after,
+        n_intra_gap,
+    )
+
+
 def build_features_df(
     raw_df: pd.DataFrame,
     registry: FactorRegistry,
     funding_df: pd.DataFrame | None = None,
     markprice_df: pd.DataFrame | None = None,
+    oi_df: pd.DataFrame | None = None,
 ) -> pd.DataFrame:
     """Compute all registered factors over the full raw DataFrame.
 
@@ -146,6 +221,18 @@ def build_features_df(
     correct and expected. If ``markprice_df`` is None, basis columns are added
     with all-NaN values so the schema is consistent. The production build raises
     if markprice is missing while basis factors are registered.
+
+    Routing (Path D Phase B Task B5): OI factors (``input_source="oi"``) do NOT
+    compute on ``raw_df`` (it has no ``sum_open_interest`` column). Instead:
+    1. ``_check_oi_coverage(raw_df, oi_df)`` asserts the OI 1h grid matches the
+       OHLCV grid over their overlap (raises on >=1 misaligned bar — never silently
+       mis-pair OI onto the wrong bar; CONTRACT BOUNDARY between this coverage guard
+       and the left-join below).
+    2. OI factors are computed on ``oi_df`` directly (native-1h, no carry).
+    3. Their columns are LEFT-JOINED onto ``out`` by ``open_time_utc``.
+    If ``oi_df`` is None, OI columns are added with all-NaN values so the schema
+    is consistent. The production build raises if OI is missing while OI factors
+    are registered.
     """
     ohlcv_names = registry.list_names(input_source="ohlcv")
     funding_names = registry.list_names(input_source="funding")
@@ -236,6 +323,61 @@ def build_features_df(
                 f"Duplicate open_time_utc in basis_feat?"
             )
 
+    oi_names = registry.list_names(input_source="oi")
+    if oi_names:
+        if oi_df is None:
+            # No OI frame provided: add NaN columns for every OI factor so the
+            # schema stays consistent (same columns regardless of OI availability).
+            # The production build raises when OI is required.
+            logger.warning(
+                "build_features_df: %d OI factor(s) registered (%s) but no "
+                "oi_df provided — adding NaN columns. The production build "
+                "requires the OI parquet.",
+                len(oi_names),
+                oi_names,
+            )
+            for name in oi_names:
+                out[name] = float("nan")
+        else:
+            # CONTRACT BOUNDARY: _check_oi_coverage raises if the OI 1h grid
+            # disagrees with the OHLCV grid by >=1 bar in their overlap window.
+            # This guard fires BEFORE the left-join (producer-layer invariant);
+            # the left-join itself is a separate operation. Widening the allowed
+            # misalignment requires explicit human approval.
+            _check_oi_coverage(raw_df, oi_df)
+            logger.info(
+                "Computing %d OI factors over %d OI bars, then left-joining "
+                "onto the 1h OHLCV feature frame",
+                len(oi_names),
+                len(oi_df),
+            )
+            # DESIGN INVARIANT: OI factors use zero-poison (OI<=0 -> NaN) which
+            # legitimately produces NaN after the declared warmup on glitch bars.
+            # This violates compute_all's ``null_policy="nan_before_warmup_only"``
+            # post-warmup enforcement, so we bypass compute_all and call each
+            # factor's compute function directly. The G1/G2 leakage guards in
+            # tests/test_leakage_guards.py independently verify causality.
+            oi_computed: dict[str, pd.Series] = {}
+            for name in oi_names:
+                spec = registry.get(name)
+                series = spec.compute(oi_df).astype(spec.output_dtype)
+                oi_computed[name] = series
+            oi_feat = pd.DataFrame(oi_computed, index=oi_df.index)
+            oi_feat = pd.concat(
+                [oi_df[["open_time_utc"]], oi_feat], axis=1
+            )
+            # Left-join OI columns onto the OHLCV feature frame by open_time_utc.
+            # OHLCV bars NOT in the OI frame (outside the overlap window, or after
+            # the OI data ends) → NaN OI values (correct).
+            # validate="one_to_one" guards against duplicate open_time_utc in either
+            # frame, which would silently row-multiply out and corrupt ALL factors.
+            n_rows_before = len(out)
+            out = out.merge(oi_feat, on="open_time_utc", how="left", validate="one_to_one")
+            assert len(out) == n_rows_before, (
+                f"OI left-join multiplied rows: {n_rows_before} → {len(out)}. "
+                f"Duplicate open_time_utc in oi_feat?"
+            )
+
     return out
 
 
@@ -292,6 +434,7 @@ def build_features(
     registry: FactorRegistry | None = None,
     funding_path: Path | None = DEFAULT_FUNDING_PATH,
     markprice_path: Path | None = DEFAULT_MARKPRICE_PATH,
+    oi_path: Path | None = DEFAULT_OI_PATH,
 ) -> Path:
     """Build the full-coverage factor parquet. Returns the written path.
 
@@ -308,6 +451,12 @@ def build_features(
     ``factors.basis_derive.derive_basis_rel``. Basis factor columns are then
     left-joined onto the 1h feature frame. Passing ``markprice_path=None``
     or a path to a non-existent file raises when basis factors are registered.
+
+    When OI factors are registered, ``oi_path`` (the 1h OI parquet) is loaded
+    and OI factors are computed directly on it (native-1h, no carry). A
+    coverage guard asserts the OI grid matches the OHLCV grid over their
+    overlap before the left-join. Passing ``oi_path=None`` or a path to a
+    non-existent file raises when OI factors are registered.
     """
     if registry is None:
         registry = get_registry()
@@ -341,8 +490,22 @@ def build_features(
                 f"ingestion first or pass markprice_path=None to accept NaN columns."
             )
         markprice_df = load_markprice(markprice_path)
+    oi_df = None
+    if registry.list_names(input_source="oi") and oi_path is not None:
+        # When an oi_path is given, it must exist — never silently produce NaN
+        # OI columns on a misconfigured production path. Passing oi_path=None is
+        # the explicit "no OI available" signal that produces NaN OI columns.
+        if not Path(oi_path).exists():
+            raise ValueError(
+                f"OI factors are registered and oi_path was supplied "
+                f"({oi_path}) but the file does not exist; the production "
+                f"build cannot silently drop OI columns. Run the OI ingestion "
+                f"first or pass oi_path=None to accept NaN columns."
+            )
+        oi_df = load_oi(oi_path)
     features_df = build_features_df(
-        raw_df, registry, funding_df=funding_df, markprice_df=markprice_df
+        raw_df, registry, funding_df=funding_df, markprice_df=markprice_df,
+        oi_df=oi_df,
     )
     feature_version = compute_feature_version(registry)
     write_features_parquet(features_df, output_path, feature_version, raw_path)
@@ -355,14 +518,15 @@ def load_features_or_rebuild(
     registry: FactorRegistry | None = None,
     funding_path: Path | None = DEFAULT_FUNDING_PATH,
     markprice_path: Path | None = DEFAULT_MARKPRICE_PATH,
+    oi_path: Path | None = DEFAULT_OI_PATH,
 ) -> pd.DataFrame:
     """Read the feature parquet, rebuilding first if feature_version is stale.
 
     This is the canonical consumer-side entrypoint. No silent "use stale
     data" fallback is permitted: if the stored version doesn't match the
-    live registry hash, we rebuild before returning the DataFrame. ``funding_path``
-    and ``markprice_path`` are forwarded to :func:`build_features` for the
-    funding-factor and basis-factor routing respectively.
+    live registry hash, we rebuild before returning the DataFrame. ``funding_path``,
+    ``markprice_path``, and ``oi_path`` are forwarded to :func:`build_features` for
+    the funding-factor, basis-factor, and OI-factor routing respectively.
     """
     if registry is None:
         registry = get_registry()
@@ -382,6 +546,7 @@ def load_features_or_rebuild(
             registry,
             funding_path=funding_path,
             markprice_path=markprice_path,
+            oi_path=oi_path,
         )
 
     return pd.read_parquet(features_path)
@@ -437,6 +602,13 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=DEFAULT_MARKPRICE_PATH,
         help="Path to the 1h markprice parquet (used to derive basis_rel when "
         "basis factors are registered; native-1h, no carry)",
+    )
+    parser.add_argument(
+        "--oi",
+        type=Path,
+        default=DEFAULT_OI_PATH,
+        help="Path to the 1h open-interest parquet (used when OI factors are "
+        "registered; native-1h, no carry; coverage guard raises on >=1 misaligned bar)",
     )
     parser.add_argument(
         "--force-rebuild",
@@ -496,8 +668,22 @@ def main(argv: list[str] | None = None) -> int:
             )
             return 1
         markprice_df = load_markprice(args.markprice)
+    oi_df = None
+    if registry.list_names(input_source="oi"):
+        # Mirror the funding/markprice diagnostic: log an actionable error + return
+        # non-zero when OI factors are registered but the OI parquet is missing.
+        if args.oi is None or not Path(args.oi).exists():
+            logger.error(
+                "OI factors are registered but the OI parquet (%s) "
+                "is missing; the build cannot silently drop OI columns. "
+                "Run the OI ingestion first or pass an explicit --oi path.",
+                args.oi,
+            )
+            return 1
+        oi_df = load_oi(args.oi)
     features_df = build_features_df(
-        raw_df, registry, funding_df=funding_df, markprice_df=markprice_df
+        raw_df, registry, funding_df=funding_df, markprice_df=markprice_df,
+        oi_df=oi_df,
     )
 
     if args.dry_run:

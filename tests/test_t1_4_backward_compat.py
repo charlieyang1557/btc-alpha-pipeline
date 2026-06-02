@@ -2194,7 +2194,29 @@ class TestT1_4_Pc9BaselineGate:
         # Branch pre-existing gap was +28 (from prior pathc arc commits merged into
         # this branch); our 32 new tests bring pre-T1.x = 3042 + 32 = 3074.
         # Advance BASELINE 3014 → 3074.
-        BASELINE = 3074
+        # Path D Phase B Task B5 (pathd-oi-scoping branch): OI factor registration +
+        # build integration (input_source="oi" widen in registry.py, oi_df routing
+        # in build_features.py, coverage guard, zero-poison propagation). Adds +28
+        # collected items across 3 new/modified files, none a t1_4/t1_5 subtraction
+        # target, so +28 lands wholly in pre_t1_x_baseline = total − t1_4 − t1_5:
+        #   tests/test_oi_build_routing.py (+12 NEW file: 2 input_source contract-widen
+        #     tests [FactorSpec(oi) constructs + invalid still raises] + 4 OI
+        #     registration tests [factor names, input_source, warmups, input_period_bars,
+        #     category] + 6 routing integration tests [OI columns present, OHLCV
+        #     unaffected, rows not dropped, coverage-guard raises, zero-poison NaN]),
+        #   tests/test_factors.py (+4: the EXPECTED_FACTORS-parametrized forensic
+        #     invariance test auto-grew 33→37 = +4 as the 4 OI factors are picked up),
+        #   tests/test_leakage_guards.py (+12: the registry-auto-parametrized G2
+        #     truncation + G2 reversal + G4a invariance sentinels grew 33→37, i.e.
+        #     3 sentinels × 4 OI factors).
+        # Production changes: factors/registry.py __post_init__ widen (adds "oi"),
+        #   factors/oi.py +4 SPEC_OI_* FactorSpec objects + import FactorSpec,
+        #   factors/build_features.py load_oi + _check_oi_coverage + oi_df routing +
+        #   oi_path in build_features/load_features_or_rebuild/CLI. Sealed
+        #   tier6_dsr_v1/ sha256 4/4 byte-unchanged; PHASE_D_AUTHORIZED untouched.
+        # Advance BASELINE 3074 → 3102 (same expected-additive-cohort precedent;
+        # per Charlie Phase D Phase B Task B5 register, pathd-oi-scoping branch).
+        BASELINE = 3102
         assert pre_t1_x_baseline == BASELINE, (
             f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
             f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "
