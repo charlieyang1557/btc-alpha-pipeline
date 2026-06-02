@@ -853,6 +853,119 @@ def validate_markprice(df: pd.DataFrame) -> dict[str, Any]:
     }
 
 
+# ---------------------------------------------------------------------------
+# OI validation (Path D — 1h open-interest series, causally downsampled from 5min)
+# ---------------------------------------------------------------------------
+
+# Allowed source labels for the OI series. Mirrors funding/markprice allowed sources
+# (USDT-M futures data; no Binance.US source).
+OI_ALLOWED_SOURCES = {"binance_vision", "ccxt_binance"}
+
+OI_REQUIRED_COLUMNS = [
+    "open_time_utc",
+    "sum_open_interest",
+    "sum_open_interest_value",
+    "source",
+    "ingested_at_utc",
+]
+
+
+def validate_oi(df: pd.DataFrame) -> dict[str, Any]:
+    """Validate the OI 1h series (sum_open_interest + sum_open_interest_value) against the oi schema.
+
+    Inputs: DataFrame with open_time_utc(datetime64[ms,UTC] PK), sum_open_interest(float64),
+      sum_open_interest_value(float64, nullable), source(string),
+      ingested_at_utc(datetime64[ms,UTC]).
+    Computation: structural/PK checks + sum_open_interest positivity check.
+    Warmup period: none.
+    Output schema: {"ok": bool, "errors": list[str], "warnings": list[str], "rows": int}.
+    Null policy: NaN in sum_open_interest_value is allowed (schema nullable: true);
+      NaN in sum_open_interest is an error (schema nullable: false).
+
+    Checks (errors -> ok=False):
+    - required columns present
+    - open_time_utc is timezone-aware UTC
+    - open_time_utc has no duplicates (unique primary key)
+    - open_time_utc is strictly ascending (sorted)
+    - sum_open_interest > 0 for every row (non-positive or zero is invalid)
+    - source values are within OI_ALLOWED_SOURCES, populated (no null/empty)
+
+    Warnings (do NOT set ok=False):
+    - spacing gaps (consecutive spacing != 1h) — flagged, never interpolated/removed
+
+    Args:
+        df: The OI DataFrame to validate.
+
+    Returns:
+        dict with keys "ok" (bool), "errors" (list[str]), "warnings" (list[str]),
+        and "rows" (int).
+    """
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    # Required columns
+    missing = [c for c in OI_REQUIRED_COLUMNS if c not in df.columns]
+    if missing:
+        errors.append(f"Missing columns: {missing}")
+        return {"ok": False, "errors": errors, "warnings": warnings, "rows": len(df)}
+
+    pk = df["open_time_utc"]
+
+    # UTC tz-aware
+    if not hasattr(pk.dtype, "tz") or pk.dt.tz is None:
+        errors.append("open_time_utc is not timezone-aware")
+    elif str(pk.dt.tz) != "UTC":
+        errors.append(f"open_time_utc timezone is {pk.dt.tz}, expected UTC")
+
+    # Unique PK (no duplicates)
+    dupe_count = int(pk.duplicated().sum())
+    if dupe_count > 0:
+        errors.append(f"open_time_utc has {dupe_count} duplicate value(s)")
+
+    # Strictly ascending (sorted)
+    if not pk.is_monotonic_increasing or dupe_count > 0:
+        errors.append("open_time_utc is not strictly ascending (sorted_pk)")
+
+    # sum_open_interest > 0 per row (the signal series; zero/negative is invalid)
+    bad_oi = int((df["sum_open_interest"].isna() | (df["sum_open_interest"] <= 0)).sum())
+    if bad_oi > 0:
+        errors.append(f"sum_open_interest has {bad_oi} row(s) NaN or <= 0")
+
+    # source populated + allowed
+    src = df["source"]
+    null_count = int(src.isna().sum())
+    empty_count = int((src == "").sum())
+    invalid_values = set(src.dropna().unique()) - OI_ALLOWED_SOURCES
+    if null_count > 0:
+        errors.append(f"source has {null_count} null value(s)")
+    if empty_count > 0:
+        errors.append(f"source has {empty_count} empty value(s)")
+    if invalid_values:
+        errors.append(f"source has invalid value(s): {sorted(invalid_values)}")
+
+    # Gap detection (warning only; flagged, never interpolated). Expected spacing is
+    # exactly 1h (ONE_HOUR_MS ms). A gap is spacing >= 1.5x that.
+    if len(df) >= 2:
+        s = df.sort_values("open_time_utc").reset_index(drop=True)
+        diffs = s["open_time_utc"].diff().iloc[1:]
+        expected = pd.Timedelta(hours=1)
+        gap_mask = diffs >= expected * 1.5
+        gap_count = int(gap_mask.sum())
+        if gap_count > 0:
+            missing_hours = int(((diffs[gap_mask] / expected).round() - 1).sum())
+            warnings.append(
+                f"{gap_count} gap(s) in open_time_utc spacing (missing bars; ~{missing_hours} "
+                f"missing hour(s)) flagged — not interpolated"
+            )
+
+    return {
+        "ok": len(errors) == 0,
+        "errors": errors,
+        "warnings": warnings,
+        "rows": len(df),
+    }
+
+
 def save_report(report: dict[str, Any], report_dir: Path, prefix: str = "validation") -> Path:
     """Save a validation report as JSON.
 
@@ -886,19 +999,79 @@ def main() -> int:
     Returns:
         Exit code: 0 on PASS/WARNING, 1 on FAIL.
     """
-    parser = argparse.ArgumentParser(description="Validate OHLCV or funding parquet data")
+    parser = argparse.ArgumentParser(description="Validate OHLCV, funding, markprice, or OI parquet data")
     parser.add_argument("--file", type=str, default=None, help="Path to OHLCV parquet file")
     parser.add_argument(
         "--funding", type=str, default=None,
         help="Path to funding parquet file (validates the funding schema instead of OHLCV)",
     )
+    parser.add_argument(
+        "--markprice", type=str, default=None,
+        help="Path to markprice parquet file (validates the markprice schema)",
+    )
+    parser.add_argument(
+        "--oi", type=str, default=None,
+        help="Path to OI parquet file (validates the oi schema)",
+    )
     parser.add_argument("--report", type=str, default=None, help="Directory to save report")
     parser.add_argument("--dry-run", action="store_true", help="Print report but don't save")
     args = parser.parse_args()
 
-    if (args.file is None) == (args.funding is None):
-        logger.error("Provide exactly one of --file (OHLCV) or --funding")
+    modes = [args.file, args.funding, args.markprice, args.oi]
+    provided = sum(1 for m in modes if m is not None)
+    if provided != 1:
+        logger.error("Provide exactly one of --file (OHLCV), --funding, --markprice, or --oi")
         return 1
+
+    # OI-validation path
+    if args.oi is not None:
+        file_path = Path(args.oi)
+        if not file_path.exists():
+            logger.error("File not found: %s", file_path)
+            return 1
+        logger.info("Loading OI %s ...", file_path)
+        df = pd.read_parquet(file_path)
+        logger.info("Loaded %d rows", len(df))
+
+        report = validate_oi(df)
+        report["file_checked"] = str(file_path)
+        logger.info("OI validation ok: %s", report["ok"])
+        for err in report["errors"]:
+            logger.error("  ERROR: %s", err)
+        for warn in report["warnings"]:
+            logger.warning("  WARN: %s", warn)
+
+        if args.dry_run:
+            print(json.dumps(report, indent=2, default=str))
+        elif args.report:
+            save_report(report, Path(args.report), prefix="oi_validation")
+
+        return 0 if report["ok"] else 1
+
+    # Markprice-validation path
+    if args.markprice is not None:
+        file_path = Path(args.markprice)
+        if not file_path.exists():
+            logger.error("File not found: %s", file_path)
+            return 1
+        logger.info("Loading markprice %s ...", file_path)
+        df = pd.read_parquet(file_path)
+        logger.info("Loaded %d rows", len(df))
+
+        report = validate_markprice(df)
+        report["file_checked"] = str(file_path)
+        logger.info("Markprice validation ok: %s", report["ok"])
+        for err in report["errors"]:
+            logger.error("  ERROR: %s", err)
+        for warn in report["warnings"]:
+            logger.warning("  WARN: %s", warn)
+
+        if args.dry_run:
+            print(json.dumps(report, indent=2, default=str))
+        elif args.report:
+            save_report(report, Path(args.report), prefix="markprice_validation")
+
+        return 0 if report["ok"] else 1
 
     # Funding-validation path
     if args.funding is not None:

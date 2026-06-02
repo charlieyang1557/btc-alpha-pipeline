@@ -142,3 +142,91 @@ def test_downsample_boundary_obs_at_exactly_N_plus_1h_does_not_leak():
     assert bar01 == 23.0   # 999.0 would indicate the N+1h boundary obs leaked into bar N
     bar02 = out.loc[out.open_time_utc == pd.Timestamp("2020-09-01 02:00", tz="UTC"), "sum_open_interest"].iloc[0]
     assert bar02 == 999.0  # the boundary obs belongs to bar 02:00
+
+
+# ---------------------------------------------------------------------------
+# A4: validate_oi + --oi CLI branch
+# ---------------------------------------------------------------------------
+
+import subprocess
+import sys
+from ingestion.validators import validate_oi
+
+
+def _good_oi():
+    return pd.DataFrame({
+        "open_time_utc": pd.to_datetime([1577836800000, 1577840400000], unit="ms", utc=True).as_unit("ms"),
+        "sum_open_interest": [12345.6, 12350.0], "sum_open_interest_value": [9.8e7, 9.9e7],
+        "source": ["binance_vision"]*2, "ingested_at_utc": pd.to_datetime([0, 0], unit="ms", utc=True).as_unit("ms"),
+    })
+
+
+def test_validate_oi_accepts_good():
+    assert validate_oi(_good_oi())["ok"] is True
+
+
+def test_validate_oi_rejects_duplicate_pk():
+    df = _good_oi()
+    df.loc[1, "open_time_utc"] = df.loc[0, "open_time_utc"]
+    r = validate_oi(df)
+    assert r["ok"] is False and "duplicate" in r["errors"][0].lower()
+
+
+def test_validate_oi_rejects_negative_oi():
+    df = _good_oi()
+    df.loc[0, "sum_open_interest"] = -1.0
+    r = validate_oi(df)
+    assert r["ok"] is False
+
+
+def test_validate_oi_flags_gap_as_warning_not_error():
+    # Build a frame with a 2h gap between the two rows (missing 1 hour).
+    # gap -> warning; ok must still be True.
+    df = pd.DataFrame({
+        "open_time_utc": pd.to_datetime([1577836800000, 1577844000000], unit="ms", utc=True).as_unit("ms"),
+        "sum_open_interest": [100.0, 200.0],
+        "sum_open_interest_value": [1e8, 2e8],
+        "source": ["binance_vision"]*2,
+        "ingested_at_utc": pd.to_datetime([0, 0], unit="ms", utc=True).as_unit("ms"),
+    })
+    r = validate_oi(df)
+    assert r["ok"] is True
+    assert len(r["warnings"]) > 0
+
+
+def test_validate_oi_cli_ok_exit_zero(tmp_path):
+    """--oi <good_parquet> exits 0 (end-to-end CLI wiring check)."""
+    p = tmp_path / "btcusdt_oi_1h.parquet"
+    _good_oi().to_parquet(p, engine="pyarrow", index=False)
+    result = subprocess.run(
+        [sys.executable, "-m", "ingestion.validators", "--oi", str(p)],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, f"STDERR: {result.stderr}"
+
+
+def test_validate_oi_cli_bad_exits_nonzero(tmp_path):
+    """--oi <bad_parquet> (negative OI) exits non-zero."""
+    df = _good_oi()
+    df.loc[0, "sum_open_interest"] = -1.0
+    p = tmp_path / "btcusdt_oi_1h_bad.parquet"
+    df.to_parquet(p, engine="pyarrow", index=False)
+    result = subprocess.run(
+        [sys.executable, "-m", "ingestion.validators", "--oi", str(p)],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode != 0, f"Expected non-zero exit for bad OI data"
+
+
+def test_validate_oi_cli_mutual_exclusion(tmp_path):
+    """--oi is mutually exclusive with --file; providing both exits non-zero."""
+    p = tmp_path / "btcusdt_oi_1h.parquet"
+    _good_oi().to_parquet(p, engine="pyarrow", index=False)
+    result = subprocess.run(
+        [sys.executable, "-m", "ingestion.validators", "--oi", str(p), "--file", str(p)],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode != 0, "Expected non-zero when both --oi and --file are provided"
