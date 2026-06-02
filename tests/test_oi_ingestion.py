@@ -221,6 +221,16 @@ def test_validate_oi_flags_zero_oi_as_warning_not_error():
     assert any("zero" in w.lower() for w in r["warnings"])
 
 
+def test_validate_oi_rejects_nan_oi():
+    # NaN in sum_open_interest is a hard error (schema nullable: false) — distinct from the
+    # zero-OI warning path (Codex B2: the §38.1 repair split NaN/negative/zero branches).
+    df = _good_oi()
+    df.loc[0, "sum_open_interest"] = float("nan")
+    r = validate_oi(df)
+    assert r["ok"] is False
+    assert any("nan" in e.lower() for e in r["errors"])
+
+
 def test_validate_oi_flags_gap_as_warning_not_error():
     # Build a frame with a 2h gap between the two rows (missing 1 hour).
     # gap -> warning; ok must still be True.

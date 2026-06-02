@@ -20,6 +20,7 @@ import argparse
 import io
 import logging
 import sys
+import tempfile
 import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
@@ -235,8 +236,13 @@ def _download_day(pair: str, day_key: str) -> pd.DataFrame | None:
                 logger.warning("No CSV found in %s", filename)
                 return None
             with zf.open(csv_names[0]) as csv_file:
-                tmp = Path(f"/tmp/{filename}.csv")
-                tmp.write_bytes(csv_file.read())
+                # Collision-safe temp file (Codex B2: a fixed /tmp/{filename} path races
+                # under concurrent re-runs). delete=False so parse_metrics_csv can reopen it.
+                with tempfile.NamedTemporaryFile(
+                    suffix=".csv", prefix=f"{filename}_", delete=False
+                ) as tf:
+                    tf.write(csv_file.read())
+                    tmp = Path(tf.name)
         df = parse_metrics_csv(tmp)
         tmp.unlink(missing_ok=True)
     except (zipfile.BadZipFile, Exception) as exc:
@@ -267,7 +273,7 @@ def downsample_oi_to_1h(df5: pd.DataFrame) -> pd.DataFrame:
            .last() takes the final obs within [N, N+1h) = the bar-N-close OI.
         3. Drop any 1h bins where sum_open_interest is NaN (hour-gaps; NOT interpolated).
         4. Restore open_time_utc as a datetime64[ms, UTC] column; attach source +
-           ingested_at_utc from the input frame (or now() if absent).
+           ingested_at_utc (= now() write timestamp).
     Output:
         1h frame with columns (open_time_utc, sum_open_interest, sum_open_interest_value,
         source, ingested_at_utc), sorted ascending by open_time_utc.
@@ -293,11 +299,9 @@ def downsample_oi_to_1h(df5: pd.DataFrame) -> pd.DataFrame:
     agg = agg.reset_index().rename(columns={"open_time_utc": "open_time_utc"})
     agg["open_time_utc"] = agg["open_time_utc"].astype("datetime64[ms, UTC]")
     agg["source"] = pd.array(["binance_vision"] * len(agg), dtype="string")
-    if "ingested_at_utc" in df5.columns:
-        ingested_at = df5["ingested_at_utc"].iloc[0]
-    else:
-        ingested_at = pd.Timestamp(datetime.now(timezone.utc)).as_unit("ms")
-    agg["ingested_at_utc"] = ingested_at
+    # Write timestamp (Codex/advisor B2: use now() unconditionally rather than the first
+    # input row's stamp — the latter is fragile across a multi-year concat / incremental mix).
+    agg["ingested_at_utc"] = pd.Timestamp(datetime.now(timezone.utc))
     agg["ingested_at_utc"] = agg["ingested_at_utc"].astype("datetime64[ms, UTC]")
     return agg.sort_values("open_time_utc").reset_index(drop=True)
 

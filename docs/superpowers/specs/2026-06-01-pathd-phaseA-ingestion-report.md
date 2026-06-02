@@ -32,7 +32,7 @@ This is the Phase A closeout artifact: what the first authorized OI ingestion ru
 ## Known OI data characteristics (for downstream phases)
 
 - **OI history starts 2020-09-01** — the OI-informed train window is ~8 months shorter than OHLCV/funding/basis (2020-01); after the 2160-bar (≈90d) warmup, OI factors are first valid ≈2020-12. This is the §12 heightened-under-power handicap (immutable split unchanged; OI factors NaN before availability+warmup).
-- **43 zero-OI glitch bars + 7 gaps** — flagged, kept; Phase B factors must handle `OI<=0 → NaN` (the velocity log-change) gracefully.
+- **43 zero-OI glitch bars + 7 gaps** — flagged, kept. **Phase-B obligation (both 2-leg-B2 legs):** a single zero-OI bar poisons `oi_log_change` at TWO bars (`t`: log(0)=−inf; `t+1`: uses OI[t]), and a zero *level* is a spurious all-time-low that would distort `oi_pct_rank_2160` if not NaN'd first — so the factor layer must map `OI<=0 → NaN` and a dedicated **zero-poison NaN-propagation test** must verify NaN flows correctly through all 4 OI factors (the level-percentile, the velocity-EWM, the nested velocity-percentile, the sign). This is load-bearing because the **majority of zero bars fall in the 2024/2025 validation/test regimes** (advisor count-only finding: 30 in 2024, 5 in 2025 — a glitch-bar count, NOT a signal-value peek). Also confirm at Phase B that the zero-OI bars carry ~zero *notional* (a true glitch vs a different corruption class).
 - No 2026 OI signal **values** were inspected (no-peek; structural validation only).
 
 ## Phase A status
