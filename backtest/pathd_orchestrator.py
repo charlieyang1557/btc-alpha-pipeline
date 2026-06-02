@@ -46,10 +46,13 @@ C7 INTEGRATION:
   All floor checks on the TRAIN window only; under-floor -> INDETERMINATE.
 
 NOTE (OI NaN power disclosure): the OI percentile/regime factors are heavily NaN
-in 2024/2025. Floor eligibility is computed on the non-NaN subset of train bars;
-this is a known power limitation, handled gracefully (NaN-is-False in the DSL
-compiler; degenerate/flat equity returns handled by the produce_candidate_holdout
-guard). Do not crash on NaN-heavy train subsets.
+in 2024/2025 due to scattered zero-OI-glitch gap-propagation — each zero-OI bar
+NaNs the entire rolling-2160 (~90d) percentile window containing it, so the NaN
+is data-driven, not a front-loaded burn-in; forward_2026 (the gate) is 0% NaN.
+Floor eligibility is computed on the non-NaN subset of train bars; this is a
+known power limitation, handled gracefully (NaN-is-False in the DSL compiler;
+degenerate/flat equity returns handled by the produce_candidate_holdout guard).
+Do not crash on NaN-heavy train subsets.
 """
 from __future__ import annotations
 
@@ -431,15 +434,27 @@ def run_pathd_verdict(
     n_dsr_pass = len(dsr["survivors"])
 
     sanity = per_leg()
+    # Build per-leg holdout_sharpes for the §37.3 substantive-vs-vacuous check.
+    # Only non-degenerate holdouts contribute (degenerate legs have sharpe=0.0 by
+    # instrument repair — they are not measured losses, so they are excluded here
+    # to avoid spuriously claiming a substantive basis from a flat equity).
+    holdout_sharpes: dict[str, float] = {
+        k: float(h.get("holdout_sharpe", 0.0))
+        for k, h in holdouts.items()
+        if not degenerate_legs.get(k, False)
+    }
     taxonomy = assemble_evidence(
         per_leg=sanity,
         n_tier5_pass=n_tier5_pass,
         n_dsr_pass=n_dsr_pass,
         promotion_side_effect=False,
         under_determined_flags=under_determined_flags,
+        holdout_sharpes=holdout_sharpes,
     )
     escalation = d_escalation_advisory(
-        taxonomy["advisory_taxonomy"], n_dsr_pass=n_dsr_pass
+        taxonomy["advisory_taxonomy"],
+        n_dsr_pass=n_dsr_pass,
+        negative_has_substantive_basis=taxonomy.get("negative_has_substantive_basis", True),
     )
     return {
         "holdouts": holdouts,

@@ -40,18 +40,41 @@ REASON_MECHANISM_REFUTED_DIFFERENT_AXIS = "mechanism_refuted_next_step_is_mechan
 REASON_D_POSITIVE_NEXT_AXIS_OPTIONAL = "d_positive_next_axis_optional_charlie_reevaluates"
 
 
-def d_escalation_advisory(taxonomy: str, n_dsr_pass: int) -> dict:
+REASON_VACUOUS_ONLY_NOT_WARRANTED = (
+    "vacuous_only_negative_no_measured_loss_oi_not_tested_on_this_grid"
+)
+
+
+def d_escalation_advisory(
+    taxonomy: str,
+    n_dsr_pass: int,
+    *,
+    negative_has_substantive_basis: bool = True,
+) -> dict:
     """Advise whether next-axis escalation is warranted (Charlie fires it).
 
     Path D has NO Step-0 (fresh OI cohort, no prior dead cohort to re-score);
     the only prong-2 signal is whether any variant in the N*=3 grid itself
     reached significance (``n_dsr_pass == 0``).
 
+    §37.3 SUBSTANTIVE-vs-VACUOUS gate: escalation is warranted ONLY IF the
+    earned negative has a SUBSTANTIVE basis (at least one leg had a measured
+    forward loss, i.e. ``holdout_sharpe < 0``). A vacuous-only negative — where
+    ALL legs are under-determined (floor-ineligible + thin-sample non-negative
+    Sharpe, so no leg actually LOST) — means OI was never actually tested on
+    this grid; escalation on a vacuous negative over-claims. In that case
+    ``d_escalation_warranted=False`` and the prose HEDGES ("under-powered, OI
+    not actually tested on this grid, NOT OI is dead").
+
     Args:
         taxonomy: A pathd_earned_negative taxonomy constant.
         n_dsr_pass: # OI variants passing DSR-FWER (``pass_B``). The LOCK §4
             D-trigger's second prong: an OI variant reaching DSR-significance
             (n_dsr_pass > 0) means the OI axis is NOT yet exhausted.
+        negative_has_substantive_basis: True (default) if at least one leg had
+            a measured forward loss (holdout_sharpe < 0). False if all eligible
+            legs are vacuous (under-determined; no measured loss). Default True
+            preserves backward-compatibility for callers that do not pass this.
 
     Returns:
         An ADVISORY dict: ``d_escalation_warranted`` (bool), ``reason``, and
@@ -64,7 +87,10 @@ def d_escalation_advisory(taxonomy: str, n_dsr_pass: int) -> dict:
         raise ValueError(f"unknown taxonomy {taxonomy!r}")
 
     if taxonomy == PROCESS_REFUTED_FOR_GRID:
-        if n_dsr_pass > 0:
+        if not negative_has_substantive_basis:
+            # §37.3: vacuous-only negative — OI was not actually tested; hedge.
+            warranted, reason = False, REASON_VACUOUS_ONLY_NOT_WARRANTED
+        elif n_dsr_pass > 0:
             warranted, reason = False, REASON_DSR_PASS
         else:
             warranted, reason = True, REASON_PROCESS_REFUTED_WARRANTS

@@ -250,3 +250,92 @@ def test_verdict_headline_clean_case_no_power_limited():
     assert "verdict_headline" in ev
     assert "POWER-LIMITED" not in ev["verdict_headline"]
     assert "PROCESS_REFUTED" in ev["verdict_headline"] or "process_refuted" in ev["verdict_headline"].lower()
+
+
+# ---------------------------------------------------------------------------
+# FIX 2: §37.3 substantive-vs-vacuous fields
+# ---------------------------------------------------------------------------
+
+def test_substantive_basis_true_when_at_least_one_leg_has_measured_loss():
+    """§37.3 (a): >=1 measured-loss leg + 0 DSR pass -> substantive basis, escalation warranted."""
+    ev = _ev(
+        {"H1": _leg("strong_sane"), "H2": _leg("refuted"), "H3": _leg("refuted")},
+        n_tier5_pass=0, n_dsr_pass=0,
+        under_determined_flags={"H2": False, "H3": False},
+    )
+    # Manually call with holdout_sharpes to test the field
+    ev2 = en.assemble_evidence(
+        per_leg={"H1": _leg("strong_sane"), "H2": _leg("refuted"), "H3": _leg("refuted")},
+        n_tier5_pass=0, n_dsr_pass=0,
+        promotion_side_effect=False,
+        under_determined_flags={"H2": False, "H3": False},
+        holdout_sharpes={"H1": -0.87, "H2": -1.5, "H3": -0.5},
+    )
+    assert ev2["n_substantive_loss_legs"] == 3
+    assert ev2["negative_has_substantive_basis"] is True
+    assert ev2["negative_is_vacuous_only"] is False
+
+
+def test_vacuous_only_when_all_legs_under_determined_no_measured_loss():
+    """§37.3 (b): all legs under-determined (no measured loss) -> negative_is_vacuous_only=True."""
+    ev = en.assemble_evidence(
+        per_leg={"H1": _leg("strong_sane"), "H2": _leg("refuted"), "H3": _leg("refuted")},
+        n_tier5_pass=0, n_dsr_pass=0,
+        promotion_side_effect=False,
+        under_determined_flags={"H1": True, "H2": True, "H3": True},
+        holdout_sharpes={"H1": 0.0, "H2": 0.1, "H3": 0.05},  # all non-negative
+    )
+    assert ev["n_substantive_loss_legs"] == 0
+    assert ev["negative_has_substantive_basis"] is False
+    assert ev["negative_is_vacuous_only"] is True
+    assert "VACUOUS" in ev["verdict_headline"]
+
+
+def test_mixed_case_some_loss_some_under_determined():
+    """§37.3 (c): mixed — 1 leg with measured loss, 1 under-determined."""
+    ev = en.assemble_evidence(
+        per_leg={"H1": _leg("strong_sane"), "H2": _leg("refuted"), "H3": _leg("refuted")},
+        n_tier5_pass=0, n_dsr_pass=0,
+        promotion_side_effect=False,
+        under_determined_flags={"H2": True, "H3": False},
+        holdout_sharpes={"H1": -0.87, "H2": 0.1, "H3": -0.5},
+    )
+    # H1 and H3 have measured losses; H2 is under-determined (non-negative)
+    assert ev["n_substantive_loss_legs"] == 2
+    assert ev["negative_has_substantive_basis"] is True
+    assert ev["negative_is_vacuous_only"] is False
+
+
+def test_37_3_fields_always_present_in_bundle():
+    """§37.3 fields must always appear (not only when earned-negative)."""
+    ev = _ev(
+        {"H1": _leg("strong_sane"), "H2": _leg("strong_sane"), "H3": _leg("strong_sane")},
+        n_tier5_pass=1, n_dsr_pass=0,
+    )
+    assert "n_substantive_loss_legs" in ev
+    assert "negative_has_substantive_basis" in ev
+    assert "negative_is_vacuous_only" in ev
+
+
+def test_37_3_conservative_fallback_when_holdout_sharpes_not_provided():
+    """§37.3 conservative fallback: when holdout_sharpes is None and is_earned_negative=True,
+    n_substantive_loss_legs defaults to 1 (conservative — preserves escalation_warranted)."""
+    ev = _ev(
+        {"H1": _leg("strong_sane"), "H2": _leg("refuted"), "H3": _leg("refuted")},
+        n_tier5_pass=0, n_dsr_pass=0,
+    )
+    # is_earned_negative is True; fallback gives n_substantive_loss_legs=1
+    assert ev["is_earned_negative"] is True
+    assert ev["n_substantive_loss_legs"] == 1
+    assert ev["negative_has_substantive_basis"] is True
+    assert ev["negative_is_vacuous_only"] is False
+
+
+def test_37_3_vacuous_only_false_when_not_earned_negative():
+    """§37.3: negative_is_vacuous_only is False when not earned-negative (D_POSITIVE)."""
+    ev = _ev(
+        {"H1": _leg("strong_sane"), "H2": _leg("strong_sane"), "H3": _leg("strong_sane")},
+        n_tier5_pass=2, n_dsr_pass=0,
+    )
+    assert ev["is_earned_negative"] is False
+    assert ev["negative_is_vacuous_only"] is False

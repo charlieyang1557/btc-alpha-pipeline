@@ -305,10 +305,9 @@ def compute_oi_marginal(
     relation. There is NO D2 comparator, NO redundancy_read, NO d2_agrees in Path D.
     The §38.3 inheritance is ONLY the fenced-label-read + inert-D1-modal discipline.
 
-    ``contamination_correlations`` is computed on the TRAIN frame (not the forward
-    window) and returned as a separate key in the marginal dict. It measures Pearson
-    AND Spearman of ``oi_velocity_ewm_240`` vs return and volatility series — never
-    in N*/promotion.
+    NOTE: ``contamination_correlations`` is wired separately in ``run_verdict`` (not
+    here) and serialized under ``bundle["contamination_correlations"]``.  It is
+    NOT a per-hypothesis field inside this dict.
 
     FENCED (DESIGN INVARIANT): every result carries ``promotion_affecting=False`` and
     ``in_n_star=False`` as structural constants — these are never derived from inputs
@@ -371,6 +370,55 @@ def compute_oi_marginal(
                 # NOTE: NO d2, NO redundancy_read, NO d2_agrees — OI is independent.
             }
     return marginal
+
+
+def compute_contamination_correlations(
+    forward_df: pd.DataFrame,
+    train_df: pd.DataFrame,
+) -> dict[str, Any]:
+    """Fenced contamination-correlation set on forward AND train bars (LOCK Pre-reg 3).
+
+    Computes ``contamination_correlations(df)`` (from pathd_marginal_diagnostic)
+    separately on the forward_2026 bars and the train bars. Both are computed on the
+    common evaluated bars (the full forward / train frames passed in) — the LOCK
+    calls for reporting forward and train separately so the reader can distinguish
+    correlation behaviour in-sample vs out-of-sample.
+
+    NOTE: ``corr(oi_velocity_ewm_240, cdf_realized_vol_720)`` is partly a sizing-factor
+    self-relation (cdf_realized_vol_720 IS the sizing factor); this is the B2-intended
+    vol-leakage probe, not a defect — the correlation is expected to be non-zero by
+    construction.
+
+    FENCED (DESIGN INVARIANT): the returned dict carries ``promotion_affecting=False``
+    and ``in_n_star=False`` as top-level structural constants; the per-split results
+    inherit the same fence from ``contamination_correlations``.
+
+    Args:
+        forward_df: The forward_2026 feature frame (from the gated window); must
+            include ``oi_velocity_ewm_240`` and ``return_1h`` (+ optionally
+            ``realized_vol_24h``, ``cdf_realized_vol_720``).
+        train_df: The train feature frame (from ``build_train_frame``); same
+            column requirements as ``forward_df``.
+
+    Returns:
+        Dict with keys:
+          ``forward`` — contamination_correlations result on the forward bars
+          ``train``   — contamination_correlations result on the train bars
+          ``promotion_affecting`` — always False (structural constant)
+          ``in_n_star``           — always False (structural constant)
+    """
+    from backtest.pathd_marginal_diagnostic import contamination_correlations
+
+    forward_result = contamination_correlations(forward_df)
+    train_result = contamination_correlations(train_df)
+
+    return {
+        "forward": forward_result,
+        "train": train_result,
+        # FENCE (structural constants; never derived from inputs).
+        "promotion_affecting": False,
+        "in_n_star": False,
+    }
 
 
 def run_verdict(
@@ -593,7 +641,43 @@ def run_verdict(
         run_backtest_fn=run_backtest_fn,
         git_sha=git_sha,
     )
+    # FIX 4a: annotate D1 records for DEGENERATE legs.
+    # A degenerate leg's |d1_marginal_sharpe| reads spuriously "non-inert" because
+    # the flat (0-trade) forward equity yields 0 Sharpe, so the delta is just the
+    # magnitude of the baseline. The d1 record is fenced (promotion_affecting=False)
+    # so it never influences N*/promotion, but flag it explicitly so Charlie's read
+    # is not misled by a large |d1_marginal_sharpe| on a leg that never fired.
+    degenerate_legs_in_bundle = bundle.get("degenerate_legs", {})
+    for k, is_degen in degenerate_legs_in_bundle.items():
+        if is_degen and k in oi_marginal:
+            oi_marginal[k]["d1"]["degenerate"] = True
     bundle["oi_marginal"] = oi_marginal
+
+    # --- Contamination-correlation diagnostic (LOCK Pre-registration 3) ---
+    # Forward and train bars reported SEPARATELY (fenced; promotion_affecting=False).
+    # The forward frame is loaded from the features parquet restricted to the
+    # forward window; the train frame was already built above.
+    try:
+        _fwd_raw = pd.read_parquet(features_path).sort_values("open_time_utc").reset_index(drop=True)
+        _fwd_start = pd.Timestamp(FORWARD_WINDOW[0]).tz_localize(None) if FORWARD_WINDOW[0].tzinfo is not None else pd.Timestamp(FORWARD_WINDOW[0])
+        _fwd_end = pd.Timestamp(FORWARD_WINDOW[1]).tz_localize(None) if FORWARD_WINDOW[1].tzinfo is not None else pd.Timestamp(FORWARD_WINDOW[1])
+        _fwd_times = _fwd_raw["open_time_utc"]
+        # Normalize to tz-naive for comparison if needed.
+        if hasattr(_fwd_times.dtype, "tz") and _fwd_times.dtype.tz is not None:
+            _fwd_times_cmp = _fwd_times.dt.tz_localize(None)
+        else:
+            _fwd_times_cmp = _fwd_times
+        _fwd_mask = (_fwd_times_cmp >= _fwd_start) & (_fwd_times_cmp <= _fwd_end)
+        forward_df_for_contam = _fwd_raw.loc[_fwd_mask].reset_index(drop=True)
+    except Exception:
+        # If the features parquet is absent (e.g. in unit tests), forward_df is empty.
+        forward_df_for_contam = pd.DataFrame(
+            columns=["oi_velocity_ewm_240", "return_1h", "realized_vol_24h", "cdf_realized_vol_720"]
+        )
+    bundle["contamination_correlations"] = compute_contamination_correlations(
+        forward_df=forward_df_for_contam,
+        train_df=train,
+    )
 
     # --- F3 headline caveat ---
     under_det = bundle.get("under_determined_legs", {})
@@ -635,9 +719,16 @@ def run_verdict(
             "(fresh OI cohort). C7 TRAIN-window floors applied BEFORE ranking "
             "(under-floor -> INDETERMINATE, excluded from n_tier5_pass); GENERIC F3 "
             "under-determined carve-out (any floor, not zero_fraction-specific); "
-            "D1-ONLY OI-marginal diagnostic (no D2 — OI is independent axis); "
-            "contamination_correlations fenced diagnostic. OI NaN-power disclosure: "
-            "OI factors are NaN-heavy in 2024/2025; floor eligibility on non-NaN subset."
+            "D1-ONLY OI-marginal diagnostic (no D2 — OI is independent axis). "
+            "contamination_correlations fenced diagnostic IS PRESENT in this bundle "
+            "(bundle['contamination_correlations']): Pearson+Spearman of "
+            "oi_velocity_ewm_240 vs return/vol series, reported on FORWARD and TRAIN "
+            "bars separately; promotion_affecting=False, in_n_star=False. "
+            "OI NaN-power disclosure: OI factors are NaN-heavy in 2024/2025 (scattered "
+            "zero-OI-glitch gap-propagation — each zero-OI bar NaNs the entire "
+            "rolling-2160 (~90d) percentile window containing it, so the NaN is "
+            "data-driven, not a front-loaded burn-in; forward_2026 is 0% NaN); "
+            "floor eligibility on non-NaN subset."
         ),
     }
     out_dir.mkdir(parents=True, exist_ok=True)

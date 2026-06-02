@@ -34,11 +34,13 @@ window ONLY. The prepend bars are warmup-only — they warm the strategy but are
 NEVER evaluated/metric'd, so this does NOT "spend" the pre-window (2025) data as a
 test.
 
-NOTE: the OI percentile/regime factors are heavily NaN in 2024/2025 — the forward
-window (2026) has OI data. Warmup NaN handling is a known power disclosure but does
-not crash (the DSL compiler's NaN-is-False invariant applies; a completely-NaN
-warmup produces a flat/degenerate equity which is handled gracefully via the
-degenerate-equity guard below).
+NOTE: the OI percentile/regime factors are heavily NaN in 2024/2025 due to
+scattered zero-OI-glitch gap-propagation — each zero-OI bar NaNs the entire
+rolling-2160 (~90d) percentile window containing it, so the NaN is data-driven,
+not a front-loaded burn-in; forward_2026 (the gate) is 0% NaN. OI NaN handling
+is a known power disclosure but does not crash (the DSL compiler's NaN-is-False
+invariant applies; a completely-NaN prepend region produces a flat/degenerate
+equity which is handled gracefully via the degenerate-equity guard below).
 """
 from __future__ import annotations
 
@@ -120,9 +122,11 @@ def produce_candidate_holdout(
         record it in ``degenerate_legs``). A Sharpe of 0.0 correctly FAILS the strict
         ``holdout_sharpe > 0`` Tier-5 gate.
 
-        NOTE: OI factors are heavily NaN in 2024/2025; the forward window (2026)
-        has full OI data. A warmup that falls entirely in a NaN region produces a
-        degenerate flat equity — handled by the guard above (no crash).
+        NOTE: OI factors are heavily NaN in 2024/2025 due to scattered
+        zero-OI-glitch gap-propagation (data-driven, not a front-loaded burn-in);
+        forward_2026 (the gate) is 0% NaN. A prepend region that falls entirely
+        in a NaN zone produces a degenerate flat equity — handled by the guard
+        above (no crash).
     """
     start, end = window
     cand_dir = Path(cohort_dir) / hypothesis_hash

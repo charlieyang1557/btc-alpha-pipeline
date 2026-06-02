@@ -81,10 +81,12 @@ APPROXIMATION_TEMPERS = (
     # Pearson/Spearman of oi_velocity_ewm_240 vs return/vol — diagnostic-only,
     # never in N*/promotion.
     "d1_only_no_d2_oi_is_independent_axis",
-    # OI factors are heavily NaN in 2024/2025 (data coverage starts 2020-01 but
-    # the pctrank/EWM windows require 2160 bars to warm — so the first ~90 days
-    # are NaN). Floor eligibility is computed on the non-NaN subset; this is a known
-    # power disclosure, handled gracefully (NaN-is-False DSL compiler invariant).
+    # OI factors are heavily NaN in 2024/2025 due to scattered zero-OI-glitch
+    # gap-propagation — each zero-OI bar NaNs the entire rolling-2160 (~90d)
+    # percentile window containing it, so the NaN is data-driven, not a
+    # front-loaded burn-in; forward_2026 (the gate) is 0% NaN. Floor eligibility
+    # is computed on the non-NaN subset; this is a known power disclosure, handled
+    # gracefully (NaN-is-False DSL compiler invariant).
     "oi_factors_nan_in_2024_2025_floor_on_nonnull_subset",
     # Mechanism-sanity is measured at 24h AND 72h horizons (tiered strong/weak);
     # a verdict resting on weak-sane-only legs is flagged separately
@@ -121,6 +123,7 @@ def assemble_evidence(
     promotion_side_effect: bool,
     *,
     under_determined_flags: dict | None = None,
+    holdout_sharpes: dict | None = None,
 ) -> dict:
     """Assemble the (advisory) earned-negative evidence bundle for Path D.
 
@@ -138,6 +141,12 @@ def assemble_evidence(
             (True = this leg is under-determined per the GENERIC carve-out). When
             provided, under-determined legs are surfaced in the advisory bundle as
             power gaps but NOT folded into the earned-negative taxonomy.
+        holdout_sharpes: Optional mapping of leg-id -> float holdout Sharpe. Used
+            to determine ``n_substantive_loss_legs`` per §37.3: a leg with
+            ``holdout_sharpe < 0`` has a MEASURED LOSS (substantive); a leg that is
+            under-determined (holdout_sharpe >= 0) does NOT. When None, all eligible
+            legs with ``is_earned_negative=True`` are conservatively treated as having
+            a substantive basis.
 
     Returns:
         An advisory dict: ``advisory_taxonomy`` (one of the 3 constants),
@@ -145,8 +154,13 @@ def assemble_evidence(
         ``any_mechanism_sane``, ``verdict_rests_on_weak_sane_only``, the echoed
         inputs, ``verdict_authority`` naming Charlie as the binding decider,
         ``approximation_tempers``, ``under_determined_legs`` (generic carve-out),
-        and ``consistent_with_momentum_or_vol_leakage`` (True when H3 is under-
-        determined AND mechanism-sane — NET-NEW for Path D).
+        ``consistent_with_momentum_or_vol_leakage`` (True when H3 is under-
+        determined AND mechanism-sane — NET-NEW for Path D), and the §37.3
+        substantive-vs-vacuous fields: ``n_substantive_loss_legs``,
+        ``negative_has_substantive_basis``, ``negative_is_vacuous_only``.
+        ``escalation_warranted`` in the returned dict is NOT set here — it lives
+        in pathd_escalation.d_escalation_advisory. However the ``advisory_taxonomy``
+        and the §37.3 fields together give the escalation module what it needs.
         It NEVER returns a fired action.
 
     Raises:
@@ -195,6 +209,25 @@ def assemble_evidence(
     else:
         power_limited_note = None
 
+    # §37.3: substantive-vs-vacuous distinction.
+    # A leg has a SUBSTANTIVE measured loss if holdout_sharpe < 0. A leg that is
+    # under-determined (holdout_sharpe >= 0) does NOT constitute a substantive loss.
+    # Note: an under-determined leg has holdout_sharpe >= 0 by definition of the
+    # carve-out (see _is_under_determined); a measured-loss leg always has sharpe < 0
+    # and is therefore NOT under-determined — the two sets are disjoint.
+    if holdout_sharpes is not None:
+        n_substantive_loss_legs = sum(
+            1 for k, s in holdout_sharpes.items()
+            if float(s) < 0.0
+        )
+    else:
+        # Conservative fallback: treat any earned-negative as substantive (no per-leg
+        # sharpe provided). This preserves backward-compatibility for callers that do
+        # not thread holdout_sharpes.
+        n_substantive_loss_legs = int(is_earned_negative)
+    negative_has_substantive_basis = (n_substantive_loss_legs >= 1)
+    negative_is_vacuous_only = bool(is_earned_negative and not negative_has_substantive_basis)
+
     # NET-NEW for Path D: under-powered-but-SANE H3 annotation.
     # When H3 is under-determined AND its mechanism tier is sane, record
     # consistent_with_momentum_or_vol_leakage=True: the underpowered positive is
@@ -207,7 +240,13 @@ def assemble_evidence(
 
     # Q5: verdict_headline — unmissable top-line summary.
     ud_leg_ids = ", ".join(sorted(under_determined_legs))
-    if earned_negative_power_limited:
+    if negative_is_vacuous_only:
+        verdict_headline = (
+            f"{taxonomy.upper()} — VACUOUS-ONLY: no measured forward loss on any leg "
+            f"(all legs under-powered/under-determined); OI NOT actually tested on this "
+            f"grid — see under_determined_legs for detail"
+        )
+    elif earned_negative_power_limited:
         verdict_headline = (
             f"{taxonomy.upper()} — EARNED-NEGATIVE IS POWER-LIMITED "
             f"(under-determined legs: {ud_leg_ids}); "
@@ -233,6 +272,10 @@ def assemble_evidence(
         "n_tier5_pass": int(n_tier5_pass),
         "n_dsr_pass": int(n_dsr_pass),
         "under_determined_legs": under_determined_legs,
+        # §37.3: substantive-vs-vacuous fields.
+        "n_substantive_loss_legs": n_substantive_loss_legs,
+        "negative_has_substantive_basis": negative_has_substantive_basis,
+        "negative_is_vacuous_only": negative_is_vacuous_only,
         # NET-NEW for Path D: H3 leakage annotation.
         "consistent_with_momentum_or_vol_leakage": consistent_with_momentum_or_vol_leakage,
         "verdict_authority": "charlie_register_at_earned_negative_gate",

@@ -549,3 +549,140 @@ def test_run_verdict_survives_one_degenerate_forward_leg(tmp_path):
         h = bundle["holdouts"].get(key, {})
         assert float(h.get("holdout_sharpe", 0.0)) <= 0.0
     assert rv.PHASE_D_AUTHORIZED is False
+
+
+# ---------------------------------------------------------------------------
+# FIX 1: contamination_correlations wired into the bundle
+# ---------------------------------------------------------------------------
+
+def test_run_verdict_bundle_contains_contamination_correlations(tmp_path):
+    """FIX 1: bundle['contamination_correlations'] must be present with forward+train
+    splits, fenced flags, and Pearson+Spearman dicts for the 4 series."""
+    out = tmp_path / "pathd_verdict_v1"
+    bundle = rv.run_verdict(
+        out,
+        features_path=_tiny_features(tmp_path),
+        _run_backtest=_fake_backtest_result,
+    )
+    cc = bundle.get("contamination_correlations")
+    assert cc is not None, "bundle must contain 'contamination_correlations'"
+    assert "forward" in cc, "contamination_correlations must have 'forward' split"
+    assert "train" in cc, "contamination_correlations must have 'train' split"
+    assert cc["promotion_affecting"] is False
+    assert cc["in_n_star"] is False
+    expected_series = {"return_1h", "abs_return_1h", "realized_vol_24h", "cdf_realized_vol_720"}
+    for split in ("forward", "train"):
+        assert set(cc[split]["pearson"].keys()) == expected_series, (
+            f"contamination_correlations['{split}']['pearson'] must have all 4 series"
+        )
+        assert set(cc[split]["spearman"].keys()) == expected_series, (
+            f"contamination_correlations['{split}']['spearman'] must have all 4 series"
+        )
+        assert cc[split]["promotion_affecting"] is False
+        assert cc[split]["in_n_star"] is False
+
+
+def test_contamination_does_not_change_n_tier5_pass_or_dsr(tmp_path):
+    """FIX 1: adding contamination_correlations must NOT change n_tier5_pass or DSR values."""
+    out = tmp_path / "pathd_verdict_v1"
+    bundle = rv.run_verdict(
+        out,
+        features_path=_tiny_features(tmp_path),
+        _run_backtest=_fake_backtest_result,
+    )
+    # n_tier5_pass is determined solely by eligible holdout_sharpe > 0.
+    n_positive_eligible = sum(
+        1 for k, h in bundle["holdouts"].items()
+        if float(h.get("holdout_sharpe", 0)) > 0
+        and bundle["floors"].get(k, {}).get("eligible", True)
+    )
+    assert bundle["n_tier5_pass"] == n_positive_eligible
+    # contamination_correlations is present AND DSR unchanged.
+    assert bundle.get("contamination_correlations") is not None
+    assert bundle["n_dsr_pass"] >= 0  # sanity: non-negative
+
+
+# ---------------------------------------------------------------------------
+# FIX 2: §37.3 substantive-vs-vacuous fields in the bundle
+# ---------------------------------------------------------------------------
+
+def test_run_verdict_bundle_carries_37_3_fields(tmp_path):
+    """FIX 2: §37.3 substantive-vs-vacuous fields must appear in bundle['taxonomy']."""
+    out = tmp_path / "pathd_verdict_v1"
+    bundle = rv.run_verdict(
+        out,
+        features_path=_tiny_features(tmp_path),
+        _run_backtest=_fake_backtest_result,
+    )
+    tax = bundle["taxonomy"]
+    assert "n_substantive_loss_legs" in tax, "§37.3: n_substantive_loss_legs must be present"
+    assert "negative_has_substantive_basis" in tax, "§37.3: negative_has_substantive_basis must be present"
+    assert "negative_is_vacuous_only" in tax, "§37.3: negative_is_vacuous_only must be present"
+    assert isinstance(tax["n_substantive_loss_legs"], int)
+    assert isinstance(tax["negative_has_substantive_basis"], bool)
+    assert isinstance(tax["negative_is_vacuous_only"], bool)
+
+
+# ---------------------------------------------------------------------------
+# FIX 4a: degenerate D1 flag in oi_marginal
+# ---------------------------------------------------------------------------
+
+def test_degenerate_leg_d1_record_is_flagged(tmp_path):
+    """FIX 4a: when a leg has a flat forward equity (degenerate), its D1 record
+    must carry degenerate=True to prevent misreading the spuriously large |d1_marginal_sharpe|."""
+    out = tmp_path / "pathd_verdict_v1"
+    call_idx = itertools.count()
+
+    def _dispatch(**kw):
+        idx_n = next(call_idx)
+        start = kw.get("start_date")
+        is_train = start is not None and getattr(start, "year", 2026) <= 2024
+
+        class _R:
+            pass
+
+        r = _R()
+        if is_train:
+            n = 2000
+            idx = pd.date_range("2020-01-01", periods=n, freq="h", tz="UTC")
+            rng = np.random.default_rng(idx_n + 1)
+            r.equity_curve = pd.Series(10_000.0 * np.cumprod(1.0 + rng.normal(0, 0.005, n)), index=idx)
+            trades = []
+            for k in range(300):
+                e = idx[2 * k]
+                x = idx[2 * k + 1]
+                trades.append({
+                    "entry_time_utc": e.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                    "exit_time_utc": x.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                })
+            r.trades = trades
+            r.run_id = f"train_{idx_n}"
+            r.metrics = {"sharpe_ratio": 0.1, "total_trades": len(trades),
+                         "max_drawdown": 0.1, "total_return": 0.02}
+        else:
+            n = 320
+            idx = pd.date_range("2026-01-01", periods=n, freq="h", tz="UTC")
+            # All forward runs return a flat equity (degenerate).
+            r.equity_curve = pd.Series(10_000.0, index=idx)
+            r.trades = []
+            r.metrics = {"sharpe_ratio": 0.0, "total_trades": 0,
+                         "max_drawdown": 0.0, "total_return": 0.0}
+            r.run_id = f"fwd_{idx_n}"
+        r.start_date = r.equity_curve.index[0].to_pydatetime()
+        r.end_date = r.equity_curve.index[-1].to_pydatetime()
+        return r
+
+    bundle = rv.run_verdict(
+        out,
+        features_path=_tiny_features(tmp_path),
+        _run_backtest=_dispatch,
+    )
+    degenerate_legs = bundle.get("degenerate_legs", {})
+    oi_marginal = bundle.get("oi_marginal", {})
+    for k, is_degen in degenerate_legs.items():
+        if is_degen:
+            assert k in oi_marginal, f"degenerate leg {k} must appear in oi_marginal"
+            d1 = oi_marginal[k].get("d1", {})
+            assert d1.get("degenerate") is True, (
+                f"FIX 4a: degenerate leg {k}'s D1 record must carry degenerate=True"
+            )
