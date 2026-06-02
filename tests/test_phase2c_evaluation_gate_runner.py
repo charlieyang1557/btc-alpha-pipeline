@@ -1911,7 +1911,7 @@ class TestBCNarrowPhase2ProducerEdits:
 
         MR2-2 PFR R2 ADOPT (v3): use REGISTRY_PROJECT_ROOT (imported from
         backtest.experiment_registry via `PROJECT_ROOT as REGISTRY_PROJECT_ROOT`)
-        instead of hardcoded absolute path /Users/yutianyang/... — test is now
+        instead of hardcoded absolute path <HOME>/... — test is now
         portable across environments (CI, code-review clones, machine renames)
         while preserving H2 regression-guard goal."""
         _require_b_c_narrow_symbols()
