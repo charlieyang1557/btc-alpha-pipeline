@@ -128,3 +128,17 @@ def test_downsample_gap_within_hour_yields_no_row():
     # The 00:00 and 02:00 bars must be present
     assert pd.Timestamp("2020-09-01 00:00", tz="UTC") in out_times
     assert pd.Timestamp("2020-09-01 02:00", tz="UTC") in out_times
+
+
+def test_downsample_boundary_obs_at_exactly_N_plus_1h_does_not_leak():
+    # LEAKAGE GUARD (A3 review MEDIUM): an obs stamped at exactly the bar boundary N+1h
+    # (02:00) belongs to bar 02:00, NOT bar 01:00. closed='left' makes [N, N+1h) half-open,
+    # so a large boundary value (999) must NOT appear in bar 01:00 (would prove look-ahead).
+    ts = pd.to_datetime(["2020-09-01 01:55", "2020-09-01 02:00"], utc=True)
+    df5 = pd.DataFrame({"open_time_utc": ts, "sum_open_interest": [23.0, 999.0],
+                        "sum_open_interest_value": [0.0, 0.0], "source": "binance_vision"})
+    out = downsample_oi_to_1h(df5)
+    bar01 = out.loc[out.open_time_utc == pd.Timestamp("2020-09-01 01:00", tz="UTC"), "sum_open_interest"].iloc[0]
+    assert bar01 == 23.0   # 999.0 would indicate the N+1h boundary obs leaked into bar N
+    bar02 = out.loc[out.open_time_utc == pd.Timestamp("2020-09-01 02:00", tz="UTC"), "sum_open_interest"].iloc[0]
+    assert bar02 == 999.0  # the boundary obs belongs to bar 02:00
