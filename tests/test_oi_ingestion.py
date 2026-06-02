@@ -308,3 +308,202 @@ def test_oi_reconcile_validates_before_write(tmp_path, monkeypatch):
     merged, _ = oi_reconcile.reconcile_oi(bad_existing, good_new)
     report = validate_oi(merged)
     assert report["ok"] is False
+
+
+# ---------------------------------------------------------------------------
+# A6: oi_incremental_update — CCXT-based recent-window top-up
+# ---------------------------------------------------------------------------
+#
+# NOTE: exact CCXT OI field mapping (openInterestAmount vs info.sumOpenInterest
+# vs notional) is re-verified at A7 (§38.1).  The tests here use a synthetic
+# dict shape; the field names chosen (openInterestAmount for contracts,
+# notional for USDT value) are the CURRENT best-guess and are FLAGGED for A7
+# re-verification.  Do NOT assume they are final.
+
+from ingestion import oi_incremental_update  # noqa: E402
+
+
+class _FakeOIExchange:
+    """Minimal CCXT-shaped stub for fetch_open_interest_history.
+
+    CCXT returns a list of dicts, each representing one OI snapshot:
+        {
+          "symbol":             "BTC/USDT:USDT",
+          "baseVolume":         ...,        # NOT used; avoid confusion
+          "openInterestAmount": 12345.6,    # CONTRACT/base-asset OI  ← sum_open_interest
+          "openInterestValue":  9.8765e7,   # USDT notional           ← sum_open_interest_value
+          "timestamp":          1577836800000,
+          "datetime":           "2020-01-01T00:00:00.000Z",
+          "info":               {...},
+        }
+
+    NOTE (A7 re-verify flag): the exact field names above (openInterestAmount /
+    openInterestValue) are placeholders based on CCXT unified schema research.
+    A7 must confirm these against a live or recorded CCXT response before relying
+    on them in production.  The FIREWALL rule is schema-level and inviolable:
+      sum_open_interest  ← CONTRACT amount   (NOT notional)
+      sum_open_interest_value ← USDT notional (contamination-diagnostic only)
+    """
+
+    def __init__(self, rows: list[dict]):
+        self._rows = rows
+        self.calls: list[dict] = []
+
+    def fetch_open_interest_history(
+        self,
+        symbol: str,
+        timeframe: str,
+        since: int | None = None,
+        limit: int | None = None,
+        params: dict | None = None,
+    ) -> list[dict]:
+        self.calls.append({"symbol": symbol, "timeframe": timeframe, "since": since})
+        rows = self._rows
+        if since is not None:
+            rows = [r for r in rows if r["timestamp"] >= since]
+        if limit is not None:
+            rows = rows[:limit]
+        return rows
+
+
+_OI_T0 = 1577836800000   # 2020-01-01 00:00 UTC
+_OI_T1 = 1577840400000   # 2020-01-01 01:00 UTC
+
+
+def _oi_ccxt_rows() -> list[dict]:
+    """Synthetic CCXT fetch_open_interest_history response rows."""
+    return [
+        {
+            "symbol": "BTC/USDT:USDT",
+            "openInterestAmount": 12345.6,   # contracts (base asset) → sum_open_interest
+            "openInterestValue": 9.8765e7,   # USDT notional          → sum_open_interest_value
+            "timestamp": _OI_T0,
+            "datetime": "2020-01-01T00:00:00.000Z",
+            "info": {},
+        },
+        {
+            "symbol": "BTC/USDT:USDT",
+            "openInterestAmount": 12400.0,
+            "openInterestValue": 9.9200e7,
+            "timestamp": _OI_T1,
+            "datetime": "2020-01-01T01:00:00.000Z",
+            "info": {},
+        },
+    ]
+
+
+def test_oi_incremental_normalizes_to_schema():
+    """fetch_oi_with_backoff + oi_rows_to_dataframe produce the correct oi schema.
+
+    FIREWALL: sum_open_interest must come from the CONTRACT/base-asset field
+    (openInterestAmount), NOT from the USDT notional (openInterestValue).
+    """
+    ex = _FakeOIExchange(_oi_ccxt_rows())
+    rows = oi_incremental_update.fetch_oi_with_backoff(
+        ex, symbol="BTC/USDT:USDT", timeframe="1h", since=_OI_T0
+    )
+    df = oi_incremental_update.oi_rows_to_dataframe(rows)
+
+    # Schema columns
+    assert "open_time_utc" in df.columns
+    assert "sum_open_interest" in df.columns
+    assert "sum_open_interest_value" in df.columns
+    assert "source" in df.columns
+    assert "ingested_at_utc" in df.columns
+
+    # dtypes
+    assert str(df["open_time_utc"].dtype) == "datetime64[ms, UTC]"
+    assert str(df["ingested_at_utc"].dtype) == "datetime64[ms, UTC]"
+
+    # source
+    assert (df["source"] == "ccxt_binance").all()
+
+    # FIREWALL: sum_open_interest is the CONTRACT amount (openInterestAmount = 12345.6),
+    # NOT the USDT notional (openInterestValue = 9.8765e7).
+    # If this assertion fails it means the normalizer swapped contract vs notional.
+    assert df["sum_open_interest"].iloc[0] == pytest.approx(12345.6)
+    assert df["sum_open_interest"].iloc[1] == pytest.approx(12400.0)
+
+    # sum_open_interest_value is the USDT notional (contamination-diagnostic only)
+    assert df["sum_open_interest_value"].iloc[0] == pytest.approx(9.8765e7)
+
+    # Timestamps
+    assert df["open_time_utc"].iloc[0] == pd.Timestamp("2020-01-01 00:00:00", tz="UTC")
+    assert df["open_time_utc"].iloc[1] == pd.Timestamp("2020-01-01 01:00:00", tz="UTC")
+
+    # Exchange was called with the right symbol and timeframe
+    assert ex.calls[0]["symbol"] == "BTC/USDT:USDT"
+    assert ex.calls[0]["timeframe"] == "1h"
+
+
+def test_oi_incremental_contract_not_notional_firewall():
+    """Firewall: sum_open_interest must be << sum_open_interest_value.
+
+    For BTC perpetuals, the contract OI (in BTC) is orders of magnitude smaller
+    than the USDT notional.  If sum_open_interest were accidentally set to the
+    notional (~1e8), this check would catch the swap.
+    """
+    ex = _FakeOIExchange(_oi_ccxt_rows())
+    rows = oi_incremental_update.fetch_oi_with_backoff(
+        ex, symbol="BTC/USDT:USDT", timeframe="1h", since=_OI_T0
+    )
+    df = oi_incremental_update.oi_rows_to_dataframe(rows)
+    # Contract OI ~12 k BTC;  notional ~98 M USDT.  Ratio >> 1000 if swapped.
+    ratio = df["sum_open_interest_value"].iloc[0] / df["sum_open_interest"].iloc[0]
+    assert ratio > 100, (
+        f"sum_open_interest looks like a notional, not a contract count "
+        f"(value/contracts ratio={ratio:.1f} — expected >> 100 for BTC)"
+    )
+
+
+def test_oi_incremental_backoff_retries(monkeypatch):
+    """fetch_oi_with_backoff retries on NetworkError and succeeds on attempt 3."""
+    import ccxt
+
+    class _FlakyOIExchange:
+        def __init__(self):
+            self.attempts = 0
+
+        def fetch_open_interest_history(
+            self, symbol, timeframe, since=None, limit=None, params=None
+        ):
+            self.attempts += 1
+            if self.attempts < 3:
+                raise ccxt.NetworkError("transient")
+            return _oi_ccxt_rows()
+
+    monkeypatch.setattr(oi_incremental_update.time, "sleep", lambda *_: None)
+    ex = _FlakyOIExchange()
+    rows = oi_incremental_update.fetch_oi_with_backoff(
+        ex, symbol="BTC/USDT:USDT", timeframe="1h", since=_OI_T0
+    )
+    assert ex.attempts == 3
+    assert len(rows) == 2
+
+
+def test_oi_incremental_empty_returns_empty_dataframe():
+    """oi_rows_to_dataframe on empty input returns empty schema-compliant DataFrame."""
+    df = oi_incremental_update.oi_rows_to_dataframe([])
+    expected_cols = {"open_time_utc", "sum_open_interest", "sum_open_interest_value",
+                     "source", "ingested_at_utc"}
+    assert expected_cols <= set(df.columns)
+    assert len(df) == 0
+
+
+def test_oi_incremental_30d_lookback_warning(caplog):
+    """A `since` older than ~30d must emit a warning about endpoint limit."""
+    import logging
+    import time as _time
+
+    # Pick a `since` that is more than 30 days in the past from "now"
+    since_old_ms = int((_time.time() - 35 * 86400) * 1000)
+
+    ex = _FakeOIExchange([])
+    with caplog.at_level(logging.WARNING, logger="ingestion.oi_incremental_update"):
+        oi_incremental_update.fetch_oi_history_paged(
+            ex, symbol="BTC/USDT:USDT", timeframe="1h", since_ms=since_old_ms
+        )
+    assert any("30" in msg or "30d" in msg or "window" in msg.lower()
+               for msg in caplog.messages), (
+        "Expected a warning about the ~30d endpoint window limit"
+    )
