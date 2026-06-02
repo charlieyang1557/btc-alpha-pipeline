@@ -206,9 +206,19 @@ def test_validate_oi_rejects_duplicate_pk():
 
 def test_validate_oi_rejects_negative_oi():
     df = _good_oi()
-    df.loc[0, "sum_open_interest"] = -1.0
+    df.loc[0, "sum_open_interest"] = -1.0   # NEGATIVE is impossible -> error
     r = validate_oi(df)
     assert r["ok"] is False
+
+
+def test_validate_oi_flags_zero_oi_as_warning_not_error():
+    # §38.1 real-data finding: Binance metrics has ~43 zero-OI glitch bars. ZERO (not
+    # negative) is FLAGGED + kept (like zero-volume bars), NOT a failure. ok stays True.
+    df = _good_oi()
+    df.loc[0, "sum_open_interest"] = 0.0
+    r = validate_oi(df)
+    assert r["ok"] is True
+    assert any("zero" in w.lower() for w in r["warnings"])
 
 
 def test_validate_oi_flags_gap_as_warning_not_error():

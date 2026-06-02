@@ -887,10 +887,12 @@ def validate_oi(df: pd.DataFrame) -> dict[str, Any]:
     - open_time_utc is timezone-aware UTC
     - open_time_utc has no duplicates (unique primary key)
     - open_time_utc is strictly ascending (sorted)
-    - sum_open_interest > 0 for every row (non-positive or zero is invalid)
+    - sum_open_interest is NaN (schema nullable: false) or strictly NEGATIVE (impossible)
     - source values are within OI_ALLOWED_SOURCES, populated (no null/empty)
 
     Warnings (do NOT set ok=False):
+    - sum_open_interest == 0 (glitch snapshots) — flagged + kept, never removed (mirrors the
+      project's zero-volume-bar discipline); the factor layer maps OI<=0 -> NaN log-change
     - spacing gaps (consecutive spacing != 1h) — flagged, never interpolated/removed
 
     Args:
@@ -926,10 +928,22 @@ def validate_oi(df: pd.DataFrame) -> dict[str, Any]:
     if not pk.is_monotonic_increasing or dupe_count > 0:
         errors.append("open_time_utc is not strictly ascending (sorted_pk)")
 
-    # sum_open_interest > 0 per row (the signal series; zero/negative is invalid)
-    bad_oi = int((df["sum_open_interest"].isna() | (df["sum_open_interest"] <= 0)).sum())
-    if bad_oi > 0:
-        errors.append(f"sum_open_interest has {bad_oi} row(s) NaN or <= 0")
+    # sum_open_interest: NaN -> error (schema nullable: false); strictly-NEGATIVE -> error
+    # (impossible; data corruption); ZERO -> WARNING only (glitch snapshot, flagged + kept,
+    # NOT removed -- mirrors the project's zero-volume-bar discipline; CLAUDE.md Data Rules).
+    # §38.1 real-data finding (2026-06-01): the first OI ingestion surfaced 43 zero-OI bars
+    # (~0.085%); they are flagged here and handled at the factor layer (OI<=0 -> NaN log-change).
+    nan_oi = int(df["sum_open_interest"].isna().sum())
+    if nan_oi > 0:
+        errors.append(f"sum_open_interest has {nan_oi} NaN row(s) (schema nullable: false)")
+    neg_oi = int((~df["sum_open_interest"].isna() & (df["sum_open_interest"] < 0)).sum())
+    if neg_oi > 0:
+        errors.append(f"sum_open_interest has {neg_oi} NEGATIVE row(s) (impossible; corruption)")
+    zero_oi = int((df["sum_open_interest"] == 0).sum())
+    if zero_oi > 0:
+        warnings.append(
+            f"sum_open_interest has {zero_oi} ZERO row(s) flagged (glitch snapshots; not removed)"
+        )
 
     # source populated + allowed
     src = df["source"]
