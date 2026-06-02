@@ -2216,7 +2216,46 @@ class TestT1_4_Pc9BaselineGate:
         #   tier6_dsr_v1/ sha256 4/4 byte-unchanged; PHASE_D_AUTHORIZED untouched.
         # Advance BASELINE 3074 → 3102 (same expected-additive-cohort precedent;
         # per Charlie Phase D Phase B Task B5 register, pathd-oi-scoping branch).
-        BASELINE = 3102
+        # Path D Tasks C4+C7 verdict-harness adaptation (pathd-oi-scoping branch):
+        # adapts the pathc_* verdict harness to pathd_* retargeted at the 3 LOCKed OI
+        # hypotheses + OI feature columns. KEY DIVERGENCES: D1-only diagnostic (no D2 —
+        # OI is independent axis); GENERIC F3 under-determined carve-out (any eligible==
+        # False floor, not zero_fraction-specific); H3 leakage annotation
+        # (consistent_with_momentum_or_vol_leakage); d_escalation_advisory keyed on
+        # n_dsr_pass==0; PHASE_D_AUTHORIZED=False (gate stays closed). Adds +160
+        # collected items across 12 new/extended test files + 7 new backtest/pathd_*.py
+        # modules + 1 new scripts/pathd_run_verdict.py, none a t1_4/t1_5 subtraction
+        # target, so +160 lands wholly in pre_t1_x_baseline = total − t1_4 − t1_5:
+        #   tests/test_pathd_dsr_fwer.py (+5: N*=3 cross-path parity, per-candidate loop,
+        #     pass_B survivors, no evaluate_cohort guard),
+        #   tests/test_pathd_earned_negative.py (+23: taxonomy + GENERIC F3 carve-out +
+        #     H3 leakage annotation + power-limited headline flag + verdict_headline),
+        #   tests/test_pathd_escalation.py (+6: warranted/not-warranted × 4 taxonomy
+        #     paths + advisory-only + unknown-raises),
+        #   tests/test_pathd_floors.py (+17: resolve_theta boundaries + h1_floor_eligible
+        #     boundaries + h2_derisk_occupancy_eligible boundaries + H2/H3 state-class),
+        #   tests/test_pathd_holdout_producer.py (+4: dead-18-layout + PATHD_BUILD default
+        #     + degenerate-flagged-not-raises + tier5-gate-fails),
+        #   tests/test_pathd_moments.py (+4: CSV exclude degenerate + file written +
+        #     all-degenerate empty + tier6-integrity-gate routing),
+        #   tests/test_pathd_orchestrator.py (+14: advisory pipeline + escalation +
+        #     floors threading + D1-only oi_marginal + no-D2 assertion + GENERIC F3 +
+        #     resolve_theta + degenerate-leg handling + H3 leakage annotation),
+        #   tests/test_pathd_run_verdict.py (+20: Phase-D gate × 5 + sealed-dir guard ×2
+        #     + build_train_frame horizons + mocked-engine integration + compute_train_
+        #     floors × 3 + sealed-sha256 4/4 + theta-resolution × 3 + D1-only marginal +
+        #     oi_marginal-no-d2 + n_tier5_pass + degenerate-end-to-end),
+        #   tests/test_pathd_train_sanity.py (+8: load/in_window/require_train_only
+        #     with 2020/2022/2024/2025 targets),
+        # Production additions: backtest/pathd_{holdout_producer,moments,dsr_fwer,
+        #   earned_negative,escalation,orchestrator,train_sanity}.py + the GATED
+        #   scripts/pathd_run_verdict.py + build_all_baselines + compute_per_leg_tiers
+        #   added to existing pathd_eval_gauntlet.py and pathd_perleg_mechanism.py.
+        # Sealed tier6_dsr_v1/ sha256 4/4 byte-unchanged; PHASE_D_AUTHORIZED=False
+        # (gate stays closed — real run is a separate Phase-D Charlie register).
+        # Advance BASELINE 3102 → 3262 (same expected-additive-cohort precedent;
+        # per Charlie C4+C7 register, pathd-oi-scoping branch).
+        BASELINE = 3262
         assert pre_t1_x_baseline == BASELINE, (
             f"pc9 gate (Codex F6 v4-6 SEAL-eve + Advisor F2 post-SEAL polish + Charlie "
             f"B1 register 2026-05-24 T1.5 baseline maintenance): pre-T1.x baseline "
