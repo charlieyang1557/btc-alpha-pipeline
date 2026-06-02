@@ -100,6 +100,10 @@ def parse_metrics_csv(path: Path) -> pd.DataFrame:
         ingested_at_utc datetime64[ms, UTC]  — write timestamp
     Warmup period: none (timestamp conversion only).
     Null policy: rows with NaN create_time or sum_open_interest are dropped + counted (logged).
+    Duplicate policy (§38.1 real-data finding): Binance Vision metrics files duplicate every
+        5-min row exactly. Exact-duplicate content rows are dropped + counted; if a timestamp
+        survives with DIFFERING OI values (a future glitch), a warning is logged and the last
+        is kept (so the downsample's .last() never resolves a real conflict silently).
 
     Args:
         path: Path to the metrics CSV file.
@@ -145,6 +149,27 @@ def parse_metrics_csv(path: Path) -> pd.DataFrame:
     df["source"] = pd.array(["binance_vision"] * len(df), dtype="string")
     df["ingested_at_utc"] = pd.Timestamp(datetime.now(timezone.utc))
     df["ingested_at_utc"] = df["ingested_at_utc"].astype("datetime64[ms, UTC]")
+
+    # §38.1 real-data finding (verified 2026-06-02 on the 2020-09-01 partition: 576 rows =
+    # 288 unique x2, identical values): metrics files duplicate every 5-min snapshot exactly.
+    # Drop exact-duplicate content rows; if a timestamp survives with DIFFERING values (a
+    # future data glitch), warn + keep the last rather than let the downsample resolve it.
+    n_pre = len(df)
+    df = df.drop_duplicates(
+        subset=["open_time_utc", "sum_open_interest", "sum_open_interest_value"]
+    )
+    n_exact = n_pre - len(df)
+    if n_exact:
+        logger.info("parse_metrics_csv: dropped %d exact-duplicate row(s) from %s", n_exact, path.name)
+    nonexact_mask = df["open_time_utc"].duplicated(keep=False)
+    if nonexact_mask.any():
+        logger.warning(
+            "parse_metrics_csv: %d row(s) in %s share a create_time with DIFFERING OI "
+            "values (non-exact duplicate) — keeping last",
+            int(nonexact_mask.sum()), path.name,
+        )
+        df = df.drop_duplicates(subset=["open_time_utc"], keep="last")
+
     return df.sort_values("open_time_utc").reset_index(drop=True)
 
 

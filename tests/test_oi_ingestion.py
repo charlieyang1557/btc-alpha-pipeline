@@ -73,6 +73,38 @@ def test_parse_oi_metrics_missing_required_column_raises(tmp_path):
         parse_metrics_csv(csv)
 
 
+def test_parse_oi_metrics_drops_exact_duplicate_rows(tmp_path):
+    """§38.1 real-data finding: Binance Vision metrics duplicate every 5-min row exactly.
+    parse_metrics_csv must drop exact-duplicate content rows -> unique open_time_utc."""
+    csv = tmp_path / "BTCUSDT-metrics-dup.csv"
+    csv.write_text(
+        "create_time,symbol,sum_open_interest,sum_open_interest_value,c1,c2,c3,c4\n"
+        "2020-09-01 00:00:00,BTCUSDT,39080.231,456144339.2,1,1,1,1\n"
+        "2020-09-01 00:00:00,BTCUSDT,39080.231,456144339.2,1,1,1,1\n"   # exact duplicate
+        "2020-09-01 00:05:00,BTCUSDT,39106.413,455693833.6,1,1,1,1\n"
+        "2020-09-01 00:05:00,BTCUSDT,39106.413,455693833.6,1,1,1,1\n"   # exact duplicate
+    )
+    df = parse_metrics_csv(csv)
+    assert len(df) == 2                       # 4 rows -> 2 after exact-dedup
+    assert df["open_time_utc"].is_unique
+    assert df["sum_open_interest"].tolist() == [39080.231, 39106.413]
+
+
+def test_parse_oi_metrics_nonexact_duplicate_keeps_last(tmp_path):
+    """A timestamp with DIFFERING values (a future glitch) is resolved keep-last, not
+    silently left for the downsample's .last() to pick arbitrarily."""
+    csv = tmp_path / "BTCUSDT-metrics-glitch.csv"
+    csv.write_text(
+        "create_time,symbol,sum_open_interest,sum_open_interest_value,c1,c2,c3,c4\n"
+        "2020-09-01 00:00:00,BTCUSDT,100.0,1000.0,1,1,1,1\n"
+        "2020-09-01 00:00:00,BTCUSDT,200.0,2000.0,1,1,1,1\n"   # SAME ts, DIFFERENT value
+    )
+    df = parse_metrics_csv(csv)
+    assert len(df) == 1
+    assert df["open_time_utc"].is_unique
+    assert df["sum_open_interest"].iloc[0] == 200.0           # keep-last
+
+
 # ---------------------------------------------------------------------------
 # A3: downsample_oi_to_1h tests
 # ---------------------------------------------------------------------------
