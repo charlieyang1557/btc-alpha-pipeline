@@ -225,6 +225,111 @@ def build_all_hypotheses() -> dict[str, StrategyDSL]:
     return {"H1": build_h1_dsl(), "H2": build_h2_dsl(), "H3": build_h3_dsl()}
 
 
+# ---------------------------------------------------------------------------
+# D1 no-OI baselines (Task C6, fenced diagnostic-only — never in N*/promotion)
+# ---------------------------------------------------------------------------
+# Each baseline is the SAME strategy WITHOUT the OI gate, run on the SAME forward
+# bars, so any D1-result attributes to OI's MARGINAL contribution and not the
+# underlying price-trend / vol leg alone.
+
+_VOL_CDF_FLOOR = 0.0   # cdf_realized_vol_720 >= 0.0 is always true on a CDF
+_VOL_CDF_CEIL = 1.0    # cdf_realized_vol_720 > 1.0 is never true on a CDF
+
+
+def build_h1_baseline_dsl() -> StrategyDSL:
+    """H1 no-OI baseline: ALWAYS-LONG (H1 counterfactual minus the OI tail gate).
+
+    Strips H1's oi_pct_rank_2160 exit gate: entry is always-true on the bounded vol
+    CDF (``cdf_realized_vol_720 >= 0.0``) and exit is never-true (``> 1.0``), so
+    the book is long whenever it is sizeable. Same vol-CDF ternary sizing; no time-stop.
+
+    Diagnostic-only — never in N*/promotion.
+    """
+    entry_always = ConditionGroup(conditions=[
+        Condition(factor=VOL_SIZING_FACTOR, op=">=", value=_VOL_CDF_FLOOR),
+    ])
+    exit_never = ConditionGroup(conditions=[
+        Condition(factor=VOL_SIZING_FACTOR, op=">", value=_VOL_CDF_CEIL),
+    ])
+    return StrategyDSL(
+        name="pathd_h1_baseline",
+        description=(
+            "Path D H1 no-OI baseline: always-long (OI tail gate stripped), "
+            "vol-CDF ternary sizing, no time-stop — the D1 OI-marginal counterfactual."
+        ),
+        entry=[entry_always],
+        exit=[exit_never],
+        position_sizing=_vol_cdf_ternary_sizing(),
+        max_hold_bars=None,
+    )
+
+
+def _price_trend_only_baseline(name: str, description: str, max_hold: int | None) -> StrategyDSL:
+    """Shared price-trend-only book for the H2/H3 no-OI baselines.
+
+    Entry = ``decay_linear_close_48 > decay_linear_close_168`` (the price-trend
+    confirm both H2 and H3 share); exit = the trend roll-over ``48 <= 168``. NO
+    OI condition. Same vol-CDF ternary sizing.
+    """
+    entry = ConditionGroup(conditions=[
+        Condition(factor=DECAY_FAST, op=">", value=DECAY_SLOW),
+    ])
+    exit_trend_roll = ConditionGroup(conditions=[
+        Condition(factor=DECAY_FAST, op="<=", value=DECAY_SLOW),
+    ])
+    return StrategyDSL(
+        name=name,
+        description=description,
+        entry=[entry],
+        exit=[exit_trend_roll],
+        position_sizing=_vol_cdf_ternary_sizing(),
+        max_hold_bars=max_hold,
+    )
+
+
+def build_h2_baseline_dsl() -> StrategyDSL:
+    """H2 no-OI baseline: price-trend-only book (H2 minus the OI regime gate).
+
+    Strips ``oi_velocity_ewm_240_pctrank_2160 < 0.80``; retains the
+    ``decay_linear_close_48 > decay_linear_close_168`` entry + trend-rollover exit
+    + ``max_hold_bars = 24``. Diagnostic-only — never in N*/promotion.
+    """
+    return _price_trend_only_baseline(
+        name="pathd_h2_baseline",
+        description=(
+            "Path D H2 no-OI baseline: price-trend-only (OI regime gate stripped), "
+            "vol-CDF ternary sizing, max_hold 24 — the D1 OI-marginal counterfactual."
+        ),
+        max_hold=H2_MAX_HOLD,
+    )
+
+
+def build_h3_baseline_dsl() -> StrategyDSL:
+    """H3 no-OI baseline: price-trend-only book (H3 minus the OI continuation gate).
+
+    Strips ``oi_velocity_ewm_240 > 0`` AND ``oi_pct_rank_2160 < theta`` gates;
+    retains the ``decay_linear_close_48 > decay_linear_close_168`` entry + trend-
+    rollover exit + ``max_hold_bars = 48``. Diagnostic-only — never in N*/promotion.
+    """
+    return _price_trend_only_baseline(
+        name="pathd_h3_baseline",
+        description=(
+            "Path D H3 no-OI baseline: price-trend-only (OI continuation gate stripped), "
+            "vol-CDF ternary sizing, max_hold 48 — the D1 OI-marginal counterfactual."
+        ),
+        max_hold=H3_MAX_HOLD,
+    )
+
+
+def build_all_baselines() -> dict[str, StrategyDSL]:
+    """The 3 no-OI baselines keyed by hypothesis id (Task C6 D1 counterfactual)."""
+    return {
+        "H1": build_h1_baseline_dsl(),
+        "H2": build_h2_baseline_dsl(),
+        "H3": build_h3_baseline_dsl(),
+    }
+
+
 def referenced_factors(dsl: StrategyDSL) -> set[str]:
     """Return the set of factor names a DSL references.
 
