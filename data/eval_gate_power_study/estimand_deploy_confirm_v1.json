@@ -1,0 +1,41 @@
+{
+  "schema": "eval_gate_power_study/estimand_deploy_confirm_v1",
+  "generated_at_utc": "2026-06-03T01:50:25.853570Z",
+  "spec": "docs/superpowers/specs/2026-06-02-estimand-deployability-confirmation-design.md",
+  "confirmation": {
+    "P1": {
+      "a": -10.0,
+      "gamma3": -0.9555570924911115,
+      "gamma4": 3.823243537718339,
+      "sharpe": -0.02,
+      "p_up": 0.5656470079531009,
+      "sign_z": 6.6000549796565995,
+      "directional_fires_but_not_deployable": true,
+      "max_p_up_at_nonpositive_sharpe": 0.5744845414480322,
+      "concentrates_in_nondeployable_zone": true
+    },
+    "P2": {
+      "max_net_benefit_pp": 2.082547003152113,
+      "max_net_benefit_at": {
+        "sharpe_ann": 1.5,
+        "gamma4": 100.0,
+        "n_star": 3
+      },
+      "tripwire_pp": 10.0,
+      "below_tripwire": true
+    },
+    "P3": {
+      "z_n18": 2.7729212946086634,
+      "z_2n18": 2.991316115183781,
+      "z_increase_n18": 0.2183948205751176,
+      "doubling_inflates_bar": true
+    },
+    "P4": {
+      "rho": 0.32,
+      "raw_return_sharpe": -0.009046942904846499,
+      "momentum_pnl_sharpe": 0.26459671083007313,
+      "serial_edge_shows_in_pnl_sharpe": true
+    },
+    "verdict": "DONT_BUILD"
+  }
+}
