@@ -1,6 +1,6 @@
 {
   "schema": "eval_gate_power_study/estimand_deploy_confirm_v1",
-  "generated_at_utc": "2026-06-03T01:50:25.853570Z",
+  "generated_at_utc": "2026-06-03T06:47:57.966090Z",
   "spec": "docs/superpowers/specs/2026-06-02-estimand-deployability-confirmation-design.md",
   "confirmation": {
     "P1": {
@@ -29,6 +29,17 @@
       "z_2n18": 2.991316115183781,
       "z_increase_n18": 0.2183948205751176,
       "doubling_inflates_bar": true
+    },
+    "P2_out_of_grid": {
+      "global_max_net_benefit_pp": 7.085317070695451,
+      "global_max_at": {
+        "sharpe_ann": 2.0,
+        "gamma4": 1000.0,
+        "n_star": 1
+      },
+      "n_cells": 3960,
+      "tripwire_pp": 10.0,
+      "below_tripwire": true
     },
     "P4": {
       "rho": 0.32,

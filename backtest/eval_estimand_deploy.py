@@ -40,6 +40,12 @@ TRIPWIRE_PP = 10.0  # min absolute net-of-2N* power lift to be BUILD-worthy
 N_STAR_ARMS = (3, 18, 39)  # the project's realistic multiplicity values
 GAMMA4_ARMS = (11.30944, 30.0, 60.0, 100.0)  # BTC anchor + heavier raw-hourly
 
+# Wide, dense OUT-OF-GRID box for the false-negative foreclosure (§42.2): every
+# dial cranked toward the BUILD outcome, most settings absurd / non-deployable.
+OOG_SHARPE = tuple(round(0.05 + 0.05 * i, 2) for i in range(40))  # 0.05 .. 2.00
+OOG_GAMMA4 = (4.0, 8.0, 11.30944, 20.0, 30.0, 60.0, 100.0, 200.0, 300.0, 600.0, 1000.0)
+OOG_NSTAR = (1, 2, 3, 5, 10, 18, 39, 100, 500)
+
 
 # --------------------------------------------------------------------------
 # P1 — skew-divorce: directional gate fires at net-Sharpe <= 0 (non-deployable).
@@ -159,6 +165,30 @@ def p3_multiplicity_cost() -> dict:
     }
 
 
+def out_of_grid_search() -> dict:
+    """False-negative foreclosure (§42.2): the GLOBAL max net benefit over a wide,
+    dense out-of-grid box (every dial cranked toward BUILD; most settings absurd /
+    non-deployable) is still below the 10pp tripwire -> the registered deployable
+    grid hides no surprise region. (NOTE: net benefit is NOT globally monotone —
+    e.g. it decreases in Sharpe at high N*, low gamma4 — so this rests on the dense
+    global maximum, not a monotonicity argument.)"""
+    gmax = -1.0
+    at: dict | None = None
+    for s in OOG_SHARPE:
+        for g4 in OOG_GAMMA4:
+            for ns in OOG_NSTAR:
+                nb = net_benefit_after_multiplicity(s, g4, ns)
+                if nb > gmax:
+                    gmax, at = nb, {"sharpe_ann": s, "gamma4": g4, "n_star": ns}
+    return {
+        "global_max_net_benefit_pp": gmax * 100.0,
+        "global_max_at": at,
+        "n_cells": len(OOG_SHARPE) * len(OOG_GAMMA4) * len(OOG_NSTAR),
+        "tripwire_pp": TRIPWIRE_PP,
+        "below_tripwire": (gmax * 100.0) < TRIPWIRE_PP,
+    }
+
+
 # --------------------------------------------------------------------------
 # P4 — runs-test / serial-dependence is a confirmation-layer category error.
 # --------------------------------------------------------------------------
@@ -194,6 +224,7 @@ def run_confirmation() -> dict:
     p1s = p1_skew_divorce_summary()
     p2 = p2_net_benefit_after_multiplicity()
     p3 = p3_multiplicity_cost()
+    oog = out_of_grid_search()
     p4 = p4_runs_test_inert()
     # DON'T-BUILD iff skew-divorce real (P1) AND net benefit < tripwire (P2/P3)
     # AND runs-test inert at confirmation (P4). Else SURPRISE -> reconsider.
@@ -207,6 +238,7 @@ def run_confirmation() -> dict:
         "P1": {**p1, **p1s},
         "P2": p2,
         "P3": p3,
+        "P2_out_of_grid": oog,
         "P4": p4,
         "verdict": "DONT_BUILD" if dont_build else "SURPRISE_RECONSIDER",
     }

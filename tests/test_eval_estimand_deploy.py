@@ -54,6 +54,16 @@ def test_p3_multiplicity_threshold_increase():
     assert r["doubling_inflates_bar"] is True
 
 
+def test_out_of_grid_global_max_below_tripwire():
+    # false-negative foreclosure: global max over a wide dense box (incl. the
+    # absurd non-deployable corner) is still < the 10pp tripwire.
+    r = edc.out_of_grid_search()
+    assert r["global_max_net_benefit_pp"] == pytest.approx(7.09, abs=0.15)
+    assert r["below_tripwire"] is True
+    assert r["global_max_at"]["sharpe_ann"] == pytest.approx(2.0)
+    assert r["n_cells"] >= 3000
+
+
 # --------------------------------------------------------------------------
 # P4 — runs-test is a confirmation-layer category error: a serial-dependence
 # edge shows up in STRATEGY P&L Sharpe (the gate catches it), so a runs-test
