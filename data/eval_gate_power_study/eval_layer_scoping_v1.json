@@ -1,6 +1,6 @@
 {
   "schema": "eval_gate_power_study/eval_layer_scoping_v1",
-  "generated_at_utc": "2026-06-03T00:04:05.050727Z",
+  "generated_at_utc": "2026-06-03T00:13:01.512989Z",
   "spec": "docs/superpowers/specs/2026-06-02-bayesian-eval-layer-scoping-design.md",
   "constants": {
     "Z_PASS": 1.644853626951472,
@@ -73,7 +73,7 @@
       "refuted_as_power_lever": false,
       "plausibly_raises_power": true,
       "deployment_relevance_resolved_inline": false,
-      "note": "CORRECTED (Codex B2): directional estimand is at-or-above parity at BTC kurtosis (ARE crosses 1 at g4~11.8; BTC g4~11.3). M6 NOT refuted. But sign/median power != deployable Sharpe (skew/cost) -> a fuller estimand study is needed -> Axis-1 plausibly raises-power; verdict CONDITIONAL (name the study), not DON'T-BUILD."
+      "note": "CORRECTED (Codex B2): directional estimand is NEAR parity at the strategy-moment anchor (ARE 0.994 at g4~11.3) and ABOVE parity at raw-hourly kurtosis (crossover g4~11.84; t is the conservative family). M6 NOT refuted. But sign/median power != deployable Sharpe (skew/cost) -> a fuller estimand study is needed -> Axis-1 plausibly raises-power; verdict CONDITIONAL (name the study), not DON'T-BUILD."
     },
     "SV7": {
       "shrinkage_factor": 0.2238171185539606,

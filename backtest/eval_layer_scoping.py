@@ -325,11 +325,14 @@ def sv6_estimand_comparison(sharpe_ann: float = DEPLOYABLE_SHARPE) -> dict:
     hit-rate estimand raise power over Sharpe for a modest edge under BTC's
     heavy tails?
 
-    CORRECTED RESULT: at realistic kurtosis, YES (at-or-above parity). The sign
-    test's efficiency vs the mean/Sharpe test is (2*f(0))^2; it rises from 2/pi
-    (Gaussian) past 1.0 at raw kurtosis ~11.8, and BTC's observed gamma4~11.3
-    sits AT that crossover (higher for raw hourly returns). So M6 is NOT refuted
-    as a power lever. BUT this is power to confirm a MEDIAN/DIRECTIONAL shift, not
+    CORRECTED RESULT: plausibly YES at realistic kurtosis. The sign test's
+    efficiency vs the mean/Sharpe test is (2*f(0))^2; it rises from 2/pi (Gaussian)
+    past 1.0 at raw kurtosis ~11.84. At the strategy-moment anchor gamma4~11.3 it
+    is NEAR parity (ARE 0.994, marginally below); at the higher kurtosis of raw
+    hourly BTC returns (gamma4 >> 12) it OVERTAKES. The Student-t is the conservative
+    heavy-tail family (a peaked-body family e.g. Laplace overtakes by gamma4~6), so
+    the directional advantage is if anything understated. So M6 is NOT refuted as a
+    power lever. BUT this is power to confirm a MEDIAN/DIRECTIONAL shift, not
     a deployable SHARPE edge — a high hit-rate with negative skew has a NEGATIVE
     Sharpe ("picking up pennies"), and the 15bps cost gate still applies. So the
     power gain does NOT by itself confirm deployability: resolving that needs a
@@ -360,11 +363,12 @@ def sv6_estimand_comparison(sharpe_ann: float = DEPLOYABLE_SHARPE) -> dict:
         "plausibly_raises_power": True,
         "deployment_relevance_resolved_inline": False,
         "note": (
-            "CORRECTED (Codex B2): directional estimand is at-or-above parity at "
-            "BTC kurtosis (ARE crosses 1 at g4~11.8; BTC g4~11.3). M6 NOT refuted. "
-            "But sign/median power != deployable Sharpe (skew/cost) -> a fuller "
-            "estimand study is needed -> Axis-1 plausibly raises-power; verdict "
-            "CONDITIONAL (name the study), not DON'T-BUILD."
+            "CORRECTED (Codex B2): directional estimand is NEAR parity at the "
+            "strategy-moment anchor (ARE 0.994 at g4~11.3) and ABOVE parity at "
+            "raw-hourly kurtosis (crossover g4~11.84; t is the conservative family). "
+            "M6 NOT refuted. But sign/median power != deployable Sharpe (skew/cost) "
+            "-> a fuller estimand study is needed -> Axis-1 plausibly raises-power; "
+            "verdict CONDITIONAL (name the study), not DON'T-BUILD."
         ),
     }
 
