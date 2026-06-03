@@ -3,7 +3,7 @@
 - **Date:** 2026-06-02 UTC
 - **Spec:** [`docs/superpowers/specs/2026-06-02-bayesian-eval-layer-scoping-design.md`](../superpowers/specs/2026-06-02-bayesian-eval-layer-scoping-design.md) (§5 decision rule Charlie-ratified, frozen pre-analysis).
 - **Module / tests / data:** [`backtest/eval_layer_scoping.py`](../../backtest/eval_layer_scoping.py) · [`tests/test_eval_layer_scoping.py`](../../tests/test_eval_layer_scoping.py) (18 passed) · `data/eval_gate_power_study/eval_layer_scoping_v1.json`.
-- **Status:** analysis complete; headline verdict below. **The verdict was CORRECTED from DON'T-BUILD to CONDITIONAL during the result 2-leg B2** (Codex caught a verdict-critical bug in SV6 — see "Correction provenance"). Result-B2 of the correction pending; the binding go/no-go read is the PI's.
+- **Status:** SEALED. **The verdict was CORRECTED from DON'T-BUILD to CONDITIONAL during the result 2-leg B2** (Codex caught a verdict-critical bug in SV6 — see "Correction provenance"); the correction was re-B2'd (Codex recompute + advisor, both SOUND-WITH-CAVEATS, no BLOCK; CONDITIONAL confirmed; caveats folded). **Binding read: Charlie ACCEPTED CONDITIONAL-BUILD, 2026-06-02.** The recommended estimand-deployability study is **ENDORSED as the right next step but NOT authorized** — a separate future Charlie register (anti-pre-emption; endorsed ≠ authorized).
 - **Provenance discipline:** purely analytical / read-only. No data spent, no holdout touched, no strategy run on held data, no peek; the 12 cohort Sharpes are read from the sealed Path verdict artifacts; sealed `tier6_dsr_v1/` SHA-256 byte-unchanged throughout; no `evaluate_cohort()` call (AST-checked).
 
 ## The question (spec §1)
@@ -56,11 +56,11 @@ The first-pass verdict was **DON'T-BUILD**, resting on an SV6 that concluded the
 ## Review provenance
 
 - Design spec: 2-leg B2 in two passes (design-point + written-spec); §5 rule Charlie-ratified.
-- Analysis: 18 tests green; every headline number hand-derivable. **First-pass result B2: Codex `has-BLOCK` (SV6) — verified correct + fixed (verdict DON'T-BUILD → CONDITIONAL); advisor `SOUND-WITH-CAVEATS`.** Result-B2 of the correction pending.
+- Analysis: 18 tests green; every headline number hand-derivable. **First-pass result B2: Codex `has-BLOCK` (SV6) — verified correct + fixed (verdict DON'T-BUILD → CONDITIONAL); advisor `SOUND-WITH-CAVEATS`.** **Result-B2 of the correction COMPLETE** (Codex recompute + advisor, both SOUND-WITH-CAVEATS, no BLOCK; CONDITIONAL confirmed; crossover 11.84 reproduced; caveats folded). **SEAL-eve 2-leg COMPLETE** (Codex + advisor; parity-precision + stale-line + merge-wording fixes folded). Binding read: Charlie ACCEPTED CONDITIONAL-BUILD 2026-06-02.
 
 ## Assumptions / limits (disclosed)
 
-- **The corrected SV6 uses a Student-t model** for the heavy-tail density `f(0)`; the exact crossover kurtosis is distribution-family-dependent, but the qualitative result (crossover at *realistic* γ4 ~ 10–12, BTC at/above it) is robust across heavy-tailed families (Laplace ARE=2 at γ4=6).
+- **The corrected SV6 uses a Student-t model** for the heavy-tail density `f(0)`; the exact crossover kurtosis is distribution-family-dependent, but the qualitative result (crossover at *realistic* γ4 ~ 10–12; the strategy anchor γ4≈11.3 just below it [ARE 0.994], raw hourly BTC kurtosis well above) is robust across heavy-tailed families (Laplace ARE=2 at γ4=6).
 - **The deployment-relevance question (directional power ≠ deployable Sharpe) is the load-bearing reason for CONDITIONAL** and is explicitly deferred to the named study — not resolved here.
 - The SV2 MC uses an iid-Gaussian DGP + a single mixture-e construction (τ matched to the alternative — generous to the sequential test).
 - M7's IC/τ are illustrative (no future batch exists); a conditional classification, not a measured edge.
