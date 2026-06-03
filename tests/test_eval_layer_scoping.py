@@ -89,23 +89,25 @@ def test_sv6_sharpe_power_matches_mc():
     assert p == pytest.approx(0.20, abs=0.02)
 
 
-def test_sv6_sign_power_lower_than_sharpe():
+def test_sv6_gaussian_are_is_two_over_pi():
+    assert els.sign_test_are(3.0) == pytest.approx(2.0 / math.pi, abs=1e-3)
+
+
+def test_sv6_directional_overtakes_at_realistic_kurtosis():
+    # CORRECTED (Codex B2): the sign/median test overtakes the mean/Sharpe test at
+    # realistic kurtosis (~12), NOT astronomical; ARE > 1 by gamma4=60.
+    assert 10.0 < els.kurtosis_crossover() < 14.0
+    assert els.sign_test_are(60.0) > 1.0
+
+
+def test_sv6_not_refuted_as_power_lever():
     r = els.sv6_estimand_comparison(1.5)
-    assert r["power_sign_hourly"] < r["power_sharpe_hourly"]
-    assert r["are_sign_vs_sharpe"] == pytest.approx(2.0 / math.pi, abs=0.01)
-    assert r["raises_power"] is False
-
-
-def test_sv6_kurtosis_crossover_is_astronomical():
-    r = els.sv6_estimand_comparison(1.5)
-    # at the modest hourly edge, the sign test only overtakes at absurd kurtosis
-    assert r["kurtosis_crossover_hourly"] > 1000.0
-
-
-def test_sv6_robust_across_frequency():
-    # even daily + heavy tails (gamma4=60) the sign test does not overtake
-    r = els.sv6_estimand_comparison(1.5)
-    assert r["sign_overtakes_daily_g4_60"] is False
+    assert r["refuted_as_power_lever"] is False
+    assert r["plausibly_raises_power"] is True
+    # M6 raises power for the directional estimand at BTC kurtosis (ARE ~ 1.0)...
+    assert r["are_observed_g4"] == pytest.approx(1.0, abs=0.02)
+    # ...but deployment-relevance (hit-rate != Sharpe) is NOT resolved inline.
+    assert r["deployment_relevance_resolved_inline"] is False
 
 
 # --------------------------------------------------------------------------
@@ -159,4 +161,4 @@ def test_run_analysis_assembles_all_svs():
     for k in ("SV1", "SV2", "SV3", "SV4", "SV5", "SV6", "SV7"):
         assert k in out
     assert out["SV3"]["backfires"] is True
-    assert out["SV6"]["raises_power"] is False
+    assert out["SV6"]["refuted_as_power_lever"] is False

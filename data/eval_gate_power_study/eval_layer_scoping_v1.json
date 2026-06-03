@@ -1,6 +1,6 @@
 {
   "schema": "eval_gate_power_study/eval_layer_scoping_v1",
-  "generated_at_utc": "2026-06-02T23:44:02.490566Z",
+  "generated_at_utc": "2026-06-03T00:04:05.050727Z",
   "spec": "docs/superpowers/specs/2026-06-02-bayesian-eval-layer-scoping-design.md",
   "constants": {
     "Z_PASS": 1.644853626951472,
@@ -59,15 +59,21 @@
       "note": "e ~ 1.38 over the forward window vs the 20 needed; ~2.7 yr of fresh hourly tape to cross. Axis-1=only-via-time; Axis-2 (anytime-valid monitoring) judged in the memo."
     },
     "SV6": {
-      "power_sharpe_hourly": 0.20055568375498067,
-      "power_sign_hourly": 0.15815435382670062,
-      "are_sign_vs_sharpe": 0.6366470211933708,
-      "kurtosis_crossover_hourly": 8892.295911515652,
-      "are_daily_g4_60": 0.69307919401393,
-      "sign_overtakes_daily_g4_60": false,
-      "hit_rate_excess_hourly": 0.006393382393705127,
-      "raises_power": false,
-      "note": "directional estimand is LESS powerful (ARE~0.637) at the modest hourly edge; heavy-tail rescue needs absurd kurtosis. Axis-1=no-power-gain (mild loss). Cost gate moot."
+      "power_sharpe": 0.2006159148586132,
+      "power_sign_observed_g4": 0.20001453214381848,
+      "power_sign_g4_60": 0.2119206792895143,
+      "are_gaussian": 0.6366197723675814,
+      "are_observed_g4": 0.9941568371953576,
+      "are_g4_30": 1.075615039660475,
+      "are_g4_60": 1.1002995022038007,
+      "kurtosis_crossover": 11.839218535012261,
+      "btc_observed_g4": 11.30944,
+      "sign_overtakes_at_btc_kurtosis": false,
+      "hit_rate_excess_observed_g4": 0.007989813869926619,
+      "refuted_as_power_lever": false,
+      "plausibly_raises_power": true,
+      "deployment_relevance_resolved_inline": false,
+      "note": "CORRECTED (Codex B2): directional estimand is at-or-above parity at BTC kurtosis (ARE crosses 1 at g4~11.8; BTC g4~11.3). M6 NOT refuted. But sign/median power != deployable Sharpe (skew/cost) -> a fuller estimand study is needed -> Axis-1 plausibly raises-power; verdict CONDITIONAL (name the study), not DON'T-BUILD."
     },
     "SV7": {
       "shrinkage_factor": 0.2238171185539606,

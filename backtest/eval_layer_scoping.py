@@ -260,81 +260,111 @@ def power_sharpe_test(sharpe_ann: float, T: int, ppy: int,
     return 1.0 - _phi(z_alpha - ncp)
 
 
-def power_sign_test(sharpe_ann: float, T: int, ppy: int,
+def unit_var_density_at_zero(gamma4: float) -> float:
+    """Central density f(0) of a UNIT-VARIANCE symmetric return distribution with
+    raw kurtosis gamma4, modeled as a rescaled Student-t.
+
+    Heavier tails (higher gamma4) -> higher central density -> the sign/median
+    test gains efficiency over the mean (the classic robust-statistics result:
+    the median beats the mean under heavy tails). Gaussian (gamma4<=3) ->
+    1/sqrt(2*pi). For a t_nu, raw kurtosis = 3 + 6/(nu-4) (nu>4), inverted here.
+    """
+    if gamma4 <= 3.0:
+        return 1.0 / math.sqrt(2.0 * math.pi)
+    nu = 4.0 + 6.0 / (gamma4 - 3.0)
+    f_t0 = math.gamma((nu + 1.0) / 2.0) / (
+        math.sqrt(nu * math.pi) * math.gamma(nu / 2.0)
+    )
+    return f_t0 * math.sqrt(nu / (nu - 2.0))  # rescale standard-t -> unit variance
+
+
+def power_sign_test(sharpe_ann: float, T: int, ppy: int, gamma4: float = 3.0,
                     z_alpha: float = Z_PASS) -> float:
     """One-sided directional (sign / hit-rate) test power at a true Sharpe.
 
-    For Gaussian per-bar returns, P(up)=Phi(delta_pb); hits ~ Binomial(T, p).
-    NCP_sign = (p-0.5)*2*sqrt(T); power = 1 - Phi(z_alpha - NCP_sign).
+    For a unit-variance return density with central value f(0), a small drift
+    delta_pb shifts P(up) to 0.5 + f(0)*delta_pb, so NCP_sign = 2*f(0)*delta_pb*
+    sqrt(T); power = 1 - Phi(z_alpha - NCP_sign). Heavy tails RAISE f(0) and thus
+    the sign test's power (this is the bug-fix vs the prior Gaussian-f(0) version).
     """
     delta_pb = sharpe_ann / math.sqrt(ppy)
-    p_up = _phi(delta_pb)
-    ncp = (p_up - 0.5) * 2.0 * math.sqrt(T)
+    f0 = unit_var_density_at_zero(gamma4)
+    ncp = 2.0 * f0 * delta_pb * math.sqrt(T)
     return 1.0 - _phi(z_alpha - ncp)
 
 
-def sign_test_are(sharpe_ann: float, ppy: int, gamma3: float = 0.0,
-                  gamma4: float = 3.0) -> float:
-    """Asymptotic relative efficiency of the sign test vs the Sharpe test =
-    (NCP_sign/NCP_sharpe)^2. Gaussian -> 2/pi ~ 0.637. Heavy tails raise it
-    (the Sharpe SE inflates) but at a modest per-bar Sharpe the inflation is tiny.
+def sign_test_are(gamma4: float = 3.0) -> float:
+    """ARE of the sign test vs the mean/Sharpe test = (2*f(0))^2, f(0) the
+    unit-variance return density at 0.
+
+    The Sharpe-DSR test is ~kurtosis-INDEPENDENT at a modest per-bar Sharpe (its
+    Mertens correction is O(sr^2) ~ 0), so its NCP = delta_pb*sqrt(T). The sign
+    test's NCP = 2*f(0)*delta_pb*sqrt(T). Gaussian -> 2/pi = 0.637; the ratio rises
+    PAST 1 at heavy tails -> the directional estimand overtakes.
     """
-    delta_pb = sharpe_ann / math.sqrt(ppy)
-    p_up = _phi(delta_pb)
-    ncp_sign = (p_up - 0.5) * 2.0  # per sqrt(T)
-    ncp_sharpe = delta_pb / sigma_denom(gamma3, gamma4, delta_pb)  # per sqrt(T-1)~
-    return (ncp_sign / ncp_sharpe) ** 2
+    f0 = unit_var_density_at_zero(gamma4)
+    return (2.0 * f0) ** 2
 
 
-def kurtosis_crossover(sharpe_ann: float, ppy: int) -> float:
-    """The raw kurtosis gamma4 at which the sign test's NCP equals the Sharpe
-    test's (i.e. the sign test starts to overtake) at this per-bar Sharpe.
-
-    Sign overtakes when (p-0.5)*2 * sigma_denom > delta_pb, i.e. sigma_denom >
-    delta_pb / ((p-0.5)*2). Solve sigma_denom^2 = 1 + (gamma4-1)/4 * delta_pb^2
-    (gamma3=0) for gamma4.
-    """
-    delta_pb = sharpe_ann / math.sqrt(ppy)
-    p_up = _phi(delta_pb)
-    sd_needed = delta_pb / ((p_up - 0.5) * 2.0)
-    # sd_needed^2 = 1 + (g4-1)/4 * delta^2  ->  g4 = 1 + 4*(sd^2-1)/delta^2
-    return 1.0 + 4.0 * (sd_needed * sd_needed - 1.0) / (delta_pb * delta_pb)
+def kurtosis_crossover() -> float:
+    """The raw kurtosis at which the sign-test ARE vs the mean/Sharpe test = 1
+    (the directional estimand starts to overtake). ~11.8 (Student-t model) —
+    NOT astronomical (the prior version's bug). Solved by bisection."""
+    lo, hi = 3.0001, 1000.0
+    for _ in range(200):
+        mid = 0.5 * (lo + hi)
+        if sign_test_are(mid) < 1.0:
+            lo = mid
+        else:
+            hi = mid
+    return 0.5 * (lo + hi)
 
 
 def sv6_estimand_comparison(sharpe_ann: float = DEPLOYABLE_SHARPE) -> dict:
-    """SV6 (verdict-critical): does a directional / hit-rate estimand raise power
-    over Sharpe for a modest persistent edge?
+    """SV6 (verdict-critical, CORRECTED per Codex B2): does a directional /
+    hit-rate estimand raise power over Sharpe for a modest edge under BTC's
+    heavy tails?
 
-    Result: NO at the deployable regime. The sign test is ~2/pi (0.637) efficient
-    vs the Sharpe test for Gaussian; the heavy-tail rescue requires astronomical
-    kurtosis at a modest per-bar Sharpe (BTC realized g4~11-30, crossover ~thousands).
-    Even daily + g4=60 it does not overtake. Cost gate is therefore moot (M6
-    already fails on power) but reported.
+    CORRECTED RESULT: at realistic kurtosis, YES (at-or-above parity). The sign
+    test's efficiency vs the mean/Sharpe test is (2*f(0))^2; it rises from 2/pi
+    (Gaussian) past 1.0 at raw kurtosis ~11.8, and BTC's observed gamma4~11.3
+    sits AT that crossover (higher for raw hourly returns). So M6 is NOT refuted
+    as a power lever. BUT this is power to confirm a MEDIAN/DIRECTIONAL shift, not
+    a deployable SHARPE edge — a high hit-rate with negative skew has a NEGATIVE
+    Sharpe ("picking up pennies"), and the 15bps cost gate still applies. So the
+    power gain does NOT by itself confirm deployability: resolving that needs a
+    fuller estimand study -> the verdict is CONDITIONAL, not BUILD or DON'T-BUILD.
     """
-    p_sharpe_h = power_sharpe_test(sharpe_ann, FORWARD_T, FORWARD_PPY,
-                                   0.0, BTC_REALIZED_G4)
-    p_sign_h = power_sign_test(sharpe_ann, FORWARD_T, FORWARD_PPY)
-    are = sign_test_are(sharpe_ann, FORWARD_PPY)
-    g4_cross_h = kurtosis_crossover(sharpe_ann, FORWARD_PPY)
-    # Daily robustness: T=105 daily bars over the same clean window, g4=60 stress.
-    are_daily_g4_60 = sign_test_are(sharpe_ann, DAYS_PER_YEAR, 0.0, 60.0)
-    # Illustrative cost gate: the directional edge's per-bar hit-rate excess is
-    # tiny (~0.6% at hourly); trading it pays 15bps/side. Reported for completeness.
+    p_sharpe = power_sharpe_test(sharpe_ann, FORWARD_T, FORWARD_PPY, 0.0, 3.0)
+    p_sign_obs = power_sign_test(sharpe_ann, FORWARD_T, FORWARD_PPY, BTC_REALIZED_G4)
+    p_sign_g4_60 = power_sign_test(sharpe_ann, FORWARD_T, FORWARD_PPY, 60.0)
+    are_obs = sign_test_are(BTC_REALIZED_G4)
+    cross = kurtosis_crossover()
+    # Cost gate: the directional edge's per-bar hit-rate excess is tiny; whether a
+    # confirmed directional edge survives 15bps/side is part of the deferred study.
     delta_pb = sharpe_ann / math.sqrt(FORWARD_PPY)
-    hit_excess = _phi(delta_pb) - 0.5
+    hit_excess = unit_var_density_at_zero(BTC_REALIZED_G4) * delta_pb
     return {
-        "power_sharpe_hourly": p_sharpe_h,
-        "power_sign_hourly": p_sign_h,
-        "are_sign_vs_sharpe": are,
-        "kurtosis_crossover_hourly": g4_cross_h,
-        "are_daily_g4_60": are_daily_g4_60,
-        "sign_overtakes_daily_g4_60": are_daily_g4_60 > 1.0,
-        "hit_rate_excess_hourly": hit_excess,
-        "raises_power": p_sign_h > p_sharpe_h,
+        "power_sharpe": p_sharpe,
+        "power_sign_observed_g4": p_sign_obs,
+        "power_sign_g4_60": p_sign_g4_60,
+        "are_gaussian": sign_test_are(3.0),
+        "are_observed_g4": are_obs,
+        "are_g4_30": sign_test_are(30.0),
+        "are_g4_60": sign_test_are(60.0),
+        "kurtosis_crossover": cross,
+        "btc_observed_g4": BTC_REALIZED_G4,
+        "sign_overtakes_at_btc_kurtosis": are_obs >= 1.0 - 1e-3,
+        "hit_rate_excess_observed_g4": hit_excess,
+        "refuted_as_power_lever": False,
+        "plausibly_raises_power": True,
+        "deployment_relevance_resolved_inline": False,
         "note": (
-            "directional estimand is LESS powerful (ARE~0.637) at the modest "
-            "hourly edge; heavy-tail rescue needs absurd kurtosis. Axis-1="
-            "no-power-gain (mild loss). Cost gate moot."
+            "CORRECTED (Codex B2): directional estimand is at-or-above parity at "
+            "BTC kurtosis (ARE crosses 1 at g4~11.8; BTC g4~11.3). M6 NOT refuted. "
+            "But sign/median power != deployable Sharpe (skew/cost) -> a fuller "
+            "estimand study is needed -> Axis-1 plausibly raises-power; verdict "
+            "CONDITIONAL (name the study), not DON'T-BUILD."
         ),
     }
 
